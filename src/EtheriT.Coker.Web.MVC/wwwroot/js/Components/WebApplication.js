@@ -1,142 +1,337 @@
-﻿var page_now = 1;
+var stationPageSize = 24;
+var stationSearchDelay;
+var stationSwitcherState = {
+    loaded: false,
+    loading: false,
+    pageNow: 1,
+    selectedId: null,
+    pinnedIds: [],
+    allWebs: [],
+    filteredWebs: []
+};
+
 function SelectStationInit() {
-    co.WebSite.getPageAll(null).done(function (result) {
-        if (result != null && result.totalPage > 0) {
-            page_now = result.pageNow;
-            if (result.totalPage > 1) {
-                StationPageBtnInit($(".page_btn"), result.totalPage)
-                StationContentPageChage($(".page_btn"), page_now, result.totalPage);
+    var $modal = $("#switchApp");
+    $modal
+        .off("shown.bs.modal.websiteSwitcher")
+        .on("shown.bs.modal.websiteSwitcher", function () {
+            if (!stationSwitcherState.loaded && !stationSwitcherState.loading) {
+                StationLoadAll();
             }
-            StationPageSet(result);
-        }
+        });
+}
+
+function StationLoadAll() {
+    stationSwitcherState.loading = true;
+    $(".website-load-error").addClass("d-none");
+    $(".website-loading").removeClass("d-none");
+    $(".app-switcher").empty();
+    $(".page_btn").addClass("d-none").removeClass("d-flex");
+
+    $.ajax({
+        url: "/api/Website/GetSwitcherAll/",
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        headers: _c.Data.Header
+    }).done(function (result) {
+        stationSwitcherState.allWebs = Array.isArray(result) ? result : [];
+        stationSwitcherState.allWebs.forEach(function (web, index) {
+            web.stationOriginalOrder = index;
+        });
+        StationPinnedLoad();
+        StationPinnedSort();
+        stationSwitcherState.filteredWebs = stationSwitcherState.allWebs.slice();
+        stationSwitcherState.pageNow = 1;
+        stationSwitcherState.loaded = true;
+
+        var selectedWeb = stationSwitcherState.allWebs.find(function (web) {
+            return web.check;
+        });
+        if (selectedWeb) StationSetSelected(selectedWeb);
+        else StationClearSelected();
+
+        StationSearchInit();
+        StationRender();
+    }).fail(function () {
+        stationSwitcherState.loaded = false;
+        $(".website-load-error").removeClass("d-none");
+        StationClearSelected();
+    }).always(function () {
+        stationSwitcherState.loading = false;
+        $(".website-loading").addClass("d-none");
     });
 }
-function StationPageSet(data) {
-    $(".app-switcher").empty();
-    var webs = data.webs;
+
+function StationSearchInit() {
+    var totalCount = stationSwitcherState.allWebs.length;
+    var $searchPanel = $(".website-search-panel");
+
+    if (totalCount <= 6) {
+        $searchPanel.addClass("d-none");
+        return;
+    }
+
+    $searchPanel.removeClass("d-none");
+    var $searchBox = $("#websiteSearchBox");
+    if (!$searchBox.hasClass("dx-textbox")) {
+        $searchBox.dxTextBox({
+            mode: "search",
+            placeholder: "搜尋網站名稱、網站代碼、網址或公司名稱",
+            showClearButton: true,
+            valueChangeEvent: "input",
+            onValueChanged: function (e) {
+                clearTimeout(stationSearchDelay);
+                stationSearchDelay = setTimeout(function () {
+                    StationFilter(e.value);
+                }, 250);
+            }
+        });
+    }
+}
+
+function StationFilter(keyword) {
+    var normalizedKeyword = StationNormalize(keyword);
+    stationSwitcherState.filteredWebs = stationSwitcherState.allWebs.filter(function (web) {
+        if (!normalizedKeyword) return true;
+
+        var companyNames = Array.isArray(web.companyNames) ? web.companyNames.join(" ") : "";
+        var searchableText = [
+            web.name,
+            web.defaultUrl,
+            web.orgName,
+            companyNames
+        ].map(StationNormalize).join(" ");
+
+        return searchableText.indexOf(normalizedKeyword) >= 0;
+    });
+    stationSwitcherState.pageNow = 1;
+    StationRender();
+}
+
+function StationNormalize(value) {
+    return String(value || "").trim().toLocaleLowerCase("zh-TW");
+}
+
+function StationPinnedStorageKey() {
+    var account = StationNormalize($("#UserName").text());
+    return "coker.websiteSwitcher.pinned." + encodeURIComponent(account);
+}
+
+function StationPinnedLoad() {
+    var pinnedIds = [];
+    try {
+        var storedValue = JSON.parse(localStorage.getItem(StationPinnedStorageKey()) || "[]");
+        if (Array.isArray(storedValue)) pinnedIds = storedValue;
+    } catch {
+        pinnedIds = [];
+    }
+
+    var accessibleIds = new Set(stationSwitcherState.allWebs.map(function (web) {
+        return Number(web.id);
+    }));
+    stationSwitcherState.pinnedIds = pinnedIds
+        .map(Number)
+        .filter(function (websiteId, index, values) {
+            return Number.isInteger(websiteId)
+                && websiteId > 0
+                && accessibleIds.has(websiteId)
+                && values.indexOf(websiteId) === index;
+        });
+    StationPinnedSave();
+}
+
+function StationPinnedSave() {
+    try {
+        localStorage.setItem(
+            StationPinnedStorageKey(),
+            JSON.stringify(stationSwitcherState.pinnedIds)
+        );
+    } catch {
+        // localStorage unavailable: keep the preference for the current page only.
+    }
+}
+
+function StationPinnedSort() {
+    var pinnedOrder = new Map(stationSwitcherState.pinnedIds.map(function (websiteId, index) {
+        return [websiteId, index];
+    }));
+    stationSwitcherState.allWebs.sort(function (first, second) {
+        var firstOrder = pinnedOrder.has(Number(first.id)) ? pinnedOrder.get(Number(first.id)) : Number.MAX_SAFE_INTEGER;
+        var secondOrder = pinnedOrder.has(Number(second.id)) ? pinnedOrder.get(Number(second.id)) : Number.MAX_SAFE_INTEGER;
+        if (firstOrder !== secondOrder) return firstOrder - secondOrder;
+        return first.stationOriginalOrder - second.stationOriginalOrder;
+    });
+}
+
+function StationPinnedToggle(websiteId) {
+    websiteId = Number(websiteId);
+    var pinnedIndex = stationSwitcherState.pinnedIds.indexOf(websiteId);
+    if (pinnedIndex >= 0) stationSwitcherState.pinnedIds.splice(pinnedIndex, 1);
+    else stationSwitcherState.pinnedIds.push(websiteId);
+
+    StationPinnedSave();
+    StationPinnedSort();
+
+    var searchValue = $("#websiteSearchBox").hasClass("dx-textbox")
+        ? $("#websiteSearchBox").dxTextBox("instance").option("value")
+        : "";
+    StationFilter(searchValue);
+}
+
+function StationPinnedVisualSet($frame, websiteId) {
+    var isPinned = stationSwitcherState.pinnedIds.indexOf(Number(websiteId)) >= 0;
+    var title = isPinned ? "取消置頂" : "置頂網站";
+    $frame.find(".website-pin")
+        .toggleClass("is-pinned", isPinned)
+        .attr("title", title)
+        .attr("aria-label", title)
+        .attr("aria-pressed", String(isPinned));
+}
+
+function StationRender() {
+    var filteredCount = stationSwitcherState.filteredWebs.length;
+    var totalPages = Math.max(1, Math.ceil(filteredCount / stationPageSize));
+    if (stationSwitcherState.pageNow > totalPages) stationSwitcherState.pageNow = totalPages;
+
+    var startIndex = (stationSwitcherState.pageNow - 1) * stationPageSize;
+    var pageWebs = stationSwitcherState.filteredWebs.slice(startIndex, startIndex + stationPageSize);
+
+    StationPageSet(pageWebs);
+    StationPageBtnSet(totalPages);
+    StationResultCountSet(filteredCount);
+    $(".website-no-result").toggleClass("d-none", filteredCount > 0);
+}
+
+function StationPageSet(webs) {
+    var $switcher = $(".app-switcher").empty();
+
     webs.forEach(function (web) {
         var $frame = $($("#TemplateApp").html()).clone();
-        if (web.check) {
-            $frame.find("[data-key='Id']").addClass("active-app");
-            $frame.find("[data-key='description']").after("<span class='material-symbols-outlined app-selected md-16'>check</span>")
-        }
-        $frame.find("[data-key='Id']").data("id", web.id);
-        $frame.find("[data-key='image']").attr({ src: web.images, alt: web.name })
-        $frame.find("[data-key='name']").text(web.name);
-        $frame.find("[data-key='description']").text(web.description);
+        var $card = $frame.find("[data-key='Id']");
+        $card
+            .data("id", web.id)
+            .attr("data-id", web.id)
+            .attr("title", web.description || web.name || "")
+            .attr("aria-label", "選擇網站 " + (web.name || "未命名網站"))
+            .on("click", function () {
+                StationSetSelected(web);
+            })
+            .on("dblclick", function (e) {
+                if ($(e.target).closest(".website-pin").length > 0) return;
+                e.preventDefault();
+                StationSetSelected(web);
+                $("#switchApp .switch").trigger("click");
+            })
+            .on("keydown", function (e) {
+                if ($(e.target).closest(".website-pin").length > 0) return;
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    StationSetSelected(web);
+                }
+            });
+        $frame.find("[data-key='image']")
+            .attr({ src: web.images || "/favicon.ico", alt: web.name || "網站圖示" })
+            .on("error", function () { this.src = "/favicon.ico"; });
+        $frame.find("[data-key='name']").text(web.name || "未命名網站");
+        $frame.find("[data-key='description']").text(web.description || "");
 
-        $(".app-switcher").append($frame);
+        $frame.find(".website-pin")
+            .on("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                StationPinnedToggle(web.id);
+            })
+            .on("dblclick", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        StationPinnedVisualSet($frame, web.id);
 
-        $frame.find($(".webitem")).on("click", function (e) {
-            e.preventDefault();
-            WebitemClick($frame);
-        });
+        $switcher.append($frame);
     });
 
-}
-function WebitemClick($frame) {
-    $(".app-switcher .active-app").removeClass("active-app");
-    $(".app-switcher .app-selected").remove();
-    $frame.find(".card").addClass("active-app");
-    $frame.find(".card-body").append(`<span class="material-symbols-outlined app-selected md-16">check</span>`);
-}
-function StationPageBtnInit($btn_page, page_total) {
-    $btn_page.addClass("d-flex");
-    for (var i = 1; i <= page_total; i++) {
-        var html = "";
-        if (i == page_total && page_total > 7) {
-            html += `<li class="page-item btn_page endhide">
-                                    <button class="d-none" title="..." disabled='disabled'>...</button>
-                                </li>`;
-        }
-        html += `<li class="page-item btn_page">
-                                    <button class="d-none" data-page='${i}' title="切換至第${i}頁">${i}</button>
-                                </li>`;
-        if (i == 1 && page_total > 7) {
-            html += `<li class="page-item btn_page starthide">
-                                    <button class="d-none" title="..." disabled='disabled'>...</button>
-                                </li>`;
-        }
-        $btn_page.find(".btn_next").before(html);
-    }
-    $btn_page.find(".btn_prev button").on("click", function () {
-        var $btn = $(this);
-        if (page_now > 1) {
-            page_now -= 1;
-            StationContentPageChage($btn.parent("li").parent("ul"), page_now, page_total);
-            co.WebSite.getPageAll(page_now).done(function (result) {
-                StationPageSet(result);
-            });
-        }
-    })
-    $btn_page.find(".btn_next button").on("click", function () {
-        var $btn = $(this);
-        if (page_now < page_total) {
-            page_now += 1;
-            StationContentPageChage($btn.parent("li").parent("ul"), page_now, page_total);
-            co.WebSite.getPageAll(page_now).done(function (result) {
-                StationPageSet(result);
-            });
-        }
-    })
-    $btn_page.find(".btn_page button").on("click", function () {
-        var $btn = $(this);
-        page_now = $btn.data("page");
-        StationContentPageChage($btn.parent("li").parent("ul"), $btn.data("page"), page_total);
-        co.WebSite.getPageAll(page_now).done(function (result) {
-            StationPageSet(result);
-        });
-    })
-    if (page_total > 1) $btn_page.removeClass("d-none");
+    StationSelectedVisualSet();
 }
 
-function StationContentPageChage($self, page, page_total) {
-    $self.find("li").each(function () {
-        var $this_li = $(this);
-        var $this_btn = $this_li.find("button");
-        if ($this_btn.data("page") == page) {
-            if (!$this_btn.hasClass("focus")) $this_btn.addClass("focus")
-            if (typeof ($this_btn.attr("disabled")) == "undefined") $this_btn.attr("disabled", "disabled")
-        } else {
-            if ($this_btn.hasClass("focus")) $this_btn.removeClass("focus")
-            if (typeof ($this_btn.attr("disabled")) != "undefined") $this_btn.removeAttr("disabled")
+function StationSetSelected(web) {
+    stationSwitcherState.selectedId = Number(web.id);
+    $("#selectedWebsite")
+        .addClass("active-app")
+        .data("id", web.id)
+        .attr("data-id", web.id)
+        .find("[data-key='name']").text(web.name || "");
+    $("#switchApp .switch").prop("disabled", false);
+    StationSelectedVisualSet();
+}
+
+function StationClearSelected() {
+    stationSwitcherState.selectedId = null;
+    $("#selectedWebsite")
+        .removeClass("active-app")
+        .removeData("id")
+        .attr("data-id", "")
+        .find("[data-key='name']").text("");
+    $("#switchApp .switch").prop("disabled", true);
+    StationSelectedVisualSet();
+}
+
+function StationSelectedVisualSet() {
+    $(".app-switcher .card").each(function () {
+        var $card = $(this);
+        var isSelected = Number($card.data("id")) === stationSwitcherState.selectedId;
+        $card.toggleClass("active-app", isSelected);
+        $card.find(".app-selected").remove();
+        if (isSelected) {
+            $card.find(".card-body").append(
+                "<span class='material-symbols-outlined app-selected md-16'>check</span>"
+            );
         }
     });
+}
 
-    if (page_total > 7) {
-        if (page < 4) {
-            $self.find("li.btn_page").each(function () {
-                var $this_li = $(this);
-                var $this_btn = $this_li.find("button");
-                if ($this_btn.data("page") <= 5 || $this_btn.data("page") == page_total) $this_btn.removeClass("d-none")
-                else $this_btn.addClass("d-none")
-            });
-        } else if (page > page_total - 3) {
-            $self.find("li.btn_page").each(function () {
-                var $this_li = $(this);
-                var $this_btn = $this_li.find("button");
-                if ($this_btn.data("page") >= page_total - 4 || $this_btn.data("page") == 1) $this_btn.removeClass("d-none")
-                else $this_btn.addClass("d-none")
-            });
-        } else {
-            $self.find("li.btn_page").each(function () {
-                var $this_li = $(this);
-                var $this_btn = $this_li.find("button");
-                if ((parseInt(page) + 2 >= $this_btn.data("page") && $this_btn.data("page") >= parseInt(page) - 2) || $this_btn.data("page") == 1 || $this_btn.data("page") == page_total) $this_btn.removeClass("d-none")
-                else $this_btn.addClass("d-none")
-            });
-        }
-        if ($self.find(`li button[data-page=2]`).hasClass("d-none")) {
-            if ($self.find("li.starthide button").hasClass("d-none")) $self.find("li.starthide button").removeClass("d-none");
-        }
-        if ($self.find(`li button[data-page=${page_total - 1}]`).hasClass("d-none")) {
-            if ($self.find("li.endhide button").hasClass("d-none")) $self.find("li.endhide button").removeClass("d-none");
-        }
-    } else {
-        $self.find("li").each(function () {
-            var $this_li = $(this);
-            var $this_btn = $this_li.find("button");
-            $this_btn.removeClass("d-none")
-        });
+function StationPageBtnSet(totalPages) {
+    var $pager = $(".page_btn").empty();
+    if (totalPages <= 1) {
+        $pager.addClass("d-none").removeClass("d-flex");
+        return;
     }
+
+    $pager.removeClass("d-none").addClass("d-flex");
+    StationPageButtonAppend($pager, "上一頁", stationSwitcherState.pageNow - 1, "fa-solid fa-angle-left", stationSwitcherState.pageNow === 1);
+
+    for (var page = 1; page <= totalPages; page++) {
+        StationPageButtonAppend($pager, String(page), page, null, page === stationSwitcherState.pageNow, page === stationSwitcherState.pageNow);
+    }
+
+    StationPageButtonAppend($pager, "下一頁", stationSwitcherState.pageNow + 1, "fa-solid fa-angle-right", stationSwitcherState.pageNow === totalPages);
+}
+
+function StationPageButtonAppend($pager, title, page, iconClass, disabled, active) {
+    var $item = $("<li>").addClass("page-item").toggleClass("active", !!active);
+    var $button = $("<button>")
+        .addClass("page-link")
+        .attr("type", "button")
+        .attr("title", title)
+        .prop("disabled", disabled)
+        .on("click", function () {
+            stationSwitcherState.pageNow = page;
+            StationRender();
+        });
+
+    if (iconClass) $button.append($("<i>").addClass(iconClass));
+    else $button.text(title);
+
+    $pager.append($item.append($button));
+}
+
+function StationResultCountSet(filteredCount) {
+    if (stationSwitcherState.allWebs.length <= 6) return;
+
+    var searchValue = $("#websiteSearchBox").hasClass("dx-textbox")
+        ? $("#websiteSearchBox").dxTextBox("instance").option("value")
+        : "";
+    var text = StationNormalize(searchValue)
+        ? "顯示 " + filteredCount + " / " + stationSwitcherState.allWebs.length + " 個網站"
+        : "共 " + stationSwitcherState.allWebs.length + " 個網站";
+    $(".website-result-count").text(text);
 }

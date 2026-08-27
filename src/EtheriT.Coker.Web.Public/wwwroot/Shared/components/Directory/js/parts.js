@@ -4,6 +4,7 @@
     if (!$) return;
 
     const DirectoryParts = (w.DirectoryParts = w.DirectoryParts || {});
+    let quickCartLoading = null;
 
     function isFn(fn) {
         return typeof fn === "function";
@@ -11,6 +12,33 @@
 
     function isNullOrEmpty(value) {
         return value === null || value === undefined || value === "";
+    }
+
+    function getProductDetailUrl(data) {
+        const orgName = String(data.orgName || w.OrgName || "").replace(/^\/+|\/+$/g, "");
+        return (orgName ? "/" + orgName : "") + "/search/product/" + Number(data.id || 0);
+    }
+
+    function ensureProductQuickCart() {
+        if (w.ProductQuickCart && isFn(w.ProductQuickCart.open)) {
+            return $.Deferred().resolve().promise();
+        }
+        if (quickCartLoading) return quickCartLoading.promise();
+
+        quickCartLoading = $.Deferred();
+        const productActionReady = typeof w.Product !== "undefined"
+            ? $.Deferred().resolve().promise()
+            : $.getScript("/js/ProductAction.min.js");
+
+        productActionReady
+            .then(function () { return $.getScript("/js/Modal/ShoppingCarModal.min.js"); })
+            .done(function () {
+                if (w.ProductQuickCart && isFn(w.ProductQuickCart.open)) quickCartLoading.resolve();
+                else quickCartLoading.reject();
+            })
+            .fail(function () { quickCartLoading.reject(); });
+
+        return quickCartLoading.promise();
     }
 
     function getTempTagHtml($item) {
@@ -43,7 +71,7 @@
     };
 
     // =========================
-    // Buy Button（完全不動）
+    // Buy Button（開啟快速加入購物車）
     // =========================
     DirectoryParts.applyBuyButton = function ($item, content, data, path) {
         const $content = $(content);
@@ -71,14 +99,36 @@
         if ($content.find(".btn_addToCar").length > 0) {
             $content.find(".btn_addToCar").removeClass("d-none");
         } else {
-            const html = '<div class="btn_addToCar"><button type="button">瀏覽商品</button></div>';
+            const html = '<div class="btn_addToCar"><button type="button">加入購物車</button></div>';
             $content.find("div").first().find("a").first().after(html);
         }
 
-        if (data.type == 1 && $content.find(".btn_addToCar").length > 0) {
-            $content.find(".btn_addToCar").off("click").on("click", function (e) {
+        const $buyButton = $content.find(".btn_addToCar").first();
+        $buyButton.find("button").text("加入購物車");
+        const $wrappingLink = $buyButton.closest("a");
+        if ($wrappingLink.length && !$wrappingLink.is($content)) {
+            $buyButton.insertAfter($wrappingLink);
+        }
+
+        if ($content.find(".btn_addToCar").length > 0 && Number(data.id || 0) > 0) {
+            $content.find(".btn_addToCar")
+                .attr({ href: "#", role: "button" })
+                .removeAttr("target rel")
+                .off("click.directoryQuickCart").on("click.directoryQuickCart", function (e) {
                 e.preventDefault();
-                w.location.href = path;
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                const quickCartData = {
+                        productId: data.id,
+                        productName: data.title || data.name || "",
+                        imageUrl: data.mainImage || data.minsizeImage || "",
+                        productUrl: getProductDetailUrl(data)
+                    };
+                ensureProductQuickCart().done(function () {
+                    w.ProductQuickCart.open(quickCartData);
+                }).fail(function () {
+                    Coker.sweet.error("暫時無法開啟", "快速選購載入失敗，請稍後再試。", null, true);
+                });
             });
         }
     };
@@ -268,7 +318,7 @@
                 const text = $self.data("tagname");
                 if (typeof w.OrgName === "undefined") return false;
 
-                location.href = `/${w.OrgName}/Search/Get/3/${encodeURIComponent(text)}`;
+                location.href = `/${w.OrgName}/Search/Get/-2/${encodeURIComponent(text)}`;
                 return false;
             });
         });

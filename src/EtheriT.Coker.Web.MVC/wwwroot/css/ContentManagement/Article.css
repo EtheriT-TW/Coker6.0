@@ -26,12 +26,49 @@ textarea.h300 {
     height: 300px;
 }
 /* Article List */
+#ArticleWorkspace {
+    container-type: inline-size;
+}
+
 .btn_back {
     color: #4E565A;
 }
 
 .btn_add {
     z-index: 1;
+}
+
+#ArticleWorkspace .article-readonly-row > td {
+    background-color: #fff7e6 !important;
+    color: #8a5a00;
+}
+
+#ArticleWorkspace .article-readonly-row:hover > td {
+    background-color: #ffefc2 !important;
+}
+
+#ArticleWorkspace .article-readonly-row .dx-link-delete,
+#ArticleWorkspace .article-readonly-row .dx-icon-trash {
+    opacity: 0.35;
+}
+
+#ArticleWorkspace .article-title-column {
+    overflow: hidden;
+}
+
+#ArticleWorkspace .article-title-text {
+    display: inline-block;
+    width: max-content;
+    max-width: 100%;
+    /*
+     * Reserve room for the article metadata on smaller screens. At wider
+     * sizes the title can still use up to half of the workspace; around a
+     * 13-inch laptop it shrinks before DevExtreme hides the tag column.
+     */
+    max-width: clamp(150px, calc(100cqw - 700px), 50cqw);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Article Content */
@@ -58,6 +95,33 @@ textarea.h300 {
 
 #ArticleContent .date > input {
     padding-left: 9.5rem;
+}
+
+#ArticleContent .article-popular-count {
+    min-height: 2.25rem;
+    background-color: #fff;
+}
+
+#ArticleContent .article-advanced-settings {
+    background-color: #fff;
+}
+
+#ArticleContent .article-advanced-settings > summary {
+    cursor: pointer;
+    list-style: none;
+    background-color: var(--color-gray-bg-dark);
+}
+
+#ArticleContent .article-advanced-settings > summary::-webkit-details-marker {
+    display: none;
+}
+
+#ArticleContent .article-advanced-settings .advanced-expand-icon {
+    transition: transform .2s ease;
+}
+
+#ArticleContent .article-advanced-settings[open] .advanced-expand-icon {
+    transform: rotate(180deg);
 }
 /*
 #ArticleContent > form .image_upload > div {

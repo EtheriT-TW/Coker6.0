@@ -23,31 +23,32 @@
 <script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
 
 <script type="module">
-    import {
-        createCokerGrapesLibrary,
-        registerBasePlugins,
-        createCokerGrapesEditor
-    } from '/modules/grapesjs/etherit-coker-grapesjs.min.js';
+    window.CokerGrapesReady = (async function () {
+        const {
+            createCokerGrapesLibrary,
+            registerBasePlugins,
+            createCokerGrapesEditor
+        } = await import('/modules/grapesjs/etherit-coker-grapesjs.min.js');
 
-    window.EtheriTCokerGrapesJS = createCokerGrapesLibrary({
-        ui: {
-            success(message) {
-                console.log('[EtheriT.Coker.GrapesJS]', message);
+        window.EtheriTCokerGrapesJS = createCokerGrapesLibrary({
+            ui: {
+                success(message) {
+                    console.log('[EtheriT.Coker.GrapesJS]', message);
+                }
             }
-        }
-    });
+        });
 
-    const basePlugins = registerBasePlugins(window.grapesjs, {
-        pluginName: 'etherit-coker-base-blocks'
-    });
+        const basePlugins = registerBasePlugins(window.grapesjs, {
+            pluginName: 'etherit-coker-base-blocks'
+        });
 
-    window.EtheriTCokerGrapesJS.basePlugins = basePlugins;
+        window.EtheriTCokerGrapesJS.basePlugins = basePlugins;
+        window.EtheriTCokerGrapesJS.createEditor = createCokerGrapesEditor;
+        window.EtheriTCokerGrapesJS.registerPlugins(window.grapesjs);
 
-    window.EtheriTCokerGrapesJS.createEditor = createCokerGrapesEditor;
-
-    window.EtheriTCokerGrapesJS.registerPlugins(window.grapesjs);
-
-    console.log('[EtheriT.Coker.GrapesJS] module loaded', window.EtheriTCokerGrapesJS);
+        console.log('[EtheriT.Coker.GrapesJS] module loaded', window.EtheriTCokerGrapesJS);
+        return window.EtheriTCokerGrapesJS;
+    })();
 </script>
 
 <script src="~/js/Grapes/Index.min.js" asp-append-version="true"></script>

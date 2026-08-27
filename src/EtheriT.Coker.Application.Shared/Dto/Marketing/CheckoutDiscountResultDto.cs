@@ -8,6 +8,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
 {
     public class CheckoutDiscountResultDto
     {
+        public decimal EligibleProductAmount { get; set; }
+
         public decimal TotalDiscountAmount { get; set; }
 
         public List<CheckoutDiscountAppliedDto> AppliedDiscounts { get; set; } = new();

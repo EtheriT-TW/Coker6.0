@@ -4,13 +4,19 @@
  ****************************************/
 var grapesInit = function (options) {
     options = options || {};
+    const container = options.container || '#gjs';
+
+    if (!window.EtheriTCokerGrapesJS ||
+        typeof window.EtheriTCokerGrapesJS.createEditor !== "function") {
+        throw new Error("GrapesJS Vite 模組尚未載入，無法建立畫布。");
+    }
 
     const getCurrentPageId = function () {
         if (typeof options.getPageId === "function") {
             return Number(options.getPageId() || 0);
         }
 
-        return Number($("#gjs").data("id") || 0);
+        return Number($(container).data("id") || 0);
     };
 
     const insertData = {
@@ -37,9 +43,8 @@ var grapesInit = function (options) {
     if (typeof (frameLevel) != "undefined" && frameLevel != null && frameLevel != 0) {
         insertData.css.push(`/Layout/Layout_${frameLevel}_Site.min.css`);
     }
-
     var editor = window.EtheriTCokerGrapesJS.createEditor({
-        container: '#gjs',
+        container: container,
         height: '100vh',
         fromElement: true,
 
@@ -105,12 +110,10 @@ var grapesInit = function (options) {
                     '/lib/tui-code/css/tui-image-editor.min.css',
                 ]
             },
-
             'grapesjs-blocks-table': {
-                containerId: '#gjs',
+                containerId: container,
                 componentCell: ".test"
             },
-
             'grapesjs-preset-newsletter': {
                 modalLabelExport: 'Copy the code and use it wherever you want',
                 codeViewerTheme: 'material',
@@ -237,7 +240,6 @@ var grapesInit = function (options) {
                 maxWidth: '600px'
             }
         },
-
         initOptions: {
             showOffsets: 1,
             noticeOnUnload: 0,
@@ -292,12 +294,15 @@ var grapesInit = function (options) {
             domComponents: {
                 processor: (obj) => {
                     if (!!obj.classes) {
-                        const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
                         const isrun = false;
                         let timer = null;
 
                         const waitIframeReady = (cb) => {
-                            const iframeEl = document.getElementsByClassName("gjs-frame")[0];
+                            const iframeEl = editor &&
+                                editor.Canvas &&
+                                typeof editor.Canvas.getFrameEl === "function"
+                                    ? editor.Canvas.getFrameEl()
+                                    : null;
 
                             if (!iframeEl) {
                                 return setTimeout(() => waitIframeReady(cb), 100);
@@ -474,3 +479,36 @@ var grapesInit = function (options) {
 
     return editor;
 };
+
+/**
+ * 共用畫布實例管理器。
+ * Article/Product/Menu 只提供各自的讀寫 callback，不重複 GrapesJS 初始化。
+ */
+var GrapesEditorManager = (function () {
+    const instances = {};
+
+    function create(key, options) {
+        if (!key) throw new Error("建立畫布時必須提供唯一 key。");
+        if (instances[key]) return instances[key];
+
+        instances[key] = grapesInit(options || {});
+        return instances[key];
+    }
+
+    function get(key) {
+        return instances[key] || null;
+    }
+
+    function destroy(key) {
+        const editor = instances[key];
+        if (!editor) return;
+        if (typeof editor.destroy === "function") editor.destroy();
+        delete instances[key];
+    }
+
+    return {
+        create: create,
+        get: get,
+        destroy: destroy
+    };
+})();

@@ -14,6 +14,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
 
         public string? MaxRedemptionPercentHelpText { get; set; }
 
+        public string? MaximumDiscountHelpText { get; set; }
+
         public string? MinOrderForEarnPointsHelpText { get; set; }
 
         public string? RewardRatePercentHelpText { get; set; }

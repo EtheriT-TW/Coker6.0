@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
-<script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_7.min.js" asp-append-version="true"></script>
 @{
 	string imgurl = Model.UploadPath;
@@ -33,20 +32,20 @@
 					var logo_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
 				}
 				<a href="/" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
-					@if (string.IsNullOrEmpty(Model.Title))
+					@if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
 					{
-						<h1>@Model.Title</h1>
+						<span class="logo-text">@Model.Title</span>
 					}
 					else
 					{
 						<img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-						<h1 class="sr-only">@Model.Title</h1>
+						<span class="logo-text-fallback">@Model.Title</span>
 					}
 				</a>
 			</div>
 			<div class="icon-search is-block">
 				<div class="icon-search-bg d-flex justify-content-center align-items-center">
-					<a href="/@ViewData["OrgName"]/Search" class="fa-solid fa-search mx-2"></a>
+					<a href="/@ViewData["OrgName"]/Search" class="fa-solid fa-search mx-2 notranslate"></a>
 				</div>
 			</div>
 		</div>
@@ -60,14 +59,14 @@
 						if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
 					}
 					<a href="/" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
-						@if (string.IsNullOrEmpty(Model.Title))
+						@if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
 						{
-							<h1>@Model.Title</h1>
+							<span class="logo-text">@Model.Title</span>
 						}
 						else
 						{
 							<img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" asp-append-version="true" />
-							<h1 class="d-none">@Model.Title</h1>
+							<span class="logo-text-fallback">@Model.Title</span>
 						}
 					</a>
 				</div>
@@ -77,6 +76,7 @@
 						<span class="material-symbols-outlined icon position-absolute">search</span>
 					</div>
 					<div id="google_translate_element"></div>
+					<div id="translate_switch" class="align-items-center gap-1" translate="no"></div>
 					@if (ViewBag.ShoppingEnable?? false && ViewBag.HasShoppingCar ?? false && ViewBag.storeBuyState.IndexOf("noPay") < 0)
 					{
 						<div id="Cart_Dropdown_Parent" class="d-flex px-1">
@@ -109,9 +109,9 @@
 									</template>
 								</ul>
 
-								<div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
+								<div id="Car_Dropdown_Null" class="drpy-3 text-center">@L.get("CartEmpty")</div>
 
-								<a href="/@ViewData["OrgName"]/ShoppingCar" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>購買</a>
+								<a href="/@ViewData["OrgName"]/ShoppingCar" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>@L.get("Buy")</a>
 							</div>
 						</div>
 					}

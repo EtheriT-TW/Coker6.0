@@ -21,6 +21,23 @@
       ]
     },
     {
+      "output": "js/Page/ProductContent.min.js",
+      "input": [
+        "wwwroot/view-resources/ProductContent/js/core.js",
+        "wwwroot/view-resources/ProductContent/js/selection.js",
+        "wwwroot/view-resources/ProductContent/js/media-viewer.js",
+        "wwwroot/view-resources/ProductContent/js/controller.js",
+        "wwwroot/view-resources/ProductContent/js/navigation.js",
+        "wwwroot/view-resources/ProductContent/js/boot.js"
+      ]
+    },
+    {
+      "output": "js/Page/ProductRewardPreview.min.js",
+      "input": [
+        "wwwroot/view-resources/ProductRewardPreview/ProductRewardPreview.js"
+      ]
+    },
+    {
       "output": "lib/jquery-twzipcode/jquery.twzipcode.min.js",
       "input": [
         "node_modules/jquery-twzipcode/jquery.twzipcode.min.js"
@@ -52,6 +69,7 @@
         "wwwroot/Shared/js/AnchorPoint.js",
         "wwwroot/Shared/js/Activity.js",
         "wwwroot/Shared/js/BGCanvas.js",
+        "wwwroot/Shared/js/CategoryFilter.js",
         "wwwroot/Shared/js/DefineModule.js",
         "wwwroot/Shared/js/DirectoryFacet.js",
         "wwwroot/Shared/components/Directory/js/service.js",
@@ -99,6 +117,8 @@
         "wwwroot/js/Coker/coker.form.js",
         "wwwroot/js/Coker/coker.ui.sweet.js",
         "wwwroot/js/Coker/coker.feature.search.js",
+        "wwwroot/js/Coker/coker.api.remoteTracking.js",
+        "wwwroot/js/Coker/coker.feature.remoteTracking.js",
         "wwwroot/js/Coker/coker.page.init.js",
         "wwwroot/js/Coker/coker.loader.js",
 
@@ -117,7 +137,8 @@
         "wwwroot/js/Coker/coker.api.tags.js",
         "wwwroot/js/Coker/coker.api.thirdparty.js",
         "wwwroot/js/Coker/coker.api.token.js",
-        "wwwroot/js/Coker/coker.api.user.js"
+        "wwwroot/js/Coker/coker.api.user.js",
+        "wwwroot/js/Coker/coker.api.webMenu.js"
       ]
     },
     {
@@ -147,8 +168,11 @@
         "wwwroot/view-resources/ShoppingCart/shopping-cart.marketing.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.pricing.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.forms.js",
+        "wwwroot/view-resources/ShoppingCart/shopping-cart.recipients.js",
+        "wwwroot/view-resources/ShoppingCart/shopping-cart.validation.js",
 
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.core.js",
+        "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.availability.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.redirect.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.ecpay.js",
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.linepay.js",
@@ -242,6 +266,12 @@
         "wwwroot/view-resources/Member/css/Member.bonus.css",
         "wwwroot/view-resources/Member/css/Member.rwd.css",
         "wwwroot/view-resources/Member/css/Member.level.css"
+      ]
+    },
+    {
+      "output": "css/Page/ProductRewardPreview.min.css",
+      "input": [
+        "wwwroot/view-resources/ProductRewardPreview/ProductRewardPreview.css"
       ]
     },
     {

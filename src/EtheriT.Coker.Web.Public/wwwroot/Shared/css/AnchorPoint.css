@@ -24,6 +24,27 @@
         -webkit-appearance: none;
     }
 
+/* ===== 頁內錨點導覽 aside（附加） ===== */
+.anchor_aside {
+    position: sticky;
+    top: var(--anchor-aside-top, 90px);
+    align-self: flex-start;
+    max-height: calc(100vh - var(--anchor-aside-top, 90px) - 1rem);
+    overflow-y: auto;
+    z-index: 5;
+}
+
+    .anchor_aside > .anchor_directory > ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+.anchor_directory > ul > li > a > div {
+    border-left: 3px solid transparent;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
 @media(max-width:576px) {
     .selectList {
         position: relative;
@@ -40,4 +61,11 @@
             pointer-events: none;
             font-size: 1rem;
         }
+
+
+    .anchor_aside {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
 }

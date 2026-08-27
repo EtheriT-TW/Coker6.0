@@ -30,6 +30,7 @@
 	<script src="~/lib/jquery/dist/jquery.min.js"></script>
 	<script src="/lib/knockout/knockout.min.js" asp-append-version="true"></script>
 	<script src="~/js/vendor.min.js" asp-append-version="true"></script>
+	<script src="~/js/devextreme/devextreme-license.js" asp-append-version="true"></script>
 	<script src="~/js/CokerCore.min.js" asp-append-version="true"></script>
 	<script>
 		(function () {
@@ -38,7 +39,8 @@
 
 			Coker.Data.Header["X-Coker-Website-Id"] = websiteId;
 			const pageUrl = new URL(window.location.href);
-			if (!pageUrl.searchParams.has("_site")) {
+			const pageWebsiteId = Number(pageUrl.searchParams.get("_site"));
+			if (!Number.isInteger(pageWebsiteId) || pageWebsiteId <= 0) {
 				pageUrl.searchParams.set("_site", websiteId);
 				history.replaceState(history.state, "", pageUrl.pathname + pageUrl.search + pageUrl.hash);
 			}
@@ -105,7 +107,10 @@
 				// Redirect responses do not receive the URL fragment on the server, and browsers
 				// may carry the old fragment forward. Remove it before page initialization so an
 				// old product id is never loaded under the newly selected website.
-				history.replaceState(history.state, "", pageUrl.pathname);
+				pageUrl.searchParams.delete("siteChanged");
+				pageUrl.searchParams.set("_site", websiteId);
+				pageUrl.hash = "";
+				history.replaceState(history.state, "", pageUrl.pathname + pageUrl.search);
 				window.addEventListener("load", function () {
 					if (window.Swal) {
 						Swal.fire({

@@ -108,7 +108,7 @@ namespace EtheriT.Coker.Application.Search
                         list.Add(
                             new SearchItemDto
                             {
-                                Id = 3,
+                                Id = SearchTargetIds.Product,
                                 Name = L.get("FindProduct")
                             }
                         );
@@ -117,7 +117,7 @@ namespace EtheriT.Coker.Application.Search
             }
             list.Add(new SearchItemDto
             {
-                Id = 0,
+                Id = SearchTargetIds.Article,
                 Name = L.get("FindArticle")
             });
             return list;

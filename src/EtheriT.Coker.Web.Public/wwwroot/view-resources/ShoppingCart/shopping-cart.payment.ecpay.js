@@ -7,6 +7,7 @@
     cart.Payment.ECPay = cart.Payment.ECPay || {};
     var ecpaySelectionObserver = null;
     var isClearingECPaySelection = false;
+    var ecpayRequestVersion = 0;
 
     function GetECPayEntryRadio() {
         return $('#RadioPayment input[name="RadioPayment"][data-third-party-id="' + S.ECPAY_THIRD_PARTY_ID + '"]').first();
@@ -67,7 +68,43 @@
             });
     }
     function ECPaymentChange() {
-        if (!S.ECPayMonitor || !S.HasECPay) {
+        if (!S.ECPayMonitor) {
+            return;
+        }
+
+        cart.Pricing.TotalCount();
+
+        // 取貨門市在付款方式之後選擇，載入付款項目時不應被門市必填檢核擋住。
+        var dataReady = cart.Forms.AllDataGet(false, true);
+        cart.Payment.Core.Step3Monitor();
+        var selectedOrderDetails = GetSelectedOrderDetails();
+
+        if (!dataReady || selectedOrderDetails.length === 0) {
+            ecpayRequestVersion += 1;
+            S.ECPayChanging = false;
+
+            S.ECPayReady = false;
+            S.ECPayOrderSnapshot = "";
+
+            $("#RadioPayment > .form-check").addClass("d-none");
+            $(".noPaymentWarning").addClass("d-none");
+            $(".ecpay_loading").addClass("d-none");
+            $("#ECPayPayment").empty();
+            cart.CheckoutValidation.RefreshDisplay();
+
+            return;
+        }
+
+        // 缺漏提示必須先於綠界的可用性與初始化狀態判斷。
+        // 否則資料不完整時，付款項目被隱藏了，提示也會一起沒有機會顯示。
+        $(".checkoutValidationWarning").addClass("d-none");
+
+        if (!S.HasECPay) {
+            return;
+        }
+
+        if (!S.ECPayInit) {
+            $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
             return;
         }
 
@@ -75,26 +112,6 @@
         var restorePaymentAfterSync = IsECPaySelected()
             ? GetECPayEntryValue()
             : selectedPaymentBeforeSync;
-
-        cart.Pricing.TotalCount();
-
-        var dataReady = cart.Forms.AllDataGet(false);
-        cart.Payment.Core.Step3Monitor();
-        var selectedOrderDetails = GetSelectedOrderDetails();
-
-        if (!dataReady || selectedOrderDetails.length === 0) {
-            if (S.ECPayReady) {
-                S.ECPayReady = false;
-                S.ECPayOrderSnapshot = "";
-            }
-
-            $("#RadioPayment > .form-check").addClass("d-none");
-            $(".noPaymentWarning").addClass("d-none");
-            $(".ecpayWarning").removeClass("d-none");
-            $(".ecpay_loading").addClass("d-none");
-
-            return;
-        }
 
         S.order_header_data.OrderDetails = selectedOrderDetails;
 
@@ -110,13 +127,20 @@
 
         S.ECPayChanging = true;
         S.ECPayReady = false;
+        var requestVersion = ++ecpayRequestVersion;
 
         $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
+        $(".checkoutValidationWarning").addClass("d-none");
         $("#RadioPayment > .form-check").addClass("d-none");
         $("#ECPayPayment").empty();
 
         var timeout = 0;
         var checkInterval = setInterval(function () {
+            if (requestVersion !== ecpayRequestVersion) {
+                clearInterval(checkInterval);
+                return;
+            }
+
             if (S.ECPayInit !== true) {
                 timeout += 100;
                 if (timeout >= 10000) {
@@ -130,6 +154,8 @@
             clearInterval(checkInterval);
             Coker.ThirdParty.ECPayGetToken(S.order_header_data)
                 .done(function (result) {
+                    if (requestVersion !== ecpayRequestVersion) return;
+
                     if (!result.success) {
                         S.ECPayChanging = false;
                         S.ECPayReady = false;
@@ -140,6 +166,8 @@
                     var message = result.message.split(",");
                     S.order_header_data.orderId = message[0];
                     ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
+                        if (requestVersion !== ecpayRequestVersion) return;
+
                         if (errMsg != null) {
                             S.ECPayChanging = false;
                             S.ECPayReady = false;
@@ -161,6 +189,7 @@
 
                         cart.Shipping.ConfigurePaymentOptions(paymentValueToRestore);
                         cart.Payment.Core.RadioPayment();
+                        cart.Shipping.UpdateCvsStoreSelectionDisplay();
 
                         // 綠界 SDK 可能在 createPayment 後自動選取第一個付款項目。
                         // 先立刻清一次，再啟動 DOM 監聽，避免 SDK 稍後又補上 active。
@@ -190,6 +219,8 @@
                             $("#RadioPayment .payment_display").first().addClass("first");
                             $prevPayment.addClass("last");
                             cart.Payment.Core.RadioPayment();
+                            S.CvsStoreValidationRequested = false;
+                            cart.Shipping.UpdateCvsStoreSelectionDisplay();
 
                             if ($(".ecpay_loading").hasClass("d-none")) {
                                 $ECPayList.removeClass("first last");
@@ -226,6 +257,8 @@
                     }, "V2");
                 })
                 .fail(function () {
+                    if (requestVersion !== ecpayRequestVersion) return;
+
                     S.ECPayChanging = false;
                     S.ECPayReady = false;
                     $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");
@@ -741,12 +774,15 @@
         code: "ECPay",
         type: "embedded",
         thirdPartyId: S.ECPAY_THIRD_PARTY_ID,
+        isAvailable: function () {
+            return S.ECPayAvailable === true;
+        },
         init: function () {
             if ($("#ECPayPayment").length === 0) {
                 return;
             }
 
-            S.HasECPay = true;
+            S.HasECPay = false;
             S.ECPayMonitor = true;
             S.SupportApplePay = CanUseApplePay();
             ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
@@ -760,7 +796,7 @@
 
                 var $ecpayRadio = GetECPayEntryRadio();
 
-                if ($ecpayRadio.length) {
+                if ($ecpayRadio.length && S.ECPayAvailable) {
                     $ecpayRadio.prop("checked", true);
                     $ecpayRadio.closest(".form-check").prevAll(".form-check").first().find(".payment_display").addClass("last");
                 }

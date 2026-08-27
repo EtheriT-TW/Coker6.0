@@ -189,6 +189,7 @@
  * @property {(formData:FormData)=>AjaxPromise<any>} Upload
  * @property {(formData:FormData)=>AjaxPromise<any>} Upload360
  * @property {(dto:any)=>AjaxPromise<any>} UploadYTLink
+ * @property {(formData:FormData)=>AjaxPromise<any>} UploadExternalVideo
  * @property {(dto:{type:any,id:any})=>AjaxPromise<any>} getFileList
  * @property {(dto:any)=>AjaxPromise<any>} getImgFile
  * @property {(aid:number, type:any)=>AjaxPromise<any>} getAdFile
@@ -196,22 +197,23 @@
  * @property {(dto:any)=>AjaxPromise<any>} fileDataChange
  * @property {(key:any)=>AjaxPromise<any>} Delete
  * @property {(dto:any)=>AjaxPromise<any>} DeleteFileById
- *
  * @property {(elementId:string, opt?:any)=>any} UploadImageInit
  * @property {(elementId:string, opt?:any)=>any} UploadFileInit
  * @property {(elementId:string, opt?:any)=>any} Upload360Init
  * @property {(elementId:string, opt?:any)=>any} UploadVideoInit
  * @property {(elementId:string, opt?:any)=>any} UploadVideoPreviewInit
- *
- * // merged in later via Coker.Object.merge(Coker.File, {...})
- * @property {()=>void} ListFileInit
- * @property {()=>void} fileUploadWithPreview
- * @property {(liJq:any)=>void} ListFile
  */
 
 /* ---------------------------------------------------------
  * Form
  * --------------------------------------------------------- */
+
+/**
+ * @typedef {Object} CokerFormSubmitContext
+ * @property {SubmitEvent} event
+ * @property {HTMLFormElement} form
+ * @property {HTMLElement|null} submitter
+ */
 
 /**
  * @typedef {Object} CokerFormApi
@@ -225,7 +227,7 @@
  * @property {(scope?:any)=>void} initNumberFormatter
  * @property {(formId:string, isArrayType?:boolean)=>AnyObject} getJson
  * @property {(fieldsetId:string, isArrayType?:boolean)=>AnyObject} getJsonByFieldset
- * @property {(formId:string, fn?:Function)=>void} init
+ * @property {(formId:string, fn?:(formId:string, context:CokerFormSubmitContext)=>any)=>void} init
  * @property {(formId:string)=>void} clear
  * @property {(formId:string, type?:number)=>FormData} getFileForm
  * @property {(options:{title?:string,text?:string,confirmButtonText?:string,cancelButtonText?:string,onConfirm?:Function})=>JQuery.Promise<any>} confirmSubmit
@@ -528,6 +530,7 @@
  * @typedef {Object} CokerSweetApi
  * @property {CokerSweetConfig} config
  * @property {()=>void} loading
+ * @property {()=>void} closeLoading
  * @property {(html:string, onOk?:Function, autoClose?:boolean)=>void} success
  * @property {(title:string, html:string, onOk?:Function, autoClose?:boolean)=>void} error
  * @property {(title:string, html:string, okText:string, cancelText:string, onOk?:Function, onCancel?:Function)=>void} confirm
@@ -649,6 +652,7 @@
  * @property {(dto:any)=>Promise<any>} BatchUpdateStatus
  * @property {CokerDirectoryApi} Directory
  * @property {CokerFileApi} File
+ * @property {Function} FileListManager
  * @property {CokerFormApi} Form
  * @property {CokerFreightApi} Freight
  * @property {CokerLogisticsBoxApi} LogisticsBox

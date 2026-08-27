@@ -110,7 +110,12 @@
 
     function getProvidersByType(type) {
         return getProviders().filter(function (provider) {
-            return provider && provider.type === type;
+            if (!provider || provider.type !== type) {
+                return false;
+            }
+
+            return typeof provider.isAvailable !== "function" ||
+                provider.isAvailable();
         });
     }
 
@@ -301,6 +306,11 @@
                 provider.markDirty();
             }
         });
+
+        if (cart.Payment.Availability &&
+            typeof cart.Payment.Availability.scheduleRefresh === "function") {
+            cart.Payment.Availability.scheduleRefresh(getActivePaymentValue());
+        }
     }
     function parseOrderResult(orderResult) {
         var message = String(orderResult && orderResult.message || "");

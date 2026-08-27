@@ -77,7 +77,17 @@ namespace EtheriT.Coker.Web.Public.Helpers
                     verifiedParentContent = initializedParent.Html;
                 }
 
-                renderedHtml = htmlProcessor.ComposeInheritedHtml(renderedHtml, verifiedParentContent);
+                renderedHtml = MainHeadingHtml.PrepareInheritedContent(
+                    htmlProcessor,
+                    renderedHtml,
+                    verifiedParentContent);
+            }
+            else
+            {
+                renderedHtml = MainHeadingHtml.PrepareInheritedContent(
+                    htmlProcessor,
+                    renderedHtml,
+                    null);
             }
 
             if (RewriteUploadPaths && !string.IsNullOrWhiteSpace(UploadOrgName))

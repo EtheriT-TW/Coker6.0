@@ -99,7 +99,7 @@ p {
 }
 
 .price::before {
-    content: '$';
+    content: var(--currency-symbol, 'NT$');
 }
 
 .unavailable .price::before {

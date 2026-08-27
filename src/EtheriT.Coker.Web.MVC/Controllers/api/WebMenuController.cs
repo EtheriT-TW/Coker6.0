@@ -22,7 +22,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpGet]
         [Authorize]
-        public async Task<SiteMapDto> GetAll()
+        public async Task<MenuEditorTreeDto> GetAll()
+        {
+            return await webMenuApplication.GetAll();
+        }
+        [HttpGet]
+        [Authorize]
+        public async Task<MenuEditorTreeDto> GetMainMenu()
         {
             return await webMenuApplication.GetAll();
         }
@@ -34,9 +40,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpGet]
         [Authorize]
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, [FromQuery] long? mid = null)
         {
-            return await webMenuApplication.GetAllList(loadOptions);
+            return await webMenuApplication.GetAllList(loadOptions, mid);
+        }
+        [HttpGet]
+        [Authorize]
+        public async Task<MenuEditorDetailDto> GetEditorDetail(long id)
+        {
+            return await webMenuApplication.GetEditorDetail(id);
         }
         [HttpPost]
         [Authorize]

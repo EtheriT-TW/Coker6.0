@@ -1,5 +1,6 @@
 ﻿#ProdModal > .modal-dialog {
-    min-width: 40vw;
+    width: min(1120px, 92vw);
+    max-width: 1120px;
 }
 
 #ProdModal .dx-datagrid-search-panel {
@@ -22,6 +23,111 @@
 
 #devProdListModalGrid {
     width: 100%;
+}
+
+.prod-modal-filter-panel {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) auto auto;
+    gap: 1rem;
+    align-items: end;
+    padding: 1rem;
+    border: 1px solid #cbd9e6;
+    border-radius: .65rem;
+    background: #f2f7fc;
+}
+
+.prod-modal-availability-filter {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.prod-modal-availability-filter .form-check-input {
+    width: 2.5rem;
+    height: 1.25rem;
+    margin: 0;
+}
+
+#ProdModalFilterClear {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+}
+
+#ProdModalFilterClear .material-symbols-outlined {
+    font-size: 1.2rem;
+}
+
+.prod-modal-status-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .2rem;
+}
+
+.prod-modal-status-badge {
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    background: #e8f1ff;
+    color: #1558a6;
+    font-weight: 700;
+}
+
+.prod-modal-status-cell small {
+    color: #687780;
+}
+
+.prod-modal-product-name {
+    display: -webkit-box;
+    overflow: hidden;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.prod-modal-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.prod-modal-tag-badge {
+    max-width: 100%;
+    padding: .2rem .55rem;
+    border: 1px solid #9eb9d4;
+    border-radius: 999px;
+    background: #edf5ff;
+    color: #175a9c;
+    font-size: .78rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    text-align: left;
+    cursor: pointer;
+}
+
+.prod-modal-tag-badge:hover,
+.prod-modal-tag-badge:focus-visible {
+    border-color: #1769d2;
+    background: #1769d2;
+    color: #fff;
+}
+
+@media (max-width: 767.98px) {
+    .prod-modal-filter-panel {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .prod-modal-availability-filter {
+        white-space: normal;
+    }
 }
 
     #devProdListModalGrid .dx-datagrid-rowsview .dx-row > td {

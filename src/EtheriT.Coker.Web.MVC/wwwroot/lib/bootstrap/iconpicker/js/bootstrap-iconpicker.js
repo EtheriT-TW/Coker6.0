@@ -170,8 +170,8 @@
         }
         op.selected = $.inArray(icon.replace(op.iconClassFix, ''), op.icons);
         if (op.selected === -1) {
-            op.selected = 0;
-            icon = op.iconClassFix + op.icons[op.selected];
+            this.clear();
+            return;
         }
         if (icon !== '' && op.selected >= 0) {
             var s = "";

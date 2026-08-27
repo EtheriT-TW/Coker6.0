@@ -237,5 +237,7 @@
         /// </summary>
         public static string PasswordRuleComposition { get; } = "密碼須滿足有英文大寫、小寫、符號、數字中的三個";
 
+        public static string PleaseSignIn { get; } = "請登入會員";
+
     }
 }

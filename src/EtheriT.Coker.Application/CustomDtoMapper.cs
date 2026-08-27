@@ -178,8 +178,18 @@ namespace EtheriT.Coker.Application
             CreateMap<SiteMapDto, WebMenu>().ReverseMap();
 
             CreateMap<MenuItemDto, WebMenu>()
+                .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.FK_WebsiteId, o => o.Ignore())
+                .ForMember(d => d.CreationTime, o => o.Ignore())
+                .ForMember(d => d.LastModificationTime, o => o.Ignore())
+                .ForMember(d => d.Popular, o => o.Ignore())
                 .ForMember(d => d.RemovedFromShelves, o => o.MapFrom(s => !s.IsFromShelves))
                 .ReverseMap()
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.Id))
+                .ForMember(d => d.FK_WebsiteId, o => o.MapFrom(s => s.FK_WebsiteId))
+                .ForMember(d => d.CreationTime, o => o.MapFrom(s => s.CreationTime))
+                .ForMember(d => d.LastModificationTime, o => o.MapFrom(s => s.LastModificationTime))
+                .ForMember(d => d.Popular, o => o.MapFrom(s => s.Popular))
                 .ForMember(d => d.IsFromShelves, o => o.MapFrom(s => !s.RemovedFromShelves))
                 .ForMember(d => d.OrgName, o => o.MapFrom(s => s.Website != null ? s.Website.OrgName : null))
                 .ForMember(d => d.hasContan, o => o.MapFrom(s => HasContent(s)));
@@ -326,6 +336,7 @@ namespace EtheriT.Coker.Application
             CreateMap<Order_Header, OrderHeaderDisplayDto>()
                 .ForMember(e => e.RefundTransactionId, option => option.MapFrom(c => c.refundTransactionId))
                 .ForMember(e => e.PaymentCode, option => option.MapFrom(c => c.Payment))
+                .ForMember(e => e.DiscountBreakdown, option => option.Ignore())
                 .ReverseMap();
             CreateMap<ShoppingCartDisplayDto, OrderDetailDisplayDto>()
                  .ForMember(e => e.ProdId, option => option.MapFrom(c => c.PId))
@@ -361,6 +372,9 @@ namespace EtheriT.Coker.Application
                 .ForMember(d => d.options, o => o.Ignore());
 
             CreateMap<ECPayLogisticsCreateCVSRequestDto, ECPayLogisticsCreateRequestDto>()
+                .ReverseMap();
+
+            CreateMap<ECPayLogisticsReturnRequestDto, ECPayLogisticsReturnFAMIRequestDto>()
                 .ReverseMap();
 
             //ShoppingCart
@@ -521,6 +535,8 @@ namespace EtheriT.Coker.Application
             CreateMap<FreightDto, LogisticsSetting>()
                 .ForMember(e => e.Low_Con, option => option.MapFrom(c => c.Low_Con ?? 0))
                 .ForMember(e => e.Dis_Freight, option => option.MapFrom(c => c.Dis_Freight ?? 0))
+                .ForMember(e => e.SupportCashOnDelivery, option => option.Ignore())
+                .ForMember(e => e.LogisticsPaymentRestrictions, option => option.Ignore())
                 .ForMember(e => e.logisticsBoxFees, option => option.Ignore())
                 .ForMember(e => e.MappingLogisticsSettingAndProds, option => option.Ignore());
 
@@ -539,6 +555,7 @@ namespace EtheriT.Coker.Application
                 .ForMember(e => e.IsDeleted, option => option.Ignore());
 
             CreateMap<LogisticsSetting, FreightDto>()
+                .ForMember(e => e.PaymentRestrictions, option => option.Ignore())
                 .ForMember(e => e.ProdIds, option => option.MapFrom(c =>
                     c.MappingLogisticsSettingAndProds == null
                         ? new List<ProdSelectedDto>()
@@ -591,14 +608,6 @@ namespace EtheriT.Coker.Application
                 .ForMember(d => d.LogisticsSubType, m => m.Ignore())
                 .ForMember(d => d.Describe, m => m.Ignore())
                 .ForMember(d => d.LogisticsBoxFees, m => m.MapFrom(s => s.logisticsBoxFees))
-                .ForMember(
-                    d => d.SupportCashOnDelivery,
-                    m => m.MapFrom(s =>
-                        ((int)s.LogisticsType >= 8 && (int)s.LogisticsType <= 15)
-                            ? s.SupportCashOnDelivery
-                            : true
-                    )
-                )
                 .AfterMap((src, dest) =>
                 {
                     dest.Describe = DisplayTextFormatter.Freight(

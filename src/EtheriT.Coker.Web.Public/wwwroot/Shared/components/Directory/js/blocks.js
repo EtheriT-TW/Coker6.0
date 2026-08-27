@@ -25,10 +25,35 @@
         return title || "";
     }
 
+    function isCurrentPage(routerName) {
+        return typeof w.PageKey !== "undefined" &&
+            !isNullOrEmpty(routerName) &&
+            w.PageKey.toLowerCase() === String(routerName).toLowerCase();
+    }
+
+    function renderMenuAccordionTitle($button, secItem, isActive) {
+        if (isNullOrEmpty(secItem.imgUrl)) {
+            $button.text(secItem.title);
+            return;
+        }
+
+        const src = (isNullOrEmpty(secItem.overImgUrl) || isAcitve) ? secItem.imgUrl : secItem.overImgUrl;
+
+        $button
+            .empty()
+            .addClass("imgMenu")
+            .append($("<span></span>").text(secItem.title))
+            .append($("<img />").attr({"src": src, "alt": ""}))
+    }
+
     function renderMenuAccordionItem($template, groupId, itemIdPrefix, secItem) {
         const item = $($template.html()).clone();
+        const children = secItem.children || [];
+        const isActive = children.some(function (thirdItem) {
+            return isCurrentPage(thirdItem.routerName);
+        });
 
-        item.find(".sectitle").text(secItem.title);
+        renderMenuAccordionTitle(item.find(".sectitle"), secItem, isActive);
         item.find(".accordion-header").attr("id", `${itemIdPrefix}-header`);
 
         const accordionCollapse = item.find(".accordion-collapse").attr({
@@ -48,11 +73,7 @@
             const linkTitle = getLinkTitle(thirdItem.title, false);
             const $a = $(`<a href="${thirdItem.routerName}" title="${linkTitle}" class="list-group-item list-group-item-action border-0 py-3">${thirdItem.title}</a>`);
 
-            if (
-                typeof w.PageKey !== "undefined" &&
-                thirdItem.routerName &&
-                w.PageKey.toLowerCase() === thirdItem.routerName.toLowerCase()
-            ) {
+            if (isCurrentPage(thirdItem.routerName)) {
                 $a.addClass("active");
                 $(accordionCollapse).collapse("show");
                 item.find(".accordion-header").addClass("active");
@@ -153,11 +174,22 @@
 
         if ($item.find(".swiper").length > 0) {
             const $swiperWrapper = $item.find(".swiper-wrapper");
+            $swiperWrapper.children('[data-coker-ad-rendered="true"]').remove();
 
             for (let i = 0; i < result.length; i++) {
                 const temp = $($swiperWrapper.find(".templatecontent").html()).clone();
                 const rendered = DirectoryBlocks.insertAdvertiseData(temp, result[i]);
+                rendered.attr("data-coker-ad-rendered", "true");
                 $swiperWrapper.append(rendered);
+            }
+
+            const swiperElement = $item.find(".swiper")[0];
+            if (
+                swiperElement &&
+                swiperElement.swiper &&
+                typeof swiperElement.swiper.update === "function"
+            ) {
+                swiperElement.swiper.update();
             }
         } else {
             $item.find(".File_Frame").each(function (index) {

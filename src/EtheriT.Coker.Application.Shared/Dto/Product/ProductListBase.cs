@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 
 namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
@@ -12,6 +13,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string Title { get; set; } = "";
         public bool Visible { get; set; }
         public bool RemovedFromShelves { get; set; }
+        public bool NoStockManagement { get; set; }
+        public ProdStatusEnum ProductStatus { get; set; }
         public int Ser_No { get; set; }
         public string? ItemNo { get; set; }
         public DateTime? StartTime { get; set; }

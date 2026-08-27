@@ -686,13 +686,10 @@
                 isComponent(el) {
                     if (el.tagName === 'SPAN') {
                         return {
-                            type: 'text',
-                            src: el.src,
+                            type: 'span',
                             tagName: el.tagName.toLowerCase(),
-                            content: el.innerHTML,
                             editable: true
-
-                        }
+                        };
                     }
                 }
             }),
@@ -1166,20 +1163,17 @@
         reInitCanvasComponent();
     });
 
-    // 刪除事件監聽
+    // GrapesJS emits component:remove after removing the model from its
+    // collection. Keep this handler canvas-only and do not mutate `obj`.
     editor.on('component:remove', (obj) => {
-        const iframe = document.getElementsByClassName("gjs-frame")[0].contentWindow;
-        const classList = obj.getClasses();
-        obj.setAttributes({ id: 'id', 'data-key': '' });
+        if (obj.getClasses().indexOf("anchor_title") === -1) return;
 
-        if (classList.indexOf("anchor_title") > -1) {
-            var cont = iframe.document.getElementsByClassName("anchor_title").length;
-            const timmer = function () {
-                if (iframe.document.getElementsByClassName("anchor_title").length != cont) iframe.AnchorPointInit();
-                else setTimeout(timmer, 100);
+        setTimeout(function () {
+            const iframe = editor.Canvas.getWindow();
+            if (iframe && typeof iframe.AnchorPointInit === "function") {
+                iframe.AnchorPointInit();
             }
-            setTimeout(timmer, 100);
-        }
+        }, 100);
     });
 
     // 挪動事件監聽

@@ -81,18 +81,57 @@ namespace EtheriT.Coker.Application.Authorization
                 userId = user.Id;
                 long bindId = 0;
                 if (httpContextAccessor.HttpContext != null)
-                    long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"], out bindId);
+                {
+                    var lastWebsiteCookie =
+                        httpContextAccessor.HttpContext.Request.Cookies["LastWebSite"] ??
+                        httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"];
+                    long.TryParse(lastWebsiteCookie, out bindId);
+                }
 
                 if (!await loginUserData.CheckedWebSiteId(user.Id, bindId))
                 {
-                    var defaultWeb = await db.MappingUserAndWebsites
-                        .Where(e => !e.IsDeleted && e.UserId == user.Id)
-                        .OrderByDescending(e => e.WebsiteId)
-                        .FirstOrDefaultAsync();
-                    if (defaultWeb == null)
-                        throw new Exception("無可管理的網站");
+                    var preferredWebsiteId = dto.PreferredWebsiteIds?
+                        .Where(e => string.Equals(
+                            e.Key,
+                            user.Account,
+                            StringComparison.OrdinalIgnoreCase))
+                        .Select(e => e.Value)
+                        .FirstOrDefault() ?? 0;
+                    if (await loginUserData.CheckedWebSiteId(user.Id, preferredWebsiteId))
+                    {
+                        bindId = preferredWebsiteId;
+                    }
+                    else
+                    {
+                        var isSystemUser = await db.MappingUserAndRoles
+                            .Include(m => m.Role)
+                            .AnyAsync(m =>
+                                m.UserId == user.Id &&
+                                m.Role != null &&
+                                m.Role.Type == RoleTypeEnum.系統維護);
 
-                    bindId = defaultWeb.WebsiteId;
+                        if (isSystemUser)
+                        {
+                            bindId = await db.Websites
+                                .Where(w => !w.IsDeleted)
+                                .OrderBy(w => w.Id)
+                                .Select(w => w.Id)
+                                .FirstOrDefaultAsync();
+                            if (bindId <= 0)
+                                throw new Exception("此帳號沒有可用的管理站台");
+                        }
+                        else
+                        {
+                            var defaultWeb = await db.MappingUserAndWebsites
+                                .Where(e => !e.IsDeleted && e.UserId == user.Id)
+                                .OrderByDescending(e => e.WebsiteId)
+                                .FirstOrDefaultAsync();
+                            if (defaultWeb == null)
+                                throw new Exception("無可管理的網站");
+
+                            bindId = defaultWeb.WebsiteId;
+                        }
+                    }
                 }
                 websiteId = bindId;
 
@@ -116,6 +155,10 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Secret = token.id;
                 output.EndDateTime = endDateTime;
                 output.Success = true;
+                cookieManager.Set(
+                    "LastWebSite",
+                    websiteId.Value.ToString(),
+                    CookiePurposeEnum.LastWebsite);
             }
             catch (Exception e)
             {

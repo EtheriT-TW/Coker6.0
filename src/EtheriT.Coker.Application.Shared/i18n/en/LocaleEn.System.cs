@@ -21,5 +21,9 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string PathError { get; } = "Path error";
         public static string ErrorCopyNotAllowed { get; } = "Copying content is not allowed.";
         public static string MailNotifyEmailChanged { get; } = "Email Address Change Notification";
+        public static string ErrorCopyNotSupported { get; } = "Copying is not supported here. Please use HTTPS.";
+        public static string CopySuccess { get; } = "Copied";
+        public static string CopyFailed { get; } = "Copy failed";
+        public static string TokenError { get; } = "Failed to obtain the access token.";
     }
 }

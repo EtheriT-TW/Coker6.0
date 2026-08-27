@@ -1,6 +1,8 @@
 ﻿using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.Payment;
+using EtheriT.Coker.Application.Shared.Payment;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using Microsoft.AspNetCore.Authorization;
@@ -16,15 +18,18 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
 
         private readonly IShoppingCartAppService shoppingCartAppService;
         private readonly IThirdPartyAppService thirdPartyAppService;
+        private readonly IPaymentAvailabilityService paymentAvailabilityService;
         private readonly IConfiguration Configuration;
         public ShoppingCartController(
             IShoppingCartAppService shoppingCartAppService,
             IThirdPartyAppService thirdPartyAppService,
+            IPaymentAvailabilityService paymentAvailabilityService,
             IConfiguration Configuration
             )
         {
             this.shoppingCartAppService = shoppingCartAppService;
             this.thirdPartyAppService = thirdPartyAppService;
+            this.paymentAvailabilityService = paymentAvailabilityService;
             this.Configuration = Configuration;
         }
 
@@ -44,6 +49,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             var output = await shoppingCartAppService.QuantityUpdate(dto);
             return output;
+        }
+
+        [HttpPost]
+        public async Task<ResponseMessageDto> UpdateVariant(ShoppingCartVariantUpdateDto dto)
+        {
+            return await shoppingCartAppService.UpdateVariant(dto);
         }
 
         [HttpGet]
@@ -67,6 +78,24 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         public async Task<List<ThirdPartyKeypairItemOutputDto>> GetPaymentInfo(long paytypeid)
         {
             return await thirdPartyAppService.GetPaymentResult(paytypeid);
+        }
+
+        [HttpPost]
+        public async Task<ResponseMessageDto> UpdateAddOnSelections(ShoppingCartAddOnSelectionUpdateDto dto)
+        {
+            return await shoppingCartAppService.UpdateAddOnSelections(dto);
+        }
+
+        [HttpPost]
+        public async Task<List<PaymentAvailabilityItemDto>> GetAvailablePayments(
+            PaymentAvailabilityQueryDto dto)
+        {
+            var websiteId = Configuration.GetValue<long>("WebConfig:SiteId");
+
+            return await paymentAvailabilityService.GetAvailableAsync(
+                websiteId,
+                dto.LogisticsSettingId,
+                dto.Amount);
         }
     }
 }

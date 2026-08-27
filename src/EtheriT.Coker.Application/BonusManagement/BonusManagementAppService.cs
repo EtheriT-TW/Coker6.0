@@ -76,8 +76,12 @@ namespace EtheriT.Coker.Application.BonusManagement
                     SignupBonusPoints = this.GetBonusSettingValue<int>(bonusSettingData, nameof(GetBonusSettingForEditOutput.SignupBonusPoints)),
                     MinOrderForRedemption = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MinOrderForRedemption)),
                     MaxRedemptionPercent = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MaxRedemptionPercent)),
+                    MaximumDiscount = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MaximumDiscount)),
                     MinOrderForEarnPoints = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.MinOrderForEarnPoints)),
                     RewardRatePercent = this.GetBonusSettingValue<decimal>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardRatePercent)),
+                    RewardCalculationType = this.GetBonusSettingValue<BonusRewardCalculationTypeEnum>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardCalculationType)) ?? BonusRewardCalculationTypeEnum.Percent,
+                    RewardFixedPoints = this.GetBonusSettingValue<int>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardFixedPoints)),
+                    RewardFixedPointsCumulative = this.GetBonusSettingValue<bool>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardFixedPointsCumulative)) ?? true,
                     RewardPointsExpireDays = this.GetBonusSettingValue<int>(bonusSettingData, nameof(GetBonusSettingForEditOutput.RewardPointsExpireDays)),
                 };
             }
@@ -96,6 +100,7 @@ namespace EtheriT.Coker.Application.BonusManagement
                     SignupBonusPointsHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.SignupBonusPoints))?.memo,
                     MinOrderForRedemptionHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForRedemption))?.memo,
                     MaxRedemptionPercentHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MaxRedemptionPercent))?.memo,
+                    MaximumDiscountHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MaximumDiscount))?.memo,
                     MinOrderForEarnPointsHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.MinOrderForEarnPoints))?.memo,
                     RewardRatePercentHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardRatePercent))?.memo,
                     RewardPointsExpireDaysHelpText = bonusSettingItem.storeGroups?.FirstOrDefault()?.storeSets?.FirstOrDefault(x => x.key == nameof(GetBonusSettingForEditOutput.RewardPointsExpireDays))?.memo

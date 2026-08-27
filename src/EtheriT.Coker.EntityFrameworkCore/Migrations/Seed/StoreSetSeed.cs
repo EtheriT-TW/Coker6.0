@@ -487,7 +487,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Id = 28,
                     key = "MaximumDiscount",
                     name = "最高折抵上限",
-                    memo = "單筆訂單紅利抵扣上限",
+                    memo = "單筆訂單紅利抵扣上限，如無須限制可不輸入",
                     FK_StoreSetGroupId = 6,
                     type = SeoSetDataTypeEnum.number,
                     maxlength = 8,
@@ -496,6 +496,79 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "B001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 7, 08, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                },new StoreSet 
+                {
+                    Id = 29,
+                    key = "ProductPageLayout",
+                    name = "商品頁版型",
+                    memo = "設定商品頁面的顯示版型",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.radio,
+                    maxlength = null,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
+                }, new StoreSet
+                {
+                    Id = 30,
+                    key = "RewardCalculationType",
+                    name = "紅利回饋方式",
+                    memo = "設定消費滿額後依百分比或固定點數贈送紅利",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.select,
+                    maxlength = 20,
+                    pattern = "",
+                    IsDeleted = false,
+                    DefaultValue = "Percent",
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 21, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 31,
+                    key = "RewardFixedPoints",
+                    name = "固定回饋點數",
+                    memo = "消費滿足條件後贈送的固定紅利點數",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.number,
+                    maxlength = 8,
+                    pattern = "",
+                    IsDeleted = false,
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 21, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 32,
+                    key = "RewardFixedPointsCumulative",
+                    name = "固定點數累計贈送",
+                    memo = "固定點數是否按消費門檻倍數累計贈送",
+                    FK_StoreSetGroupId = 6,
+                    type = SeoSetDataTypeEnum.checkBox,
+                    maxlength = 5,
+                    pattern = "",
+                    IsDeleted = false,
+                    DefaultValue = "True",
+                    jobID = "B001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 21, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 33,
+                    key = "priceCurrency",
+                    name = "商品幣別",
+                    memo = "商品價格與搜尋引擎結構化資料使用的 ISO 4217 幣別",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.select,
+                    maxlength = 3,
+                    pattern = "^[A-Z]{3}$",
+                    IsDeleted = false,
+                    DefaultValue = "TWD",
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -657,6 +730,44 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                { 
+                    Id = 18,
+                    Key = "Layout_1",
+                    Value = "版型一",
+                    FK_StoreSetId = 29,
+                    IsDeleted = false,
+                    IsDefault = true,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 19,
+                    Key = "Layout_2",
+                    Value = "版型二",
+                    FK_StoreSetId = 29,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 20,
+                    Key = "TWD",
+                    Value = "新臺幣（TWD）",
+                    FK_StoreSetId = 33,
+                    IsDefault = true,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 21,
+                    Key = "USD",
+                    Value = "美元（USD）",
+                    FK_StoreSetId = 33,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

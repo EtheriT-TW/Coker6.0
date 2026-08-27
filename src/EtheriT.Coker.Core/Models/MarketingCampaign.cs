@@ -71,8 +71,9 @@ namespace EtheriT.Coker.Core.Models
         public bool CanStack { get; set; }
 
         /// <summary>
-        /// 是否可重複觸發
-        /// 例如滿 1000 折 100，訂單 2000 是否折 200
+        /// 資格是否可重複觸發。
+        /// 例如滿 1000 的活動，訂單 2000 是否取得兩次資格；
+        /// 或每購買 1 件指定商品取得一次資格時，購買 2 件是否取得兩次資格。
         /// 第一階段建議先 false
         /// </summary>
         public bool Repeatable { get; set; }

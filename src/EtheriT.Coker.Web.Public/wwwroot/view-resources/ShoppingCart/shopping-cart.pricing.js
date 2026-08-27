@@ -6,25 +6,39 @@
     cart.Pricing = cart.Pricing || {};
 
 function computeSelectedSubtotal() {
-    let sum = 0, bonus = 0;
+    let sum = 0, bonus = 0, discountEligibleSum = 0;
     $('.purchase_group li.purchase_item input[name="buyItems"]:checked').each(function () {
         const $li = $(this).closest('li.purchase_item');
         const $sub = $li.find('[data-key="subtotal"]');
         sum += Number($sub.data('subtotal') || 0);
         bonus += Number($sub.data('subtotal_bonus') || 0);
+        const scId = Number($li.data('scId'));
+        const stateItem = (S.shopping_cart_data || []).find(function (item) { return Number(item.Id) === scId; });
+        if (!stateItem || stateItem.IsAdditional !== true) {
+            discountEligibleSum += Number($sub.data('subtotal') || 0);
+        }
     });
-    return { sum, bonus };
+    return { sum, bonus, discountEligibleSum };
 }
 function TotalCount() {
-    const { sum, bonus } = cart.Pricing.computeSelectedSubtotal();
+    const { sum, bonus, discountEligibleSum } = cart.Pricing.computeSelectedSubtotal();
+    const rewardAmount = cart.Marketing && typeof cart.Marketing.refreshRewardCampaigns === "function"
+        ? Number(cart.Marketing.refreshRewardCampaigns() || 0)
+        : 0;
 
     // 商品原始小計
-    S.subtotal = Number(sum || 0);
+    S.subtotal = Number(sum || 0) + rewardAmount;
     S.order_data.bonus = Number(bonus || 0);
+
+    var showGeneralProductAmount = S.subtotal > Number(discountEligibleSum || 0);
+    $(".generalProductAmountLine").toggleClass("d-none", !showGeneralProductAmount);
+    $(".generalProductAmount").text(showGeneralProductAmount
+        ? Number(discountEligibleSum || 0).toLocaleString()
+        : "");
 
     // 行銷活動折扣：只影響畫面試算，不作為正式訂單依據
     var marketingDiscountResult = cart.Marketing && typeof cart.Marketing.calculateOrderDiscount === "function"
-        ? cart.Marketing.calculateOrderDiscount(S.subtotal)
+        ? cart.Marketing.calculateOrderDiscount(Number(discountEligibleSum || 0))
         : { discountAmount: 0, memo: "" };
 
     var marketingDiscount = Number(marketingDiscountResult.discountAmount || 0);
@@ -70,7 +84,29 @@ function TotalCount() {
     const $bonusRuleLine = $(".bonusRuleLine");
     const $redeemRuleText = $(".bonusRedeemRuleText");
 
+    function splitParentheticalDetail($elements, mainClass, detailClass) {
+        $elements.each(function () {
+            const $element = $(this);
+            const parts = $element.text().match(/^(.*?)(\uFF08.*\uFF09)$/);
+            if (parts) {
+                $element.empty()
+                    .append($("<span></span>").addClass(mainClass).text(parts[1]))
+                    .append($("<span></span>").addClass(detailClass).text(parts[2]));
+            }
+        });
+    }
+
     const redeemEnabled = (MinOrderForRedemption > 0 && MaxRedemptionPercent > 0);
+    const maximumDiscountAmount = Number(MaximumDiscount);
+    const hasMaximumDiscount = MaximumDiscount != null && maximumDiscountAmount > 0;
+    const allowsFullProductRedemption = Number(MaxRedemptionPercent) >= 100;
+    const redemptionLimitText = allowsFullProductRedemption
+        ? (hasMaximumDiscount
+            ? `單筆折抵上限 ${cart.Utils.formatMoney(maximumDiscountAmount)}`
+            : "商品金額可全額折抵")
+        : (hasMaximumDiscount
+            ? `折抵上限 ${MaxRedemptionPercent}%，單筆上限 ${cart.Utils.formatMoney(maximumDiscountAmount)}`
+            : `折抵上限 ${MaxRedemptionPercent}%`);
 
     let allBonus = Number(bonus || 0);
     let redeemAmount = 0;
@@ -93,16 +129,21 @@ function TotalCount() {
             const diff = MinOrderForRedemption - payableSubtotal;
 
             $redeemRuleText.text(
-                `再消費 $${diff.toLocaleString()} 可使用紅利折抵（最高 ${MaxRedemptionPercent}%）`
+                `再消費 ${cart.Utils.formatMoney(diff)} 可使用紅利折抵（${redemptionLimitText}）`
             );
 
             $bonusRuleLine.removeClass("d-none");
+
+            splitParentheticalDetail($redeemRuleText, "bonus-rule-main", "bonus-rule-detail");
         }
 
         // 已達門檻
         else {
 
-            const cap = Math.floor(payableSubtotal * MaxRedemptionPercent / 100);
+            const percentageCap = Math.round(payableSubtotal * MaxRedemptionPercent / 100);
+            const cap = hasMaximumDiscount
+                ? Math.floor(Math.min(percentageCap, maximumDiscountAmount))
+                : percentageCap;
             const memberBonusAmount = Math.max(0, (totalBonus || 0) - bonus);
 
             redeemAmount = Math.min(cap, memberBonusAmount);
@@ -114,7 +155,12 @@ function TotalCount() {
 
                 // label 覆蓋
                 $bonusDisconLine.find(".summary-label")
-                    .text(`本單可使用紅利折抵（最高 ${MaxRedemptionPercent}%）`);
+                    .text(`本單可使用紅利折抵（${redemptionLimitText}）`);
+                splitParentheticalDetail(
+                    $bonusDisconLine.find(".summary-label"),
+                    "summary-label-main",
+                    "summary-label-detail"
+                );
 
                 // 金額
                 $bonusDisconLine.find(".bonusDiscion")
@@ -152,26 +198,63 @@ function TotalCount() {
     const $rewardRow = $(".bonusRedeemHintLine");
     const $earnText = $(".bonusEarnHintText");
 
-    const earnEnabled = (MinOrderForEarnPoints > 0 && RewardRatePercent > 0);
+    const fixedPointsReward = Number(RewardCalculationType) === 2 || RewardCalculationType === "FixedPoints";
+    const rewardValue = fixedPointsReward
+        ? Number(RewardFixedPoints || 0)
+        : Number(RewardRatePercent || 0);
+    const earnEnabled = MinOrderForEarnPoints > 0 && rewardValue > 0;
+    // 後端 DetailBuildResult 會先將折抵後商品小計四捨五入為整數，再計算回饋。
+    const rewardEligibleSubtotal = Math.round(payableSubtotal);
+
+    function calculateBonusEarnPoints(eligibleSubtotal) {
+        if (!earnEnabled || eligibleSubtotal < MinOrderForEarnPoints) {
+            return 0;
+        }
+
+        if (!fixedPointsReward) {
+            return Math.floor(eligibleSubtotal * RewardRatePercent / 100);
+        }
+
+        const fixedPoints = Math.floor(Number(RewardFixedPoints || 0));
+        if (fixedPoints <= 0) {
+            return 0;
+        }
+
+        const multiplier = RewardFixedPointsCumulative
+            ? Math.floor(eligibleSubtotal / MinOrderForEarnPoints)
+            : 1;
+
+        return multiplier * fixedPoints;
+    }
 
     function buildBonusEarnRuleText() {
-        return `商品滿 $${Number(MinOrderForEarnPoints || 0).toLocaleString()}，` +
+        if (fixedPointsReward) {
+            if (RewardFixedPointsCumulative) {
+                return `每滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
+                    `贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
+            }
+
+            return `商品滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
+                `固定贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
+        }
+
+        return `商品滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
             `依折抵後商品金額 ${Number(RewardRatePercent || 0).toLocaleString()}% 回饋，運費不計。`;
     }
 
     if (!earnEnabled) {
         $rewardRow.addClass("d-none");
         $earnText.text("");
-    } else if (payableSubtotal < MinOrderForEarnPoints) {
-        const diff = MinOrderForEarnPoints - payableSubtotal;
+    } else if (rewardEligibleSubtotal < MinOrderForEarnPoints) {
+        const diff = MinOrderForEarnPoints - rewardEligibleSubtotal;
 
         $rewardRow.removeClass("d-none");
         $earnText.html(
-            `<span class="bonus-earn-main">再消費 $${diff.toLocaleString()} 可獲得紅利回饋</span>` +
+            `<span class="bonus-earn-main">再消費 ${cart.Utils.formatMoney(diff)} 可獲得紅利回饋</span>` +
             `<span class="bonus-earn-rule d-block">${buildBonusEarnRuleText()}</span>`
         );
     } else {
-        const earnPoints = Math.floor(payableSubtotal * RewardRatePercent / 100);
+        const earnPoints = calculateBonusEarnPoints(rewardEligibleSubtotal);
 
         if (earnPoints > 0) {
             $rewardRow.removeClass("d-none");

@@ -211,22 +211,377 @@ namespace EtheriT.Coker.Application
             return type == (int)FileBindTypeEnum.網站圖示
                 || type == (int)FileBindTypeEnum.網站Logo;
         }
-        public async Task<UploadFileOutputDto> upload360Files(IList<IFormFile> files, int type, long? sid, string page)
+
+        private static string SanitizeUploadedFileName(string? fileName)
+        {
+            var value = (fileName ?? "").Trim();
+            var extensionStart = value.LastIndexOf('.');
+            var generatedSuffix = extensionStart >= 0 ? value.IndexOf(':', extensionStart) : -1;
+            if (generatedSuffix > extensionStart)
+                value = value.Substring(0, generatedSuffix);
+
+            value = value.Replace('\\', '/');
+            var slash = value.LastIndexOf('/');
+            if (slash >= 0) value = value.Substring(slash + 1);
+            return string.IsNullOrWhiteSpace(value) ? "file" : value;
+        }
+
+        private static string GetSafeUploadExtension(IFormFile file)
+        {
+            var extension = Path.GetExtension(SanitizeUploadedFileName(file.FileName)).TrimStart('.');
+            if (!Regex.IsMatch(extension, "^[A-Za-z0-9]{1,10}$"))
+                throw new InvalidOperationException("檔案副檔名格式錯誤");
+            return extension.ToLowerInvariant();
+        }
+
+        private static string NormalizeStoredUploadPath(string? path)
+        {
+            var value = (path ?? "").Trim();
+            var suffix = value.IndexOf(":upload/", StringComparison.OrdinalIgnoreCase);
+            if (suffix < 0) suffix = value.IndexOf(":/upload/", StringComparison.OrdinalIgnoreCase);
+            return suffix > 0 ? value.Substring(0, suffix) : value;
+        }
+
+        private static string ApplyOrgToUploadPath(string? path, string orgName)
+        {
+            var value = NormalizeStoredUploadPath(path).Replace('\\', '/');
+            if (string.IsNullOrWhiteSpace(orgName) || !value.StartsWith("/upload/", StringComparison.OrdinalIgnoreCase))
+                return value;
+
+            var afterUpload = value.Substring("/upload/".Length);
+            if (afterUpload.StartsWith(orgName + "/", StringComparison.OrdinalIgnoreCase))
+                return value;
+            return $"/upload/{orgName}/{afterUpload}";
+        }
+        public async Task<UploadFileOutputDto> upload360Files(
+            IList<IFormFile> files,
+            IList<int> fileIndexes,
+            IList<long> frameIds,
+            int type,
+            long sid,
+            int serno,
+            long id,
+            string page)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
             {
                 Files = new List<FileItemDto>(),
                 ErrorFiles = new List<string>()
             };
-            return null;
+            try
+            {
+                if (type != (int)FileBindTypeEnum.產品)
+                    throw new InvalidOperationException("不支援的 360 圖片綁定類型");
+                if (frameIds == null || frameIds.Count == 0)
+                    throw new InvalidOperationException("360 圖片至少需要一張影格");
+                if (files.Count != fileIndexes.Count)
+                    throw new InvalidOperationException("360 圖片與影格位置數量不一致");
+
+                var uploadedByIndex = new Dictionary<int, IFormFile>();
+                for (var i = 0; i < files.Count; i++)
+                {
+                    var index = fileIndexes[i];
+                    if (index < 0 || index >= frameIds.Count || !uploadedByIndex.TryAdd(index, files[i]))
+                        throw new InvalidOperationException("360 圖片影格位置無效或重複");
+                }
+                for (var i = 0; i < frameIds.Count; i++)
+                {
+                    if (frameIds[i] <= 0 && !uploadedByIndex.ContainsKey(i))
+                        throw new InvalidOperationException($"第 {i + 1} 張 360 影格缺少檔案");
+                }
+
+                var websiteId = await loginUserData.GetWebsiteId();
+                var userId = await loginUserData.GetUserId();
+                var ownsProduct = await db.Prods.AnyAsync(e => !e.IsDeleted && e.Id == sid && e.FK_WebsiteId == websiteId);
+                if (!ownsProduct)
+                    throw new UnauthorizedAccessException("商品不存在或不屬於目前網站");
+                var orgName = await loginUserData.GetWebsiteOrgName();
+                var now = DateTime.Now;
+                var removedFiles = new List<FileUpload>();
+                var strategy = db.Database.CreateExecutionStrategy();
+
+                await strategy.ExecuteAsync(async () =>
+                {
+                    var desiredIds = frameIds.ToList();
+                    var oldGroupIds = new List<long>();
+                    removedFiles = new List<FileUpload>();
+
+                    await using var transaction = await db.Database.BeginTransactionAsync();
+                    try
+                    {
+                        FileBind? bind = null;
+                        FileUpload? oldParent = null;
+                        List<FileBindMore> oldRelations = new List<FileBindMore>();
+
+                    if (id > 0)
+                    {
+                        bind = await db.FileBinds
+                            .Where(e => !e.IsDeleted && e.Sid == sid && e.type == type && e.FK_FileUploadId == id)
+                            .FirstOrDefaultAsync();
+                        oldParent = await db.FileUploads
+                            .Where(e => !e.IsDeleted && e.Id == id && e.FK_WebsiteId == websiteId)
+                            .FirstOrDefaultAsync();
+                        if (bind == null || oldParent == null)
+                            throw new UnauthorizedAccessException("360 圖片群組不存在或不屬於目前網站");
+
+                        oldRelations = await db.FileBindMores
+                            .Where(e => !e.IsDeleted && e.type == (int)FileBindMoreEnum.立體圖片 && e.FK_FileBindGuid == oldParent.GuidKey)
+                            .OrderBy(e => e.Id)
+                            .ToListAsync();
+                        oldGroupIds.Add(oldParent.Id);
+                        oldGroupIds.AddRange(oldRelations.Where(e => e.FK_FileUploadId.HasValue).Select(e => e.FK_FileUploadId!.Value));
+
+                        if (desiredIds.Any(frameId => frameId > 0 && !oldGroupIds.Contains(frameId)))
+                            throw new UnauthorizedAccessException("360 影格不屬於目前群組");
+                    }
+                    else if (desiredIds.Any(frameId => frameId > 0))
+                    {
+                        throw new InvalidOperationException("新建 360 圖片不可引用既有影格");
+                    }
+
+                    foreach (var pair in uploadedByIndex.OrderBy(e => e.Key))
+                    {
+                        var saved = await SaveFile(pair.Value, "", $"{page}/360", convert: false);
+                        if (!saved.Id.HasValue || saved.Id.Value <= 0)
+                            throw new InvalidOperationException($"第 {pair.Key + 1} 張 360 影格上傳失敗");
+                        desiredIds[pair.Key] = saved.Id.Value;
+                    }
+
+                    if (desiredIds.Distinct().Count() != desiredIds.Count)
+                        throw new InvalidOperationException("360 圖片不可重複使用同一影格");
+
+                    var desiredUploads = await db.FileUploads
+                        .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && desiredIds.Contains(e.Id))
+                        .ToListAsync();
+                    if (desiredUploads.Count != desiredIds.Count)
+                        throw new UnauthorizedAccessException("部分 360 影格不存在或不屬於目前網站");
+                    var desiredMap = desiredUploads.ToDictionary(e => e.Id);
+                    var parent = desiredMap[desiredIds[0]];
+
+                    foreach (var relation in oldRelations)
+                    {
+                        relation.IsDeleted = true;
+                        relation.DeletionTime = now;
+                        relation.DeleterUserId = userId;
+                    }
+
+                    if (bind == null)
+                    {
+                        bind = new FileBind
+                        {
+                            Guid = Guid.NewGuid(),
+                            Sid = sid,
+                            type = type,
+                            CreatorUserId = userId,
+                            CreationTime = now
+                        };
+                        db.FileBinds.Add(bind);
+                    }
+                    else
+                    {
+                        bind.LastModifierUserId = userId;
+                        bind.LastModificationTime = now;
+                    }
+
+                    bind.Name = $"360°（{desiredIds.Count} 張）";
+                    bind.num = desiredIds.Count;
+                    bind.SerNo = serno;
+                    bind.MediaLink = "";
+                    bind.FK_FileUploadId = parent.Id;
+
+                    for (var i = 1; i < desiredIds.Count; i++)
+                    {
+                        db.FileBindMores.Add(new FileBindMore
+                        {
+                            type = (int)FileBindMoreEnum.立體圖片,
+                            FK_FileBindGuid = parent.GuidKey,
+                            FK_FileUploadId = desiredIds[i],
+                            CreatorUserId = userId,
+                            CreationTime = now.AddTicks(i)
+                        });
+                    }
+
+                    var removedIds = oldGroupIds.Except(desiredIds).ToList();
+                    if (removedIds.Count > 0)
+                    {
+                        removedFiles = await db.FileUploads
+                            .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && removedIds.Contains(e.Id))
+                            .ToListAsync();
+                        foreach (var removed in removedFiles)
+                        {
+                            removed.IsDeleted = true;
+                            removed.DeletionTime = now;
+                            removed.DeleterUserId = userId;
+                        }
+                    }
+
+                    await db.SaveChangesAsync();
+                    response.Files = desiredIds.Select(frameId =>
+                    {
+                        var upload = desiredMap[frameId];
+                        var path = ApplyOrgToUploadPath(upload.DownloadFileName, orgName);
+                        return new FileItemDto
+                        {
+                            Id = upload.Id,
+                            Guid = upload.GuidKey,
+                            Name = upload.OriginalFileName,
+                            Path = path
+                        };
+                    }).ToList();
+                    await transaction.CommitAsync();
+                    response.Success = true;
+                    }
+                    catch
+                    {
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
+                });
+
+                foreach (var removed in removedFiles)
+                {
+                    var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                        orgName,
+                        NormalizeStoredUploadPath(removed.DownloadFileName));
+                    await deleteFile(physicalPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.ErrorFiles!.Add(ex.Message);
+                response.Error = ex.Message;
+            }
+            return response;
         }
-        public async Task<ResponseMessageDto> uploadYTLink(FileYTLinkUploadDto dto)
+        private static bool TryNormalizeExternalVideo(string value, out string contentType, out string storedValue, out string canonicalUrl)
+        {
+            const string prefix = "external-video:v1:";
+            contentType = "youtube";
+            storedValue = value?.Trim() ?? "";
+            canonicalUrl = $"https://www.youtube.com/watch?v={storedValue}";
+
+            if (storedValue.Length > 200) return false;
+            if (!storedValue.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return Regex.IsMatch(storedValue, @"^[\w-]{6,20}(&t=\d+)?$");
+
+            var remainder = storedValue[prefix.Length..];
+            var separator = remainder.IndexOf(':');
+            if (separator <= 0) return false;
+
+            var provider = remainder[..separator].ToLowerInvariant();
+            string decodedUrl;
+            try { decodedUrl = Uri.UnescapeDataString(remainder[(separator + 1)..]); }
+            catch { return false; }
+
+            if (!Uri.TryCreate(decodedUrl, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return false;
+
+            var host = uri.Host.ToLowerInvariant();
+            var allowed = provider switch
+            {
+                "youtube" => host is "youtube.com" or "www.youtube.com" or "m.youtube.com" or "youtu.be",
+                "facebook" => host is "facebook.com" or "www.facebook.com" or "fb.watch",
+                "instagram" => host is "instagram.com" or "www.instagram.com",
+                "threads" => host is "threads.com" or "www.threads.com" or "threads.net" or "www.threads.net",
+                "x" => host is "x.com" or "www.x.com" or "twitter.com" or "www.twitter.com",
+                _ => false
+            };
+            if (!allowed) return false;
+            if (provider == "instagram" &&
+                !Regex.IsMatch(uri.AbsolutePath, @"^/(p|reels?|tv)/[\w-]+/?$", RegexOptions.IgnoreCase)) return false;
+            if (provider == "threads" &&
+                !Regex.IsMatch(uri.AbsolutePath, @"^/@[\w.]+/post/[\w-]+/?$", RegexOptions.IgnoreCase) &&
+                !Regex.IsMatch(uri.AbsolutePath, @"^/t/[\w-]+/?$", RegexOptions.IgnoreCase)) return false;
+
+            contentType = $"external-video/{provider}";
+            canonicalUrl = uri.AbsoluteUri;
+            return true;
+        }
+
+        private const string ExternalVideoMetadataPrefix = "external-video-meta:v1:";
+
+        private static string NormalizeExternalVideoAspectRatio(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() switch
+            {
+                "16:9" => "16:9",
+                "9:16" => "9:16",
+                "1:1" => "1:1",
+                "4:3" => "4:3",
+                _ => "auto"
+            };
+        }
+
+        private static void ParseExternalVideoMetadata(string? areaKey, out string thumbnail, out string aspectRatio)
+        {
+            thumbnail = "";
+            aspectRatio = "auto";
+            var value = areaKey?.Trim() ?? "";
+            if (value.Length == 0) return;
+
+            if (!value.StartsWith(ExternalVideoMetadataPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                // 舊資料的 AreaKey 只存封面路徑。
+                thumbnail = value;
+                return;
+            }
+
+            var metadata = value.Substring(ExternalVideoMetadataPrefix.Length);
+            var separator = metadata.IndexOf('|');
+            if (separator < 0)
+            {
+                aspectRatio = NormalizeExternalVideoAspectRatio(metadata);
+                return;
+            }
+
+            aspectRatio = NormalizeExternalVideoAspectRatio(metadata.Substring(0, separator));
+            thumbnail = metadata.Substring(separator + 1);
+        }
+
+        private static string? BuildExternalVideoMetadata(string? thumbnail, string? aspectRatio)
+        {
+            var normalizedThumbnail = thumbnail?.Trim() ?? "";
+            var normalizedAspectRatio = NormalizeExternalVideoAspectRatio(aspectRatio);
+            if (normalizedThumbnail.Length == 0 && normalizedAspectRatio == "auto") return null;
+            return $"{ExternalVideoMetadataPrefix}{normalizedAspectRatio}|{normalizedThumbnail}";
+        }
+
+        public Task<ResponseMessageDto> uploadYTLink(FileYTLinkUploadDto dto)
+        {
+            return uploadExternalVideo(dto, null, false, "auto");
+        }
+
+        public async Task<ResponseMessageDto> uploadExternalVideo(FileYTLinkUploadDto dto, IFormFile? thumbnail, bool removeThumbnail, string? aspectRatio)
         {
             ResponseMessageDto response = new ResponseMessageDto() { Success = true };
 
             try
             {
+                if (!TryNormalizeExternalVideo(dto.File, out var contentType, out var storedValue, out var canonicalUrl))
+                {
+                    response.Success = false;
+                    response.Error = "不支援的外嵌影片網址。支援 YouTube watch/shorts/youtu.be、Facebook watch/reel/videos/fb.watch、Instagram p/reel/reels/tv、Threads post/t、X 或 Twitter status 網址。";
+                    return response;
+                }
+
                 long userId = await loginUserData.GetUserId();
+                long savedId = 0;
+                aspectRatio = NormalizeExternalVideoAspectRatio(aspectRatio);
+                string? thumbnailPath = null;
+                if (thumbnail != null && thumbnail.Length > 0)
+                {
+                    if (thumbnail.Length > 10 * 1024 * 1024 ||
+                        !thumbnail.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException("封面圖片僅支援 10 MB 以下的圖片檔案");
+
+                    var thumbnailFile = await SaveFile(
+                        thumbnail,
+                        "",
+                        "ExternalVideoThumbnail",
+                        isTemp: true,
+                        convert: true);
+                    thumbnailPath = thumbnailFile.Path;
+                }
 
                 if (dto.Id == 0)
                 {
@@ -237,9 +592,9 @@ namespace EtheriT.Coker.Application
                     {
                         FK_WebsiteId = WebsiteID,
                         GuidKey = Guid.NewGuid(),
-                        ContentType = "youtube",
-                        OriginalFileName = dto.File,
-                        DownloadFileName = $"https://www.youtube.com/watch?v={dto.File}",
+                        ContentType = contentType,
+                        OriginalFileName = storedValue,
+                        DownloadFileName = canonicalUrl,
                         Size = 0,
                         FileGuid = key,
                         CreatorUserId = userId,
@@ -257,11 +612,13 @@ namespace EtheriT.Coker.Application
                         num = 1,
                         SerNo = dto.SerNo,
                         MediaLink = fu.DownloadFileName,
+                        AreaKey = BuildExternalVideoMetadata(thumbnailPath, aspectRatio),
                         FK_FileUploadId = fu.Id,
                         CreatorUserId = userId,
                         CreationTime = DateTime.Now,
                     };
                     db.FileBinds.Add(fb);
+                    savedId = fu.Id;
                     db.SaveChanges();
                 }
                 else
@@ -269,9 +626,9 @@ namespace EtheriT.Coker.Application
                     var db_fu = db.FileUploads.Where(e => e.Id == dto.Id).FirstOrDefault();
                     if (db_fu != null)
                     {
-                        db_fu.ContentType = "youtube";
-                        db_fu.OriginalFileName = dto.File;
-                        db_fu.DownloadFileName = $"https://www.youtube.com/watch?v={dto.File}";
+                        db_fu.ContentType = contentType;
+                        db_fu.OriginalFileName = storedValue;
+                        db_fu.DownloadFileName = canonicalUrl;
                         db_fu.Size = 0;
                         db_fu.LastModificationTime = DateTime.Now;
                         db_fu.LastModifierUserId = userId;
@@ -283,8 +640,14 @@ namespace EtheriT.Coker.Application
                             db_fb.SerNo = dto.SerNo;
                             db_fb.Name = db_fu.OriginalFileName;
                             db_fb.MediaLink = db_fu.DownloadFileName;
+                            ParseExternalVideoMetadata(db_fb.AreaKey, out var existingThumbnail, out _);
+                            if (removeThumbnail) existingThumbnail = "";
+                            else if (!string.IsNullOrWhiteSpace(thumbnailPath)) existingThumbnail = thumbnailPath;
+                            db_fb.AreaKey = BuildExternalVideoMetadata(existingThumbnail, aspectRatio);
                             db_fb.LastModifierUserId = userId;
                             db_fb.LastModificationTime = DateTime.Now;
+                            savedId = db_fu.Id;
+                            thumbnailPath = existingThumbnail;
                         }
                         else
                         {
@@ -297,6 +660,10 @@ namespace EtheriT.Coker.Application
                     }
                 }
                 db.SaveChanges();
+                if (response.Success)
+                {
+                    response.Object = new { Id = savedId, Thumbnail = thumbnailPath, AspectRatio = aspectRatio };
+                }
 
             }
             catch (Exception e)
@@ -385,22 +752,36 @@ namespace EtheriT.Coker.Application
             long WebsiteID = await loginUserData.GetWebsiteId();
             long userId = await loginUserData.GetUserId();
             var filesName = dto.Select(o => o.mediaLink).ToList();
-            var allFile = db.FileUploads
+            var allFile = await db.FileUploads
                             .Where(e => e.FK_WebsiteId == WebsiteID)
                             .Where(e => !e.IsDeleted)
-                            .Where(f => filesName.Contains(f.DownloadFileName)).ToList();
+                            .Where(f => filesName.Contains(f.DownloadFileName))
+                            .ToListAsync();
+            var fileByName = allFile
+                .Where(e => !string.IsNullOrEmpty(e.DownloadFileName))
+                .GroupBy(e => e.DownloadFileName!)
+                .ToDictionary(e => e.Key, e => e.First());
+            var fileIds = allFile.Select(e => e.Id).ToList();
+            var sideIds = dto.Select(e => e.SId).Distinct().ToList();
+            var bindTypes = dto.Select(e => (int)e.Type).Distinct().ToList();
+            var existingBinds = await db.FileBinds
+                .Where(e => !e.IsDeleted
+                    && e.FK_FileUploadId.HasValue
+                    && fileIds.Contains(e.FK_FileUploadId.Value)
+                    && sideIds.Contains(e.Sid)
+                    && bindTypes.Contains(e.type))
+                .ToListAsync();
+            var bindByKey = existingBinds
+                .GroupBy(e => (e.FK_FileUploadId!.Value, e.Sid, e.type))
+                .ToDictionary(e => e.Key, e => e.First());
             List<FileBind> FileBinds = new List<FileBind>();
             foreach (var file in dto)
             {
-                long Id = allFile.Find(d => d.DownloadFileName == file.mediaLink).Id;
-                var myFileBind = db.FileBinds
-                        .Where(e => e.FK_FileUploadId == Id)
-                        .Where(e => !e.IsDeleted)
-                        .Where(e => e.Sid == file.SId)
-                        .Where(e => e.type == (int)file.Type)
-                        .FirstOrDefault();
-                var hasBind = FileBinds.Find(e => e.FK_FileUploadId == Id && e.Sid == file.SId && e.type == (int)file.Type);
-                if (myFileBind == null && hasBind == null)
+                if (!fileByName.TryGetValue(file.mediaLink, out var uploadedFile))
+                    continue;
+                var key = (uploadedFile.Id, file.SId, (int)file.Type);
+                bindByKey.TryGetValue(key, out var myFileBind);
+                if (myFileBind == null)
                 {
                     FileBind fb = new FileBind
                     {
@@ -411,17 +792,18 @@ namespace EtheriT.Coker.Application
                         num = 1,
                         SerNo = file.SerNo,
                         MediaLink = file.mediaLink,
-                        FK_FileUploadId = Id,
+                        FK_FileUploadId = uploadedFile.Id,
                         CreatorUserId = userId,
                         CreationTime = DateTime.Now,
                     };
                     FileBinds.Add(fb);
+                    bindByKey[key] = fb;
                 }
                 else if (myFileBind != null)
                 {
                     myFileBind.SerNo = file.SerNo;
                     myFileBind.Name = string.IsNullOrEmpty(file.Name) ? file.mediaLink : file.Name;
-                    myFileBind.FK_FileUploadId = Id;
+                    myFileBind.FK_FileUploadId = uploadedFile.Id;
                     myFileBind.MediaLink = file.mediaLink;
                     myFileBind.LastModifierUserId = userId;
                     myFileBind.LastModificationTime = DateTime.Now;
@@ -966,7 +1348,9 @@ namespace EtheriT.Coker.Application
                             var file_type = 0;
                             var fu = await (db.FileUploads.Where(e => e.Id == fb.FK_FileUploadId)).FirstOrDefaultAsync();
 
-                            if (Regex.IsMatch(fb.MediaLink, @"^https://www.youtube.com/[\w\W]*", RegexOptions.IgnoreCase))
+                            if (fu != null && (
+                                Regex.IsMatch(fu.ContentType ?? "", @"^(youtube|external-video/)", RegexOptions.IgnoreCase) ||
+                                Regex.IsMatch(fb.MediaLink, @"^https://(www\.)?youtube.com/[\w\W]*", RegexOptions.IgnoreCase)))
                             {
                                 file_type = 4;
                             }
@@ -985,12 +1369,21 @@ namespace EtheriT.Coker.Application
                                 }
                             }
 
+                            if (fu == null) continue;
+                            var links = new List<string> { fb.MediaLink };
+                            if (file_type == 4)
+                            {
+                                ParseExternalVideoMetadata(fb.AreaKey, out var externalVideoThumbnail, out var externalVideoAspectRatio);
+                                links.Add(externalVideoThumbnail);
+                                links.Add(externalVideoAspectRatio);
+                            }
+
                             output.Add(new FileGetProdDisplayDto
                             {
                                 Id = fu.Id,
                                 Name = fb.Name,
                                 FileType = file_type,
-                                Link = new List<string> { fb.MediaLink },
+                                Link = links,
                                 SerNo = fb.SerNo,
                             });
                         }
@@ -1017,7 +1410,37 @@ namespace EtheriT.Coker.Application
                                     }
                                     else
                                     {
-                                        //360抓圖
+                                        var relations = await db.FileBindMores
+                                            .Where(e => !e.IsDeleted && e.type == (int)FileBindMoreEnum.立體圖片 && e.FK_FileBindGuid == fu.GuidKey)
+                                            .OrderBy(e => e.Id)
+                                            .ToListAsync();
+                                        var frameIds = new List<long> { fu.Id };
+                                        frameIds.AddRange(relations
+                                            .Where(e => e.FK_FileUploadId.HasValue)
+                                            .Select(e => e.FK_FileUploadId!.Value));
+
+                                        var frameUploads = await db.FileUploads
+                                            .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && frameIds.Contains(e.Id))
+                                            .ToListAsync();
+                                        var frameMap = frameUploads.ToDictionary(e => e.Id);
+                                        var orderedIds = frameIds.Where(frameMap.ContainsKey).ToList();
+                                        var links = orderedIds
+                                            .Select(frameId => NormalizeStoredUploadPath(frameMap[frameId].DownloadFileName))
+                                            .ToList();
+
+                                        if (links.Count > 0)
+                                        {
+                                            output.Add(new FileGetProdDisplayDto
+                                            {
+                                                Id = fu.Id,
+                                                Name = fb.Name,
+                                                FileType = 2,
+                                                Link = links,
+                                                FrameIds = orderedIds,
+                                                AmountX = links.Count,
+                                                SerNo = fb.SerNo,
+                                            });
+                                        }
                                     }
                                 }
                                 else if (Regex.IsMatch(fu.ContentType, @"^video/[\w\W]*", RegexOptions.IgnoreCase))
@@ -1043,7 +1466,7 @@ namespace EtheriT.Coker.Application
                     {
                         if (orgName != "")
                         {
-                            output[i].Link[j] = output[i].Link[j].Replace("upload", $"upload/{orgName}").Replace($"/{orgName}/{orgName}/", $"/{orgName}/");
+                            output[i].Link[j] = ApplyOrgToUploadPath(output[i].Link[j], orgName);
                         }
                     }
                 }
@@ -1169,7 +1592,7 @@ namespace EtheriT.Coker.Application
                                 || bind.type == (int)FileBindTypeEnum.選單Icon));
                     var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
                         orgName,
-                        files.DownloadFileName ?? ""
+                        NormalizeStoredUploadPath(files.DownloadFileName)
                     );
 
                     if (File.Exists(physicalPath))
@@ -1239,7 +1662,9 @@ namespace EtheriT.Coker.Application
                             {
                                 if (fafile_binds != null)
                                 {
-                                    var chfile_binds = await (db.FileBindMores.Where(e => e.FK_FileBindGuid == fafile.GuidKey && e.type == (int)FileBindMoreEnum.壓縮圖片).Where(e => !e.IsDeleted).ToListAsync());
+                                    var chfile_binds = await db.FileBindMores
+                                        .Where(e => e.FK_FileBindGuid == fafile.GuidKey && !e.IsDeleted)
+                                        .ToListAsync();
                                     if (chfile_binds != null)
                                     {
                                         foreach (var chfile_bind in chfile_binds)
@@ -1411,8 +1836,10 @@ namespace EtheriT.Coker.Application
             if (prodIds == null || prodIds.Count == 0)
                 return new Dictionary<long, string>();
 
-            long webid = await loginUserData.GetWebsiteId();
-            string orgName = await loginUserData.GetWebsiteOrgName();
+            // 後台由登入身分取得網站；Public 專案則必須由 WebConfig 取得前台網站。
+            // 使用 Common 版本可同時涵蓋兩種情境，避免匿名前台取得 websiteId=0 而全部回傳 noImg。
+            long webid = await loginUserData.GetCommonWebsiteId();
+            string orgName = await loginUserData.GetWebsiteOrgName(webid);
 
             // 把「網站邊界」綁死在查詢裡，避免跨站撈圖
             var siteProdIds =
@@ -1644,8 +2071,8 @@ namespace EtheriT.Coker.Application
 
                 if ((file != null && file.Length > 0))
                 {
-                    string[] sp = file.FileName.Split('.');
-                    string ext = sp[sp.Length - 1];
+                    var originalFileName = SanitizeUploadedFileName(file.FileName);
+                    var ext = GetSafeUploadExtension(file);
                     var path = $"/{directory}/{key}.{ext}";
 
                     if (!fileAllow.Ext.Contains(file.ContentType)) throw new Exception("Type Error");
@@ -1674,7 +2101,7 @@ namespace EtheriT.Coker.Application
                         {
                             return new FileItemDto
                             {
-                                Name = file.FileName,
+                                Name = originalFileName,
                                 Path = $@"/upload{path}".Replace("/upload/", $"/upload/{orgName}/"),
                                 Guid = Guid.NewGuid()
                             };
@@ -1689,7 +2116,7 @@ namespace EtheriT.Coker.Application
                                     FileGuid = key,
                                     GuidKey = Guid.NewGuid(),
                                     DownloadFileName = $@"/upload{path}",
-                                    OriginalFileName = file.FileName,
+                                    OriginalFileName = originalFileName,
                                     ContentType = ContentType,
                                     Size = fileLength,
                                     IsEncryption = isEncryption,
@@ -1710,7 +2137,7 @@ namespace EtheriT.Coker.Application
                                 return new FileItemDto
                                 {
                                     Id = 0,
-                                    Name = file.FileName
+                                    Name = originalFileName
                                 };
                             }
                         }

@@ -57,6 +57,7 @@ namespace EtheriT.Coker.Application.Authorization
                 CookiePurposeEnum.Language => TimeSpan.FromDays(365),
                 CookiePurposeEnum.ShortTerm => TimeSpan.FromMinutes(5),
                 CookiePurposeEnum.LongTerm => TimeSpan.FromDays(30),
+                CookiePurposeEnum.LastWebsite => TimeSpan.FromDays(180),
                 CookiePurposeEnum.none => TimeSpan.Zero,
                 _ => TimeSpan.FromMinutes(10),
             };

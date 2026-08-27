@@ -22,6 +22,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.JsonObject;
+using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Tag;
@@ -60,6 +61,7 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IJsonObjectAppService jsonObjectAppService;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
+        private readonly IFrontRoleContextService frontRoleContextService;
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryMenuCacheLocks = new();
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryContentCacheLocks = new();
         public DirectoryAppService(
@@ -78,7 +80,8 @@ namespace EtheriT.Coker.Application.Directory
             IConfiguration configuration,
             IHtmlProcessor htmlProcessor,
             IJsonObjectAppService jsonObjectAppService,
-            IWebsiteCacheStateAppService websiteCacheStateAppService
+            IWebsiteCacheStateAppService websiteCacheStateAppService,
+            IFrontRoleContextService frontRoleContextService
         )
         {
             this.db = db;
@@ -97,43 +100,70 @@ namespace EtheriT.Coker.Application.Directory
             this.htmlProcessor = htmlProcessor;
             this.jsonObjectAppService = jsonObjectAppService;
             this.websiteCacheStateAppService = websiteCacheStateAppService;
+            this.frontRoleContextService = frontRoleContextService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
             ResponseMessageDto tag_response = new ResponseMessageDto() { Success = true };
+            ResponseMessageDto reverse_tag_response = new ResponseMessageDto() { Success = true };
             ResponseMessageDto ad_response = new ResponseMessageDto() { Success = true };
 
             try
             {
                 long userid = await loginUserData.GetUserId();
                 long WebsiteID = 0;
-                if (userid != 0) { WebsiteID = await loginUserData.GetWebsiteId(); }
+
+                if (userid != 0)
+                {
+                    WebsiteID = await loginUserData.GetWebsiteId();
+                }
+
                 var asoid = dto.Id;
 
                 if (dto.Id == 0)
                 {
                     if (userid != 0)
                     {
-                        Core.Models.Directory newItem = mapper.Map<Core.Models.Directory>(dto);
+                        Core.Models.Directory newItem =
+                            mapper.Map<Core.Models.Directory>(dto);
+
                         newItem.FK_WebsiteId = WebsiteID;
-                        if (dto.Type == 3) newItem.FK_Mid = dto.FK_Mid;
+
+                        if (dto.Type == 3)
+                            newItem.FK_Mid = dto.FK_Mid;
+
                         db.Directory.Add(newItem);
+
                         await loginUserData.SaveChanges(newItem);
+
                         asoid = newItem.Id;
                     }
-                    else throw new Exception("查無資料");
+                    else
+                    {
+                        throw new Exception("查無資料");
+                    }
                 }
                 else
                 {
-                    var db_d = db.Directory.Where(e => e.Id == dto.Id).FirstOrDefault();
+                    var db_d = db.Directory
+                        .Where(e => e.Id == dto.Id)
+                        .FirstOrDefault();
+
                     if (db_d != null)
                     {
                         db_d = mapper.Map(dto, db_d);
-                        if (dto.Type == 3) db_d.FK_Mid = dto.FK_Mid;
+
+                        if (dto.Type == 3)
+                            db_d.FK_Mid = dto.FK_Mid;
+
                         await loginUserData.SaveChanges(db_d);
                     }
-                    else throw new Exception("查無資料");
+                    else
+                    {
+                        throw new Exception("查無資料");
+                    }
                 }
 
                 if (asoid.HasValue)
@@ -144,19 +174,37 @@ namespace EtheriT.Coker.Application.Directory
                         asoid.Value);
                 }
 
-                if (asoid != null && (dto.Type != (int)DirectoryTypeEnum.選單))
+                if (asoid != null &&
+                    dto.Type != (int)DirectoryTypeEnum.選單)
                 {
-                    var oldtaglist = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
-                    {
-                        Fk_Aid = (long)asoid,
-                        Type = TagAssociateTypeEnum.目錄,
-                    });
+                    /*
+                     * =========================================================
+                     * 正向標籤
+                     * TagAssociateTypeEnum.目錄
+                     * =========================================================
+                     */
+
+                    var oldtaglist =
+                        await tagAppService.GetTagAssociate(
+                            new TagAssociateGetDto()
+                            {
+                                Fk_Aid = (long)asoid,
+                                Type = TagAssociateTypeEnum.目錄,
+                            });
+
                     var tagitem = new List<TagAssociateDto>();
                     var newtagid = new List<long>();
+
                     foreach (var data in dto.TagSelected)
                     {
-                        var temp = oldtaglist.FindAll(o => o.FK_TId == data.FK_TId);
-                        if (temp.Count == 0) { newtagid.Add(data.FK_TId); }
+                        var temp = oldtaglist.FindAll(
+                            o => o.FK_TId == data.FK_TId);
+
+                        if (temp.Count == 0)
+                        {
+                            newtagid.Add(data.FK_TId);
+                        }
+
                         tagitem.Add(new TagAssociateDto()
                         {
                             Id = data.Id,
@@ -166,56 +214,113 @@ namespace EtheriT.Coker.Application.Directory
                             IsDeleted = data.IsDeleted
                         });
                     }
-                    tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
-                    if (tag_response.Success & newtagid.Count > 0)
+
+                    tag_response =
+                        await tagAppService.TagAssociateAddDelect(tagitem);
+
+                    /*
+                     * =========================================================
+                     * 新增正向標籤時同步廣告
+                     * 保留原本邏輯
+                     * =========================================================
+                     */
+
+                    if (tag_response.Success && newtagid.Count > 0)
                     {
                         if (oldtaglist != null)
                         {
-                            var adids = await GetReleAdId(oldtaglist.Select(e => e.FK_TId).ToList());
-                            var adlist = await (from a in db.Advertise.Where(e => !e.IsDeleted)
-                                                where adids.Contains(a.Id)
-                                                select new DirectoryReleInfoDto
-                                                {
-                                                    Id = a.Id,
-                                                    Title = a.Title,
-                                                    Description = a.Describe,
-                                                    StartTime = a.StartDate,
-                                                    EndTime = a.EndDate,
-                                                    SerNo = a.SerNO,
-                                                    Visible = a.Visible,
-                                                    ClickTimes = a.Clicks,
-                                                    ExposureTimes = a.Exposure,
-                                                    LastModificationTime = a.LastModificationTime ?? a.CreationTime
-                                                }).ToListAsync();
+                            var adids = await GetReleAdId(
+                                oldtaglist
+                                    .Select(e => e.FK_TId)
+                                    .ToList());
+
+                            var adlist = await (
+                                from a in db.Advertise.Where(e => !e.IsDeleted)
+                                where adids.Contains(a.Id)
+                                select new DirectoryReleInfoDto
+                                {
+                                    Id = a.Id,
+                                    Title = a.Title,
+                                    Description = a.Describe,
+                                    StartTime = a.StartDate,
+                                    EndTime = a.EndDate,
+                                    SerNo = a.SerNO,
+                                    Visible = a.Visible,
+                                    ClickTimes = a.Clicks,
+                                    ExposureTimes = a.Exposure,
+                                    LastModificationTime =
+                                        a.LastModificationTime ??
+                                        a.CreationTime
+                                })
+                                .ToListAsync();
+
                             if (adlist.Count > 0)
                             {
-                                var adtagitem = new List<TagAssociateDto>();
+                                var adtagitem =
+                                    new List<TagAssociateDto>();
+
                                 foreach (var newtag in newtagid)
                                 {
                                     foreach (var ad in adlist)
                                     {
-                                        adtagitem.Add(new TagAssociateDto()
-                                        {
-                                            Id = ad.Id,
-                                            FK_AId = (long)ad.Id,
-                                            FK_TId = newtag,
-                                            Type = TagAssociateTypeEnum.廣告,
-                                            IsDeleted = false,
-                                        });
+                                        adtagitem.Add(
+                                            new TagAssociateDto()
+                                            {
+                                                Id = ad.Id,
+                                                FK_AId = ad.Id,
+                                                FK_TId = newtag,
+                                                Type = TagAssociateTypeEnum.廣告,
+                                                IsDeleted = false,
+                                            });
                                     }
                                 }
-                                ad_response = await tagAppService.TagAssociateAddDelect(adtagitem);
+
+                                ad_response =
+                                    await tagAppService
+                                        .TagAssociateAddDelect(adtagitem);
                             }
                         }
                     }
+
+                    /*
+                     * =========================================================
+                     * 反向 / 拒絕標籤
+                     * TagAssociateTypeEnum.目錄拒絕
+                     * =========================================================
+                     */
+
+                    var reverseTagItems =
+                        new List<TagAssociateDto>();
+
+                    foreach (var data in dto.ReverseTagSelected)
+                    {
+                        reverseTagItems.Add(
+                            new TagAssociateDto()
+                            {
+                                Id = data.Id,
+                                FK_AId = (long)asoid,
+                                FK_TId = data.FK_TId,
+                                Type = TagAssociateTypeEnum.目錄拒絕,
+                                IsDeleted = data.IsDeleted
+                            });
+                    }
+
+                    reverse_tag_response =
+                        await tagAppService
+                            .TagAssociateAddDelect(reverseTagItems);
                 }
-                output.Success = tag_response.Success & ad_response.Success;
+
+                output.Success =
+                    tag_response.Success &&
+                    reverse_tag_response.Success &&
+                    ad_response.Success;
             }
             catch (Exception e)
             {
                 output.Success = false;
                 output.Error = e.Message;
             }
+
             return output;
         }
         public async Task<DirectoryGetDataDto> GetDataOne(long Id)
@@ -223,44 +328,86 @@ namespace EtheriT.Coker.Application.Directory
             try
             {
                 long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.Directory.Where(e => e.Id == Id && !e.IsDeleted && e.FK_WebsiteId == WebsiteID);
 
-                if (result != null)
+                var output = await db.Directory
+                    .Where(e =>
+                        e.Id == Id &&
+                        !e.IsDeleted &&
+                        e.FK_WebsiteId == WebsiteID)
+                    .Select(e => new DirectoryGetDataDto
+                    {
+                        Id = e.Id,
+                        Title = e.Title,
+                        Description = e.Description,
+                        Visible = e.Visible,
+                        Type = e.Type,
+                        SortBy = e.SortBy,
+                        FK_MId = e.FK_Mid
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (output == null)
+                    throw new Exception("查無目錄資料");
+
+                var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto
                 {
-                    var output = await (from e in result
-                                        select new DirectoryGetDataDto
-                                        {
-                                            Id = e.Id,
-                                            Title = e.Title,
-                                            Description = e.Description,
-                                            Visible = e.Visible,
-                                            Type = e.Type,
-                                            TagDatas = new List<TagGetSelectedDto>(),
-                                            SortBy = e.SortBy,
-                                            FK_MId = e.FK_Mid
-                                        }).FirstOrDefaultAsync();
+                    Fk_Aid = output.Id,
+                    Type = TagAssociateTypeEnum.目錄
+                });
 
-                    var tagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto()
-                    {
-                        Fk_Aid = output.Id,
-                        Type = TagAssociateTypeEnum.目錄,
-                    }
-                    );
+                var reverseTagDatas = await tagAppService.GetTagAssociate(new TagAssociateGetDto
+                {
+                    Fk_Aid = output.Id,
+                    Type = TagAssociateTypeEnum.目錄拒絕
+                });
 
-                    if (tagDatas != null)
-                    {
-                        output.TagDatas = tagDatas;
-                    }
+                output.TagDatas = tagDatas ?? new List<TagGetSelectedDto>();
+                output.ReverseTagDatas = reverseTagDatas ?? new List<TagGetSelectedDto>();
 
-                    return output;
-                }
-                else throw new Exception("查無文章資料");
+                return output;
             }
-            catch (Exception e)
+            catch
             {
                 return null;
             }
         }
+
+        public async Task<List<DirectoryGetDataDto>> GetSeoData(
+            IReadOnlyCollection<long> ids,
+            long websiteId)
+        {
+            if (websiteId <= 0 || ids == null || ids.Count == 0)
+            {
+                return new List<DirectoryGetDataDto>();
+            }
+
+            var directoryIds = ids
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (directoryIds.Count == 0)
+            {
+                return new List<DirectoryGetDataDto>();
+            }
+
+            return await db.Directory
+                .AsNoTracking()
+                .Where(e =>
+                    directoryIds.Contains(e.Id) &&
+                    !e.IsDeleted &&
+                    e.FK_WebsiteId == websiteId)
+                .Select(e => new DirectoryGetDataDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    Description = e.Description,
+                    Type = e.Type,
+                    Visible = e.Visible
+                })
+                .ToListAsync();
+        }
+
         private async Task<DirectoryReleInfoGetDto> TechCertReleInfo(DirectoryReleInfoInputDto dto)
         {
             var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
@@ -326,6 +473,15 @@ namespace EtheriT.Coker.Application.Directory
             long searchId = (dto.Ids != null && dto.Ids.Count > 0) ? dto.Ids[0] : 0;
             long websiteId = (dto.SiteId == null || dto.SiteId == 0) ? await loginUserData.GetWebsiteId() : dto.SiteId.Value;
 
+            searchId = SearchTargetIds.Normalize(searchId);
+            if (searchId == SearchTargetIds.Default)
+            {
+                bool hasProducts = await db.Prods
+                    .AsNoTracking()
+                    .AnyAsync(e => e.FK_WebsiteId == websiteId && !e.IsDeleted && !e.RemovedFromShelves);
+                searchId = hasProducts ? SearchTargetIds.Product : SearchTargetIds.Article;
+            }
+
             var output = new DirectoryReleInfoGetDto
             {
                 ReleInfos = new List<DirectoryReleInfoDto>(),
@@ -366,8 +522,12 @@ namespace EtheriT.Coker.Application.Directory
 
             switch (searchId)
             {
-                case 3:
+                case SearchTargetIds.Product:
                     includeProd = true;
+                    break;
+
+                case SearchTargetIds.Article:
+                    includeArticle = true;
                     break;
 
                 case 1:
@@ -375,14 +535,14 @@ namespace EtheriT.Coker.Application.Directory
                     includeArticle = true;
                     break;
 
-                default: // 0 或其他：預設搜尋選單 + 文章
+                default: // 第二階段實作正數 CustSearch.Id 前，先沿用舊的全站搜尋行為。
                     includeMenu = true;
                     includeArticle = true;
                     break;
             }
             bool hasAnyFilter = HasAnyEffectiveFilter(dto);
 
-            if (hasAnyFilter || (searchId == 0 && dto.DirectoryType > 0))
+            if (hasAnyFilter || (searchId == SearchTargetIds.Article && dto.DirectoryType > 0))
             {
                 includeMenu = false;
             }
@@ -2407,7 +2567,7 @@ namespace EtheriT.Coker.Application.Directory
                 showUnvisible = showUnvisible
             });
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, bool includeAdvertise = false)
         {
             try
             {
@@ -2416,6 +2576,10 @@ namespace EtheriT.Coker.Application.Directory
                 List<long> RoleIds = await loginUserData.GetUserRoleIds();
                 bool isSuperUser = await permissionsAppService.IsPowerUserPermissions();
                 IQueryable<Core.Models.Directory> result = db.Directory.Where(e => !e.IsDeleted).Where(e => e.FK_WebsiteId == WebsiteID);
+                if (!includeAdvertise)
+                {
+                    result = result.Where(e => e.Type != (int)DirectoryTypeEnum.廣告);
+                }
                 if (!isSuperUser)
                 {
                     var per = await db.PermissionDetail.Where(e => e.FK_WebsiteId == WebsiteID)
@@ -3121,10 +3285,10 @@ namespace EtheriT.Coker.Application.Directory
                             break;
                     }
 
-                    var take = dto?.Take.GetValueOrDefault() ?? 0;
-                    if (take < 1) take = 1;
-                    take = Math.Min(take, 20);
-                    result.Advertisements = groupAdvertisements.Take(take).ToList();
+                    var take = dto?.Take;
+                    result.Advertisements = take.HasValue && take.Value > 0
+                        ? groupAdvertisements.Take(Math.Min(take.Value, 20)).ToList()
+                        : groupAdvertisements;
                 }
 
                 output.Add(result);
@@ -3272,7 +3436,8 @@ namespace EtheriT.Coker.Application.Directory
                         if (webmenus != null)
                         {
                             var html = stringHandler.HtmlDecode(webmenus.Html);
-                            var value = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "[data-dirid]").FirstOrDefault().Attr("data-dirid");
+                            var directoryNode = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "[data-dirid]").FirstOrDefault();
+                            var value = directoryNode?.Attr("data-dirid");
                             if (!string.IsNullOrEmpty(value) && long.TryParse(value, out var dirId))
                             {
                                 dto.dirids.Add(dirId);
@@ -3280,104 +3445,53 @@ namespace EtheriT.Coker.Application.Directory
                         }
                     }
 
-                    if (dto.dirids != null)
+                    if (dto.dirids != null && dto.dirids.Count > 0)
                     {
-                        string diridsStr = string.Join(",", dto.dirids);
-                        var tagids = await (from tag in db.Tags
-                                            join tagas in db.Tag_Associates on tag.Id equals tagas.FK_TId
-                                            where tagas.Type == TagAssociateTypeEnum.目錄
-                                            where dto.dirids.Contains(tagas.FK_AId)
-                                            where tag.FK_WebsiteId == WebsiteID
-                                            orderby tagas.Id
-                                            select tag.Id).ToListAsync();
-                        var not_tagids = await (from tag in db.Tags
-                                                join tagas in db.Tag_Associates on tag.Id equals tagas.FK_TId
-                                                where tagas.Type == TagAssociateTypeEnum.目錄拒絕
-                                                where dto.dirids.Contains(tagas.FK_AId)
-                                                where tag.FK_WebsiteId == WebsiteID
-                                                select tag.Id).ToListAsync();
-                        List<KeyValueDto> datas = new List<KeyValueDto>();
-
-                        switch (dto.type)
+                        List<DirectoryFilterDto> filters = new List<DirectoryFilterDto>();
+                        if (!string.IsNullOrWhiteSpace(dto.filters))
                         {
-                            case 1:
-                                var not_tags_pid = await (from p in db.Prods
-                                                          join tagas in db.Tag_Associates on p.Id equals tagas.FK_AId
-                                                          where p.FK_WebsiteId == WebsiteID
-                                                          where tagas.Type == TagAssociateTypeEnum.商品
-                                                          where not_tagids.Contains(tagas.FK_TId)
-                                                          select p.Id).ToListAsync();
-                                var products_tags = await (from p in db.Prods
-                                                           join tagas in db.Tag_Associates on p.Id equals tagas.FK_AId
-                                                           where !not_tags_pid.Contains(p.Id)
-                                                           where p.FK_WebsiteId == WebsiteID
-                                                           where !p.RemovedFromShelves && p.Visible
-                                                           where p.permanent || (DateTime.Now >= p.StartTime && DateTime.Now <= p.EndTime)
-                                                           where tagids.Contains(tagas.FK_TId) && tagas.Type == TagAssociateTypeEnum.商品
-                                                           orderby
-                                                                p.Ser_No, p.Status == ProdStatusEnum.新品 descending,
-                                                                p.Status != ProdStatusEnum.售完 descending, p.Status != ProdStatusEnum.停產 descending,
-                                                                p.ItemNo, p.Title, p.Id descending
-                                                           select new { p, tagas }).ToListAsync();
-
-                                datas = products_tags
-                                    .Select(x => new KeyValueDto()
-                                    {
-                                        Key = x.p.Id.ToString(),
-                                        Value = x.p.Title ?? ""
-                                    }).DistinctBy(x => x.Key).ToList();
-                                break;
-                            case 2:
-                                var not_tags_aid = await (from a in db.Article
-                                                          join tagas in db.Tag_Associates on a.Id equals tagas.FK_AId
-                                                          where a.FK_WebsiteId == WebsiteID
-                                                          where tagas.Type == TagAssociateTypeEnum.文章
-                                                          where not_tagids.Contains(tagas.FK_TId)
-                                                          select a.Id).ToListAsync();
-                                var articles_tags = await (from a in db.Article
-                                                           join tagas in db.Tag_Associates on a.Id equals tagas.FK_AId
-                                                           where !not_tags_aid.Contains(a.Id)
-                                                           where a.Visible
-                                                           where a.FK_WebsiteId == WebsiteID
-                                                           where tagas.Type == TagAssociateTypeEnum.文章 && tagids.Contains(tagas.FK_TId)
-                                                           where a.permanent || (DateTime.Now >= a.StartTime && DateTime.Now <= a.EndTime)
-                                                           orderby a.SerNO, a.NodeDate descending, a.Id descending
-                                                           select new { a, tagas }).ToListAsync();
-                                datas = articles_tags.OrderBy(x => tagids.IndexOf(x.tagas.FK_TId)).Select(x => new KeyValueDto()
-                                {
-                                    Key = x.a.Id.ToString(),
-                                    Value = x.a.Title ?? ""
-                                }).ToList();
-                                break;
+                            filters = JsonConvert.DeserializeObject<List<DirectoryFilterDto>>(dto.filters)
+                                ?? new List<DirectoryFilterDto>();
                         }
 
-                        var index = datas.FindIndex(d => long.Parse(d.Key) == dto.id);
-                        if (index > -1)
+                        // 上一則／下一則必須與前台目錄使用完全相同的成員條件、權限及排序。
+                        // 舊邏輯以「任一目錄標籤符合」查詢，會把缺少其他必要標籤的內容帶進來。
+                        var directoryResult = await GetReleInfo(new DirectoryReleInfoInputDto
                         {
-                            if (index == 0 && datas.Count > 1)
+                            Ids = dto.dirids,
+                            SiteId = WebsiteID,
+                            Page = 1,
+                            ShowNum = -500,
+                            Filters = filters
+                        });
+                        var datas = directoryResult.ReleInfos
+                            .Where(x => dto.type == 1
+                                ? x.type == DirectoryTypeEnum.商品
+                                : x.type == DirectoryTypeEnum.文章)
+                            .Select(x => new KeyValueDto
                             {
-                                var keynext = $"{datas[index + 1].Key}?dirid={diridsStr}";
-                                response.Add(new KeyValueDto());
-                                response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
-                            }
-                            else if (index == 0 && datas.Count == 1)
-                            {
-                                response.Add(new KeyValueDto());
-                                response.Add(new KeyValueDto());
-                            }
-                            else if (index == datas.Count - 1)
-                            {
-                                var keyprev = $"{datas[index - 1].Key}?dirid={diridsStr}";
-                                response.Add(new KeyValueDto() { Key = keyprev, Value = datas[index - 1].Value ?? "" });
-                                response.Add(new KeyValueDto());
-                            }
-                            else
-                            {
-                                var keynext = $"{datas[index + 1].Key}?dirid={diridsStr}";
-                                var keyprev = $"{datas[index - 1].Key}?dirid={diridsStr}";
-                                response.Add(new KeyValueDto() { Key = keyprev, Value = datas[index - 1].Value ?? "" });
-                                response.Add(new KeyValueDto() { Key = keynext, Value = datas[index + 1].Value ?? "" });
-                            }
+                                Key = x.Id.ToString(),
+                                Value = x.Title ?? string.Empty
+                            })
+                            .ToList();
+                        var index = datas.FindIndex(x => x.Key == dto.id.ToString());
+                        if (index >= 0)
+                        {
+                            var diridsStr = string.Join(",", dto.dirids);
+                            response.Add(index > 0
+                                ? new KeyValueDto
+                                {
+                                    Key = $"{datas[index - 1].Key}?dirid={diridsStr}",
+                                    Value = datas[index - 1].Value
+                                }
+                                : new KeyValueDto());
+                            response.Add(index < datas.Count - 1
+                                ? new KeyValueDto
+                                {
+                                    Key = $"{datas[index + 1].Key}?dirid={diridsStr}",
+                                    Value = datas[index + 1].Value
+                                }
+                                : new KeyValueDto());
                         }
                     }
                 }
@@ -3749,26 +3863,7 @@ namespace EtheriT.Coker.Application.Directory
             try
             {
                 var uuid = await tokenAppService.GetUUID();
-
-                if (uuid != Guid.Empty)
-                {
-                    var roleId = await db.MappingUserAndRoles
-                        .AsNoTracking()
-                        .Include(e => e.Role)
-                        .Where(e => !e.IsDeleted)
-                        .Where(e => e.UUID == uuid)
-                        .Where(e => e.Role != null)
-                        .Where(e => e.Role!.FK_WebsiteId == websiteId)
-                        .Where(e => e.Role!.Type == RoleTypeEnum.前台)
-                        .Where(e => !e.Role!.IsDeleted)
-                        .Select(e => (long?)e.RoleId)
-                        .FirstOrDefaultAsync();
-
-                    if (roleId != null && roleId > 0)
-                    {
-                        return roleId;
-                    }
-                }
+                return await frontRoleContextService.GetRoleIdAsync(uuid, websiteId);
             }
             catch
             {

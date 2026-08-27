@@ -6,9 +6,26 @@
     cart.Init = cart.Init || {};
 
     function PageReady() {
-        $('#RadioPayment .payment_display').on("click", function () {
-            cart.Payment.Core.updatePaymentRadioUI($(this).closest('.form-check'));
+        // Bootstrap Modal 不應留在 Swiper 的 transform 容器內，否則底部按鈕可能被遮罩攔截。
+        var $addOnModal = $('#CartProductAddOnModal');
+        if ($addOnModal.length && !$addOnModal.parent().is('body')) {
+            $addOnModal.appendTo(document.body);
+        }
+
+        $('#RadioPayment .payment_display').on("click", function (event) {
+            var $formCheck = $(this).closest('.form-check');
+            var $radio = $formCheck.find('input[name="RadioPayment"]').first();
+
+            if ($radio.prop("disabled")) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                return;
+            }
+
+            cart.Payment.Core.updatePaymentRadioUI($formCheck);
             cart.Payment.Core.RadioPayment();
+            S.CvsStoreValidationRequested = false;
+            cart.Shipping.UpdateCvsStoreSelectionDisplay();
         });
 
         // 群組全選（Header）
@@ -28,23 +45,37 @@
             $group.find('.js-group-check').prop('indeterminate', false);
 
             $validItems.prop('checked', checked);
+            cart.Items.syncAdditionalSelection($group);
 
             cart.Items.updateGroupSelectedSubtotal($group);
             cart.Pricing.TotalCount();
             cart.Pricing.updateNextStepByBonus();
             cart.Payment.Core.onAmountChanged();
+            if (cart.Marketing && typeof cart.Marketing.refreshProductAddOnPrompt === 'function') {
+                cart.Marketing.refreshProductAddOnPrompt();
+            }
         });
 
         // 單一品項
         $(document).on('change', '.purchase_group li.purchase_item input[name="buyItems"]', function () {
             const $group = $(this).closest('.purchase_group');
 
+            if ($(this).closest('.purchase_item').hasClass('cart-additional-item')) {
+                cart.Items.syncAdditionalSelection($group);
+                return;
+            }
+
             if (this.checked) cart.Items.clearOtherGroupsExcept($group); // 互斥：勾任何一個品項就清其他組
+
+            cart.Items.syncAdditionalSelection($group);
 
             cart.Items.updateGroupSelectedSubtotal($group);
             cart.Pricing.TotalCount();
             cart.Pricing.updateNextStepByBonus();
             cart.Payment.Core.onAmountChanged();
+            if (cart.Marketing && typeof cart.Marketing.refreshProductAddOnPrompt === 'function') {
+                cart.Marketing.refreshProductAddOnPrompt();
+            }
         });
 
         cart.Payment.Core.initAll();
@@ -61,6 +92,7 @@
             enabled: false,
             allowTouchMove: false,
             simulateTouch: false,
+            returnFocus: false,
             pagination: {
                 el: ".swiper_pagination > .swiper_pagination_buystep",
                 clickable: true,
@@ -74,8 +106,21 @@
             }
         });
 
+        var nextStepButton = document.querySelector('.btn_swiper_next_buystep');
+        if (nextStepButton && nextStepButton.dataset.marketingValidationBound !== 'true') {
+            nextStepButton.dataset.marketingValidationBound = 'true';
+            nextStepButton.addEventListener('click', function (event) {
+                if (!S.buy_step_swiper || S.buy_step_swiper.activeIndex !== 0) return;
+                if (cart.Marketing && typeof cart.Marketing.validateProductAddOnBeforeNext === 'function' &&
+                    !cart.Marketing.validateProductAddOnBeforeNext()) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }, true);
+        }
+
         S.buy_step_swiper.on('slideChangeTransitionEnd', function () {
-            if (S.gotop_switch) {
+            if (S.gotop_switch && !S.isRestoringECPayLogistics) {
                 window.scrollTo(0, $("#BuyStepSwiper").offset().top - $("#Mega_Menu").height() - 90);
             }
         });
@@ -123,10 +168,12 @@
                         var isdefault = true;
 
                         for (var i = 0; i < select_cart_data.length; i++) {
-                            var $select_input = $('input[data-subtype="' + select_cart_data[i].logisticsSubType + '"]');
-                            if ($select_input.length > 0) {
-                                $select_input.val(select_cart_data[i].cvsStoreName);
-                                var $radio = $select_input.siblings('input[name="RadioShipping"]');
+                            var logisticsSubType = String(select_cart_data[i].logisticsSubType || "");
+                            var $radio = $('input[name="RadioShipping"][data-logistics-subtype]').filter(function () {
+                                return String($(this).attr("data-logistics-subtype") || "").toUpperCase() ===
+                                    logisticsSubType.toUpperCase();
+                            }).first();
+                            if ($radio.length > 0) {
                                 $radio.prop('checked', true);
                                 $radio.attr({
                                     "data-cvsstoreid": select_cart_data[i].cvsStoreID,
@@ -156,14 +203,12 @@
                         //商品數量變更這邊沒有動到 先移除
                         var $checkedShipping = $("[name='RadioShipping']:checked");
 
-                        if ($checkedShipping.length > 0) {
-                            var this_SupportCashOnDelivery = String($checkedShipping.attr("data-support-cash-on-delivery")).toLowerCase() == "true";
-                            S.SupportCashOnDelivery = this_SupportCashOnDelivery;
+                        if ($checkedShipping.length > 0 && cart.Payment.Availability) {
+                            cart.Payment.Availability.refresh(
+                                cart.Payment.Core.getActivePaymentValue()
+                            );
 
                             // 從綠界超商地圖返回時，restoreOrderForm() 會負責在資料恢復完成後重載金流。
-                            if (!S.SupportCashOnDelivery && !S.isRestoringECPayLogistics) {
-                                cart.Payment.Core.reloadActiveEmbeddedProvider();
-                            }
                         }
                     }
                     break;
@@ -272,6 +317,7 @@
         });
 
         cart.Forms.ElementInit();
+        if (cart.Recipients) cart.Recipients.Init();
 
         $("#OrdererForm :input, #RecipientForm :input, #InvoiceForm :input, #Form_Invoice :input, #Form_InvoicePersonalType :input")
             .not("[name='RadioShipping']")
@@ -308,7 +354,7 @@
         S.ShippingForms = $('#RadioShipping');
         S.PaymentForms = $('#RadioPayment');
         S.OrdererForms = $('#OrdererForm > form');
-        S.RecipientForms = $('#RecipientForm > form');
+        S.RecipientForms = $('#Form_Recipient');
         S.InvoiceForms = $('#Form_Invoice');
         S.InvoicePersonalTypeForms = $('#Form_InvoicePersonalType');
 
@@ -336,11 +382,9 @@
                 $inputs.each(function () {
                     const $input = $(this);
                     const id = Number($input.val());
-                    const $formCheck = $input.closest('.form-check');
-                    const $describe = $formCheck.next('.freight-describe');
+                    const $optionRow = $input.closest('.shipping-option-row');
                     const isTarget = (id === fid);
-                    $formCheck.toggleClass('d-none', !isTarget);
-                    $describe.toggleClass('d-none', !isTarget);
+                    $optionRow.toggleClass('d-none', !isTarget);
                     $input.prop('checked', isTarget);
                 });
 
@@ -352,12 +396,10 @@
                 $inputs.each(function () {
                     const $input = $(this);
                     const statusType = Number($input.data('freight-status-type')) || 0;
-                    const $formCheck = $input.closest('.form-check');
-                    const $describe = $formCheck.next('.freight-describe');
+                    const $optionRow = $input.closest('.shipping-option-row');
                     const isSpecial = (statusType === 2); // 特殊運費
 
-                    $formCheck.toggleClass('d-none', isSpecial);
-                    $describe.toggleClass('d-none', isSpecial);
+                    $optionRow.toggleClass('d-none', isSpecial);
 
                     // 若原本選到特殊項目 → 取消選取
                     if (isSpecial && $input.is(':checked')) {
@@ -369,7 +411,7 @@
                 const $checked = $('[name="RadioShipping"]:checked');
                 if ($checked.length === 0) {
                     const $firstVisible = $inputs.filter(function () {
-                        return !$(this).closest('.form-check').hasClass('d-none');
+                        return !$(this).closest('.shipping-option-row').hasClass('d-none');
                     }).first();
                     if ($firstVisible.length) {
                         $firstVisible.prop('checked', true);
@@ -382,8 +424,9 @@
         }
 
         $(".btn_checkout").on("click", function () {
-            cart.Payment.Core.setProvidersMonitorByType("embedded", false);
+            this.blur();
             cart.Payment.Core.Step3Monitor();
+            S.shipMethodsChosen = S.shipMethodsChosen && cart.Shipping.HasSelectedCvsStore();
             if (!S.OrdererFilled) {
                 if (!S.OrdererOpen) cart.Forms.OrdererEdit(true);
                 Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
@@ -392,7 +435,13 @@
             } else if (!S.InvoiceFilled) {
                 Coker.sweet.warning("請注意", "請確實填寫發票寄送資料！", null);
             } else if (!S.shipMethodsChosen) {
-                Coker.sweet.warning("請注意", "請選擇運送方式！", null);
+                if (cart.Shipping.IsCvsShippingSelected() && !cart.Shipping.HasSelectedCvsStore()) {
+                    S.CvsStoreValidationRequested = true;
+                    cart.Shipping.UpdateCvsStoreSelectionDisplay();
+                    Coker.sweet.warning("請注意", "請先選擇超商取貨門市！", null);
+                } else {
+                    Coker.sweet.warning("請注意", "請選擇運送方式！", null);
+                }
             } else if (!S.payMethodsChosen && !cart.Payment.Core.hasProvidersByType("embedded")) {
                 Coker.sweet.warning("請注意", "請選擇付款方式！", null);
             } else {
@@ -411,6 +460,7 @@
                         null
                     );
                 } else {
+                    cart.Payment.Core.setProvidersMonitorByType("embedded", false);
                     Coker.sweet.custom("info", "是否確定結帳？", "點選確認進入付款流程", "是，開始付款", function () {
                         cart.Order.OrderHeaderAdd();
                     }, "否", function () {
@@ -437,7 +487,11 @@
 
         /* Radio Button */
         $('input[type=radio][name=RadioShipping]').on("change", cart.Shipping.RadioShipping);
-        $('input[type=radio][name=RadioPayment]').on("change", cart.Payment.Core.RadioPayment);
+        $('input[type=radio][name=RadioPayment]').on("change", function () {
+            cart.Payment.Core.RadioPayment();
+            S.CvsStoreValidationRequested = false;
+            cart.Shipping.UpdateCvsStoreSelectionDisplay();
+        });
         $('input[type=radio][name=RecipientRadio]').on("change", cart.Forms.RecipientRadio);
         $('input[type=radio][name=InvoiceRadio]').on("change", cart.Forms.InvoiceRadio);
         $('input[type=radio][name=InvoiceType]').on("change", cart.Forms.InvoiceTypeRadio);

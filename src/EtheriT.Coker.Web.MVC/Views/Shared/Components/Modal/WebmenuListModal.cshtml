@@ -16,6 +16,7 @@
                     @(Html.DevExtreme().DataGrid<MenuGetAllListDto>()
                         .DataSource(d => d.RemoteController().Key("Id")
                         .LoadUrl("/api/WebMenu/GetAllList").LoadMethod("Get")
+                        .LoadParams(new { mid = new JS("getWebmenuSelectSort") })
                         )
                         .ID("WebmenuList")
                         .Selection(s => s.Mode(SelectionMode.Single))
@@ -32,6 +33,7 @@
                         )
                         .Columns(c =>
                         {
+                            c.AddFor(e => e.IsSelected).Caption("是否勾選").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
                             c.AddFor(e => e.Id).Caption("編號").Visible(false);
                             c.AddFor(e => e.Title).Caption("選單名稱").Width(150);
                             c.AddFor(e => e.Items).Caption("子選單");

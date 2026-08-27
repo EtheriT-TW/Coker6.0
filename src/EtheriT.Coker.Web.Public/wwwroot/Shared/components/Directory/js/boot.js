@@ -30,6 +30,20 @@
             });
     }
 
+    function getAdvertiseTake($el) {
+        const raw = $el.data("maxlen");
+        if (raw === null || typeof raw === "undefined" || String(raw).trim() === "") {
+            return null;
+        }
+
+        const take = Number(raw);
+
+        // 舊版未設定最大筆數時會回傳全部符合廣告；0 或無效值也視為未限制。
+        if (!Number.isFinite(take) || take < 1) return null;
+
+        return Math.min(Math.floor(take), 20);
+    }
+
     function showAdvertiseLoading($el) {
         if (!$el || !$el.length || $el.children(".coker-ad-loading").length) return;
 
@@ -98,13 +112,58 @@
 
         return Number.isFinite(longitude) && Number.isFinite(latitude);
     }
-    function getHashPage() {
-        return location.hash.replace("#", "");
+    function normalizePage(page) {
+        const value = String(page == null ? "" : page).trim();
+        if (!/^\d+$/.test(value)) return "1";
+
+        const number = parseInt(value, 10);
+        return number > 0 ? String(number) : "1";
     }
 
-    function normalizePage(page) {
-        if (isNaN(page) || page === "") return "1";
-        return String(page);
+    function getPageUrl(page) {
+        const normalizedPage = normalizePage(page);
+        const url = new URL(w.location.href);
+
+        // 第一頁使用目錄原始網址，避免 /?Page=1 與原始網址形成重複內容。
+        if (normalizedPage === "1") url.searchParams.delete("Page");
+        else url.searchParams.set("Page", normalizedPage);
+
+        // 相容舊版 #2 連結，但不要把舊頁碼 hash 帶進新的正式網址。
+        if (/^#\d+$/.test(url.hash)) url.hash = "";
+
+        return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    function syncCanonicalPage(page) {
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (!canonical || !canonical.href) return;
+
+        const normalizedPage = normalizePage(page);
+        const canonicalUrl = new URL(canonical.href);
+
+        if (normalizedPage === "1") canonicalUrl.searchParams.delete("Page");
+        else canonicalUrl.searchParams.set("Page", normalizedPage);
+
+        canonical.href = canonicalUrl.href;
+    }
+
+    function getLocationPage() {
+        const url = new URL(w.location.href);
+        const queryPage = url.searchParams.get("Page");
+
+        if (queryPage !== null) return normalizePage(queryPage);
+
+        const legacyHash = (url.hash || "").match(/^#(\d+)$/);
+        if (!legacyHash) return "1";
+
+        const page = normalizePage(legacyHash[1]);
+
+        // 舊網址仍可開啟，載入時以 replaceState 無轉址升級成 ?Page=N。
+        if (w.history && typeof w.history.replaceState === "function") {
+            w.history.replaceState(w.history.state, "", getPageUrl(page));
+        }
+
+        return page;
     }
 
     function buildCatalogOption($self, page) {
@@ -143,13 +202,13 @@
         if (!hasNearestCoordinates($self)) return;
 
         const dirid = getDirIds($self);
-        const hashPage = !!page ? page.toString() : getHashPage();
+        const locationPage = page != null ? page.toString() : getLocationPage();
 
-        if (typeof $self.data("page") !== "undefined" && $self.data("page") === hashPage) {
+        if (typeof $self.data("page") !== "undefined" && $self.data("page") === locationPage) {
             return;
         }
 
-        page = normalizePage(hashPage);
+        page = normalizePage(locationPage);
 
         const option = buildCatalogOption($self, page);
 
@@ -174,6 +233,8 @@
                 })
                 .fail(function (error) {
                     if ($self.data("directoryRequestId") !== requestId) return;
+
+                    $self.removeData("directoryScrollAfterRender");
 
                     if (w.DirectoryRenderer && typeof w.DirectoryRenderer.hideLoading === "function") {
                         w.DirectoryRenderer.hideLoading($self);
@@ -236,20 +297,24 @@
             if (!dirid.length) return;
 
             const directoryKey = dirid.join(",");
+            const take = getAdvertiseTake($self);
+            const loadingKey = `${directoryKey}|${take === null ? "all" : take}`;
 
             if (
-                $self.data("advertiseLoadingKey") === directoryKey ||
-                $self.data("advertiseLoadedKey") === directoryKey
+                $self.data("advertiseLoadingKey") === loadingKey ||
+                $self.data("advertiseLoadedKey") === loadingKey
             ) {
                 return;
             }
 
-            $self.data("advertiseLoadingKey", directoryKey);
+            $self.data("advertiseLoadingKey", loadingKey);
             showAdvertiseLoading($self);
             pendingItems.push({
                 $element: $self,
                 directoryIds: dirid,
-                key: directoryKey
+                key: directoryKey,
+                loadingKey: loadingKey,
+                take: take
             });
 
             if (!seenGroups[directoryKey]) {
@@ -267,7 +332,17 @@
             return;
         }
 
-        const request = w.DirectoryService.getAdvertiseBatchData(groups);
+        // DTO 目前是整批共用一個 Take；只要任一元件未限制，就讓 API
+        // 回傳全部，再由有設定 maxlen 的元件各自裁切。
+        const hasUnlimitedItem = pendingItems.some(function (item) {
+            return item.take === null;
+        });
+        const take = hasUnlimitedItem
+            ? null
+            : pendingItems.reduce(function (max, item) {
+                return Math.max(max, item.take);
+            }, 1);
+        const request = w.DirectoryService.getAdvertiseBatchData(groups, take);
 
         request.done(function (result) {
             const resultByKey = {};
@@ -279,43 +354,55 @@
 
             pendingItems.forEach(function (item) {
                 // Ignore a stale response when the editor changed the directory
-                // association while this batch request was in flight.
-                if (getDirIds(item.$element).join(",") !== item.key) {
-                    hideAdvertiseLoading(item.$element, false);
+                // association or max length while this batch request was in flight.
+                const currentTake = getAdvertiseTake(item.$element);
+                const currentKey = `${getDirIds(item.$element).join(",")}|${currentTake === null ? "all" : currentTake}`;
+                if (currentKey !== item.loadingKey) {
+                    if (item.$element.data("advertiseLoadingKey") === item.loadingKey) {
+                        hideAdvertiseLoading(item.$element, false);
+                    }
                     return;
                 }
 
                 if (w.DirectoryBlocks && typeof w.DirectoryBlocks.renderAdvertise === "function") {
-                    w.DirectoryBlocks.renderAdvertise(item.$element, resultByKey[item.key] || []);
+                    const advertisements = resultByKey[item.key] || [];
+                    w.DirectoryBlocks.renderAdvertise(
+                        item.$element,
+                        item.take === null ? advertisements : advertisements.slice(0, item.take)
+                    );
                 }
 
-                item.$element.data("advertiseLoadedKey", item.key);
+                item.$element.data("advertiseLoadedKey", item.loadingKey);
                 hideAdvertiseLoading(item.$element, true);
             });
         }).fail(function () {
             pendingItems.forEach(function (item) {
-                item.$element.removeData("advertiseLoadedKey");
-                hideAdvertiseLoading(item.$element, false);
+                if (item.$element.data("advertiseLoadingKey") === item.loadingKey) {
+                    item.$element.removeData("advertiseLoadedKey");
+                    hideAdvertiseLoading(item.$element, false);
+                }
             });
         }).always(function () {
             pendingItems.forEach(function (item) {
-                item.$element.removeData("advertiseLoadingKey");
+                if (item.$element.data("advertiseLoadingKey") === item.loadingKey) {
+                    item.$element.removeData("advertiseLoadingKey");
+                }
             });
         });
     }
 
-    function bindHashChangeIfNeeded($root) {
+    function bindLocationChangeIfNeeded($root) {
         const dirLength = $root.find(".catalog_frame").filter(function () {
             return canAutoLoadCatalog($(this));
         }).length;
 
         if (dirLength !== 1) return;
 
-        if ("onhashchange" in window) {
-            window.onhashchange = hashChangeDirectory;
-        } else {
-            setInterval(hashChangeDirectory, 1000);
-        }
+        $(w)
+            .off("popstate.directoryPager")
+            .on("popstate.directoryPager", locationChangeDirectory)
+            .off("hashchange.directoryPager")
+            .on("hashchange.directoryPager", locationChangeDirectory);
     }
 
     function DirectoryGetDataInit(root) {
@@ -335,7 +422,7 @@
 
         initMenuDirectories($root);
         initAdvertiseDirectories($root);
-        bindHashChangeIfNeeded($root);
+        bindLocationChangeIfNeeded($root);
     }
 
     function initElemntAndLoadDir($dir, page) {
@@ -360,22 +447,41 @@
         initSingleCatalog($self, page);
     }
 
-    function hashChangeDirectory(e) {
-        if (!!e) {
-            initElemntAndLoadDir();
-            e.preventDefault();
-        } else {
-            console.log("HashChange錯誤");
+    function navigateToPage($item, page) {
+        const normalizedPage = normalizePage(page);
+        const $catalogs = $(document).find(".catalog_frame").filter(function () {
+            return canAutoLoadCatalog($(this));
+        });
+
+        if ($catalogs.length === 1 && w.history && typeof w.history.pushState === "function") {
+            const nextUrl = getPageUrl(normalizedPage);
+            const currentUrl = `${w.location.pathname}${w.location.search}${w.location.hash}`;
+
+            if (nextUrl !== currentUrl) {
+                w.history.pushState({ directoryPage: normalizedPage }, "", nextUrl);
+            }
         }
+
+        syncCanonicalPage(normalizedPage);
+        initElemntAndLoadDir($item, normalizedPage);
+    }
+
+    function locationChangeDirectory() {
+        const page = getLocationPage();
+        syncCanonicalPage(page);
+        initElemntAndLoadDir(null, page);
     }
 
     DirectoryBoot.init = DirectoryGetDataInit;
     DirectoryBoot.initElemntAndLoadDir = initElemntAndLoadDir;
-    DirectoryBoot.hashChangeDirectory = hashChangeDirectory;
+    DirectoryBoot.getPageUrl = getPageUrl;
+    DirectoryBoot.navigateToPage = navigateToPage;
+    DirectoryBoot.locationChangeDirectory = locationChangeDirectory;
+    DirectoryBoot.hashChangeDirectory = locationChangeDirectory;
 
     // 舊版相容
     w.DirectoryGetDataInit = DirectoryGetDataInit;
     w.initElemntAndLoadDir = initElemntAndLoadDir;
-    w.hashChangeDirectory = hashChangeDirectory;
+    w.hashChangeDirectory = locationChangeDirectory;
 
 })(window, window.jQuery);

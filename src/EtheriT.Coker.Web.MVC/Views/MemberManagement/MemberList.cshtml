@@ -77,7 +77,7 @@
                         c.AddFor(e => e.Bonus).Caption("紅利");
                     }
                     c.AddFor(e => e.Total).Caption("訂購總金額");
-                    c.AddFor(e => e.Level).Caption("會員等級").Lookup(lookup =>
+                    c.AddFor(e => e.RoleId).Caption("會員等級").Lookup(lookup =>
                         lookup.DataSource("getMemberLevel")
                             .ValueExpr("id")
                             .DisplayExpr("name")

@@ -10,6 +10,8 @@ namespace EtheriT.Coker.Web.MVC.Models.BonusManagement
 
         public string? MaxRedemptionPercentHelpText { get; set; }
 
+        public string? MaximumDiscountHelpText { get; set; }
+
         public string? MinOrderForEarnPointsHelpText { get; set; }
 
         public string? RewardRatePercentHelpText { get; set; }

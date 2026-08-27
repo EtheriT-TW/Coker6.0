@@ -1,23 +1,74 @@
 ﻿var $display, $removedFromShelves, $name, $name_count, $introduction, $introduction_count, $illustrate, $illustrate_count,
-    $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent, $itemNo, $itemNo_count, $noStockManagement;
-var startDate, endDate, keyId, price_tid, temp_psid;
+    $marks, $price, $subItemNo, $stock_number, $packingPoint_number, $alert_number, $min_number, $date, $picker, $permanent,
+    $itemNo, $itemNo_count, $noStockManagement;
+var $popularVisible;
+var $popularValue;
+var startDate, endDate, keyId, price_tid, temp_psid, setPage;
 var specDescModal, $spec_desc_input, $currentSpecDescRow = null;
 var productTagFilter = null;
 var productTagOptions = [];
 var productTagOptionsPromise = null;
 var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal_price_list = [], spec_pick_list, suggest_price_list = []
 var $price_modal, priceModal
-var total_files = [];
+var productMediaManager, productFileManager, specMediaManager;
 var spec_media_map = {};
 var specMediaModal;
 let importProdPopup = null;
 let productImportTemplateGrid = null;
 let selectedProductImportTemplateId = null;
+let pendingProductImportTaskId = null;
+let pendingProductImportAnalysis = null;
+let productImportAnalysisErrorGrid = null;
+let productImportAnalysisErrorRows = [];
+let pendingProductImportIgnoredRows = [];
+let productImportConfirmInProgress = false;
 var elementReady = false;
 var pendingHashEdit = false;
+var lastProductImportInfoLoaded = false;
+
+async function loadLastProductImportInfo(forceReload) {
+    if (lastProductImportInfoLoaded && !forceReload) return;
+    lastProductImportInfoLoaded = true;
+    try {
+        const response = await fetch("/api/Product/GetLastProductImport", {
+            method: "GET",
+            headers: _c.Data.Header,
+            credentials: "same-origin",
+            cache: "no-store"
+        });
+        if (!response.ok) throw new Error("無法取得最後匯入時間");
+        const result = await response.json();
+        const $info = $("#LastProductImportInfo").removeClass("d-none");
+        if (!result.hasImport || !result.completionTime) {
+            $info.text("商品資料尚無成功匯入紀錄。");
+            return;
+        }
+        const completionTime = new Date(result.completionTime);
+        $info.text("最後成功匯入：" + completionTime.toLocaleString("zh-TW", { hour12: false }));
+        if (result.message) $info.attr("title", result.message);
+    } catch (error) {
+        lastProductImportInfoLoaded = false;
+        console.error(error);
+    }
+}
+
+function getCurrentProductImportForm() {
+    if (importProdPopup && typeof importProdPopup.content === "function") {
+        const popupForm = $(importProdPopup.content()).find(`form[name="fileUploadForm"]`)[0];
+        if (popupForm) return popupForm;
+    }
+
+    return $(`form[name="fileUploadForm"]:visible`)[0]
+        || $(`form[name="fileUploadForm"]`)[0]
+        || null;
+}
 
 function ImportProd() {
-    const form = $(`[name="fileUploadForm"]`)[0];
+    const form = getCurrentProductImportForm();
+    if (!form) {
+        co.sweet.error("找不到目前的商品匯入表單，請關閉視窗後重新開啟。");
+        return;
+    }
     const fileInput = $(form).find(`[name="files"]`)[0];
     if (!selectedProductImportTemplateId) {
         co.sweet.error("請先選擇商品匯入版型。");
@@ -30,22 +81,29 @@ function ImportProd() {
 
     var formData = new FormData(form);
     formData.append("templateId", selectedProductImportTemplateId);
-    formData.append("overwriteExisting", $("#overwriteExistingProductPages").is(":checked"));
     const $submitButton = $("#btnStartProductImport").prop("disabled", true);
+    importProdPopup.hide();
+    Swal.fire({
+        title: "正在掃描商品匯入檔",
+        html: "<div style=\"margin-bottom:12px;\">正在上傳檔案並建立掃描任務…</div>",
+        allowOutsideClick: false,
+        allowEscapeKey: true,
+        showCloseButton: true,
+        showConfirmButton: false,
+        didOpen: function () { Swal.showLoading(); }
+    });
     co.Product.AddUp.Import(formData).done(async function (response) {
-        importProdPopup.hide();
         try {
-            const status = await waitForProductTask(response.taskId, "商品匯入中");
+            const status = await waitForProductTask(response.taskId, "正在掃描商品匯入檔");
             Swal.close();
-            const importErrors = getProductImportErrors(status.resultJson);
-            if (importErrors.length > 0) {
-                showProductImportErrors(importErrors);
-            } else {
-                co.sweet.success(status.message || "商品匯入成功。");
-            }
-            if (product_list != null) product_list.component.refresh();
+            pendingProductImportTaskId = response.taskId;
+            pendingProductImportAnalysis = parseProductImportAnalysis(status.resultJson);
+            renderProductImportAnalysis(pendingProductImportAnalysis);
+            showProductImportStep(3);
+            importProdPopup.show();
         } catch (error) {
             Swal.close();
+            importProdPopup.show();
             if (error && Array.isArray(error.importErrors) && error.importErrors.length > 0) {
                 showProductImportErrors(error.importErrors, true);
             } else {
@@ -53,6 +111,8 @@ function ImportProd() {
             }
         }
     }).fail(function (xhr) {
+        Swal.close();
+        importProdPopup.show();
         var message = xhr.responseJSON && xhr.responseJSON.message
             ? xhr.responseJSON.message
             : "檔案格式錯誤，無法建立匯入任務。";
@@ -63,16 +123,22 @@ function ImportProd() {
 }
 
 function updateProductImportStartButton() {
-    const fileInput = $(`[name="fileUploadForm"] [name="files"]`)[0];
+    const form = getCurrentProductImportForm();
+    const fileInput = form ? $(form).find(`[name="files"]`)[0] : null;
     const hasFile = !!(fileInput && fileInput.files && fileInput.files.length > 0);
     $("#btnStartProductImport").prop("disabled", !selectedProductImportTemplateId || !hasFile);
 }
 
 function showProductImportStep(step) {
     const selectingTemplate = step === 1;
+    const selectingFile = step === 2;
+    const confirming = step === 3;
     $("#productImportStepTemplate").toggleClass("d-none", !selectingTemplate);
-    $("#productImportStepFile").toggleClass("d-none", selectingTemplate);
-    if (importProdPopup) importProdPopup.option("height", selectingTemplate ? 620 : 430);
+    $("#productImportStepFile").toggleClass("d-none", !selectingFile);
+    $("#productImportStepConfirm")
+        .toggleClass("d-none", !confirming)
+        .toggleClass("d-flex", confirming);
+    if (importProdPopup) importProdPopup.option("height", selectingTemplate ? 620 : (confirming ? 720 : 420));
     if (selectingTemplate && productImportTemplateGrid) {
         window.setTimeout(function () {
             productImportTemplateGrid.updateDimensions();
@@ -136,11 +202,17 @@ function initializeProductImportTemplateGrid() {
     if ($grid.length === 0) return;
 
     selectedProductImportTemplateId = null;
+    pendingProductImportTaskId = null;
+    pendingProductImportAnalysis = null;
+    productImportAnalysisErrorRows = [];
+    pendingProductImportIgnoredRows = [];
+    productImportConfirmInProgress = false;
     showProductImportStep(1);
     $("#btnNextProductImportStep").prop("disabled", true);
     $("#btnStartProductImport").prop("disabled", true);
-    $(`[name="fileUploadForm"]`)[0].reset();
-    $(`[name="fileUploadForm"] [name="files"]`)
+    const form = getCurrentProductImportForm();
+    if (form) form.reset();
+    $(form).find(`[name="files"]`)
         .off("change.productImport")
         .on("change.productImport", updateProductImportStartButton);
 
@@ -269,42 +341,652 @@ function initializeProductImportTemplateGrid() {
 }
 
 function showImportProdPopup() {
+    pendingProductImportTaskId = null;
+    pendingProductImportAnalysis = null;
+    pendingProductImportIgnoredRows = [];
+    productImportAnalysisErrorGrid = null;
+    productImportAnalysisErrorRows = [];
+    productImportConfirmInProgress = false;
     importProdPopup = $("#importProdPopup").dxPopup("instance");
     importProdPopup.option("contentTemplate", $("#importProdPopup-template"));
-    importProdPopup.option("title", "商品匯入");
+    importProdPopup.option("title", "商品資料匯入");
     importProdPopup.option("onShown", function () {
-        initializeProductImportTemplateGrid();
+        if (!pendingProductImportTaskId) initializeProductImportTemplateGrid();
     });
     importProdPopup.show();
 }
 
+function parseProductImportAnalysis(resultJson) {
+    if (!resultJson) return { canImport: false, errors: [], differences: [], summary: null };
+    const result = typeof resultJson === "string" ? JSON.parse(resultJson) : resultJson;
+    return {
+        canImport: result.CanImport !== undefined ? result.CanImport : result.canImport,
+        errors: result.Errors || result.errors || [],
+        differences: result.Differences || result.differences || [],
+        summary: result.Summary || result.summary || null
+    };
+}
+
+function getAnalysisValue(item, pascalName, camelName) {
+    return item && item[pascalName] !== undefined ? item[pascalName] : (item ? item[camelName] : "");
+}
+
+function getVisibleCharacter(character) {
+    const visibleCharacters = {
+        " ": { text: "␠", name: "半形空白", code: "U+0020" },
+        "\u00a0": { text: "⍽", name: "不換行空白", code: "U+00A0" },
+        "\u3000": { text: "□", name: "全形空白", code: "U+3000" },
+        "\t": { text: "⇥", name: "Tab", code: "U+0009" },
+        "\r": { text: "↵", name: "CR 換行", code: "U+000D" },
+        "\n": { text: "↵", name: "LF 換行", code: "U+000A" },
+        "\u200b": { text: "[ZWSP]", name: "零寬空白", code: "U+200B" },
+        "\u200c": { text: "[ZWNJ]", name: "零寬非連字元", code: "U+200C" },
+        "\u200d": { text: "[ZWJ]", name: "零寬連字元", code: "U+200D" },
+        "\ufeff": { text: "[BOM]", name: "BOM／零寬不換行空白", code: "U+FEFF" }
+    };
+    if (visibleCharacters[character]) return visibleCharacters[character];
+    const codePoint = character.codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
+    return { text: character, name: "字元", code: "U+" + codePoint };
+}
+
+function getCharacterDiff(leftValue, rightValue) {
+    const left = Array.from(leftValue || "");
+    const right = Array.from(rightValue || "");
+    let prefixLength = 0;
+    while (prefixLength < left.length
+        && prefixLength < right.length
+        && left[prefixLength] === right[prefixLength]) {
+        prefixLength++;
+    }
+    let suffixLength = 0;
+    while (suffixLength < left.length - prefixLength
+        && suffixLength < right.length - prefixLength
+        && left[left.length - 1 - suffixLength] === right[right.length - 1 - suffixLength]) {
+        suffixLength++;
+    }
+    const leftChanged = left.map(function (_, index) {
+        return index >= prefixLength && index < left.length - suffixLength;
+    });
+    const rightChanged = right.map(function (_, index) {
+        return index >= prefixLength && index < right.length - suffixLength;
+    });
+    return { left: left, right: right, leftChanged: leftChanged, rightChanged: rightChanged };
+}
+
+function getTextSimilarity(leftValue, rightValue) {
+    const left = Array.from((leftValue || "").toLocaleLowerCase().replace(/\s+/g, " ").trim());
+    const right = Array.from((rightValue || "").toLocaleLowerCase().replace(/\s+/g, " ").trim());
+    if (left.length === 0 || right.length === 0) return left.length === right.length ? 1 : 0;
+    let previous = new Array(right.length + 1).fill(0);
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex++) {
+        const current = new Array(right.length + 1).fill(0);
+        for (let rightIndex = 1; rightIndex <= right.length; rightIndex++) {
+            current[rightIndex] = left[leftIndex - 1] === right[rightIndex - 1]
+                ? previous[rightIndex - 1] + 1
+                : Math.max(previous[rightIndex], current[rightIndex - 1]);
+        }
+        previous = current;
+    }
+    return (2 * previous[right.length]) / (left.length + right.length);
+}
+
+function appendMarkedCharacters($container, characters, changedCharacters) {
+    let unchangedText = "";
+    let changedText = "";
+    let changedDetails = [];
+    function flushUnchangedText() {
+        if (!unchangedText) return;
+        $container.append(document.createTextNode(unchangedText));
+        unchangedText = "";
+    }
+    function flushChangedText() {
+        if (!changedText) return;
+        $("<mark>")
+            .addClass("px-1 rounded bg-warning text-dark")
+            .attr("title", "差異區段；包含：" + changedDetails.filter(function (item, index, items) {
+                return items.indexOf(item) === index;
+            }).join("、"))
+            .text(changedText)
+            .appendTo($container);
+        changedText = "";
+        changedDetails = [];
+    }
+    characters.forEach(function (character, index) {
+        if (!changedCharacters[index]) {
+            flushChangedText();
+            unchangedText += character;
+            return;
+        }
+        flushUnchangedText();
+        const visible = getVisibleCharacter(character);
+        changedText += visible.text;
+        changedDetails.push(visible.name + "（" + visible.code + "）");
+    });
+    flushChangedText();
+    flushUnchangedText();
+    if (characters.length === 0) {
+        $("<mark>").addClass("px-1 rounded bg-warning text-dark").text("[空字串]").appendTo($container);
+    }
+}
+
+function appendCharacterComparison($container, leftLabel, leftValue, rightLabel, rightValue) {
+    const shouldMarkDifference = getTextSimilarity(leftValue, rightValue) >= 0.55;
+    const difference = shouldMarkDifference ? getCharacterDiff(leftValue, rightValue) : null;
+    const $left = $("<div>").addClass("mb-1").appendTo($container);
+    $("<span>").addClass("fw-bold me-1").text(leftLabel + "：").appendTo($left);
+    if (shouldMarkDifference) {
+        appendMarkedCharacters($left, difference.left, difference.leftChanged);
+    } else {
+        $left.append(document.createTextNode(leftValue || "[空字串]"));
+    }
+    const $right = $("<div>").appendTo($container);
+    $("<span>").addClass("fw-bold me-1").text(rightLabel + "：").appendTo($right);
+    if (shouldMarkDifference) {
+        appendMarkedCharacters($right, difference.right, difference.rightChanged);
+    } else {
+        $right.append(document.createTextNode(rightValue || "[空字串]"));
+        $("<div>")
+            .addClass("text-muted mt-1")
+            .text("兩側內容差異較大，直接顯示完整內容，不標示個別字元。")
+            .appendTo($container);
+    }
+}
+
+function appendExcelConflictComparisons($container, comparisonValues) {
+    const groupedValues = [];
+    (comparisonValues || []).forEach(function (item) {
+        const value = getAnalysisValue(item, "Value", "value") || "";
+        const label = getAnalysisValue(item, "Label", "label") || "內容";
+        const rowNumber = Number(getAnalysisValue(item, "RowNumber", "rowNumber"));
+        let group = groupedValues.find(function (entry) {
+            return entry.value === value && entry.label === label;
+        });
+        if (!group) {
+            group = { value: value, label: label, rowNumbers: [] };
+            groupedValues.push(group);
+        }
+        if (rowNumber > 0 && group.rowNumbers.indexOf(rowNumber) < 0) group.rowNumbers.push(rowNumber);
+    });
+    if (groupedValues.length < 2) return;
+
+    const reference = groupedValues[0];
+    groupedValues.slice(1).forEach(function (other, index) {
+        const $comparison = $("<div>")
+            .addClass("mt-2 pt-2 border-top small")
+            .appendTo($container);
+        appendCharacterComparison(
+            $comparison,
+            "第 " + reference.rowNumbers.sort(function (a, b) { return a - b; }).join("、") + " 列 " + reference.label,
+            reference.value,
+            "第 " + other.rowNumbers.sort(function (a, b) { return a - b; }).join("、") + " 列 " + other.label,
+            other.value);
+    });
+}
+
+function renderProductImportAnalysis(analysis) {
+    const $summary = $("#productImportAnalysisSummary").empty();
+    const $content = $("#productImportAnalysisContent").empty();
+    appendProductImportSummary($summary, analysis.summary);
+    if (pendingProductImportIgnoredRows.length > 0) {
+        $("<div>").addClass("alert alert-secondary py-2")
+            .text("目前已選擇忽略 " + pendingProductImportIgnoredRows.length + " 個 Excel 資料列；這些列不會正式匯入。")
+            .appendTo($summary);
+    }
+
+    const errors = analysis.errors || [];
+    const differences = analysis.differences || [];
+    if (errors.length > 0) {
+        $("<div>").addClass("alert alert-danger py-2")
+            .text("Excel 內有 " + errors.length + " 筆資料衝突。請修正後重新掃描；若確認不匯入衝突所涉及的整列資料，也可以選取『忽略』後繼續。")
+            .appendTo($content);
+        const gridData = errors.map(function (item, errorIndex) {
+            const rowNumbers = getAnalysisValue(item, "RowNumbers", "rowNumbers") || [];
+            const sortedRows = rowNumbers.slice().sort(function (a, b) { return a - b; });
+            return {
+                id: "error:" + errorIndex,
+                sheet: getAnalysisValue(item, "Sheet", "sheet") || "-",
+                rowNumbers: sortedRows,
+                rowsText: sortedRows.length === 0
+                    ? "-"
+                    : sortedRows.join("、") + (sortedRows.length > 1 ? "（共 " + sortedRows.length + " 列）" : ""),
+                name: getAnalysisValue(item, "Name", "name") || "資料衝突",
+                description: getAnalysisValue(item, "Description", "description") || "-",
+                comparisonValues: getAnalysisValue(item, "ComparisonValues", "comparisonValues") || [],
+                canIgnore: !!getAnalysisValue(item, "CanIgnore", "canIgnore") && sortedRows.length > 0,
+                ignore: false
+            };
+        });
+        // 額外保存完整資料集合，避免 DevExpress 分頁後只取得目前載入的頁面。
+        productImportAnalysisErrorRows = gridData;
+        const $grid = $("<div>").addClass("mb-3").appendTo($content);
+        productImportAnalysisErrorGrid = $grid.dxDataGrid({
+            dataSource: gridData,
+            keyExpr: "id",
+            height: 330,
+            showBorders: true,
+            rowAlternationEnabled: true,
+            wordWrapEnabled: true,
+            filterRow: { visible: true },
+            searchPanel: { visible: true, width: 240, placeholder: "搜尋工作表、列號或原因" },
+            paging: { pageSize: 10 },
+            pager: {
+                visible: true,
+                showPageSizeSelector: true,
+                allowedPageSizes: [10, 20, 50],
+                showInfo: true,
+                showNavigationButtons: true
+            },
+            columns: [
+                { dataField: "sheet", caption: "工作表", width: 100 },
+                { dataField: "rowsText", caption: "Excel 列號", width: 120 },
+                { dataField: "name", caption: "資料位置", width: 250 },
+                {
+                    dataField: "description",
+                    caption: "衝突原因與字元差異",
+                    cellTemplate: function (container, options) {
+                        $("<div>").text(options.data.description).appendTo(container);
+                        appendExcelConflictComparisons($(container), options.data.comparisonValues);
+                    }
+                },
+                {
+                    dataField: "ignore",
+                    caption: "忽略此組",
+                    width: 100,
+                    alignment: "center",
+                    allowFiltering: false,
+                    cellTemplate: function (container, options) {
+                        $("<div>").dxCheckBox({
+                            value: options.data.ignore,
+                            disabled: !options.data.canIgnore,
+                            hint: options.data.canIgnore
+                                ? "勾選後，此組衝突涉及的所有 Excel 資料列都不會匯入"
+                                : "此結構錯誤不可忽略，必須修改 Excel",
+                            onValueChanged: function (e) {
+                                options.data.ignore = e.value;
+                                updateProductImportConfirmButton();
+                            }
+                        }).appendTo(container);
+                    }
+                }
+            ],
+            onRowPrepared: function (e) {
+                if (e.rowType === "data" && !e.data.canIgnore) e.rowElement.css("background", "#f8d7da");
+            },
+            onToolbarPreparing: function (e) {
+                e.toolbarOptions.items.unshift({
+                    location: "after",
+                    widget: "dxButton",
+                    options: {
+                        text: "全部標記忽略",
+                        hint: "將所有可忽略的 Excel 衝突列標記為不匯入",
+                        onClick: function () {
+                            productImportAnalysisErrorRows.forEach(function (row) {
+                                if (row.canIgnore) row.ignore = true;
+                            });
+                            e.component.repaint();
+                            updateProductImportConfirmButton();
+                        }
+                    }
+                });
+                e.toolbarOptions.items.unshift({
+                    location: "after",
+                    widget: "dxButton",
+                    options: {
+                        icon: "fa-solid fa-file-excel",
+                        text: "下載衝突清單",
+                        onClick: function () {
+                            CokerDxGridExport({ component: e.component, format: "xlsx", cancel: false }, {
+                                fileName: "ProductImportScanErrors",
+                                worksheetName: "商品匯入掃描衝突"
+                            });
+                        }
+                    }
+                });
+            }
+            }).dxDataGrid("instance");
+        $("<div>").addClass("form-text mb-3")
+            .text("每筆代表一組衝突，Excel 列號會列出該組涉及的所有資料列；只有內容相近時才以黃色標示差異區段，內容差異較大時會直接顯示完整值。勾選「忽略此組」後，該組涉及的列不會寫入商品、目錄或技術證照。必須處理全部衝突後才能繼續。")
+            .appendTo($content);
+    } else {
+        productImportAnalysisErrorRows = [];
+    }
+
+    if (differences.length > 0) {
+        const $differenceAlert = $("<div>").addClass("alert alert-warning py-2")
+            .appendTo($content);
+        const optionDefinitions = [
+            { code: "product-name", id: "confirmOverwriteProductNames", text: "允許以 Excel 更新既有商品名稱", showDetails: true },
+            { code: "product-spec", id: "confirmOverwriteProductSpecs", text: "允許以 Excel 更新 SubItemNo 對應的既有規格", showDetails: true },
+            { code: "product-price", id: "confirmOverwriteProductPrices", text: "允許以 Excel 更新既有商品價格", showDetails: true },
+            { code: "technical-certificate", id: "confirmOverwriteTechnicalCertificates", text: "允許以 Excel 覆蓋既有技術證照內容", showDetails: true },
+            { code: "duplicate-menu-title", id: "confirmAllowDuplicateMenuTitles", text: "RouterName 不同時，允許建立同名選單", showDetails: true },
+            { code: "menu-parent", id: "confirmOverwriteMenuParents", text: "允許依 Excel 搬移既有選單父層", showDetails: true },
+            {
+                code: "directory-page",
+                id: "confirmOverwriteDirectoryPages",
+                text: "將版型重新套用到本次涉及的既有商品目錄頁",
+                helpText: "未勾選時會完整保留既有目錄頁；只有勾選後才會重新套用版型。",
+                countsAsUnresolved: false,
+                showDetails: false
+            }
+        ];
+        const renderedOptions = [];
+        optionDefinitions.forEach(function (option) {
+            const count = differences.filter(function (item) {
+                return getAnalysisValue(item, "Code", "code") === option.code;
+            }).length;
+            if (count === 0) return;
+            const $check = $("<div>").addClass("form-check mb-2").appendTo($content);
+            const $input = $("<input>")
+                .attr({ type: "checkbox", id: option.id })
+                .addClass("form-check-input")
+                .appendTo($check);
+            $("<label>").attr("for", option.id).addClass("form-check-label fw-bold")
+                .text(option.text + "（" + count + " 筆）")
+                .appendTo($check);
+            if (option.helpText) {
+                $("<div>").addClass("form-text").text(option.helpText).appendTo($check);
+            }
+            renderedOptions.push({ definition: option, count: count, input: $input });
+        });
+
+        const differenceDisplayDefinitions = {
+            "product-name": {
+                type: "商品名稱不同",
+                existingLabel: "資料庫商品名稱",
+                excelLabel: "Excel 商品名稱",
+                markCharacters: true
+            },
+            "product-spec": {
+                type: "同一 SubItemNo 的規格不同",
+                existingLabel: "資料庫規格",
+                excelLabel: "Excel 規格",
+                markCharacters: true
+            },
+            "product-price": {
+                type: "商品價格異動",
+                existingLabel: "目前價格",
+                excelLabel: "匯入後價格",
+                markCharacters: false
+            },
+            "technical-certificate": {
+                type: "技術證照內容不同",
+                existingLabel: "資料庫證照內容",
+                excelLabel: "Excel 證照內容",
+                markCharacters: true
+            },
+            "duplicate-menu-title": {
+                type: "選單名稱相同，但 RouterName 不同",
+                existingLabel: "現有 RouterName",
+                excelLabel: "Excel RouterName",
+                markCharacters: true
+            },
+            "menu-parent": {
+                type: "選單所在父層不同",
+                existingLabel: "目前父層",
+                excelLabel: "Excel 指定父層",
+                markCharacters: false
+            },
+            "directory-page": {
+                type: "既有目錄頁已有內容，版型可能被重新套用",
+                existingLabel: "目前目錄頁",
+                excelLabel: "授權後的動作",
+                markCharacters: false
+            }
+        };
+        const $details = $("<div>").addClass("mt-3").appendTo($content);
+        differences.forEach(function (item) {
+            const code = getAnalysisValue(item, "Code", "code");
+            const option = optionDefinitions.find(function (definition) { return definition.code === code; });
+            if (!option || !option.showDetails) return;
+            const display = differenceDisplayDefinitions[code] || {
+                type: "資料內容不同",
+                existingLabel: "現有資料",
+                excelLabel: "Excel",
+                markCharacters: false
+            };
+            const existingValue = getAnalysisValue(item, "ExistingValue", "existingValue") || "[空白]";
+            const excelValue = getAnalysisValue(item, "ExcelValue", "excelValue") || "[空白]";
+            const $row = $("<div>")
+                .addClass("border rounded p-2 mb-2 product-import-difference-detail")
+                .attr("data-difference-code", code)
+                .appendTo($details);
+            $("<div>").addClass("fw-bold")
+                .text("[" + getAnalysisValue(item, "Sheet", "sheet") + "] " + getAnalysisValue(item, "Name", "name"))
+                .appendTo($row);
+            $("<div>")
+                .addClass("text-danger fw-bold my-1")
+                .text("差異類型：" + display.type)
+                .appendTo($row);
+            if (display.markCharacters) {
+                appendCharacterComparison(
+                    $row,
+                    display.existingLabel,
+                    existingValue,
+                    display.excelLabel,
+                    excelValue);
+            } else {
+                $("<div>").append(
+                    $("<span>").addClass("fw-bold me-1").text(display.existingLabel + "："),
+                    document.createTextNode(existingValue)
+                ).appendTo($row);
+                $("<div>").append(
+                    $("<span>").addClass("fw-bold me-1").text(display.excelLabel + "："),
+                    document.createTextNode(excelValue)
+                ).appendTo($row);
+            }
+            $("<div>").addClass("text-muted small")
+                .text(getAnalysisValue(item, "Description", "description") || "")
+                .appendTo($row);
+        });
+
+        function updateDifferenceDisplay() {
+            let unauthorizedCount = 0;
+            let visibleDetailCount = 0;
+            renderedOptions.forEach(function (option) {
+                const authorized = option.input.is(":checked");
+                if (!authorized && option.definition.countsAsUnresolved !== false)
+                    unauthorizedCount += option.count;
+                if (!authorized && option.definition.showDetails) visibleDetailCount += option.count;
+                $details.find('[data-difference-code="' + option.definition.code + '"]')
+                    .toggle(!authorized);
+            });
+            $differenceAlert
+                .toggle(unauthorizedCount > 0)
+                .text(unauthorizedCount > 0
+                    ? "尚有 " + unauthorizedCount + " 筆更新未授權；未勾選的項目會保留資料庫現況。"
+                    : "所有列出的更新皆已授權。正式匯入時會依勾選項目處理。");
+            $details.toggle(visibleDetailCount > 0);
+        }
+        renderedOptions.forEach(function (option) {
+            option.input.on("change", updateDifferenceDisplay);
+        });
+        updateDifferenceDisplay();
+    } else if (errors.length === 0) {
+        $("<div>").addClass("alert alert-success py-2")
+            .text("匯入檔掃描完成，沒有 Excel 衝突或資料庫差異，可以直接匯入。")
+            .appendTo($content);
+    }
+
+    updateProductImportConfirmButton();
+}
+
+function updateProductImportConfirmButton() {
+    if (!pendingProductImportAnalysis) return;
+    if (productImportConfirmInProgress) {
+        $("#btnConfirmProductImport").prop("disabled", true);
+        return;
+    }
+    const errors = pendingProductImportAnalysis.errors || [];
+    if (errors.length === 0) {
+        $("#btnConfirmProductImport").prop("disabled", false);
+        return;
+    }
+    const hasNonIgnorable = errors.some(function (item) {
+        return !getAnalysisValue(item, "CanIgnore", "canIgnore");
+    });
+    const allIgnorableRowsHandled = productImportAnalysisErrorRows
+        .filter(function (row) { return row.canIgnore; })
+        .every(function (row) { return row.ignore; });
+    $("#btnConfirmProductImport").prop("disabled", hasNonIgnorable || !allIgnorableRowsHandled);
+}
+
+async function confirmProductImport() {
+    if (!pendingProductImportTaskId
+        || !pendingProductImportAnalysis
+        || productImportConfirmInProgress) return;
+    productImportConfirmInProgress = true;
+    const $button = $("#btnConfirmProductImport")
+        .prop("disabled", true)
+        .text("正在啟動匯入…");
+    let confirmationPopupHidden = false;
+    try {
+        const selectedIgnoredRows = productImportAnalysisErrorRows
+            .filter(function (error) { return error.canIgnore && error.ignore; })
+            .reduce(function (rows, error) {
+                error.rowNumbers.forEach(function (rowNumber) {
+                    rows.push({ sheet: error.sheet, rowNumber: rowNumber });
+                });
+                return rows;
+            }, []);
+        const ignoredRows = pendingProductImportIgnoredRows.concat(selectedIgnoredRows)
+            .filter(function (row, index, rows) {
+                return rows.findIndex(function (item) {
+                    return item.sheet === row.sheet && item.rowNumber === row.rowNumber;
+                }) === index;
+            });
+        const response = await fetch("/api/Product/ConfirmProductImport", {
+            method: "POST",
+            headers: Object.assign({}, _c.Data.Header, { "Content-Type": "application/json" }),
+            credentials: "same-origin",
+            body: JSON.stringify({
+                taskId: pendingProductImportTaskId,
+                templateId: selectedProductImportTemplateId,
+                overwriteExistingProductNames: $("#confirmOverwriteProductNames").is(":checked"),
+                overwriteExistingSpecs: $("#confirmOverwriteProductSpecs").is(":checked"),
+                overwriteExistingPrices: $("#confirmOverwriteProductPrices").is(":checked"),
+                overwriteExistingTechnicalCertificates: $("#confirmOverwriteTechnicalCertificates").is(":checked"),
+                allowDuplicateMenuTitles: $("#confirmAllowDuplicateMenuTitles").is(":checked"),
+                overwriteExistingMenuParents: $("#confirmOverwriteMenuParents").is(":checked"),
+                overwriteExistingDirectoryPages: $("#confirmOverwriteDirectoryPages").is(":checked"),
+                ignoredRows: ignoredRows
+            })
+        });
+        if (!response.ok) {
+            const errorResult = await response.json().catch(function () { return {}; });
+            if (errorResult.analysis) {
+                pendingProductImportIgnoredRows = ignoredRows;
+                pendingProductImportAnalysis = {
+                    canImport: errorResult.analysis.CanImport !== undefined
+                        ? errorResult.analysis.CanImport
+                        : errorResult.analysis.canImport,
+                    errors: errorResult.analysis.Errors || errorResult.analysis.errors || [],
+                    differences: errorResult.analysis.Differences || errorResult.analysis.differences || [],
+                    summary: errorResult.analysis.Summary || errorResult.analysis.summary || null
+                };
+                renderProductImportAnalysis(pendingProductImportAnalysis);
+                $("#productImportAnalysisContent").scrollTop(0);
+                co.sweet.warn(errorResult.message || "仍有 Excel 衝突，請繼續處理。");
+                return;
+            }
+            throw new Error(errorResult.message || "無法確認商品匯入");
+        }
+        const responseData = await response.json();
+        // DevExtreme Popup 的層級高於 SweetAlert；先關閉確認視窗，
+        // 等隱藏動畫結束後再顯示正式匯入進度，避免進度被蓋住。
+        importProdPopup.hide();
+        confirmationPopupHidden = true;
+        await new Promise(function (resolve) { window.setTimeout(resolve, 250); });
+        const status = await waitForProductTask(responseData.taskId, "商品正式匯入中");
+        Swal.close();
+        const importResult = getProductImportResult(status.resultJson);
+        showProductImportErrors(importResult.errors, false, importResult.summary);
+        if (product_list != null) product_list.component.refresh();
+        loadLastProductImportInfo(true);
+    } catch (error) {
+        Swal.close();
+        if (!confirmationPopupHidden) importProdPopup.show();
+        co.sweet.error(error && error.message ? error.message : "商品匯入失敗。");
+    } finally {
+        productImportConfirmInProgress = false;
+        $button.text("確認並開始匯入");
+        updateProductImportConfirmButton();
+    }
+}
+
 function getProductImportErrors(resultJson) {
-    if (!resultJson) return [];
+    return getProductImportResult(resultJson).errors;
+}
+
+function getProductImportResult(resultJson) {
+    const emptyResult = { errors: [], summary: null };
+    if (!resultJson) return emptyResult;
 
     try {
         const result = typeof resultJson === "string" ? JSON.parse(resultJson) : resultJson;
         const errors = result.Errors || result.errors || [];
-        if (!Array.isArray(errors)) return [];
+        const summary = result.Summary || result.summary || null;
+        if (!Array.isArray(errors)) return { errors: [], summary: summary };
 
-        return errors.map(function (item, index) {
-            return {
-                sequence: index + 1,
-                name: item.Name || item.name || "-",
-                description: item.Description || item.description || "-"
-            };
-        });
+        return {
+            errors: errors.map(function (item, index) {
+                return {
+                    sequence: index + 1,
+                    name: item.Name || item.name || "-",
+                    description: item.Description || item.description || "-"
+                };
+            }),
+            summary: summary
+        };
     } catch (error) {
         console.error("Unable to parse product import result.", error);
-        return [];
+        return emptyResult;
     }
 }
 
-function showProductImportErrors(errors, importFailed) {
+function getImportSummaryValue(summary, pascalName, camelName) {
+    if (!summary) return 0;
+    return Number(summary[pascalName] !== undefined ? summary[pascalName] : summary[camelName]) || 0;
+}
+
+function appendProductImportSummary(contentElement, summary) {
+    if (!summary) return;
+
+    const detectedScopes = summary.DetectedUpdateScopes || summary.detectedUpdateScopes || [];
+
+    const productText = "匯入檔 " + getImportSummaryValue(summary, "ProductRowCount", "productRowCount")
+        + " 列，實際商品 " + getImportSummaryValue(summary, "ProductCount", "productCount")
+        + " 隻；新增 " + getImportSummaryValue(summary, "ProductAddedCount", "productAddedCount")
+        + "、更新 " + getImportSummaryValue(summary, "ProductUpdatedCount", "productUpdatedCount")
+        + "；現有商品 " + getImportSummaryValue(summary, "ProductBeforeCount", "productBeforeCount")
+        + " → " + getImportSummaryValue(summary, "ProductAfterCount", "productAfterCount") + " 隻";
+    const menuText = "匯入檔 " + getImportSummaryValue(summary, "DirectoryRowCount", "directoryRowCount")
+        + " 列目錄，涉及選單 " + getImportSummaryValue(summary, "MenuCount", "menuCount")
+        + " 個；新增 " + getImportSummaryValue(summary, "MenuAddedCount", "menuAddedCount")
+        + "、沿用既有 " + getImportSummaryValue(summary, "MenuExistingCount", "menuExistingCount")
+        + "；現有選單 " + getImportSummaryValue(summary, "MenuBeforeCount", "menuBeforeCount")
+        + " → " + getImportSummaryValue(summary, "MenuAfterCount", "menuAfterCount") + " 個";
+
+    const summaryBox = $("<div>")
+        .css({ padding: "12px 14px", marginBottom: "12px", background: "#f5f8fb", border: "1px solid #d9e2ec", borderRadius: "6px" })
+        .appendTo(contentElement);
+    $("<div>").css({ fontWeight: 600, marginBottom: "6px" }).text("匯入小總結").appendTo(summaryBox);
+    $("<div>")
+        .append(
+            $("<span>").addClass("fw-bold").text("本次更新範圍："),
+            document.createTextNode(detectedScopes.length > 0 ? detectedScopes.join("、") : "未偵測到可更新欄位")
+        )
+        .appendTo(summaryBox);
+    $("<div>").css({ marginTop: "4px" }).text("商品：" + productText).appendTo(summaryBox);
+    $("<div>").css({ marginTop: "4px" }).text("選單：" + menuText).appendTo(summaryBox);
+}
+
+function showProductImportErrors(errors, importFailed, summary) {
     const popupElement = $("<div>").appendTo(document.body);
     let popupInstance = null;
 
     popupElement.dxPopup({
-        title: importFailed ? "商品匯入失敗－請修正 Excel" : "商品匯入完成－需留意資料",
+        title: importFailed ? "商品匯入失敗－請修正 Excel" : (errors.length > 0 ? "商品匯入完成－需留意資料" : "商品匯入完成"),
         width: function () { return Math.min($(window).width() * 0.92, 960); },
         height: function () { return Math.min($(window).height() * 0.88, 680); },
         minWidth: 320,
@@ -320,16 +1002,25 @@ function showProductImportErrors(errors, importFailed) {
                 height: "100%"
             });
 
+            if (!importFailed) appendProductImportSummary(contentElement, summary);
+
             $("<div>")
                 .css({ marginBottom: "12px", color: importFailed ? "#a94442" : "#856404" })
                 .text(importFailed
                     ? "匯入已停止，未寫入任何資料。共有 " + errors.length + " 筆錯誤，請修正原 Excel 後重新匯入。"
-                    : "匯入已完成，共有 " + errors.length + " 筆資料需要留意。請依下列原因檢查原 Excel 內容。")
+                    : (errors.length > 0
+                        ? "匯入已完成，共有 " + errors.length + " 筆資料需要留意。請依下列原因檢查原 Excel 內容。"
+                        : "匯入已完成，沒有需要留意的資料。"))
                 .appendTo(contentElement);
 
             const gridElement = $("<div>")
                 .css({ flex: "1 1 auto", minHeight: 0 })
                 .appendTo(contentElement);
+
+            if (errors.length === 0) {
+                gridElement.hide();
+                return;
+            }
 
             gridElement.dxDataGrid({
                 dataSource: errors,
@@ -420,16 +1111,31 @@ function showProductImportErrors(errors, importFailed) {
 async function exportProd(e) {
     if (exportProd.isProcessing) return;
 
+    const versionResult = await Swal.fire({
+        title: "選擇商品匯出版本",
+        text: "選擇版本後會立即開始製作匯出檔。",
+        icon: "question",
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "完整商品資料",
+        denyButtonText: "價格／庫存簡易版",
+        cancelButtonText: "取消",
+        reverseButtons: true
+    });
+    if (!versionResult.isConfirmed && !versionResult.isDenied) return;
+    const exportVersion = versionResult.isConfirmed ? "full" : "price";
+
     exportProd.isProcessing = true;
     const button = e && e.component ? e.component : null;
     if (button) button.option("disabled", true);
 
     try {
-        const startResponse = await fetch("/api/Product/StartProductExport", {
+        const startResponse = await fetch(
+            "/api/Product/StartProductExport?version=" + encodeURIComponent(exportVersion), {
             method: "POST",
             headers: _c.Data.Header,
             credentials: "same-origin"
-        });
+            });
         if (!startResponse.ok) {
             const errorResult = await startResponse.json().catch(function () { return {}; });
             throw new Error(errorResult.message || "無法建立商品匯出任務");
@@ -490,10 +1196,12 @@ async function waitForProductTask(taskId, title) {
 
         if (status.status === "failed" || status.status === "expired") {
             const taskError = new Error(status.error || status.message || "背景任務失敗");
-            taskError.importErrors = getProductImportErrors(status.resultJson);
+            const importResult = getProductImportResult(status.resultJson);
+            taskError.importErrors = importResult.errors;
+            taskError.importSummary = importResult.summary;
             throw taskError;
         }
-        if (status.status === "succeeded")
+        if (status.status === "succeeded" || status.status === "awaitingconfirmation")
             return status;
     }
 }
@@ -530,7 +1238,7 @@ function toolbarPreparing(e) {
             widget: "dxButton",
             options: {
                 icon: "fa-solid fa-file-arrow-up",
-                text: "商品匯入",
+                text: "商品資料匯入",
                 stylingMode: "outlined",
                 onClick: showImportProdPopup
             }
@@ -545,12 +1253,6 @@ async function PageReady() {
     TechCertListModalInit();
     TagListModalInit();
 
-    elementReady = true;
-
-    if (pendingHashEdit) {
-        pendingHashEdit = false;
-        HashDataEdit();
-    }
     try {
         const LogisticsBoxRequires = await co.LogisticsBox.Requires();
         if (!LogisticsBoxRequires.object) throw new Error("不需要物流箱");
@@ -607,6 +1309,14 @@ async function PageReady() {
         });
     }
 
+    // Hash routing may run as soon as the grid is ready. Do not enter the
+    // canvas until both the editor and its page loader have been initialized.
+    elementReady = true;
+    if (pendingHashEdit) {
+        pendingHashEdit = false;
+        HashDataEdit();
+    }
+
     // 開啟規格描述 modal（.btn_spec_desc_edit 在樣板內，用 delegated）
     $(document).on("click", ".btn_spec_desc_edit", function (e) {
         e.preventDefault();
@@ -624,9 +1334,6 @@ async function PageReady() {
         }
         specDescModal.hide();
     });
-
-    /* File Upload */
-    co.File.ListFileInit();
 
     /* Spec List */
     co.Product.Spec.ListInit();
@@ -942,8 +1649,29 @@ function ElementInit() {
     $itemNo = $("#InputItemNo");
     $itemNo_count = $("#ProductForm .itemNo .itemNo_count");
     $display = $(`#ProductForm [name="Visible"]`);
+    $popularVisible = $(`#ProductForm [name="PopularVisible"]`);
+    $popularValue = $("#ProductPopularValue");
     $removedFromShelves = $(`#ProductForm [name="RemovedFromShelves"]`);
     $noStockManagement = $("#NoStockManagement");
+
+    productMediaManager = new Coker.FileListManager("#ProdMedia", {
+        type: [
+            Coker.FileListManager.Types.Image,
+            Coker.FileListManager.Types.Image360,
+            Coker.FileListManager.Types.Video,
+            Coker.FileListManager.Types.ExternalVideo
+        ]
+    });
+    productFileManager = new Coker.FileListManager("#ProdFiles", {
+        type: Coker.FileListManager.Types.File
+    });
+    specMediaManager = new Coker.FileListManager("#SpecMedia", {
+        type: Coker.FileListManager.Types.Image,
+        onChange: function () {
+            var $row = $("#SpecMedia").data("spec-row");
+            if ($row && $row.length) refreshSpecThumb($row);
+        }
+    });
 
     specDescModal = new bootstrap.Modal(document.getElementById('SpecDescModal'));
     $spec_desc_input = $("#InputSpecDesc");
@@ -952,39 +1680,10 @@ function ElementInit() {
     specMediaModal = new bootstrap.Modal(document.getElementById('SpecMediaModal'));
     document.getElementById('SpecMediaModal').addEventListener('hidden.bs.modal', function () {
         var $block = $("#SpecMedia");
-        syncSpecMediaOrder($block);
-        $block.find("ul > li.upload_list").remove();
-        UploadPreviewFrameClear($block);
+        specMediaManager.clearPreview();
         var $row = $block.data("spec-row");
         if ($row && $row.length) refreshSpecThumb($row);
     });
-
-    // 依畫面上的 li 順序，把 bucket 陣列「就地」重排（必須保留同一個陣列參照）
-    function syncSpecMediaOrder($block) {
-        var store = $block.data("files");
-        if (!store) return;
-
-        var ordered = [];
-        $block.find("ul > li.upload_list").each(function () {
-            var $li = $(this);
-            var f;
-            if (typeof $li.data("id") != "undefined") {
-                f = store.find(x => x.Id == $li.data("id"));
-            } else if (typeof $li.data("tempid") != "undefined") {
-                f = store.find(x => x.TempId == $li.data("tempid"));
-            }
-            if (f && ordered.indexOf(f) === -1) ordered.push(f);
-        });
-
-        // 補回沒出現在畫面上的項目（例如已標記刪除的），避免存檔時漏掉刪除
-        store.forEach(function (f) {
-            if (ordered.indexOf(f) === -1) ordered.push(f);
-        });
-
-        // 就地替換內容，維持同一個陣列參照（spec_media_map[key] 與 $block.data("files") 是同一個陣列）
-        store.length = 0;
-        Array.prototype.push.apply(store, ordered);
-    }
 
     $price_modal = $("#PriceModal >.modal-dialog > .modal-content > .modal-body > .priceSetting >.price_option");
     $("#SortCheck").on("change", function () {
@@ -1045,6 +1744,8 @@ function FormDataClear() {
     keyId = 0;
     $removedFromShelves.prop("checked", false);
     $display.prop("checked", false);
+    $popularVisible.prop("checked", true);
+    $popularValue.text("0");
     $name.val("");
     $name_count.text(0);
     $itemNo.val("");
@@ -1072,16 +1773,15 @@ function FormDataClear() {
     suggest_price_list = [];
     price_tid = 0;
     temp_psid = 0;
-    $(".data_upload").each(function () {
-        UploadPreviewFrameClear($(this));
-    });
-    $(".data_upload > ul > .upload_list").remove();
-    total_files = [];
+    productMediaManager.reset();
+    productFileManager.reset();
+    specMediaManager.reset();
     spec_media_map = {};
-    $("#SpecMedia").data("files", null).data("spec-key", null);
+    $("#SpecMedia").data("spec-key", null).data("spec-row", null);
 }
 function contentReady(e) {
     product_list = e;
+    loadLastProductImportInfo(false);
 
     if (!elementReady) {
         pendingHashEdit = true;
@@ -1099,6 +1799,11 @@ function hashChange(e) {
     }
 }
 function HashDataEdit() {
+    if (!elementReady) {
+        pendingHashEdit = true;
+        return;
+    }
+
     FormDataClear();
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
@@ -1142,10 +1847,8 @@ function editButtonClicked(e) {
     window.location.hash = keyId
 }
 function paletteButtonClicked(e) {
-    $("#gjs").data("id", e.row.key);
-    setPage(e.row.key);
-    keyId = e.row.key + "-1";
-    window.location.hash = keyId;
+    keyId = e.row.key;
+    window.location.hash = keyId + "-1";
 }
 function FormDataSet(result) {
     //console.log(result)
@@ -1155,11 +1858,11 @@ function FormDataSet(result) {
     TechCertDataSet(result.techCertDatas);
 
     result.multimedia.forEach(media => {
-        UploadListAdd(media, $("#ProdMedia"));
+        productMediaManager.add(media);
     })
 
     result.files.forEach(file => {
-        UploadListAdd(file, $("#ProdFiles"));
+        productFileManager.add(file);
     })
     $("#ProdMedia > ul > li:first-child").trigger("click");
 
@@ -1193,6 +1896,8 @@ function FormDataSet(result) {
     disp_opt = result.disp_Opt;
     $removedFromShelves.prop("checked", !result.removedFromShelves);
     $display.prop("checked", result.visible);
+    $popularVisible.prop("checked", result.popularVisible);
+    $popularValue.text(Number(result.popular ?? result.Popular ?? 0).toLocaleString("zh-TW"));
     $noStockManagement.prop("checked", result.noStockManagement);
     $noStockManagement.prop("checked", result.noStockManagement);
     $noStockManagement.trigger("change");
@@ -1740,242 +2445,11 @@ function OpenSpecMediaModal($row) {
     var $block = $("#SpecMedia");
     var bucket = spec_media_map[key] || (spec_media_map[key] = []);
 
-    // 容器指向該列的 bucket（co.File 之後讀寫都會落到這裡）
-    $block.data("files", bucket);
     $block.data("spec-key", key);
-    $block.data("file_num", 0);
-
-    // 重建清單
-    $block.find("ul > li.upload_list").remove();
-    UploadPreviewFrameClear($block);
-    bucket.filter(f => !f.IsDelete).forEach(function (f) {
-        SpecMediaRowRender(f, $block);
-    });
-
-    // 預設顯示預覽：有圖就顯示第一張，沒有則顯示預設框
-    var $default = $block.find(".preview_frame .default_frame");
-    $block.find(".preview_frame .default_frame").addClass("d-none");
-
-    var $items = $block.find("ul > li.upload_list");
-    if ($items.length) {
-        $items.first().trigger("click");                    // 有圖：顯示第一張，預設框保持隱藏
-    }
-
-
     $block.data("spec-row", $row);
+    specMediaManager.setFiles(bucket);
+    $block.find("ul > li.upload_list").first().trigger("click");
     specMediaModal.show();
-}
-
-// 從內部 obj 渲染一列（不 push，資料已在 bucket）
-function SpecMediaRowRender(obj, $target) {
-    var item = $($("#TemplateUploadList").html()).clone();
-    var $ul = $target.children("ul");
-    var file_num = $ul.find("li.upload_list").length + 1;
-
-    item.data("uploadtype", obj.Type);
-    item.data("edit", false);
-    item.data("serno", file_num);
-    item.find(".ser_no").val(file_num);
-    if (typeof obj.Id != "undefined") item.data("id", obj.Id);
-    else item.data("tempid", obj.TempId);
-    item.find(".title").text(obj.Name || "");
-
-    var file = obj.File;
-    if (!!file) {
-        switch (obj.Type) {
-            case 2: item.find(".thumb_img").attr("src", "/images/defaultImage/360.jpg"); break;
-            case 3: item.find(".thumb_img").attr("src", "/images/defaultImage/video.jpg"); break;
-            case 4: item.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${file}/hqdefault.jpg`); break;
-            default: item.find(".thumb_img").attr("src", obj.Link || file); break;
-        }
-        var href = obj.Type == 4 ? `https://www.youtube.com/watch?v=${file}` : (obj.Link || file);
-        item.find(".btn_link").removeClass("d-none").attr("href", href);
-    } else item.find(".btn_link").addClass("d-none");
-
-    item.on("click", function () { co.File.ListFile($(this)); });
-
-    item.find(".ser_no").on("blur", function () {
-        var $self = $(this);
-        var $uploadList = $target.find(".upload_list");
-        if ($self.val() < 1) $self.val(1);
-        else if ($self.val() > $uploadList.length) $self.val($uploadList.length);
-        if ($self.val() != item.data("serno")) {
-            if ($self.val() > item.data("serno")) {
-                SortChange($uploadList, "bigger", item.data("serno"), $self.val());
-                $ul.children("li").eq(parseInt($self.val()) - 1).after(item);
-            } else if ($self.val() < item.data("serno")) {
-                SortChange($uploadList, "smaller", $self.val(), item.data("serno"));
-                $ul.children("li").eq(parseInt($self.val()) - 1).before(item);
-            }
-        }
-        item.data("serno", $self.val());
-    });
-
-    item.find(".btn_remove").on("click", function (e) {
-        e.preventDefault();
-        var $self = $(this).parents("li").first();
-        var store = co.File.filesOf($target);
-        if (typeof ($self.data("id")) != "undefined") {
-            var s = store.find(f => f["Id"] == $self.data("id"));
-            if (s) s["IsDelete"] = true;
-        } else if (typeof ($self.data("tempid")) != "undefined") {
-            var idx = store.findIndex(f => f["TempId"] == $self.data("tempid"));
-            if (idx >= 0) store.splice(idx, 1);
-        }
-        UploadPreviewFrameClear($target);
-        $self.remove();
-    });
-
-    $ul.children(".btn_upload_add").before(item);
-    $target.data("file_num", file_num);
-}
-
-function UploadListAdd(result, $target) {
-    var item = $($("#TemplateUploadList").html()).clone();
-    var item_serno = item.find(".ser_no"),
-        item_btn_remove = item.find(".btn_remove");
-    var file_num = $target.find("ul > li").length - 1;
-    var store = co.File.filesOf($target);
-    var tempId = store.length;
-    if (typeof (file_num) == "undefined") file_num = 0;
-    if (result == null) {
-        $target.find("ul > li").each(function () {
-            var $self = $(this);
-            if ($self.hasClass("upload_list") && $self.find(".title").text() == "") {
-                $self.remove();
-                file_num -= 1;
-            }
-        })
-
-        file_num += 1;
-        item.data("tempid", tempId);
-        item.data("serno", file_num);
-        item_serno.val(file_num);
-        if ($target.find(".select_frame").length == 0 && typeof ($target.data("uploadtype")) != "undefined")
-            item.data("uploadtype", $target.data("uploadtype"));
-        else
-            item.data("uploadtype", 0);
-        item.data("edit", false);
-        item.on("click", function () {
-            co.File.ListFile($(this));
-        })
-    } else if (typeof (result.id) == "undefined") {
-        item.data("tempid", result.TempId);
-        item.data("serno", file_num);
-        item_serno.val(file_num);
-        item.data("uploadtype", result.Type);
-        item.data("edit", false);
-        item.find(".title").text(result.Name);
-        if (!!result.Link) {
-            item.find(".thumb_img").attr("src", result.Link);
-        } else if (result.Type == 2)
-            item.find(".thumb_img").attr("src", `/images/defaultImage/360.jpg`);
-        else if (result.Type == 3)
-            item.find(".thumb_img").attr("src", `/images/defaultImage/video.jpg`);
-        item.on("click", function () {
-            co.File.ListFile($(this));
-        })
-    } else {
-        file_num += 1;
-
-        item.data("id", result.id);
-        item.data("serno", file_num);
-        item_serno.val(file_num);
-        item.data("uploadtype", result.fileType);
-        item.data("edit", false);
-        item.find(".title").text(result.name);
-
-        var obj = {};
-        obj["Id"] = result.id;
-        obj["Name"] = result.name;
-        var link = result.link[0];
-        if (result.fileType == 4) {
-            obj["File"] = result.name;
-        } else {
-            obj["File"] = link;
-        }
-        obj["Type"] = result.fileType;
-        obj["IsDelete"] = false;
-        if (!!obj["File"]) {
-            switch (obj.Type) {
-                case 2:
-                    item.find(".thumb_img").attr("src", `/images/defaultImage/360.jpg`);
-                    break;
-                case 3:
-                    item.find(".thumb_img").attr("src", `/images/defaultImage/video.jpg`);
-                    break;
-                case 4:
-                    item.find(".thumb_img").attr("src", `https://img.youtube.com/vi/${obj["File"]}/hqdefault.jpg`);
-                    break;
-                default:
-                    item.find(".thumb_img").attr("src", obj["File"]);
-                    break;
-            }
-            item.find(".btn_link").removeClass("d-none").attr("href", obj["File"]);
-        } else item.find(".btn_link").addClass("d-none");
-        store.push(obj);
-
-        item.on("click", function () {
-            co.File.ListFile($(this));
-        })
-    }
-    $target.data("file_num", file_num);
-    item_serno.on("blur", function () {
-        var $self = $(this);
-        var $uploadList = $target.find(".upload_list");
-        if ($self.val() < 1) {
-            $self.val(1);
-        } else if ($self.val() > $uploadList.length) {
-            $self.val($uploadList.length);
-        }
-        if ($self.val() != item.data("serno")) {
-            if ($self.val() > item.data("serno")) {
-                SortChange($uploadList, "bigger", item.data("serno"), $self.val())
-                $target.children("ul").children("li").eq(parseInt($self.val()) - 1).after(item);
-            } else if ($self.val() < item.data("serno")) {
-                SortChange($uploadList, "smaller", $self.val(), item.data("serno"))
-                $target.children("ul").children("li").eq(parseInt($self.val()) - 1).before(item);
-            }
-        }
-        item.data("serno", $self.val());
-    })
-
-    item_btn_remove.on("click", function (e) {
-        e.preventDefault();
-        var $self = $(this).parents("li").first();
-        var $uploadList = $target.find(".upload_list");
-        if (item.data("serno") < $target.data("file_num")) {
-            SortChange($uploadList, "bigger", item.data("serno"), $target.data("file_num"));
-        }
-        if (typeof ($self.data("id")) != "undefined") {
-            store.find(item => item["Id"] == $self.data("id"))["IsDelete"] = true;
-        } else if (typeof ($self.data("tempid")) != "undefined") {
-            var tempid = $self.data("tempid");
-            var index = store.findIndex(item => item["TempId"] == tempid);
-            if (index >= 0) {
-                store.splice(index, 1);
-                store.forEach(file => {
-                    file["TempId"] = file["TempId"] > tempid ? file["TempId"] - 1 : file["TempId"];
-                })
-            }
-        }
-        UploadPreviewFrameClear($target);
-        $self.remove();
-        $target.data("file_num", $target.data("file_num") - 1);
-    })
-
-    $target.find("ul > .btn_upload_add").before(item);
-    co.File.ListFile(item);
-}
-function UploadPreviewFrameClear($target) {
-    var $self = $target.find(".preview_frame");
-    $self.find(".default_frame").addClass("d-flex");
-    $self.find(".upload_frame").addClass("d-none");
-    $self.find(".media_frame").removeClass("d-flex");
-    $self.find(".youtube_frame").removeClass("d-flex");
-    $self.find(".select_frame").removeClass("d-flex");
-    $self.find(".youtube_preview").empty();
-    $self.find(".media_preview > div").empty();
 }
 /* ********** *****************
 排序 沒有資料的情況下依舊可以拖動 需修改
@@ -2079,6 +2553,7 @@ function AddUp(success_text, error_text, target) {
             Title: $name.val(),
             ItemNo: $itemNo.val(),
             Visible: $display.is(":checked"),
+            PopularVisible: $popularVisible.is(":checked"),
             RemovedFromShelves: !$removedFromShelves.is(":checked"),
             NoStockManagement: $noStockManagement.is(":checked"),
             Ser_No: $("#SortCheck").is(":checked") ? $(`[name="serNo"]`).val() : 500,
@@ -2096,18 +2571,18 @@ function AddUp(success_text, error_text, target) {
             if (result.success) {
                 Coker.sweet.success(success_text, null, true);
                 var fileListSave = [];
-                if (total_files.length > 0) {
-                    $("#ProductForm .data_upload > ul > li").each(function () {
+                var productFiles = productMediaManager.getFiles().concat(productFileManager.getFiles());
+                if (productFiles.length > 0) {
+                    $("#ProdMedia, #ProdFiles").children("ul").children("li.upload_list").each(function () {
                         var $self = $(this);
-                        if (!$self.hasClass("btn_upload_add")) {
-                            var data = [];
-                            total_files.forEach(file => {
-                                if ((typeof (file["Id"]) != "undefined" && file["Id"] == $self.data("id")) || (typeof (file["TempId"]) != "undefined" && file["TempId"] == $self.data("tempid"))) {
-                                    data.push(file);
-                                }
-                            })
-                            if (data.length > 0) {
-                                switch (data[0]["Type"]) {
+                        var data = [];
+                        productFiles.forEach(file => {
+                            if ((typeof (file["Id"]) != "undefined" && file["Id"] == $self.data("id")) || (typeof (file["TempId"]) != "undefined" && file["TempId"] == $self.data("tempid"))) {
+                                data.push(file);
+                            }
+                        })
+                        if (data.length > 0) {
+                            switch (data[0]["Type"]) {
                                     case 1:
                                         if (typeof (data[0]["File"]) == "string") {
                                             co.File.fileSortChange({
@@ -2141,20 +2616,40 @@ function AddUp(success_text, error_text, target) {
                                             })
                                         }
                                         break;
-                                    /* ********** *****************
-                                  360 上傳資料庫，須重打
-                                   ***************************/
                                     case 2:
                                         var formData = new FormData();
                                         formData.append("type", 1);
                                         formData.append("sid", pid);
                                         formData.append("serno", $self.find(".ser_no").val());
-                                        for (var i = 0; i < data.length; i += 3) {
-                                            for (var j = i; j < i + 3; j++) {
-                                                formData.append('files', data[j]);
+                                        formData.append("id", data[0]["Id"] || 0);
+
+                                        var frames = Array.isArray(data[0]["File"]) ? data[0]["File"] : [];
+                                        var frameIds = Array.isArray(data[0]["FrameIds"]) ? data[0]["FrameIds"] : [];
+                                        frames.forEach(function (frame, frameIndex) {
+                                            var frameId = frameIds[frameIndex] || 0;
+                                            formData.append("frameIds", frameId);
+                                            if (frame instanceof File) {
+                                                formData.append("files", frame);
+                                                formData.append("fileIndexes", frameIndex);
                                             }
-                                            formData.delete('files');
-                                        }
+                                        });
+
+                                        fileListSave.push(
+                                            co.File.Upload360(formData).then(function (result) {
+                                                if (!result || !result.success || !result.files || !result.files.length) {
+                                                    var errorMessage = result && (result.error || (result.errorFiles || []).join("、"));
+                                                    if (co.sweet) co.sweet.error("360 圖片儲存失敗", errorMessage || "請重新上傳");
+                                                    return $.Deferred().reject(result).promise();
+                                                }
+                                                data[0].Id = result.files[0].id;
+                                                data[0].FrameIds = result.files.map(file => file.id);
+                                                data[0].File = result.files.map(file => file.path);
+                                                data[0].Links = data[0].File.slice();
+                                                data[0].Link = data[0].File[0] || "";
+                                                data[0].Name = `360°（${data[0].File.length} 張）`;
+                                                return result;
+                                            })
+                                        );
                                         break;
                                     /* ********** *****************
                                        影片上傳資料庫，不確定錯誤是否在這
@@ -2184,17 +2679,25 @@ function AddUp(success_text, error_text, target) {
                                         break;
                                     case 4:
                                         var Id = typeof (data[0]["Id"]) == "undefined" ? 0 : data[0]["Id"];
+                                        var externalVideoData = new FormData();
+                                        externalVideoData.append("Id", Id);
+                                        externalVideoData.append("File", data[0]["File"] + "");
+                                        externalVideoData.append("SId", pid);
+                                        externalVideoData.append("Type", 1);
+                                        externalVideoData.append("SerNo", $self.find(".ser_no").val());
+                                        externalVideoData.append("removeThumbnail", data[0].RemoveThumbnail === true);
+                                        externalVideoData.append("aspectRatio", data[0].AspectRatio || "auto");
+                                        if (data[0].ThumbnailFile instanceof File) externalVideoData.append("thumbnail", data[0].ThumbnailFile);
                                         fileListSave.push(
-                                            co.File.UploadYTLink({
-                                                Id: Id,
-                                                File: data[0]["File"] + "",
-                                                SId: pid,
-                                                Type: 1,
-                                                SerNo: $self.find(".ser_no").val(),
-                                            }).done(function (result) {
+                                            co.File.UploadExternalVideo(externalVideoData).done(function (result) {
                                                 var _dfr = $.Deferred();
-                                                if (result.success && typeof (result.files) != "undefined") {
-                                                    data[0].Id = result.files[0].id;
+                                                if (result.success) {
+                                                    var saved = result.object || result.Object || {};
+                                                    data[0].Id = saved.id || saved.Id || data[0].Id;
+                                                    data[0].Thumbnail = saved.thumbnail || saved.Thumbnail || data[0].Thumbnail || "";
+                                                    data[0].AspectRatio = saved.aspectRatio || saved.AspectRatio || data[0].AspectRatio || "auto";
+                                                    data[0].ThumbnailFile = null;
+                                                    data[0].RemoveThumbnail = false;
                                                     return _dfr.resolve();
                                                 } else return _dfr.reject();
                                                 return _dfr.promise();
@@ -2226,20 +2729,15 @@ function AddUp(success_text, error_text, target) {
                                                 })
                                             );
                                         }
-                                }
                             }
                         }
                     })
 
-                    total_files.forEach(file => {
+                    productFiles.forEach(file => {
                         if (typeof (file["IsDelete"]) != "undefined" && file["IsDelete"] == true) {
                             switch (file["Type"]) {
-                                /* ********** *****************
-                               360檔案刪除未處理
-                                ***************************/
-                                case 2:
-                                    break;
                                 case 1:
+                                case 2:
                                 case 3:
                                 case 4:
                                 case 5:
@@ -2337,15 +2835,25 @@ function AddUp(success_text, error_text, target) {
                                 }));
                                 break;
                             }
-                            case 4: {   // Youtube
-                                fileListSave.push(co.File.UploadYTLink({
-                                    Id: typeof f.Id == "undefined" ? 0 : f.Id,
-                                    File: f.File + "",
-                                    SId: stockId,
-                                    Type: 16,
-                                    SerNo: serno
-                                }).done(function (r) {
-                                    if (r.success && typeof r.files != "undefined") f.Id = r.files[0].id;
+                        case 4: {   // 外嵌影片（相容舊 YouTube 資料）
+                                var externalVideoData = new FormData();
+                                externalVideoData.append("Id", typeof f.Id == "undefined" ? 0 : f.Id);
+                                externalVideoData.append("File", f.File + "");
+                                externalVideoData.append("SId", stockId);
+                                externalVideoData.append("Type", 16);
+                                externalVideoData.append("SerNo", serno);
+                                externalVideoData.append("removeThumbnail", f.RemoveThumbnail === true);
+                                externalVideoData.append("aspectRatio", f.AspectRatio || "auto");
+                                if (f.ThumbnailFile instanceof File) externalVideoData.append("thumbnail", f.ThumbnailFile);
+                                fileListSave.push(co.File.UploadExternalVideo(externalVideoData).done(function (r) {
+                                    if (r.success) {
+                                        var saved = r.object || r.Object || {};
+                                        f.Id = saved.id || saved.Id || f.Id;
+                                        f.Thumbnail = saved.thumbnail || saved.Thumbnail || f.Thumbnail || "";
+                                        f.AspectRatio = saved.aspectRatio || saved.AspectRatio || f.AspectRatio || "auto";
+                                        f.ThumbnailFile = null;
+                                        f.RemoveThumbnail = false;
+                                    }
                                 }));
                                 break;
                             }
@@ -2374,16 +2882,8 @@ function AddUp(success_text, error_text, target) {
         })
     }
 }
-function setTotalFile(obj) {
-    total_files.forEach((index, item) => {
-        obj.data.forEach((index2, item2) => {
-            if (typeof (item.TempId) != "") {
-
-            }
-        });
-    });
-}
 function MoveToContent() {
+    $("body").removeClass("grapesEdit");
     if (keyId == 0) $("#ProductContent .card-header .titile").text("新增商品")
     else $("#ProductContent .card-header .titile").text("編輯商品")
     $("#ProductForm").removeClass("was-validated");
@@ -2393,15 +2893,17 @@ function MoveToContent() {
     tagContentRefresh();
 }
 function MoveToCanvas() {
+    $("body").addClass("grapesEdit");
     $("#gjs").data("id", keyId);
     setPage(keyId);
-    $("#TopLine > a").removeClass("d-none");
+    $("#TopLine .btn_back").removeClass("d-none");
     $("#ProductList").addClass("d-none");
     $("#ProductContent").addClass("d-none");
     $("#ProductCanvas").removeClass("d-none");
 }
 function BackToList(refresh) {
-    $("#TopLine > a").addClass("d-none");
+    $("body").removeClass("grapesEdit");
+    $("#TopLine .btn_back").addClass("d-none");
     $("#ProductList").removeClass("d-none");
     $("#ProductCanvas").addClass("d-none");
     $("#ProductContent").addClass("d-none");

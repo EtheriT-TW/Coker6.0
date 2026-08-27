@@ -316,9 +316,18 @@
         top: 0;
     }
 
+.accordion-button:has(img){
+    padding:0;
+}
+
+.accordion-button::after{
+    margin-left:unset;
+    position:absolute;
+    right:5%;
+}
 /* ===== Type Change Frame ===== */
 .type_change_frame > .catalog .box-shadow {
-    box-shadow: 2px 3px 5px rgba(50,50,50,0.3);
+    box-shadow: 2px 3px 5px rgba(73, 73, 73, 0.2);
     height: 100%;
     padding: 10px;
 }
@@ -699,7 +708,7 @@
     .btn_addToCar button:before {
         font-family: 'Font Awesome 6 Free';
         font-weight: 900;
-        content: "\f002";
+        content: "\f217";
         padding-right: .25rem;
     }
 
@@ -715,6 +724,12 @@
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
+}
+
+/* 商品連結為整張卡片時，快速選購按鈕必須位於其命中區域上方。 */
+.type4 .btn_addToCar {
+    z-index: 3;
+    pointer-events: auto;
 }
 
 .type5 .btn_addToCar {
@@ -849,6 +864,10 @@
 
     .type_change_frame .catalog.type1 .tags .badge {
         max-width: 10rem;
+    }
+
+    .type_change_frame .catalog.type1 .col.type5 .tags .badge{
+        max-width: 19rem;
     }
 
     .type_change_frame .catalog.type1 .col.type5 figure figcaption .bottom-row {

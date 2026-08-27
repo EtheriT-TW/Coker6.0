@@ -9,8 +9,12 @@
 <script nonce="@ViewBag.Nonce">
     const MinOrderForRedemption = @Json.Serialize(ViewBag.MinOrderForRedemption ?? 0);
     const MaxRedemptionPercent = @Json.Serialize(ViewBag.MaxRedemptionPercent ?? 0);
+    const MaximumDiscount = @Json.Serialize(ViewBag.MaximumDiscount);
     const MinOrderForEarnPoints = @Json.Serialize(ViewBag.MinOrderForEarnPoints ?? 0);
     const RewardRatePercent = @Json.Serialize(ViewBag.RewardRatePercent ?? 0);
+    const RewardCalculationType = @Json.Serialize(ViewBag.RewardCalculationType ?? 1);
+    const RewardFixedPoints = @Json.Serialize(ViewBag.RewardFixedPoints ?? 0);
+    const RewardFixedPointsCumulative = @Json.Serialize(ViewBag.RewardFixedPointsCumulative ?? true);
 </script>
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
@@ -22,116 +26,27 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 id="staticBackdropLabel" class="modal-title fw-bold">選擇收件地址清單</h5>
+                <h5 id="staticBackdropLabel" class="modal-title fw-bold">選擇常用收件與配送資訊</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                @* @(Html.DevExtreme().DataGrid<RecipientsDto>()
-                .DataSource(d => d.RemoteController().Key("Id")
-                .LoadUrl("/api/Recipients/GetAllList").LoadMethod("Get")
-                )
-                .ID("RecipientsList")
-                .Selection(s =>
-                s.Mode(SelectionMode.Single).ShowCheckBoxesMode(GridSelectionShowCheckBoxesMode.Always)
-                )
-                .RemoteOperations(true)
-                .ColumnHidingEnabled(false)
-                .ShowBorders(true)
-                .FilterRow(filterRow => filterRow
-                .Visible(true)
-                .ApplyFilter(GridApplyFilterMode.Auto)
-                )
-                .SearchPanel(searchPanel => searchPanel
-                .Visible(true)
-                .Placeholder("請輸入要搜尋的資料")
-                )
-                .Editing(editing =>
-                {
-                editing.Mode(GridEditMode.Row);
-                editing.AllowDeleting(true);
-                editing.UseIcons(true);
-                })
-                .Columns(c =>
-                {
-                c.AddFor(e => e.Id).Caption("編號").Visible(false).AllowEditing(false).SortOrder(SortOrder.Desc);
-                c.AddFor(e => e.Name).Caption("姓名").AllowEditing(false);
-                c.AddFor(e => e.Email).Caption("電子郵件").AllowEditing(false);
-                c.AddFor(e => e.Address).Caption("地址").AllowEditing(false);
-                c.AddFor(e => e.TelePhone).Caption("行動電話").AllowEditing(false);
-                c.AddFor(e => e.CellPhone).Caption("聯絡電話").AllowEditing(false);
-                c.Add()
-                .Type(GridCommandColumnType.Buttons)
-                .Buttons(b =>
-                {
-                b.Add().Name("delete").OnClick("RecipientsList_DeleteButtonClicked");
-                });
-                })
-                .Toolbar(toolbar =>
-                {
-                toolbar.Items(i =>
-                {
-                i.Add()
-                .Name(DataGridToolbarItem.SearchPanel)
-                .ShowText(ToolbarItemShowTextMode.Always)
-                .Location(ToolbarItemLocation.After);
-                });
-                })
-                //.OnSelectionChanged("RecipientsList_SelectChange")
-                .OnContentReady("RecipientsList_ContentReady")
-                .Paging(paging => paging.PageSize(10))
-                ) *@
-                @* <table class="table">
-                <thead>
-                <tr>
-                <th scope="col" class="fw-normal">選擇</th>
-                <th scope="col" class="fw-normal">姓名</th>
-                <th scope="col" class="fw-normal">郵遞區號</th>
-                <th scope="col" class="fw-normal">地址</th>
-                <th scope="col" class="fw-normal">聯絡電話</th>
-                <th scope="col" class="fw-normal">行動電話</th>
-                <th scope="col" class="fw-normal">刪除</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                <th scope="row" class="fw-normal">
-                <label class="d-none" for="radio_recipient1">選擇</label>
-                <input id="radio_recipient1" class="form-check-input" type="radio" name="RecipientDataRadio" checked>
-                </th>
-                <td class="fw-normal">姓○</td>
-                <td class="fw-normal">806</td>
-                <td class="fw-normal">地址資料***</td>
-                <td class="fw-normal">07-1234***</td>
-                <td class="fw-normal">0912-******</td>
-                <td class="fw-normal">
-                <button type="button" class="btn_delete_recipient bg-transparent border-0">
-                <i class="fa-solid fa-xmark"></i>
-                <span class="d-none">送出</span>
-                </button>
-                </td>
-                </tr>
-                <tr>
-                <th scope="row" class="fw-normal">
-                <label class="d-none" for="radio_recipient2">選擇</label>
-                <input id="radio_recipient2" class="form-check-input" type="radio" name="RecipientDataRadio">
-                </th>
-                <td class="fw-normal">姓○</td>
-                <td class="fw-normal">806</td>
-                <td class="fw-normal">地址資料***</td>
-                <td class="fw-normal">07-1234***</td>
-                <td class="fw-normal">0912-******</td>
-                <td class="fw-normal">
-                <button type="button" class="btn_delete_recipient bg-transparent border-0">
-                <i class="fa-solid fa-xmark"></i>
-                <span class="d-none">送出</span>
-                </button>
-                </td>
-                </tr>
-                </tbody>
-                </table> *@
+                <div id="RecipientsListLoading" class="py-4 text-muted" role="status">正在讀取常用收件資訊……</div>
+                <div id="RecipientsListError" class="recipient-list-message d-none" role="alert">
+                    <div class="fw-bold mb-2">暫時無法讀取常用收件資訊</div>
+                    <div class="small mb-3 recipient-list-error-detail"></div>
+                    <button type="button" class="recipient-modal-button recipient-modal-button-secondary btn_recipient_retry">重新讀取</button>
+                </div>
+                <div id="RecipientsListEmpty" class="py-4 d-none">
+                    <div class="recipient-empty-icon" aria-hidden="true">＋</div>
+                    <div class="recipient-empty-title fw-bold fs-5 mb-2">目前沒有常用收件資訊</div>
+                    <div class="recipient-empty-description small text-muted mb-4">先新增收件人與配送方式，下次結帳就能直接選用。</div>
+                    <button type="button" class="recipient-modal-button recipient-modal-button-primary btn_recipient_new" data-bs-dismiss="modal">新增第一筆收件資訊</button>
+                </div>
+                <div id="RecipientsCardList" class="recipient-card-list text-start"></div>
             </div>
-            <div class="modal-footer justify-content-center border-0">
-                <button type="button" class="text-white border-0 px-5 py-1" data-bs-dismiss="modal">確定</button>
+            <div class="modal-footer justify-content-between border-0">
+                <button type="button" class="recipient-modal-button recipient-modal-button-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="recipient-modal-button recipient-modal-button-primary btn_recipient_new" data-bs-dismiss="modal">＋ 新增收件資訊</button>
             </div>
         </div>
     </div>
@@ -159,18 +74,28 @@
         <div>買過商品<span class="fw-bold">3</span>件</div>
     </a>
 </div>
-<div id="BuyStepSwiper" class="container pt-5 pb-4 mt-4 position-relative">
+<div id="BuyStepSwiper" class="container pt-3 pb-4 mt-2 position-relative">
     @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable && !ViewBag.isLogin)
     {
         <div id="memberLogin" class="container my-5">
             <div class="rounded-1 px-3 py-4 bg-white d-flex align-items-center justify-content-center justify-content-sm-start">
-                <div>購買前登入會員可更方便查詢訂單！</div>
+                <div class="member-login-message">購買前登入會員，方便查詢訂單！</div>
                 <button class="btn_call_login bg-transparent rounded-1 ms-0 ms-sm-3">會員登入</button>
             </div>
         </div>
     }
 
-    <div class="swiper shadow-lg mt-5">
+    <div class="swiper_pagination">
+        <div class="swiper_pagination_buystep"></div>
+
+        <div class="step_name d-flex text-center justify-content-between p-0">
+            <div class="">購物車</div>
+            <div class="">填寫資料</div>
+            <div class="">完成訂購</div>
+        </div>
+    </div>
+
+    <div class="swiper shadow-lg mt-3">
         <div class="swiper-wrapper">
             <div id="Step1" class="card text-center swiper-slide">
                 <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
@@ -201,7 +126,7 @@
                                 <small class="text-muted">已選 <span class="js-selected-count">0</span> 件</small>
                                 <div>
                                     <span class="fw-bold">小計：</span>
-                                    <span class="js-group-subtotal red_text fw-bold" data-subtotal="0">$0</span>
+                                    <span class="js-group-subtotal price red_text fw-bold" data-subtotal="0">0</span>
                                 </div>
                             </div>
                         </li>
@@ -224,9 +149,9 @@
                                             <div data-key="spec" class="pro_specification pe-3"></div>
                                         </div>
                                         <div data-key="freight" class="fixedFreight"></div>
+                                        <div class="js-cart-item-message d-none d-lg-block text-start"></div>
                                     </div>
                                 </a>
-                                <div class="js-cart-item-message d-none d-lg-block col-lg-10 offset-lg-2 text-start"></div>
                             </div>
                             <div class="nostock text-start col-sm-6 col d-none">
                                 <div data-key="title" class="pro_name d-lg-none single_line fw-bold"></div>
@@ -243,11 +168,11 @@
                                             <div data-key="spec" class="pro_specification pe-3"></div>
                                             @*<div class="pro_instructions single_line"></div>*@
                                         </div>
+                                        <div class="js-cart-item-message d-lg-none text-start"></div>
                                     </div>
                                 </a>
-                                <div class="js-cart-item-message d-lg-none col-12 text-start"></div>
 
-                                <div class="cart-item-price col-12 col-lg-4 fw-bold align-self-center text-start text-lg-center">
+                                <div class="cart-item-price col-12 col-lg-4 fw-bold align-self-center text-start text-lg-center" aria-label="單價">
                                     <div data-key="oldPrice" data-type="price" class="pro_old_unit fw-light text-decoration-line-through d-none"></div>
                                     <div data-key="price" data-type="price" class="pro_unit cart-price-block">
                                         <div class="cart-price-main"></div>
@@ -269,7 +194,7 @@
                                     </button>
                                 </div>
 
-                                <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none cart-price-block" data-subtotal="">
+                                <div data-key="subtotal" data-type="price" class="pro_subtotal col-4 fw-bold fs-5 d-none cart-price-block" data-subtotal="" aria-label="小計">
                                     <div class="cart-price-main"></div>
                                     <div class="cart-price-bonus d-none"></div>
                                 </div>
@@ -299,10 +224,42 @@
                         </li>
                     </template>
                     <ul class="purchase_list ps-4 pe-5"></ul>
+                    <section id="CartMarketingRewards" class="cart-marketing-rewards d-none" aria-live="polite">
+                        <div class="cart-marketing-heading">
+                            <div>
+                                <span class="cart-marketing-kicker">購物車限定優惠</span>
+                                <h3 class="cart-marketing-title">滿額加價購／贈品</h3>
+                            </div>
+                            <span class="cart-marketing-selected-summary"></span>
+                        </div>
+                        <div class="cart-marketing-campaign-list"></div>
+                    </section>
+                    <div class="modal fade" id="CartProductAddOnModal" tabindex="-1" aria-labelledby="CartProductAddOnModalTitle" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                            <div class="modal-content cart-addon-modal-content">
+                                <div class="modal-header">
+                                    <div>
+                                        <span class="cart-marketing-kicker">購物車直接補選</span>
+                                        <h3 class="modal-title fs-5" id="CartProductAddOnModalTitle">加價購／贈品</h3>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="cart-addon-modal-campaigns"></div>
+                                </div>
+                                <div class="modal-footer cart-addon-modal-footer">
+                                    <span class="cart-addon-modal-summary me-auto"></span>
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                                    <button type="button" class="btn btn-danger js-save-cart-addons">儲存優惠商品</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <partial name="_ProductRewardPreview" />
                     <div class="cart-summary-section">
                         <div class="cart-summary-gap" aria-hidden="true"></div>
-                        <div class="priceline priceline-step1 pe-sm-5 col-12 col-md-7 offset-md-5">
-                            <div class="summary-main-row">
+                        <div class="priceline priceline-step1 pe-lg-5 col-12 col-lg-7 offset-lg-5">
+                            <div class="summary-main-row productAmountLine">
                                 <div class="summary-label">商品金額</div>
                                 <div class="summary-amount dual-price">
                                     <span class="bonus-part"><span class="bonus"></span>點</span>
@@ -311,14 +268,15 @@
                                 </div>
                             </div>
 
-                            <div class="summary-main-row marketingDiscountLine d-none">
+                            <div class="summary-main-row generalProductAmountLine d-none">
                                 <div class="summary-label">
-                                    活動折扣<span class="marketingDiscountName"></span>
+                                    <span>一般商品金額</span>
+                                    <span class="summary-label-detail">（不含加價購）</span>
                                 </div>
-                                <div class="summary-amount price-negative">
-                                    $<span class="marketingDiscount"></span>
-                                </div>
+                                <div class="summary-amount generalProductAmount price"></div>
                             </div>
+
+                            <div class="marketingDiscountLines d-none"></div>
 
                             <div class="summary-main-row bonusDiscionLine d-none">
                                 <div class="summary-label">紅利折抵</div>
@@ -370,38 +328,41 @@
             </div>
 
             <div id="Step3" class="card text-center swiper-slide">
-                <div class="card-header px-3 py-2 d-flex align-items-center justify-content-between">
-                    @* <div class="fs-5 my-2">購物明細</div> *@
-                    <div class="fs-5">訂購人資料</div>
-                    <button class="btn_edit_data bg-transparent border-0 fs-3 ms-1" title="編輯">
-                        <i class="fa-regular fa-pen-to-square"></i>
-                        <span class="d-none">編輯</span>
-                    </button>
-                    <button class="btn_inituser border-0 ms-auto opacity-75 text-decoration-underline">恢復預設資料</button>
-                </div>
-
                 <div class="card-body px-0">
-                    <div id="OrdererForm">
-                        <div class="default_data">
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div data-key="orderer" class="col ps-0 text-start"></div>
+                    <section class="checkout-section-card checkout-orderer-section">
+                        <div class="checkout-section-heading d-flex align-items-center">
+                            <div>
+                                <div class="fs-5">訂購人資料</div>
+                                <div class="small text-muted">確認訂購人的聯絡資料</div>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                <div data-key="ordererEmail" class="col ps-0 text-start"></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                <div data-key="ordererCellPhone" class="col ps-0 text-start"></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div data-key="ordererAddress" class="col ps-0 text-start"></div>
-                            </div>
+                            <button class="btn_edit_data checkout-heading-action bg-transparent border-0 fs-4 ms-2" title="編輯訂購人資料">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                                <span class="d-none">編輯</span>
+                            </button>
+                            <button class="btn_inituser checkout-restore-button border-0 ms-auto">恢復預設資料</button>
                         </div>
 
-                        <form id="Form_Orderer" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+                        <div id="OrdererForm" class="checkout-section-body">
+                            <div class="default_data checkout-data-panel">
+                                <div class="checkout-data-row">
+                                    <div class="checkout-data-label">姓名</div>
+                                    <div data-key="orderer" class="checkout-data-value"></div>
+                                </div>
+                                <div class="checkout-data-row">
+                                    <div class="checkout-data-label">電子郵件</div>
+                                    <div data-key="ordererEmail" class="checkout-data-value"></div>
+                                </div>
+                                <div class="checkout-data-row">
+                                    <div class="checkout-data-label">手機號碼</div>
+                                    <div data-key="ordererCellPhone" class="checkout-data-value"></div>
+                                </div>
+                                <div class="checkout-data-row">
+                                    <div class="checkout-data-label">地址</div>
+                                    <div data-key="ordererAddress" class="checkout-data-value"></div>
+                                </div>
+                            </div>
+
+                            <form id="Form_Orderer" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
                             <input type="hidden" name="authentiity_token" value="@Model.token" />
                             <div class="row mx-0">
                                 <div class="form-floating mb-3 col-12 col-sm-6 px-0">
@@ -460,60 +421,80 @@
                                     <label class="form-check-label" for="MemberUpdate">同時更新會員資料<span class="ps-2 text-danger">*Email為登入帳號，不會回存</span></label>
                                 </div>
                             }
-                        </form>
+                            </form>
 
-                        <form id="Form_Memo" class="px-3 mt-4 pt-4 border-top px-sm-5 needs-validation" method="post" novalidate>
-                            <div class="row">
-                                <div class="form-floating mb-3 col-12">
-                                    <textarea id="TextareaRemark" name="remark" class="form-control" placeholder="備註"></textarea>
-                                    <label for="TextareaRemark" class="px-4">備　　註</label>
-                                </div>
+                        </div>
+                    </section>
+
+                    <div id="RecipientForm" class="recipient-delivery-panel checkout-section-card">
+                        <div class="recipient-panel-heading checkout-section-heading d-flex align-items-center">
+                            <div>
+                                <div class="fs-5">收件與配送資訊</div>
+                                <div class="small text-muted">在同一區完成收件人、配送方式與取貨地點</div>
                             </div>
-                        </form>
-                    </div>
+                        </div>
 
-                    <div id="RecipientForm">
-                        <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                            <div class="fs-5 text-end">收件人資料</div>
-                            <ul class="d-flex flex-wrap text-start mb-0">
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
-                                    <label class="form-check-label" for="radio_recipient_order">同訂購人資訊</label>
-                                </li>
-                                <li class="form-check mb-0 ms-3">
-                                    <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
-                                    <label class="form-check-label" for="radio_recipient_edit">輸入收件人資料</label>
-                                </li>
-                                @if (ViewBag.LoginEnable)
-                                {
-                                    @if (ViewBag.isLogin)
-                                    {
-                                        <li class="form-check mb-0 ms-3 d-none">
-                                            <input id="radio_recipient_choose" class="form-check-input" type="radio" name="RecipientRadio" value="choose" data-bs-toggle="modal" data-bs-target="#RecipientModal">
-                                            <label class="form-check-label" for="radio_recipient_choose">選擇收件人</label>
-                                        </li>
-                                    }
-                                }
-                            </ul>
+                        <div class="recipient-substep px-3 px-sm-5">選擇本次收件資訊</div>
+                        <div class="recipient-source-options px-3 px-sm-5" role="radiogroup" aria-label="選擇收件人資料來源">
+                            <label class="recipient-source-option is-selected" for="radio_recipient_order">
+                                <input id="radio_recipient_order" class="form-check-input" type="radio" name="RecipientRadio" value="order" checked>
+                                <span>
+                                    <strong>同訂購人</strong>
+                                    <small>直接使用訂購人的姓名、電話與地址</small>
+                                </span>
+                            </label>
+
+                            @if (ViewBag.LoginEnable && ViewBag.isLogin)
+                            {
+                                <input id="radio_recipient_choose" class="d-none" type="radio" name="RecipientRadio" value="choose">
+                                <button id="btn_recipient_choose"
+                                        type="button"
+                                        class="recipient-source-option text-start"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#RecipientModal">
+                                    <span class="recipient-source-indicator" aria-hidden="true"></span>
+                                    <span>
+                                        <strong>常用收件</strong>
+                                        <small>一併套用已儲存的收件人與配送方式</small>
+                                    </span>
+                                </button>
+                            }
+
+                            <label class="recipient-source-option" for="radio_recipient_edit">
+                                <input id="radio_recipient_edit" class="form-check-input" type="radio" name="RecipientRadio" value="edit">
+                                <span>
+                                    <strong>新增／<br class="recipient-adjust-break">調整收件</strong>
+                                    <small>新增資料，或沿用目前資料後再調整</small>
+                                </span>
+                            </label>
+
+                            <div id="RecipientActivePanel" class="recipient-active-panel" aria-live="polite"></div>
                         </div>
 
                         <div class="default_data d-none">
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">姓　　名：</div>
-                                <div data-key="recipient" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-summary-label">姓名</div>
+                                <div data-key="recipient" class="recipient-summary-value"></div>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">電子郵件：</div>
-                                <div data-key="recipientEmail" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-summary-label">電子郵件</div>
+                                <div data-key="recipientEmail" class="recipient-summary-value"></div>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">手機號碼：</div>
-                                <div data-key="recipientCellPhone" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-summary-label">手機號碼</div>
+                                <div data-key="recipientCellPhone" class="recipient-summary-value"></div>
                             </div>
-                            <div class="row">
-                                <div class="col-auto col-sm-2 text-end ps-4">地　　址：</div>
-                                <div data-key="recipientAddress" class="col text-start ps-0"></div>
+                            <div class="recipient-summary-row">
+                                <div class="recipient-display-address-label recipient-summary-label">收件地址</div>
+                                <div data-key="recipientAddress" class="recipient-summary-value"></div>
                             </div>
+                        </div>
+
+                        <div class="recipient-copy-actions d-none">
+                            <button id="btn_copy_recipient" type="button" class="recipient-copy-button">
+                                以這份資料另作調整
+                            </button>
+                            <span class="small text-muted">只調整本次收件資訊，不會修改原本的訂購人或常用資料。</span>
                         </div>
 
                         <form id="Form_Recipient" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
@@ -569,12 +550,23 @@
                                 </div>
                             </div>
                         </form>
+
+                        <form id="Form_Memo" class="checkout-order-note px-3 px-sm-4 needs-validation" method="post" novalidate>
+                            <label for="TextareaRemark" class="checkout-order-note-label">訂單備註 <span>選填</span></label>
+                            <div class="small text-muted mb-2">如有配送時段、包裝或其他需求，可在此補充說明。</div>
+                            <textarea id="TextareaRemark" name="remark" class="form-control" placeholder="請輸入本次訂單需要留意的事項"></textarea>
+                        </form>
                     </div>
                     @if (ViewBag.HasInvoice)
                     {
+                        <section class="checkout-section-card checkout-invoice-section">
+                            <div class="checkout-section-heading">
+                                <div class="fs-5">發票資訊</div>
+                                <div class="small text-muted">選擇發票類型與紙本發票寄送對象</div>
+                            </div>
                         <div id="invoiceType">
-                            <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                                <div class="fs-5 text-end">發票類型　</div>
+                            <div class="checkout-subsection-heading px-3 px-sm-5 d-flex align-items-center">
+                                <div class="checkout-subsection-title">發票類型</div>
                                 <ul id="radioType" class="d-sm-flex text-start mb-0">
                                     <li class="form-check mb-0 ms-3">
                                         <input id="radio_type_recipient" class="form-check-input" type="radio" name="InvoiceType" value="personal" checked>
@@ -618,8 +610,7 @@
                                         </form>
                                     }
                                     <!-- 發票另寄（通常不需要額外輸入，寄送選擇會在第三個 block） -->
-                                    <div class="invoice-row personal-sub text-muted" data-personal="paper">
-                                        <div class="invoice-label"></div>
+                                    <div class="invoice-row personal-sub text-muted invoice-paper-note" data-personal="paper">
                                         <div class="invoice-fields">
                                             已選擇「紙本發票」，請於下方選擇發票寄送對象。
                                         </div>
@@ -659,8 +650,8 @@
                         </div>
 
                         <div id="InvoiceForm">
-                            <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                                <div class="fs-5 text-end">發票寄送　</div>
+                            <div class="checkout-subsection-heading px-3 px-sm-5 d-flex align-items-center">
+                                <div class="checkout-subsection-title">發票寄送</div>
                                 <ul class="d-sm-flex text-start mb-0">
                                     <li class="form-check mb-0 ms-3">
                                         <input id="radio_bill_recipient" class="form-check-input" type="radio" name="InvoiceRadio" value="recipient" checked>
@@ -685,14 +676,16 @@
                                 </div>
                             </div>
                         </div>
+                        </section>
                     }
-                    <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                        <div class="fs-5 text-end">運送方式　</div>
-                    </div>
+                    <section id="ShippingSection" aria-labelledby="ShippingSectionTitle">
+                        <div class="recipient-shipping-heading">
+                            <div id="ShippingSectionTitle" class="recipient-substep">配送方式與取貨地點</div>
+                        </div>
 
-                    <form id="RadioShipping" class="px-4 px-sm-5 mb-3 shipping needs-validation" method="post" novalidate>
+                        <form id="RadioShipping" class="px-2 px-sm-4 mb-3 shipping needs-validation" method="post" novalidate>
                         <input type="hidden" name="authentiity_token" value="@Model.token" />
-                        <div class="row gx-0">
+                        <div class="shipping-option-list">
                             @if (Model.freightModels.Count > 0)
                             {
                                 var has_invalid = false;
@@ -701,46 +694,41 @@
                                     var check = freight.Set_Default ? "checked" : "";
                                     var boxFeesJson = System.Text.Json.JsonSerializer.Serialize(freight.LogisticsBoxFees ?? new List<LogisticsBoxFeeDisplayDto>());
 
-                                    <div class="form-check text-start col-12 col-sm-3 my-2">
-                                        <input id="FreeShip_@freight.Id"
-                                               class="form-check-input"
-                                               type="radio"
-                                               name="RadioShipping"
-                                               value="@freight.Id"
-                                               data-freight-status-type="@freight.FreightStatusType"
-                                               data-freight-type="@((int)freight.FreightType)"
-                                               data-discount-freight-type="@(freight.DiscountFreightType.HasValue ? ((int)freight.DiscountFreightType.Value).ToString() : "")"
-                                               data-freight="@(freight.Freight)"
-                                               data-lowcon="@(freight.Low_Con)"
-                                               data-disfreight="@(freight.Dis_Freight)"
-                                               data-isdefault="@freight.Set_Default"
-                                               data-boxfees='@Html.Raw(boxFeesJson)'
-                                               data-support-cash-on-delivery="@freight.SupportCashOnDelivery"
-                                               @check
-                                               required>
-                                        <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
+                                    <div class="shipping-option-row @(freight.GetMap ? "has-cvs" : "")">
+                                        <div class="shipping-choice form-check text-start">
+                                            <input id="FreeShip_@freight.Id"
+                                                   class="form-check-input"
+                                                   type="radio"
+                                                   name="RadioShipping"
+                                                   value="@freight.Id"
+                                                   data-freight-status-type="@freight.FreightStatusType"
+                                                   data-freight-type="@((int)freight.FreightType)"
+                                                   data-discount-freight-type="@(freight.DiscountFreightType.HasValue ? ((int)freight.DiscountFreightType.Value).ToString() : "")"
+                                                   data-freight="@(freight.Freight)"
+                                                   data-lowcon="@(freight.Low_Con)"
+                                                   data-disfreight="@(freight.Dis_Freight)"
+                                                   data-isdefault="@freight.Set_Default"
+                                                   data-boxfees='@Html.Raw(boxFeesJson)'
+                                                   data-is-cvs="@freight.GetMap"
+                                                   data-logistics-type="@((int)freight.LogisticsType)"
+                                                   data-logistics-subtype="@freight.LogisticsSubType"
+                                                   @check
+                                                   required>
+                                            <label class="form-check-label" for="FreeShip_@freight.Id">@freight.Title</label>
 
-                                        @if (freight.GetMap)
-                                        {
-                                            <input type="button"
-                                                   class="btn_getmap bg-transparent border-0 ms-1 text-decoration-underline"
-                                                   value="選擇門市"
-                                                   data-subtype="@freight.LogisticsSubType"
-                                                   data-support-cash-on-delivery="@freight.SupportCashOnDelivery"
-                                                   title="選擇門市">
-                                        }
-
-                                        @{
-                                            if (!has_invalid)
-                                            {
-                                                <div class="invalid-feedback">請選擇運送方式</div>
-                                                has_invalid = true;
+                                            @{
+                                                if (!has_invalid)
+                                                {
+                                                    <div class="invalid-feedback">請選擇運送方式</div>
+                                                    has_invalid = true;
+                                                }
                                             }
-                                        }
-                                    </div>
+                                        </div>
 
-                                    <div class="text-start freight-describe col-12 col-sm-9 my-2">
-                                        @freight.Describe
+                                        <div class="text-start freight-describe">
+                                            @freight.Describe
+                                        </div>
+
                                     </div>
                                 }
                             }
@@ -749,15 +737,22 @@
                                 <div class="noshipping">店家尚未設定運費方式</div>
                             }
                         </div>
-                    </form>
+                        </form>
 
-                    <form id="ecpayLogisticsForm" method="get" action="/api/ThirdParty/ECPayLogisticsGetMap" class="d-none">
-                        <input type="hidden" name="SCIds" />
-                        <input type="hidden" name="LogisticsSubType" />
-                        <input type="hidden" name="IsCollection" />
-                    </form>
+                        <form id="ecpayLogisticsForm" method="get" action="/api/ThirdParty/ECPayLogisticsGetMap" class="d-none">
+                            <input type="hidden" name="SCIds" />
+                            <input type="hidden" name="LogisticsSubType" />
+                            <input type="hidden" name="IsCollection" />
+                        </form>
+                    </section>
 
-                    <div class="priceline priceline-step3 px-3 pe-sm-5 col-12 col-md-7 offset-md-5">
+                    <section class="checkout-section-card checkout-summary-section">
+                        <div class="checkout-section-heading">
+                            <div class="fs-5">訂單金額</div>
+                            <div class="small text-muted">確認商品金額、折扣與運費</div>
+                        </div>
+                        <div class="checkout-section-body checkout-summary-body">
+                    <div class="priceline priceline-step3">
                         <div class="summary-main-row">
                             <div class="summary-label">商品金額</div>
                             <div class="summary-amount dual-price">
@@ -767,14 +762,15 @@
                             </div>
                         </div>
 
-                        <div class="summary-main-row marketingDiscountLine d-none">
+                        <div class="summary-main-row generalProductAmountLine d-none">
                             <div class="summary-label">
-                                活動折扣<span class="marketingDiscountName"></span>
+                                <span>一般商品金額</span>
+                                <span class="summary-label-detail">（不含加價購）</span>
                             </div>
-                            <div class="summary-amount price-negative">
-                                $<span class="marketingDiscount"></span>
-                            </div>
+                            <div class="summary-amount generalProductAmount price"></div>
                         </div>
+
+                        <div class="marketingDiscountLines d-none"></div>
 
                         <div class="summary-main-row bonusDiscionLine d-none">
                             <div class="summary-label">紅利折抵</div>
@@ -813,22 +809,23 @@
                             </div>
                         </div>
                     </div>
+                        </div>
+                    </section>
 
-                    <div class="title px-3 py-2 my-3 d-flex align-items-center">
-                        <div class="fs-5 text-end">付款方式　</div>
-                        @if (Model.paymentModels.Find(e => e.Code == "ECPay") != null)
-                        {
-                            <div class="ecpayWarning text-danger px-5">請先完整填寫資料，才能選擇付款方式</div>
-                        }
+                    <section class="checkout-section-card checkout-payment-section">
+                    <div class="checkout-section-heading payment-section-title">
+                        <div class="fs-5">付款方式</div>
+                        <div class="small text-muted">選擇本次訂單的付款方式</div>
                     </div>
-                    @* <form id="RadioPayment" class="px-4 px-sm-5 text-start border-bottom mb-4 pb-4 needs-validation" method="post" novalidate> *@
-                    <form id="RadioPayment" class="px-4 px-sm-5 text-start border-bottom mb-4 pb-4">
+                    @* <form id="RadioPayment" class="px-4 px-sm-5 text-start needs-validation" method="post" novalidate> *@
+                    <form id="RadioPayment" class="checkout-section-body px-3 px-sm-4 text-start">
                         <input type="hidden" name="authentiity_token" value="@Model.token" />
+                        <div class="checkoutValidationWarning d-none" role="alert"></div>
                         @if (Model.paymentModels.Count > 0)
                         {
                             @foreach (var payment in Model.paymentModels ?? new List<PaymentTypeItemOutputDto>())
                             {
-                                var isECPay = payment.Code == "ECPay";
+                                var isECPay = payment.Code == "ECPay" || payment.FK_ThirdPartyId == 4;
 
                                 <div class="form-check text-start m-0 p-0 @(isECPay ? "d-none" : "")">
                                     <input id="radio_payment_@payment.Code"
@@ -837,8 +834,11 @@
                                            name="RadioPayment"
                                            data-maxamount="@payment.MaxAmount"
                                            data-minamount="@payment.MinAmount"
+                                           data-availability-id="@payment.Id"
                                            value="@payment.Id"
                                            data-third-party-id="@payment.FK_ThirdPartyId"
+                                           data-code="@payment.Code"
+                                           data-cvs-store-selection-mode="@((int)payment.CvsStoreSelectionMode)"
                                            required
                                            data-title="@payment.Title">
 
@@ -847,7 +847,11 @@
                                          data-radioid="radio_payment_@payment.Code">
                                         <div class="d-flex align-items-center">
                                             <span class="paymentradio d-block"></span>
-                                            <div class="paymenttitle">@payment.Title</div>
+                                            <div class="payment-copy">
+                                                <div class="paymenttitle">@payment.Title</div>
+                                                <div class="payment-unavailable-reason small d-none"
+                                                     role="note"></div>
+                                            </div>
                                         </div>
 
                                         @if (!string.IsNullOrWhiteSpace(payment.Icon))
@@ -860,7 +864,7 @@
                                 </div>
                             }
 
-                            @if (Model.paymentModels.Any(e => e.Code == "ECPay"))
+                            @if (Model.paymentModels.Any(e => e.Code == "ECPay" || e.FK_ThirdPartyId == 4))
                             {
                                 <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">
                                     支付方式載入中......
@@ -875,6 +879,21 @@
                             <div class="nopayment">店家尚未設定付款方式</div>
                         }
                     </form>
+                    <div id="CvsStoreSelection" class="checkout-cvs-store-section d-none px-3 px-sm-4 pb-4">
+                        <div class="checkout-cvs-store-heading">取貨門市</div>
+                        <div class="cvs-store-picker">
+                            <input type="button"
+                                   class="btn_getmap cvs-store-button d-none"
+                                   value="請選擇取貨門市"
+                                   aria-describedby="CvsStoreStatus"
+                                   title="選擇取貨門市">
+                            <div id="CvsStoreStatus"
+                                 class="cvs-store-status"
+                                 role="status"
+                                 aria-live="polite"></div>
+                        </div>
+                    </div>
+                    </section>
 
                     <div class="swiper_button mt-4 my-sm-5 row align-items-center justify-content-center">
                         <button class="btn_gray_underline btn_goprev col-auto order-1 order-sm-0 border-0 text-center text-decoration-underline bg-transparent p-2">
@@ -941,14 +960,14 @@
                                         </div>
                                     </a>
 
-                                    <div class="col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center">
+                                    <div class="step4-item-price col-12 col-lg-4 my-3 my-lg-0 fs-5 align-self-center text-start text-lg-center">
                                         <div data-key="price" class="pro_unit"></div>
                                         <div data-key="bonus" class="pro_bonus"></div>
                                     </div>
 
                                     <div data-key="quantity" class="pro_quantity col-12 col-lg-4 fs-5 d-flex justify-content-start justify-content-lg-center"></div>
 
-                                    <div class="pro_subtotal col-4 fw-bold fs-5 d-lg-block d-none text-center">
+                                    <div class="pro_subtotal col-4 fw-bold fs-5 d-none text-center">
                                         <div data-key="subtotal" data-subtotal=""></div>
                                         <div data-key="subtotalBonus"></div>
                                     </div>
@@ -956,7 +975,7 @@
                             </li>
                         </template>
 
-                        <div class="d-flex justify-content-center">
+                        <div class="d-flex justify-content-center mt-3">
                             <button class="btn_view_list border-0 rounded-pill fs-5 px-5 py-2 d-none" type="button" data-bs-toggle="collapse" data-bs-target="#CollapsePurchase" aria-expanded="false" aria-controls="CollapsePurchase">
                                 查看購物清單
                             </button>
@@ -968,10 +987,15 @@
                                 <div data-key="productSubtotal" class="subtotal col-4 price">0</div>
                             </div>
 
-                            <div class="py-2 d-flex justify-content-end text-end step4MarketingDiscountLine d-none">
-                                <div>活動折扣</div>
-                                <div class="step4MarketingDiscount col-4 price-negative price">0</div>
+                            <div class="py-2 d-flex justify-content-end text-end step4GeneralProductAmountLine d-none">
+                                <div>
+                                    <span>一般商品金額</span>
+                                    <span class="summary-label-detail">（不含加價購）</span>
+                                </div>
+                                <div class="step4GeneralProductAmount col-4 price">0</div>
                             </div>
+
+                            <div class="step4MarketingDiscountLines d-none"></div>
 
                             <div class="py-2 d-flex justify-content-end text-end productBonusLine d-none">
                                 <div>商品紅利</div>
@@ -1136,8 +1160,8 @@
                             </div>
                             <div class="border-bottom border-top text-start py-3 my-3">
                                 <div class="mb-2 row align-items-center">
-                                    <div class="col-auto col-sm-2 text-end">應繳金額新台幣：</div>
-                                    <div class="col ps-0">新台幣<span class="total_amount paid_amount fs-5 fw-bold"></span></div>
+                                    <div class="col-auto col-sm-2 text-end">應繳金額：</div>
+                                    <div class="col ps-0"><span class="total_amount paid_amount fs-5 fw-bold"></span></div>
                                 </div>
                                 <div class="paid_date_row mb-2 row align-items-center d-none">
                                     <div class="col-auto col-sm-2 text-end">繳費期限：</div>
@@ -1157,17 +1181,6 @@
         </div>
     </div>
 
-    <div class="swiper_pagination container position-absolute position-relative">
-        <div class="centerline position-absolute container"><hr class="opacity-100" /></div>
-
-        <div class="swiper_pagination_buystep position-absolute"></div>
-
-        <div class="step_name position-absolute container d-flex text-center justify-content-between p-0">
-            <div class="">購物車</div>
-            <div class="">填寫資料</div>
-            <div class="">完成訂購</div>
-        </div>
-    </div>
 </div>
 
 

@@ -63,15 +63,24 @@ function updateGroupSelectedSubtotal($group) {
             sum += Number($li.find('[data-key="subtotal"]').data('subtotal') || 0);
         }
     });
-    $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(`$${sum.toLocaleString()}`);
+    $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(sum.toLocaleString());
     cart.Items.syncHeaderCheckbox($group);
+}
+function syncAdditionalSelection($group) {
+    const hasSelectedPrimary = $group
+        .find('li.purchase_item:not(.cart-additional-item) input[name="buyItems"]:enabled:checked')
+        .length > 0;
+
+    $group.find('li.cart-additional-item input[name="buyItems"]:enabled')
+        .prop('checked', hasSelectedPrimary);
+    $group.toggleClass('has-selected-primary', hasSelectedPrimary);
 }
 function clearOtherGroupsExcept($group) {
     $('.purchase_group').not($group).each(function () {
         const $g = $(this);
         $g.find('.js-group-check').prop({ checked: false, indeterminate: false });
         $g.find('input[name="buyItems"]').prop('checked', false);
-        $g.find('.js-group-subtotal').attr('data-subtotal', 0).text('$0');
+        $g.find('.js-group-subtotal').attr('data-subtotal', 0).text('0');
         $g.find('.js-selected-count').text(0);
     });
 }
@@ -81,6 +90,45 @@ function CardDataGet() {
             cart.Items.CartInit(result)
         }
     });
+}
+function ReloadCartDisplay() {
+    var deferred = $.Deferred();
+
+    Product.GetAll.Cart().done(function (result) {
+        var items = Array.isArray(result) ? result : [];
+        S.shopping_cart_data = [];
+
+        if (items.length > 0) {
+            cart.Items.CartInit(items);
+        } else {
+            cart.Items.renderCartGroups([]);
+            cart.Items.refreshHasProds();
+            if (cart.Forms && typeof cart.Forms.DetailsClear === "function") {
+                cart.Forms.DetailsClear();
+            }
+        }
+
+        deferred.resolve(items);
+    }).fail(function (error) {
+        deferred.reject(error);
+    });
+
+    return deferred.promise();
+}
+function ReloadCartDropdown(items) {
+    if (typeof window.CartDropAdd !== "function") return;
+
+    $("#Car_Dropdown > ul").empty();
+    $("#Car_Badge").text("");
+
+    (items || []).forEach(function (item) {
+        window.CartDropAdd(item);
+    });
+
+    if (!items || items.length === 0) {
+        $("#Car_Dropdown_Null").removeClass("d-none");
+        $("#Car_Dropdown > .btn_car_buy").attr("disabled", "");
+    }
 }
 function groupByFreight(list) {
     return list.reduce((acc, it) => {
@@ -128,25 +176,96 @@ function renderCartGroups(result) {
         const $groupItems = $group.find('.group_items');
 
         // 塞入該組 items（沿用你原有 CartListAdd，但改讓它可以指定容器）
-        items.forEach(row => {
-            var originalPrice = row.oldPrice != null ? row.oldPrice : row.price;
-            var currentPrice = row.price != null ? row.price : 0;
+        // API 已依活動來源完成主從排序，不可再把所有優惠商品集中移到最後。
+        const orderedItems = items.slice();
+        const appendProductAdditionalSection = function () {
+            $groupItems.append(
+                '<li class="cart-additional-section-label js-cart-addon-group-action d-none" ' +
+                'data-group-id="' + meta.id + '">' +
 
-            // 存一份「加入購物車當時的價」到自訂欄位，給後面需要的人用
-            row.originalPriceInCart = originalPrice;
-            row.priceChangeFlag = null;  // 'up' = 調漲, 'down' = 降價
+                '<span>' +
+                '<i class="fa-solid fa-turn-down me-2"></i>' +
+                '加價購／贈品' +
+                '</span>' +
 
-            if (originalPrice > 0 && currentPrice > 0 && originalPrice !== currentPrice) {
-                row.priceChangeFlag = (currentPrice > originalPrice) ? 'up' : 'down';
+                '<span class="cart-additional-section-actions">' +
+                '<small>會隨本組主要商品一併結帳</small>' +
+
+                '<button type="button" ' +
+                'class="btn btn-sm btn-outline-danger js-open-cart-addons">' +
+                '<i class="fa-solid fa-plus me-1"></i>' +
+                '補選／調整' +
+                '</button>' +
+                '</span>' +
+                '</li>'
+            );
+        };
+
+        const appendOrderAdditionalSection = function () {
+            $groupItems.append(
+                '<li class="cart-order-additional-section-label">' +
+                '<span>' +
+                '<strong>訂單加價購／贈品</strong>' +
+                '<small>本筆購物車符合優惠活動條件</small>' +
+                '</span>' +
+                '</li>'
+            );
+        };
+
+        let previousAdditionalType = null;
+
+        orderedItems.forEach(row => {
+            var isAdditional = row.isAdditional === true;
+
+            if (!isAdditional) {
+                previousAdditionalType = null;
             }
-            // === 原本的程式 ===
+            else {
+                var parentLabel = String(
+                    cart.Utils.getValueIgnoreCase(row, "additionalParentLabel") || ""
+                ).trim();
+
+                var additionalType =
+                    parentLabel === "本筆訂單"
+                        ? "order"
+                        : "product";
+
+                if (additionalType !== previousAdditionalType) {
+                    if (additionalType === "order") {
+                        appendOrderAdditionalSection();
+                    }
+                    else {
+                        appendProductAdditionalSection();
+                    }
+                }
+
+                previousAdditionalType = additionalType;
+            }
+
+            var originalPrice =
+                row.oldPrice != null ? row.oldPrice : row.price;
+
+            var currentPrice =
+                row.price != null ? row.price : 0;
+
+            row.originalPriceInCart = originalPrice;
+            row.priceChangeFlag = null;
+
+            if (
+                originalPrice > 0 &&
+                currentPrice > 0 &&
+                originalPrice !== currentPrice
+            ) {
+                row.priceChangeFlag =
+                    currentPrice > originalPrice ? "up" : "down";
+            }
+
             row.__groupId = meta.id;
+
             cart.Items.CartListAdd(row, $groupItems);
         });
-
-
         // 初始化本組已選小計/件數
-        $group.find('.js-group-subtotal').attr('data-subtotal', 0).text('$0');
+        $group.find('.js-group-subtotal').attr('data-subtotal', 0).text('0');
         $group.find('.js-group-check').prop('indeterminate', false);
         $group.find('.js-selected-count').text(0);
 
@@ -164,8 +283,8 @@ function updateOverallSubtotal() {
     $('#Step1 .purchase_list .purchase_group_header [data-field="subtotal"]').each(function () {
         sum += Number($(this).attr('data-subtotal') || 0);
     });
-    $('#Step1 [data-key="subtotal"].subtotal').text(`$${sum.toLocaleString()}`);
-    $('#Step1 [data-key="total"].subtotal').text(`$${sum.toLocaleString()}`);
+    $('#Step1 [data-key="subtotal"].subtotal').text(sum.toLocaleString());
+    $('#Step1 [data-key="total"].subtotal').text(sum.toLocaleString());
 }
 function CartInit(result) {
     $("#Step1 > .card-body").removeClass("d-none");
@@ -200,22 +319,40 @@ function CartInit(result) {
             $firstGroup.find('.js-group-check').prop('checked', false);
         }
 
+        cart.Items.syncAdditionalSelection($firstGroup);
         cart.Items.updateGroupSelectedSubtotal($firstGroup);
         cart.Pricing.TotalCount();
         cart.Pricing.updateNextStepByBonus();
         cart.Payment.Core.onAmountChanged();
         cart.Payment.Core.reloadActiveEmbeddedProvider();
+        if (cart.Marketing && typeof cart.Marketing.loadCartMarketingCampaigns === 'function') {
+            cart.Marketing.loadCartMarketingCampaigns();
+        }
     }
 }
 function CartListAdd(data, $container) {
     if (data.quantity > 0) {
         var exists = S.shopping_cart_data.find(e => e.Id == data.scId);
+        var marketingRewardItemId = cart.Utils.getValueIgnoreCase(data, "FK_MarketingRewardItemId");
 
         if (exists != null) {
             data.price = exists.Price;
+            exists.PId = data.pId;
+            exists.PSId = data.psId;
+            exists.IsAdditional = data.isAdditional === true;
+            exists.MarketingRewardItemId = marketingRewardItemId == null
+                ? null
+                : Number(marketingRewardItemId);
+            exists.Quantity = data.quantity;
         } else {
             var obj = {};
             obj['Id'] = data.scId;
+            obj['PId'] = data.pId;
+            obj['PSId'] = data.psId;
+            obj['IsAdditional'] = data.isAdditional === true;
+            obj['MarketingRewardItemId'] = marketingRewardItemId == null
+                ? null
+                : Number(marketingRewardItemId);
             obj['Price'] = data.price;
             obj['OriginalPrice'] = data.originalPriceInCart ?? data.price;
             obj['Quantity'] = data.quantity;
@@ -233,9 +370,13 @@ function CartListAdd(data, $container) {
         }
     }
 
+    var validationCode = data.validationCode || data.ValidationCode || '';
+    var isQuantityShortage = validationCode === "QuantityExceedsStock";
     var max_quantity = data.noStockManagement === true
         ? Infinity
-        : data.quantity + data.stock;
+        : isQuantityShortage
+            ? Number(data.stock || 0)
+            : data.quantity + data.stock;
 
     var item_list_ul = $container || $("#Step1 > .card-body > .purchase_list");
     var $template = $($("#Template_Cart_Details").html()).clone();
@@ -245,23 +386,135 @@ function CartListAdd(data, $container) {
     $template.attr('data-group-id', groupId);
     $template = cart.Items.CartListInsert($template, data);
 
-    var validationCode = data.validationCode || data.ValidationCode || '';
+    if (data.isAdditional === true) {
+        var parentLabel = String(
+            cart.Utils.getValueIgnoreCase(data, "additionalParentLabel") || ""
+        ).trim();
 
-    if (Number(data.quantity || 0) <= 0 || data.available === false || data.available === "false") {
+        var isOrderLevel = parentLabel === "本筆訂單";
+
+        $template.attr("data-additional", "true");
+
+        if (isOrderLevel) {
+            // 訂單滿額／滿件優惠
+            // 不屬於任何單一主商品，所以不做縮排與 Parent 線
+            $template
+                .addClass("cart-order-additional-item")
+                .removeClass("cart-additional-item");
+        }
+        else {
+            // 指定商品型加價購／贈品
+            $template
+                .addClass("cart-additional-item")
+                .removeClass("cart-order-additional-item");
+        }
+
+        $template.find('.pro_name').first().before(
+            '<span class="cart-additional-badge">' +
+            '<i class="fa-solid fa-link me-1"></i>' +
+            (isOrderLevel ? '訂單優惠' : '附屬優惠品') +
+            '</span>'
+        );
+
+        $template.find('input[name="buyItems"]')
+            .addClass('cart-additional-check')
+            .attr({
+                tabindex: '-1',
+                'aria-hidden': 'true'
+            });
+
+        $template.find('.pro_quantity')
+            .prop('readonly', true)
+            .attr('aria-label', '優惠商品數量');
+
+        if (!isOrderLevel) {
+            $template.find('.btn_count_plus')
+                .attr('title', '補選或調整優惠商品');
+        }
+    }
+    else {
+        $template.addClass("cart-primary-item");
+
+        var openVariantEditor = function (event) {
+            event.preventDefault();
+
+            if (!window.ProductQuickCart ||
+                typeof window.ProductQuickCart.open !== "function") {
+                return;
+            }
+
+            window.ProductQuickCart.open({
+                mode: "edit-cart",
+                cartId: Number(data.scId || 0),
+                productId: Number(data.pId || 0),
+                productStockId: Number(data.psId || 0),
+                productPriceId: Number(data.ppId || 0),
+                quantity: Number(data.quantity || 1),
+                productName: data.title || "",
+                imageUrl: data.imagePath || "/images/noImg.jpg",
+                productUrl: `/${OrgName}/search/product/${data.pId}`,
+                onUpdated: function () {
+                    cart.Items.ReloadCartDisplay().done(function (items) {
+                        ReloadCartDropdown(items);
+                        S.productAddOnDrafts = null;
+                        Coker.sweet.success("商品規格已更新", null, true);
+                    }).fail(function () {
+                        Coker.sweet.error(
+                            "商品已更新",
+                            "畫面更新失敗，請重新整理購物車確認。",
+                            null,
+                            true
+                        );
+                    });
+                }
+            });
+        };
+
+        $template.find("a.pro_link")
+            .removeAttr("target rel")
+            .attr({
+                href: "#",
+                title: `查看或修改：${data.title}`,
+                role: "button"
+            })
+            .on("click", openVariantEditor);
+
+        var $specDetail = $template.find(".content > a.pro_link .pro_detail").first();
+        if (!$specDetail.length) {
+            $specDetail = $template.find(".pro_detail").first();
+        }
+        $("<span>", {
+            class: "cart-item-edit-variant border-0 bg-transparent p-0",
+            text: "查看／修改"
+        }).appendTo($specDetail);
+    }
+
+    var isUnavailable = Number(data.quantity || 0) <= 0 ||
+        data.available === false ||
+        data.available === "false";
+
+    if (isQuantityShortage) {
+        $template.addClass("cart-item-stock-shortage");
+        $template.find('input[name="buyItems"]').prop({
+            checked: false,
+            disabled: true
+        });
+        $template.find('.btn_count_plus').prop('disabled', true);
+
+        var $shortageContent = $template.find(".js-cart-item-message");
+        if (!$shortageContent.length) $shortageContent = $template;
+        $shortageContent.append(
+            $('<div class="js-cart-stock-shortage text-danger small mt-1"></div>')
+                .text(data.describe || "目前庫存不足，請先調整數量才可結帳。")
+        );
+    } else if (isUnavailable) {
         $template.addClass("cart-item-error");
         $template.find('input[name="buyItems"]').prop({
             checked: false,
             disabled: true
         });
 
-        var msg = data.describe || "此商品目前無法購買，請調整或移除。";
-        var $messageContainers = $template.find(".js-cart-item-message");
-        if (!$messageContainers.length) $messageContainers = $template;
-
-        // 數量為 0 時，錯誤已顯示在右側不可購買區塊，不再於標題下方重複顯示。
-        if (Number(data.quantity || 0) > 0 && $template.find(".js-stock-error").length === 0) {
-            $messageContainers.append($('<div class="js-stock-error text-danger small mt-1"></div>').text(msg));
-        }
+        // 不可販售狀態由專用區塊顯示原因，不在商品標題下方重複顯示。
     } else if (["SpecTitleChanged", "ProductTitleChanged", "CartSnapshotChanged"].includes(validationCode)) {
         $template.addClass("cart-item-warning");
         $template.find('input[name="buyItems"]')
@@ -279,13 +532,34 @@ function CartListAdd(data, $container) {
 
     $template.find(".btn_remove_pro").on("click", function () {
         var $self = $(this).parents("li").first();
+        var $group = $self.closest("li.purchase_group");
+        var mayRemoveAdditionalItems = !$self.hasClass("cart-additional-item") &&
+            $group.find("li.cart-additional-item").length > 0;
+
+        if (mayRemoveAdditionalItems) {
+            Coker.sweet.confirm(
+                "確定移除主要商品？",
+                "移除後若不再符合活動資格，相關加價購／贈品也會一併移除。",
+                "確認移除",
+                "取消",
+                function () {
+                    cart.Items.CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品時發生錯誤");
+                }
+            );
+            return;
+        }
         Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
             cart.Items.CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤");
         });
     });
 
     $template.find(".btn_count_plus").on("click", function () {
-        if ($template.hasClass("cart-item-error")) return;
+        if ($template.hasClass("cart-item-error") ||
+            $template.hasClass("cart-item-stock-shortage")) return;
+        if ($template.hasClass("cart-additional-item")) {
+            $template.closest('.purchase_group').find('.js-open-cart-addons').first().trigger('click');
+            return;
+        }
 
         var $self_bro = $(this).siblings(".pro_quantity");
         const $group = $template.closest('.purchase_group');
@@ -356,7 +630,9 @@ function CartListAdd(data, $container) {
     if ($template.find(".btn_move_to_favorites").length > 0) {
         if (S.islogin) {
             var $btn_favorites = $template.find(".btn_move_to_favorites");
-            if (data.quantity) $btn_favorites.parent("span").removeClass("d-none");
+            if (data.quantity && data.available !== false && data.available !== "false") {
+                $btn_favorites.parent("span").removeClass("d-none");
+            }
 
             Coker.Favorites.Check(data.pId).done(function (check) {
                 if (check.success) {
@@ -403,6 +679,10 @@ function refreshHasProds() {
     S.hasProds = S.shopping_cart_data && S.shopping_cart_data.length > 0;
 }
 function CartListInsert($frame, data) {
+    var isUnavailable = Number(data.quantity || 0) <= 0 ||
+        data.available === false ||
+        data.available === "false";
+
     $frame.find("*").each(function () {
         var $self = $(this);
         if (typeof ($self.data("key")) != "undefined") {
@@ -414,7 +694,7 @@ function CartListInsert($frame, data) {
                     break;
                 case "link":
                     $self.attr({
-                        href: `/${OrgName}/home/product/${data['pId']}`,
+                        href: `/${OrgName}/search/product/${data['pId']}`,
                         title: `連結至：${data['title']}(另開新視窗)`
                     });
                     break;
@@ -461,12 +741,12 @@ function CartListInsert($frame, data) {
 
                     if (oldBonus > 0) {
                         if (original > 0) {
-                            oldText = `$${original.toLocaleString()} + 紅利${oldBonus.toLocaleString()}`;
+                            oldText = `${cart.Utils.formatMoney(original)} + 紅利${oldBonus.toLocaleString()}`;
                         } else {
                             oldText = `紅利${oldBonus.toLocaleString()}`;
                         }
                     } else {
-                        oldText = `$${original.toLocaleString()}`;
+                        oldText = cart.Utils.formatMoney(original);
                     }
 
                     $self.removeClass("d-none");
@@ -496,7 +776,7 @@ function CartListInsert($frame, data) {
                     var bonus = Number(data.bonus || 0);
 
                     var cashText = unitPrice > 0
-                        ? `$${unitPrice.toLocaleString()}`
+                        ? cart.Utils.formatMoney(unitPrice)
                         : "";
 
                     if (data.priceLabel != null && cashText) {
@@ -515,11 +795,11 @@ function CartListInsert($frame, data) {
                     var sub_bonus = Number(data.bonus || 0) * qty;
 
                     var cashText = sub_price > 0
-                        ? `$${sub_price.toLocaleString()}`
+                        ? cart.Utils.formatMoney(sub_price)
                         : "";
 
                     cart.Pricing.setCartPriceBlock($self, cashText, sub_bonus, "block");
-
+                    $self.removeClass("d-none");
                     $self.data("subtotal", sub_price);
                     $self.data("subtotal_bonus", sub_bonus);
                     break;
@@ -543,12 +823,12 @@ function CartListInsert($frame, data) {
             const item = $self.closest(".image");
             const checkItem = item.find(`[name="buyItems"]`).attr("id", `prod${data.scId}`).val(data.scId);
             checkItem.next("label").attr("for", `prod${data.scId}`);
-            if (data['quantity'] == 0) {
+            if (isUnavailable) {
                 $frame.find(".nostock")
                     .removeClass("d-none")
                     .find(".js-unavailable-message")
                     .text(data.describe || "此商品目前無法購買，請調整或移除。");
-                $frame.find(".content").addClass("d-none");
+                $frame.children(".content").addClass("d-none");
                 $frame.find(".btn_side_icon .favorites").addClass("d-none");
             }
         }
@@ -569,7 +849,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
         self.data("subtotal_bonus", sub_bonus);
 
         var cashText = sub_price > 0
-            ? `$${sub_price.toLocaleString()}`
+            ? cart.Utils.formatMoney(sub_price)
             : "";
 
         cart.Pricing.setCartPriceBlock(self, cashText, sub_bonus);
@@ -630,11 +910,18 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
     }).done(function (result) {
         if (result.success) {
             var $li = self.closest('li.purchase_item');
+            var updateItem = result.object?.items?.[0] || result.Object?.Items?.[0];
+            var updateSucceeded = updateItem == null ||
+                updateItem.success === true || updateItem.Success === true;
+            var updateError = updateItem?.error || updateItem?.Error || '';
+            var updatedQuantity = Number(
+                updateItem?.newQuantity ?? updateItem?.NewQuantity ?? quantity
+            );
 
             if (entry) {
                 entry.Price = price;
                 entry.Bonus = bonus;
-                entry.Quantity = quantity;
+                entry.Quantity = updatedQuantity;
                 entry.PackingPoint = Number(entry.PackingPoint || 0);
             }
 
@@ -646,19 +933,49 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
                 $itemCheckbox.prop('disabled', false);
             }
 
-            if (result.object?.items?.[0] && !result.object.items[0].success) {
+            if (!updateSucceeded && updateError === "StockNotEnough" && updatedQuantity < oldQty) {
+                $li.addClass('cart-item-stock-shortage');
+                $li.find('.pro_quantity').val(updatedQuantity);
+                $li.find('.btn_count_plus').prop('disabled', true);
+                $itemCheckbox.prop({ checked: false, disabled: true });
+
+                var $shortageContent = $li.find('.js-cart-item-message');
+                if (!$shortageContent.length) $shortageContent = $li;
+                $li.find('.js-cart-stock-shortage').remove();
+                $('<div class="js-cart-stock-shortage text-danger small mt-1"></div>')
+                    .text(updateItem.message || updateItem.Message || "目前庫存不足，請繼續調整數量。")
+                    .appendTo($shortageContent);
+
+                updateSubtotalAndDisplay(updatedQuantity);
+                syncGroupAndTotal();
+                CartDropReset(scid, updatedQuantity);
+                cart.Payment.Core.onAmountChanged();
+                return;
+            }
+
+            if (!updateSucceeded) {
                 handleUpdateError(
                     "商品數量無法更新",
-                    result.object.items[0].message || "庫存不足，已恢復為原本數量。",
+                    updateItem.message || updateItem.Message || "庫存不足，已恢復為原本數量。",
                     false
                 );
                 return;
             }
 
-            updateSubtotalAndDisplay(quantity);
+            $li.removeClass('cart-item-stock-shortage');
+            $li.find('.js-cart-stock-shortage').remove();
+            $li.find('.btn_count_plus').prop('disabled', false);
+            updateSubtotalAndDisplay(updatedQuantity);
             syncGroupAndTotal();
-            CartDropReset(scid, quantity);
+            CartDropReset(scid, updatedQuantity);
             cart.Payment.Core.onAmountChanged();
+            if (entry && entry.IsAdditional !== true && cart.Marketing && typeof cart.Marketing.loadCartMarketingCampaigns === 'function') {
+                cart.Marketing.loadCartMarketingCampaigns().always(function () {
+                    if (typeof cart.Marketing.requireProductAddOnAdjustment === 'function') {
+                        cart.Marketing.requireProductAddOnAdjustment();
+                    }
+                });
+            }
             return;
         }
 
@@ -678,6 +995,57 @@ function CartDelete(self, id, success, error) {
             return;
         }
 
+        var responseData = result.object || result.Object || {};
+        var removedAdditionalIds = responseData.removedCartIds || responseData.RemovedCartIds || [];
+        if (removedAdditionalIds.length > 0) {
+            var applyCascadeRemoval = function () {
+                var removedIds = [Number(id)].concat(removedAdditionalIds.map(Number));
+                var removedSet = new Set(removedIds);
+
+                $("#Step1 li.purchase_item").filter(function () {
+                    return removedSet.has(Number($(this).data("scId")));
+                }).remove();
+
+                S.shopping_cart_data = (S.shopping_cart_data || []).filter(function (item) {
+                    return !removedSet.has(Number(item.Id));
+                });
+                removedIds.forEach(function (cartId) {
+                    CartDropReset(cartId, 0);
+                });
+
+                $("#Step1 li.purchase_group").each(function () {
+                    var $currentGroup = $(this);
+                    var remainingCount = $currentGroup.find("li.purchase_item").length;
+                    if (remainingCount === 0) {
+                        $currentGroup.remove();
+                        return;
+                    }
+
+                    $currentGroup.find('[data-field="count"]').text(remainingCount + " 件");
+                    cart.Items.syncAdditionalSelection($currentGroup);
+                    cart.Items.updateGroupSelectedSubtotal($currentGroup);
+                });
+
+                cart.Items.refreshHasProds();
+                cart.Pricing.TotalCount();
+                cart.Pricing.updateNextStepByBonus();
+                cart.Payment.Core.onAmountChanged();
+                if (cart.Marketing && typeof cart.Marketing.loadCartMarketingCampaigns === "function") {
+                    cart.Marketing.loadCartMarketingCampaigns();
+                }
+                if (parseInt($("#Car_Badge").text()) === 0) {
+                    cart.Forms.DetailsClear();
+                }
+            };
+
+            Coker.sweet.success(
+                result.message || ("主要商品已移除，並一併移除 " + removedAdditionalIds.length + " 項優惠商品。"),
+                applyCascadeRemoval,
+                false
+            );
+            return;
+        }
+
         self.remove();
         Coker.sweet.success(success, null, true);
 
@@ -694,6 +1062,7 @@ function CartDelete(self, id, success, error) {
                 $group.remove();
             } else {
                 $group.find('[data-field="count"]').text(`${remainingCount} 件`);
+                cart.Items.syncAdditionalSelection($group);
                 cart.Items.updateGroupSelectedSubtotal($group);
             }
         }
@@ -772,6 +1141,15 @@ function ValidateCartOnInit() {
             // 預設先解鎖，避免舊狀態殘留
             $itemCheckbox.prop('disabled', false);
 
+            if (errorCode === "StockNotEnough" &&
+                $li.hasClass('cart-item-stock-shortage')) {
+                $itemCheckbox.prop({ checked: false, disabled: true });
+                $li.find('.btn_count_plus').prop('disabled', true);
+                $li.find('.js-cart-stock-shortage')
+                    .text(msg || '目前庫存不足，請先調整數量才可結帳。');
+                return;
+            }
+
             // ✅ 成功 & 未被後端標記移除 → 不處理
             if (success && !removed) return;
 
@@ -802,6 +1180,7 @@ function ValidateCartOnInit() {
         updateGroupSelectedSubtotal: updateGroupSelectedSubtotal,
         clearOtherGroupsExcept: clearOtherGroupsExcept,
         CardDataGet: CardDataGet,
+        ReloadCartDisplay: ReloadCartDisplay,
         groupByFreight: groupByFreight,
         createGroupHeader: createGroupHeader,
         renderCartGroups: renderCartGroups,
@@ -810,6 +1189,7 @@ function ValidateCartOnInit() {
         CartListAdd: CartListAdd,
         refreshHasProds: refreshHasProds,
         CartListInsert: CartListInsert,
+        syncAdditionalSelection: syncAdditionalSelection,
         CartQuantityUpdate: CartQuantityUpdate,
         CartDelete: CartDelete,
         getSelectedCartIds: getSelectedCartIds,

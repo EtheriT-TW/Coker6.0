@@ -2,6 +2,8 @@
     User: {
         Login: function (para) {
             var _dfr = $.Deferred();
+            co.sweet.loading("登入中", "正在驗證帳號，請稍候...");
+
             $.ajax({
                 url: "/api/User/Login",
                 type: "POST",
@@ -9,6 +11,7 @@
                 data: JSON.stringify(para),
                 dataType: "json"
             }).done(function (result) {
+                Swal.close();
                 co.Cookie.AddAll({
                     isLogin: true,
                     endDateTime: (new Date(result.endDateTime)).getTime()
@@ -16,11 +19,16 @@
                 _c.Data.Header.Authorization = 'Bearer ' + result.token;
                 _c.Data.Header.Secret = result.secret;
                 _dfr.resolve(result);
+            }).fail(function (xhr, status, error) {
+                Swal.close();
+                co.sweet.error("登入失敗", "伺服器暫時無法回應，請稍後再試。");
+                _dfr.reject(xhr, status, error);
             });
             return _dfr.promise();
         },
         Logout: function () {
             var _dfr = $.Deferred();
+            co.sweet.loading("登出中", "正在安全登出，請稍候...");
 
             $.ajax({
                 url: "/api/User/Logout",
@@ -29,9 +37,6 @@
                 headers: _c.Data.Header,
                 dataType: "json"
             }).always(function () {
-                // 注意：這只能清 JS 可操作的輔助 cookie，HttpOnly 仍由後端清
-                _c.Cookie.DelAll();
-
                 if (_c.Data && _c.Data.Header) {
                     delete _c.Data.Header.Authorization;
                     delete _c.Data.Header.Secret;

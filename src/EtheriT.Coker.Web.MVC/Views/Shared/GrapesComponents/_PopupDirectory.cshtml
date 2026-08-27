@@ -20,6 +20,7 @@
                 .DataSource(
                 d => d.RemoteController().Key("Id")
                 .LoadUrl("/api/Directory/GetAllList").LoadMethod("Get")
+                .LoadParams(new { includeAdvertise = true })
                 )
                 .ID("DirectoryList2")
                 .Selection(

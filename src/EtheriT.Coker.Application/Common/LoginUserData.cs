@@ -141,37 +141,53 @@ namespace EtheriT.Coker.Application
                 long lastWebSite = 0;
                 if (httpContextAccessor.HttpContext != null)
                 {
-                    long.TryParse(httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"], out lastWebSite);
+                    var lastWebsiteCookie =
+                        httpContextAccessor.HttpContext.Request.Cookies["LastWebSite"] ??
+                        httpContextAccessor.HttpContext.Request.Cookies["lastWebSite"];
+                    long.TryParse(lastWebsiteCookie, out lastWebSite);
                 }
                 if (await CheckedWebSiteId(lastWebSite))
                 {
                     if (token != null && token.websiteId != lastWebSite)
                     {
                         token.websiteId = lastWebSite;
-                        db.SaveChanges();
+                        await db.SaveChangesAsync();
                     }
                     return lastWebSite;
                 }
                 else {
-                    var date = from w in db.Websites
-                               join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
-                               join u in db.Users on bind.UserId equals u.Id
-                               where u.Account == name
-                               select new WebsDto
-                               {
-                                   Id = w.Id
-                               };
-                    if (date.Any())
+                    long websiteId;
+                    if (await isSystemUser())
                     {
-                        var websiteId = (await date.FirstOrDefaultAsync()).Id;
-                        if (token != null && token.websiteId != websiteId)
-                        {
-                            token.websiteId = websiteId;
-                            db.SaveChanges();
-                        }
-                        return websiteId;
+                        websiteId = await db.Websites
+                            .Where(w => !w.IsDeleted)
+                            .OrderBy(w => w.Id)
+                            .Select(w => w.Id)
+                            .FirstOrDefaultAsync();
                     }
-                    else return 0;
+                    else
+                    {
+                        websiteId = await (
+                            from w in db.Websites
+                            join bind in db.MappingUserAndWebsites on w.Id equals bind.WebsiteId
+                            join u in db.Users on bind.UserId equals u.Id
+                            where !w.IsDeleted &&
+                                  !bind.IsDeleted &&
+                                  !u.IsDeleted &&
+                                  u.Account == name
+                            orderby w.Id
+                            select w.Id
+                        ).FirstOrDefaultAsync();
+                    }
+
+                    if (websiteId <= 0) return 0;
+
+                    if (token != null && token.websiteId != websiteId)
+                    {
+                        token.websiteId = websiteId;
+                        await db.SaveChangesAsync();
+                    }
+                    return websiteId;
                 }
             }
             else
@@ -372,15 +388,23 @@ namespace EtheriT.Coker.Application
             return string.IsNullOrEmpty(secret) ? new Guid() : Guid.Parse(secret);
         }
         public async Task<bool> CheckedWebSiteId(long id) {
+            if (id <= 0) return false;
+
             bool check = false;
             long userId = await GetUserId();
             check = await isSystemUser();
-            if(check) return true;
+            if (check)
+            {
+                return await db.Websites.AnyAsync(w => w.Id == id && !w.IsDeleted);
+            }
             if (userId != 0) {
                 var userDetail = db.Users.Where(u => u.Id == userId).Where(u => !u.IsDeleted);
                 if (userDetail.Any())
                 {
-                    var data = db.MappingUserAndWebsites.Where(m => m.UserId == userId).Where(m => m.WebsiteId == id);
+                    var data = db.MappingUserAndWebsites
+                        .Where(m => !m.IsDeleted)
+                        .Where(m => m.UserId == userId)
+                        .Where(m => m.WebsiteId == id);
                     if (data.Any()) check = true;
                 }
             }
@@ -393,9 +417,28 @@ namespace EtheriT.Coker.Application
             return data.Any();
         }
         public async Task<bool> CheckedWebSiteId(long userId,long websiteId) {
+            if (userId <= 0 || websiteId <= 0) return false;
+
             bool check = false;
             try {
-                var data = await db.MappingUserAndWebsites.Where(m => m.UserId == userId).Where(m => m.WebsiteId == websiteId).FirstOrDefaultAsync();
+                var isSystemUser = await db.MappingUserAndRoles
+                    .Include(m => m.Role)
+                    .AnyAsync(m =>
+                        m.UserId == userId &&
+                        m.Role != null &&
+                        m.Role.Type == RoleTypeEnum.系統維護);
+                if (isSystemUser)
+                {
+                    return await db.Websites.AnyAsync(w =>
+                        w.Id == websiteId &&
+                        !w.IsDeleted);
+                }
+
+                var data = await db.MappingUserAndWebsites
+                    .Where(m => !m.IsDeleted)
+                    .Where(m => m.UserId == userId)
+                    .Where(m => m.WebsiteId == websiteId)
+                    .FirstOrDefaultAsync();
                 if (data != null) check = true;
             }catch(Exception) {
                 check = false;

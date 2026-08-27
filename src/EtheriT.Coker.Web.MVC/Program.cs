@@ -13,6 +13,7 @@ using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Contact;
 using EtheriT.Coker.Application.Contact.Export;
+using EtheriT.Coker.Application.Dashboard;
 using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.FileManagement;
 using EtheriT.Coker.Application.Filters;
@@ -26,11 +27,13 @@ using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Member;
 using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Payment;
 using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Processor;
 using EtheriT.Coker.Application.Product;
 using EtheriT.Coker.Application.Remote;
 using EtheriT.Coker.Application.Report;
+using EtheriT.Coker.Application.Recipients;
 using EtheriT.Coker.Application.Search;
 using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Shared.Advertise;
@@ -38,6 +41,7 @@ using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Common;
+using EtheriT.Coker.Application.Shared.Dashboard;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion.Auth;
 using EtheriT.Coker.Application.Shared.FileManagement;
@@ -49,9 +53,11 @@ using EtheriT.Coker.Application.Shared.Marketing;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Payment;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Remote;
+using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Shared.Reporting;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.Shared.Specification;
@@ -333,10 +339,13 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IWebsiteApplication, WebsiteApplication>();
 builder.Services.AddScoped<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddScoped<IOrderAppService, OrderAppService>();
+builder.Services.AddScoped<IPaymentAvailabilityService, PaymentAvailabilityService>();
+builder.Services.AddScoped<IRecipientsAppService, RecipientsAppService>();
 builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
 builder.Services.AddScoped<IMemberAppService, MemberAppService>();
 builder.Services.AddScoped<IFreightAppService, FreightAppService>();
 builder.Services.AddScoped<IProductAppService, ProductAppService>();
+builder.Services.AddScoped<IProductImportAppService, ProductImportAppService>();
 builder.Services.AddScoped<ProductExportBackgroundJob>();
 builder.Services.AddScoped<BackgroundTaskService>();
 builder.Services.AddScoped<PageTextBackfillJob>();
@@ -365,6 +374,7 @@ builder.Services.AddScoped<IAuditLogAppService, AuditLogAppService>();
 builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddScoped<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddScoped<IRemoteAppService, RemoteAppService>();
+builder.Services.AddScoped<IDashboardAppService, DashboardAppService>();
 builder.Services.AddScoped<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddScoped<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddScoped<IContactAppService, ContactAppService>();
@@ -382,6 +392,13 @@ builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAu
 builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplicationService>();
 builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<LogCleanupWorking>();
+builder.Services.AddScoped<DatabaseRetentionWorking>();
+builder.Services.AddScoped<RemoteRetentionWorking>();
+builder.Services.Configure<DatabaseRetentionOptions>(
+    builder.Configuration.GetSection("DatabaseRetention"));
+builder.Services.AddScoped<RemoteDailyStatisticsWorking>();
+builder.Services.Configure<RemoteAnalyticsOptions>(
+    builder.Configuration.GetSection("RemoteAnalytics"));
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
 builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));
@@ -412,6 +429,9 @@ builder.Services.AddDbContext<CokerDbContext>(options =>
             sqlServerOptionsAction: sqlOptions =>
             {
                 sqlOptions.EnableRetryOnFailure();
+                var migrationCommandTimeout = configuration.GetValue<int?>("DatabaseMigrationCommandTimeout");
+                if (migrationCommandTimeout.HasValue)
+                    sqlOptions.CommandTimeout(migrationCommandTimeout.Value);
             }
         );
     }

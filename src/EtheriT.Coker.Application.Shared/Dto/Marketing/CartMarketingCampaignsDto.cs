@@ -9,5 +9,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
     public class CartMarketingCampaignsDto
     {
         public List<CartMarketingCampaignDto> OrderDiscounts { get; set; } = new();
+        public List<CartAddOnCampaignDto> AddOnCampaigns { get; set; } = new();
     }
 }

@@ -76,9 +76,9 @@ namespace EtheriT.Coker.Application
             this.htmlSanitizeService = htmlSanitizeService;
 
         }
-        public async Task<SiteMapDto> GetAll()
+        public async Task<MenuEditorTreeDto> GetAll()
         {
-            SiteMapDto response = new SiteMapDto { Success = false };
+            MenuEditorTreeDto response = new MenuEditorTreeDto { Success = false };
             try
             {
                 response.Maps = await GetEditorMenuTreeAsync();
@@ -115,6 +115,7 @@ namespace EtheriT.Coker.Application
                 var siteId = loginUserData.GetFrontWebsiteId();
                 var child = loginUserData.GetFrontChildOrgName();
                 response = await GetDisplayAll(siteId);
+                response.Maps = FilterMainMenuItems(response.Maps);
                 if (child != null && child.Any())
                 {
                     child.ForEach(item =>
@@ -130,7 +131,7 @@ namespace EtheriT.Coker.Application
                             if (website != null)
                             {
                                 var map = await GetDisplayAll(website.Id);
-                                e.Children = map.Success ? map.Maps : null;
+                                e.Children = map.Success ? FilterMainMenuItems(map.Maps) : null;
                             }
                         }
                     }
@@ -142,6 +143,26 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
+
+        private static List<MenuItemDto> FilterMainMenuItems(IEnumerable<MenuItemDto>? items)
+        {
+            if (items == null) return new List<MenuItemDto>();
+
+            return items
+                .Where(item => item.Visible
+                    && item.IsFromShelves
+                    && item.ShowToMenu
+                    && (item.PageType == PageTypeEnum.一般頁面
+                        || item.PageType == PageTypeEnum.結構頁面))
+                .Select(item =>
+                {
+                    var children = FilterMainMenuItems(item.Children);
+                    item.Children = children.Count > 0 ? children : null;
+                    return item;
+                })
+                .ToList();
+        }
+
         public async Task CheckDisplayAll(long WebsiteID)
         {
             try
@@ -186,7 +207,7 @@ namespace EtheriT.Coker.Application
 
             return (jsonStr, currentVersion);
         }
-        private async Task<List<MenuItemDto>> GetEditorMenuTreeAsync()
+        private async Task<List<MenuEditorTreeItemDto>> GetEditorMenuTreeAsync()
         {
             var websiteId = await loginUserData.GetWebsiteId();
             var userId = await loginUserData.GetUserId();
@@ -225,34 +246,17 @@ namespace EtheriT.Coker.Application
                 .ThenBy(menu => menu.Id)
                 .Select(menu => new
                 {
-                    Item = new MenuItemDto
+                    Item = new MenuEditorTreeItemDto
                     {
                         Id = menu.Id,
                         Title = menu.Title,
-                        SubTitle = menu.SubTitle,
-                        RouterName = menu.RouterName,
-                        PageType = menu.PageType,
-                        Description = menu.Description,
                         icon = menu.icon,
                         Visible = menu.Visible,
                         SerNO = menu.SerNO,
-                        PopularVisible = menu.PopularVisible,
-                        ImgId = menu.ImgId,
-                        OverImgId = menu.OverImgId,
-                        LinkUrl = menu.LinkUrl,
-                        Target = menu.Target,
-                        LanBar = menu.LanBar,
-                        VisibleHeader = menu.VisibleHeader,
-                        VisibleFooter = menu.VisibleFooter,
-                        VisibleTitle = menu.VisibleTitle,
-                        IsFromShelves = !menu.RemovedFromShelves,
                         FK_TopNodeId = menu.FK_TopNodeId,
-                        FK_RootNodeId = menu.FK_RootNodeId,
-                        FK_WebsiteId = menu.FK_WebsiteId,
-                        ShowToMenu = menu.ShowToMenu,
-                        LastModificationTime = menu.LastModificationTime,
-                        CreationTime = menu.CreationTime
+                        FK_RootNodeId = menu.FK_RootNodeId
                     },
+                    menu.PageType,
                     HasPageText = menu.PageText != null && menu.PageText != "",
                     HasMediaHtml = menu.Html != null
                         && (menu.Html.Contains("<img") || menu.Html.Contains("<iframe") || menu.Html.Contains("<video"))
@@ -261,7 +265,8 @@ namespace EtheriT.Coker.Application
 
             var menus = menuRows.Select(row =>
             {
-                row.Item.hasContan = row.Item.PageType != PageTypeEnum.結構頁面
+                row.Item.icon = NormalizeMenuIcon(row.Item.icon);
+                row.Item.hasContan = row.PageType != PageTypeEnum.結構頁面
                     && (row.HasPageText || row.HasMediaHtml);
                 return row.Item;
             }).ToList();
@@ -290,57 +295,11 @@ namespace EtheriT.Coker.Application
                 .Select(permission => permission.TargetId)
                 .ToHashSet();
 
-            var imageFiles = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
-            {
-                Sid = menuIds,
-                Type = 2,
-                Size = 1
-            });
-            var overImageFiles = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
-            {
-                Sid = menuIds,
-                Type = 3,
-                Size = 1
-            });
-            var imageMap = imageFiles.GroupBy(file => file.Sid).ToDictionary(group => group.Key, group => group.First());
-            var overImageMap = overImageFiles.GroupBy(file => file.Sid).ToDictionary(group => group.Key, group => group.First());
-
-            var iconIdByMenuId = new Dictionary<long, long>();
-            foreach (var menu in menus)
-            {
-                if (!(menu.icon ?? "").StartsWith("IconId", StringComparison.OrdinalIgnoreCase)) continue;
-
-                var iconParts = menu.icon!.Split(':', 2);
-                if (iconParts.Length == 2 && long.TryParse(iconParts[1], out var iconId) && iconId > 0)
-                    iconIdByMenuId[menu.Id] = iconId;
-                else
-                    menu.icon = "empty";
-            }
-
-            var iconMap = await fileUploadAppService.GetImgFileMapByIdAsync(iconIdByMenuId.Values.ToList(), 1);
             foreach (var menu in menus)
             {
                 menu.HasBackstagePermission = backstagePermissionIds.Contains(menu.Id);
                 menu.HasFrontPermission = frontPermissionIds.Contains(menu.Id);
-
-                if (menu.ImgId != null && imageMap.TryGetValue(menu.Id, out var image))
-                {
-                    menu.ImgUrl = image.Link;
-                    menu.ImgName = image.Name;
-                }
-                if (menu.OverImgId != null && overImageMap.TryGetValue(menu.Id, out var overImage))
-                {
-                    menu.OverImgUrl = overImage.Link;
-                    menu.OverImgName = overImage.Name;
-                }
-                if (iconIdByMenuId.TryGetValue(menu.Id, out var iconId)
-                    && iconMap.TryGetValue(iconId, out var iconUrl))
-                {
-                    menu.IconId = iconId.ToString();
-                    menu.IconUrl = iconUrl;
-                }
-
-                menu.Children = new List<MenuItemDto>();
+                menu.Children = new List<MenuEditorTreeItemDto>();
             }
 
             var menuMap = menus.ToDictionary(menu => menu.Id);
@@ -355,6 +314,125 @@ namespace EtheriT.Coker.Application
 
             return menus.Where(menu => menu.FK_TopNodeId == null).ToList();
         }
+
+        public async Task<MenuEditorDetailDto> GetEditorDetail(long id)
+        {
+            var response = new MenuEditorDetailDto();
+
+            try
+            {
+                var websiteId = await loginUserData.GetWebsiteId();
+                var menu = await db.WebMenus
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(item => item.Id == id
+                        && item.FK_WebsiteId == websiteId
+                        && !item.IsDeleted);
+
+                if (menu == null)
+                    throw new Exception("查無選單資料");
+
+                if (!await CanEditMenuAsync(websiteId, id))
+                    throw new Exception("您沒有此選單的編輯權限");
+
+                var item = mapper.Map<MenuItemDto>(menu);
+                item.icon = NormalizeMenuIcon(item.icon);
+                item.RouterName ??= string.Empty;
+                item.LinkUrl ??= string.Empty;
+                var menuIds = new List<long> { id };
+
+                var imageFiles = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+                {
+                    Sid = menuIds,
+                    Type = (int)FileBindTypeEnum.選單圖,
+                    Size = 1
+                });
+                var image = imageFiles.FirstOrDefault();
+                if (image != null)
+                {
+                    item.ImgId = image.Id;
+                    item.ImgUrl = image.Link;
+                    item.ImgName = image.Name;
+                }
+
+                var overImageFiles = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
+                {
+                    Sid = menuIds,
+                    Type = (int)FileBindTypeEnum.選單覆蓋,
+                    Size = 1
+                });
+                var overImage = overImageFiles.FirstOrDefault();
+                if (overImage != null)
+                {
+                    item.OverImgId = overImage.Id;
+                    item.OverImgUrl = overImage.Link;
+                    item.OverImgName = overImage.Name;
+                }
+
+                if ((item.icon ?? "").StartsWith("IconId", StringComparison.OrdinalIgnoreCase))
+                {
+                    var iconParts = item.icon!.Split(':', 2);
+                    if (iconParts.Length == 2
+                        && long.TryParse(iconParts[1], out var iconId)
+                        && iconId > 0)
+                    {
+                        var iconMap = await fileUploadAppService.GetImgFileMapByIdAsync(
+                            new List<long> { iconId },
+                            1);
+                        item.IconId = iconId.ToString();
+                        if (iconMap.TryGetValue(iconId, out var iconUrl))
+                            item.IconUrl = iconUrl;
+                    }
+                }
+
+                var permissionTypes = await db.PermissionDetail
+                    .AsNoTracking()
+                    .Where(permission => permission.FK_WebsiteId == websiteId
+                        && permission.FK_TargetId == id
+                        && permission.IsGranted
+                        && (permission.Type == (int)PermissionDetailsTypeEnum.選單
+                            || permission.Type == (int)PermissionDetailsTypeEnum.選單會員))
+                    .Select(permission => permission.Type)
+                    .Distinct()
+                    .ToListAsync();
+
+                item.HasBackstagePermission =
+                    permissionTypes.Contains((int)PermissionDetailsTypeEnum.選單);
+                item.HasFrontPermission =
+                    permissionTypes.Contains((int)PermissionDetailsTypeEnum.選單會員);
+
+                response.Item = item;
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Error = ex.Message;
+            }
+
+            return response;
+        }
+
+        private async Task<bool> CanEditMenuAsync(long websiteId, long menuId)
+        {
+            if (await permissionsAppService.IsPowerUserPermissions())
+                return true;
+
+            var userId = await loginUserData.GetUserId();
+            var roleIds = await loginUserData.GetUserRoleIds();
+            var permittedIds = await db.PermissionDetail
+                .AsNoTracking()
+                .Where(permission => permission.FK_WebsiteId == websiteId)
+                .Where(permission => permission.FK_UserId == userId
+                    || (permission.FK_RoleId != null && roleIds.Contains(permission.FK_RoleId.Value)))
+                .Where(permission => permission.Type == (int)PermissionDetailsTypeEnum.選單)
+                .Where(permission => permission.IsGranted && permission.FK_TargetId != null)
+                .Select(permission => permission.FK_TargetId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            return permittedIds.Count == 0 || permittedIds.Contains(menuId);
+        }
+
         private async Task<string> GetDisplayChildAndSaveCache(long? id, long WebsiteID)
         {
             var menus = await GetDisplayChild(id, WebsiteID, false, true);
@@ -402,15 +480,17 @@ namespace EtheriT.Coker.Application
                 throw new Exception("資料錯誤");
             }
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, long? mid = null)
         {
             var websiteId = await loginUserData.GetWebsiteId();
             var dataQuery = db.WebMenus
                 .AsNoTracking()
                 .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId)
-                .OrderBy(e => e.Id)
+                .OrderByDescending(e => mid.HasValue && e.Id == mid.Value)
+                .ThenBy(e => e.Id)
                 .Select(e => new MenuGetAllListDto
                 {
+                    IsSelected = mid.HasValue && e.Id == mid.Value,
                     Id = e.Id,
                     Title = e.Title ?? string.Empty,
                     Link = e.RouterName ?? string.Empty,
@@ -612,6 +692,8 @@ namespace EtheriT.Coker.Application
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                dto.icon = NormalizeMenuIcon(dto.icon);
+
                 if (!string.IsNullOrEmpty(dto.RouterName))
                 {
                     var siteId = await loginUserData.GetWebsiteId();
@@ -636,6 +718,16 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             return response;
         }
+
+        private static string NormalizeMenuIcon(string? icon)
+        {
+            var value = icon?.Trim();
+            return string.IsNullOrEmpty(value)
+                || value.Equals("material-symbols-outlined empty", StringComparison.OrdinalIgnoreCase)
+                    ? "empty"
+                    : value;
+        }
+
         private async Task<long> Create(MenuItemDto dto)
         {
             long WebsiteID = await loginUserData.GetWebsiteId();
@@ -744,18 +836,6 @@ namespace EtheriT.Coker.Application
                         result.Css = sanitized.Css;
                         result.LastModificationTime = null;
                         result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "").Replace("&lt;content&gt;", "").Replace("&lt;/content&gt;", "");
-                        if (string.IsNullOrEmpty(result.Description))
-                        {
-                            result.Description = htmlProcessor.text(
-                                htmlProcessor.RemoveNode(
-                                    htmlProcessor.RemoveNode(
-                                        htmlProcessor.RemoveNode(
-                                            stringHandler.HtmlDecode(result.Html), ".material-symbols-outlined"
-                                        ), ".anchor_directory"
-                                    ), ".d-none"
-                                )
-                            );
-                        }
                         result.CurrentUrl = $"/{menu.RouterName}";
                         result.VisibleFooter = menu.VisibleFooter;
                         result.VisibleHeader = menu.VisibleHeader;

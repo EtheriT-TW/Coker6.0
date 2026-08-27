@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.TechnicalCertificate
         public string ItemNo { get; set; } = "";
         public string Description { get; set; } = "";
 		public int Ser_no { get; set; } = 500;
+		public int SourceRowNumber { get; set; }
 
 	}
 }

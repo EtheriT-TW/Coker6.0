@@ -41,5 +41,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<ResponseMessageDto> getDefaultHeader() {
             return await templatesApplicationService.getDefaultHeader();
         }
+        [HttpGet]
+        public async Task<ResponseMessageDto> getGlobalSettings()
+        {
+            return await templatesApplicationService.getGlobalSettings();
+        }
+        [HttpPost]
+        public async Task<ResponseMessageDto> saveGlobalSettings(GlobalSettingsDto dto)
+        {
+            return await templatesApplicationService.saveGlobalSettings(dto);
+        }
     }
 }

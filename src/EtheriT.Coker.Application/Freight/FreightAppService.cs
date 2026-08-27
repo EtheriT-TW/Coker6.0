@@ -98,7 +98,10 @@ namespace EtheriT.Coker.Application.Freight
                 {
                     ls = await db.LogisticsSettings
                         .Include(x => x.logisticsBoxFees)
-                        .FirstOrDefaultAsync(e => e.Id == dto.Id && !e.IsDeleted);
+                        .FirstOrDefaultAsync(e =>
+                            e.Id == dto.Id &&
+                            e.FK_WebsiteId == websiteId &&
+                            !e.IsDeleted);
 
                     if (ls == null)
                         throw new Exception("查無運費資料");
@@ -112,6 +115,7 @@ namespace EtheriT.Coker.Application.Freight
 
                 await SyncProdMappingsAsync(ls.Id, dto.ProdIds, websiteId);
                 await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreightType);
+                await SyncPaymentRestrictionsAsync(ls.Id, dto.PaymentRestrictions);
                 if (dto.FreightType == FreightTypeEnum.依箱計費)
                     await SyncLogisticsBoxFeesAsync(ls.Id, dto.LogisticsBoxFees, websiteId, dto.FreightType);
 
@@ -334,7 +338,17 @@ namespace EtheriT.Coker.Application.Freight
         {
             try
             {
-                var result = db.LogisticsSettings.Include(e => e.MappingLogisticsSettingAndProds).ThenInclude(e => e.Prod).Include(e => e.logisticsBoxFees).ThenInclude(e => e.logisticsBox).Where(e => e.Id == Id && !e.IsDeleted).FirstOrDefault();
+                var websiteId = await loginUserData.GetWebsiteId();
+                var result = await db.LogisticsSettings
+                    .AsNoTracking()
+                    .Include(e => e.MappingLogisticsSettingAndProds)
+                        .ThenInclude(e => e.Prod)
+                    .Include(e => e.logisticsBoxFees)
+                        .ThenInclude(e => e.logisticsBox)
+                    .FirstOrDefaultAsync(e =>
+                        e.Id == Id &&
+                        e.FK_WebsiteId == websiteId &&
+                        !e.IsDeleted);
 
                 if (result != null)
                 {
@@ -350,6 +364,172 @@ namespace EtheriT.Coker.Application.Freight
 
             return null;
         }
+        public async Task<List<FreightPaymentRestrictionDto>> GetPaymentRestrictions(
+            long? logisticsSettingId,
+            ShippingTypeEnum shippingType)
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+
+            if (logisticsSettingId.HasValue && logisticsSettingId.Value > 0)
+            {
+                var ownsLogisticsSetting = await db.LogisticsSettings
+                    .AnyAsync(x => x.Id == logisticsSettingId.Value && x.FK_WebsiteId == websiteId);
+
+                if (!ownsLogisticsSetting)
+                    throw new Exception("查無運費資料");
+            }
+
+            var paymentTypes = await db.PaymentTypes
+                .AsNoTracking()
+                .OrderBy(x => x.SerNo)
+                .ThenBy(x => x.Id)
+                .ToListAsync();
+
+            var enabledPaymentTypeIds = await db.PaymentTypesValues
+                .AsNoTracking()
+                .Where(x => x.FK_WebsiteId == websiteId && x.Used)
+                .Select(x => x.FK_PaymentTypesId)
+                .ToListAsync();
+
+            var defaultRules = await db.LogisticsType_Payments
+                .AsNoTracking()
+                .Where(x => x.ShippingType == shippingType && x.FK_LogisticsSettingId == null)
+                .ToDictionaryAsync(x => x.FK_PaymentTypeId);
+
+            var customRules = logisticsSettingId.HasValue && logisticsSettingId.Value > 0
+                ? await db.LogisticsType_Payments
+                    .AsNoTracking()
+                    .Where(x => x.FK_LogisticsSettingId == logisticsSettingId.Value && x.ShippingType == null)
+                    .ToDictionaryAsync(x => x.FK_PaymentTypeId)
+                : new Dictionary<long, LogisticsPaymentRestriction>();
+
+            var enabledPaymentTypeIdSet = enabledPaymentTypeIds.ToHashSet();
+
+            return paymentTypes.Select(paymentType =>
+            {
+                defaultRules.TryGetValue(paymentType.Id, out var defaultRule);
+                customRules.TryGetValue(paymentType.Id, out var customRule);
+
+                var defaultIsEnabled = defaultRule?.IsEnabled ?? true;
+                var defaultMinAmount = defaultRule?.OverrideMinAmount ?? paymentType.MinAmount;
+                var defaultMaxAmount = defaultRule?.OverrideMaxAmount ?? paymentType.MaxAmount;
+                var isCustomized = customRule != null;
+
+                return new FreightPaymentRestrictionDto
+                {
+                    PaymentTypeId = paymentType.Id,
+                    PaymentTypeTitle = paymentType.Title ?? string.Empty,
+                    PaymentTypeCode = paymentType.Code ?? string.Empty,
+                    WebsitePaymentEnabled = enabledPaymentTypeIdSet.Contains(paymentType.Id),
+                    PaymentTypeMinAmount = paymentType.MinAmount,
+                    PaymentTypeMaxAmount = paymentType.MaxAmount,
+                    DefaultIsEnabled = defaultIsEnabled,
+                    DefaultMinAmount = defaultMinAmount,
+                    DefaultMaxAmount = defaultMaxAmount,
+                    IsCustomized = isCustomized,
+                    IsEnabled = customRule?.IsEnabled ?? defaultIsEnabled,
+                    OverrideMinAmount = customRule?.OverrideMinAmount,
+                    OverrideMaxAmount = customRule?.OverrideMaxAmount,
+                    EffectiveMinAmount = isCustomized
+                        ? customRule!.OverrideMinAmount ?? paymentType.MinAmount
+                        : defaultMinAmount,
+                    EffectiveMaxAmount = isCustomized
+                        ? customRule!.OverrideMaxAmount ?? paymentType.MaxAmount
+                        : defaultMaxAmount
+                };
+            }).ToList();
+        }
+
+        private async Task SyncPaymentRestrictionsAsync(
+            long logisticsSettingId,
+            List<FreightPaymentRestrictionDto>? restrictions)
+        {
+            if (restrictions == null)
+                return;
+
+            var duplicatedPaymentTypeIds = restrictions
+                .GroupBy(x => x.PaymentTypeId)
+                .Where(x => x.Count() > 1)
+                .Select(x => x.Key)
+                .ToList();
+
+            if (duplicatedPaymentTypeIds.Any())
+                throw new Exception("付款方式限制不可重複。");
+
+            var requestedPaymentTypeIds = restrictions
+                .Select(x => x.PaymentTypeId)
+                .Distinct()
+                .ToList();
+
+            var paymentTypes = await db.PaymentTypes
+                .Where(x => requestedPaymentTypeIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id);
+
+            var invalidPaymentTypeIds = requestedPaymentTypeIds
+                .Where(x => !paymentTypes.ContainsKey(x))
+                .ToList();
+
+            if (invalidPaymentTypeIds.Any())
+                throw new Exception("包含無效的付款方式。");
+
+            var currentRules = await db.LogisticsType_Payments
+                .Where(x => x.FK_LogisticsSettingId == logisticsSettingId && x.ShippingType == null)
+                .ToDictionaryAsync(x => x.FK_PaymentTypeId);
+
+            var changedRules = new List<LogisticsPaymentRestriction>();
+
+            foreach (var input in restrictions)
+            {
+                currentRules.TryGetValue(input.PaymentTypeId, out var currentRule);
+
+                if (!input.IsCustomized)
+                {
+                    if (currentRule != null)
+                    {
+                        currentRule.IsDeleted = true;
+                        changedRules.Add(currentRule);
+                    }
+
+                    continue;
+                }
+
+                if (!input.IsEnabled)
+                {
+                    input.OverrideMinAmount = null;
+                    input.OverrideMaxAmount = null;
+                }
+
+                if (input.OverrideMinAmount < 0 || input.OverrideMaxAmount < 0)
+                    throw new Exception("付款金額限制不可小於 0。");
+
+                var paymentType = paymentTypes[input.PaymentTypeId];
+                var effectiveMinAmount = input.OverrideMinAmount ?? paymentType.MinAmount;
+                var effectiveMaxAmount = input.OverrideMaxAmount ?? paymentType.MaxAmount;
+
+                if (effectiveMaxAmount.HasValue && effectiveMinAmount > effectiveMaxAmount.Value)
+                    throw new Exception($"{paymentType.Title}的最低金額不可大於最高金額。");
+
+                if (currentRule == null)
+                {
+                    currentRule = new LogisticsPaymentRestriction
+                    {
+                        ShippingType = null,
+                        FK_LogisticsSettingId = logisticsSettingId,
+                        FK_PaymentTypeId = input.PaymentTypeId
+                    };
+                    db.LogisticsType_Payments.Add(currentRule);
+                }
+
+                currentRule.IsEnabled = input.IsEnabled;
+                currentRule.OverrideMinAmount = input.OverrideMinAmount;
+                currentRule.OverrideMaxAmount = input.OverrideMaxAmount;
+                changedRules.Add(currentRule);
+            }
+
+            if (changedRules.Any())
+                await loginUserData.SaveChanges(changedRules);
+        }
+
         public async Task<JsonResult> GetDisplay()
         {
             try
@@ -386,16 +566,21 @@ namespace EtheriT.Coker.Application.Freight
 
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             long usetId = await loginUserData.GetUserId();
+            long websiteId = await loginUserData.GetWebsiteId();
 
             try
             {
-                var db_ls = db.LogisticsSettings.Where(e => e.Id == Id).FirstOrDefault();
+                var db_ls = await db.LogisticsSettings
+                    .FirstOrDefaultAsync(e =>
+                        e.Id == Id &&
+                        e.FK_WebsiteId == websiteId &&
+                        !e.IsDeleted);
                 if (db_ls != null)
                 {
                     db_ls.IsDeleted = true;
                     db_ls.DeletionTime = DateTime.Now;
                     db_ls.DeleterUserId = usetId;
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                     output.Success = true;
                 }
             }

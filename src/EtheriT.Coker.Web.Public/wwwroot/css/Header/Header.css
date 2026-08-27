@@ -1,5 +1,9 @@
 ﻿
 /* Mega Menu */
+.logo-text-fallback {
+    display: none;
+}
+
 #Mega_Menu > .btn_menu {
     margin-top: 0.25rem;
     transition: 0.3s;
@@ -20,6 +24,10 @@
     }
 
 /* Button Car Dropdown */
+#btn_car_dropdown {
+    padding: 1px 6px;
+}
+
 #btn_car_dropdown > i.open {
     color: var(--red-popup);
 }
@@ -47,7 +55,27 @@
 
     #Car_Dropdown > ul {
         list-style: none;
+        width: 100%;
+        margin: 0;
+        padding: 0 !important;
+        overflow-x: hidden;
     }
+
+        #Car_Dropdown > ul > li {
+            box-sizing: border-box;
+            width: 100%;
+            margin-right: 0 !important;
+            padding-right: 1.7rem;
+        }
+
+        #Car_Dropdown > ul > li > figure > a {
+            width: 100%;
+            min-width: 0;
+        }
+
+        #Car_Dropdown > ul > li > figure > a > figcaption {
+            min-width: 0;
+        }
 
         #Car_Dropdown > ul > li.unavailable {
             position: relative;
@@ -104,7 +132,7 @@
 
         #Car_Dropdown > ul > li > figure > .btn_cart_delete {
             top: 50%;
-            right: -1.5rem;
+            right: 0;
             transform: translate(0, -50%);
             color: var(--gray-icon);
         }
@@ -116,6 +144,62 @@
     #Car_Dropdown > .btn_car_buy {
         background-color: var(--black-text);
     }
+
+    #Car_Dropdown > ul > li.cart-item--primary {
+        padding-top: .25rem;
+        background: #fff;
+    }
+
+    #Car_Dropdown > ul > li.cart-item--additional {
+        position: relative;
+        width: calc(100% - .85rem);
+        margin-left: .85rem;
+        padding: .35rem 1.7rem .35rem .5rem;
+        border-left: 3px solid var(--red-main);
+        background: color-mix(in srgb, var(--red-main) 7%, #fff);
+    }
+
+    #Car_Dropdown > ul > li.cart-item--additional::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: -.85rem;
+        width: .7rem;
+        border-top: 1px dashed var(--red-main);
+    }
+
+    #Car_Dropdown > ul > li.cart-item--additional .pro_image {
+        width: 48px;
+        max-width: 48px;
+        height: 48px;
+        margin-right: .4rem !important;
+        object-fit: cover;
+        border-radius: .25rem;
+    }
+
+    #Car_Dropdown .cart-item__type-badge {
+        display: inline-flex;
+        margin-bottom: .15rem;
+        padding: .05rem .4rem;
+        border-radius: 999px;
+        color: #fff;
+        background: var(--red-main);
+        font-size: .7rem;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+
+#Car_Dropdown.cart-dropdown--positioned {
+    position: fixed !important;
+    inset: auto !important;
+    top: var(--cart-dropdown-top) !important;
+    left: var(--cart-dropdown-left) !important;
+    right: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    max-height: min(90vh, var(--cart-dropdown-available-height)) !important;
+    overflow-x: hidden !important;
+}
 
         #Car_Dropdown > .btn_car_buy[disabled] {
             background-color: var(--gray-bg-dark);

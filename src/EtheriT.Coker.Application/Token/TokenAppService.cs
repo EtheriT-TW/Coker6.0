@@ -30,9 +30,6 @@ namespace EtheriT.Coker.Application.Token
 {
     public class TokenAppService : ITokenAppService
     {
-        private static readonly SemaphoreSlim CleanupLock = new(1, 1);
-        private static DateTime _nextCleanupAtUtc = DateTime.MinValue;
-        private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(10);
         private readonly JwtHelpers jwt;
         private readonly CokerDbContext db;
         private readonly IHttpContextAccessor httpContextAccessor;
@@ -90,17 +87,43 @@ namespace EtheriT.Coker.Application.Token
                         var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
                         if (RefreshToken != null)
                         {
-                            var uuid = db.MappingOldNewUUID.Where(e => e.TempUUID == RefreshToken.UUID).Select(e => e.UserUUID).FirstOrDefault();
-                            var frontUser = await db.FrontUsers.Include(e => e.Websites).Where(e => e.UUID == uuid && e.Websites.Any(s => s.FK_WebsiteId == websiteId)).FirstOrDefaultAsync();
+                            var uuid = await db.MappingOldNewUUID
+                                .Where(e => e.TempUUID == RefreshToken.UUID && !e.IsDeleted)
+                                .Select(e => e.UserUUID)
+                                .FirstOrDefaultAsync();
+                            if (uuid == Guid.Empty) uuid = RefreshToken.UUID;
+
+                            var frontUser = await db.FrontUsers
+                                .Include(e => e.Websites)
+                                .FirstOrDefaultAsync(e =>
+                                    e.UUID == uuid &&
+                                    e.Status == (int)UserStatusEnum.開通 &&
+                                    !e.IsDeleted &&
+                                    e.Websites.Any(s =>
+                                        s.FK_WebsiteId == websiteId &&
+                                        !s.IsDeleted));
                             if (frontUser != null)
                             {
                                 var useraccount = frontUser.Account == null ? frontUser.Email : frontUser.Account;
                                 tokenItem = await NewToken(useraccount, RefreshToken.UUID, frontUser?.Id);
                                 output.name = frontUser?.Name;
                             }
-                            else tokenItem = await NewToken(null, RefreshToken?.UUID);
+                            else
+                            {
+                                // 會員已停權、刪除或已不屬於本站時，不可用舊 RefreshToken 恢復登入。
+                                RefreshToken.EndTime = date;
+                                await db.SaveChangesAsync();
+                                tokenItem = await NewToken();
+                            }
                         }
-                        else tokenItem = await NewToken(null, oidRefreshToken?.UUID);
+                        else
+                        {
+                            // 已登入會員的 RefreshToken 失效後，改發全新的訪客 UUID，
+                            // 避免訪客 Token 繼續攜帶原會員 UUID 而取得會員角色。
+                            tokenItem = oidRefreshToken?.UserID == null
+                                ? await NewToken(null, oidRefreshToken?.UUID)
+                                : await NewToken();
+                        }
                     }
                     else tokenItem = await NewToken();
                 }
@@ -115,79 +138,7 @@ namespace EtheriT.Coker.Application.Token
                 output.Success = false;
                 output.Error = e.Message;
             }
-            finally {
-                try
-                {
-                    await TryCleanupExpiredTokensAsync(websiteId);
-                }
-                catch
-                {
-                    // 這邊一定要吃掉，不可以讓清理錯誤影響到主流程
-                    // 有 Log 系統的話建議寫 Log
-                }
-
-            }
-
             return output;
-        }
-        /// <summary>
-        /// 清理過期或失聯的 Token / ShoppingCart：
-        /// 1. 清孤兒購物車：沒有對應 Token 的、且尚未成立訂單
-        /// 2. 清過期 Token
-        /// 3. 要刪的購物車：這些 Token 底下、尚未成立訂單的
-        /// </summary>
-        private async Task CleanupExpiredTokensAsync(long websiteId)
-        {
-            var now = DateTime.Now;
-
-            // === 1) 清孤兒購物車：沒有對應 Token 的、且尚未成立訂單 ===
-            var orphanCarts = await (
-                from c in db.ShoppingCarts   // 依你的 DbSet 名稱調整
-                where !c.IsOrder
-                      && !db.Tokens.Any(t => t.id == c.FK_Tid)
-                select c
-            )
-            .Take(100)
-            .ToListAsync();
-
-            if (orphanCarts.Count > 0)
-            {
-                db.ShoppingCarts.RemoveRange(orphanCarts);
-                await db.SaveChangesAsync();
-            }
-
-            // === 2) 清過期 Token ===
-
-            // 找候選 Token：該網站且已過期
-            var expiredTokens = await (
-                from t in db.Tokens
-                where t.websiteId == websiteId
-                      && t.EndTime != null
-                      && t.EndTime < now
-                orderby t.EndTime  // 先刪最舊的
-                select t
-            )
-            .Include(t => t.ShoppingCarts)
-            .Take(100)
-            .ToListAsync();
-
-            if (expiredTokens.Count == 0)
-                return;
-
-            // 要刪的購物車：這些 Token 底下、尚未成立訂單的
-            var cartsToDelete = expiredTokens
-                .SelectMany(t => t.ShoppingCarts.Where(c => !c.IsOrder))
-                .ToList();
-
-            if (cartsToDelete.Count > 0)
-            {
-                db.ShoppingCarts.RemoveRange(cartsToDelete);
-            }
-
-            // 不管是否有訂單，只要 Token 過期就刪
-            db.Tokens.RemoveRange(expiredTokens);
-
-            await db.SaveChangesAsync();
         }
 
         public async Task<TokenKeyItem> NewToken(string? Accont = null, Guid? UUID = null, long? UserId = null)
@@ -275,7 +226,10 @@ namespace EtheriT.Coker.Application.Token
                         .FirstOrDefaultAsync(e =>
                             e.UUID == userUuid &&
                             e.Status == (int)UserStatusEnum.開通 &&
-                            e.Websites.Any(w => w.FK_WebsiteId == websiteId));
+                            !e.IsDeleted &&
+                            e.Websites.Any(w =>
+                                w.FK_WebsiteId == websiteId &&
+                                !w.IsDeleted));
 
                     if (frontUser == null)
                         throw new SecurityTokenException("使用者不屬於目前網站");
@@ -299,25 +253,6 @@ namespace EtheriT.Coker.Application.Token
             return output;
         }
 
-        private async Task TryCleanupExpiredTokensAsync(long websiteId)
-        {
-            if (DateTime.UtcNow < _nextCleanupAtUtc || !await CleanupLock.WaitAsync(0))
-                return;
-
-            try
-            {
-                if (DateTime.UtcNow < _nextCleanupAtUtc)
-                    return;
-
-                // Advance before running so a failed cleanup cannot create a request-time retry storm.
-                _nextCleanupAtUtc = DateTime.UtcNow.Add(CleanupInterval);
-                await CleanupExpiredTokensAsync(websiteId);
-            }
-            finally
-            {
-                CleanupLock.Release();
-            }
-        }
         public async Task<ResponseMessageDto> AgreePrivacy()
         {
             ResponseMessageDto response = new ResponseMessageDto();

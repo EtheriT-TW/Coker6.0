@@ -1,11 +1,20 @@
 @using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Marketing
+@using EtheriT.Coker.Web.MVC.Common
+@using EtheriT.Coker.Web.MVC.Extensions
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @{
     ViewData["Title"] = "MarketingSettings";
+    var canUseProdAddition = Context.HasPermission(CokerContextKeys.ProdAddition);
 }
 
+<input id="MarketingCanUseProdAddition"
+       type="hidden"
+       value="@canUseProdAddition.ToString().ToLowerInvariant()" />
+<link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/StoreSettings/MarketingSettings.min.css" asp-append-version="true" />
-<script src="~/js/StoreSettings/MarketingSettings.min.js" asp-append-version="true"></script>
+<script src="~/lib/swiper/swiper-bundle.min.js" asp-append-version="true"></script>
+<script src="~/js/StoreSettings/MarketingSettings.js" asp-append-version="true"></script>
 
 <div>
     <div id="TopLine" class="d-flex justify-content-between mb-4">
@@ -54,8 +63,29 @@
                             .AllowFiltering(false)
                             .AllowSorting(false);
                         c.AddFor(e => e.Status).Caption("狀態").Width(100);
-                        c.AddFor(e => e.StartTime).Caption("開始時間").DataType(GridColumnDataType.DateTime).Format("yyyy/MM/dd HH:mm").Width(160).AllowHeaderFiltering(false);
-                        c.AddFor(e => e.EndTime).Caption("結束時間").DataType(GridColumnDataType.DateTime).Format("yyyy/MM/dd HH:mm").Width(160).AllowHeaderFiltering(false);
+                        c.Add().Name("ActivityTime")
+                            .Caption("活動時間")
+                            .CalculateCellValue("marketingActivityTimeCellValue")
+                            .Width(240)
+                            .AllowHeaderFiltering(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false);
+                        c.Add().Name("RepeatableDisplay")
+                            .Caption("重複套用")
+                            .CalculateCellValue("marketingRepeatableCellValue")
+                            .Width(85)
+                            .Alignment(HorizontalAlignment.Center)
+                            .AllowHeaderFiltering(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false);
+                        c.Add().Name("CanStackDisplay")
+                            .Caption("優惠併用")
+                            .CalculateCellValue("marketingCanStackCellValue")
+                            .Width(85)
+                            .Alignment(HorizontalAlignment.Center)
+                            .AllowHeaderFiltering(false)
+                            .AllowFiltering(false)
+                            .AllowSorting(false);
                         c.Add()
                             .Type(GridCommandColumnType.Buttons)
                             .Buttons(b =>
@@ -95,6 +125,14 @@
                 <button class="btn_done btn-primary border-0 px-3 py-1 text-white" form="MarketingForm">　儲存　</button>
             </div>
 
+            <div id="MarketingEditLoading" class="card-body d-none" role="status" aria-live="polite">
+                <div class="d-flex flex-column align-items-center justify-content-center text-center py-5">
+                    <div class="spinner-border text-primary" aria-hidden="true"></div>
+                    <strong class="mt-3">正在載入活動設定</strong>
+                    <span class="text-muted mt-1">資料讀取中，請稍候…</span>
+                </div>
+            </div>
+
             <form id="MarketingForm" class="card-body needs-validation">
                 <input type="hidden" name="Id" value="0" />
                 <input type="hidden" name="CampaignType" value="0" />
@@ -117,7 +155,7 @@
                                 活動名稱
                                 <span class="text-muted">(請確實填寫，將出現在結帳頁)</span>
                             </label>
-                            <input id="InputName" class="form-control" name="Name" type="text" autocomplete="off" maxlength="100" required>
+                            <input id="InputName" class="form-control" name="Name" type="text" autocomplete="off" maxlength="100" placeholder="例如：中秋滿額加價購／贈品" required>
                         </div>
 
                         <div class="col-12 col-lg-3 mb-3">
@@ -132,7 +170,7 @@
 
                         <div class="col-12 mb-3">
                             <label class="form-label" for="InputDescription">活動說明</label>
-                            <textarea id="InputDescription" class="form-control" name="Description" rows="3" maxlength="500"></textarea>
+                            <textarea id="InputDescription" class="form-control" name="Description" rows="3" maxlength="500" placeholder="選填，可補充活動適用說明"></textarea>
                         </div>
                     </div>
                 </div>
@@ -143,9 +181,9 @@
                     <div class="mb-3">
                         <label class="form-label required_sign">優惠類型</label>
 
-                        <div class="d-flex flex-wrap gap-3">
+                        <div class="marketing-rule-grid">
                             <div class="form-check marketing-rule-card">
-                                <input id="RuleAmountDiscount" class="form-check-input" type="radio" name="RuleType" value="1" required>
+                                <input id="RuleAmountDiscount" class="form-check-input" type="radio" name="RuleMode" value="amount-discount" required>
                                 <label class="form-check-label" for="RuleAmountDiscount">
                                     <span class="fw-bold">滿額折抵</span>
                                     <small class="d-block text-muted">例如：滿 1000 折 100</small>
@@ -153,76 +191,227 @@
                             </div>
 
                             <div class="form-check marketing-rule-card">
-                                <input id="RulePercentDiscount" class="form-check-input" type="radio" name="RuleType" value="2" required>
+                                <input id="RulePercentDiscount" class="form-check-input" type="radio" name="RuleMode" value="percent-discount" required>
                                 <label class="form-check-label" for="RulePercentDiscount">
                                     <span class="fw-bold">滿額打折</span>
                                     <small class="d-block text-muted">例如：滿 2000 打 9 折</small>
                                 </label>
                             </div>
+
+                            @if (canUseProdAddition)
+                            {
+                                <div class="form-check marketing-rule-card">
+                                    <input id="RuleProductAddOn" class="form-check-input" type="radio" name="RuleMode" value="product-addon" required>
+                                    <label class="form-check-label" for="RuleProductAddOn">
+                                        <span class="fw-bold">指定商品滿件加價購／贈品</span>
+                                        <small class="d-block text-muted">指定商品任選合計達件數，可選優惠商品</small>
+                                    </label>
+                                </div>
+
+                                <div class="form-check marketing-rule-card">
+                                    <input id="RuleOrderAmountAddOn" class="form-check-input" type="radio" name="RuleMode" value="order-amount-addon" required>
+                                    <label class="form-check-label" for="RuleOrderAmountAddOn">
+                                        <span class="fw-bold">訂單滿額加價購／贈品</span>
+                                        <small class="d-block text-muted">整筆訂單達門檻，可選優惠商品</small>
+                                    </label>
+                                </div>
+
+                                <div class="form-check marketing-rule-card">
+                                    <input id="RuleScopeAmountAddOn" class="form-check-input" type="radio" name="RuleMode" value="scope-amount-addon" required>
+                                    <label class="form-check-label" for="RuleScopeAmountAddOn">
+                                        <span class="fw-bold">指定商品滿額加價購／贈品</span>
+                                        <small class="d-block text-muted">指定商品合計達門檻，可選優惠商品</small>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                        <div id="RuleTypeLockHint" class="marketing-rule-lock-hint d-none">
+                            <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+                            此活動已離開草稿狀態。為保留活動成效分析的一致性，優惠類型不可變更；如需其他類型，請新增活動。
                         </div>
                     </div>
 
-                    <div class="row align-items-start">
-                        <div class="col-12 col-md-4">
-                            <label class="form-label required_sign" for="InputMinAmount">滿額門檻</label>
-                            <div class="input-group">
-                                <span class="input-group-text">NT$</span>
-                                <input id="InputMinAmount" class="form-control" name="MinAmount" type="number" min="1" required data-form-type="number">
+                    <div id="DiscountRuleSettings">
+                        <div class="row align-items-start">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label required_sign" for="InputMinAmount">滿額門檻</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">NT$</span>
+                                    <input id="InputMinAmount" class="form-control" name="MinAmount" type="number" min="1" data-form-type="number">
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="col-12 col-md-4 rewardAmountSection d-none">
-                            <label class="form-label required_sign" for="InputDiscountAmount">折抵金額</label>
-                            <div class="input-group">
-                                <span class="input-group-text">NT$</span>
-                                <input id="InputDiscountAmount" class="form-control" name="DiscountAmount" type="number" min="1" data-form-type="number">
+                            <div class="col-12 col-md-4 rewardAmountSection d-none">
+                                <label class="form-label required_sign" for="InputDiscountAmount">折抵金額</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">NT$</span>
+                                    <input id="InputDiscountAmount" class="form-control" name="DiscountAmount" type="number" min="1" data-form-type="number">
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="col-12 col-md-4 rewardPercentSection d-none">
-                            <label class="form-label required_sign" for="InputDiscountPercent">折扣折數</label>
-                            <div class="input-group">
-                                <input id="InputDiscountPercent"
-                                       class="form-control"
-                                       name="DiscountPercent"
-                                       type="number"
-                                       min="1"
-                                       max="99"
-                                       step="1"
-                                       inputmode="numeric"
-                                       data-max-length="2"
-                                       data-form-type="number">
-                                <span class="input-group-text">折</span>
+                            <div class="col-12 col-md-4 rewardPercentSection d-none">
+                                <label class="form-label required_sign" for="InputDiscountPercent">折扣折數</label>
+                                <div class="input-group">
+                                    <input id="InputDiscountPercent"
+                                           class="form-control"
+                                           name="DiscountPercent"
+                                           type="number"
+                                           min="1"
+                                           max="99"
+                                           step="1"
+                                           inputmode="numeric"
+                                           data-max-length="2"
+                                           data-form-type="number">
+                                    <span class="input-group-text">折</span>
+                                </div>
+                                <div class="form-text">例如：9 或 90 都表示九折，85 表示八五折，最低 1 折。</div>
                             </div>
-                            <div class="form-text">例如：9 或 90 都表示九折，85 表示八五折，最低 1 折。</div>
-                        </div>
 
-                        <div class="col-12 col-md-4 rewardPercentSection d-none">
-                            <label class="form-label" for="InputMaxDiscountAmount">最高折抵</label>
-                            <div class="input-group">
-                                <span class="input-group-text">NT$</span>
-                                <input id="InputMaxDiscountAmount" class="form-control" name="MaxDiscountAmount" type="number" min="0" data-form-type="number">
+                            <div class="col-12 col-md-4 rewardPercentSection d-none">
+                                <label class="form-label" for="InputMaxDiscountAmount">最高折抵</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">NT$</span>
+                                    <input id="InputMaxDiscountAmount" class="form-control" name="MaxDiscountAmount" type="number" min="0" data-form-type="number">
+                                </div>
+                                <div class="form-text">可留空，表示不限制。</div>
                             </div>
-                            <div class="form-text">可留空，表示不限制。</div>
                         </div>
                     </div>
 
-                    <div class="row align-items-start">
-                        <div class="col-12 col-md-4 mb-3">
-                            <div class="form-check marketing-check align-items-start">
-                                <input id="CheckCanStack" class="form-check-input" name="CanStack" type="checkbox" value="true" data-form-type="boolean">
-                                <label class="form-check-label" for="CheckCanStack">允許與其他優惠併用</label>
+                    <div id="AddOnRuleSettings" class="d-none">
+                        <div class="marketing-config-columns">
+                            <section class="marketing-config-panel">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div id="AddOnConditionTitle" class="marketing-config-title mb-0">資格條件設定</div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary scopeProductSection d-none" data-open-product-picker="#ScopeProductPicker">
+                                        ＋ 選擇商品
+                                    </button>
+                                </div>
+
+                                <div id="ScopeAmountExplanation" class="marketing-condition-flow d-none">
+                                    <div class="marketing-condition-flow-title">計算方式</div>
+                                    <div>下方指定商品的有效小計合計 <strong>≥ 指定門檻</strong></div>
+                                    <div class="marketing-condition-flow-result">即可取得優惠商品選擇資格</div>
+                                </div>
+
+                                <div id="ScopeProductSection" class="scopeProductSection d-none">
+                                    <textarea id="ScopeProductPicker" class="form-control marketing-product-picker d-none" rows="2" readonly data-marketing-picker="scope"></textarea>
+                                    <div id="ScopeProductRows" class="marketing-item-list"></div>
+                                </div>
+
+                                <div id="AddOnQuantitySection" class="marketing-compact-setting marketing-condition-quantity-setting mt-3 d-none">
+                                    <div class="marketing-compact-setting-row">
+                                        <label class="form-label required_sign mb-0" for="InputAddOnMinQuantity">每次資格需合計購買件數</label>
+                                        <div class="input-group marketing-quantity-input">
+                                            <input id="InputAddOnMinQuantity" class="form-control" type="number" min="1" value="1" data-form-type="number">
+                                            <span class="input-group-text">件</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">上方指定商品可混搭計算；合計達此件數即可取得一次資格。</div>
+                                </div>
+
+                                <div id="AddOnAmountSection" class="mt-3 d-none">
+                                    <label id="AddOnAmountLabel" class="form-label required_sign" for="InputAddOnMinAmount">滿額門檻</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">NT$</span>
+                                        <input id="InputAddOnMinAmount" class="form-control" type="number" min="1" data-form-type="number">
+                                    </div>
+                                    <div id="AddOnAmountHelp" class="form-text"></div>
+                                </div>
+
+                            </section>
+
+                            <section class="marketing-config-panel marketing-reward-panel">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <div class="marketing-config-title mb-0">優惠商品設定</div>
+                                    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+                                        <button id="ToggleRewardBatchPrice" type="button" class="btn btn-sm btn-outline-secondary d-none"
+                                                aria-expanded="false" aria-controls="RewardBatchPricePanel">
+                                            批次設定
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-open-product-picker="#RewardProductPicker">
+                                            ＋ 新增加價購／贈品
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="RewardProductPicker" class="form-control marketing-product-picker d-none" rows="2" readonly data-marketing-picker="reward"></textarea>
+                                <div id="RewardBatchPricePanel" class="marketing-batch-price-panel d-none">
+                                    <div class="marketing-batch-price-copy">
+                                        <strong>批次設定活動價</strong>
+                                        <small>可全部設為固定金額，或依下方「價格參考」的非會員、會員層級或建議售價打折。</small>
+                                    </div>
+                                    <div class="marketing-batch-price-controls">
+                                        <label for="RewardBatchPriceMode">套用方式</label>
+                                        <select id="RewardBatchPriceMode" class="form-select form-select-sm"></select>
+                                        <label id="RewardBatchPriceValueLabel" for="RewardBatchPriceValue">活動價</label>
+                                        <div class="input-group input-group-sm marketing-batch-price-value">
+                                            <input id="RewardBatchPriceValue" class="form-control" type="number" min="0" step="1" placeholder="請輸入金額">
+                                            <span id="RewardBatchPriceUnit" class="input-group-text">NT$</span>
+                                        </div>
+                                        <button id="ApplyRewardBatchPrice" type="button" class="btn btn-sm btn-outline-danger">套用到全部</button>
+                                    </div>
+                                    <div id="RewardBatchPriceFeedback" class="marketing-batch-price-feedback" aria-live="polite"></div>
+                                </div>
+                                <div id="RewardProductRows" class="marketing-item-list"></div>
+                                <div id="RewardProductEmpty" class="marketing-empty-state">尚未設定優惠商品</div>
+
+                                <div class="marketing-reward-limit-grid mt-3">
+                                    <div class="marketing-compact-setting">
+                                        <div class="marketing-compact-setting-row">
+                                            <label class="form-label required_sign mb-0" for="InputSelectionQuantity">每次資格可選件數</label>
+                                            <div class="input-group marketing-quantity-input">
+                                                <input id="InputSelectionQuantity" class="form-control" type="number" min="1" value="1" data-form-type="number">
+                                                <span class="input-group-text">件</span>
+                                            </div>
+                                        </div>
+                                        <div id="SelectionQuantityHelp" class="form-text">取得一次資格後，可從優惠商品中選擇 1 件。</div>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        <div id="MarketingActivitySummary" class="marketing-activity-summary d-none">
+                            <span class="material-symbols-outlined" aria-hidden="true">summarize</span>
+                            <div>
+                                <strong>活動概要</strong>
+                                <div id="MarketingActivitySummaryText"></div>
                             </div>
                         </div>
 
-                        <div class="col-12 col-md-4 mb-3 repeatableSection">
-                            <div class="form-check marketing-check align-items-start">
-                                <input id="CheckRepeatable" class="form-check-input" name="Repeatable" type="checkbox" value="true" data-form-type="boolean">
-                                <label class="form-check-label" for="CheckRepeatable">允許滿額折抵可累計</label>
-                            </div>
-                            <div class="form-text ps-4">例如滿 1000 折 100，消費 2000 是否折 200。</div>
+                        <div id="MarketingOfferPreview" class="marketing-offer-preview"></div>
+                    </div>
+
+                    <div class="marketing-option-grid mt-3">
+                        <div id="CanStackSection" class="marketing-option-switch">
+                            <input id="CheckCanStack" class="visually-hidden" name="CanStack" type="checkbox" value="true" data-form-type="boolean">
+                            <label for="CheckCanStack">
+                                <span class="material-symbols-outlined marketing-option-icon" aria-hidden="true">layers</span>
+                                <span class="marketing-option-copy">
+                                    <strong>允許與其他優惠併用</strong>
+                                    <small>預設關閉。開啟後，此折扣可和其他期間重疊且允許併用的優惠一起套用，可能產生累計折扣；儲存時會再次提醒。</small>
+                                </span>
+                                <span class="marketing-option-toggle" aria-hidden="true">
+                                    <span class="material-symbols-outlined toggle-off">toggle_off</span>
+                                    <span class="material-symbols-outlined toggle-on">toggle_on</span>
+                                </span>
+                            </label>
                         </div>
-                    </div> 
+
+                        <div class="marketing-option-switch repeatableSection">
+                            <input id="CheckRepeatable" class="visually-hidden" name="Repeatable" type="checkbox" value="true" data-form-type="boolean">
+                            <label for="CheckRepeatable">
+                                <span class="material-symbols-outlined marketing-option-icon" aria-hidden="true">repeat</span>
+                                <span class="marketing-option-copy">
+                                    <strong id="RepeatableLabel">允許滿額折抵可累計</strong>
+                                    <small id="RepeatableHelp">例如滿 1000 折 100，消費 2000 是否折 200。</small>
+                                </span>
+                                <span class="marketing-option-toggle" aria-hidden="true">
+                                    <span class="material-symbols-outlined toggle-off">toggle_off</span>
+                                    <span class="material-symbols-outlined toggle-on">toggle_on</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="marketing-section">
@@ -248,6 +437,8 @@
                     </div>
                 </div>
             </form>
+
+            @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ProdSelectModal" })
         </div>
     </div>
 </div>

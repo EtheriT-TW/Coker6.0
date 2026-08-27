@@ -37,6 +37,18 @@
                 data: JSON.stringify(data),
                 dataType: "json"
             });
+        },
+        CartVariant: function (data) {
+            return $.ajax({
+                url: "/api/ShoppingCart/UpdateVariant",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: {
+                    Authorization: 'Bearer ' + localStorage.getItem("token")
+                },
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
         }
     },
     GetAll: {
@@ -123,9 +135,47 @@ function CartDropInit() {
         }
     })
 }
+
+function CartDropPosition() {
+    var button = document.getElementById("btn_car_dropdown");
+    var menu = document.getElementById("Car_Dropdown");
+    if (!button || !menu || !menu.classList.contains("show")) return;
+
+    var buttonRect = button.getBoundingClientRect();
+    var menuWidth = Math.min(menu.offsetWidth || 280, window.innerWidth - 16);
+    var left = buttonRect.left;
+
+    if (left + menuWidth > window.innerWidth - 8) {
+        left = buttonRect.right - menuWidth;
+    }
+
+    left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
+    menu.style.setProperty("--cart-dropdown-left", `${left}px`);
+    menu.style.setProperty("--cart-dropdown-top", `${buttonRect.bottom + 8}px`);
+    menu.style.setProperty("--cart-dropdown-available-height", `${Math.max(window.innerHeight - buttonRect.bottom - 16, 160)}px`);
+    menu.classList.add("cart-dropdown--positioned");
+}
+
+$(document)
+    .off("shown.bs.dropdown.cartPosition", "#btn_car_dropdown")
+    .on("shown.bs.dropdown.cartPosition", "#btn_car_dropdown", CartDropPosition);
+$(window)
+    .off("resize.cartPosition scroll.cartPosition")
+    .on("resize.cartPosition scroll.cartPosition", CartDropPosition);
+
 function CartDropAdd(result) {
     var $template = $($("#Template_Car_Dropdown").html()).clone();
     if (!result.available) $template.addClass("unavailable");
+    if (result.isAdditional === true) {
+        $template.addClass("cart-item--additional");
+        $template.find("figcaption").prepend(
+            $("<span></span>")
+                .addClass("cart-item__type-badge")
+                .text(result.priceLabel || "加價購")
+        );
+    } else {
+        $template.addClass("cart-item--primary");
+    }
     $template = HeaderDataInsert($template, result)
     $template.data("scid", result.scId);
     $template.find(".btn_cart_delete").on("click", function () {
@@ -135,6 +185,8 @@ function CartDropAdd(result) {
         });
     });
 
+    // GetAll 已由後端依「主商品 → 對應優惠商品」排序；新加入購物車的項目也應
+    // 保留加入順序，避免再把所有主要商品插到優惠商品之前。
     $("#Car_Dropdown > ul").append($template);
 
     var car_num = $("#Car_Badge").text() == "" ? 1 : parseInt($("#Car_Badge").text()) + 1;
@@ -167,15 +219,24 @@ function CartDropReset(scid, quantity) {
     });
 }
 function CartDropDelete(self, id, success, error) {
-    self.remove();
-    Product.Delete.Cart(id).done(function () {
-        Coker.sweet.success(success, null, true);
-        var car_num = parseInt($("#Car_Badge").text()) - 1;
-        $("#Car_Badge").text(car_num.toString());
-        if (parseInt($("#Car_Badge").text()) == 0) {
-            CartClear();
+    Product.Delete.Cart(id).done(function (result) {
+        if (!result || result.success !== true) {
+            Coker.sweet.error("錯誤", (result && result.error) || error, null, true);
+            return;
         }
 
+        var responseData = result.object || result.Object || {};
+        var removedCartIds = responseData.removedCartIds || responseData.RemovedCartIds || [];
+        var removedIdSet = new Set([Number(id)].concat(removedCartIds.map(Number)));
+
+        removedIdSet.forEach(function (cartId) {
+            CartDropReset(cartId, 0);
+        });
+
+        Coker.sweet.success(result.message || success, null, true);
+        if (parseInt($("#Car_Badge").text()) <= 0) {
+            CartClear();
+        }
     }).fail(function () {
         Coker.sweet.error("錯誤", error, null, true);
     })
@@ -195,7 +256,7 @@ function HeaderDataInsert($frame, data) {
                 case "link":
                     if (data.available) {
                         $self.attr({
-                            href: `/${OrgName}/home/product/${data['pId']}`,
+                            href: `/${OrgName}/search/product/${data['pId']}`,
                             title: `連結至：${data['title']}`
                         });
                     }
@@ -230,9 +291,12 @@ function HeaderDataInsert($frame, data) {
                     if (data.available) {
                         if (data.bonus > 0) {
                             const price = parseInt($self.text());
+                            $self.toggleClass("price", price > 0);
                             if (price > 0) $self.text(`${price.toLocaleString()}+紅利${data.bonus}`);
                             else $self.text(`紅利${data.bonus}`);
-                        } else $self.text(parseInt($self.text()).toLocaleString())
+                        } else {
+                            $self.addClass("price").text(parseInt($self.text()).toLocaleString());
+                        }
                     }
                     break;
             };

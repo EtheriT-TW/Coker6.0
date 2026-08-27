@@ -62,10 +62,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await orderAppService.GetOrderDetails(id);
         }
         [HttpGet]
-        public async Task<List<OrderDisplayDto>> GetOrderDisplay(long ohid, bool check)
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public async Task<List<OrderDisplayDto>> GetOrderDisplay(long ohid)
         {
             List<long> ohids = new List<long> { ohid };
-            return await orderAppService.GetOrderDisplay(ohids, check);
+            // Public order details must always be scoped to the current member or guest session.
+            return await orderAppService.GetOrderDisplay(ohids, true);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> Reorder(long ohid)

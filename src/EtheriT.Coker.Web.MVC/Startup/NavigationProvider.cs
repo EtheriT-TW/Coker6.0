@@ -325,7 +325,16 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Controller="StoreSettings",
                                 Action="MarketingSettings",
                                 Icon="confirmation_number",
-                                Enable=false
+                                Enable=false,
+                                jobItemModels= new List<JobMenu> {
+                                    new JobMenu{
+                                        PageName="ProdAddition",
+                                        Title = "商品加價購/滿額贈",
+                                        IsView = false,
+                                        Enable = false,
+                                        PermissionMode = PermissionMode.Execute
+                                    }
+                                }
                             },
                             new JobMenu{
                                 PageName="LogisticsSettings",
@@ -357,6 +366,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         Icon="palette",
                         CollapseId="#Layout",
                         jobItemModels = new List<JobMenu>{
+                            new JobMenu{
+                                PageName="GlobalSettings",
+                                Title="全站設定",
+                                Controller="Template",
+                                Action="GlobalSettings",
+                                Icon="tune"
+                            },
                             new JobMenu{
                                 PageName="HeaderSettings",
                                 Title="版頭設定",
@@ -677,44 +693,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
             ThePermission.systemManager = await loginUserData.isSystemUser();
             if (ThePermission.superManager)
             {
-                site.Jobs.ForEach(x =>
-                {
-                    if (x.Enable)
-                    {
-                        if (x.PermissionMode == PermissionMode.Execute)
-                        {
-                            x.CanExecute = true;
-                        } 
-                        else
-                        {
-                            x.CanRemove = true;
-                            x.CanUpdate = true;
-                            x.CanVisble = true;
-                            x.CanCreate = true;
-                        }
-                        if (x.jobItemModels != null)
-                        {
-                            x.jobItemModels.ForEach(s =>
-                            {
-                                if (s.Enable)
-                                {
-                                    if (s.PermissionMode == PermissionMode.Execute)
-                                    {
-                                        s.CanExecute = true;
-                                    }
-                                    else
-                                    {
-                                        s.CanRemove = true;
-                                        s.CanUpdate = true;
-                                        s.CanVisble = true;
-                                        s.CanCreate = true;
-                                    }
-                                }
-                            });
-                        }
-                    }
-                });
-
+                GrantEnabledJobs(site.Jobs);
             }
             else
             {
@@ -770,7 +749,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 string ActionName = actionName
                     ?? (_httpContextAccessor.HttpContext.Request.RouteValues["action"] ?? "").ToString();
 
-                JobMenu? item = null;
+                JobMenu? item = FindJob(site.Jobs, ControllerName, ActionName);
                 JobMenu? Bonus = FindJob(site.Jobs, "BonusManagement", "Settings");
                 if (Bonus != null)
                 {
@@ -783,16 +762,6 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     bonusPermission.CanEdit = false;
                 }
 
-                site.Jobs.ForEach(e =>
-                {
-                    if (e.Controller == ControllerName && e.Action == ActionName) item = e;
-                    else if (e.jobItemModels != null)
-                    {
-                        var n = e.jobItemModels.Find(x => x.Controller == ControllerName && x.Action == ActionName);
-                        if (n != null) item = n;
-                    }
-                    if (item != null) return;
-                });
                 if (item != null)
                 {
                     ThePermission.CanVisble = item.CanVisble;
@@ -810,7 +779,8 @@ namespace EtheriT.Coker.Web.MVC.Startup
             }
             ThePermission.Initable = true;
 
-            if (writeHttpContextItems) {
+            if (writeHttpContextItems)
+            {
                 permissionStateStore.Set(websiteId, userId, ThePermission);
                 permissionStateStore.Set(websiteId, userId, bonusPermission);
 
@@ -821,18 +791,45 @@ namespace EtheriT.Coker.Web.MVC.Startup
         }
         public JobMenu? FindJob(List<JobMenu> jobs, string Controller, string Action)
         {
-            JobMenu? m = null;
-
-            jobs.ForEach(e =>
+            foreach (var job in jobs)
             {
-                if (m != null) return;
-                if (e.Controller == Controller && e.Action == Action) m = e;
-                if (e.jobItemModels != null)
+                if (job.Controller == Controller && job.Action == Action)
+                    return job;
+
+                if (job.jobItemModels == null || job.jobItemModels.Count == 0)
+                    continue;
+
+                var child = FindJob(job.jobItemModels, Controller, Action);
+                if (child != null)
+                    return child;
+            }
+
+            return null;
+        }
+
+        private static void GrantEnabledJobs(IEnumerable<JobMenu> jobs, bool ancestorsEnabled = true)
+        {
+            foreach (var job in jobs)
+            {
+                var effectiveEnabled = ancestorsEnabled && job.Enable;
+                if (effectiveEnabled)
                 {
-                    m = FindJob(e.jobItemModels, Controller, Action);
+                    if (job.PermissionMode == PermissionMode.Execute)
+                    {
+                        job.CanExecute = true;
+                    }
+                    else
+                    {
+                        job.CanRemove = true;
+                        job.CanUpdate = true;
+                        job.CanVisble = true;
+                        job.CanCreate = true;
+                    }
                 }
-            });
-            return m;
+
+                if (job.jobItemModels != null && job.jobItemModels.Count > 0)
+                    GrantEnabledJobs(job.jobItemModels, effectiveEnabled);
+            }
         }
         private void SetJobs(List<JobMenu> jobs, List<JobMenu> settings, bool allowOverwriteEnable = false)
         {
@@ -898,29 +895,23 @@ namespace EtheriT.Coker.Web.MVC.Startup
             }
         }
 
-        private static void SetExecutePermissions(HttpContext httpContext, IEnumerable<JobMenu> jobs)
+        private static void SetExecutePermissions(
+            HttpContext httpContext,
+            IEnumerable<JobMenu> jobs,
+            bool ancestorsEnabled = true)
         {
             foreach (var job in jobs)
             {
+                var effectiveEnabled = ancestorsEnabled && job.Enable;
                 if (job.PermissionMode == PermissionMode.Execute)
                 {
                     httpContext.Items[job.PageName] =
-                        job.Enable &&
+                        effectiveEnabled &&
                         job.CanExecute;
                 }
 
-                if (job.jobItemModels == null)
-                    continue;
-
-                foreach (var child in job.jobItemModels)
-                {
-                    if (child.PermissionMode != PermissionMode.Execute)
-                        continue;
-
-                    httpContext.Items[child.PageName] =
-                        child.Enable &&
-                        child.CanExecute;
-                }
+                if (job.jobItemModels != null && job.jobItemModels.Count > 0)
+                    SetExecutePermissions(httpContext, job.jobItemModels, effectiveEnabled);
             }
         }
     }

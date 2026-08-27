@@ -98,5 +98,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             };
             return Json(responseDto);
         }
+
+        [HttpGet]
+        public async Task<ActionResult<OnlineVisitorCountOutputDto>> GetOnlineVisitorCount()
+        {
+            return Ok(await remoteAppService.GetOnlineVisitorCount());
+        }
     }
 }

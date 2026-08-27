@@ -1,5 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.Freight;
 using EtheriT.Coker.Application.Shared.Freight;
 using Microsoft.AspNetCore.Authorization;
@@ -72,6 +73,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<FreightDto> GetOne(long Id)
         {
             return await freightAppService.GetOne(Id);
+        }
+        [HttpGet]
+        public async Task<List<FreightPaymentRestrictionDto>> GetPaymentRestrictions(long? logisticsSettingId, ShippingTypeEnum shippingType)
+        {
+            return await freightAppService.GetPaymentRestrictions(logisticsSettingId, shippingType);
         }
         [HttpGet]
         public async Task<ResponseMessageDto> Delete(long Id)

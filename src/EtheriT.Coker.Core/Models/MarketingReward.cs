@@ -65,5 +65,23 @@ namespace EtheriT.Coker.Core.Models
         /// 當贈品需要指定商品規格時，記錄贈品規格 Id。
         /// </summary>
         public long? FK_GiftProductStockId { get; set; }
+
+        /// <summary>
+        /// 每取得一次活動資格時，可從優惠商品池選取的總件數（M）。
+        /// 優惠商品池的有效明細數即為 N，可表達 N 選 M。
+        /// </summary>
+        public int SelectionQuantityPerQualification { get; set; } = 1;
+
+        /// <summary>
+        /// 單筆訂單從此優惠商品池最多可取得的總件數。
+        /// null 表示不另外限制，仍受資格次數與各明細上限限制。
+        /// </summary>
+        public int? MaxSelectionQuantityPerOrder { get; set; }
+
+        /// <summary>
+        /// 可供顧客主動選取的加價購／贈品商品。
+        /// 明細活動價為 0 時視為贈品，大於 0 時視為加價購。
+        /// </summary>
+        public virtual ICollection<MarketingRewardItem> Items { get; set; } = new List<MarketingRewardItem>();
     }
 }

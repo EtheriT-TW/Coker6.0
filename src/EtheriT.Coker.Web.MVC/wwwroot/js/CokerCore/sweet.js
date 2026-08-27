@@ -3,17 +3,22 @@
         config: {
             timeout: 1500
         },
-        loading: function () {
+        loading: function (title, text) {
             Swal.fire({
-                title: "資料處理中，請稍後。",
+                title: title || "資料處理中，請稍後。",
+                text: text || "",
                 allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
                 didOpen: () => {
                     Swal.showLoading();
-                },
-                willClose: () => {
                 }
-            }).then((result) => {
             });
+        },
+        closeLoading: function () {
+            if (Swal.isLoading()) {
+                Swal.close();
+            }
         },
         success: function (text, action, autoclose) {
             var closetime = false;

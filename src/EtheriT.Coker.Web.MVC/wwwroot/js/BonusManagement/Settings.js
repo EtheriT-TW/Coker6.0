@@ -1,6 +1,11 @@
 ﻿$(function () {
     $("#submitButton").on("click", function () {
         var form = $("#bonusSettingsForm").dxForm("instance");
+        var validationResult = form.validate();
+        if (!validationResult.isValid) {
+            return;
+        }
+
         var formData = form.option("formData");
 
         $.ajax({
@@ -32,6 +37,7 @@ $(document).ready(function () {
         $(".dx-numberbox").each(function () {
             var instance = $(this).dxNumberBox("instance");
             if (instance) {
+                const originalValueChanged = instance.option("onValueChanged");
                 instance.option("onValueChanged", function (e) {
                     if (e.event && e.event.type === "dxmousewheel") {
                         if (suspendValueChanged) {
@@ -40,6 +46,11 @@ $(document).ready(function () {
                         }
                         suspendValueChanged = true;
                         e.component.option('value', e.previousValue);
+                        return;
+                    }
+
+                    if (typeof originalValueChanged === "function") {
+                        originalValueChanged(e);
                     }
                 });
             }

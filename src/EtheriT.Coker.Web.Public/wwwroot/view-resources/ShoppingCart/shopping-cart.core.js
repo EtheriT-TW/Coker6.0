@@ -17,6 +17,10 @@
         marketingDiscount: 0,
         marketingDiscountMemo: "",
         marketingCampaigns: null,
+        marketingRewardSelections: {},
+        marketingRewardManualSelections: {},
+        marketingRewardAmount: 0,
+        productAddOnDrafts: null,
         ori_freight: undefined,
         low_con: undefined,
         disfreight: undefined,
@@ -41,7 +45,10 @@
         OrdererFilled: true,
         RecipientFilled: true,
         InvoiceFilled: true,
-        SupportCashOnDelivery: undefined,
+        AvailablePayments: [],
+        PaymentAvailabilityLoaded: false,
+        PaymentAvailabilityRequestId: 0,
+        PaymentAvailabilityTimer: null,
         $Orderer_TWzipcode: undefined,
         $Recipient_TWzipcode: undefined,
         $Invoice_TWzipcode: undefined,
@@ -95,6 +102,7 @@
         ECPayOrderSnapshot: "",
         ECPayRefreshTimer: null,
         ECPayChanging: false,
+        ECPayAvailable: false,
         SupportApplePay: false,
         isRestoringECPayLogistics: false,
         RecipientsList_dxData: undefined,
@@ -103,4 +111,15 @@
     });
 
     cart.Utils = cart.Utils || {};
+
+    cart.Utils.formatMoney = function (value) {
+        var amount = Number(String(value == null ? 0 : value).replaceAll(",", ""));
+        if (!Number.isFinite(amount)) return "";
+
+        if (window.CokerCurrency && typeof window.CokerCurrency.format === "function") {
+            return window.CokerCurrency.format(amount);
+        }
+
+        return `NT$${amount.toLocaleString()}`;
+    };
 })(window, window.jQuery);

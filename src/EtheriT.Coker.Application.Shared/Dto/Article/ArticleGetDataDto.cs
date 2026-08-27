@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public double? Latitude { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; }
+        public int Popular { get; set; }
         public bool PopularVisible { get; set; }
         public long FK_WebsiteId { get; set; }
         public DateTime? NodeDate { get; set; }

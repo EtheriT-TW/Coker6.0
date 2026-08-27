@@ -1,10 +1,10 @@
 ﻿@using EtheriT.Coker.Application.Shared.Dto.Marquee
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 @using EtheriT.Coker.Web.Public.Views.Shared.Components.MenuItem
+@using EtheriT.Coker.Application.Shared.i18n;
 @model HeaderViewModel
 
 <link rel="stylesheet" href="~/css/Header/Header_Layout_1.min.css" asp-append-version="true" />
-<script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
 
 <nav class="navbar navbar-expand-lg flex-column p-0 shadow @(ViewBag.HasFullBanner == true ? "position-fixed" : "") w-100">
@@ -19,14 +19,14 @@
                 if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
             }
             <a href="@Model.HomeLink" target="@home_target" title="@home_title" @(rel != null ? $"rel=\"{rel}\"" : "")>
-                @if (string.IsNullOrEmpty(Model.Title))
+                @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
                 {
-                    <h1>@Model.Title</h1>
+                    <span class="logo-text">@Model.Title</span>
                 }
                 else
                 {
                     <img src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-                    <h1 class="sr-only">@Model.Title</h1>
+                    <span class="logo-text-fallback">@Model.Title</span>
                 }
             </a>
         </div>
@@ -38,7 +38,17 @@
             <!-- Menu Canvas Search Block -->
             <div class="offcanvas-header pt-3 mx-3">
                 <div class="offcanvas-title fs-5 fw-bold" id="offcanvasLabel">
-                    <a href="/"><img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" /></a>
+                    <a href="/">
+                        @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
+                        {
+                            <span class="logo-text">@Model.Title</span>
+                        }
+                        else
+                        {
+                            <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
+                            <span class="logo-text-fallback">@Model.Title</span>
+                        }
+                    </a>
                 </div>
             </div>
 
@@ -181,14 +191,14 @@
                 var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
             }
             <a href="@Model.HomeLink" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
-                @if (string.IsNullOrEmpty(Model.Title))
+                @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
                 {
-                    <h1>@Model.Title</h1>
+                    <span class="logo-text">@Model.Title</span>
                 }
                 else
                 {
                     <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-                    <h1 class="d-none">@Model.Title</h1>
+                    <span class="logo-text-fallback">@Model.Title</span>
                 }
             </a>
         </div>
@@ -201,6 +211,7 @@
                 <span class="text-nowrap ms-2 d-none d-lg-flex">搜尋</span>
             </a>
             <div id="google_translate_element"></div>
+            <div id="translate_switch" class="align-items-center gap-1" translate="no"></div>
             @if ((ViewBag.ShoppingEnable ?? false) && (ViewBag.HasShoppingCar ?? false) && ((ViewBag.storeBuyState ?? "").IndexOf("noPay") < 0))
             {
                 <div id="Cart_Dropdown_Parent" class="d-flex px-1">
@@ -234,9 +245,9 @@
                             </template>
                         </ul>
 
-                        <div id="Car_Dropdown_Null" class="drpy-3 text-center">購物車尚無商品</div>
+                        <div id="Car_Dropdown_Null" class="drpy-3 text-center">@L.get("CartEmpty")</div>
 
-                        <a href="/@ViewData["OrgName"]/ShoppingCar" title="連結至購物車" class="btn_car_buy d-flex justify-content-center border-0 rounded-1 w-100 py-1 mt-2 text-white">結帳</a>
+                        <a href="/@ViewData["OrgName"]/ShoppingCar" title="連結至購物車" class="btn_car_buy d-flex justify-content-center border-0 rounded-1 w-100 py-1 mt-2 text-white">@L.get("Checkout")</a>
                     </div>
                 </div>
             }

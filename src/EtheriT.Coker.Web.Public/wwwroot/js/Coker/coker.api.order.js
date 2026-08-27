@@ -26,11 +26,10 @@
                 return Coker.api.get("/api/Order/GetOrderDetails/", { id: id });
             },
 
-            /** 取得訂單顯示資料（後台 / 前台共用） */
-            GetAllData: function (ohid, check) {
+            /** 取得前台訂單顯示資料；伺服器固定驗證目前會員或訪客工作階段 */
+            GetAllData: function (ohid) {
                 return Coker.api.get("/api/Order/GetOrderDisplay", {
-                    ohid: ohid,
-                    check: check
+                    ohid: ohid
                 });
             },
             /** 取得會員歷史訂單 */

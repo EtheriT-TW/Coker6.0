@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
-<script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
 <script src="~/js/Header/Header_Layout_1.min.js" asp-append-version="true"></script>
 
 <nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow">
@@ -31,14 +30,14 @@
 					var logo_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
 				}
 				<a href="/" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
-					@if (string.IsNullOrEmpty(Model.Title))
+					@if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
 					{
-						<h1>@Model.Title</h1>
+						<span class="logo-text">@Model.Title</span>
 					}
 					else
 					{
 						<img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-						<h1 class="sr-only">@Model.Title</h1>
+						<span class="logo-text-fallback">@Model.Title</span>
 					}
 				</a>
 			</div>
@@ -58,14 +57,14 @@
 						if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
 					}
 					<a href="/" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
-						@if (string.IsNullOrEmpty(Model.Title))
+						@if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
 						{
-							<h1>@Model.Title</h1>
+							<span class="logo-text">@Model.Title</span>
 						}
 						else
 						{
 							<img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" asp-append-version="true" />
-							<h1 class="d-none">@Model.Title</h1>
+							<span class="logo-text-fallback">@Model.Title</span>
 						}
 					</a>
 				</div>

@@ -14,7 +14,7 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5 mx-auto" id="ECPayModalLabel">選擇支付方式</h1>
+                <h2 class="modal-title fs-5 mx-auto" id="ECPayModalLabel">選擇支付方式</h2>
             </div>
             <div class="modal-body">
                 <div id="ECPayPayment"></div>
@@ -157,7 +157,7 @@
                     <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">
                         <span class="material-symbols-outlined mx-2">
                             other_admission
-                        </span>歷史訂單
+                        </span>@L.get("OrderHistory")
                     </button>
                 </li>
             }
@@ -182,7 +182,7 @@
                     <button class="nav-link" id="bonus-tab" data-bs-toggle="tab" data-bs-target="#bonus-tab-pane" type="button" role="tab" aria-controls="bonus-tab-pane" aria-selected="false">
                         <span class="material-symbols-outlined mx-2">
                             savings
-                        </span>現有紅利
+                        </span>@L.get("CurrentBonus")
                     </button>
                 </li>
             }
@@ -373,7 +373,16 @@
             @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
             {
                 <div id="profile-tab-pane" class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab" tabindex="2">
+                    <div class="alert alert-light border text-secondary small mb-3" role="note">
+                        若有訂單資料或交易憑證需求，建議自行留存；如無法查閱，請聯繫客服協助。
+                    </div>
+
                     <div class="nodata h5 text-center fw-bold d-none">@L.get("EmptyOrderHistory")</div>
+
+                    <div class="order-loading text-center text-secondary py-5 d-none" role="status" aria-live="polite" aria-hidden="true">
+                        <div class="spinner-border" aria-hidden="true"></div>
+                        <div class="mt-3">歷史訂單載入中，請稍候...</div>
+                    </div>
 
                     <ul class="page_btn d-flex justify-content-center mb-4 pagination d-none" data-init="false">
                         <li class="page-item btn_prev">
@@ -440,10 +449,15 @@
                                         <div class="col-10 text-end align-content-center">商品金額：</div>
                                         <div class="header_subtotal price col-2 text-end align-content-center"></div>
                                     </div>
+                                    <div class="row d-lg-flex px-3 general_product_amount_row d-none">
+                                        <div class="col-10 text-end align-content-center">一般商品金額（不含加價購）</div>
+                                        <div class="header_generalProductAmount price col-2 text-end align-content-center"></div>
+                                    </div>
                                     <div class="row d-lg-flex px-3 discount_summary_row">
                                         <div class="col-10 text-end align-content-center">活動折扣：</div>
                                         <div class="header_discount price-negative col-2 text-end align-content-center"></div>
                                     </div>
+                                    <div class="discount_breakdown_rows px-3"></div>
                                     <div class="row d-lg-flex px-3 bonus_summary_row">
                                         <div class="col-10 text-end align-content-center">商品紅利：</div>
                                         <div class="header_productBonus price col-2 text-end align-content-center"></div>

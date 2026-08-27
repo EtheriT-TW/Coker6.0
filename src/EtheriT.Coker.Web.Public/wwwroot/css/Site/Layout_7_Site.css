@@ -74,6 +74,23 @@ html {
         color: var(--gray-path);
     }
 
+/* 路徑：長商品名不擠壓前面層級（商品頁的麵包屑沒有 #breadcrumb，一律用 class 選取） */
+.top_title_1 .bread > ol {
+    flex-wrap: nowrap; /* 路徑固定單行 */
+}
+
+    .top_title_1 .bread > ol > li {
+        flex: 0 0 auto; /* 中間各層級一律不被壓縮 */
+        white-space: nowrap;
+    }
+
+        .top_title_1 .bread > ol > li:last-child {
+            flex: 0 1 auto; /* 只有最後一項（商品名）可縮 */
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 超出的部分收成 ... */
+        }
+
 .editTime {
     color: var(--gray-path);
     font-size: 0.9rem;

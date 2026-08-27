@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EtheriT.Coker.Application.Shared.i18n;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,17 +26,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
 
                 if (CartAlreadyExceeded)
                 {
-                    return
-                        $"會員紅利不足，目前可用 {AvailableBonus:N0} 點，" +
-                        $"購物車已需 {CurrentCartBonus:N0} 點，" +
-                        $"已超出 {CurrentCartBonus - AvailableBonus:N0} 點";
+                    return L.get("BonusNotEnoughExceeded", AvailableBonus, CurrentCartBonus, CurrentCartBonus - AvailableBonus);
                 }
 
-                return
-                    $"會員紅利不足，目前可用 {AvailableBonus:N0} 點，" +
-                    $"購物車已需 {CurrentCartBonus:N0} 點，" +
-                    $"本次新增需 {IncrementBonus:N0} 點，" +
-                    $"尚差 {ShortfallBonus:N0} 點";
+                return L.get("BonusNotEnoughShortfall", AvailableBonus, CurrentCartBonus, IncrementBonus, ShortfallBonus);
             }
         }
     }

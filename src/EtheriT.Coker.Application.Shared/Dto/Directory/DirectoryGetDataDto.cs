@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public long? FK_MId { get; set; }
         public int SortBy { get; set; }
         public bool Visible { get; set; }
-        public List<TagGetSelectedDto> TagDatas { get; set; }
+        public List<TagGetSelectedDto> TagDatas { get; set; } = new List<TagGetSelectedDto>();
+        public List<TagGetSelectedDto> ReverseTagDatas { get; set; } = new List<TagGetSelectedDto>();
     }
 }

@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
     {
         public long? Id { get; set; }
         public string Title { get; set; }
+        public ShippingTypeEnum LogisticsType { get; set; }
         public int? Freight { get; set; }
         public int? Low_Con { get; set; }
         public int? Dis_Freight { get; set; }
@@ -18,7 +19,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Freight
         public bool GetMap { get; set; }
         public string LogisticsSubType { get; set; }
         public string CVSStoreID { get; set; }
-        public bool SupportCashOnDelivery { get; set; }
         public List<LogisticsBoxFeeDisplayDto> LogisticsBoxFees { get; set; } = new();
     }
 }

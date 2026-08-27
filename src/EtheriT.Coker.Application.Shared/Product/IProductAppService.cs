@@ -3,12 +3,10 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
-using EtheriT.Coker.Application.Shared.Dto.Import;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -20,7 +18,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockAddUp(long Pid, List<ProductStockDto> dto);
         public Task<ResponseMessageDto> StockBatchSet(List<StockBatchSetDto> dto);
         public Task<ResponseMessageDto> PriceAddUp(List<ProductPriceDto> dto);
-        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids, string? tagIds);
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, string? pids, string? tagIds, bool excludeUnavailable = false);
         public Task<JsonResult> SaleQuantityStaging(DataSourceLoadOptions loadOptions);
         public Task<ProdGetDataDto> GetProdDataOne(long Id);
         public Task<List<ProductStockDto>> GetStockDataAll(long PId);
@@ -38,15 +36,15 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> StockDelete(long Id);
         public Task<ResponseMessageDto> PriceDelete(long Id);
         public Task<ResponseMessageDto> ClickLog(long FK_Pid);
-        public Task<ImportOutputDto> ProdReplace(IList<IFormFile> files, long templateId, bool overwriteExisting);
-        public Task<ImportOutputDto> ProdReplace(string filePath, long templateId, bool overwriteExisting, System.Action<int, string>? reportProgress);
         public Task<byte[]> ExportProductData();
         public Task<byte[]> ExportProductData(long websiteId, System.Action<int, string>? reportProgress);
+        public Task<byte[]> ExportProductData(long websiteId, string exportVersion, System.Action<int, string>? reportProgress);
         public Task<GetProdContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> ImportConten(ProdSaveContenDto dto);
         public Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto);
         public Task<ResponseMessageDto> HasAnyItemNo();
         public Task<GetFrontContenOutputDto> GetFrontConten(ProdGetFrontContenInputDto dto);
+        public Task<ProductSeoDataDto?> GetSeoData(ProdGetFrontContenInputDto dto, bool orderLowToHigh);
         public Task<List<TagGetSelectedDto>> GetProductListTags();
 
     }

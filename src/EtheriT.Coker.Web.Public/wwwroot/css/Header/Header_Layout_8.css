@@ -60,7 +60,8 @@ header {
         background-color: var(--header-menu-bg) !important;
     }
 
-.icon-logged-in {
+#HiUser .material-symbols-outlined.icon-logged-in,
+#MenuHiUser .material-symbols-outlined.icon-logged-in {
     font-variation-settings: 'FILL' 1;
 }
 
@@ -190,6 +191,14 @@ header {
     .navbar span.bg-secondary {
         color: var(--header-nav-text-color) !important;
     }
+
+/* 翻譯按鈕預設不啟用，需要的站台再以站台專屬 CSS 開啟 */
+#translate_switch {
+    display: none;
+}
+body {
+    top: 0 !important;
+}
 
 /* Button Car Dropdown */
 #btn_car_dropdown > i.open {

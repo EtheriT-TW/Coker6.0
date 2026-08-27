@@ -23,5 +23,6 @@ namespace EtheriT.Coker.Core.Models
         public ICollection<MappingLogisticsSettingAndProd> MappingLogisticsSettingAndProds { get; set; }
         public ICollection<Order_Header> Order_Headers { get; set; }
         public ICollection<LogisticsBoxFee> logisticsBoxFees { get; set; }
+        public ICollection<LogisticsPaymentRestriction> LogisticsPaymentRestrictions { get; set; }
     }
 }

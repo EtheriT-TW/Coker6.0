@@ -10,5 +10,13 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
     {
         public bool IsSelected { get; set; }
         public string TagNames { get; set; } = string.Empty;
+        public int ProductStatus { get; set; }
+        public string ProductStatusName { get; set; } = string.Empty;
+        public string SaleStateName { get; set; } = string.Empty;
+        public bool RemovedFromShelves { get; set; }
+        public bool NoStockManagement { get; set; }
+        public int? StockQuantity { get; set; }
+        public int? AlertQuantity { get; set; }
+        public string StockDisplay { get; set; } = string.Empty;
     }
 }

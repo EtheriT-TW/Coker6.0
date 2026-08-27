@@ -24,7 +24,7 @@
         "wwwroot/js/CokerCore/Freight.js",
         "wwwroot/js/CokerCore/HashPage.js",
         "wwwroot/js/CokerCore/HtmlContent.js",
-        "wwwroot/js/CokerCore/ListFile.js",
+        "wwwroot/js/CokerCore/FileListManager.js",
         "wwwroot/js/CokerCore/Member.js",
         "wwwroot/js/CokerCore/Marketing.js",
         "wwwroot/js/CokerCore/ObjectType.js",
@@ -67,12 +67,6 @@
       "output": "lib/swiper/swiper-bundle.min.js",
       "input": [
         "node_modules/swiper/swiper-bundle.min.js"
-      ]
-    },
-    {
-      "output": "lib/chart.js/chart.min.js",
-      "input": [
-        "node_modules/chart.js/dist/chart.min.js"
       ]
     },
     {
@@ -134,7 +128,8 @@
     {
       "output": "css/CokerCore.min.css",
       "input": [
-        "wwwroot/css/CokerCore/hashPage.css"
+        "wwwroot/css/CokerCore/hashPage.css",
+        "wwwroot/css/CokerCore/FileListManager.css"
       ]
     },
     {

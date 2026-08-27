@@ -25,10 +25,19 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 context.Request.Path.StartsWithSegments("/front") ||
                 path.StartsWith("/DXX", StringComparison.OrdinalIgnoreCase);
 
+            // Session lifecycle endpoints must be allowed to determine whether the login
+            // has expired and to clear authentication state. Applying the website-tab
+            // consistency check first would turn an expired login into a misleading 409.
+            bool isSessionLifecycleRequest =
+                context.Request.Path.StartsWithSegments("/api/User/Login") ||
+                context.Request.Path.StartsWithSegments("/api/User/Chech") ||
+                context.Request.Path.StartsWithSegments("/api/User/Logout");
+
             // The selected website lives on the shared login token. Bind requests to the
             // website that was active when this browser tab loaded, so an old tab cannot
             // silently operate on a website selected by another tab.
-            if (context.User.Identity?.IsAuthenticated == true)
+            if (context.User.Identity?.IsAuthenticated == true &&
+                !isSessionLifecycleRequest)
             {
                 var loginUserData = context.RequestServices.GetRequiredService<LoginUserData>();
                 var currentWebsiteId = await loginUserData.GetWebsiteId();
@@ -37,6 +46,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                     !context.Request.Path.StartsWithSegments("/api/Website/Exchange") &&
                     context.Request.Headers.TryGetValue("X-Coker-Website-Id", out var websiteHeader) &&
                     long.TryParse(websiteHeader.FirstOrDefault(), out var pageWebsiteId) &&
+                    pageWebsiteId > 0 &&
                     pageWebsiteId != currentWebsiteId)
                 {
                     context.Response.StatusCode = StatusCodes.Status409Conflict;
@@ -52,6 +62,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 if (!isApiRequest &&
                     context.Request.Query.TryGetValue("_site", out var siteQuery) &&
                     long.TryParse(siteQuery.FirstOrDefault(), out var requestedWebsiteId) &&
+                    requestedWebsiteId > 0 &&
                     requestedWebsiteId != currentWebsiteId)
                 {
                     var currentPage = context.Request.PathBase + context.Request.Path;

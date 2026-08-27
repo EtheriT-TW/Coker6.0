@@ -28,7 +28,6 @@
 		<Content Remove="wwwroot\js\Page\Index.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.js" />
 		<Content Remove="wwwroot\js\Page\OrderManagement.min.js" />
-		<Content Remove="wwwroot\js\Page\ProductContent.js" />
 		<Content Remove="wwwroot\js\Page\Search.js" />
 		<Content Remove="wwwroot\Shared\components\Directory\**\*.*" />
 		<Content Remove="wwwroot\Shared\components\ArticleViewer\index.css" />
@@ -74,22 +73,22 @@
 	<ItemGroup>
 		<PackageReference Include="DevExpress.Xpo" Version="25.2.8" />
 		<PackageReference Include="DevExtreme.AspNet.Data" Version="5.1.0" />
-		<PackageReference Include="Hangfire" Version="1.8.23" />
+		<PackageReference Include="Hangfire" Version="1.8.24" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.19.1" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.21.0" />
 		<PackageReference Include="MiniExcel" Version="1.45.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
 		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
-		<PackageReference Include="System.Drawing.Common" Version="10.0.9" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
+		<PackageReference Include="System.Drawing.Common" Version="10.0.10" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.21.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -140,7 +139,6 @@
 		<None Include="wwwroot\view-resources\**\*.*" />
 		<None Include="wwwroot\Shared\components\Directory\**\*.*" />
 		<None Include="wwwroot\js\Page\Index.js" />
-		<None Include="wwwroot\js\Page\ProductContent.js" />
 		<None Include="wwwroot\js\Page\Search.js" />
 		<None Include="wwwroot\Shared\components\ArticleViewer\index.css" />
 		<None Include="wwwroot\Shared\components\ArticleViewer\Index.js" />
@@ -154,7 +152,6 @@
 		<None Include="wwwroot\Shared\components\Form\css\DynamicForm.css" />
 		<None Include="wwwroot\Shared\components\Form\css\DynamicForm.en.css" />
 		<None Include="wwwroot\Shared\css\Directory.css" />
-		<None Include="wwwroot\Shared\css\FlipBook.css" />
 		<None Include="wwwroot\Shared\css\Flipdown.css" />
 		<None Include="wwwroot\Shared\css\Frame.css" />
 		<None Include="wwwroot\Shared\css\HoverEffect.css" />
@@ -165,7 +162,6 @@
 		<None Include="wwwroot\Shared\js\BGCanvas.js" />
 		<None Include="wwwroot\Shared\js\Contact.js" />
 		<None Include="wwwroot\Shared\js\CShare.js" />
-		<None Include="wwwroot\Shared\js\FlipBook.js" />
 		<None Include="wwwroot\Shared\js\Flipdown.js" />
 		<None Include="wwwroot\Shared\js\Frame.js" />
 		<None Include="wwwroot\Shared\js\GetLatLng.js" />

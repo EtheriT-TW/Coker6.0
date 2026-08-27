@@ -48,7 +48,12 @@
     function formatMoney(value) {
         const text = normalizeText(value);
         if (!text) return "";
-        return `$${text}元`;
+
+        if (w.CokerCurrency && typeof w.CokerCurrency.format === "function") {
+            return w.CokerCurrency.format(normalizeNumber(value));
+        }
+
+        return `NT$${text}`;
     }
 
     function formatBonus(value) {
@@ -136,7 +141,7 @@
      * 4. 登入後有會員價（currentRoleName 為會員角色）：
      *    顯示「劃線建議售價 + 會員價」，非會員價不顯示；
      *    沒設建議售價時，退用非會員價當劃線價
-     * 5. 有紅利時，售價行改為組合：$700元 + 50紅利點
+     * 5. 有紅利時，售價行改為組合：NT$700 + 50紅利點
      * 6. 只有 bonus 時，只顯示 bonus
      */
     function buildHtml(data) {

@@ -229,5 +229,7 @@
         public static string PasswordRuleLength { get; } = "Password length must be between 8 and 32 characters.";
         public static string PasswordRuleComposition { get; } = "Password must include at least three of the following: uppercase letters, lowercase letters, numbers, or symbols.";
 
+        public static string PleaseSignIn { get; } = "Please sign in";
+
     }
 }

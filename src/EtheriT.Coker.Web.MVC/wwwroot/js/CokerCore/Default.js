@@ -115,7 +115,10 @@
                 co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;
             }
 
-            Coker.Page.waitForModuleInitFunctions(5000, 50)
+            Promise.resolve(window.CokerGrapesReady)
+                .then(function () {
+                    return Coker.Page.waitForModuleInitFunctions(5000, 50);
+                })
                 .then(function () {
                     typeof (PageReady) === "function" && PageReady();
                 })

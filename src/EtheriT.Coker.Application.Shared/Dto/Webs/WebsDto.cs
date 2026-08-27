@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Webs.Dto
         public string Description { get; set; }
         public string Images { get; set; }
         public string DefaultUrl { get; set; }
+        public List<string> CompanyNames { get; set; } = new List<string>();
         public bool Check { get; set; }
     }
 }

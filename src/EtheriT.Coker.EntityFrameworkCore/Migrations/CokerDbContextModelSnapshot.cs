@@ -17,7 +17,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -405,6 +405,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ExecutionTime");
 
                     b.HasIndex("FK_WebsiteId");
 
@@ -867,7 +869,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebMenuId");
+                    b.HasIndex("FK_WebMenuId")
+                        .HasDatabaseName("IX_Contacts_FK_WebMenuId");
+
+                    b.HasIndex("FK_WebMenuId", "Status", "CreationTime")
+                        .HasDatabaseName("IX_Contacts_FK_WebMenuId_Status_CreationTime_Active")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("FK_WebMenuId", "Status", "CreationTime"), new[] { "Name", "UserName" });
 
                     b.ToTable("Contacts");
                 });
@@ -1910,8 +1919,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("FK_Pid")
-                        .HasMaxLength(50)
+                    b.Property<long?>("FK_LogisticsSettingId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_PaymentTypeId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
@@ -1919,21 +1930,524 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
 
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("ShippingType")
-                        .HasMaxLength(50)
+                    b.Property<decimal?>("OverrideMaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("OverrideMinAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("ShippingType")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_Pid");
+                    b.HasIndex("FK_PaymentTypeId");
 
-                    b.ToTable("LogisticsType_Payments");
+                    b.HasIndex("FK_LogisticsSettingId", "FK_PaymentTypeId")
+                        .IsUnique()
+                        .HasFilter("[FK_LogisticsSettingId] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("ShippingType", "FK_PaymentTypeId")
+                        .IsUnique()
+                        .HasFilter("[FK_LogisticsSettingId] IS NULL AND [IsDeleted] = 0");
+
+                    b.ToTable("LogisticsType_Payments", t =>
+                        {
+                            t.HasCheckConstraint("CK_LogisticsType_Payments_RuleScope", "([ShippingType] IS NOT NULL AND [FK_LogisticsSettingId] IS NULL) OR ([ShippingType] IS NULL AND [FK_LogisticsSettingId] IS NOT NULL)");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = -701L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 1
+                        },
+                        new
+                        {
+                            Id = -702L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 2
+                        },
+                        new
+                        {
+                            Id = -703L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 3
+                        },
+                        new
+                        {
+                            Id = -704L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 4
+                        },
+                        new
+                        {
+                            Id = -706L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 6
+                        },
+                        new
+                        {
+                            Id = -707L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 7
+                        },
+                        new
+                        {
+                            Id = -708L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 8
+                        },
+                        new
+                        {
+                            Id = -709L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 9
+                        },
+                        new
+                        {
+                            Id = -710L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 10
+                        },
+                        new
+                        {
+                            Id = -711L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 11
+                        },
+                        new
+                        {
+                            Id = -712L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 12
+                        },
+                        new
+                        {
+                            Id = -713L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 13
+                        },
+                        new
+                        {
+                            Id = -714L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 14
+                        },
+                        new
+                        {
+                            Id = -715L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 15
+                        },
+                        new
+                        {
+                            Id = -716L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 16
+                        },
+                        new
+                        {
+                            Id = -717L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 17
+                        },
+                        new
+                        {
+                            Id = -801L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 1
+                        },
+                        new
+                        {
+                            Id = -802L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 2
+                        },
+                        new
+                        {
+                            Id = -803L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 3
+                        },
+                        new
+                        {
+                            Id = -805L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 5
+                        },
+                        new
+                        {
+                            Id = -806L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 6
+                        },
+                        new
+                        {
+                            Id = -807L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 7
+                        },
+                        new
+                        {
+                            Id = -808L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 8
+                        },
+                        new
+                        {
+                            Id = -809L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 9
+                        },
+                        new
+                        {
+                            Id = -810L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 10
+                        },
+                        new
+                        {
+                            Id = -811L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 11
+                        },
+                        new
+                        {
+                            Id = -812L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 12
+                        },
+                        new
+                        {
+                            Id = -813L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 13
+                        },
+                        new
+                        {
+                            Id = -814L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 14
+                        },
+                        new
+                        {
+                            Id = -815L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 15
+                        },
+                        new
+                        {
+                            Id = -816L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 16
+                        },
+                        new
+                        {
+                            Id = -817L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 17
+                        },
+                        new
+                        {
+                            Id = -1001L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 1
+                        },
+                        new
+                        {
+                            Id = -1002L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 2
+                        },
+                        new
+                        {
+                            Id = -1003L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 3
+                        },
+                        new
+                        {
+                            Id = -1004L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 4
+                        },
+                        new
+                        {
+                            Id = -1005L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 5
+                        },
+                        new
+                        {
+                            Id = -1006L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 6
+                        },
+                        new
+                        {
+                            Id = -1008L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 8
+                        },
+                        new
+                        {
+                            Id = -1009L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 9
+                        },
+                        new
+                        {
+                            Id = -1010L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 10
+                        },
+                        new
+                        {
+                            Id = -1011L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 11
+                        },
+                        new
+                        {
+                            Id = -1012L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 12
+                        },
+                        new
+                        {
+                            Id = -1013L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 13
+                        },
+                        new
+                        {
+                            Id = -1014L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 14
+                        },
+                        new
+                        {
+                            Id = -1015L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 15
+                        },
+                        new
+                        {
+                            Id = -1016L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 16
+                        },
+                        new
+                        {
+                            Id = -1017L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 17
+                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
@@ -2172,6 +2686,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TempUUID", "UserUUID");
 
                     b.ToTable("MappingOldNewUUID");
                 });
@@ -2569,6 +3085,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<decimal?>("MaxDiscountAmount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("MaxSelectionQuantityPerOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SelectionQuantityPerQualification")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
                     b.HasKey("Id");
 
                     b.HasIndex("FK_MarketingRuleId")
@@ -2576,6 +3100,76 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("MarketingRewards");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingRewardItem", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<long>("FK_MarketingRewardId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_ProdStockId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MaxQuantityPerOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<decimal>("OfferPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_ProdStockId");
+
+                    b.HasIndex("FK_MarketingRewardId", "FK_ProdStockId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("FK_MarketingRewardId", "Enabled", "SortOrder");
+
+                    b.ToTable("MarketingRewardItems");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingRule", b =>
@@ -2674,6 +3268,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
+
+                    b.Property<int>("RequiredQuantityPerQualification")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
 
                     b.Property<long>("TargetId")
                         .HasColumnType("bigint");
@@ -3064,6 +3663,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<decimal?>("Discount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("DiscountBreakdownJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("FK_UUID")
                         .HasColumnType("uniqueidentifier");
 
@@ -3335,6 +3937,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("ReceiverZipCode")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RtnMerchantTradeNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RtnOrderNo")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SenderAddress")
                         .HasColumnType("nvarchar(max)");
 
@@ -3474,6 +4082,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("CvsStoreSelectionMode")
+                        .HasColumnType("int");
+
                     b.Property<long?>("DeleterUserId")
                         .HasColumnType("bigint");
 
@@ -3498,11 +4109,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("MaxAmount")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("MaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("MinAmount")
-                        .HasColumnType("int");
+                    b.Property<decimal>("MinAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("RefundWorkDay")
                         .HasColumnType("int");
@@ -3537,10 +4150,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "atm",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 1L,
                             Icons = "pay05.jpg",
                             IsDeleted = false,
-                            MinAmount = 1,
+                            MinAmount = 1m,
                             RefundWorkDay = -1,
                             SerNo = 1,
                             Title = "ATM",
@@ -3553,11 +4167,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayCARD",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 30,
+                            MaxAmount = 199999m,
+                            MinAmount = 30m,
                             RefundWorkDay = 0,
                             RepayAfterMinutes = 10,
                             SerNo = 3,
@@ -3571,11 +4186,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayATM",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay05.jpg",
                             IsDeleted = false,
-                            MaxAmount = 49999,
-                            MinAmount = 1,
+                            MaxAmount = 49999m,
+                            MinAmount = 1m,
                             RefundWorkDay = 3,
                             SerNo = 8,
                             Title = "ATM(虛擬帳戶)",
@@ -3588,11 +4204,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayPI",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay02.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 1,
+                            MaxAmount = 199999m,
+                            MinAmount = 1m,
                             RefundWorkDay = 0,
                             RepayAfterMinutes = 10,
                             SerNo = 7,
@@ -3606,10 +4223,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayACCT",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "",
                             IsDeleted = true,
-                            MinAmount = 1,
+                            MinAmount = 1m,
                             RefundWorkDay = 0,
                             RepayAfterMinutes = 10,
                             SerNo = 500,
@@ -3623,11 +4241,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayEACH",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay06_支付連銀行.jpg",
                             IsDeleted = false,
-                            MaxAmount = 49999,
-                            MinAmount = 1,
+                            MaxAmount = 49999m,
+                            MinAmount = 1m,
                             RefundWorkDay = 3,
                             SerNo = 9,
                             Title = "支付連銀行支付付款",
@@ -3640,11 +4259,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PCHomeIPL7",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 1,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay03.jpg",
                             IsDeleted = false,
-                            MaxAmount = 20000,
-                            MinAmount = 65,
+                            MaxAmount = 20000m,
+                            MinAmount = 65m,
                             RefundWorkDay = 3,
                             SerNo = 10,
                             Title = "7-11貨到付款",
@@ -3657,11 +4277,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PCHomeIPLFM",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 1,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay04.jpg",
                             IsDeleted = false,
-                            MaxAmount = 20000,
-                            MinAmount = 65,
+                            MaxAmount = 20000m,
+                            MinAmount = 65m,
                             RefundWorkDay = 3,
                             SerNo = 11,
                             Title = "全家貨到付款",
@@ -3674,11 +4295,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PCHomeIPLOK",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 1,
                             FK_ThirdPartyId = 2L,
                             Icons = "ok1_0.jpg",
                             IsDeleted = true,
-                            MaxAmount = 20000,
-                            MinAmount = 65,
+                            MaxAmount = 20000m,
+                            MinAmount = 65m,
                             RefundWorkDay = 3,
                             SerNo = 500,
                             Title = "OK貨到付款",
@@ -3691,11 +4313,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PCHomeIPLHL",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 1,
                             FK_ThirdPartyId = 2L,
                             Icons = "life_0.jpg",
                             IsDeleted = false,
-                            MaxAmount = 20000,
-                            MinAmount = 65,
+                            MaxAmount = 20000m,
+                            MinAmount = 65m,
                             RefundWorkDay = 3,
                             SerNo = 12,
                             Title = "萊爾富貨到付款",
@@ -3708,11 +4331,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayInstallment3",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 30,
+                            MaxAmount = 199999m,
+                            MinAmount = 30m,
                             RefundWorkDay = 0,
                             RepayAfterMinutes = 10,
                             SerNo = 4,
@@ -3726,11 +4350,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayInstallment6",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 30,
+                            MaxAmount = 199999m,
+                            MinAmount = 30m,
                             RefundWorkDay = 0,
                             RepayAfterMinutes = 10,
                             SerNo = 5,
@@ -3744,11 +4369,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PchomePayInstallment12",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 30,
+                            MaxAmount = 199999m,
+                            MinAmount = 30m,
                             RefundWorkDay = 0,
                             RepayAfterMinutes = 10,
                             SerNo = 6,
@@ -3762,11 +4388,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "LinePay",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 3L,
                             Icons = "pay01.jpg",
                             IsDeleted = false,
-                            MaxAmount = 50000,
-                            MinAmount = 1,
+                            MaxAmount = 50000m,
+                            MinAmount = 1m,
                             RefundWorkDay = 0,
                             RepayAfterMinutes = 10,
                             SerNo = 2,
@@ -3780,11 +4407,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "PCHomeIBRCD",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 2L,
                             Icons = "pay_07.jpg",
                             IsDeleted = false,
-                            MaxAmount = 20000,
-                            MinAmount = 25,
+                            MaxAmount = 20000m,
+                            MinAmount = 25m,
                             RefundWorkDay = 3,
                             SerNo = 13,
                             Title = "超商條碼付款",
@@ -3797,11 +4425,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCreditCard",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 6,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
                             RefundWorkDay = 21,
                             RepayAfterMinutes = 10,
                             SerNo = 14,
@@ -3815,11 +4444,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayUnionPay",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 6,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
                             RefundWorkDay = 21,
                             RepayAfterMinutes = 10,
                             SerNo = 15,
@@ -3833,11 +4463,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCreditInstallment_3",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 6,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
                             RefundWorkDay = 21,
                             RepayAfterMinutes = 10,
                             SerNo = 16,
@@ -3851,11 +4482,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCreditInstallment_6",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 6,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
                             RefundWorkDay = 21,
                             RepayAfterMinutes = 10,
                             SerNo = 17,
@@ -3869,11 +4501,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCreditInstallment_12",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay_08_信用卡.jpg",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 6,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
                             RefundWorkDay = 21,
                             RepayAfterMinutes = 10,
                             SerNo = 18,
@@ -3887,11 +4520,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayATM",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay05.jpg",
                             IsDeleted = false,
-                            MaxAmount = 49999,
-                            MinAmount = 17,
+                            MaxAmount = 49999m,
+                            MinAmount = 17m,
                             RefundWorkDay = -1,
                             SerNo = 19,
                             Title = "ATM(虛擬帳戶)",
@@ -3904,11 +4538,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayBarcode",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay_07.jpg",
                             IsDeleted = false,
-                            MaxAmount = 20000,
-                            MinAmount = 16,
+                            MaxAmount = 20000m,
+                            MinAmount = 16m,
                             RefundWorkDay = -1,
                             SerNo = 20,
                             Title = "超商條碼付款",
@@ -3921,11 +4556,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCVS",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "",
                             IsDeleted = false,
-                            MaxAmount = 20000,
-                            MinAmount = 31,
+                            MaxAmount = 20000m,
+                            MinAmount = 31m,
                             RefundWorkDay = -1,
                             SerNo = 21,
                             Title = "超商代碼付款",
@@ -3938,11 +4574,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCVS_FAMILY",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay04.jpg",
                             IsDeleted = true,
-                            MaxAmount = 20000,
-                            MinAmount = 31,
+                            MaxAmount = 20000m,
+                            MinAmount = 31m,
                             RefundWorkDay = -1,
                             SerNo = 22,
                             Title = "超商代碼付款(全家)",
@@ -3955,11 +4592,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCVS_HILIFE",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "life_0.jpg",
                             IsDeleted = true,
-                            MaxAmount = 20000,
-                            MinAmount = 31,
+                            MaxAmount = 20000m,
+                            MinAmount = 31m,
                             RefundWorkDay = -1,
                             SerNo = 23,
                             Title = "超商代碼付款(萊爾富)",
@@ -3972,11 +4610,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayCVS_IBON",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "pay03.jpg",
                             IsDeleted = true,
-                            MaxAmount = 20000,
-                            MinAmount = 31,
+                            MaxAmount = 20000m,
+                            MinAmount = 31m,
                             RefundWorkDay = -1,
                             SerNo = 24,
                             Title = "超商代碼付款(7-11)",
@@ -3989,11 +4628,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "ECPayApplePay",
                             CreationTime = new DateTime(2024, 11, 21, 14, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 4L,
                             Icons = "",
                             IsDeleted = false,
-                            MaxAmount = 199999,
-                            MinAmount = 6,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
                             RefundWorkDay = -1,
                             RepayAfterMinutes = 10,
                             SerNo = 25,
@@ -4007,10 +4647,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "COD",
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 5L,
                             Icons = "trans_icon.jpg",
                             IsDeleted = false,
-                            MinAmount = 1,
+                            MinAmount = 1m,
                             RefundWorkDay = -1,
                             SerNo = 1,
                             Title = "貨到付款",
@@ -4023,10 +4664,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Code = "Post",
                             CreationTime = new DateTime(2025, 12, 26, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
                             FK_ThirdPartyId = 6L,
                             Icons = "",
                             IsDeleted = false,
-                            MinAmount = 1,
+                            MinAmount = 1m,
                             RefundWorkDay = -1,
                             SerNo = 1,
                             Title = "郵政劃撥",
@@ -4246,6 +4888,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("PageText")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Popular")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("PopularVisible")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("RemovedFromShelves")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -4303,6 +4951,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "從座圈到噴嘴給您雙重防護\n不用動手全自動科技最體貼\n雙漩洗技術為您實現真乾淨",
                             IsDeleted = false,
                             NoStockManagement = false,
+                            Popular = 0,
+                            PopularVisible = true,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4320,6 +4970,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "商品二的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
                             NoStockManagement = false,
+                            Popular = 0,
+                            PopularVisible = true,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4337,6 +4989,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "商品三的第一行介紹\n商品二的第二行介紹",
                             IsDeleted = false,
                             NoStockManagement = false,
+                            Popular = 0,
+                            PopularVisible = true,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4354,6 +5008,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Introduction = "最大容水量：11公升\n適用水壓：1~5kgf/㎝²",
                             IsDeleted = false,
                             NoStockManagement = false,
+                            Popular = 0,
+                            PopularVisible = true,
                             RemovedFromShelves = false,
                             Ser_No = 500,
                             Status = 0,
@@ -4620,6 +5276,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("SeoVariantProperty")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -4638,6 +5299,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 2L,
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
+                            SeoVariantProperty = 0,
                             Type = "顏色"
                         },
                         new
@@ -4647,6 +5309,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 2L,
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
+                            SeoVariantProperty = 0,
                             Type = "尺寸"
                         },
                         new
@@ -4656,6 +5319,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 2L,
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
+                            SeoVariantProperty = 0,
                             Type = "其他"
                         });
                 });
@@ -4943,6 +5607,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<string>("CVSAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("CVSOutSide")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("CVSStoreID")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CVSStoreName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("CVSTelephone")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<string>("CellPhone")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -4981,6 +5665,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<int?>("LogisticsType")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -4997,6 +5684,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<Guid>("UUID")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ZipCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FK_WebsiteId");
@@ -5012,6 +5703,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<DateTime?>("AnalyticsAggregatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("BrowserInfo")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
@@ -5019,6 +5713,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("ClientIpAddress")
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("EngagedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("ExecutionTime")
                         .HasColumnType("datetime2");
@@ -5041,6 +5738,18 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("HabitsProcessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("HasInteraction")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsEngaged")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastHeartbeatAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("LastStatComputedAt")
                         .HasColumnType("datetime2");
 
@@ -5053,6 +5762,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasDefaultValue(0);
 
                     b.Property<int>("TimeOnPage")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TrackingEventId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("TrafficQuality")
                         .HasColumnType("int");
 
                     b.Property<Guid>("UUID")
@@ -5076,9 +5791,158 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasIndex("State");
 
+                    b.HasIndex("TrackingEventId")
+                        .IsUnique()
+                        .HasFilter("[TrackingEventId] IS NOT NULL");
+
                     b.HasIndex("UUID");
 
+                    b.HasIndex("FK_WebsiteId", "LastHeartbeatAt")
+                        .HasDatabaseName("IX_Remotes_FK_WebsiteId_LastHeartbeatAt_Online")
+                        .HasFilter("[LastHeartbeatAt] IS NOT NULL AND [TrackingEventId] IS NOT NULL");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("FK_WebsiteId", "LastHeartbeatAt"), new[] { "TrackingEventId", "FK_UserId", "UUID", "IsEngaged" });
+
                     b.ToTable("Remotes");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.RemoteDailyAggregationRun", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AggregationVersion")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("SourceRows")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("StatisticDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StatisticDate")
+                        .IsUnique();
+
+                    b.ToTable("RemoteDailyAggregationRuns");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.RemoteDailyStatistic", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("AggregatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("EffectiveUniqueVisitors")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("EffectiveViews")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_ArticleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_ProdId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_TechCertId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebmenuId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LegacyViews")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PageViews")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte>("Scope")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("StatisticDate")
+                        .HasColumnType("date");
+
+                    b.Property<long>("TotalVisibleSeconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UniqueVisitors")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_ArticleId", "StatisticDate");
+
+                    b.HasIndex("FK_ProdId", "StatisticDate");
+
+                    b.HasIndex("FK_WebmenuId", "StatisticDate");
+
+                    b.HasIndex("FK_WebsiteId", "StatisticDate", "Scope");
+
+                    b.HasIndex("StatisticDate", "FK_WebsiteId", "Scope", "FK_WebmenuId", "FK_ArticleId", "FK_ProdId", "FK_TechCertId")
+                        .IsUnique();
+
+                    b.ToTable("RemoteDailyStatistics");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.RemoteHourlyStatistic", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("AggregatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("EffectiveUniqueVisitors")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("EffectiveViews")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LegacyViews")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PageViews")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("StatisticHour")
+                        .HasColumnType("datetime2(0)");
+
+                    b.Property<long>("TotalVisibleSeconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UniqueVisitors")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId", "StatisticHour");
+
+                    b.HasIndex("StatisticHour", "FK_WebsiteId")
+                        .IsUnique();
+
+                    b.ToTable("RemoteHourlyStatistics");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Role", b =>
@@ -5195,6 +6059,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("AdditionalParentLabel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("AdditionalParentShoppingCartId")
+                        .HasColumnType("bigint");
+
                     b.Property<int?>("Bonus")
                         .HasColumnType("int");
 
@@ -5229,6 +6099,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<decimal?>("Discont")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<long?>("FK_MarketingRewardItemId")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("FK_PSid")
                         .HasColumnType("bigint");
@@ -5300,9 +6173,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FK_MarketingRewardItemId");
+
                     b.HasIndex("FK_PSid");
 
                     b.HasIndex("FK_PriceId");
+
+                    b.HasIndex("FK_Tid", "IsOrder");
 
                     b.ToTable("ShoppingCarts");
                 });
@@ -5798,10 +6675,87 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             jobID = "B001",
                             key = "MaximumDiscount",
                             maxlength = 8,
-                            memo = "單筆訂單紅利抵扣上限",
+                            memo = "單筆訂單紅利抵扣上限，如無須限制可不輸入",
                             name = "最高折抵上限",
                             pattern = "",
                             type = 8
+                        },
+                        new
+                        {
+                            Id = 29L,
+                            CreationTime = new DateTime(2026, 7, 17, 11, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "ProductPageLayout",
+                            memo = "設定商品頁面的顯示版型",
+                            name = "商品頁版型",
+                            pattern = "",
+                            type = 3
+                        },
+                        new
+                        {
+                            Id = 30L,
+                            CreationTime = new DateTime(2026, 8, 21, 10, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            DefaultValue = "Percent",
+                            FK_StoreSetGroupId = 6L,
+                            IsDeleted = false,
+                            jobID = "B001",
+                            key = "RewardCalculationType",
+                            maxlength = 20,
+                            memo = "設定消費滿額後依百分比或固定點數贈送紅利",
+                            name = "紅利回饋方式",
+                            pattern = "",
+                            type = 5
+                        },
+                        new
+                        {
+                            Id = 31L,
+                            CreationTime = new DateTime(2026, 8, 21, 10, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetGroupId = 6L,
+                            IsDeleted = false,
+                            jobID = "B001",
+                            key = "RewardFixedPoints",
+                            maxlength = 8,
+                            memo = "消費滿足條件後贈送的固定紅利點數",
+                            name = "固定回饋點數",
+                            pattern = "",
+                            type = 8
+                        },
+                        new
+                        {
+                            Id = 32L,
+                            CreationTime = new DateTime(2026, 8, 21, 10, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            DefaultValue = "True",
+                            FK_StoreSetGroupId = 6L,
+                            IsDeleted = false,
+                            jobID = "B001",
+                            key = "RewardFixedPointsCumulative",
+                            maxlength = 5,
+                            memo = "固定點數是否按消費門檻倍數累計贈送",
+                            name = "固定點數累計贈送",
+                            pattern = "",
+                            type = 4
+                        },
+                        new
+                        {
+                            Id = 33L,
+                            CreationTime = new DateTime(2026, 8, 26, 12, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            DefaultValue = "TWD",
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "priceCurrency",
+                            maxlength = 3,
+                            memo = "商品價格與搜尋引擎結構化資料使用的 ISO 4217 幣別",
+                            name = "商品幣別",
+                            pattern = "^[A-Z]{3}$",
+                            type = 5
                         });
                 });
 
@@ -6964,6 +7918,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("id");
 
+                    b.HasIndex("EndTime", "id")
+                        .HasFilter("[EndTime] IS NOT NULL");
+
                     b.ToTable("Tokens");
                 });
 
@@ -7749,6 +8706,50 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Key = "MobileCarrier",
                             Value = "手機載具"
+                        },
+                        new
+                        {
+                            Id = 18L,
+                            CreationTime = new DateTime(2026, 7, 17, 11, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 29L,
+                            IsDefault = true,
+                            IsDeleted = false,
+                            Key = "Layout_1",
+                            Value = "版型一"
+                        },
+                        new
+                        {
+                            Id = 19L,
+                            CreationTime = new DateTime(2026, 7, 17, 11, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 29L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "Layout_2",
+                            Value = "版型二"
+                        },
+                        new
+                        {
+                            Id = 20L,
+                            CreationTime = new DateTime(2026, 8, 26, 12, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 33L,
+                            IsDefault = true,
+                            IsDeleted = false,
+                            Key = "TWD",
+                            Value = "新臺幣（TWD）"
+                        },
+                        new
+                        {
+                            Id = 21L,
+                            CreationTime = new DateTime(2026, 8, 26, 12, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 33L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "USD",
+                            Value = "美元（USD）"
                         });
                 });
 
@@ -8167,11 +9168,18 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsPaymentRestriction", b =>
                 {
+                    b.HasOne("EtheriT.Coker.Core.Models.LogisticsSetting", "LogisticsSetting")
+                        .WithMany("LogisticsPaymentRestrictions")
+                        .HasForeignKey("FK_LogisticsSettingId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("EtheriT.Coker.Core.Models.PaymentType", "PaymentType")
                         .WithMany("LogisticsType_Payments")
-                        .HasForeignKey("FK_Pid")
+                        .HasForeignKey("FK_PaymentTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("LogisticsSetting");
 
                     b.Navigation("PaymentType");
                 });
@@ -8315,6 +9323,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("MarketingRule");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingRewardItem", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.MarketingReward", "MarketingReward")
+                        .WithMany("Items")
+                        .HasForeignKey("FK_MarketingRewardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Prod_Stock", "ProdStock")
+                        .WithMany()
+                        .HasForeignKey("FK_ProdStockId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("MarketingReward");
+
+                    b.Navigation("ProdStock");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingRule", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.MarketingCampaign", "MarketingCampaign")
@@ -8370,7 +9397,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.ShoppingCart", "ShoppingCart")
                         .WithMany("Order_Details")
                         .HasForeignKey("FK_SCId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Order_Header");
@@ -8476,7 +9503,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
                         .WithMany("Prods")
                         .HasForeignKey("FK_WebsiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Website");
@@ -8487,7 +9514,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
                         .WithMany("Prod_Logs")
                         .HasForeignKey("FK_Pid")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Prod");
@@ -8498,7 +9525,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.Prod_Stock", "Prod_Stock")
                         .WithMany("Prod_Prices")
                         .HasForeignKey("FK_PSId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("EtheriT.Coker.Core.Models.Role", "Role")
@@ -8517,7 +9544,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.Prod_Spec_Type", "Prod_Spec_Type")
                         .WithMany("Prod_Specs")
                         .HasForeignKey("FK_Tid")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Prod_Spec_Type");
@@ -8528,7 +9555,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
                         .WithMany("Prod_Spec_Types")
                         .HasForeignKey("FK_WebsiteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Website");
@@ -8539,7 +9566,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.Prod", "Prod")
                         .WithMany("Prod_Stocks")
                         .HasForeignKey("FK_Pid")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Prod");
@@ -8623,16 +9650,23 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
                 {
+                    b.HasOne("EtheriT.Coker.Core.Models.MarketingRewardItem", "MarketingRewardItem")
+                        .WithMany("ShoppingCarts")
+                        .HasForeignKey("FK_MarketingRewardItemId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("EtheriT.Coker.Core.Models.Prod_Stock", "Prod_Stock")
                         .WithMany("ShoppingCarts")
                         .HasForeignKey("FK_PSid")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("EtheriT.Coker.Core.Models.Prod_Price", "Prod_Price")
                         .WithMany("ShoppingCarts")
                         .HasForeignKey("FK_PriceId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("MarketingRewardItem");
 
                     b.Navigation("Prod_Price");
 
@@ -8927,6 +9961,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.LogisticsSetting", b =>
                 {
+                    b.Navigation("LogisticsPaymentRestrictions");
+
                     b.Navigation("MappingLogisticsSettingAndProds");
 
                     b.Navigation("Order_Headers");
@@ -8937,6 +9973,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingCampaign", b =>
                 {
                     b.Navigation("Rules");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingReward", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingRewardItem", b =>
+                {
+                    b.Navigation("ShoppingCarts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MarketingRule", b =>

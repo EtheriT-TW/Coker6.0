@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
 
 namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
 {
@@ -30,6 +31,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
         public decimal? MaxRedemptionPercent { get; set; }
 
         /// <summary>
+        /// 單筆訂單紅利折抵上限
+        /// </summary>
+        public decimal? MaximumDiscount { get; set; }
+
+        /// <summary>
         /// 消費滿額條件 (當次消費滿額X元可啟動獲得數紅利)
         /// </summary>
         public decimal? MinOrderForEarnPoints { get; set; }
@@ -38,6 +44,21 @@ namespace EtheriT.Coker.Application.Shared.Dto.BonusManagement
         /// 獲得%數紅利 (消費滿額時，可獲得%數紅利)
         /// </summary>
         public decimal? RewardRatePercent { get; set; }
+
+        /// <summary>
+        /// 紅利回饋計算方式
+        /// </summary>
+        public BonusRewardCalculationTypeEnum RewardCalculationType { get; set; } = BonusRewardCalculationTypeEnum.Percent;
+
+        /// <summary>
+        /// 固定回饋點數
+        /// </summary>
+        public int? RewardFixedPoints { get; set; }
+
+        /// <summary>
+        /// 固定點數是否按消費門檻倍數累計
+        /// </summary>
+        public bool RewardFixedPointsCumulative { get; set; } = true;
 
         /// <summary>
         /// 紅利有效天數

@@ -54,6 +54,7 @@ namespace EtheriT.Coker.Application.Import
                     var fileData = await ProdReplace(path);
                     output.Products.AddRange(fileData.Products);
                     output.Directories.AddRange(fileData.Directories);
+                    output.TechnicalCertificates.AddRange(fileData.TechnicalCertificates);
                     await fileUploadAppService.deleteFile(path);
                 }
             }
@@ -66,11 +67,22 @@ namespace EtheriT.Coker.Application.Import
 
             var orgName = await loginUserData.GetWebsiteOrgName();
             var output = new ProdImportAllDto();
-            output.Products.AddRange(readProdExcel(path, orgName));
-            output.Directories.AddRange(readDirectoryExcel(path));
+            var sheetNames = MiniExcel.GetSheetNames(path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (!sheetNames.Contains("商品"))
+                throw new InvalidDataException("商品匯入檔至少需要包含「商品」工作表。");
+            var technicalCertificates = sheetNames.Contains("技術證照")
+                ? readTechnicalCertificateExcel(path)
+                : new List<TechCertImportDto>();
+            output.TechnicalCertificates.AddRange(technicalCertificates);
+            output.Products.AddRange(readProdExcel(path, orgName, technicalCertificates));
+            if (sheetNames.Contains("目錄分類"))
+                output.Directories.AddRange(readDirectoryExcel(path));
             return output;
         }
-        private List<ProductImportDto> readProdExcel(string path, string orgName)
+        private List<ProductImportDto> readProdExcel(
+            string path,
+            string orgName,
+            List<TechCertImportDto> Techs)
         {
             List<ProductImportDto> data = new List<ProductImportDto>();
             var importedColumns = MiniExcel.Query(
@@ -86,11 +98,12 @@ namespace EtheriT.Coker.Application.Import
                 ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var reg = MiniExcel.Query<ProductImportUpateRegDto>(path, sheetName: "商品", startCell: "A2").ToList();
             var rows = mapper.Map<List<ProductImportDto>>(reg);
-            var Techs = MiniExcel.Query<TechCertImportDto>(path, sheetName: "技術證照", startCell: "A2").ToList();
-            foreach (var row in rows)
+            for (var rowIndex = 0; rowIndex < rows.Count; rowIndex++)
             {
+                var row = rows[rowIndex];
                 if (row != null)
                 {
+                    row.SourceRowNumber = rowIndex + 3;
                     row.ImportedColumns = new HashSet<string>(importedColumns, StringComparer.OrdinalIgnoreCase);
                     NormalizeProductImportRow(row);
                 }
@@ -105,9 +118,12 @@ namespace EtheriT.Coker.Application.Import
                 {
                     if (rows[i] != null)
                     {
-                        var t = Techs.FindAll(e => e.ProdName == rows[i].ProdName && e.ItemNo == rows[i].ItemNo);
+                        var t = Techs.FindAll(e =>
+                            string.Equals(e.ProdName, rows[i].ProdName, StringComparison.OrdinalIgnoreCase)
+                            && string.Equals(e.ItemNo, rows[i].ItemNo, StringComparison.OrdinalIgnoreCase));
                         rows[i].Techs = mapper.Map<List<TechCertDto>>(t);
                         pathReplace(rows[i], "Image", "Product", orgName);
+                        pathReplaceValue(rows[i], nameof(ProductImportDto.SpecImage), "Product", orgName);
                         pathReplace(rows[i], "File", "Product/File", orgName);
                         if (rows[i].Techs != null)
                         {
@@ -123,6 +139,21 @@ namespace EtheriT.Coker.Application.Import
 
             return data;
         }
+
+        private static List<TechCertImportDto> readTechnicalCertificateExcel(string path)
+        {
+            var rows = MiniExcel.Query<TechCertImportDto>(
+                path,
+                sheetName: "技術證照",
+                startCell: "A2").ToList();
+            for (var rowIndex = 0; rowIndex < rows.Count; rowIndex++)
+            {
+                var row = rows[rowIndex];
+                if (row != null) row.SourceRowNumber = rowIndex + 3;
+                if (row != null) NormalizeTechnicalCertificateRow(row);
+            }
+            return rows;
+        }
         private static void NormalizeProductImportRow(ProductImportDto row)
         {
             row.ProdName = CustomDtoMapper.Normalize(row.ProdName);
@@ -135,6 +166,17 @@ namespace EtheriT.Coker.Application.Import
             row.Spec1 = CustomDtoMapper.Normalize(row.Spec1);
             row.Spec2Name = CustomDtoMapper.Normalize(row.Spec2Name);
             row.Spec2 = CustomDtoMapper.Normalize(row.Spec2);
+            // 規格欄位必須由第一組開始使用。舊版 Excel 可省略規格類別，
+            // 因此只要規格一整組為空且規格二有實際規格值，就將第二組往前移。
+            if (string.IsNullOrWhiteSpace(row.Spec1Name)
+                && string.IsNullOrWhiteSpace(row.Spec1)
+                && !string.IsNullOrWhiteSpace(row.Spec2))
+            {
+                row.Spec1Name = row.Spec2Name;
+                row.Spec1 = row.Spec2;
+                row.Spec2Name = string.Empty;
+                row.Spec2 = string.Empty;
+            }
             row.RoleName = CustomDtoMapper.Normalize(row.RoleName);
             row.Tag1 = CustomDtoMapper.Normalize(row.Tag1);
             row.Tag2 = CustomDtoMapper.Normalize(row.Tag2);
@@ -208,11 +250,40 @@ namespace EtheriT.Coker.Application.Import
                 prop.SetValue(dto, path);
             }
         }
+        private void pathReplaceValue<T>(T dto, string propertyName, string dir, string orgName) where T : class
+        {
+            var prop = typeof(T).GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            if (prop?.CanRead != true || prop.CanWrite != true || prop.PropertyType != typeof(string))
+                return;
+
+            string? path = prop.GetValue(dto) as string;
+            if (string.IsNullOrWhiteSpace(path))
+                return;
+
+            path = path.Trim();
+            if (path.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var orgPrefix = $"/upload/{orgName}/";
+            if (!string.IsNullOrWhiteSpace(orgName)
+                && path.StartsWith(orgPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                path = $"/upload/{path.Substring(orgPrefix.Length)}";
+            }
+            else if (!path.StartsWith("/upload/", StringComparison.OrdinalIgnoreCase))
+            {
+                path = $"/upload/{dir}/{path}".Replace("//", "/");
+            }
+
+            prop.SetValue(dto, path);
+        }
         public List<DirectoryImportDto> readDirectoryExcel(string path)
         {
             var rows = MiniExcel.Query<DirectoryImportDto>(path, sheetName: "目錄分類", startCell: "A3").ToList();
-            foreach (var row in rows)
+            for (var rowIndex = 0; rowIndex < rows.Count; rowIndex++)
             {
+                var row = rows[rowIndex];
+                if (row != null) row.SourceRowNumber = rowIndex + 4;
                 if (row != null) NormalizeDirectoryRow(row);
             }
             return rows;

@@ -17,8 +17,121 @@
 
         S.buy_step_swiper.update();
     }
+    function UpdateRecipientAddressRequirement() {
+        var $selected = $("[name='RadioShipping']:checked");
+        var isCvs = String($selected.attr("data-is-cvs") || "").toLowerCase() === "true";
+        var $addressBlock = $("#Recipient_TWzipcode");
+        var $addressFields = $addressBlock.find("select, #RecipientInputAddress");
+
+        $addressBlock.toggleClass("d-none", isCvs);
+        $addressFields.prop("required", !isCvs);
+        UpdateCvsStoreSelectionDisplay();
+
+        if (S.buy_step_swiper) {
+            S.buy_step_swiper.update();
+        }
+    }
+    function IsCvsShippingSelected() {
+        var $selected = $("[name='RadioShipping']:checked");
+        return $selected.length > 0 &&
+            String($selected.attr("data-is-cvs") || "").toLowerCase() === "true";
+    }
+    function GetSelectedPaymentRadio() {
+        var activeValue = cart.Payment.Core.getActivePaymentValue();
+        var $radio = activeValue == null || activeValue === ""
+            ? $()
+            : $('#RadioPayment input[name="RadioPayment"][value="' + activeValue + '"]').first();
+
+        return $radio.length
+            ? $radio
+            : $('#RadioPayment input[name="RadioPayment"]:checked').first();
+    }
+    function PaymentGatewaySelectsCvsStore() {
+        var $payment = GetSelectedPaymentRadio();
+        return $payment.length > 0 &&
+            Number($payment.attr("data-cvs-store-selection-mode") || 0) === 1;
+    }
+    function RequiresMerchantCvsStore() {
+        if (!IsCvsShippingSelected()) return false;
+
+        var $payment = GetSelectedPaymentRadio();
+        return $payment.length > 0 && !PaymentGatewaySelectsCvsStore();
+    }
+    function HasSelectedCvsStore() {
+        if (!RequiresMerchantCvsStore()) return true;
+
+        var $selected = $("[name='RadioShipping']:checked");
+        return $.trim($selected.attr("data-cvsstoreid") || "") !== "" &&
+            $.trim($selected.attr("data-cvsstorename") || "") !== "" &&
+            $.trim($selected.attr("data-cvsaddress") || "") !== "";
+    }
+    function UpdateCvsStoreSelectionDisplay() {
+        var $section = $("#CvsStoreSelection");
+        var $button = $section.find(".btn_getmap").first();
+        var $status = $section.find(".cvs-store-status").first();
+        var $shipping = $("[name='RadioShipping']:checked");
+        var $payment = GetSelectedPaymentRadio();
+
+        $button.addClass("d-none").removeClass("is-missing is-complete").removeAttr("aria-invalid");
+        $status.removeClass("d-none is-missing is-complete is-gateway").empty();
+
+        if (!IsCvsShippingSelected()) {
+            $section.addClass("d-none");
+        } else if (!$payment.length) {
+            $section.removeClass("d-none");
+            $status.text("請先選擇付款方式，再確認取貨門市的選擇流程。");
+        } else if (PaymentGatewaySelectsCvsStore()) {
+            var paymentTitle = $.trim($payment.attr("data-title") || "付款平台");
+            $section.removeClass("d-none");
+            $status.addClass("is-gateway")
+                .text("取貨門市將於「" + paymentTitle + "」付款頁面選擇，本站不會重複要求選店。");
+        } else {
+            var storeName = $.trim($shipping.attr("data-cvsstorename") || "");
+            var storeAddress = $.trim($shipping.attr("data-cvsaddress") || "");
+            var hasStore = $.trim($shipping.attr("data-cvsstoreid") || "") !== "" &&
+                storeName !== "" && storeAddress !== "";
+
+            $section.removeClass("d-none");
+            $button.removeClass("d-none");
+
+            if (!hasStore) {
+                $button.val("請選擇取貨門市");
+                if (S.CvsStoreValidationRequested === true) {
+                    $button.addClass("is-missing").attr("aria-invalid", "true");
+                    $status.addClass("is-missing").text("尚未選擇門市，完成後才能結帳。");
+                } else {
+                    $status.text("請選擇本次訂單的取貨門市。");
+                }
+            } else {
+                var storeButtonText = /門市$/.test(storeName) ? storeName : storeName + "門市";
+                $button.val(storeButtonText)
+                    .attr("title", "變更取貨門市：" + storeName)
+                    .addClass("is-complete");
+                $status.addClass("d-none is-complete");
+            }
+        }
+
+        if (cart.Recipients && typeof cart.Recipients.RefreshDisplay === "function") {
+            cart.Recipients.RefreshDisplay();
+        }
+    }
+    function GetCvsStoreSelectionTarget() {
+        var $button = $("#CvsStoreSelection .btn_getmap").first();
+        return $button.length ? $button[0] : $("[name='RadioShipping']:checked")[0];
+    }
     function RadioShipping() {
         var $this = $("[name='RadioShipping']:checked");
+        S.CvsStoreValidationRequested = false;
+
+        S.order_header_data = S.order_header_data || {};
+        S.order_header_data.shipping = $this.val();
+        if (!IsCvsShippingSelected()) {
+            S.order_header_data.CVSStoreID = null;
+            S.order_header_data.CVSStoreName = null;
+            S.order_header_data.CVSAddress = null;
+            S.order_header_data.CVSTelephone = null;
+            S.order_header_data.CVSOutSide = null;
+        }
 
         S.ori_freight = Number($this.data("freight") || 0);
         S.low_con = Number($this.data("lowcon") || 0);
@@ -39,93 +152,22 @@
 
         S.freight = S.ori_freight;
 
-        var oldamount = $(".summary-amount.total_amount").first().text();
+        UpdateRecipientAddressRequirement();
         cart.Pricing.TotalCount();
-        var newamount = $(".summary-amount.total_amount").first().text();
-        var isAmountChanged = oldamount != newamount;
-
-        var this_SupportCashOnDelivery = $this.attr("data-support-cash-on-delivery").toLowerCase() == "true";
-        var isSupportCashOnDeliveryChanged = S.SupportCashOnDelivery != this_SupportCashOnDelivery;
-        S.SupportCashOnDelivery = this_SupportCashOnDelivery;
-
-        var shouldRefreshEmbeddedPayment =
-            isAmountChanged ||
-            isSupportCashOnDeliveryChanged;
-
-        if (shouldRefreshEmbeddedPayment) {
-            cart.Payment.Core.onAmountChanged();
-            cart.Payment.Core.reloadActiveEmbeddedProvider();
-        }
+        cart.Payment.Core.onAmountChanged();
     }
     function ConfigurePaymentOptions(val) {
         var $CheckedShipping = $('input[name="RadioShipping"]:checked');
         if ($CheckedShipping.length == 0) return;
 
-        var canCashOnDelivery =
-            $CheckedShipping.attr("data-support-cash-on-delivery").toLowerCase() === "true";
+        if (!cart.Payment.Availability) return;
 
-        // 必須在取消 radio 前保留原本選取值。
-        // ECPay 尚未 ready 時，reloadActiveEmbeddedProvider()
-        // 仍需要靠這個 radio 找到 active provider。
-        var selectedPaymentValue =
-            val != null && val !== ""
-                ? String(val)
-                : String(cart.Payment.Core.GetCheckedPaymentValue() || "");
-
-        $("#RadioPayment > .form-check").addClass("d-none");
-        $(".noPaymentWarning").addClass("d-none");
-        $(".ecpayWarning").removeClass("d-none");
-        $("#RadioPayment input:radio").prop("checked", false);
-        $("#RadioPayment > .form-check > .payment_display").removeClass("checked first last");
-
-        var $list = $("#RadioPayment > .form-check");
-
-        // 先顯示所有付款方式
-        $list.removeClass("d-none");
-
-        // 非貨到付款情境，不顯示貨到付款
-        var $codPayment = $("#radio_payment_COD");
-        var $codFormCheck = $codPayment.closest(".form-check");
-
-        if (canCashOnDelivery) {
-            $codFormCheck.removeClass("d-none");
-        } else {
-            $codFormCheck.addClass("d-none");
+        if (!S.PaymentAvailabilityLoaded) {
+            cart.Payment.Availability.refresh(val);
+            return;
         }
 
-        $list.each(function () {
-            var $formCheck = $(this);
-            var $input = $formCheck.find('input[name="RadioPayment"]').first();
-
-            if (cart.Payment.Core.isEmbeddedPaymentRadio($input)) {
-                $formCheck.addClass("d-none");
-            }
-        });
-
-        $(".ecpayWarning").addClass("d-none");
-
-        var $targetInput = $();
-
-        if (selectedPaymentValue !== "") {
-            $targetInput = $(`#RadioPayment input[name="RadioPayment"][value="${selectedPaymentValue}"]`);
-        }
-
-        var $targetFormCheck = $targetInput.closest(".form-check");
-
-        // 如果 val 是 embedded 付款，允許它維持 checked，但 radio 本身仍然隱藏。
-        // 真正顯示的是 provider 自己的付款 UI。
-        if ($targetInput.length && cart.Payment.Core.isEmbeddedPaymentRadio($targetInput)) {
-            cart.Payment.Core.updatePaymentRadioUI($targetFormCheck);
-        } else {
-            // 一般付款方式：如果 val 不存在，或 val 對應到隱藏項，就改選第一個可見付款方式
-            if (!$targetFormCheck.length || $targetFormCheck.hasClass("d-none")) {
-                $targetFormCheck = $("#RadioPayment > .form-check:not(.d-none)").first();
-            }
-
-            if ($targetFormCheck.length) {
-                cart.Payment.Core.updatePaymentRadioUI($targetFormCheck);
-            }
-        }
+        cart.Payment.Availability.apply(val);
     }
     function getSelectedShippingMeta() {
         var $selected = $("[name='RadioShipping']:checked");
@@ -427,6 +469,13 @@
     Object.assign(cart.Shipping, {
         Step2Monitor: Step2Monitor,
         RadioShipping: RadioShipping,
+        UpdateRecipientAddressRequirement: UpdateRecipientAddressRequirement,
+        UpdateCvsStoreSelectionDisplay: UpdateCvsStoreSelectionDisplay,
+        IsCvsShippingSelected: IsCvsShippingSelected,
+        PaymentGatewaySelectsCvsStore: PaymentGatewaySelectsCvsStore,
+        RequiresMerchantCvsStore: RequiresMerchantCvsStore,
+        HasSelectedCvsStore: HasSelectedCvsStore,
+        GetCvsStoreSelectionTarget: GetCvsStoreSelectionTarget,
         ConfigurePaymentOptions: ConfigurePaymentOptions,
         getSelectedShippingMeta: getSelectedShippingMeta,
         calculateDiscountTargetFreight: calculateDiscountTargetFreight,

@@ -73,12 +73,14 @@ namespace EtheriT.Coker.Application.StoreSet
                                               memo = s.memo,
                                               pattern = s.pattern,
                                               type = s.type!,
+                                              DefaultValue = s.DefaultValue,
                                               storeSetItems = (
                                                  from item in db.StoreSetItems.Where(e => (e.Level == null || level >= e.Level) && e.FK_StoreSetId == s.Id)
                                                  select new StoreSetItemOutputDto
                                                  {
                                                      Key = item.Key,
                                                      Value = item.Value,
+                                                     IsDefault = item.IsDefault,
                                                  }
                                              ).ToList()
                                           }).ToList()
@@ -433,6 +435,14 @@ namespace EtheriT.Coker.Application.StoreSet
             if (v.Count == 1 && string.IsNullOrWhiteSpace(v[0])) return false;
             return true;
         }
+
+        public string RenderMarkdownToHtml(string? markdown)
+        {
+            if (string.IsNullOrWhiteSpace(markdown)) return string.Empty;
+            var normalized = NormalizeMarkdownForDisplay(markdown);
+            return Markdown.ToHtml(normalized, _mdPipeline);
+        }
+
         private static string NormalizeMarkdownForDisplay(string text)
         {
             if (string.IsNullOrEmpty(text)) return text;

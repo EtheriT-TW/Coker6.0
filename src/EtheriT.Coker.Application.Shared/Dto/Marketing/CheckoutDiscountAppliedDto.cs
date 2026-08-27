@@ -20,6 +20,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Marketing
 
         public decimal BaseAmount { get; set; }
 
+        public decimal ThresholdAmount { get; set; }
+
         public decimal DiscountAmount { get; set; }
 
         public int AppliedTimes { get; set; }

@@ -12,5 +12,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View();
         }
+        public IActionResult GlobalSettings()
+        {
+            return View();
+        }
     }
 }

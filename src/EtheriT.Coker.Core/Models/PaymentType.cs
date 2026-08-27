@@ -1,6 +1,8 @@
 ﻿using EtheriT.Coker.Core.Entity;
 using System.ComponentModel.DataAnnotations;
 
+using EtheriT.Coker.Application.Shared.Dto.enumType.Payment;
+
 namespace EtheriT.Coker.Core.Models
 {
     public class PaymentType : FullAuditedEntity
@@ -13,9 +15,9 @@ namespace EtheriT.Coker.Core.Models
         // 排序
         public int SerNo { get; set; }
         // 允許的最低金額
-        public int MinAmount { get; set; } = 1;
+        public decimal MinAmount { get; set; } = 1;
         // 允許的上限金額
-        public int? MaxAmount { get; set; }
+        public decimal? MaxAmount { get; set; }
         // Icon
         public string Icons { get; set; }
         // 是否允許退款
@@ -25,6 +27,8 @@ namespace EtheriT.Coker.Core.Models
         public long FK_ThirdPartyId { get; set; }
         //超過多久可以重新付款
         public int? RepayAfterMinutes { get; set; }
+        // 超商門市由本站結帳流程或付款平台負責選擇
+        public CvsStoreSelectionModeEnum CvsStoreSelectionMode { get; set; }
         public ThirdParty? ThirdParty { get; set; }
         public List<LogisticsPaymentRestriction>? LogisticsType_Payments { get; set; }
         public List<PaymentTypesValue>? paymentTypesValues { get; set; }

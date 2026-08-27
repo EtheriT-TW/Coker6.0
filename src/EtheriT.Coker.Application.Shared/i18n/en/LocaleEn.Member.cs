@@ -30,7 +30,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string ChangeEmail { get; } = "Change email";
         public static string Logout { get; } = "Log out";
         public static string ErrorNameRequired { get; } = "Name is required";
-        public static string OrderHistory { get; } = "Order history";
+        public static string OrderHistory { get; } = "History";
         public static string NewEmail { get; } = "New email address";
         public static string ErrorEmailRequired { get; } = "Email is required";
         public static string HintEnterAreaCode { get; } = "Please enter the area code";
@@ -52,11 +52,15 @@ namespace EtheriT.Coker.Application.Shared.i18n
 
         public static string RemoveFavorite { get; } = "Remove from favorites";
         public static string AddFavorite { get; } = "Add to favorites";
+        public static string AddFavoriteSuccess { get; } = "Added to your favorites.";
+        public static string RemoveFavoriteSuccess { get; } = "Removed from your favorites.";
 
         public static string EmptyBrowsingHistory { get; } = "No browsing history found";
         public static string NoteBrowsingHistorySixMonthsOnly { get; } = "* Only the most recent 6 months of records are available";
         public static string InfoEmailSameNoChange { get; } = "The new email address is the same as the current one. No changes were made.";
 
         public static string ResultEmailChangeSuccess { get; } = "Email address updated successfully.";
+
+        public static string CurrentBonus { get; } = "Bonus";
     }
 }

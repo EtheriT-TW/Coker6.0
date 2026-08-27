@@ -1,0 +1,192 @@
+@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+
+<div id="MenuEditorForm" class="card item-menu menu-editor-form">
+    <div class="card-header text-white d-flex justify-content-between">
+        <span class="title">選單資料</span>
+        <a href="" class="text-white" target="_blank">
+            <i class="material-symbols-outlined">captive_portal</i>
+        </a>
+    </div>
+    <div class="card-body">
+        <form id="frmEdit" class="form-horizontal needs-validation d-flex justify-content-center align-item-center flex-column menu-editor-form__form" novalidate>
+            <input type="hidden" class="item-menu" name="id" />
+            <input type="hidden" id="serNO" name="serNO" value="500" class="item-menu">
+            <input type="hidden" class="item-menu" id="text" name="text">
+            <div class="form-group">
+                <div class="input-group">
+                    <div class="form-floating flex-grow-1 flex-shrink-1 flex-auto">
+                        <input type="text" class="form-control item-menu" id="title" name="title" placeholder="請輸入標題" required>
+                        <label for="title">*標題※圖標僅能擇一*</label>
+                    </div>
+                    <div class="input-group-append">
+                        <button type="button" id="myEditor_icon" class="btn btn-outline-secondary rounded-0"></button>
+                    </div>
+                    <div id="IconImageUpload" class="d-flex justify-content-center image_upload menu-editor-form__icon-upload" data-issinge="true" data-needcompress="false">
+                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+                    </div>
+                    <input type="text" class="form-control item-menu d-none" id="iconId" name="iconId">
+                    <input type="text" class="form-control item-menu d-none" id="iconUrl" name="iconUrl">
+                    <div class="invalid-feedback">標題為必填</div>
+                </div>
+                <input type="hidden" name="icon" class="item-menu">
+            </div>
+            <div class="form-group mt-3">
+                <div class="input-group">
+                    <div class="form-floating flex-grow-1 flex-shrink-1 flex-auto">
+                        <input type="text" class="form-control item-menu" id="subTitle" name="subTitle" placeholder="請輸入子標題">
+                        <label for="subTitle">子標題</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 menu-editor-form__boolean-row menu-editor-form__boolean-row--primary my-3">
+                    <div class="col form-group form-check px-1">
+                        <label for="pageType" class="form-label">頁面類型</label>
+                        <select name="pageType" id="pageType" class="form-select item-menu"></select>
+                        <div id="PageTypeDescription" class="memo"></div>
+                    </div>
+                    <div class="col menu-editor-form__boolean-cell">
+                        <div class="menu-editor-toggle menu-editor-toggle--group" data-menu-toggle data-icon-on="translate" data-icon-off="hide_source">
+                            <span id="LanBarLabel" class="menu-editor-toggle__label">是否顯示語言列</span>
+                            <input type="hidden" name="lanBar" id="lanBar" class="item-menu" value="false">
+                            <button type="button" class="menu-editor-toggle__button" aria-labelledby="LanBarLabel LanBarState">
+                                <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">hide_source</i>
+                                <span id="LanBarState" data-menu-toggle-state>否</span>
+                            </button>
+                        </div>
+                        <div class="memo">僅在有語言列的版型有效</div>
+                    </div>
+                    <div class="col menu-editor-form__boolean-cell">
+                        <div class="menu-editor-toggle menu-editor-toggle--group" data-menu-toggle data-icon-on="publish" data-icon-off="unpublished">
+                            <span id="IsFromShelvesLabel" class="menu-editor-toggle__label">是否上架</span>
+                            <input type="hidden" name="isFromShelves" id="isFromShelves" class="item-menu" value="true">
+                            <button type="button" class="menu-editor-toggle__button" aria-labelledby="IsFromShelvesLabel IsFromShelvesState">
+                                <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">publish</i>
+                                <span id="IsFromShelvesState" data-menu-toggle-state>是</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 menu-editor-form__boolean-row my-3">
+                    <div class="col menu-editor-form__boolean-cell">
+                        <div class="menu-editor-toggle menu-editor-toggle--group" data-menu-toggle data-icon-on="vertical_align_top" data-icon-off="hide_source">
+                            <span id="VisibleHeaderLabel" class="menu-editor-toggle__label">是否顯示版頭</span>
+                            <input type="hidden" name="visibleHeader" id="visibleHeader" class="item-menu" value="true">
+                            <button type="button" class="menu-editor-toggle__button" aria-labelledby="VisibleHeaderLabel VisibleHeaderState">
+                                <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">vertical_align_top</i>
+                                <span id="VisibleHeaderState" data-menu-toggle-state>是</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col menu-editor-form__boolean-cell">
+                        <div class="menu-editor-toggle menu-editor-toggle--group" data-menu-toggle data-icon-on="vertical_align_bottom" data-icon-off="hide_source">
+                            <span id="VisibleFooterLabel" class="menu-editor-toggle__label">是否顯示頁尾</span>
+                            <input type="hidden" name="visibleFooter" id="visibleFooter" class="item-menu" value="true">
+                            <button type="button" class="menu-editor-toggle__button" aria-labelledby="VisibleFooterLabel VisibleFooterState">
+                                <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">vertical_align_bottom</i>
+                                <span id="VisibleFooterState" data-menu-toggle-state>是</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col menu-editor-form__boolean-cell">
+                        <div class="menu-editor-toggle menu-editor-toggle--group" data-menu-toggle data-icon-on="title" data-icon-off="hide_source">
+                            <span id="VisibleTitleLabel" class="menu-editor-toggle__label">是否顯示標題</span>
+                            <input type="hidden" name="visibleTitle" id="visibleTitle" class="item-menu" value="true">
+                            <button type="button" class="menu-editor-toggle__button" aria-labelledby="VisibleTitleLabel VisibleTitleState">
+                                <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">title</i>
+                                <span id="VisibleTitleState" data-menu-toggle-state>是</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="LinkSettingsBlock" class="menu-editor-form__link-settings mb-3">
+                <div class="menu-editor-form__link-settings-header">
+                    <div class="menu-editor-form__link-settings-title">
+                        <i class="material-symbols-outlined" aria-hidden="true">link</i>
+                        導向設定
+                    </div>
+                    <div class="menu-editor-toggle menu-editor-toggle--group menu-editor-toggle--link-target" data-menu-toggle data-icon-on="open_in_new" data-icon-off="web_asset" data-state-on="另開視窗" data-state-off="目前視窗">
+                        <span id="TargetLabel" class="menu-editor-toggle__label">開啟方式</span>
+                        <input type="hidden" name="target" id="target" class="item-menu" value="false">
+                        <button type="button" class="menu-editor-toggle__button" aria-labelledby="TargetLabel TargetState">
+                            <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">web_asset</i>
+                            <span id="TargetState" data-menu-toggle-state>目前視窗</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="RouterNameBlock" class="form-floating mb-3">
+                    <input type="text" class="form-control item-menu" id="routerName" name="routerName" placeholder="請輸入路徑名稱">
+                    <label for="routerName" class="form-label">*路徑名稱*※連結僅能擇一</label>
+                </div>
+                <div id="LinkUrlBlock" class="form-floating">
+                    <input type="text" class="form-control item-menu" id="linkUrl" name="linkUrl" placeholder="請輸入連結">
+                    <label for="linkUrl">連結※路徑名稱僅能擇一</label>
+                </div>
+            </div>
+            <div class="row mx-0 menu-editor-form__images">
+                <div class="col-12 col-md-5 px-0 p-2 menu-editor-form__image-panel">
+                    <div class="text-center fw-bold menu-editor-form__section-title">選單圖片</div>
+                    <div id="ImageUpload" class="d-flex justify-content-center align-item-center image_upload" data-issinge="true" data-needcompress="false">
+                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+                    </div>
+                    <input type="text" class="form-control item-menu d-none" id="imgId" name="imgId">
+                    <input type="text" class="form-control item-menu d-none" id="imgUrl" name="imgUrl">
+                    <input type="text" class="form-control item-menu d-none" id="imgName" name="imgName">
+                </div>
+                <div class="col-12 col-md-2"></div>
+                <div class="col-12 col-md-5 px-0 p-2 menu-editor-form__image-panel">
+                    <div class="text-center fw-bold menu-editor-form__section-title">滑鼠覆蓋圖片</div>
+                    <div id="OverImageUpload" class="d-flex justify-content-center align-item-center image_upload" data-issinge="true" data-needcompress="false">
+                        @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ImageUploadModal" })
+                    </div>
+                    <input type="text" class="form-control item-menu d-none" id="overImgId" name="overImgId">
+                    <input type="text" class="form-control item-menu d-none" id="overImgUrl" name="overImgUrl">
+                    <input type="text" class="form-control item-menu d-none" id="overImgName" name="overImgName">
+                </div>
+            </div>
+            <div class="menu-editor-form__settings">
+                <div class="menu-editor-toggle menu-editor-toggle--group" data-menu-toggle data-icon-on="visibility" data-icon-off="visibility_off">
+                    <span id="VisibleLabel" class="menu-editor-toggle__label">是否顯示</span>
+                    <input type="hidden" name="visible" id="Visible" class="item-menu" value="false">
+                    <button type="button" class="menu-editor-toggle__button" aria-labelledby="VisibleLabel VisibleState">
+                        <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">visibility_off</i>
+                        <span id="VisibleState" data-menu-toggle-state>否</span>
+                    </button>
+                </div>
+                <div class="menu-editor-toggle menu-editor-toggle--group" data-menu-toggle data-icon-on="menu" data-icon-off="menu_open">
+                    <span id="ShowToMenuLabel" class="menu-editor-toggle__label">顯示於主選單</span>
+                    <input type="hidden" name="showToMenu" id="ShowToMenu" class="item-menu" value="true">
+                    <button type="button" class="menu-editor-toggle__button" aria-labelledby="ShowToMenuLabel ShowToMenuState">
+                        <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">menu</i>
+                        <span id="ShowToMenuState" data-menu-toggle-state>是</span>
+                    </button>
+                </div>
+                <div class="menu-editor-toggle menu-editor-toggle--group menu-editor-toggle--popular" data-menu-toggle data-icon-on="toggle_on" data-icon-off="toggle_off" aria-describedby="popularHelp">
+                    <span id="PopularVisibleLabel" class="menu-editor-toggle__label">顯示人氣值</span>
+                    <input type="hidden" name="popularVisible" id="PopularVisible" class="item-menu" value="true">
+                    <button type="button" class="menu-editor-toggle__button" aria-labelledby="PopularVisibleLabel PopularVisibleState">
+                        <i class="material-symbols-outlined" data-menu-toggle-icon aria-hidden="true">toggle_on</i>
+                        <span id="PopularVisibleState" data-menu-toggle-state>是</span>
+                        <output id="popularDisplay" class="menu-editor-toggle__popular-value fw-bold" aria-live="polite">0</output>
+                    </button>
+                    <input type="hidden" id="popular" name="popular" value="0">
+                </div>
+            </div>
+            <small id="popularHelp" class="form-text menu-editor-form__help menu-editor-form__popular-help">由每日瀏覽統計自動更新，無法手動修改</small>
+            <div class="form-group form-check">
+                <label for="description">描述</label>
+                <textarea id="description" name="description" class="form-control item-menu" placeholder="描述文字"></textarea>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer d-flex justify-content-between">
+        <button type="button" id="btnUpdate" class="btn" disabled><i class="fas fa-sync-alt"></i>更新</button>
+        <button type="button" id="btnAdd" class="btn btn-danger"><i class="fas fa-plus"></i>新增</button>
+        <button type="button" id="btnRefresh" class="btn btn-danger">
+            <i class="fa-sharp fa-solid fa-rotate-right"></i>清空
+        </button>
+    </div>
+</div>

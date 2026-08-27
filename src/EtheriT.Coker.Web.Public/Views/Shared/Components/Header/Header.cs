@@ -115,7 +115,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                         HomeTarget = false,
                         menuItemModels = new List<MenuItem.MenuItemModel> { },
                         marqueeModels = new List<MarqueeDisplayDto> { },
-                        templates = await templatesApplicationService.GetDefaultTemplatesAsync()
+                        templates = await templatesApplicationService.GetDefaultTemplatesAsync(defaultData.Id)
                     };
                     if (File.Exists(Path.Combine(uploadDirectory, "marqueeblockbig.png")))
                     {
@@ -139,8 +139,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                                     var list = JsonConvert.DeserializeObject<HeaderContentConfigDto>(bannerSection.ContentConfig);
                                     if (list != null )
                                     {
-                                        headerViewModel.ShowMarquee = list.ShowMarquee;
-                                        headerViewModel.ShowPagePath = list.ShowPagePath;
                                         if (list.Sliders.Count > 0)
                                         {
                                             var banners = new List<SliderDto>();
@@ -238,6 +236,10 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
                             }
                             break;
                     }
+
+                    var globalSettings = await templatesApplicationService.GetGlobalSettingsForDisplayAsync(defaultData.Id);
+                    headerViewModel.ShowMarquee = globalSettings.Visibility.ShowMarquee;
+                    headerViewModel.ShowPagePath = globalSettings.Visibility.ShowPagePath;
 
                     if (marquee != null && marquee.Count > 0)
                     {

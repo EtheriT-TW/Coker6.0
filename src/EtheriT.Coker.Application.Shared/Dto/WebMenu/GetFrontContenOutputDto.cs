@@ -20,6 +20,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public string ImageUrl { get; set; } = string.Empty;
         public int LayoutType { get; set; }
         public int? Popular { get; set; }
+        public bool PopularVisible { get; set; }
         public bool RemovedFromShelves { get; set; }
         public bool VisibleHeader { get; set; }
         public bool VisibleFooter { get; set; }

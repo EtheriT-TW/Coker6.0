@@ -8,6 +8,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int? OldSubtotal { get; set; }
         public string Subtotal { get; set; }
         public string Discount { get; set; }
+        public OrderDiscountBreakdownDto? DiscountBreakdown { get; set; }
         public string Bonus { get; set; }
         public string CouponId { get; set; }
         public string Service_Charge { get; set; }
@@ -44,6 +45,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? CreationTime { get; set; }
         public bool CanRefund { get; set; } = false;
         public int LogisticsType { get; set; }
+        public string? LogisticsStatus { get; set; }
+        public string? LogisticsStatusStr { get; set; }
         public string? LogisticsTypeStr { get; set; }
         public string? LogisticsSubTypeStr { get; set; }
         public string ProductSubtotal { get; set; } = "0";

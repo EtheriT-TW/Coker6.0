@@ -1,6 +1,99 @@
-﻿import { ModuleSelectManager } from "./ModuleSelect.js";
+﻿import { ModuleSelectManager } from "./ModuleSelect.min.js";
 
 let prodListModalInstance = null;
+let prodModalTagFilter = null;
+let prodModalTagOptionsPromise = null;
+
+function refreshModalGrid() {
+    if (!window.jQuery) return;
+
+    try {
+        const grid = window.jQuery("#devProdListModalGrid").dxDataGrid("instance");
+        if (grid) grid.refresh();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function loadModalTagOptions() {
+    if (prodModalTagOptionsPromise) return prodModalTagOptionsPromise;
+
+    prodModalTagOptionsPromise = co.Product.Get.ProductListTags()
+        .then(function (data) { return data || []; })
+        .catch(function (err) {
+            prodModalTagOptionsPromise = null;
+            console.error("商品標籤載入失敗", err);
+            return [];
+        });
+
+    return prodModalTagOptionsPromise;
+}
+
+function initModalFilters() {
+    if (!window.jQuery || !document.querySelector("#ProdModalTagFilter")) return;
+
+    if (!prodModalTagFilter) {
+        const store = new DevExpress.data.CustomStore({
+            key: "fK_TId",
+            loadMode: "raw",
+            load: loadModalTagOptions
+        });
+
+        prodModalTagFilter = window.jQuery("#ProdModalTagFilter").dxTagBox({
+            dataSource: store,
+            valueExpr: "fK_TId",
+            displayExpr: "tag_Name",
+            placeholder: "選擇商品標籤，可多選",
+            showSelectionControls: true,
+            applyValueMode: "useButtons",
+            searchEnabled: true,
+            multiline: false,
+            maxDisplayedTags: 3,
+            showMultiTagOnly: false,
+            dropDownOptions: {
+                minWidth: 420,
+                wrapperAttr: { class: "prod-modal-tag-dropdown" }
+            },
+            onValueChanged: refreshModalGrid
+        }).dxTagBox("instance");
+    }
+
+    window.jQuery("#ProdModalExcludeUnavailable")
+        .off("change.prodModalFilter")
+        .on("change.prodModalFilter", refreshModalGrid);
+
+    window.jQuery("#ProdModalFilterClear")
+        .off("click.prodModalFilter")
+        .on("click.prodModalFilter", function () {
+            if (prodModalTagFilter) prodModalTagFilter.option("value", []);
+            window.jQuery("#ProdModalExcludeUnavailable").prop("checked", false);
+            refreshModalGrid();
+        });
+
+    window.jQuery(document)
+        .off("click.prodModalTagBadge", "#ProdModal .prod-modal-tag-badge")
+        .on("click.prodModalTagBadge", "#ProdModal .prod-modal-tag-badge", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const tagName = String(window.jQuery(this).attr("data-tag-name") || "").trim();
+            if (!tagName || !prodModalTagFilter) return;
+
+            loadModalTagOptions().then(function (tagOptions) {
+                const tag = tagOptions.find(function (item) {
+                    return String(item.tag_Name ?? item.Tag_Name ?? "").trim() === tagName;
+                });
+                if (!tag) return;
+
+                const tagId = tag.fK_TId ?? tag.FK_TId;
+                const values = (prodModalTagFilter.option("value") || []).slice();
+                if (!values.includes(tagId)) {
+                    values.push(tagId);
+                    prodModalTagFilter.option("value", values);
+                }
+            });
+        });
+}
 
 function ensureElement(target) {
     if (!target) return null;
@@ -25,6 +118,8 @@ function ensureElement(target) {
 }
 
 function createInstance() {
+    initModalFilters();
+
     return ModuleSelectManager.create({
         name: "ProdListModal",
         modalSelector: "#ProdModal",
@@ -32,7 +127,11 @@ function createInstance() {
         saveButtonSelector: ".btn_prod_save",
 
         getRowKey: function (row) {
-            return row?.Id ?? row?.id ?? null;
+            return row?.FK_ProdId
+                ?? row?.fK_ProdId
+                ?? row?.Id
+                ?? row?.id
+                ?? null;
         },
 
         getRowText: function (row) {
@@ -52,6 +151,16 @@ function createInstance() {
                 Id: 0,
                 FK_ProdId: row?.Id ?? row?.id ?? 0,
                 Prod_Name: row?.Title ?? row?.title ?? row?.Prod_Name ?? row?.prod_Name ?? "",
+                MinsizeImage: row?.MinsizeImage ?? row?.minsizeImage ?? "/images/noImg.jpg",
+                ItemNo: row?.ItemNo ?? row?.itemNo ?? "",
+                Price: row?.Price ?? row?.price ?? "",
+                ProductStatus: row?.ProductStatus ?? row?.productStatus ?? 0,
+                ProductStatusName: row?.ProductStatusName ?? row?.productStatusName ?? "",
+                Visible: row?.Visible ?? row?.visible ?? false,
+                Available: row?.Available ?? row?.available ?? false,
+                NoStockManagement: row?.NoStockManagement ?? row?.noStockManagement ?? false,
+                StockQuantity: row?.StockQuantity ?? row?.stockQuantity ?? null,
+                AlertQuantity: row?.AlertQuantity ?? row?.alertQuantity ?? null,
                 IsDeleted: false
             };
         },
@@ -71,6 +180,16 @@ function createInstance() {
                     ?? data?.title
                     ?? data?.Title
                     ?? "",
+                MinsizeImage: data?.minsizeImage ?? data?.MinsizeImage ?? "/images/noImg.jpg",
+                ItemNo: data?.itemNo ?? data?.ItemNo ?? "",
+                Price: data?.price ?? data?.Price ?? "",
+                ProductStatus: data?.productStatus ?? data?.ProductStatus ?? 0,
+                ProductStatusName: data?.productStatusName ?? data?.ProductStatusName ?? "",
+                Visible: data?.visible ?? data?.Visible ?? false,
+                Available: data?.available ?? data?.Available ?? false,
+                NoStockManagement: data?.noStockManagement ?? data?.NoStockManagement ?? false,
+                StockQuantity: data?.stockQuantity ?? data?.StockQuantity ?? null,
+                AlertQuantity: data?.alertQuantity ?? data?.AlertQuantity ?? null,
                 IsDeleted: data?.IsDeleted === true
             };
         },
@@ -274,6 +393,15 @@ const ProdListModalApi = {
     loadParams: {
         pids: function () {
             return window.ProdListModalApi.getActiveKeysCsv();
+        },
+
+        tagIds: function () {
+            if (!prodModalTagFilter) return "";
+            return (prodModalTagFilter.option("value") || []).join(",");
+        },
+
+        excludeUnavailable: function () {
+            return document.querySelector("#ProdModalExcludeUnavailable")?.checked === true;
         }
     }
 };

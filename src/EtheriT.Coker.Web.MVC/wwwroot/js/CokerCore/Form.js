@@ -482,33 +482,57 @@
         },
 
         init: function (id, fun) {
-            const form = document.getElementById(id);
-            if (!form) return;
+            let initialForm = null;
+            let formId = "";
+
+            if (typeof id === "string") {
+                formId = id.replace(/^#/, "");
+                initialForm = document.getElementById(formId);
+            } else {
+                const $element = id instanceof jQuery ? id.first() : $(id).first();
+                const element = $element.get(0);
+
+                if (element) {
+                    initialForm = (element.tagName || "").toUpperCase() === "FORM"
+                        ? element
+                        : element.closest("form");
+                    formId = initialForm ? initialForm.getAttribute("id") || "" : "";
+                }
+            }
+
+            if (!formId) {
+                console.warn("Form.init requires a form id or form element.", id);
+                return;
+            }
 
             const parseNumber = (val) => {
                 if (val === null || val === undefined || val === "") return "";
                 return String(val).replace(/,/g, "").trim();
             };
 
-            const restoreNumberFormat = function () {
+            const restoreNumberFormat = function (form) {
                 $(form).find('[data-origin-type="number"]').each(function () {
                     const $input = $(this);
                     $input.val(_c.Form.formatElementValue($input, $input.val()));
                 });
             };
 
-            _c.Form.initNumberFormatter(form);
-
-            if (form.dataset.formInit === "true") {
-                form._cokerSubmitHandler = fun;
-                return;
+            if (initialForm) {
+                initialForm.dataset.formInit = "true";
+                initialForm._cokerSubmitHandler = fun;
+                _c.Form.initNumberFormatter(initialForm);
             }
 
-            form.dataset.formInit = "true";
-            form._cokerSubmitHandler = fun;
-
-            form.addEventListener("submit", function (event) {
+            const selector = `#${$.escapeSelector(formId)}`;
+            $(document)
+                .off("submit.cokerForm", selector)
+                .on("submit.cokerForm", selector, function (event) {
+                const form = this;
+                const nativeEvent = event.originalEvent || event;
                 event.preventDefault();
+                form.dataset.formInit = "true";
+                form._cokerSubmitHandler = fun;
+                _c.Form.initNumberFormatter(form);
 
                 if (form.dataset.submitting === "true") {
                     event.stopImmediatePropagation();
@@ -524,7 +548,7 @@
                 });
 
                 if (!form.checkValidity()) {
-                    restoreNumberFormat();
+                    restoreNumberFormat(form);
                     event.stopPropagation();
                     form.classList.add("was-validated");
                     return;
@@ -536,15 +560,19 @@
                 let result = null;
 
                 try {
-                    result = form._cokerSubmitHandler && form._cokerSubmitHandler(id);
+                    result = form._cokerSubmitHandler && form._cokerSubmitHandler(formId, {
+                        event: nativeEvent,
+                        form: form,
+                        submitter: nativeEvent.submitter || null
+                    });
                 } catch (error) {
-                    restoreNumberFormat();
+                    restoreNumberFormat(form);
                     form.dataset.submitting = "false";
                     throw error;
                 }
 
                 const release = function () {
-                    restoreNumberFormat();
+                    restoreNumberFormat(form);
                     form.dataset.submitting = "false";
                 };
 
@@ -563,7 +591,7 @@
                 }
 
                 release();
-            }, false);
+            });
         },
 
         clear: function (id) {

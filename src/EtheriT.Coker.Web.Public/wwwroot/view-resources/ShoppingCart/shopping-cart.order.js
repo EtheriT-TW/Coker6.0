@@ -39,10 +39,9 @@
 
             var shipping_radio = $(`[name="RadioShipping"]:checked`);
             S.order_header_data.shipping = shipping_radio.val();
-            S.order_header_data.CVSStoreID = shipping_radio.attr("data-cvsstoreid") ?? null;
-
-            var hasBtnGetMap = shipping_radio.siblings(".btn_getmap").length > 0;
-            if (hasBtnGetMap && S.order_header_data.CVSStoreID == null) {
+            if (!cart.Shipping.HasSelectedCvsStore()) {
+                S.CvsStoreValidationRequested = true;
+                cart.Shipping.UpdateCvsStoreSelectionDisplay();
                 Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
                 return;
             }
@@ -52,6 +51,9 @@
             }
 
             S.order_header_data.OrderDetails = S.order_header_data.OrderDetails.filter(e => ids.includes(e.Id));
+            S.order_header_data.RewardSelections = cart.Marketing && typeof cart.Marketing.getRewardSelections === "function"
+                ? cart.Marketing.getRewardSelections()
+                : [];
             S.order_header_data.remark = S.$remark.val();
 
             if (typeof (S.order_header_data.remark) == "undefined" || S.order_header_data.remark == "") {
@@ -128,14 +130,14 @@
             item_subtotal = item.find(`.pro_subtotal > [data-key="subtotal"]`),
             item_subtotal_bonus = item.find(`.pro_subtotal > [data-key="subtotalBonus"]`);
 
-        item_link.attr("href", `/${OrgName}/Home/product/` + result.pId);
+        item_link.attr("href", `/${OrgName}/search/product/` + result.pId);
         item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
         item_image.attr("src", result.imagePath.replace(`upload/${OrgName}/`, "upload/"));
         item_name.text(result.title);
         item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
         item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
         if (result.price > 0)
-            item_unit.text(`$${(result.price).toLocaleString('en-US')}`)
+            item_unit.text(cart.Utils.formatMoney(result.price))
         if (result.bonusPrice > 0)
             item_unitBonus.text(`紅利：${(result.bonusPrice).toLocaleString('en-US')}`)
         item_quantity.text(result.quantity);

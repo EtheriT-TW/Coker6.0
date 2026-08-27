@@ -112,11 +112,20 @@
 						<select id="SelectShipping" class="form-select" name="LogisticsType" aria-label="Shipping Select" required></select>
 					</div>
 
-					<div class="form-check col-6 col-sm-3 mb-3 d-none">
-						<input class="form-check-input" type="checkbox" id="SupportCashOnDeliveryCheckBox" name="SupportCashOnDelivery" checked>
-						<label class="form-check-label" for="SupportCashOnDeliveryCheckBox">
-							代收款項
-						</label>
+				</div>
+
+				<div class="payment-restriction-section d-flex flex-wrap align-items-center gap-3 mb-3">
+					<button type="button"
+							id="OpenPaymentRestrictionModal"
+							class="btn btn-outline-primary"
+							data-bs-toggle="modal"
+							data-bs-target="#PaymentRestrictionModal">
+						<span class="material-symbols-outlined align-middle me-1">payments</span>
+						付款方式限制
+					</button>
+					<div>
+						<div id="PaymentRestrictionSummary" class="fw-semibold">載入付款方式設定中…</div>
+						<div class="small text-muted">依物流型別套用系統預設；可針對此運費設定個別覆寫。</div>
 					</div>
 				</div>
 
@@ -160,6 +169,7 @@
 								   type="number"
 								   name="Low_Con"
 								   aria-label="Input Low Consumption"
+								   min="1"
 								   disabled="disabled"
 								   required>
 						</div>
@@ -204,6 +214,63 @@
 					</div>
 				</div>
 			</form>
+
+			<div class="modal fade"
+				 id="PaymentRestrictionModal"
+				 tabindex="-1"
+				 aria-labelledby="PaymentRestrictionModalLabel"
+				 aria-hidden="true">
+				<div class="modal-dialog modal-xl modal-dialog-scrollable">
+					<div class="modal-content">
+						<div class="modal-header">
+							<div>
+								<h5 class="modal-title" id="PaymentRestrictionModalLabel">付款方式限制</h5>
+								<div class="small text-muted mt-1">
+									系統預設會隨物流型別改變；自訂金額留白時，沿用付款方式本身的金額限制。
+								</div>
+							</div>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+						</div>
+						<div class="modal-body">
+							<div class="alert alert-warning py-2 small">
+								自訂金額可高於或低於平台預設，儲存前請先確認你與金流或物流業者的合約額度。
+							</div>
+							<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+								<div id="PaymentRestrictionModalSummary" class="small text-muted"></div>
+								<div class="form-check form-switch">
+									<input id="ShowAllPaymentTypes"
+										   class="form-check-input"
+										   type="checkbox"
+										   role="switch">
+									<label class="form-check-label" for="ShowAllPaymentTypes">
+										顯示本站未啟用的付款方式
+									</label>
+								</div>
+							</div>
+							<div class="table-responsive payment-restriction-table-wrap">
+								<table class="table table-sm align-middle mb-0">
+									<thead>
+										<tr>
+											<th>付款方式</th>
+											<th>系統預設</th>
+											<th class="text-center">自訂</th>
+											<th class="text-center">允許使用</th>
+											<th>最低金額</th>
+											<th>最高金額</th>
+										</tr>
+									</thead>
+									<tbody id="PaymentRestrictionRows"></tbody>
+								</table>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+							<button type="button" id="ApplyPaymentRestrictions" class="btn btn-primary">套用設定</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			@await Component.InvokeAsync(nameof(Modal), new { dispaly = "ProdSelectModal" })
 			@await Component.InvokeAsync(nameof(Modal), new { dispaly = "LogisticsBoxModal" })
 		</div>

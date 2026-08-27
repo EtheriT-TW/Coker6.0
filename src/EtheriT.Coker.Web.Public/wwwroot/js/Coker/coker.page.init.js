@@ -130,6 +130,16 @@
                 }
             },
             {
+                name: "categoryFilter",
+                key: "coker_inited_categoryFilter",
+                test: function ($root) {
+                    return has($root, ".filter-btn");
+                },
+                run: function ($root) {
+                    if (isFn(w.CategoryFilterInit)) w.CategoryFilterInit($root);
+                }
+            },
+            {
                 name: "hoverMask",
                 key: "coker_inited_hoverMask",
                 test: function ($root) {
@@ -212,6 +222,19 @@
                     }
 
                     w.Coker.DynamicForm.init($root);
+                }
+            },
+            {
+                name: "remoteTracking",
+                key: "coker_inited_remoteTracking",
+                test: function ($root) {
+                    return has($root, "body")
+                        && !!w.RemoteTrackingToken
+                        && !!C.RemoteTracking
+                        && isFn(C.RemoteTracking.init);
+                },
+                run: function () {
+                    C.RemoteTracking.init();
                 }
             },
             {

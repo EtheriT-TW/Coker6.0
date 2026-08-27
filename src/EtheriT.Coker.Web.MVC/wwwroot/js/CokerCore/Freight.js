@@ -18,6 +18,18 @@
             data: { id: id },
         });
     },
+    GetPaymentRestrictions: function (logisticsSettingId, shippingType) {
+        return $.ajax({
+            url: "/api/Freight/GetPaymentRestrictions/",
+            type: "GET",
+            contentType: 'application/json; charset=utf-8',
+            headers: _c.Data.Header,
+            data: {
+                logisticsSettingId: logisticsSettingId || null,
+                shippingType: shippingType
+            }
+        });
+    },
     Delete: function (id) {
         return $.ajax({
             url: "/api/Freight/Delete/",

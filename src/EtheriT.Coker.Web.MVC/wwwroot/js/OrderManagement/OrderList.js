@@ -1,6 +1,6 @@
 ﻿var keyId
 var order_list
-let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_logistics_save, $btn_send_notification, btn_logistics_edit, btn_logistics_update
+let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_queryLogisticsStatus, $btn_CVSReturn, $btn_logistics_save, $btn_send_notification, btn_logistics_edit, btn_logistics_update
 var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0, ECPayLogisticsTypeStr = "", ECPayLogisticsSubTypeStr = "";
 function PageReady() {
     OrderDataCollapse();
@@ -61,6 +61,18 @@ function PageReady() {
 
     $btn_save.on("click", function () {
         updateOrder(function (onSuccess) {
+            if (![1, 2, 6].includes(parseInt($order_status.val()))) {
+                $btn_createLogistics.addClass("d-none");
+                $btn_printShippingLabel.addClass("d-none");
+            }
+            if (parseInt($order_status.val()) != 3) {
+                $("#OrderData .LogisticsStatusStr").addClass("d-none");
+                $("#OrderData .LogisticsStatusStr").text("");
+                $btn_queryLogisticsStatus.addClass("d-none");
+            }
+            if (parseInt($order_status.val()) != 8) {
+                $btn_CVSReturn.addClass("d-none");
+            }
             if (parseInt($order_status.val()) === 3) {
                 co.sweet.confirm("發送出貨通知信", "是否確認發送出貨通知信?", "確定", "取消", function () {
                     co.Order.ShipOrder(keyId).done(function (result) {
@@ -90,7 +102,7 @@ function PageReady() {
 
     co.Order.GetOrderStatusLookup().done(function (result) {
         $(result).each(function () {
-            $order_status.append(`<option value="${this.id}">${this.name}</option>`);
+            $order_status.append(`<option value="${this.id}" ${this.id > 7 ? "disabled" : ""}>${this.name}</option>`);
         });
     });
     $(".btn_confirm").on("click", function () {
@@ -256,60 +268,105 @@ function PageReady() {
         //});
     });
 
-    //$btn_createLogistics.on("click", function () {
-    //    co.sweet.loading();
-    //    if (!ECPayLogisticsTypeStr) {
-    //        co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
-    //        return;
-    //    }
+    $btn_createLogistics.on("click", function () {
+       co.sweet.loading();
+       if (!ECPayLogisticsTypeStr) {
+           co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
+           return;
+       }
 
-    //    const data = {
-    //        Action: "CreateLogistics",
-    //        OrderId: keyId,
-    //        ExtraData: "CVS",
-    //    };
+       const data = {
+           Action: "CreateLogistics",
+           OrderId: keyId,
+           ExtraData: "CVS",
+       };
 
-    //    Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
-    //        if (result.success) {
-    //            co.sweet.success(result.message, function () { }, false);
-    //            $btn_printShippingLabel.removeClass("d-none");
-    //        } else {
-    //            co.sweet.error("訂單狀態錯誤", result.message);
-    //        }
-    //        $btn_createLogistics.addClass("d-none");
-    //    });
-    //});
+       Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
+           if (result.success) {
+               co.sweet.success(result.message, function () { }, false);
+               $btn_printShippingLabel.removeClass("d-none");
+           } else {
+               co.sweet.error("訂單狀態錯誤", result.message);
+           }
+           $btn_createLogistics.addClass("d-none");
+       });
+    });
 
-    //$btn_printShippingLabel.on("click", function () {
-    //    if (!ECPayLogisticsSubTypeStr) {
-    //        co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
-    //        return;
-    //    }
+    $btn_printShippingLabel.on("click", function () {
+       if (!ECPayLogisticsSubTypeStr) {
+           co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
+           return;
+       }
 
-    //    const $form = $("<form>", {
-    //        method: "post",
-    //        action: "/api/ThirdParty/ECPayLogisticsPrintShippingLabel",
-    //        target: "_blank"
-    //    });
+       const $form = $("<form>", {
+           method: "post",
+           action: "/api/ThirdParty/ECPayLogisticsPrintShippingLabel",
+           target: "_blank"
+       });
 
-    //    const data = {
-    //        Action: "PrintOrderInfo",
-    //        OrderId: keyId,
-    //        ExtraData: ECPayLogisticsSubTypeStr,
-    //    };
+       const data = {
+           Action: "PrintOrderInfo",
+           OrderId: keyId,
+           ExtraData: ECPayLogisticsSubTypeStr,
+       };
 
-    //    $.each(data, function (key, value) {
-    //        $("<input>", {
-    //            type: "hidden",
-    //            name: key,
-    //            value: value
-    //        }).appendTo($form);
-    //    });
+       $.each(data, function (key, value) {
+           $("<input>", {
+               type: "hidden",
+               name: key,
+               value: value
+           }).appendTo($form);
+       });
 
-    //    $("body").append($form);
-    //    $form.submit();
-    //    $form.remove();
-    //});
+       $("body").append($form);
+       $form.submit();
+       $form.remove();
+    });
+
+    $btn_queryLogisticsStatus.on("click", function () {
+        co.sweet.loading();
+        if (!ECPayLogisticsTypeStr) {
+            co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
+            return;
+        }
+
+        const data = {
+            Action: "GetTradeInfo",
+            OrderId: keyId,
+            ExtraData: "",
+        };
+
+        Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
+            if (result.success) {
+                const [code, message] = result.message.split("|");
+                co.sweet.success(message, function () { }, false);
+            } else {
+                co.sweet.error("無法取得物流狀態", result.message);
+            }
+        });
+    });
+
+    $btn_CVSReturn.on("click", function () {
+        co.sweet.loading();
+        if (!ECPayLogisticsTypeStr) {
+            co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
+            return;
+        }
+
+        const data = {
+            Action: "ReturnCVS",
+            OrderId: keyId,
+            ExtraData: "",
+        };
+
+        Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
+            if (result.success) {
+                co.sweet.success(result.message, function () { }, false);
+            } else {
+                co.sweet.error("產生退貨編號發生錯誤", result.message);
+            }
+        });
+    });
 
     if ("onhashchange" in window) {
         window.onhashchange = hashChange;
@@ -328,9 +385,50 @@ function ToggleOrderBonusLines(data) {
     $(".productBonusLine").toggleClass("d-none", productBonus <= 0);
     $(".bonusDiscionLine").toggleClass("d-none", redeemBonus <= 0);
     $(".bonusUseTotalLine").toggleClass("d-none", totalBonus <= 0);
-    $(".discountLine").toggleClass("d-none", discount <= 0);
+    const breakdown = data.discountBreakdown || {};
+    const discountItems = Array.isArray(breakdown.items) ? breakdown.items : [];
+    const validDiscountItems = discountItems.filter(function (item) {
+        return Number(item.discountAmount || 0) > 0;
+    });
+    $(".discountLine").toggleClass("d-none", discount <= 0 || validDiscountItems.length === 1);
+    const $discountRows = $(".order_discountBreakdown").empty();
+    const eligibleAmount = Number(breakdown.eligibleProductAmount || 0);
+    const productAmount = Number(String(data.productSubtotal || "0").replaceAll(",", ""));
+    const showGeneralProductAmount = eligibleAmount > 0 && productAmount > eligibleAmount;
+
+    $(".generalProductAmountLine").toggleClass("d-none", !showGeneralProductAmount);
+    $(".order_generalProductAmount").text(
+        showGeneralProductAmount ? eligibleAmount.toLocaleString() : ""
+    );
+
+    validDiscountItems.forEach(function (item) {
+        const amount = Number(item.discountAmount || 0);
+        if (amount <= 0) return;
+
+        const repeatText = Number(item.appliedTimes || 0) > 1
+            ? `（套用 ${item.appliedTimes} 次）`
+            : "";
+        const isSingleDiscount = validDiscountItems.length === 1;
+        const $row = $("<div>", {
+            "class": isSingleDiscount ? "d-flex" : "d-flex small text-secondary"
+        });
+        $("<div>", { "class": isSingleDiscount ? "col fw-bold" : "col" })
+            .text(`${item.name || "活動折扣"}${repeatText}`)
+            .appendTo($row);
+        $("<div>", {
+            "class": isSingleDiscount
+                ? "col-4 col-sm-2 text-end color_red_number"
+                : "col-4 col-sm-2 text-end"
+        })
+            .text(`-$${amount.toLocaleString()}`)
+            .appendTo($row);
+        $discountRows.append($row);
+    });
 }
 function updateOrder(onSuccess) {
+    co.sweet.loading("儲存中，請稍後。");
+    $btn_save.prop("disabled", true);
+
     co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val(), TrackingNumber: $tracking_number.val() }).done(function (result) {
         if (result.success) {
             var msg = "儲存成功";
@@ -368,6 +466,10 @@ function updateOrder(onSuccess) {
             order_list.component.refresh();
         }
         else co.sweet.error("儲存失敗", result.error);
+    }).fail(function () {
+        co.sweet.error("儲存失敗", "連線異常，請稍後再試。");
+    }).always(function () {
+        $btn_save.prop("disabled", false);
     });
 }
 function lockLogistics() {
@@ -441,6 +543,7 @@ function ElementInit() {
     $recipient_cellphone = $(".recipient_cellphone")
     $recipient_telphone = $(".recipient_telphone")
     $recipient_address = $(".recipient_address")
+    $recipient_address_label = $(".recipient_address_label")
     $recipient_email = $(".recipient_email");
 
     /* Order */
@@ -456,6 +559,8 @@ function ElementInit() {
     $btn_logistics_save = $(".btn_logistics_save");
     $btn_createLogistics = $(".btn_createLogistics");
     $btn_printShippingLabel = $(".btn_printShippingLabel");
+    $btn_queryLogisticsStatus = $(".btn_queryLogisticsStatus");
+    $btn_CVSReturn = $(".btn_CVSReturn");
     $btn_send_notification = $(".btn_send_notification");
     $btn_logistics_edit = $(".btn_logistics_edit");
     $btn_logistics_update = $(".btn_logistics_update");
@@ -496,6 +601,7 @@ function FormDataClear() {
     $recipient_cellphone.text("")
     $recipient_telphone.text("")
     $recipient_address.text("")
+    $recipient_address_label.text("地　　址：")
     $recipient_email.text("")
 
     $orderer_name.text("")
@@ -573,30 +679,109 @@ function HashDataEdit() {
         if (window.currentHash != window.location.hash) {
             var hash = window.location.hash.replace("#", "");
             var ohids = `${hash}`;
-            co.Order.GetDisplay(ohids).done(function (result) {
+            var hasOrderData = false;
+
+            co.sweet.loading("訂單明細載入中，請稍後。");
+
+            var displayRequest = co.Order.GetDisplay(ohids).done(function (result) {
                 if (result.length > 0) {
+                    hasOrderData = true;
                     var order_header = result[0].orderHeader;
                     // 如果是貨到付款 待付款可以取消
                     if ([7, 8, 9, 10].includes(order_header.paymentCode)) isCashOnDelivery = true;
                     //keyId = order_header.id;
                     HeaderDataInsert(order_header)
 
-                    var order_details = result[0].orderDetails;
-                    var temp = $("#Template_Purchase_List").data("temp") || $($("#Template_Purchase_List").html()).clone();
-                    if (!!!$("#Template_Purchase_List").data("temp")) $("#Template_Purchase_List").data("temp", temp);
-                    $("#OrderDetails > .card-body > .purchase_list").empty();
-                    $.each(order_details, function (index, data) {
-                        var frame = $(temp).clone();
-                        frame = DataInsert(data, frame);
-                        $("#OrderDetails > .card-body > .purchase_list").append(frame)
-                    });
+                    var order_details = Array.isArray(result[0].orderDetails)
+                        ? result[0].orderDetails
+                        : [];
 
-                    MoveToContent();
+                    var temp =
+                        $("#Template_Purchase_List").data("temp") ||
+                        $($("#Template_Purchase_List").html()).clone();
+
+                    if (!!!$("#Template_Purchase_List").data("temp")) {
+                        $("#Template_Purchase_List").data("temp", temp);
+                    }
+
+                    var $purchaseList =
+                        $("#OrderDetails > .card-body > .purchase_list");
+
+                    $purchaseList.empty();
+
+                    var orderAdditionalHeadingAdded = false;
+
+                    $.each(order_details, function (index, data) {
+
+                        var isAdditional = data.isAdditional === true;
+
+                        var parentLabel = String(
+                            data.additionalParentLabel || ""
+                        ).trim();
+
+                        var isOrderLevelAdditional =
+                            isAdditional &&
+                            parentLabel === "本筆訂單";
+
+                        // ==============================
+                        // 訂單層級優惠
+                        // ==============================
+                        if (
+                            isOrderLevelAdditional &&
+                            !orderAdditionalHeadingAdded
+                        ) {
+                            orderAdditionalHeadingAdded = true;
+
+                            $purchaseList.append(
+                                '<li class="order-additional-heading">' +
+                                '<strong>訂單加價購／贈品</strong>' +
+                                '<small>本筆訂單符合優惠活動條件</small>' +
+                                '</li>'
+                            );
+                        }
+
+                        var frame = $(temp).clone();
+
+                        frame = DataInsert(data, frame);
+
+                        // ==============================
+                        // 優惠商品樣式分類
+                        // ==============================
+                        if (isAdditional) {
+
+                            if (isOrderLevelAdditional) {
+                                // 訂單滿額 / 滿件優惠
+                                // 不附屬任何單一商品，因此不縮排
+                                frame
+                                    .addClass("order-additional-item")
+                                    .removeClass("product-additional-item");
+                            }
+                            else {
+                                // 指定商品型加價購
+                                // 後端已排序在主商品後面，直接縮排表示 parent-child
+                                frame
+                                    .addClass("product-additional-item")
+                                    .removeClass("order-additional-item");
+                            }
+
+                            frame.find(".pro_name").before(
+                                '<span class="order-additional-badge">' +
+                                '<i class="fa-solid fa-link me-1" aria-hidden="true"></i>' +
+                                '加價購／贈品' +
+                                '</span>'
+                            );
+                        }
+                        else {
+                            frame.addClass("primary-order-item");
+                        }
+
+                        $purchaseList.append(frame);
+                    });
                 } else {
                     window.location.hash = ""
                 }
             });
-            co.Order.GetHeaderOld(parseInt(hash)).done(function (result) {
+            var headerRequest = co.Order.GetHeaderOld(parseInt(hash)).done(function (result) {
                 if (result != null) {
                     FormDataClear();
                     keyId = result.id;
@@ -605,6 +790,19 @@ function HashDataEdit() {
                     //window.location.hash = ""
                 }
             });
+
+            $.when(displayRequest, headerRequest)
+                .done(function () {
+                    if (hasOrderData) {
+                        window.currentHash = window.location.hash;
+                        MoveToContent();
+                    }
+                    co.sweet.closeLoading();
+                })
+                .fail(function () {
+                    window.location.hash = "";
+                    co.sweet.error("訂單明細載入失敗", "請稍後再試。");
+                });
         }
     } else {
         BackToList();
@@ -613,7 +811,6 @@ function HashDataEdit() {
 function editButtonClicked(e) {
     keyId = e.row.key;
     window.location.hash = keyId
-    MoveToContent();
 }
 function HeaderDataInsert(data) {
     DataInsert(data, $("#OrderDetails"));
@@ -640,8 +837,20 @@ function HeaderDataInsert(data) {
             .text("");
     }
 
-    //if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
-    //else if (data.logisticsType >= 8 && data.logisticsType <= 17) $btn_createLogistics.removeClass("d-none");
+    if ([1, 2, 6].includes(data.state)  && data.cvsStoreID != null) {
+        if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
+        else if (data.logisticsType >= 8 && data.logisticsType <= 15) $btn_createLogistics.removeClass("d-none");
+    }
+
+    if (data.logisticsStatus == "已取件" && [8, 9, 10, 11].includes(data.logisticsType) && !data.logisticsStatusStr.startsWith("退貨編號")) {
+        $btn_CVSReturn.removeClass("d-none");
+    }
+
+    if (data.state == 3 && data.logisticsStatusStr != "") {
+        $btn_queryLogisticsStatus.removeClass("d-none");
+        $("#OrderData .LogisticsStatusStr").html(data.logisticsStatusStr);
+        $("#OrderData .LogisticsStatusStr").removeClass("d-none")
+    }
 
     ECPayLogisticsTypeStr = data.logisticsTypeStr;
     ECPayLogisticsSubTypeStr = data.logisticsSubTypeStr;
@@ -705,7 +914,45 @@ function HeaderDataSet(result) {
     $recipient_cellphone.text(result.recipientCellPhone)
     var re_telIndex = result.recipientTelePhone.indexOf("-", 5)
     $recipient_telphone.text(result.recipientTelePhone.substr(re_telIndex + 1).length > 0 ? result.recipientTelePhone : result.recipientTelePhone.substr(0, re_telIndex))
-    $recipient_address.text(result.recipientAddress)
+    var cvsStoreID = result.cvsStoreID || result.cvsStoreId || "";
+    var cvsStoreName = result.cvsStoreName || "";
+    var cvsAddress = result.cvsAddress || "";
+    var hasCvsStore = cvsStoreID || cvsStoreName || cvsAddress;
+
+    // 舊訂單可能只有「超商-門市名稱(門市地址)」寫在收件地址中。
+    if (!hasCvsStore && result.recipientAddress) {
+        var addressText = result.recipientAddress;
+        var addressStart = addressText.lastIndexOf("(");
+        var addressEnd = addressText.lastIndexOf(")");
+        var storeSeparator = addressText.lastIndexOf("-", addressStart);
+        var logisticsName = storeSeparator > 0 ? addressText.substring(0, storeSeparator).toLowerCase() : "";
+        var isCvsAddress = /7-eleven|7-11|全家|萊爾富|ok/.test(logisticsName);
+
+        if (isCvsAddress && addressStart > storeSeparator && addressEnd > addressStart) {
+            cvsStoreName = addressText.substring(storeSeparator + 1, addressStart);
+            cvsAddress = addressText.substring(addressStart + 1, addressEnd);
+            hasCvsStore = true;
+        }
+    }
+
+    if (hasCvsStore) {
+        $recipient_address_label.text("取貨門市：");
+        $recipient_address.empty();
+
+        var storeTitle = cvsStoreName || "未提供門市名稱";
+        if (cvsStoreID) storeTitle += `（門市編號：${cvsStoreID}）`;
+        $("<div>").text(storeTitle).appendTo($recipient_address);
+
+        if (cvsAddress) {
+            $("<div>")
+                .addClass("small text-muted")
+                .text(cvsAddress)
+                .appendTo($recipient_address);
+        }
+    } else {
+        $recipient_address_label.text("地　　址：");
+        $recipient_address.text(result.recipientAddress);
+    }
     $recipient_email.text(result.recipientEmail)
 
     $orderer_name.text(result.orderer)
@@ -821,10 +1068,17 @@ function DataInsert(data, frame) {
                     }
                     break;
                 case "cvsinfo":
-                    if (data.cvsStoreName != null && data.cvsAddress != null) {
+                    if (data.cvsStoreName || data.cvsStoreID || data.cvsAddress) {
                         var $cvsinfo = $("#OrderData > .card-body > .row > .col > .storeinfo");
-                        $cvsinfo.removeClass("d-none")
-                        $cvsinfo.find(".order_cvsinfo").html(`${data.cvsStoreName}<br>${data.cvsAddress}`)
+                        var storeTitle = data.cvsStoreName || "未提供門市名稱";
+                        if (data.cvsStoreID) storeTitle += `（門市編號：${data.cvsStoreID}）`;
+
+                        var $storeContent = $cvsinfo.find(".order_cvsinfo").empty();
+                        $("<div>").text(storeTitle).appendTo($storeContent);
+                        if (data.cvsAddress) {
+                            $("<div>").text(data.cvsAddress).appendTo($storeContent);
+                        }
+                        $cvsinfo.removeClass("d-none");
                     }
                     break;
                 default:
@@ -847,6 +1101,7 @@ function MoveToContent() {
 }
 function BackToList() {
     isCashOnDelivery = false;
+    window.currentHash = "";
     $("#OrderList").removeClass("d-none");
     $("#OrderContent").addClass("d-none");
     $("#PrintR001").addClass("d-none");
@@ -854,6 +1109,10 @@ function BackToList() {
     $btn_save.addClass("d-none");
     $btn_createLogistics.addClass("d-none");
     $btn_printShippingLabel.addClass("d-none");
+    $("#OrderData .LogisticsStatusStr").addClass("d-none");
+    $("#OrderData .LogisticsStatusStr").text("");
+    $btn_queryLogisticsStatus.addClass("d-none");
+    $btn_CVSReturn.addClass("d-none");
     window.location.hash = ""
     $("#OrderDetails > .card-body > .purchase_list > .purchase_item").each(function () {
         $(this).remove();

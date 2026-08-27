@@ -18,7 +18,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.OAuth
         TempData,
         ShortTerm,
         LongTerm,
-        none
+        none,
+        LastWebsite
     }
 
 }

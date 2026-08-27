@@ -65,12 +65,17 @@ namespace EtheriT.Coker.Application.Authorization
                 var frontUser = await (
                     from user in db.FrontUsers
                     join map in db.MappingFrontUserAndWebsite on user.Id equals map.FK_UserId
-                    where user.Email == dto.Email && map.FK_WebsiteId == dto.WebsiteId
+                    where user.Email == dto.Email && map.FK_WebsiteId == websiteId
                     select user).FirstOrDefaultAsync();
                 var role = await db.Roles
-                    .Where(e => e.FK_WebsiteId == websiteId && e.Type == RoleTypeEnum.前台)
+                    .Where(e =>
+                        e.FK_WebsiteId == websiteId &&
+                        e.Type == RoleTypeEnum.前台 &&
+                        !e.IsDeleted)
                     .OrderBy(e => e.Ser_No)
+                    .ThenBy(e => e.Id)
                     .FirstOrDefaultAsync();
+                if (role == null) throw new Exception("尚未設定可用的前台會員角色");
 
                 var passwordError = CheckPassword(dto.Password);
                 if (dto.Password != dto.PasswordConfirm) throw new Exception("輸入的密碼不相符");
@@ -97,12 +102,13 @@ namespace EtheriT.Coker.Application.Authorization
                     }
 
                     frontUser.FK_User = user.Id;
-                    frontUser.Level = role?.Id ?? 2;
+                    // Level 僅保留舊版相容；實際角色以 MappingUserAndRoles 為準。
+                    frontUser.Level = role.Id;
                     db.FrontUsers.Add(frontUser);
                     await loginUserData.SaveChanges(frontUser);
                     userId = frontUser.Id;
 
-                    var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit(dto.WebsiteId);
+                    var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit(websiteId);
                     var bonusText = string.Empty;
                     if (bonusSetting?.SignupBonusPoints > 0)
                     {
@@ -122,7 +128,7 @@ namespace EtheriT.Coker.Application.Authorization
                     {
                         UserId = user.Id,
                         UUID = frontUser.UUID,
-                        RoleId = role?.Id ?? 2
+                        RoleId = role.Id
                     };
                     db.MappingUserAndRoles.Add(userRole);
                     await loginUserData.SaveChanges(userRole);
@@ -130,7 +136,7 @@ namespace EtheriT.Coker.Application.Authorization
                     var userWebsite = new MappingFrontUserAndWebsite
                     {
                         FK_UserId = frontUser.Id,
-                        FK_WebsiteId = dto.WebsiteId
+                        FK_WebsiteId = websiteId
                     };
                     db.MappingFrontUserAndWebsite.Add(userWebsite);
                     await loginUserData.SaveChanges(userWebsite);
@@ -138,7 +144,7 @@ namespace EtheriT.Coker.Application.Authorization
                     var accountLog = new Account_Log
                     {
                         UUID = uuid,
-                        WebsiteId = dto.WebsiteId,
+                        WebsiteId = websiteId,
                         Status = (int)AccountStatusEnum.註冊,
                         CreatorUserId = frontUser.Id,
                         CreationTime = DateTime.Now
@@ -189,7 +195,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 dto.Password = "*********";
                 dto.PasswordConfirm = "*********";
-                await loginUserData.SetLogs(userId, dto.WebsiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(userId, websiteId, JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             catch (Exception ex)
             {

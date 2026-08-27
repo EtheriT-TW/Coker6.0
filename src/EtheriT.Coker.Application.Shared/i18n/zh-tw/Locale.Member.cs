@@ -161,6 +161,16 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string AddFavorite { get; } = "加入收藏";
 
         /// <summary>
+        /// 成功將商品加入收藏
+        /// </summary>
+        public static string AddFavoriteSuccess { get; } = "成功將商品加入收藏";
+
+        /// <summary>
+        /// 已將商品從收藏中移除
+        /// </summary>
+        public static string RemoveFavoriteSuccess { get; } = "已將商品從收藏中移除";
+
+        /// <summary>
         /// 查無瀏覽紀錄
         /// </summary>
         public static string EmptyBrowsingHistory { get; } = "查無瀏覽紀錄";
@@ -179,6 +189,11 @@ namespace EtheriT.Coker.Application.Shared.i18n
         /// 電子郵件修改成功
         /// </summary>
         public static string ResultEmailChangeSuccess { get; } = "電子郵件修改成功";
+
+        /// <summary>
+        /// 現有紅利
+        /// </summary>
+        public static string CurrentBonus { get; } = "現有紅利";
 
     }
 }

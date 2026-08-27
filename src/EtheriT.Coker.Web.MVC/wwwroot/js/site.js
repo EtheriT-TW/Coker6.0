@@ -165,12 +165,11 @@ var PreLoader;
         }
     });
     $("#switchApp .switch").on("click", function () {
-        co.WebSite.exchange($(".active-app").first().data("id")).done(function (result) {
-            if (result.success) {
-                co.Cookie.Add("LastWebSite", result.message);
-                location.reload();
-            }
-        });
+        const $selectedWebsite = $("#switchApp .active-app").first();
+        const websiteId = $selectedWebsite.data("id");
+        const websiteName = $selectedWebsite.find("[data-key='name']").text().trim();
+
+        co.WebSite.exchange(websiteId, websiteName);
     });
     a.fn.setAsideMode = function () {
         if (localStorage.getItem("asideMode") === null) {

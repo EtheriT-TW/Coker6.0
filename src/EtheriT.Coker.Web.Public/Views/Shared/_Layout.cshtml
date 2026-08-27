@@ -13,6 +13,8 @@
         ViewBag.NoCopy?.ToString(),
         ViewBag.option?.ToString()
     ).Trim();
+    // DevExtreme 檔案較大，預設不載入；需要的頁面設定 ViewData["UseDevExtreme"] = true。
+    var useDevExtreme = ViewData["UseDevExtreme"] as bool? == true;
 }
 <!DOCTYPE html>
 <html lang="@ViewData["Locale"]">
@@ -21,58 +23,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@Html.Raw(ViewBag.PageTagNameName)</title>
     <script nonce="@ViewBag.Nonce">
-        document.documentElement.classList.add("coker-prepaint");
-        document.documentElement.setAttribute("aria-busy", "true");
+            document.documentElement.classList.add("coker-prepaint");
+            document.documentElement.setAttribute("aria-busy", "true");
     </script>
     <style nonce="@ViewBag.Nonce">
-        html.coker-prepaint::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            z-index: 2147483646;
-            background: #fff;
-            opacity: 1;
-            transition: opacity 120ms ease-out;
-        }
-
-        html.coker-prepaint::after {
-            content: "";
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            z-index: 2147483647;
-            width: 2.5rem;
-            height: 2.5rem;
-            margin: -1.25rem 0 0 -1.25rem;
-            border: .25rem solid #e5e5e5;
-            border-top-color: #777;
-            border-radius: 50%;
-            opacity: 1;
-            animation: coker-prepaint-spin .75s linear infinite;
-            transition: opacity 120ms ease-out;
-        }
-
-        html.coker-prepaint.coker-prepaint-ready::before,
-        html.coker-prepaint.coker-prepaint-ready::after {
-            opacity: 0;
-        }
-
-        @@keyframes coker-prepaint-spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @@media (prefers-reduced-motion: reduce) {
-            html.coker-prepaint::after {
-                animation: none;
+            html.coker-prepaint::before {
+                content: "";
+                position: fixed;
+                inset: 0;
+                z-index: 2147483646;
+                background: #fff;
+                opacity: 1;
+                transition: opacity 120ms ease-out;
             }
-        }
+
+            html.coker-prepaint::after {
+                content: "";
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                z-index: 2147483647;
+                width: 2.5rem;
+                height: 2.5rem;
+                margin: -1.25rem 0 0 -1.25rem;
+                border: .25rem solid #e5e5e5;
+                border-top-color: #777;
+                border-radius: 50%;
+                opacity: 1;
+                animation: coker-prepaint-spin .75s linear infinite;
+                transition: opacity 120ms ease-out;
+            }
+
+            html.coker-prepaint.coker-prepaint-ready::before,
+            html.coker-prepaint.coker-prepaint-ready::after {
+                opacity: 0;
+            }
+
+            @@keyframes coker-prepaint-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @@media (prefers-reduced-motion: reduce) {
+                html.coker-prepaint::after {
+                    animation: none;
+                }
+            }
     </style>
     <style nonce="@ViewBag.Nonce">
-        @@media (max-width: 767.98px) {
-            .coker-desktop-breadcrumb {
-                display: none !important;
+            @@media (max-width: 767.98px) {
+                .coker-desktop-breadcrumb {
+                    display: none !important;
+                }
             }
-        }
     </style>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/fortawesome/css/all.min.css" />
@@ -80,57 +84,67 @@
     <link rel="stylesheet" href="~/lib/sweetalert2/dist/sweetalert2.min.css" />
     <link rel="stylesheet" href="~/lib/aos/aos.css" />
     <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/vendor.min.css" asp-append-version="true" />
+    @if (useDevExtreme)
+    {
+        <link rel="stylesheet" href="~/css/vendor.min.css" asp-append-version="true" />
+    }
     <link rel="stylesheet" href="~/css/Header/Header.min.css" asp-append-version="true" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" asp-append-version="true" />
-    @switch (ViewData["PageView"])
-    {
-        case "Article":
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/article/{ViewData["Id"]}")" />
-            break;
-        case "Product":
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/product/{ViewData["Id"]}")" />
-            break;
-        case "Techcert":
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}/search/techcert/{ViewData["Id"]}")" />
-            break;
-        default:
-            <link rel="canonical" href="@($"{ViewData["Root"]}/{ViewData["OrgName"]}{ViewData["CurrentUrl"]}")" />
-            break;
-    }
+    <link rel="canonical" href="@ViewData["CanonicalUrl"]" />
     @await Component.InvokeAsync(nameof(LayoutType))
 
     <meta name="author" content="易碩網際科技股份有限公司" />
     <meta name="copyright" content="易碩網際科技股份有限公司" />
-    <meta name="description" content="@Html.Raw(ViewData["Description"])">
+    <meta name="description" content="@ViewData["Description"]">
     <meta itemprop="name" content="@Html.Raw(ViewBag.PageTagNameName)" />
-    <meta itemprop="description" content="@Html.Raw(ViewData["Description"])" />
+    <meta itemprop="description" content="@ViewData["Description"]" />
     <meta name="twitter:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
-    <meta name="twitter:description" content="@Html.Raw(ViewData["Description"])" />
+    <meta name="twitter:description" content="@ViewData["Description"]" />
     @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
     {
         <meta name="twitter:image" content="@Html.Raw(ViewBag.ImageUrl)">
     }
     <meta property="og:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="@ViewData["CurrentUrl"]" />
+    <meta property="og:url" content="@(ViewData["OpenGraphUrl"] ?? ViewData["CurrentUrl"])" />
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
-    <meta property="og:description" content="@Html.Raw(ViewData["Description"])" />
+    <meta property="og:description" content="@ViewData["Description"]" />
     @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
     {
         <meta property="og:image" content="@Html.Raw(ViewBag.ImageUrl)">
     }
     <meta property="og:locale" content="zh-tw" />
     <meta name="csp-nonce" content="@Html.Raw(ViewBag.Nonce)" />
+    @if (ViewBag.ProductStructuredDataJson is string productStructuredDataJson &&
+         !string.IsNullOrWhiteSpace(productStructuredDataJson))
+    {
+        <script id="product-structured-data"
+                type="application/ld+json"
+                data-product-id="@ViewBag.ProductStructuredDataProductId"
+                nonce="@ViewBag.Nonce">@Html.Raw(productStructuredDataJson)</script>
+    }
+    @if (ViewBag.BreadcrumbStructuredDataJson is string breadcrumbStructuredDataJson &&
+         !string.IsNullOrWhiteSpace(breadcrumbStructuredDataJson))
+    {
+        <script id="breadcrumb-structured-data"
+                type="application/ld+json"
+                data-page-type="@ViewBag.BreadcrumbStructuredDataPageType"
+                data-page-id="@ViewBag.BreadcrumbStructuredDataPageId"
+                nonce="@ViewBag.Nonce">@Html.Raw(breadcrumbStructuredDataJson)</script>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/js/vendor.min.js" asp-append-version="true" nonce="@ViewBag.Nonce"></script>
-    <script src="~/js/devextreme/localization/dx.messages.zh-tw.js"></script>
-    <script nonce="@ViewBag.Nonce"> DevExpress.localization.locale('zh-tw'); </script>
+    @if (useDevExtreme)
+    {
+        <script src="~/js/vendor.min.js" asp-append-version="true" nonce="@ViewBag.Nonce"></script>
+        <script src="~/js/devextreme/localization/dx.messages.zh-tw.js" asp-append-version="true"></script>
+        <script nonce="@ViewBag.Nonce">DevExpress.localization.locale('zh-tw');</script>
+    }
     <style nonce="@ViewBag.Nonce">
-        :root {
-            --orgName: @ViewData["OrgName"];
-        }
+            :root {
+                --orgName: @ViewData["OrgName"];
+                --currency-symbol: '@(ViewBag.PriceCurrencySymbol ?? "NT$")';
+            }
     </style>
     @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
     @if (Configuration.GetValue<bool>("RemoteJs:Enabled", false))
@@ -138,672 +152,993 @@
         <script data-consolejs-channel="c54af59e-d006-5fa6-30d5-e2b3f272a9fc" src="https://remotejs.com/agent/agent.js" crossorigin="anonymous"></script>
     }
     <script nonce="@ViewBag.Nonce">
-        sessionStorage.setItem("PageKey","@ViewBag.PageKey");
-        const local = @Html.Raw(L.getAllJsonString());
-        const SiteId = @ViewBag.SiteId;
-        const SearchWord = @Html.Raw(ViewBag.SearchWord);
-        const BackstageUrl = "@ViewBag.BackstageUrl";
-        const OAuthSuccess ="@ViewBag.OAuthSuccess";
-        const OAuthError = "@ViewBag.OAuthError";
-        const RootId = "@ViewBag.RootId";
-        const PageId = "@ViewData["Id"]";
-        const PageType = "@ViewBag.option";
-        const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
-        const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
-        const parsedPageId = Number.parseInt(PageId, 10);
-        const OrgName = "@ViewData["OrgName"]";
-        const PageKey = "@ViewBag.RouterName";
-        window.__LOGIN_STATE__ = @(ViewBag.isLogin == true ? "true" : "false");
-        window.SiteId = SiteId;
-        window.PageId = Number.isNaN(parsedPageId) ? null : parsedPageId;
-        window.CI360 = { notInitOnLoad: true }
-        window.totalBonus = totalBonus;
-        window.orderPrice = orderPrice;
-        window.OrgName = OrgName;
-        window.PageKey = PageKey;
-        window.onload = function () {
-            ready();
-        }
-        const originalAppendChild = Element.prototype.appendChild;
-        const originalInsertBefore = Node.prototype.insertBefore;
-        const nonce = document.querySelector('meta[name="csp-nonce"]').getAttribute('content');
-
-        // 覆寫 appendChild 方法
-        Element.prototype.appendChild = function (child) {
-            // child 是否為 undefined
-            if (child) {
-                // 檢查是否為 <script> 或 <style> 元素
-                if (child.tagName && (child.tagName === 'SCRIPT' || child.tagName === 'STYLE')) {
-                    // 為元素添加 nonce 屬性
-                    child.setAttribute('nonce', nonce);
+            const RemoteTrackingToken = @Json.Serialize(ViewBag.RemoteTrackingToken ?? "");
+            const local = @Html.Raw(L.getAllJsonString());
+            const SiteId = @ViewBag.SiteId;
+            const SearchWord = @Html.Raw(ViewBag.SearchWord);
+            const BackstageUrl = "@ViewBag.BackstageUrl";
+            const OAuthSuccess = "@ViewBag.OAuthSuccess";
+            const OAuthError = "@ViewBag.OAuthError";
+            const RootId = "@ViewBag.RootId";
+            const PageId = "@ViewData["Id"]";
+            const PageType = "@ViewBag.option";
+            const orderPrice = @ViewBag.priceOrder.ToString().ToLower();
+            const totalBonus = @Json.Serialize(ViewBag.UserBonus ?? 0);
+            const parsedPageId = Number.parseInt(PageId, 10);
+            const OrgName = "@ViewData["OrgName"]";
+            const PageKey = "@ViewBag.RouterName";
+            const priceCurrency = Object.freeze({
+                code: @Json.Serialize(ViewBag.PriceCurrencyCode ?? "TWD"),
+                symbol: @Json.Serialize(ViewBag.PriceCurrencySymbol ?? "NT$"),
+                decimalDigits: @Json.Serialize(ViewBag.PriceCurrencyDecimalDigits ?? 0)
+            });
+            const formatMoney = function(value) {
+                const amount = Number(value);
+                if (!Number.isFinite(amount)) {
+                    return "";
                 }
 
-                // 調用原始的 appendChild 方法
-                return originalAppendChild.call(this, child);
+                const locale = document.documentElement.lang || "zh-TW";
+                const formattedAmount = amount.toLocaleString(locale, {
+                    minimumFractionDigits: priceCurrency.decimalDigits,
+                    maximumFractionDigits: priceCurrency.decimalDigits
+                });
+                return `${priceCurrency.symbol}${formattedAmount}`;
+            };
+            window.__LOGIN_STATE__ = @(ViewBag.isLogin == true ? "true" : "false");
+            window.SiteId = SiteId;
+            window.PageId = Number.isNaN(parsedPageId) ? null : parsedPageId;
+            window.CI360 = { notInitOnLoad: true }
+            window.totalBonus = totalBonus;
+            window.orderPrice = orderPrice;
+            window.OrgName = OrgName;
+            window.PageKey = PageKey;
+            window.CokerCurrency = Object.freeze({
+                ...priceCurrency,
+                format: formatMoney
+            });
+            window.RemoteTrackingToken = RemoteTrackingToken;
+            window.onload = function() {
+                ready();
             }
-        };
+            const originalAppendChild = Element.prototype.appendChild;
+            const originalInsertBefore = Node.prototype.insertBefore;
+            const nonce = document.querySelector('meta[name="csp-nonce"]').getAttribute('content');
 
-        // 覆寫 insertBefore 方法
-        Node.prototype.insertBefore = function (newNode, referenceNode) {
-            // 檢查插入的節點是否為 script 或 style
-            if (newNode.tagName === 'SCRIPT' || newNode.tagName === 'STYLE') {
-                // 添加 nonce 屬性
-                newNode.setAttribute('nonce', nonce);
-            }
+            // 覆寫 appendChild 方法
+            Element.prototype.appendChild = function(child) {
+                // child 是否為 undefined
+                if (child) {
+                    // 檢查是否為 <script> 或 <style> 元素
+                    if (child.tagName && (child.tagName === 'SCRIPT' || child.tagName === 'STYLE')) {
+                        // 為元素添加 nonce 屬性
+                        child.setAttribute('nonce', nonce);
+                    }
 
-            // 調用原始的 insertBefore 方法
-            return originalInsertBefore.call(this, newNode, referenceNode);
-        };
+                    // 調用原始的 appendChild 方法
+                    return originalAppendChild.call(this, child);
+                }
+            };
+
+            // 覆寫 insertBefore 方法
+            Node.prototype.insertBefore = function(newNode, referenceNode) {
+                // 檢查插入的節點是否為 script 或 style
+                if (newNode.tagName === 'SCRIPT' || newNode.tagName === 'STYLE') {
+                    // 添加 nonce 屬性
+                    newNode.setAttribute('nonce', nonce);
+                }
+
+                // 調用原始的 insertBefore 方法
+                return originalInsertBefore.call(this, newNode, referenceNode);
+            };
     </script>
     @if (!string.IsNullOrEmpty(ViewBag.GA4))
     {
         <!-- Google tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=@ViewBag.GA4" crossorigin="anonymous"></script>
         <script nonce="@ViewBag.Nonce">
-            window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
-            gtag('js', new Date());
+                window.dataLayer = window.dataLayer || [];
+                function gtag() { dataLayer.push(arguments); }
+                gtag('js', new Date());
 
-            gtag('config', "@ViewBag.GA4");
-            @if (!string.IsNullOrEmpty(ViewBag.GoogleAds))
-            {
-                    @: gtag('config', '@ViewBag.GoogleAds');
-            }
+                gtag('config', "@ViewBag.GA4");
+                @if (!string.IsNullOrEmpty(ViewBag.GoogleAds))
+                    {
+                        @:gtag('config', '@ViewBag.GoogleAds');
+                }
         </script>
     }
     @if (ViewData["google.translate"] != null && !string.IsNullOrEmpty(ViewData["google.translate"]!.ToString() ?? ""))
     {
         <script nonce="@ViewBag.Nonce">
-            let isGoogleTranslateInitialized = false;
-            function triggerResize(quietMs = 200, fallbackMs = 1500) {
-                const header = document.querySelector('header'); // 針對 header
-                if (!header) {
-                    // 找不到 header 就直接觸發一次
-                    window.dispatchEvent(new Event('resize'));
-                    return;
-                }
+                let isGoogleTranslateInitialized = false;
+                let cancelResizeWatch = null;   // 同時間只保留一組觀察，連續切換不會疊加
+                let googleTranslateRetries = 0;
+                const GOOGLE_TRANSLATE_MAX_RETRIES = 10;
 
-                let timer;
-                const mo = new MutationObserver(() => {
-                    clearTimeout(timer);
-                    timer = setTimeout(() => {
-                        mo.disconnect();
+                function triggerResize(quietMs = 200, fallbackMs = 1500) {
+                    const header = document.querySelector('header'); // 針對 header
+                    if (!header) {
+                        // 找不到 header 就直接觸發一次
                         window.dispatchEvent(new Event('resize'));
-                    }, quietMs);
-                });
-
-                // 只觀察 header 內部
-                mo.observe(header, {
-                    childList: true,      // 子節點增減
-                    subtree: true,        // header 裡所有子孫
-                    characterData: true,  // 文字內容變化
-                    attributes: true      // 屬性改變（例如 style）
-                });
-
-                // fallback，最多等 fallbackMs
-                setTimeout(() => {
-                    try { mo.disconnect(); } catch {}
-                    window.dispatchEvent(new Event('resize'));
-                }, fallbackMs);
-            }
-            document.addEventListener('change', function (e) {
-                if (e.target && e.target.classList.contains('goog-te-combo')) {
-                    triggerResize();
-                }
-            });
-            function googleTranslateElementInit() {
-                if (isGoogleTranslateInitialized) {
-                    console.log("Google Translate is already initialized.");
-                    return;
-                }
-                try {
-                    if (typeof google !== "undefined" && typeof google.translate !== "undefined" && google.translate.TranslateElement) {
-                        new google.translate.TranslateElement({
-                            pageLanguage: 'zh-TW',
-                            includedLanguages: '@ViewData["google.translate"]',
-                            gaTrack: true
-                        }, 'google_translate_element');
-
-                        $('select.goog-te-combo').attr('title', 'translate');
-                        isGoogleTranslateInitialized = true;
-                        triggerResize();
-                    } else {
-                        console.warn("Google Translate API is not ready yet. Retrying...");
-                        setTimeout(googleTranslateElementInit, 1000); // 每秒重試一次
+                        return;
                     }
-                } catch (error) {
-                    console.error("Failed to initialize Google Translate:", error);
+
+                    if (cancelResizeWatch) cancelResizeWatch();   // 前一輪還沒結束就先收掉
+
+                    let timer;
+                    let fallback;
+
+                    const cleanup = () => {
+                        clearTimeout(timer);
+                        clearTimeout(fallback);
+                        try { mo.disconnect(); } catch { }
+                        cancelResizeWatch = null;
+                    };
+
+                    // 安靜期到了、或 fallback 到期，兩條路徑只會真的送出一次 resize
+                    const done = () => {
+                        cleanup();
+                        window.dispatchEvent(new Event('resize'));
+                    };
+
+                    const mo = new MutationObserver(() => {
+                        clearTimeout(timer);
+                        timer = setTimeout(done, quietMs);
+                    });
+
+                    // 只觀察 header 內部
+                    mo.observe(header, {
+                        childList: true,      // 子節點增減
+                        subtree: true,        // header 裡所有子孫
+                        characterData: true,  // 文字內容變化
+                        attributes: true      // 屬性改變（例如 style）
+                    });
+
+                    // fallback，最多等 fallbackMs
+                    fallback = setTimeout(done, fallbackMs);
+                    cancelResizeWatch = cleanup;
                 }
-            }
 
-            // 動態加載 Google Translate 腳本
-            function loadGoogleTranslateScript() {
-                const script = document.createElement("script");
-                script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-                script.async = true;
-                script.defer = true;
+                document.addEventListener('change', function(e) {
+                    if (e.target && e.target.classList && e.target.classList.contains('goog-te-combo')) {
+                        triggerResize();
+                    }
+                });
 
-                script.onload = () => {
-                    console.log("Google Translate script loaded successfully.");
+                function googleTranslateElementInit() {
+                    if (isGoogleTranslateInitialized) {
+                        console.log("Google Translate is already initialized.");
+                        return;
+                    }
+                    try {
+                        if (typeof google !== "undefined" && typeof google.translate !== "undefined" && google.translate.TranslateElement) {
+                            new google.translate.TranslateElement({
+                                pageLanguage: PAGE_LANG,
+                                includedLanguages: '@ViewData["google.translate"]'
+                            }, 'google_translate_element');
+
+                            isGoogleTranslateInitialized = true;
+                            whenComboReady(function(combo) {
+                                combo.title = 'translate';
+                                buildTranslateSwitch(combo);
+                            });
+                            triggerResize();
+                        } else if (googleTranslateRetries < GOOGLE_TRANSLATE_MAX_RETRIES) {
+                            googleTranslateRetries++;
+                            console.warn("Google Translate API is not ready yet. Retrying... (" + googleTranslateRetries + "/" + GOOGLE_TRANSLATE_MAX_RETRIES + ")");
+                            setTimeout(googleTranslateElementInit, 1000);
+                        } else {
+                            console.error("Google Translate API 逾時未就緒，翻譯功能停用");
+                        }
+                    } catch (error) {
+                        console.error("Failed to initialize Google Translate:", error);
+                    }
+                }
+
+
+                // 動態加載 Google Translate 腳本
+                function loadGoogleTranslateScript() {
+                    const script = document.createElement("script");
+                    script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+                    script.async = true;
+                    script.defer = true;
+
+                    script.onload = () => {
+                        console.log("Google Translate script loaded successfully.");
+                    };
+
+                    script.onerror = () => {
+                        console.error("Failed to load Google Translate script.");
+                    };
+
+                    document.head.appendChild(script);
+                }
+
+
+                // #translate_switch 預設 display:none，需要的站台在自訂 CSS 設成 display:flex 即可開啟；
+                // 翻譯目標超過 1 種時會自動切換回下拉選單
+                // ViewData["Locale"] 存的是小寫（zh-tw / en），Google 的 option value 是 zh-TW，
+                // 兩邊比對和 combo.value 設定都需要一致的大小寫，統一在這裡正規化
+                function canonLang(code) {
+                    const s = (code || '').trim();
+                    const p = s.split('-');
+                    return p.length > 1 ? p[0].toLowerCase() + '-' + p[1].toUpperCase() : s.toLowerCase();
+                }
+
+                // 與 TranslateElement 的 pageLanguage 共用同一個來源
+                const PAGE_LANG = canonLang('@ViewData["Locale"]') || 'zh-TW';
+
+                // 後台勾選的語系清單。注意頁面語系（例如中文(繁體)）勾選的意義不是翻譯目標，
+                // 而是讓它成為翻譯後可以切回去的選項——Google 原生就支援原地還原。
+                // 沒勾的話翻譯後無路可退，只能靠清 cookie + reload。
+                const INCLUDED_LANGS = '@ViewData["google.translate"]'.split(',').map(canonLang).filter(Boolean);
+                const TARGET_LANGS = INCLUDED_LANGS.filter(c => c !== PAGE_LANG);
+                const CAN_RESTORE_NATIVELY = INCLUDED_LANGS.indexOf(PAGE_LANG) !== -1;
+                if (!CAN_RESTORE_NATIVELY) {
+                    console.warn('後台翻譯設定未勾選 ' + PAGE_LANG + '，回原文將以重新整理處理');
+                }
+
+                // 想顯示語言自稱而不是中文名稱時在這裡覆寫；沒列到的就用 Google 給的名稱
+                const TRANSLATE_LABELS = {
+                    'zh-TW': '繁體',
+                    'zh-CN': '简体',
                 };
 
-                script.onerror = () => {
-                    console.error("Failed to load Google Translate script.");
+                // 下拉選單的原語言字樣要跟 Google 自己的「中文 (簡體)」「日文」對齊。
+                // Intl.DisplayNames 給不出這個格式（zh-TW→「中文（台灣）」、zh-Hant→「繁體中文」，
+                // 括號還是全角），所以在這裡明列；沒列到的語系才退回 Intl。
+                const PAGE_LANG_LABELS = {
+                    'zh-TW': '中文(繁體)',
+                    'zh-CN': '中文(簡體)',
                 };
 
-                document.head.appendChild(script);
-            }
+                // 空值選項（原文）顯示成頁面本身的語系名稱，例如「中文 (繁體)」
+                function getPageLangLabel() {
+                    if (PAGE_LANG_LABELS[PAGE_LANG]) return PAGE_LANG_LABELS[PAGE_LANG];
+                    try {
+                        return new Intl.DisplayNames([PAGE_LANG], { type: 'language' }).of(PAGE_LANG) || PAGE_LANG;
+                    } catch {
+                        return PAGE_LANG;
+                    }
+                }
 
-            // 加載 Google Translate 腳本並初始化
-            loadGoogleTranslateScript();
+                // 標籤優先序：TRANSLATE_LABELS 覆寫 → Google 提供的名稱 → Intl → 語系代碼
+                function getLangLabel(code, googleText) {
+                    const key = code || PAGE_LANG;   // 空值代表原文，改用頁面語系代碼去查表
+                    if (TRANSLATE_LABELS[key]) return TRANSLATE_LABELS[key];
+                    if (!code) return getPageLangLabel();
+                    if (googleText) return googleText.trim();
+                    try {
+                        return new Intl.DisplayNames([PAGE_LANG], { type: 'language' }).of(code) || code;
+                    } catch {
+                        return code;
+                    }
+                }
+
+                // 目前語系（'' 代表原文）。不靠 cookie 即時判斷，避免 Google 寫入延遲
+                let currentTranslateLang = '';
+
+                function pickTranslateLang(raw, separator) {
+                    const parts = raw.split(separator).filter(Boolean);
+                    const lang = canonLang(parts[parts.length - 1] || '');
+                    return lang === PAGE_LANG ? '' : lang;   // 翻成自己 = 原文
+                }
+
+                function getTranslateLang() {
+                    const h = location.hash.match(/googtrans\(([^)]*)\)/);
+                    if (h) return pickTranslateLang(decodeURIComponent(h[1]), '|');
+
+                    const c = document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/);
+                    if (c) return pickTranslateLang(decodeURIComponent(c[1]), '/');
+
+                    return '';
+                }
+
+                function clearCookieAllDomains(name) {
+                    const expire = 'expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                    const parts = location.hostname.split('.');
+                    const domains = [''];
+                    for (let i = 0; i <= parts.length - 2; i++) {
+                        const d = parts.slice(i).join('.');
+                        domains.push(d, '.' + d);
+                    }
+                    domains.forEach(d => {
+                        document.cookie = `${name}=; ${expire}${d ? `; domain=${d}` : ''}`;
+                    });
+                }
+
+                function clearTranslateCookie() {
+                    clearCookieAllDomains('googtrans');
+                    clearCookieAllDomains('googtransopt');   // 這行才是第 2 點
+                }
+
+                // 後台有勾選頁面語系時，Google 的下拉選單本來就提供「切回頁面語系」，
+                // 那是原地還原、不重整。沒勾才退回清 cookie + reload。
+                function restoreOriginalLanguage() {
+                    if (location.hash.indexOf('googtrans') !== -1) {
+                        history.replaceState(null, '', location.pathname + location.search);
+                    }
+
+                    const combo = document.querySelector('select.goog-te-combo');
+                    if (CAN_RESTORE_NATIVELY && combo) {
+                        combo.value = PAGE_LANG;
+                        combo.dispatchEvent(new Event('change', { bubbles: true }));
+                        currentTranslateLang = '';
+                        syncTranslateSwitch();
+
+                        // Google 的 change handler 會把 googtrans 寫成 /zh-TW/zh-TW，
+                        // 要排到它之後才清；不清的話下次載入 Google 仍會照 cookie 跑一輪翻譯流程。
+                        // 這裡不重載頁面，畫面已經由 Google 原地還原完成。
+                        setTimeout(clearTranslateCookie, 0);
+                        return;
+                    }
+
+                    clearTranslateCookie();
+                    location.reload();
+                }
+
+                // icon 字型靠文字內容當 ligature（Material Symbols），被翻譯就會變成裸字
+                // FA 走 ::before 通常不受影響，一併標記當保險
+                const ICON_SELECTOR = [
+                    '.material-symbols-outlined',
+                    '.material-icons',
+                    '[class^="fa-"]',
+                    '[class*=" fa-"]'
+                ].join(',');
+
+                function markIcon(el) {
+                    if (el.classList.contains('notranslate')) return;
+                    el.classList.add('notranslate');
+                    el.setAttribute('translate', 'no');
+                }
+
+                function markIconsNoTranslate(root) {
+                    const scope = root || document.body;
+                    if (!scope) return;
+                    if (scope.nodeType === 1 && scope.matches(ICON_SELECTOR)) markIcon(scope);
+                    scope.querySelectorAll(ICON_SELECTOR).forEach(markIcon);
+                }
+
+                // ajax 載入的內容（商品列表等）也要補標記。
+                // Google 翻譯時會把整頁文字節點包成大量 <font>，那是純文字容器、不可能有 icon
+                // （icon 已標 notranslate，Google 根本不會碰），跳過它可以省下翻譯瞬間
+                // 成千上萬次的 matches + querySelectorAll 子樹掃描
+                function observeNewIcons() {
+                    if (!document.body) return;
+                    const mo = new MutationObserver(mutations => {
+                        for (const m of mutations) {
+                            for (const node of m.addedNodes) {
+                                if (node.nodeType !== 1) continue;
+                                if (node.nodeName === 'FONT') continue;
+                                markIconsNoTranslate(node);
+                            }
+                        }
+                    });
+                    mo.observe(document.body, { childList: true, subtree: true });
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        markIconsNoTranslate();
+                        observeNewIcons();
+                    });
+                } else {
+                    markIconsNoTranslate();
+                    observeNewIcons();
+                }
+
+                // 等 Google 把 select 生出來（TranslateElement 不保證同步完成）
+                // 等 Google 把 select 和 option 都生出來（TranslateElement 不保證同步完成）
+                function whenComboReady(callback, tries = 40) {
+                    const combo = document.querySelector('select.goog-te-combo');
+                    if (combo && combo.options.length > 1) { callback(combo); return; }
+                    if (tries <= 0) {
+                        // Google 沒載入成功（廣告攔截器、CSP、網路）→ 收掉空容器，靜默降級
+                        console.warn('goog-te-combo 未就緒，翻譯功能停用');
+                        const host = document.getElementById('translate_switch');
+                        if (host) host.classList.add('d-none');
+                        return;
+                    }
+                    setTimeout(() => whenComboReady(callback, tries - 1), 250);
+                }
+
+                function buildTranslateSwitch(combo) {
+                    const host = document.getElementById('translate_switch');
+                    if (!host) return;
+                    if (host.dataset.built) return;
+
+                    // 站台沒有啟用按鈕（容器仍是 display:none）→ 維持下拉選單
+                    if (getComputedStyle(host).display === 'none') return;
+
+                    // 清單來源是後台設定，不是 combo.options。
+                    // Google 的 options 是「從目前狀態可切換過去的語言」，翻譯後會變成
+                    // 「請選擇語言 + 中文(繁體)」，拿它當翻譯目標清單會誤判。
+                                        if (TARGET_LANGS.length === 0) {   // 後台沒設翻譯目標 → 不要留空容器佔位
+                        host.classList.add('d-none');
+                        return;
+                    }
+
+                    // 只有 1 個翻譯目標時用切換鈕，其餘退回下拉選單
+                    if (TARGET_LANGS.length !== 1) {
+                        host.classList.add('d-none');
+                        return;
+                    }
+
+                    const code = TARGET_LANGS[0];
+                    host.dataset.built = '1';
+                    const dropdown = document.getElementById('google_translate_element');
+                    if (dropdown) dropdown.classList.add('d-none');
+                    buildTranslateToggle(host, { code: code, text: getLangLabel(code, getComboLabel(combo, code)) });
+                }
+
+                // 優先沿用 Google 自己給的語系名稱；翻譯狀態下該 option 不在清單裡就取不到，
+                // 此時由 getLangLabel 退回 Intl.DisplayNames
+                function getComboLabel(combo, code) {
+                    const opt = combo.querySelector('option[value="' + code + '"]');
+                    return opt ? opt.textContent.trim() : '';
+                }
+
+                // 單一目標語系時的切換鈕：文字隨狀態在「目標語系」和「原文」之間翻面
+                function buildTranslateToggle(host, lang) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'notranslate btn btn-sm btn-outline-secondary border-0 px-2';
+                    btn.dataset.toggleLang = lang.code;
+                    btn.dataset.toggleText = lang.text;
+                    host.appendChild(btn);
+
+                    btn.addEventListener('click', function() {
+                        if (currentTranslateLang === lang.code) {   // 已翻譯 → 回原文
+                            restoreOriginalLanguage();
+                            return;
+                        }
+                        // Google 翻譯後會重建 select，一定要即時查，不能用閉包捕獲的
+                        const combo = document.querySelector('select.goog-te-combo');
+                        if (!combo) return;
+                        combo.value = lang.code;
+                        combo.dispatchEvent(new Event('change', { bubbles: true }));
+                        currentTranslateLang = lang.code;           // 先更新，不等 cookie
+                        syncTranslateSwitch();
+                    });
+
+                    currentTranslateLang = getTranslateLang();
+                    syncTranslateSwitch();
+                }
+
+                function syncTranslateSwitch() {
+                    const toggle = document.querySelector('#translate_switch button[data-toggle-lang]');
+                    if (!toggle) return;
+                    const isTranslated = currentTranslateLang === toggle.dataset.toggleLang;
+                    toggle.textContent = isTranslated ? getLangLabel('') : toggle.dataset.toggleText;
+                    toggle.setAttribute('aria-pressed', isTranslated ? 'true' : 'false');
+                }
+
+                // 加載 Google Translate 腳本並初始化
+                loadGoogleTranslateScript();
         </script>
     }
     @if (!string.IsNullOrEmpty(ViewBag.GTM))
     {
         <!-- Google Tag Manager -->
         <script nonce="@ViewBag.Nonce">
-            (function (w, d, s, l, i) {
-                w[l] = w[l] || []; w[l].push({
-                    'gtm.start':
-                        new Date().getTime(), event: 'gtm.js'
-                }); var f = d.getElementsByTagName(s)[0],
-                    j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
-                        'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+                (function(w, d, s, l, i) {
+                    w[l] = w[l] || []; w[l].push({
+                        'gtm.start':
+                            new Date().getTime(), event: 'gtm.js'
+                    }); var f = d.getElementsByTagName(s)[0],
+                        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                            'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
             })(window, document, 'script', 'dataLayer', '@ViewBag.GTM');</script>
-        <!-- End Google Tag Manager -->
-    }
-</head>
-<body id="@ViewData["Layout"]" class="@bodyClass">
-    @if (!string.IsNullOrEmpty(ViewBag.GTM))
-    {
-        <!-- Google Tag Manager (noscript) -->
-        <noscript>
-            <iframe class="gtmIframe" src="https://www.googletagmanager.com/ns.html?id=@ViewBag.GTM" height="0" width="0"></iframe>
-        </noscript>
-        <!-- End Google Tag Manager (noscript) -->
-    }
-    <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <a id="jumpToCenter" href="#ContainerBody" class="hide accesskey" title="@L.get("accesskeyJumpMain")">
-        <span title="@L.get("accesskeyJumpMain")">@L.get("accesskeyJumpMain")</span>
-    </a>
-    @{
-        if (ViewData["VisibleHeader"] == null)
-        {
-            ViewData["VisibleHeader"] = "true";
+            <!-- End Google Tag Manager -->
         }
-        if (ViewData["VisibleFooter"] == null)
+    </head>
+    <body id="@ViewData["Layout"]" class="@bodyClass">
+        @if (!string.IsNullOrEmpty(ViewBag.GTM))
         {
-            ViewData["VisibleFooter"] = "true";
+            <!-- Google Tag Manager (noscript) -->
+            <noscript>
+                <iframe class="gtmIframe" src="https://www.googletagmanager.com/ns.html?id=@ViewBag.GTM" height="0" width="0"></iframe>
+            </noscript>
+            <!-- End Google Tag Manager (noscript) -->
         }
-        string VisibleHeader = bool.Parse((ViewData["VisibleHeader"] ?? "true").ToString() ?? "true") ? "" : "d-none";
-        string VisibleFooter = bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true") ? "" : "d-none";
+        <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        <a id="jumpToCenter" href="#ContainerBody" class="hide accesskey" title="@L.get("accesskeyJumpMain")">
+            <span title="@L.get("accesskeyJumpMain")">@L.get("accesskeyJumpMain")</span>
+        </a>
+        @{
+            if (ViewData["VisibleHeader"] == null)
+            {
+                ViewData["VisibleHeader"] = "true";
+            }
+            if (ViewData["VisibleFooter"] == null)
+            {
+                ViewData["VisibleFooter"] = "true";
+            }
+            string VisibleHeader = bool.Parse((ViewData["VisibleHeader"] ?? "true").ToString() ?? "true") ? "" : "d-none";
+            string VisibleFooter = bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true") ? "" : "d-none";
+            bool useSiteTitleAsMainHeading = ViewData["UseSiteTitleAsMainHeading"] as bool? ??
+                !string.Equals(
+                    ViewData["PageView"]?.ToString(),
+                    "Product",
+                    StringComparison.OrdinalIgnoreCase);
+            string mainHeading = ViewData["MainHeading"]?.ToString() ??
+                ViewData["PageName"]?.ToString() ??
+                ViewData["SideName"]?.ToString() ??
+                string.Empty;
 
-    }
-    <header class="@VisibleHeader @ViewBag.HeaderLayoutClass @(ViewBag.HasFullBanner == true ? "overlap-banner" : "")">
-        @await Component.InvokeAsync(nameof(Header))
-    </header>
-    <noscript>
-        <p id="noscript">
-            <span>@L.get("noJavascript")</span><br />
-            @L.get("noJavascriptMemo")
-        </p>
-    </noscript>
-    <div id="ContainerBody">
-        <a accesskey="C" href="javascript:void(0)" class="hide accesskey" title="@L.get("accesskeyCenter")">:::</a>
-        @await RenderSectionAsync("Styles", required: false)
-        @RenderBody()
-    </div>
-    <footer class="footer_pack_up @VisibleFooter">
-        @await Component.InvokeAsync(nameof(Footer))
-    </footer>
-    @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable)
-    {
-        <script nonce="@ViewBag.Nonce" src="~/js/Login.min.js" asp-append-version="true"></script>
-        <div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered justify-content-center">
-                <div class="modal-content">
-                    <div class="modal-header border-0">
-                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">@L.get("LoginTitle")</div>
-                        <form id="LoginForm" class="card-body needs-validation" method="post">
-                            <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
-                            <div class="login_mail input-group mb-3">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">mail</span>
-                                </div>
-                                <input id="InputLoginMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Login Mail" placeholder="@L.get("Email")" required name="Email">
-                            </div>
-                            <div class="login_pass input-group mb-3">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">lock</span>
-                                </div>
-                                <input id="InputLoginPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Login Password" placeholder="@L.get("Password")" required name="Password">
-                                <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
-                                </div>
-                            </div>
-                            <div class="login_vcode input-group">
-                                <input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
-                                <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                    <img id="LoginImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-end">
-                                @if (!string.IsNullOrEmpty(ViewBag.PrivacyPolicy))
-                                {
-                                    <button class="border-0 bg-transparent text-black-50" type="button" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal"> @L.get("PrivacyPolicy") </button>
-                                }
-                                <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
-                            </div>
-                            <div class="form-check">
-                                <input id="CheckRemember" class="form-check-input" type="checkbox" value="" checked>
-                                <label class="form-check-label" for="CheckRemember">@L.get("RememberMe")</label>
-                            </div>
-                        </form>
-                        <button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("SignIn")</button>
-                        @if (ViewBag.MemberRegister)
-                        {
-                            <div class="text-center fs-4 fw-bold">@L.get("OtherLoginMethods")</div>
-                            <div class="otherLoginList"></div>
-                            <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 d-none" data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("OtherLoginMethods")</button>
-                        }
-                    </div>
-                    <div class="modal-footer d-flex justify-content-center border-0">
-                        @if (ViewBag.MemberRegister)
-                        {
-                            <div class="text-black-50">@L.get("NotMember")</div>
-                            <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("SignUpNow")</button>
-                        }
-                        <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("ForgotPassword")</button>
-                    </div>
-                </div>
-            </div>
+        }
+        <header class="@VisibleHeader @ViewBag.HeaderLayoutClass @(ViewBag.HasFullBanner == true ? "overlap-banner" : "")">
+            @if (useSiteTitleAsMainHeading && !string.IsNullOrWhiteSpace(mainHeading))
+            {
+                <h1 class="visually-hidden">@mainHeading</h1>
+            }
+            @await Component.InvokeAsync(nameof(Header))
+        </header>
+        <noscript>
+            <p id="noscript">
+                <span>@L.get("noJavascript")</span><br />
+                @L.get("noJavascriptMemo")
+            </p>
+        </noscript>
+        <div id="ContainerBody">
+            <a accesskey="C" href="javascript:void(0)" class="hide accesskey" title="@L.get("accesskeyCenter")">:::</a>
+            @await RenderSectionAsync("Styles", required: false)
+            @RenderBody()
         </div>
-        <div id="PrivacyStatementModal" class="modal fade" aria-hidden="true" aria-labelledby="PrivacyStatementModal" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable justify-content-center">
-                <div class="modal-content markdown-content">
-                    <div class="modal-header border-0">
-                        <h2 class="title">@L.get("PrivacyPolicy")</h2>
-                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="px-4">
-                            @Html.Raw(ViewBag.PrivacyPolicy)
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @if (ViewBag.MemberRegister)
+        <footer class="footer_pack_up @VisibleFooter">
+            @await Component.InvokeAsync(nameof(Footer))
+        </footer>
+        @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable)
         {
-            <div id="OtherLoginModal" class="modal fade" aria-hidden="true" aria-labelledby="OtherLoginModal" tabindex="-1">
+            <script nonce="@ViewBag.Nonce" src="~/js/Login.min.js" asp-append-version="true"></script>
+            <div id="LoginModal" class="modal fade" aria-hidden="true" aria-labelledby="LoginModalLabel" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered justify-content-center">
                     <div class="modal-content">
                         <div class="modal-header border-0">
                             <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="text-center fs-4 fw-bold">@L.get("OtherLoginMethods")</div>
-                            <div class="otherLoginList"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered justify-content-center">
-                    <div class="modal-content">
-                        <div class="modal-header border-0">
-                            <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="text-center fs-4 fw-bold">@L.get("RegisterTitle")</div>
-                            <form id="RegisterForm" class="card-body needs-validation pb-0" method="post">
+                            <div class="text-center fs-4 fw-bold">@L.get("LoginTitle")</div>
+                            <form id="LoginForm" class="card-body needs-validation" method="post">
                                 <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
-                                <div class="register_mail input-group mb-3">
+                                <div class="login_mail input-group mb-3">
                                     <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                         <span class="material-symbols-outlined text-black-50">mail</span>
                                     </div>
-                                    <input id="InputRegisterMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Register Mail" placeholder="@L.get("Email")" required name="Email">
+                                    <input id="InputLoginMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Login Mail" placeholder="@L.get("Email")" required name="Email">
                                 </div>
-                                <div class="register_name input-group mb-3">
-                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                        <span class="material-symbols-outlined text-black-50">account_circle</span>
-                                    </div>
-                                    <input id="InputRegisterName" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Name" placeholder="@L.get("NameOrDisplayName")" required name="Name">
-                                </div>
-                                <div class="register_new_pass input-group">
+                                <div class="login_pass input-group mb-3">
                                     <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
                                         <span class="material-symbols-outlined text-black-50">lock</span>
                                     </div>
-                                    <input id="InputRegisterNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register New Password" placeholder="@L.get("Password")" required name="Password">
+                                    <input id="InputLoginPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Login Password" placeholder="@L.get("Password")" required name="Password">
                                     <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
                                         <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
                                     </div>
                                 </div>
-                                <div id="RegisterNewPassFeedBack" class="lh-1 text-danger py-1">@L.get("PasswordRuleHint")</div>
-                                <div class="register_check_pass input-group">
-                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                        <span class="material-symbols-outlined text-black-50">lock</span>
-                                    </div>
-                                    <input id="InputRegisterCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register Check Password" placeholder="@L.get("ConfirmPassword")" required name="PasswordConfirm">
-                                    <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                        <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
-                                    </div>
-                                </div>
-                                <div id="RegisterCheckPassFeedBack" class="lh-1 text-danger py-1">　</div>
-                                <div class="register_vcode input-group">
-                                    <input id="InputRegisterVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Register Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
+                                <div class="login_vcode input-group">
+                                    <input id="InputLoginVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Login Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
                                     <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                        <img id="RegisterImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
+                                        <img id="LoginImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
                                     </div>
                                 </div>
-                            </form>
-                            <div class="px-3">
-                                <div class="d-flex  justify-content-end pt-0 pb-3">
+                                <div class="d-flex justify-content-end">
+                                    @if (!string.IsNullOrEmpty(ViewBag.PrivacyPolicy))
+                                    {
+                                        <button class="border-0 bg-transparent text-black-50" type="button" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal"> @L.get("PrivacyPolicy") </button>
+                                    }
                                     <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
                                 </div>
                                 <div class="form-check">
-                                    <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
-                                    <label class="form-check-label" for="CheckAccept">@L.get("AgreeTerms")<span><button class="bg-transparent border-0 px-0 text-decoration-underline" type="button" data-bs-toggle="modal" data-bs-target="#TermsModal"> @L.get("MemberTerms") </button></span></label>
+                                    <input id="CheckRemember" class="form-check-input" type="checkbox" value="" checked>
+                                    <label class="form-check-label" for="CheckRemember">@L.get("RememberMe")</label>
                                 </div>
-                            </div>
-                            <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Register")</button>
+                            </form>
+                            <button class="btn_login w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("SignIn")</button>
+                            @if (ViewBag.MemberRegister)
+                            {
+                                <div class="text-center fs-4 fw-bold">@L.get("OtherLoginMethods")</div>
+                                <div class="otherLoginList"></div>
+                                <button class="btn_other_login w-100 rounded border-0 text-white py-2 fs-5 d-none" data-bs-target="#OtherLoginModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("OtherLoginMethods")</button>
+                            }
+                        </div>
+                        <div class="modal-footer d-flex justify-content-center border-0">
+                            @if (ViewBag.MemberRegister)
+                            {
+                                <div class="text-black-50">@L.get("NotMember")</div>
+                                <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#RegisterModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("SignUpNow")</button>
+                            }
+                            <button class="bg-transparent border-0 text-decoration-underline text-black-50" data-bs-target="#ForgetModal" data-bs-toggle="modal" data-bs-dismiss="modal">@L.get("ForgotPassword")</button>
                         </div>
                     </div>
                 </div>
             </div>
-        }
-        <div id="TermsModal" class="modal fade" aria-hidden="true" aria-labelledby="TermsModal" tabindex="-1">
-            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable justify-content-center">
-                <div class="modal-content">
-                    <div class="modal-header border-0">
-                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold pb-3">@L.get("MemberTerms")</div>
-                        <div class="content px-4">
-                            @ViewBag.membershipTerms
+            <div id="PrivacyStatementModal" class="modal fade" aria-hidden="true" aria-labelledby="PrivacyStatementModal" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable justify-content-center">
+                    <div class="modal-content markdown-content">
+                        <div class="modal-header border-0">
+                            <h2 class="title">@L.get("PrivacyPolicy")</h2>
+                            <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="px-4">
+                                @Html.Raw(ViewBag.PrivacyPolicy)
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div id="ResetModal" class="modal fade" aria-hidden="true" aria-labelledby="ResetModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered justify-content-center">
-                <div class="modal-content">
-                    <div class="modal-header border-0">
-                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">@L.get("ResetPasswordTitle")</div>
-                        <div class="px-3 pt-2">@L.get("PasswordRuleHint")</div>
-                        <form id="ResetForm" class="card-body needs-validation" method="post">
-                            <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
-                            <div class="reset_old_pass input-group d-none">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">lock</span>
-                                </div>
-                                <input id="InputResetOldPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Old Password" placeholder="@L.get("OldPassword")" required name="OldPassword" disabled>
-                                <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
-                                </div>
+            @if (ViewBag.MemberRegister)
+            {
+                <div id="OtherLoginModal" class="modal fade" aria-hidden="true" aria-labelledby="OtherLoginModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered justify-content-center">
+                        <div class="modal-content">
+                            <div class="modal-header border-0">
+                                <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div id="ResetOldPassFeedBack" class="lh-1 text-danger pt-1 d-none">　</div>
-                            <div class="reset_new_pass input-group">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">lock</span>
-                                </div>
-                                <input id="InputResetNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset New Password" placeholder="@L.get("Password")" required name="Password">
-                                <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
-                                </div>
+                            <div class="modal-body">
+                                <div class="text-center fs-4 fw-bold">@L.get("OtherLoginMethods")</div>
+                                <div class="otherLoginList"></div>
                             </div>
-                            <div id="ResetNewPassFeedBack" class="lh-1 text-danger pt-1">　</div>
-                            <div class="reset_check_pass input-group">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">lock</span>
-                                </div>
-                                <input id="InputResetCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset Check Password" placeholder="@L.get("ConfirmPassword")" required name="PasswordConfirm">
-                                <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
-                                    <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
-                                </div>
-                            </div>
-                            <div id="ResetCheckPassFeedBack" class="lh-1 text-danger pt-1">　</div>
-                            <div class="reset_vcode input-group">
-                                <input id="InputResetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Reset Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
-                                <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                    <img id="ResetImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
-                                </div>
-                            </div>
-                        </form>
-                        <div class="px-3 d-flex justify-content-end">
-                            <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
                         </div>
-                        <button class="btn_reset w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Reset")</button>
-                        <button class="btn_resetforget bg-transparent border-0 text-decoration-underline text-black-50 w-100 d-none">@L.get("ForgotPassword")?</button>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div id="ForgetModal" class="modal fade" aria-hidden="true" aria-labelledby="ForgetModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered justify-content-center">
-                <div class="modal-content">
-                    <div class="modal-header border-0">
-                        <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center fs-4 fw-bold">@L.get("ForgotPassword")</div>
-                        <form id="ForgetForm" class="card-body needs-validation" method="post">
-                            <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
-                            <div class="forget_mail input-group mb-3">
-                                <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
-                                    <span class="material-symbols-outlined text-black-50">mail</span>
-                                </div>
-                                <input id="InputForgetMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Forget Mail" placeholder="@L.get("Email")" required name="Email">
+                <div id="RegisterModal" class="modal fade" aria-hidden="true" aria-labelledby="RegisterModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered justify-content-center">
+                        <div class="modal-content">
+                            <div class="modal-header border-0">
+                                <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="forget_vcode input-group">
-                                <input id="InputForgetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Forget Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
-                                <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
-                                    <img id="ForgetImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
-                                </div>
-                            </div>
-                        </form>
-                        <div class="d-flex justify-content-end px-3">
-                            <button class="btn_backlogin border-0 bg-transparent text-end text-black-50 me-1">@L.get("BackToLogin")</button>
-                            <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
-                        </div>
-                        <button class="btn_forget w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Send")</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
-            <p class="cookie_text my-3 pe-3">@L.get("cookieDeclare")</p>
-            <div id="Cookie_button">
-                <div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">@L.get("accept")</div>
-                <div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
-            </div>
-        </div>
-        @if (ViewBag.option != "product")
-        {
-            <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
-                @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ShoppingCarModal" })
-            </div>
-        }
-    }
-    <div id="videoModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
-        <div class="modal-dialog modal-xl modal-dialog-centered h-75">
-            <div class="modal-content bg-black h-100">
-                <div class="modal-header">
-                    <button type="button" data-bs-dismiss="modal" aria-label="Close" class="btn-close rounded-circle bg-light"></button>
-                </div>
-                <div class="modal-body h-100 text-white text-center m-5">
-                    <i class="fa fa-duotone fa-spinner fa-spin-pulse fa-10x"></i>
-                    <div class="fa-3x massage d-none">影片連結設定錯誤</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="SwiperModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen">
-            <div class="modal-content bg-black h-100">
-                <div b-6jkwzezpeq="" class="justify-content-center modal-header position-relative py-2">
-                    <div class="imgalt fs-4 text-white"></div>
-                    <button b-6jkwzezpeq="" type="button" data-bs-dismiss="modal" aria-label="Close" class="bg-light btn-close end-0 mx-2 position-absolute rounded-circle"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="pictureSwiper" class="swiper pb-2">
-                        <div class="swiper-button-prev rounded-circle"></div>
-                        <div class="swiper-wrapper"></div>
-                        <div class="swiper-button-next rounded-circle"></div>
-                    </div>
-                    <div id="pictureSwiperThumbs" thumbsSlider="" class="swiper pt-2">
-                        <div class="swiper-wrapper"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="FlipBookModal" tabindex="-1" aria-labelledby="FlipBookModalLabel" aria-hidden="true" class="modal fade FlipBookModal">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" aria-label="Close" data-bs-dismiss="modal" id="idmmf" class="btn-close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="FlipBookShell">
-                        <div class="FlipBookToolbar">
-                            <div class="FlipBookToolbarStart">
-                                <button type="button" class="FlipBookToolButton FlipBookSidebarToggle" aria-label="開啟頁面清單" title="頁面" aria-expanded="false" aria-controls="FlipBookSidebar">
-                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
-                                        <rect x="3" y="4" width="6" height="7" rx="1"></rect>
-                                        <rect x="3" y="13" width="6" height="7" rx="1"></rect>
-                                        <path d="M12 6h9M12 10h7M12 15h9M12 19h7"></path>
-                                    </svg>
-                                </button>
-                                <a class="FlipBookToolButton FlipBookOpenPdf" target="_blank" rel="noopener" aria-label="在新視窗開啟 PDF" title="開啟 PDF">
-                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
-                                        <path d="M14 3h7v7M21 3l-9 9"></path>
-                                        <path d="M11 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"></path>
-                                    </svg>
-                                </a>
-                                <form class="FlipBookSearch" role="search">
-                                    <label class="visually-hidden" for="FlipBookSearchInput">搜尋 PDF 文字</label>
-                                    <div class="FlipBookSearchField">
-                                        <input id="FlipBookSearchInput" class="FlipBookSearchInput" type="search" placeholder="搜尋 PDF 文字" autocomplete="off" />
-                                        <span class="FlipBookSearchStatus" aria-live="polite"></span>
-                                        <button type="submit" class="FlipBookSearchSubmit" aria-label="搜尋 PDF 文字" title="搜尋">
-                                            <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
-                                                <circle cx="11" cy="11" r="7"></circle>
-                                                <path d="m16.5 16.5 4 4"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <button type="button" class="FlipBookToolButton FlipBookSearchPrevious" aria-label="上一個搜尋結果" title="上一個搜尋結果" disabled>↑</button>
-                                    <button type="button" class="FlipBookToolButton FlipBookSearchNext" aria-label="下一個搜尋結果" title="下一個搜尋結果" disabled>↓</button>
-                                </form>
-                            </div>
-                            <div class="FlipBookNavigation">
-                                <button type="button" class="FlipBookButton FlipBookPrevious" aria-label="上一頁">‹</button>
-                                <label class="FlipBookPageStatus">
-                                    <span class="visually-hidden">目前頁數</span>
-                                    <input class="FlipBookPageInput" type="number" min="1" value="1" inputmode="numeric" />
-                                    <span aria-hidden="true">/</span>
-                                    <span class="FlipBookPageTotal">0</span>
-                                </label>
-                                <button type="button" class="FlipBookButton FlipBookNext" aria-label="下一頁">›</button>
-                            </div>
-                            <button type="button" class="FlipBookButton FlipBookClose" aria-label="關閉" data-bs-dismiss="modal">×</button>
-                        </div>
-                        <div class="FlipBookWorkspace">
-                            <aside id="FlipBookSidebar" class="FlipBookSidebar" aria-label="頁面清單" hidden>
-                                <div class="FlipBookSidebarHeader">
-                                    <strong>頁面</strong>
-                                    <button type="button" class="FlipBookSidebarClose" aria-label="關閉頁面清單">×</button>
-                                </div>
-                                <div class="FlipBookThumbnailList"></div>
-                            </aside>
-                            <div class="FlipBookStage">
-                                <div class="FlipBookLoading d-none" role="status" aria-live="polite" aria-hidden="true">
-                                    <div class="FlipBookLoadingContent">
-                                        <div class="FlipBookLoadingSpinner" aria-hidden="true"></div>
-                                        <div class="FlipBookLoadingText">PDF 下載中</div>
-                                        <div class="FlipBookLoadingProgress" role="progressbar" aria-label="PDF 下載進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                                            <div class="FlipBookLoadingProgressBar"></div>
+                            <div class="modal-body">
+                                <div class="text-center fs-4 fw-bold">@L.get("RegisterTitle")</div>
+                                <form id="RegisterForm" class="card-body needs-validation pb-0" method="post">
+                                    <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                                    <div class="register_mail input-group mb-3">
+                                        <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                            <span class="material-symbols-outlined text-black-50">mail</span>
                                         </div>
-                                        <div class="FlipBookLoadingPercent">0%</div>
+                                        <input id="InputRegisterMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Register Mail" placeholder="@L.get("Email")" required name="Email">
+                                    </div>
+                                    <div class="register_name input-group mb-3">
+                                        <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                            <span class="material-symbols-outlined text-black-50">account_circle</span>
+                                        </div>
+                                        <input id="InputRegisterName" class="input_bg form-control rounded border-0 py-3" type="text" aria-label="Input Register Name" placeholder="@L.get("NameOrDisplayName")" required name="Name">
+                                    </div>
+                                    <div class="register_new_pass input-group">
+                                        <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                            <span class="material-symbols-outlined text-black-50">lock</span>
+                                        </div>
+                                        <input id="InputRegisterNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register New Password" placeholder="@L.get("Password")" required name="Password">
+                                        <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
+                                            <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
+                                        </div>
+                                    </div>
+                                    <div id="RegisterNewPassFeedBack" class="lh-1 text-danger py-1">@L.get("PasswordRuleHint")</div>
+                                    <div class="register_check_pass input-group">
+                                        <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                            <span class="material-symbols-outlined text-black-50">lock</span>
+                                        </div>
+                                        <input id="InputRegisterCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Register Check Password" placeholder="@L.get("ConfirmPassword")" required name="PasswordConfirm">
+                                        <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
+                                            <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
+                                        </div>
+                                    </div>
+                                    <div id="RegisterCheckPassFeedBack" class="lh-1 text-danger py-1">　</div>
+                                    <div class="register_vcode input-group">
+                                        <input id="InputRegisterVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Register Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
+                                        <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+                                            <img id="RegisterImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
+                                        </div>
+                                    </div>
+                                </form>
+                                <div class="px-3">
+                                    <div class="d-flex  justify-content-end pt-0 pb-3">
+                                        <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
+                                    </div>
+                                    <div class="form-check">
+                                        <input id="CheckAccept" class="form-check-input" type="checkbox" value="">
+                                        <label class="form-check-label" for="CheckAccept">@L.get("AgreeTerms")<span><button class="bg-transparent border-0 px-0 text-decoration-underline" type="button" data-bs-toggle="modal" data-bs-target="#TermsModal"> @L.get("MemberTerms") </button></span></label>
                                     </div>
                                 </div>
-                                <div class="FlipBook" aria-label="電子書"></div>
+                                <button class="btn_register w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Register")</button>
                             </div>
-                            <div class="FlipBookZoomControls" aria-label="縮放控制">
-                                <button type="button" class="FlipBookZoomButton FlipBookZoomOut" aria-label="縮小" title="縮小">
-                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
-                                        <circle cx="10.5" cy="10.5" r="6.5"></circle>
-                                        <path d="m15.5 15.5 5 5M7.5 10.5h6"></path>
-                                    </svg>
-                                </button>
-                                <button type="button" class="FlipBookZoomStatus FlipBookZoomReset" aria-label="恢復為 100%" title="恢復為 100%" disabled>100%</button>
-                                <button type="button" class="FlipBookZoomButton FlipBookZoomIn" aria-label="放大" title="放大">
-                                    <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
-                                        <circle cx="10.5" cy="10.5" r="6.5"></circle>
-                                        <path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"></path>
-                                    </svg>
-                                </button>
+                        </div>
+                    </div>
+                </div>
+            }
+            <div id="TermsModal" class="modal fade" aria-hidden="true" aria-labelledby="TermsModal" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable justify-content-center">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center fs-4 fw-bold pb-3">@L.get("MemberTerms")</div>
+                            <div class="content px-4">
+                                @ViewBag.membershipTerms
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ResetModal" class="modal fade" aria-hidden="true" aria-labelledby="ResetModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered justify-content-center">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center fs-4 fw-bold">@L.get("ResetPasswordTitle")</div>
+                            <div class="px-3 pt-2">@L.get("PasswordRuleHint")</div>
+                            <form id="ResetForm" class="card-body needs-validation" method="post">
+                                <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                                <div class="reset_old_pass input-group d-none">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">lock</span>
+                                    </div>
+                                    <input id="InputResetOldPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Old Password" placeholder="@L.get("OldPassword")" required name="OldPassword" disabled>
+                                    <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
+                                        <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
+                                    </div>
+                                </div>
+                                <div id="ResetOldPassFeedBack" class="lh-1 text-danger pt-1 d-none">　</div>
+                                <div class="reset_new_pass input-group">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">lock</span>
+                                    </div>
+                                    <input id="InputResetNewPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset New Password" placeholder="@L.get("Password")" required name="Password">
+                                    <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
+                                        <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
+                                    </div>
+                                </div>
+                                <div id="ResetNewPassFeedBack" class="lh-1 text-danger pt-1">　</div>
+                                <div class="reset_check_pass input-group">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">lock</span>
+                                    </div>
+                                    <input id="InputResetCheckPass" class="input_bg form-control rounded border-0 py-3 pass" type="password" autocomplete="off" aria-label="Input Reset Check Password" placeholder="@L.get("ConfirmPassword")" required name="PasswordConfirm">
+                                    <div class="position-absolute pe-3 end-0 top-50 d-flex translate-middle-y fs-4">
+                                        <button class="btn_passtoggle material-symbols-outlined text-black-50 bg-transparent border-0 px-0" title="@L.get("ShowPassword")">visibility_off</button>
+                                    </div>
+                                </div>
+                                <div id="ResetCheckPassFeedBack" class="lh-1 text-danger pt-1">　</div>
+                                <div class="reset_vcode input-group">
+                                    <input id="InputResetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Reset Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
+                                    <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+                                        <img id="ResetImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="px-3 d-flex justify-content-end">
+                                <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
+                            </div>
+                            <button class="btn_reset w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Reset")</button>
+                            <button class="btn_resetforget bg-transparent border-0 text-decoration-underline text-black-50 w-100 d-none">@L.get("ForgotPassword")?</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="ForgetModal" class="modal fade" aria-hidden="true" aria-labelledby="ForgetModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered justify-content-center">
+                    <div class="modal-content">
+                        <div class="modal-header border-0">
+                            <button type="button" class="btn-close rounded-circle" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center fs-4 fw-bold">@L.get("ForgotPassword")</div>
+                            <form id="ForgetForm" class="card-body needs-validation" method="post">
+                                <input type="hidden" name="authentiity_token" value="@ViewData["XSRF-TOKEN"]" />
+                                <div class="forget_mail input-group mb-3">
+                                    <div class="position-absolute ps-3 top-50 d-flex translate-middle-y fs-4">
+                                        <span class="material-symbols-outlined text-black-50">mail</span>
+                                    </div>
+                                    <input id="InputForgetMail" class="input_bg form-control rounded border-0 py-3" type="email" aria-label="Input Forget Mail" placeholder="@L.get("Email")" required name="Email">
+                                </div>
+                                <div class="forget_vcode input-group">
+                                    <input id="InputForgetVCode" class="input_bg form-control rounded border-0 py-3 ps-3" type="text" aria-label="Input Forget Verification Code" placeholder="@L.get("VerificationCode")" maxlength="4" autocomplete="off" required>
+                                    <div class="position-absolute d-flex ps-2 me-2 top-50 end-0 translate-middle-y z-index-up ">
+                                        <img id="ForgetImgCaptcha" alt="@L.get("Captcha")" class="img-fluid" src="" />
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="d-flex justify-content-end px-3">
+                                <button class="btn_backlogin border-0 bg-transparent text-end text-black-50 me-1">@L.get("BackToLogin")</button>
+                                <button class="btn_refresh border-0 bg-transparent text-black-50">@L.get("RefreshVerificationCode")</button>
+                            </div>
+                            <button class="btn_forget w-100 rounded border-0 text-white py-2 fs-5 my-3">@L.get("Send")</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
+                <p class="cookie_text my-3 pe-3">@L.get("cookieDeclare")</p>
+                <div id="Cookie_button">
+                    <div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">@L.get("accept")</div>
+                    <div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
+                </div>
+            </div>
+            @if (ViewBag.IsProductDetail != true)
+            {
+                <div id="ShoppingCarModal" class="modal fade" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+                    @await Component.InvokeAsync(nameof(Modal), new { dispaly = "ShoppingCarModal" })
+                </div>
+            }
+        }
+        <div id="videoModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
+            <div class="modal-dialog modal-xl modal-dialog-centered h-75">
+                <div class="modal-content bg-black h-100">
+                    <div class="modal-header">
+                        <button type="button" data-bs-dismiss="modal" aria-label="Close" class="btn-close rounded-circle bg-light"></button>
+                    </div>
+                    <div class="modal-body h-100 text-white text-center m-5">
+                        <i class="fa fa-duotone fa-spinner fa-spin-pulse fa-10x"></i>
+                        <div class="fa-3x massage d-none">影片連結設定錯誤</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="SwiperModal" tabindex="-1" aria-labelledby="videoModal" aria-hidden="true" class="modal fade">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen">
+                <div class="modal-content bg-black h-100">
+                    <div b-6jkwzezpeq="" class="justify-content-center modal-header position-relative py-2">
+                        <div class="imgalt fs-4 text-white"></div>
+                        <button b-6jkwzezpeq="" type="button" data-bs-dismiss="modal" aria-label="Close" class="bg-light btn-close end-0 mx-2 position-absolute rounded-circle"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="pictureSwiper" class="swiper pb-2">
+                            <div class="swiper-button-prev rounded-circle"></div>
+                            <div class="swiper-wrapper"></div>
+                            <div class="swiper-button-next rounded-circle"></div>
+                        </div>
+                        <div id="pictureSwiperThumbs" thumbsSlider="" class="swiper pt-2">
+                            <div class="swiper-wrapper"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="FlipBookModal" tabindex="-1" aria-labelledby="FlipBookModalLabel" aria-hidden="true" class="modal fade FlipBookModal">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" aria-label="Close" data-bs-dismiss="modal" id="idmmf" class="btn-close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="FlipBookShell">
+                            <div class="FlipBookToolbar">
+                                <div class="FlipBookToolbarStart">
+                                    <button type="button" class="FlipBookToolButton FlipBookSidebarToggle" aria-label="開啟頁面清單" title="頁面" aria-expanded="false" aria-controls="FlipBookSidebar">
+                                        <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                            <rect x="3" y="4" width="6" height="7" rx="1"></rect>
+                                            <rect x="3" y="13" width="6" height="7" rx="1"></rect>
+                                            <path d="M12 6h9M12 10h7M12 15h9M12 19h7"></path>
+                                        </svg>
+                                    </button>
+                                    <a class="FlipBookToolButton FlipBookOpenPdf" target="_blank" rel="noopener" aria-label="在新視窗開啟 PDF" title="開啟 PDF">
+                                        <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                            <path d="M14 3h7v7M21 3l-9 9"></path>
+                                            <path d="M11 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"></path>
+                                        </svg>
+                                    </a>
+                                    <form class="FlipBookSearch" role="search">
+                                        <label class="visually-hidden" for="FlipBookSearchInput">搜尋 PDF 文字</label>
+                                        <div class="FlipBookSearchField">
+                                            <input id="FlipBookSearchInput" class="FlipBookSearchInput" type="search" placeholder="搜尋 PDF 文字" autocomplete="off" />
+                                            <span class="FlipBookSearchStatus" aria-live="polite"></span>
+                                            <button type="submit" class="FlipBookSearchSubmit" aria-label="搜尋 PDF 文字" title="搜尋">
+                                                <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                                    <circle cx="11" cy="11" r="7"></circle>
+                                                    <path d="m16.5 16.5 4 4"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <button type="button" class="FlipBookToolButton FlipBookSearchPrevious" aria-label="上一個搜尋結果" title="上一個搜尋結果" disabled>↑</button>
+                                        <button type="button" class="FlipBookToolButton FlipBookSearchNext" aria-label="下一個搜尋結果" title="下一個搜尋結果" disabled>↓</button>
+                                    </form>
+                                </div>
+                                <div class="FlipBookNavigation">
+                                    <button type="button" class="FlipBookButton FlipBookPrevious" aria-label="上一頁">‹</button>
+                                    <label class="FlipBookPageStatus">
+                                        <span class="visually-hidden">目前頁數</span>
+                                        <input class="FlipBookPageInput" type="number" min="1" value="1" inputmode="numeric" />
+                                        <span aria-hidden="true">/</span>
+                                        <span class="FlipBookPageTotal">0</span>
+                                    </label>
+                                    <button type="button" class="FlipBookButton FlipBookNext" aria-label="下一頁">›</button>
+                                </div>
+                                <button type="button" class="FlipBookButton FlipBookClose" aria-label="關閉" data-bs-dismiss="modal">×</button>
+                            </div>
+                            <div class="FlipBookWorkspace">
+                                <aside id="FlipBookSidebar" class="FlipBookSidebar" aria-label="頁面清單" hidden>
+                                    <div class="FlipBookSidebarHeader">
+                                        <strong>頁面</strong>
+                                        <button type="button" class="FlipBookSidebarClose" aria-label="關閉頁面清單">×</button>
+                                    </div>
+                                    <div class="FlipBookThumbnailList"></div>
+                                </aside>
+                                <div class="FlipBookStage">
+                                    <div class="FlipBookLoading d-none" role="status" aria-live="polite" aria-hidden="true">
+                                        <div class="FlipBookLoadingContent">
+                                            <div class="FlipBookLoadingSpinner" aria-hidden="true"></div>
+                                            <div class="FlipBookLoadingText">PDF 下載中</div>
+                                            <div class="FlipBookLoadingProgress" role="progressbar" aria-label="PDF 下載進度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                                <div class="FlipBookLoadingProgressBar"></div>
+                                            </div>
+                                            <div class="FlipBookLoadingPercent">0%</div>
+                                        </div>
+                                    </div>
+                                    <div class="FlipBook" aria-label="電子書"></div>
+                                </div>
+                                <div class="FlipBookZoomControls" aria-label="縮放控制">
+                                    <button type="button" class="FlipBookZoomButton FlipBookZoomOut" aria-label="縮小" title="縮小">
+                                        <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                            <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                                            <path d="m15.5 15.5 5 5M7.5 10.5h6"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="FlipBookZoomStatus FlipBookZoomReset" aria-label="恢復為 100%" title="恢復為 100%" disabled>100%</button>
+                                    <button type="button" class="FlipBookZoomButton FlipBookZoomIn" aria-label="放大" title="放大">
+                                        <svg class="FlipBookIcon" aria-hidden="true" viewBox="0 0 24 24">
+                                            <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                                            <path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div id="SideFloating">
-        @await Component.InvokeAsync(nameof(SideFloating))
-    </div>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/lib/swiper/swiper-bundle.min.js"></script>
-    <script src="~/Shared/c-share.min.js" asp-append-version="true"></script>
-    <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
-    <script src="~/lib/jquery-twzipcode/jquery.twzipcode.min.js"></script>
-    <script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
-    <script src="~/lib/aos/aos.js"></script>
-    <script src="~/Shared/Coker.min.js" asp-append-version="true"></script>
-    <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
-    <script defer src="/lib/jscloudimage360/js-cloudimage-360-view.min.js" asp-append-version="true"></script>
-    <script src="~/js/site.min.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-    <style id="frameCss" nonce="@ViewBag.Nonce">
-        @Html.Raw(HttpUtility.HtmlDecode(ViewBag.Css))
-    </style>
-    <script nonce="@ViewBag.Nonce">
-        (() => {
-            const root = document.documentElement;
-            const reveal = () => {
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    root.classList.add("coker-prepaint-ready");
-                    window.setTimeout(() => {
-                        root.classList.remove("coker-prepaint", "coker-prepaint-ready");
-                        root.removeAttribute("aria-busy");
-                    }, 140);
-                }));
-            };
+        <div id="SideFloating">
+            @await Component.InvokeAsync(nameof(SideFloating))
+        </div>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/lib/swiper/swiper-bundle.min.js"></script>
+        <script src="~/Shared/c-share.min.js" asp-append-version="true"></script>
+        <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
+        <script src="~/lib/jquery-twzipcode/jquery.twzipcode.min.js"></script>
+        <script src="~/lib/masonry-layout/dist/masonry.pkgd.min.js"></script>
+        <script src="~/lib/aos/aos.js"></script>
+        <script src="~/Shared/Coker.min.js" asp-append-version="true"></script>
+        <script src="~/Shared/shared.min.js" asp-append-version="true"></script>
+        <script src="~/js/ProductAction.min.js" asp-append-version="true"></script>
+        <script src="~/js/Modal/ShoppingCarModal.min.js" asp-append-version="true"></script>
+        <script defer src="/lib/jscloudimage360/js-cloudimage-360-view.min.js" asp-append-version="true"></script>
+        <script src="~/js/site.min.js" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+        <style id="frameCss" nonce="@ViewBag.Nonce">
+                @Html.Raw(HttpUtility.HtmlDecode(ViewBag.Css))
+        </style>
+        <script nonce="@ViewBag.Nonce">
+                (() => {
+                    const root = document.documentElement;
+                    const reveal = () => {
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            root.classList.add("coker-prepaint-ready");
+                            window.setTimeout(() => {
+                                root.classList.remove("coker-prepaint", "coker-prepaint-ready");
+                                root.removeAttribute("aria-busy");
+                            }, 140);
+                        }));
+                    };
 
-            const stylesheetReady = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-                .map(link => link.sheet
-                    ? Promise.resolve()
-                    : new Promise(resolve => {
-                        link.addEventListener("load", resolve, { once: true });
-                        link.addEventListener("error", resolve, { once: true });
-                    }));
+                    const stylesheetReady = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                        .map(link => link.sheet
+                            ? Promise.resolve()
+                            : new Promise(resolve => {
+                                link.addEventListener("load", resolve, { once: true });
+                                link.addEventListener("error", resolve, { once: true });
+                            }));
 
-            const fontsReady = document.fonts?.ready ?? Promise.resolve();
-            const resourcesReady = Promise.all([...stylesheetReady, fontsReady]);
-            const timeout = new Promise(resolve => window.setTimeout(resolve, 2000));
+                    const fontsReady = document.fonts?.ready ?? Promise.resolve();
+                    const resourcesReady = Promise.all([...stylesheetReady, fontsReady]);
+                    const timeout = new Promise(resolve => window.setTimeout(resolve, 2000));
 
-            Promise.race([resourcesReady, timeout]).then(reveal, reveal);
-        })();
-    </script>
-</body>
+                    Promise.race([resourcesReady, timeout]).then(reveal, reveal);
+                })();
+        </script>
+    </body>
 </html>

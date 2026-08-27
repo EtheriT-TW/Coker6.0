@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
 	public class ProductImportUpateDto
 	{
+		public long? ProductId { get; set; }
 		public string ProdName { get; set; } = string.Empty;
 		public string Status {  get; set; } = "一般";
         public string ItemNo { get; set; } = string.Empty;
@@ -27,8 +28,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Spec1 { get; set; }
 		public string? Spec2Name { get; set; }
 		public string? Spec2 { get; set; }
+		public string? SpecImage { get; set; }
 		public string? SpecDescription { get; set; }
-		public int Stock { get; set; } = 0;
+		public int? Stock { get; set; }
 		public int? Min_Qty { get; set; } = 1;
 		public int? Alert_Qty { get; set; } = 0;
 		public decimal? SuggestPrice { get; set; } = 0;

@@ -12,13 +12,13 @@ using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Favorites;
 using EtheriT.Coker.Application.Freight;
 using EtheriT.Coker.Application.HtmlContent;
-using EtheriT.Coker.Application.Import;
 using EtheriT.Coker.Application.JsonObject;
 using EtheriT.Coker.Application.Marketing;
 using EtheriT.Coker.Application.Marquee;
 using EtheriT.Coker.Application.Member;
 using EtheriT.Coker.Application.Newsletter;
 using EtheriT.Coker.Application.Order;
+using EtheriT.Coker.Application.Payment;
 using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Processor;
 using EtheriT.Coker.Application.Product;
@@ -40,6 +40,7 @@ using EtheriT.Coker.Application.Shared.Marketing;
 using EtheriT.Coker.Application.Shared.Marquee;
 using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Order;
+using EtheriT.Coker.Application.Shared.Payment;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Recipients;
@@ -60,11 +61,10 @@ using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.MVC.Resources;
+using EtheriT.Coker.Web.Public.Authentication;
 using EtheriT.Coker.Web.Public.Middlewares;
 using EtheriT.Coker.Web.Public.Services;
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -72,12 +72,8 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using Microsoft.Net.Http.Headers;
 // using Serilog; // 流量紀錄功能暫停使用；恢復下方設定時需一併啟用。
 using System.Net;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
@@ -88,90 +84,8 @@ var env = builder.Environment;
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
 
-// 配置 JWT Bearer 認證
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = "JWT_OR_COOKIE";
-        options.DefaultChallengeScheme = "JWT_OR_COOKIE";
-        options.DefaultAuthenticateScheme = "JWT_OR_COOKIE";
-    }).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-    {
-        options.LoginPath = "/";
-        options.ExpireTimeSpan = TimeSpan.FromDays(1);
-        options.Cookie.Name = $".Coker6.Front.Auth.{builder.Configuration.GetValue<long>("WebConfig:SiteId")}";
-        options.Events.OnValidatePrincipal = context =>
-        {
-            var configuredWebsiteId = context.HttpContext.RequestServices
-                .GetRequiredService<IConfiguration>()
-                .GetValue<long>("WebConfig:SiteId");
-            var claimWebsiteId = context.Principal?.FindFirst("websiteId")?.Value;
-
-            if (!long.TryParse(claimWebsiteId, out var tokenWebsiteId) ||
-                tokenWebsiteId != configuredWebsiteId)
-            {
-                context.RejectPrincipal();
-            }
-
-            return Task.CompletedTask;
-        };
-    }).AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true, // 是否驗證發行者
-            ValidateAudience = true, // 是否驗證接收者
-            ValidateLifetime = true, // 是否驗證 Token 的有效期
-            ValidateIssuerSigningKey = true, // 是否驗證簽名密鑰
-            ValidIssuer = builder.Configuration.GetValue<string>("JwtSettings:Issuer"), // JWT 發行者
-            ValidAudience = builder.Configuration.GetValue<string>("JwtSettings:Audience"), // JWT 接收者
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey"))), // 密鑰
-            ClockSkew = TimeSpan.FromMinutes(1) // Token 時間允許的偏移量
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var websiteId = context.HttpContext.RequestServices
-                    .GetRequiredService<IConfiguration>()
-                    .GetValue<long>("WebConfig:SiteId");
-                var websiteClaim = context.Principal?.FindFirst("websiteId")?.Value;
-                var sidClaim = context.Principal?.FindFirst(ClaimTypes.Sid)?.Value;
-
-                if (!long.TryParse(websiteClaim, out var tokenWebsiteId) ||
-                    tokenWebsiteId != websiteId ||
-                    !Guid.TryParse(sidClaim, out var sid))
-                {
-                    context.Fail("Token 不屬於目前網站");
-                    return;
-                }
-
-                var db = context.HttpContext.RequestServices.GetRequiredService<CokerDbContext>();
-                var now = DateTime.Now;
-                var tokenExists = await db.Tokens.AnyAsync(t =>
-                    t.id == sid &&
-                    t.websiteId == websiteId &&
-                    t.StartTime <= now &&
-                    t.EndTime != null &&
-                    t.EndTime > now);
-
-                if (!tokenExists)
-                    context.Fail("Token 不存在或已失效");
-            }
-        };
-    }).AddPolicyScheme("JWT_OR_COOKIE", "JWT_OR_COOKIE", options =>
-    {
-        // runs on each request
-        options.ForwardDefaultSelector = context =>
-        {
-            // filter by auth type
-            string authorization = context.Request.Headers[HeaderNames.Authorization];
-            if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
-                return JwtBearerDefaults.AuthenticationScheme;
-
-            // otherwise always check for cookie auth
-            return CookieAuthenticationDefaults.AuthenticationScheme;
-        };
-    });
+// 前台 Cookie／JWT 認證與會員狀態驗證集中於 Authentication 模組。
+builder.Services.AddFrontAuthentication(builder.Configuration);
 
 builder.Services.AddAuthorization();
 
@@ -236,6 +150,9 @@ builder.Services.AddDbContext<CokerDbContext>(item =>
     item.UseSqlServer(configuration.GetConnectionString("Default"), sqlServerOptionsAction: sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure();
+        var migrationCommandTimeout = configuration.GetValue<int?>("DatabaseMigrationCommandTimeout");
+        if (migrationCommandTimeout.HasValue)
+            sqlOptions.CommandTimeout(migrationCommandTimeout.Value);
     })
 );
 
@@ -252,6 +169,7 @@ builder.Services.AddScoped<MailAppService, MailAppService>();
 builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddScoped<IMarqueeAppService, MarqueeAppService>();
 builder.Services.AddScoped<IOrderAppService, OrderAppService>();
+builder.Services.AddScoped<IPaymentAvailabilityService, PaymentAvailabilityService>();
 builder.Services.AddScoped<IRecipientsAppService, RecipientsAppService>();
 builder.Services.AddScoped<ITokenAppService, TokenAppService>();
 builder.Services.AddScoped<IShoppingCartAppService, ShoppingCartAppService>();
@@ -279,7 +197,6 @@ builder.Services.AddScoped<IArticleAppService, ArticleAppService>();
 builder.Services.AddScoped<ITechnicalCertificateAppService, TechnicalCertificateAppService>();
 builder.Services.AddScoped<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddScoped<IDirectoryAppService, DirectoryAppService>();
-builder.Services.AddScoped<ImportAppService, ImportAppService>();
 builder.Services.AddScoped<ISpecificationAppService, SpecificationAppService>();
 builder.Services.AddScoped<IStoreSetAppService, StoreSetAppService>();
 builder.Services.AddScoped<ICustSearchAppService, CustSearchAppService>();
@@ -304,6 +221,7 @@ builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 builder.Services.AddScoped<IMarketingAppService, MarketingAppService>();
 builder.Services.AddScoped<ICheckoutDiscountService, CheckoutDiscountService>();
+builder.Services.AddSingleton<RemoteTrackingTokenService>();
 
 builder.Services.AddSingleton<JumpRedirectCache>();
 
@@ -559,6 +477,12 @@ app.UseRouting();
 app.UseMiddleware<RedirectMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "Robots",
+    pattern: "robots.txt",
+    defaults: new { controller = "Robots", action = "Index" }
+);
 
 app.MapControllerRoute(
     name: "Sitemap",

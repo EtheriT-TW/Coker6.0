@@ -9,8 +9,11 @@
                 data: { page: page },
             });
         },
-        exchange: function (id) {
+        exchange: function (id, websiteName) {
             var _dfr = $.Deferred();
+            var waitingTitle = websiteName ? `正在切換至${websiteName}網站` : "正在切換網站";
+            co.sweet.loading(waitingTitle, "請稍候，切換完成後將自動重新載入頁面。");
+
             $.ajax({
                 url: "/api/Website/Exchange",
                 type: "POST",
@@ -19,16 +22,24 @@
                 data: JSON.stringify({ Id: id }),
                 dataType: "json"
             }).done(function (result) {
+                Swal.close();
                 if (result.success) {
-                    co.Cookie.EffectiveTime = co.Data.Time.DataRetentionLongTime;
-                    co.Cookie.Add("LastWebSite", result.message);
-                    co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;
                     _c.Data.Header["X-Coker-Website-Id"] = result.message;
                     const pageUrl = new URL(window.location.href);
                     pageUrl.searchParams.set("_site", result.message);
-                    history.replaceState(history.state, "", pageUrl.pathname + pageUrl.search + pageUrl.hash);
+                    pageUrl.searchParams.set("siteChanged", "true");
+                    pageUrl.hash = "";
+                    _dfr.resolve(result);
+                    location.replace(pageUrl.pathname + pageUrl.search);
+                    return;
+                } else {
+                    co.sweet.error("網站切換失敗", result.error || result.message || "無法切換網站，請稍後再試。");
                 }
                 _dfr.resolve(result);
+            }).fail(function (xhr, status, error) {
+                Swal.close();
+                co.sweet.error("網站切換失敗", "伺服器暫時無法回應，請稍後再試。");
+                _dfr.reject(xhr, status, error);
             });
             return _dfr.promise();
         },

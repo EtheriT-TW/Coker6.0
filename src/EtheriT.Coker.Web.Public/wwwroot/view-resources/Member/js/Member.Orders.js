@@ -10,13 +10,26 @@
 
         MemberPage.Orders = {
             loadPage: function (number) {
+                var $pane = $(MemberPage.Selectors.orderPane);
+                var $pageBtn = $pane.find(".page_btn");
+                var $noData = $pane.find(".nodata");
+                var $content = $pane.find(".content");
+                var $loading = $pane.find(".order-loading");
+                var requestId = ($pane.data("orderRequestId") || 0) + 1;
+
+                $pane.data("orderRequestId", requestId).attr("aria-busy", "true");
+                $pageBtn.addClass("d-none");
+                $noData.addClass("d-none");
+                $content.empty();
+                $loading.removeClass("d-none").attr("aria-hidden", "false");
+
                 C.Order.GetHistoryOrder(number).done(function (result) {
-                    var $pane = $(MemberPage.Selectors.orderPane);
-                    var $pageBtn = $pane.find(".page_btn");
-                    var $noData = $pane.find(".nodata");
+                    if ($pane.data("orderRequestId") !== requestId) return;
 
                     if (result.success && result.orderData != null && result.orderData.length > 0) {
                         if (result.page_Total > 1) {
+                            $pageBtn.removeClass("d-none");
+
                             if (!$pageBtn.data("init")) {
                                 MemberPage.Pagination.init($pageBtn, result.page_Total, "order");
                             }
@@ -30,6 +43,11 @@
                     } else {
                         $noData.removeClass("d-none");
                     }
+                }).always(function () {
+                    if ($pane.data("orderRequestId") !== requestId) return;
+
+                    $loading.addClass("d-none").attr("aria-hidden", "true");
+                    $pane.removeAttr("aria-busy");
                 });
             },
 
@@ -199,7 +217,24 @@
                         C.Order.Reorder($this.data("ohid")).done(function (result) {
                             if (result.success) {
                                 var ohidStr = ("000000000" + result.message).substring(String(result.message).length);
-                                w.location.href = "/" + w.OrgName + "/ShoppingCar?reorder" + ohidStr;
+                                var redirectToCart = function () {
+                                    w.location.href = "/" + w.OrgName + "/ShoppingCar?reorder" + ohidStr;
+                                };
+                                var reorderInfo = result.object || result.Object || {};
+                                var skippedQuantity = Number(
+                                    reorderInfo.skippedAdditionalQuantity ||
+                                    reorderInfo.SkippedAdditionalQuantity || 0
+                                );
+
+                                if (skippedQuantity > 0) {
+                                    C.sweet.warning(
+                                        "部分優惠商品未加入",
+                                        "原訂單有 " + skippedQuantity + " 件加價購／贈品，目前活動已關閉、失效或資格不足，因此只重新加入可購買的商品。",
+                                        redirectToCart
+                                    );
+                                } else {
+                                    redirectToCart();
+                                }
                             } else {
                                 C.sweet.warning("商品庫存不足", result.message, null);
                             }
@@ -219,13 +254,80 @@
             },
 
             renderDetails: function (frame, orderDetails) {
-                $.each(orderDetails, function (index, detail) {
+                orderDetails = Array.isArray(orderDetails) ? orderDetails : [];
+                // 後端已依主商品／訂單滿額來源排序，前端保留 API 順序。
+                var orderedDetails = orderDetails.slice();
+                var $list = frame.find(".list-group");
+                var orderAdditionalHeadingAdded = false;
+
+                $.each(orderedDetails, function (index, detail) {
                     if (detail == null) return;
 
-                    var listFrame = $($("#Template_Order_Details_List").html()).clone();
+                    var isAdditional = detail.isAdditional === true;
+
+                    var parentLabel = String(
+                        detail.additionalParentLabel || ""
+                    ).trim();
+
+                    var isOrderLevelAdditional =
+                        isAdditional &&
+                        parentLabel === "本筆訂單";
+
+                    // 訂單層級優惠才需要獨立標題。
+                    // 商品型加價購直接靠「緊接主商品 + 縮排」表達關係。
+                    if (isOrderLevelAdditional && !orderAdditionalHeadingAdded) {
+                        orderAdditionalHeadingAdded = true;
+
+                        var $heading = $(
+                            '<li class="list-group-item member-order-additional-heading"></li>'
+                        );
+
+                        var $headingText = $("<span></span>");
+
+                        $headingText.append(
+                            "<strong>訂單加價購／贈品</strong>"
+                        );
+
+                        $headingText.append(
+                            $("<small></small>").text(
+                                "本筆訂單符合優惠活動條件"
+                            )
+                        );
+
+                        $heading.append($headingText);
+                        $list.append($heading);
+                    }
+
+                    var listFrame = $(
+                        $("#Template_Order_Details_List").html()
+                    ).clone();
+
+                    if (isAdditional) {
+                        if (isOrderLevelAdditional) {
+                            // 訂單滿額／滿件優惠：
+                            // 不附屬任何單一商品，因此不縮排。
+                            listFrame
+                                .addClass("member-order-additional-item")
+                                .removeClass("member-additional-item");
+                        }
+                        else {
+                            // 商品型加價購：
+                            // 緊接主商品並縮排。
+                            listFrame
+                                .addClass("member-additional-item")
+                                .removeClass("member-order-additional-item");
+                        }
+
+                        listFrame.find(".title").before(
+                            '<span class="member-additional-badge">' +
+                            '<i class="fa-solid fa-link me-1" aria-hidden="true"></i>' +
+                            '加價購／贈品' +
+                            '</span>'
+                        );
+                    }
 
                     listFrame.find("a").attr({
-                        href: "/" + w.OrgName + "/Member/product/" + detail.pId,
+                        href: "/" + w.OrgName + "/search/product/" + detail.pId,
                         title: "連結至：" + detail.title
                     });
 
@@ -259,7 +361,7 @@
                         ? (detailBonus > 0 ? detailSubtotal.toLocaleString() + "<br />紅利：" + detailBonusSubtotal.toLocaleString() : detailSubtotal.toLocaleString())
                         : "紅利：" + detailBonusSubtotal.toLocaleString());
 
-                    frame.find(".list-group").append(listFrame);
+                    $list.append(listFrame);
                 });
             },
 
@@ -291,6 +393,49 @@
                 } else {
                     frame.find(".collapse .discount_summary_row").remove();
                 }
+
+                var breakdown = orderHeader.discountBreakdown || {};
+                var discountItems = Array.isArray(breakdown.items) ? breakdown.items : [];
+                var validDiscountItems = discountItems.filter(function (item) {
+                    return Number(item.discountAmount || 0) > 0;
+                });
+                var $discountRows = frame.find(".collapse .discount_breakdown_rows").empty();
+                var eligibleAmount = Number(breakdown.eligibleProductAmount || 0);
+                var showGeneralProductAmount = eligibleAmount > 0 && productAmount > eligibleAmount;
+
+                frame.find(".collapse .general_product_amount_row")
+                    .toggleClass("d-none", !showGeneralProductAmount);
+                frame.find(".collapse .header_generalProductAmount").text(
+                    showGeneralProductAmount ? C.util.string.thousandSign(eligibleAmount) : ""
+                );
+
+                if (validDiscountItems.length === 1) {
+                    frame.find(".collapse .discount_summary_row").remove();
+                }
+
+                validDiscountItems.forEach(function (item) {
+                    var amount = Number(item.discountAmount || 0);
+                    if (amount <= 0) return;
+
+                    var repeatText = Number(item.appliedTimes || 0) > 1
+                        ? "（套用 " + item.appliedTimes + " 次）"
+                        : "";
+                    var isSingleDiscount = validDiscountItems.length === 1;
+                    var $row = $("<div>", {
+                        "class": isSingleDiscount ? "row" : "row text-secondary small"
+                    });
+                    $("<div>", { "class": "col-10 text-end" })
+                        .text((item.name || "活動折扣") + repeatText)
+                        .appendTo($row);
+                    $("<div>", {
+                        "class": isSingleDiscount
+                            ? "col-2 text-end price-negative"
+                            : "col-2 text-end"
+                    })
+                        .text((isSingleDiscount ? "$" : "-$") + C.util.string.thousandSign(amount))
+                        .appendTo($row);
+                    $discountRows.append($row);
+                });
 
                 frame.find(".collapse .header_invoiceTypeTitle").text(orderHeader.invoiceTypeTitle || "未提供");
                 frame.find(".collapse .header_shipping").text(orderHeader.shipping || "未提供");

@@ -1,6 +1,7 @@
 ﻿@using DevExtreme.AspNet.Mvc
 @using EtheriT.Coker.Application.Shared.Dto.Product
 @using EtheriT.Coker.Application.Shared.Dto.Specification
+@using EtheriT.Coker.Application.Shared.Dto.enumType.Product
 @{
 	ViewData["Title"] = "SpecSetting";
 }
@@ -62,6 +63,21 @@
 							.Columns(c =>
 							{
 								c.AddFor(e => e.Type).Caption("規格類型");
+								c.AddFor(e => e.SeoVariantProperty)
+								.Lookup(lookup => lookup
+								.DataSource(new[]
+								{
+									new { Value = (int)SeoVariantPropertyEnum.None, Text = "不指定" },
+									new { Value = (int)SeoVariantPropertyEnum.Color, Text = "顏色（color）" },
+									new { Value = (int)SeoVariantPropertyEnum.Size, Text = "尺寸（size）" },
+									new { Value = (int)SeoVariantPropertyEnum.SuggestedAge, Text = "適用年齡（suggestedAge）" },
+									new { Value = (int)SeoVariantPropertyEnum.SuggestedGender, Text = "適用性別（suggestedGender）" },
+									new { Value = (int)SeoVariantPropertyEnum.Material, Text = "材質（material）" },
+									new { Value = (int)SeoVariantPropertyEnum.Pattern, Text = "圖樣（pattern）" }
+								})
+								.DisplayExpr("Text")
+								.ValueExpr("Value"))
+								.Caption("Google 商品變體屬性");
 								c.Add()
 								.Type(GridCommandColumnType.Buttons)
 								.Buttons(b =>
@@ -91,6 +107,7 @@
 								});
 							})
 							.OnContentReady("contentReady")
+							.OnInitNewRow("initSpecTypeRow")
 							.OnRowInserting("dataSaving")
 							.OnRowUpdating("dataSaving"))
 					</div>
@@ -180,6 +197,7 @@
 				</div>
 			</div>
 		</div>
+		<div class="text-end my-2 text-secondary">※ Google 商品變體屬性僅供 SEO 結構化資料使用；不指定時，規格仍會顯示在商品變體名稱中。</div>
 		<div class="text-end my-2 text-danger">※名稱不可以符號開頭</div>
 	</div>
 </div>

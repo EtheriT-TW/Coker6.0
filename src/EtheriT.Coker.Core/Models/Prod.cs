@@ -25,6 +25,8 @@ namespace EtheriT.Coker.Core.Models
         public bool NoStockManagement { get; set; }   // 無須設定庫存
         public ProdStatusEnum Status { get; set; }
         public ProdStatusEnum? oStatus { get; set; }
+        public int Popular { get; set; } = 0;
+        public bool PopularVisible { get; set; } = true;
         public int? Clicks { get; set; }
         public string? SaveHtml { get; set; }
         [MaxLength]

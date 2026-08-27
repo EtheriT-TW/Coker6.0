@@ -5,48 +5,48 @@
     padding-right: 1.5rem !important;
 }
 
-#profile-tab-pane .order_list_header, #profile-tab-pane .btn_detailed {
+    #profile-tab-pane .order_list_header, #profile-tab-pane .btn_detailed {
         color: #555;
     }
 
-#profile-tab-pane .content .payment {
+    #profile-tab-pane .content .payment {
         display: flex;
         justify-content: center;
     }
 
-#profile-tab-pane .content .payment img {
+        #profile-tab-pane .content .payment img {
             height: 1.5rem;
             margin-top: 0rem;
             padding-right: 0.5rem;
         }
 
-#profile-tab-pane .content .payment span {
+        #profile-tab-pane .content .payment span {
             white-space: nowrap;
         }
 
-#profile-tab-pane .order_extra_info, #profile-tab-pane .recipient_info {
+    #profile-tab-pane .order_extra_info, #profile-tab-pane .recipient_info {
         padding-top: 0.75rem;
     }
 
-#profile-tab-pane .order_extra_item, #profile-tab-pane .recipient_info_item {
+    #profile-tab-pane .order_extra_item, #profile-tab-pane .recipient_info_item {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
     }
 
-#profile-tab-pane .order_extra_label, #profile-tab-pane .recipient_info_label {
+    #profile-tab-pane .order_extra_label, #profile-tab-pane .recipient_info_label {
         font-size: 0.8rem;
         color: #888;
     }
 
-#profile-tab-pane .order_extra_value, #profile-tab-pane .recipient_info_value {
+    #profile-tab-pane .order_extra_value, #profile-tab-pane .recipient_info_value {
         font-size: 1rem;
         font-weight: 500;
         color: #212529;
         word-break: break-all;
     }
 
-#profile-tab-pane .header_invoiceTypeTitle,
+    #profile-tab-pane .header_invoiceTypeTitle,
     #profile-tab-pane .header_shipping,
     #profile-tab-pane .header_carrier {
         word-break: break-all;
@@ -57,7 +57,7 @@
     justify-content: flex-start;
 }
 
-#systemMemoLine > div {
+    #systemMemoLine > div {
         text-align-last: left;
     }
 
@@ -66,7 +66,7 @@
     font-weight: 500;
 }
 
-.price-negative:before {
+    .price-negative:before {
         content: "-";
     }
 
@@ -90,12 +90,12 @@
     background-color: #ACACAC;
 }
 
-.btn_buyAgain:hover {
+    .btn_buyAgain:hover {
         color: white !important;
         background-color: #ACACAC !important;
     }
 
-.btn_buyAgain::after {
+    .btn_buyAgain::after {
         font-family: 'Font Awesome 6 Free';
         font-weight: 900;
         content: "\f217 ";
@@ -110,7 +110,7 @@
     background-color: rgba(255,193,7);
 }
 
-.btn_buyInfo:hover {
+    .btn_buyInfo:hover {
         color: black !important;
         background-color: rgba(255,193,7) !important;
     }
@@ -140,6 +140,102 @@
     justify-content: flex-start;
 }
 
-#remarkLine > div {
+    #remarkLine > div {
         text-align-last: left;
     }
+
+/* ========================================
+   商品型加價購 / 贈品
+   ======================================== */
+
+#profile-tab-pane .member-additional-item {
+    width: calc(100% - 2rem);
+    margin-left: 2rem;
+    padding-left: 0.75rem;
+    border-left: 3px solid #e6a2ad;
+    background: linear-gradient( 90deg, #fff5f6 0%, rgba(255, 250, 251, 0.35) 75%, transparent 100% );
+}
+
+
+/* ========================================
+   訂單層級優惠
+   ======================================== */
+
+#profile-tab-pane .member-order-additional-heading {
+    display: block;
+    margin-top: 0.75rem;
+    padding: 0.65rem 1rem;
+    border-top: 1px solid #dee2e6;
+    border-bottom: 1px solid #f2d9dd;
+    background: #fff8f9;
+    color: #a63b4d;
+}
+
+    #profile-tab-pane .member-order-additional-heading span,
+    #profile-tab-pane .member-order-additional-heading small {
+        display: block;
+    }
+
+    #profile-tab-pane .member-order-additional-heading strong {
+        font-size: 0.9rem;
+    }
+
+    #profile-tab-pane .member-order-additional-heading small {
+        margin-top: 0.12rem;
+        color: #806c70;
+        font-size: 0.78rem;
+    }
+
+
+/* 訂單優惠不是任何商品的 child */
+#profile-tab-pane .member-order-additional-item {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+    background: linear-gradient( 90deg, #fff8f9 0%, rgba(255, 250, 251, 0.18) 75%, transparent 100% );
+}
+
+
+/* ========================================
+   優惠商品 Badge
+   ======================================== */
+
+#profile-tab-pane .member-additional-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    padding: 0.1rem 0.48rem;
+    border-radius: 999px;
+    background: #fbe1e5;
+    color: #bd3048;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+#profile-tab-pane .collapse > .card-body > .list-group img {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+/* ========================================
+   Mobile
+   ======================================== */
+@media (max-width: 767.98px) {
+    /* 商品型仍縮排 */
+    #profile-tab-pane .member-additional-item {
+        width: calc(100% - 0.75rem);
+        margin-left: 0.75rem;
+        padding-left: 0.45rem;
+    }
+    /* 訂單型不縮排 */
+    #profile-tab-pane .member-order-additional-item {
+        width: 100%;
+        margin-left: 0;
+        padding-left: 0;
+    }
+
+    #profile-tab-pane .member-order-additional-heading {
+        padding: 0.6rem 0.75rem;
+    }
+}

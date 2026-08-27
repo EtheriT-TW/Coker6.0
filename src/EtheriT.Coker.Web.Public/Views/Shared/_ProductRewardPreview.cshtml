@@ -1,0 +1,36 @@
+<link rel="stylesheet" href="~/css/Page/ProductRewardPreview.min.css" asp-append-version="true" />
+
+<div id="ProductRewardPreviewModal" class="modal fade product-reward-preview" tabindex="-1"
+     aria-labelledby="ProductRewardPreviewTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h3 class="modal-title fs-5" id="ProductRewardPreviewTitle">優惠商品資訊</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body product-reward-preview__body">
+                <div class="product-reward-preview__media">
+                    <img class="product-reward-preview__image" src="/images/noImg.jpg" alt="" />
+                    <span class="product-reward-preview__benefit"></span>
+                </div>
+                <div class="product-reward-preview__content">
+                    <div class="product-reward-preview__name"></div>
+                    <div class="product-reward-preview__stock"></div>
+                    <div class="product-reward-preview__price-row">
+                        <span class="product-reward-preview__offer"></span>
+                        <span class="product-reward-preview__original"></span>
+                    </div>
+                    <p class="product-reward-preview__hint mb-0">此商品須符合目前優惠活動條件，才能以優惠價選購或領取。</p>
+                </div>
+            </div>
+            <div class="modal-footer product-reward-preview__footer border-0 pt-0">
+                <a class="product-reward-preview__link btn btn-outline-secondary" href="#" target="_blank" rel="noopener noreferrer">
+                    查看商品介紹<span class="visually-hidden">（另開新分頁）</span>
+                </a>
+                <button type="button" class="product-reward-preview__select btn">我要加購</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/Page/ProductRewardPreview.min.js" asp-append-version="true"></script>

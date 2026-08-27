@@ -23,6 +23,7 @@ using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Common;
 using Microsoft.AspNetCore.Http;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.Shared.Payment;
 
 namespace EtheriT.Coker.Application.ThirdParty
 {
@@ -34,6 +35,7 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly IConfiguration configuration;
         private readonly IOrderAppService orderAppService;
         private readonly IShoppingCartAppService shoppingCartAppService;
+        private readonly IPaymentAvailabilityService paymentAvailabilityService;
         private readonly IMapper mapper;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IWebHostEnvironment _env;
@@ -44,6 +46,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             IConfiguration configuration,
             IOrderAppService orderAppService,
             IShoppingCartAppService shoppingCartAppService,
+            IPaymentAvailabilityService paymentAvailabilityService,
             IMapper mapper,
             IHttpContextAccessor httpContextAccessor,
             IWebHostEnvironment env
@@ -55,6 +58,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.configuration = configuration;
             this.orderAppService = orderAppService;
             this.shoppingCartAppService = shoppingCartAppService;
+            this.paymentAvailabilityService = paymentAvailabilityService;
             this.mapper = mapper;
             this.httpContextAccessor = httpContextAccessor;
             this._env = env;
@@ -887,11 +891,27 @@ namespace EtheriT.Coker.Application.ThirdParty
                         ECPayCVSInfoDto CVSInfo = new ECPayCVSInfoDto();
                         ECPayBarcodeInfoDto BarcodeInfo = new ECPayBarcodeInfoDto();
 
-                        var paytypes = await (from ptv in db.PaymentTypesValues
-                                              join pt in db.PaymentTypes on ptv.FK_PaymentTypesId equals pt.Id
-                                              where ptv.Used && ptv.FK_WebsiteId == WebsiteId
-                                              where pt.FK_ThirdPartyId == 4
-                                              select pt).ToListAsync();
+                        var payableAmount =
+                            ohdata.Subtotal +
+                            ohdata.Freight;
+
+                        var availablePayments = await paymentAvailabilityService.GetAvailableAsync(
+                            WebsiteId,
+                            ohdata.Shipping,
+                            payableAmount);
+
+                        var availableEcpayPaymentIds = availablePayments
+                            .Where(x =>
+                                x.ProviderCode == "ECPay" &&
+                                x.IsAvailable)
+                            .Select(x => x.Id)
+                            .ToList();
+
+                        var paytypes = await db.PaymentTypes
+                            .Where(x => availableEcpayPaymentIds.Contains(x.Id))
+                            .OrderBy(x => x.SerNo)
+                            .ThenBy(x => x.Id)
+                            .ToListAsync();
 
                         if (paytypes.Any())
                         {
@@ -1033,7 +1053,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                             RequestBody.Data = Encrypt(PaymentBody, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                         }
-                        else throw new Exception("付款資訊錯誤");
+                        else throw new Exception("目前的物流方式或訂單金額沒有可用的綠界付款方式。");
                     }
                     else throw new Exception($"查無訂單({("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)})資訊");
                 }
@@ -1041,6 +1061,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
+                throw new Exception($"建立綠界付款資料失敗：{ex.Message}", ex);
             }
             return RequestBody;
         }

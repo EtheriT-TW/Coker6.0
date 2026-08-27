@@ -14,13 +14,15 @@
         freightListGridEvent: null,
         keyId: 0,
         isInitialized: false,
+        paymentRestrictions: null,
+        paymentRestrictionsDraft: null,
+        paymentRestrictionRequestVersion: 0,
+        pendingShippingType: null,
 
         $setDefault: null,
         $title: null,
         $preserve: null,
         $shipping: null,
-        $isCashOnDelivery: null,
-        $isCashOnDelivery_parent: null,
         $freightStatusType: null,
         $freight: null,
         $lowCon: null,
@@ -33,6 +35,11 @@
         $logisticsBoxSection: null,
         $logisticsPriceSection: null,
         $logisticsBoxSelectedList: null,
+        $paymentRestrictionModal: null,
+        $paymentRestrictionRows: null,
+        $paymentRestrictionSummary: null,
+        $paymentRestrictionModalSummary: null,
+        $showAllPaymentTypes: null,
 
         init: function () {
             if (this.isInitialized) return;
@@ -51,8 +58,6 @@
             this.$title = $("#InputName");
             this.$preserve = $("#SelectPreserve");
             this.$shipping = $("#SelectShipping");
-            this.$isCashOnDelivery = $("#SupportCashOnDeliveryCheckBox");
-            this.$isCashOnDelivery_parent = this.$isCashOnDelivery.closest(".form-check");
             this.$freightStatusType = $("#SelectStatus");
             this.$freight = $("#InputFreight");
             this.$lowCon = $("#InputLowCon");
@@ -66,6 +71,11 @@
             this.$logisticsBoxSection = $(this.logisticsBoxSectionSelector);
             this.$logisticsPriceSection = $(this.logisticsPriceSectionSelector);
             this.$logisticsBoxSelectedList = $(this.logisticsBoxListSelector);
+            this.$paymentRestrictionModal = $("#PaymentRestrictionModal");
+            this.$paymentRestrictionRows = $("#PaymentRestrictionRows");
+            this.$paymentRestrictionSummary = $("#PaymentRestrictionSummary");
+            this.$paymentRestrictionModalSummary = $("#PaymentRestrictionModalSummary");
+            this.$showAllPaymentTypes = $("#ShowAllPaymentTypes");
         },
 
         initCommonForm: function () {
@@ -153,10 +163,8 @@
             });
 
             this.$shipping.off("change.freight").on("change.freight", function () {
-                var $this = $(this);
-                var value = Number($this.val() || 0);
-                if (value >= 8 && value <= 15) self.$isCashOnDelivery_parent.removeClass("d-none");
-                else self.$isCashOnDelivery_parent.addClass("d-none");
+                self.pendingShippingType = Number($(this).val() || 0) || null;
+                self.loadPaymentRestrictions(true);
             });
 
             this.$lowCon.off("blur.freight").on("blur.freight", function () {
@@ -169,6 +177,62 @@
 
             this.$dFreight.off("blur.freight").on("blur.freight", function () {
                 self.validateDiscountFreightRelation(true);
+            });
+
+            this.$paymentRestrictionModal
+                .off("show.bs.modal.freight")
+                .on("show.bs.modal.freight", function () {
+                    self.openPaymentRestrictionEditor();
+                })
+                .off("hidden.bs.modal.freight")
+                .on("hidden.bs.modal.freight", function () {
+                    self.paymentRestrictionsDraft = null;
+                });
+
+            this.$showAllPaymentTypes.off("change.freight").on("change.freight", function () {
+                self.renderPaymentRestrictionRows();
+            });
+
+            this.$paymentRestrictionRows
+                .off("change.freight", ".payment-custom-switch")
+                .on("change.freight", ".payment-custom-switch", function () {
+                    var row = self.getPaymentRestrictionDraftRow($(this).closest("tr").data("payment-id"));
+                    if (!row) return;
+
+                    row.isCustomized = $(this).is(":checked");
+
+                    if (!row.isCustomized) {
+                        row.isEnabled = row.defaultIsEnabled;
+                        row.overrideMinAmount = null;
+                        row.overrideMaxAmount = null;
+                    }
+
+                    self.renderPaymentRestrictionRows();
+                })
+                .off("change.freight", ".payment-enabled-switch")
+                .on("change.freight", ".payment-enabled-switch", function () {
+                    var row = self.getPaymentRestrictionDraftRow($(this).closest("tr").data("payment-id"));
+                    if (!row) return;
+
+                    row.isEnabled = $(this).is(":checked");
+                    if (!row.isEnabled) {
+                        row.overrideMinAmount = null;
+                        row.overrideMaxAmount = null;
+                    }
+                    self.renderPaymentRestrictionRows();
+                })
+                .off("input.freight", ".payment-amount-input")
+                .on("input.freight", ".payment-amount-input", function () {
+                    var $input = $(this);
+                    var row = self.getPaymentRestrictionDraftRow($input.closest("tr").data("payment-id"));
+                    if (!row) return;
+
+                    var value = $input.val();
+                    row[$input.data("field")] = value === "" ? null : Number(value);
+                });
+
+            $("#ApplyPaymentRestrictions").off("click.freight").on("click.freight", function () {
+                self.applyPaymentRestrictionDraft();
             });
         },
 
@@ -183,10 +247,15 @@
             });
 
             co.Order.GetShippingTypeEnum().done(function (result) {
+                var selectedValue = self.pendingShippingType || self.$shipping.val();
                 self.$shipping.empty();
                 $(result).each(function () {
                     self.$shipping.append($("<option>").attr({ value: this.value }).text(this.key));
                 });
+
+                if (selectedValue) self.$shipping.val(selectedValue);
+                self.pendingShippingType = Number(self.$shipping.val() || 0) || null;
+                self.loadPaymentRestrictions(false);
             });
 
             co.Order.GetFreightStatusTypeEnum().done(function (result) {
@@ -230,9 +299,7 @@
             this.applyFreightStatusUI();
             this.applyDiscountFreightTypeUI();
 
-            var value = Number(this.$shipping.val() || 0);
-            if (value >= 8 && value <= 15) this.$isCashOnDelivery_parent.removeClass("d-none");
-            else this.$isCashOnDelivery_parent.addClass("d-none");
+            this.loadPaymentRestrictions(false);
         },
 
         onEnterEdit: function (id) {
@@ -261,7 +328,13 @@
 
             this.$setDefault.prop("checked", false);
             this.$inputProd.attr("disabled", "disabled");
-            this.$isCashOnDelivery_parent.addClass("d-none");
+            this.paymentRestrictions = null;
+            this.paymentRestrictionsDraft = null;
+            this.paymentRestrictionRequestVersion++;
+            this.pendingShippingType = null;
+            this.$showAllPaymentTypes.prop("checked", false);
+            this.$paymentRestrictionRows.empty();
+            this.$paymentRestrictionSummary.text("載入付款方式設定中…");
 
             this.$discountFreightType.val("").attr("disabled", "disabled");
             this.$discountFreightGroupSection.addClass("d-none");
@@ -287,6 +360,8 @@
             const self = this;
 
             _c.Form.insertData(result, "#" + this.formId);
+            this.pendingShippingType = Number(result.logisticsType ?? result.LogisticsType ?? 0) || null;
+            if (this.pendingShippingType) this.$shipping.val(this.pendingShippingType);
             this.$setDefault.prop("checked", !!result.set_Default);
 
             if (!result.discountFreightType && !result.DiscountFreightType) {
@@ -311,8 +386,316 @@
                 self.handleLowConRule();
             });
 
-            if (result.logisticsType >= 8 && result.logisticsType <= 15) self.$isCashOnDelivery_parent.removeClass("d-none");
-            else self.$isCashOnDelivery_parent.addClass("d-none");
+            this.loadPaymentRestrictions(false);
+        },
+
+        clonePaymentRestrictions: function (rows) {
+            return JSON.parse(JSON.stringify(rows || []));
+        },
+
+        normalizePaymentRestriction: function (row) {
+            return {
+                paymentTypeId: row.paymentTypeId ?? row.PaymentTypeId,
+                paymentTypeTitle: row.paymentTypeTitle ?? row.PaymentTypeTitle ?? "",
+                paymentTypeCode: row.paymentTypeCode ?? row.PaymentTypeCode ?? "",
+                websitePaymentEnabled: !!(row.websitePaymentEnabled ?? row.WebsitePaymentEnabled),
+                paymentTypeMinAmount: Number(row.paymentTypeMinAmount ?? row.PaymentTypeMinAmount ?? 0),
+                paymentTypeMaxAmount: row.paymentTypeMaxAmount ?? row.PaymentTypeMaxAmount ?? null,
+                defaultIsEnabled: !!(row.defaultIsEnabled ?? row.DefaultIsEnabled),
+                defaultMinAmount: Number(row.defaultMinAmount ?? row.DefaultMinAmount ?? 0),
+                defaultMaxAmount: row.defaultMaxAmount ?? row.DefaultMaxAmount ?? null,
+                isCustomized: !!(row.isCustomized ?? row.IsCustomized),
+                isEnabled: !!(row.isEnabled ?? row.IsEnabled),
+                overrideMinAmount: row.overrideMinAmount ?? row.OverrideMinAmount ?? null,
+                overrideMaxAmount: row.overrideMaxAmount ?? row.OverrideMaxAmount ?? null,
+                effectiveMinAmount: Number(row.effectiveMinAmount ?? row.EffectiveMinAmount ?? 0),
+                effectiveMaxAmount: row.effectiveMaxAmount ?? row.EffectiveMaxAmount ?? null
+            };
+        },
+
+        loadPaymentRestrictions: function (preserveCurrent) {
+            var shippingType = this.pendingShippingType || Number(this.$shipping.val() || 0);
+            if (!shippingType) {
+                this.paymentRestrictions = [];
+                this.$paymentRestrictionSummary.text("請先選擇物流型別");
+                return $.Deferred().resolve([]).promise();
+            }
+
+            var self = this;
+            var currentRows = preserveCurrent ? this.clonePaymentRestrictions(this.paymentRestrictions) : [];
+            var requestVersion = ++this.paymentRestrictionRequestVersion;
+
+            this.$paymentRestrictionSummary.text("載入付款方式設定中…");
+
+            return co.Freight.GetPaymentRestrictions(this.keyId, shippingType)
+                .done(function (result) {
+                    if (requestVersion !== self.paymentRestrictionRequestVersion) return;
+
+                    var rows = (result || []).map(function (row) {
+                        return self.normalizePaymentRestriction(row);
+                    });
+
+                    if (currentRows.length) {
+                        rows.forEach(function (row) {
+                            var current = currentRows.find(function (x) {
+                                return Number(x.paymentTypeId) === Number(row.paymentTypeId);
+                            });
+
+                            if (!current) return;
+                            row.isCustomized = current.isCustomized;
+                            row.isEnabled = current.isCustomized ? current.isEnabled : row.defaultIsEnabled;
+                            row.overrideMinAmount = current.isCustomized ? current.overrideMinAmount : null;
+                            row.overrideMaxAmount = current.isCustomized ? current.overrideMaxAmount : null;
+                            self.updatePaymentRestrictionEffectiveValues(row);
+                        });
+                    }
+
+                    self.paymentRestrictions = rows;
+                    self.updatePaymentRestrictionSummary();
+
+                    if (self.$paymentRestrictionModal.hasClass("show")) {
+                        self.paymentRestrictionsDraft = self.clonePaymentRestrictions(rows);
+                        self.renderPaymentRestrictionRows();
+                    }
+                })
+                .fail(function () {
+                    if (requestVersion !== self.paymentRestrictionRequestVersion) return;
+                    self.$paymentRestrictionSummary.text("付款方式設定載入失敗");
+                    self.$paymentRestrictionRows.html(
+                        '<tr><td colspan="6" class="text-center text-danger py-4">無法載入付款方式設定</td></tr>'
+                    );
+                });
+        },
+
+        openPaymentRestrictionEditor: function () {
+            if (this.paymentRestrictions == null) {
+                this.$paymentRestrictionRows.html(
+                    '<tr><td colspan="6" class="text-center text-muted py-4">載入中…</td></tr>'
+                );
+                this.loadPaymentRestrictions(false);
+                return;
+            }
+
+            this.paymentRestrictionsDraft = this.clonePaymentRestrictions(this.paymentRestrictions);
+            this.renderPaymentRestrictionRows();
+        },
+
+        getPaymentRestrictionDraftRow: function (paymentTypeId) {
+            return (this.paymentRestrictionsDraft || []).find(function (row) {
+                return Number(row.paymentTypeId) === Number(paymentTypeId);
+            });
+        },
+
+        escapeHtml: function (value) {
+            return $("<div>").text(value == null ? "" : String(value)).html();
+        },
+
+        formatPaymentAmount: function (value, noLimitText) {
+            if (value == null) return noLimitText || "無上限";
+            return "NT$ " + Number(value).toLocaleString("zh-TW");
+        },
+
+        formatPaymentRange: function (minAmount, maxAmount) {
+            return this.formatPaymentAmount(minAmount, "NT$ 0")
+                + " ～ "
+                + this.formatPaymentAmount(maxAmount, "無上限");
+        },
+
+        renderPaymentRestrictionRows: function () {
+            var self = this;
+            var showAll = this.$showAllPaymentTypes.is(":checked");
+            var rows = (this.paymentRestrictionsDraft || []).filter(function (row) {
+                return showAll || row.websitePaymentEnabled;
+            });
+
+            if (!rows.length) {
+                this.$paymentRestrictionRows.html(
+                    '<tr><td colspan="6" class="text-center text-muted py-4">本站目前沒有啟用的付款方式，可開啟「顯示本站未啟用的付款方式」查看全部。</td></tr>'
+                );
+            } else {
+                this.$paymentRestrictionRows.html(rows.map(function (row) {
+                    var inactiveClass = row.websitePaymentEnabled ? "" : " payment-restriction-inactive";
+                    var paymentStatus = row.websitePaymentEnabled
+                        ? '<span class="badge bg-success ms-1">本站啟用</span>'
+                        : '<span class="badge bg-secondary ms-1">本站未啟用</span>';
+                    var defaultStatus = row.defaultIsEnabled
+                        ? '<span class="badge bg-success">允許</span>'
+                        : '<span class="badge bg-danger">停用</span>';
+                    var customDisabled = row.isCustomized ? "" : " disabled";
+                    var amountDisabled = row.isCustomized && row.isEnabled ? "" : " disabled";
+                    var maxPlaceholder = row.paymentTypeMaxAmount == null
+                        ? "沿用付款設定：無上限"
+                        : "沿用付款設定：" + Number(row.paymentTypeMaxAmount).toLocaleString("zh-TW");
+
+                    return `
+                        <tr data-payment-id="${row.paymentTypeId}" class="${inactiveClass}">
+                            <td>
+                                <div class="fw-semibold">${self.escapeHtml(row.paymentTypeTitle)}</div>
+                                <div class="small text-muted">${self.escapeHtml(row.paymentTypeCode)} ${paymentStatus}</div>
+                            </td>
+                            <td>
+                                <div class="payment-restriction-default">${defaultStatus}</div>
+                                <div class="small text-muted">${self.formatPaymentRange(row.defaultMinAmount, row.defaultMaxAmount)}</div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-flex">
+                                    <input class="form-check-input payment-custom-switch"
+                                           type="checkbox"
+                                           ${row.isCustomized ? "checked" : ""}>
+                                </div>
+                                <div class="small text-muted">${row.isCustomized ? "使用自訂" : "沿用預設"}</div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-flex">
+                                    <input class="form-check-input payment-enabled-switch"
+                                           type="checkbox"
+                                           ${row.isEnabled ? "checked" : ""}
+                                           ${customDisabled}>
+                                </div>
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm payment-amount-input"
+                                       type="number"
+                                       min="0"
+                                       step="0.01"
+                                       data-field="overrideMinAmount"
+                                       value="${row.overrideMinAmount ?? ""}"
+                                       placeholder="沿用付款設定：${Number(row.paymentTypeMinAmount).toLocaleString("zh-TW")}"
+                                       ${amountDisabled}>
+                            </td>
+                            <td>
+                                <input class="form-control form-control-sm payment-amount-input"
+                                       type="number"
+                                       min="0"
+                                       step="0.01"
+                                       data-field="overrideMaxAmount"
+                                       value="${row.overrideMaxAmount ?? ""}"
+                                       placeholder="${maxPlaceholder}"
+                                       ${amountDisabled}>
+                            </td>
+                        </tr>`;
+                }).join(""));
+            }
+
+            var enabledCount = (this.paymentRestrictionsDraft || []).filter(function (row) {
+                return row.websitePaymentEnabled;
+            }).length;
+            var hiddenCount = (this.paymentRestrictionsDraft || []).length - enabledCount;
+            this.$paymentRestrictionModalSummary.text(
+                "本站已啟用 " + enabledCount + " 項"
+                + (hiddenCount ? "，另有 " + hiddenCount + " 項未啟用" : "")
+            );
+        },
+
+        updatePaymentRestrictionEffectiveValues: function (row) {
+            if (row.isCustomized) {
+                row.effectiveMinAmount = row.overrideMinAmount ?? row.paymentTypeMinAmount;
+                row.effectiveMaxAmount = row.overrideMaxAmount ?? row.paymentTypeMaxAmount;
+            } else {
+                row.isEnabled = row.defaultIsEnabled;
+                row.effectiveMinAmount = row.defaultMinAmount;
+                row.effectiveMaxAmount = row.defaultMaxAmount;
+            }
+        },
+
+        validatePaymentRestrictionDraft: function () {
+            var warnings = [];
+
+            for (var row of (this.paymentRestrictionsDraft || [])) {
+                if (!row.isCustomized || !row.isEnabled) continue;
+
+                this.updatePaymentRestrictionEffectiveValues(row);
+
+                if (row.overrideMinAmount != null && row.overrideMinAmount < 0
+                    || row.overrideMaxAmount != null && row.overrideMaxAmount < 0) {
+                    Coker.sweet.error("錯誤", "付款金額限制不可小於 0。", null, true);
+                    return null;
+                }
+
+                if (row.effectiveMaxAmount != null
+                    && row.effectiveMinAmount > row.effectiveMaxAmount) {
+                    Coker.sweet.error(
+                        "錯誤",
+                        row.paymentTypeTitle + "的最低金額不可大於最高金額。",
+                        null,
+                        true
+                    );
+                    return null;
+                }
+
+                if (row.overrideMinAmount != null
+                    && row.overrideMinAmount < row.paymentTypeMinAmount) {
+                    warnings.push(row.paymentTypeTitle + "最低金額低於付款方式預設");
+                }
+
+                if (row.overrideMaxAmount != null
+                    && (row.paymentTypeMaxAmount == null
+                        ? false
+                        : row.overrideMaxAmount > row.paymentTypeMaxAmount)) {
+                    warnings.push(row.paymentTypeTitle + "最高金額高於付款方式預設");
+                }
+            }
+
+            return warnings;
+        },
+
+        applyPaymentRestrictionDraft: function () {
+            var self = this;
+            var warnings = this.validatePaymentRestrictionDraft();
+            if (warnings == null) return;
+
+            var commit = function () {
+                self.paymentRestrictions = self.clonePaymentRestrictions(self.paymentRestrictionsDraft);
+                self.updatePaymentRestrictionSummary();
+                bootstrap.Modal
+                    .getOrCreateInstance(document.getElementById("PaymentRestrictionModal"))
+                    .hide();
+            };
+
+            if (warnings.length) {
+                Coker.sweet.confirm(
+                    "金額超出付款方式預設",
+                    warnings.join("；") + "。請確認合約額度，仍要套用嗎？",
+                    "仍要套用",
+                    "返回調整",
+                    commit
+                );
+                return;
+            }
+
+            commit();
+        },
+
+        updatePaymentRestrictionSummary: function () {
+            var rows = this.paymentRestrictions || [];
+            var websiteRows = rows.filter(function (row) {
+                return row.websitePaymentEnabled;
+            });
+            var enabledCount = websiteRows.filter(function (row) {
+                return row.isEnabled;
+            }).length;
+            var customizedCount = rows.filter(function (row) {
+                return row.isCustomized;
+            }).length;
+
+            this.$paymentRestrictionSummary.text(
+                "前台付款方式可用 " + enabledCount + " / " + websiteRows.length + " 項"
+                + (customizedCount ? "，已自訂 " + customizedCount + " 項" : "，目前全部沿用系統預設")
+            );
+        },
+
+        getPaymentRestrictionsPayload: function () {
+            if (this.paymentRestrictions == null) return null;
+
+            return this.paymentRestrictions.map(function (row) {
+                return {
+                    PaymentTypeId: row.paymentTypeId,
+                    IsCustomized: row.isCustomized,
+                    IsEnabled: row.isEnabled,
+                    OverrideMinAmount: row.isCustomized && row.isEnabled ? row.overrideMinAmount : null,
+                    OverrideMaxAmount: row.isCustomized && row.isEnabled ? row.overrideMaxAmount : null
+                };
+            });
         },
 
         getCurrentFreightType: function () {
@@ -336,6 +719,7 @@
                 this.$discountFreightType.removeAttr("disabled");
 
                 if (discountType != null) {
+                    this.$lowCon.removeAttr("disabled");
                     this.$dFreight.removeAttr("disabled");
 
                     if (discountType === 1) {
@@ -346,6 +730,7 @@
                         this.$dFreight.attr("placeholder", "");
                     }
                 } else {
+                    this.$lowCon.val("").attr("disabled", "disabled");
                     this.$dFreight.val("").attr("disabled", "disabled").attr("placeholder", "不套用折抵運費");
                 }
                 return;
@@ -366,7 +751,6 @@
                 this.$logisticsPriceSection.removeClass("d-none");
 
                 this.$freight.val("").attr("disabled", "disabled");
-                this.$lowCon.removeAttr("disabled");
 
                 this.applyDiscountFreightTypeUI();
                 this.handleLowConRule();
@@ -378,7 +762,6 @@
                 this.$logisticsPriceSection.removeClass("d-none");
 
                 this.$freight.removeAttr("disabled");
-                this.$lowCon.removeAttr("disabled");
 
                 this.applyDiscountFreightTypeUI();
                 this.handleLowConRule();
@@ -404,22 +787,8 @@
 
         handleLowConRule: function () {
             const freightType = this.getCurrentFreightType();
-            const lowCon = Number(this.$lowCon.val() || 0);
-            const discountType = this.getDiscountFreightTypeValue();
 
             if (freightType !== 2 && freightType !== 3) return;
-
-            if (lowCon <= 0) {
-                this.$discountFreightType.val("");
-                this.$dFreight.val("");
-                this.$dFreight.attr("disabled", "disabled");
-                this.applyDiscountFreightTypeUI();
-                return;
-            }
-
-            if (discountType == null) {
-                this.$discountFreightType.val("1");
-            }
 
             this.applyDiscountFreightTypeUI();
         },
@@ -433,18 +802,21 @@
 
             if (freightType !== 2 && freightType !== 3) {
                 payload.DiscountFreightType = null;
+                payload.Low_Con = 0;
                 payload.Dis_Freight = 0;
                 return payload;
             }
 
             if (lowCon <= 0) {
                 payload.DiscountFreightType = null;
+                payload.Low_Con = 0;
                 payload.Dis_Freight = 0;
                 return payload;
             }
 
             if (!payload.DiscountFreightType) {
                 payload.DiscountFreightType = null;
+                payload.Low_Con = 0;
                 payload.Dis_Freight = 0;
                 return payload;
             }
@@ -461,14 +833,24 @@
         validateDiscountFreightRelation: function (showMessage) {
             const freightType = this.getCurrentFreightType();
             const freight = Number(this.$freight.val() || 0);
+            const lowCon = Number(this.$lowCon.val() || 0);
             const disFreight = Number(this.$dFreight.val() || 0);
             const discountType = this.getDiscountFreightTypeValue();
 
             this.$freight.removeClass("is-invalid");
+            this.$lowCon.removeClass("is-invalid");
             this.$dFreight.removeClass("is-invalid");
 
             if (freightType !== 2 && freightType !== 3) {
                 return true;
+            }
+
+            if (discountType != null && lowCon <= 0) {
+                this.$lowCon.addClass("is-invalid");
+                if (showMessage) {
+                    Coker.sweet.error("錯誤", "套用折抵運費時，折抵低消必須大於 0。", null, true);
+                }
+                return false;
             }
 
             if (disFreight < 0) {
@@ -663,6 +1045,13 @@
         },
 
         submitForm: function () {
+            if (this.paymentRestrictions == null) {
+                var page = this;
+                return this.loadPaymentRestrictions(false).then(function () {
+                    return page.submitForm();
+                });
+            }
+
             const freightType = this.getCurrentFreightType();
 
             if (freightType === 3 && !this.validateLogisticsBoxFees()) {
@@ -679,10 +1068,8 @@
             payload.Id = this.keyId;
             payload.ProdIds = this.getFreightProdIds();
             payload.LogisticsBoxFees = this.getFreightLogisticsBoxFeesData();
+            payload.PaymentRestrictions = this.getPaymentRestrictionsPayload();
             payload = this.normalizeDiscountFreightPayload(payload);
-            this.$isCashOnDelivery_parent.hasClass("d-none")
-                ? payload.SupportCashOnDelivery = false
-                : payload.SupportCashOnDelivery = !!payload.SupportCashOnDelivery;
 
             if (freightType === 3) {
                 payload.Freight = 0;
@@ -702,7 +1089,17 @@
             const self = this;
 
             return co.Freight.AddUp(payload)
-                .done(function () {
+                .done(function (result) {
+                    if (!result || result.success === false || result.Success === false) {
+                        Coker.sweet.error(
+                            "錯誤",
+                            result?.error || result?.Error || "儲存運費設定發生錯誤",
+                            null,
+                            true
+                        );
+                        return;
+                    }
+
                     Coker.sweet.success("運費設定儲存成功", null, true);
 
                     setTimeout(function () {

@@ -1,0 +1,118 @@
+@using DevExtreme.AspNet.Mvc
+@using EtheriT.Coker.Application.Shared.Dto.Directory
+@using EtheriT.Coker.Web.MVC.Common
+@using EtheriT.Coker.Web.MVC.Extensions
+@using EtheriT.Coker.Web.MVC.Models.ContentManagement
+@using EtheriT.Coker.Web.MVC.Startup
+@model ArticleContentViewModel
+@{
+    var permission = Context.GetPermission();
+}
+
+<div id="HtmlCanvas" class="card border-0 d-none" data-hash-page="ArticleCanvas">
+    <div id="gjs"></div>
+</div>
+
+<div id="ArticleWorkspace" class="card border-0 d-none" data-hash-page="ArticleList">
+    <div id="ArticleList" class="articles d-none">
+        <div class="card-body position-relative">
+            <div class="d-flex position-absolute z-index-up">
+                <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none @(Model.ArticleOnly ? "d-none" : "")">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded text-decoration-none ml-3">
+                    <span class="material-symbols-outlined">add</span>
+                </button>
+            </div>
+            @(
+                Html.DevExtreme().DataGrid<DirectoryReleInfoDto>()
+                    .DataSource(d => d.RemoteController().Key("Id")
+                        .LoadUrl(Model.ListUrl).LoadMethod("Get")
+                        .LoadParams(new
+                        {
+                            id = new JS("GetDirectoryId"),
+                            type = new JS("GetDirectoryType")
+                        })
+                    )
+                    .OnContentReady("DirectoryDatailListReady")
+                    .OnRowPrepared("articleRowPrepared")
+                    .HeaderFilter(headerFilter => headerFilter.Visible(true))
+                    .RemoteOperations(true)
+                    .ColumnHidingEnabled(true)
+                    .ShowBorders(true)
+                    .FilterRow(filterRow => filterRow
+                        .Visible(true)
+                        .ApplyFilter(GridApplyFilterMode.Auto)
+                    )
+                    .SearchPanel(searchPanel => searchPanel
+                        .Visible(true)
+                        .Width(480)
+                        .Placeholder("請輸入要搜尋的資料")
+                    )
+                    .ShowRowLines(true)
+                    .Columns(c =>
+                    {
+                        c.AddFor(e => e.Id).Caption("編號").Width(90).HidingPriority(9);
+                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(8);
+                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(7);
+                        c.AddFor(e => e.Title)
+                            .Caption("標題")
+                            .MinWidth(150)
+                            .AllowHiding(false)
+                            .CssClass("article-title-column")
+                            .CellTemplate(@<text>
+                                <span class="article-title-text" title="<%- data.Title || '' %>"><%- data.Title || '' %></span>
+                            </text>);
+                        c.Add()
+                            .DataField("Tags")
+                            .Caption("標籤")
+                            .Visible(Model.ArticleOnly)
+                            .Width(150)
+                            .AllowHiding(false);
+                        c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90).HidingPriority(5);
+                        c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
+                        c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
+                        c.Add().DataField(Model.ArticleOnly ? "SerNO" : "SerNo").Caption("排序").Width(90).HidingPriority(4);
+                        c.Add().DataField("Popular").Caption("人氣值").Visible(Model.ArticleOnly).Width(90).HidingPriority(3);
+                        c.Add().DataField("PopularVisible").Caption("顯示人氣值").Visible(Model.ArticleOnly).Width(120).HidingPriority(2);
+                        c.AddFor(e => e.LastModificationTime).SortOrder(SortOrder.Desc).Format("yyyy/MM/dd HH:mm").Caption("最後編輯日期").Width(160).HidingPriority(1);
+                        c.Add()
+                            .Type(GridCommandColumnType.Buttons)
+                            .Buttons(b =>
+                            {
+                                b.Add().Name("edit").Visible(permission.CanUpdate).OnClick("editArticlesButtonClicked");
+                                b.Add().Icon("palette").Visible(permission.CanUpdate).Name("edit").OnClick("paletteArticlesButtonClicked");
+                                if (Model.ArticleOnly)
+                                {
+                                    b.Add().Name("delete").Visible(permission.CanRemove).OnClick("deleteArticlesButtonClicked");
+                                }
+                                else
+                                {
+                                    b.Add()
+                                        .Name("delete")
+                                        .Visible(new JS("function(e) { return " + permission.CanRemove.ToString().ToLower() + " && e.row && e.row.data && e.row.data.CanEdit === true; }"))
+                                        .OnClick("deleteArticlesButtonClicked");
+                                }
+                            });
+                    })
+                    .ColumnAutoWidth(true)
+                    .Paging(paging => paging.PageSize(30))
+                    .Pager(pager =>
+                    {
+                        pager.Visible(true);
+                        pager.ShowPageSizeSelector(true);
+                        pager.AllowedPageSizes(new[] { 10, 20, 30 });
+                        pager.ShowInfo(true);
+                    })
+                    .Editing(editing =>
+                    {
+                        editing.AllowDeleting(true);
+                        editing.AllowUpdating(true);
+                        editing.UseIcons(true);
+                    })
+            )
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_ArticleForm", Model)

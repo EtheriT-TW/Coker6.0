@@ -40,7 +40,9 @@
     let renderContext = {
         vis: { showPrice: false, showBuy: false },
         noStockManagement: false,
-        state: null
+        state: null,
+        galleryItems: [],
+        galleryStartIndex: {}
     };
 
     function t(key, fallback) {
@@ -324,7 +326,8 @@
             $card.append(
                 $('<img class="spec-thumb" alt="" />')
                     .attr('src', imgItems[0].link[0])
-                    .data('images', imgItems)
+                    // 圖片清單改由 renderContext 統一持有，這裡只記「從第幾張開始看」
+                    .data('galleryIndex', renderContext.galleryStartIndex[stock.id] ?? 0)
             );
         } else {
             $card.append('<div class="spec-thumb spec-thumb-empty"></div>');
@@ -382,14 +385,17 @@
         });
     }
 
-    function openSpecGallery(items) {
+    function openSpecGallery(startIndex) {
         const page = window.productContentPage;
         const viewer = page && page.mediaViewer;
         if (!viewer || typeof bootstrap === 'undefined') return;
 
+        const items = renderContext.galleryItems;
+        if (!items.length) return;
+
         const original = viewer.items;          // 先快照商品圖
-        viewer.setItems(items);                  // 換成這個規格的圖
-        viewer.showByIndex(0);                    // 渲染第一張（含 dots）
+        viewer.setItems(items);                  // 換成「全部規格」的共用清單
+        viewer.showByIndex(startIndex);           // 從被點的規格那張開始（含 dots）
 
         const $modal = $('#ProDisplayModal');
         $modal.one('hidden.bs.modal', function () {
@@ -401,8 +407,8 @@
 
     function bindSpecGallery($container) {
         $container.on('click', '.spec-thumb', function () {
-            const images = $(this).data('images');
-            if (Array.isArray(images) && images.length) openSpecGallery(images);
+            const index = normalizeNullableInt($(this).data('galleryIndex'), -1);
+            if (index >= 0) openSpecGallery(index);
         });
     }
 
@@ -420,13 +426,43 @@
         $('#Product > .content').removeClass('col-md-6 col-sm-12').addClass('col-12'); // .content 補滿
     }
 
+    function buildSharedGallery(stocks) {
+        const items = [];
+        const startIndex = {};
+        const seen = new Map();
+
+        stocks.forEach(stock => {
+            let first = -1;
+
+            specImageItems(stock).forEach(item => {
+                const key = normalizeNullableInt(item.id, -1);
+                let index;
+
+                if (key >= 0 && seen.has(key)) {
+                    index = seen.get(key);          // 重複的圖沿用既有位置
+                } else {
+                    index = items.length;
+                    items.push(item);
+                    if (key >= 0) seen.set(key, index);
+                }
+
+                if (first < 0) first = index;
+            });
+            if (first >= 0) startIndex[stock.id] = first;
+        });
+        return { items: items, startIndex: startIndex };
+    }
+
     function render($container, result, state) {
         const stocks = result && Array.isArray(result.stocks) ? result.stocks : [];
+        const gallery = buildSharedGallery(stocks);
 
         renderContext = {
             vis: resolveVisibility(state, result),
             noStockManagement: !!(result && result.noStockManagement),
-            state: state
+            state: state,
+            galleryItems: gallery.items,
+            galleryStartIndex: gallery.startIndex
         };
 
         $container.empty();

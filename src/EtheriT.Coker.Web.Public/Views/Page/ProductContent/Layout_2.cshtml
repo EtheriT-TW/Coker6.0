@@ -25,7 +25,7 @@
         loginEnable: @(loginEnable ? "true" : "false"),
         shoppingEnable: @(shoppingEnable ? "true" : "false"),
         hasShoppingCar: @(hasShoppingCar ? "true" : "false")
-    };
+        };
 </script>
 
 <div id="ProDisplayModal" class="modal fade" tabindex="-1" aria-labelledby="Product Display Modal" aria-hidden="true">
@@ -33,26 +33,37 @@
         <div class="modal-content position-relative">
             <button class="btn_close_prodisplaymodal btn-close rounded-circle position-absolute end-0 top-0 p-2 m-2" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
             <a href="#" class="material-symbols-outlined btn-tool prev-btn">arrow_back_ios</a>
-            <div class="modal-body mx-auto w-100 d-flex">
-                <div id="Pro_Image" class="pro_img d-none"
-                     data-folder=""
-                     data-filename-x=""
-                     data-amount-x="1"
-                     data-pointer-zoom="2"
-                     hide-360-logo></div>
-                <div id="Pro_360View" class="pro_360view d-none"
-                     data-folder="../upload/Product/3d_pro/"
-                     data-filename-x=""
-                     data-amount-x=""
-                     data-speed="100"
-                     data-drag-speed="120"
-                     data-pointer-zoom="2"></div>
-                <video id="Pro_Video" class="pro_video d-none w-100 h-100" controls></video>
-                <div id="Pro_Youtube" class="pro_youtube pro_external_video d-none w-100"></div>
+
+            @* 媒體舞台：全站唯一一組（id 寫死）。
+               商品主圖時就待在這裡；規格圖燈箱會把整塊搬進當前的 swiper slide，關閉時搬回來。
+               沒有 .has-spec-info 時這層 div 不吃任何樣式，行為與原本完全相同。 *@
+            <div class="spec-media-stage">
+                <div class="modal-body mx-auto w-100 d-flex">
+                    <div id="Pro_Image" class="pro_img d-none"
+                         data-folder=""
+                         data-filename-x=""
+                         data-amount-x="1"
+                         data-pointer-zoom="2"
+                         hide-360-logo></div>
+                    <div id="Pro_360View" class="pro_360view d-none"
+                         data-folder="../upload/Product/3d_pro/"
+                         data-filename-x=""
+                         data-amount-x=""
+                         data-speed="100"
+                         data-drag-speed="120"
+                         data-pointer-zoom="2"></div>
+                    <video id="Pro_Video" class="pro_video d-none w-100 h-100" controls></video>
+                    <div id="Pro_Youtube" class="pro_youtube pro_external_video d-none w-100"></div>
+                </div>
+
+                <div class="pro-display-dots d-flex justify-content-center align-items-center gap-2 py-2"></div>
             </div>
 
-            <div class="pro-display-dots d-flex justify-content-center align-items-center gap-2 py-2"></div>
-
+            @* 外層 swiper：一張 slide ＝ 一個規格（左圖右文整組一起滑）。
+               只有從規格縮圖點進來（.has-spec-info）時才由 CSS 顯示。 *@
+            <div id="SpecSwiper" class="spec-swiper swiper">
+                <div class="swiper-wrapper"></div>
+            </div>
             <a href="#" class="material-symbols-outlined btn-tool next-btn">arrow_forward_ios</a>
         </div>
     </div>
@@ -133,167 +144,186 @@
     </div>
 </template>
 
+@* 規格圖燈箱的一張 slide ＝ 一個規格，由 Layout_2.js 的 fillSpecSlides() 複製填值。
+   .spec-media-preview 是滑動途中頂替用的靜態預覽圖，舞台搬進來後會被 CSS 收掉。 *@
+<template id="Template_Spec_Media_Slide">
+    <div class="swiper-slide spec-media-slide">
+        <div class="spec-media-figure">
+            <img class="spec-media-preview" src="" alt="" draggable="false" />
+        </div>
+        <div class="spec-media-info">
+            <button type="button" class="spec-media-name copy_btn">
+                <span class="spec-media-name-text"></span>
+                <span class="material-symbols-outlined copy-icon">content_copy</span>
+            </button>
+            <div class="spec-media-desc"></div>
+            <div class="spec-media-price"></div>
+        </div>
+    </div>
+</template>
+
 <Content id="main">
     <coker-safe-inherited-content website-id="@Model.HtmlSanitizeWebsiteId"
-                              parent-content="@Model.ParentSafeHtml"
-                              parent-css="@Model.ParentSafeCss"
-                              parent-source-id="@Model.ParentHtmlSanitizeSourceId"
-                              sanitize-policy="@Model.HtmlSanitizePolicy"
-                              rewrite-upload-paths="@Model.RewriteUploadPaths"
-                              upload-org-name="@Model.UploadOrgName"
-                              upload-parent-org-names="@Model.UploadParentOrgNames">
-    <div id="Product" class="container row m-auto my-3">
-        <div class="image col-md-6 col-sm-12">
-            <div class="container-fluid position-relative">
-                <div class="ProductSwiper swiper">
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide product-media-loading">
-                            <img class="pro_display img-fluid" src="~/images/directory-loading.svg" alt="商品圖片載入中" />
+                                  parent-content="@Model.ParentSafeHtml"
+                                  parent-css="@Model.ParentSafeCss"
+                                  parent-source-id="@Model.ParentHtmlSanitizeSourceId"
+                                  sanitize-policy="@Model.HtmlSanitizePolicy"
+                                  rewrite-upload-paths="@Model.RewriteUploadPaths"
+                                  upload-org-name="@Model.UploadOrgName"
+                                  upload-parent-org-names="@Model.UploadParentOrgNames">
+        <div id="Product" class="container row m-auto my-3">
+            <div class="image col-md-6 col-sm-12">
+                <div class="container-fluid position-relative">
+                    <div class="ProductSwiper swiper">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide product-media-loading">
+                                <img class="pro_display img-fluid" src="~/images/directory-loading.svg" alt="商品圖片載入中" />
+                            </div>
                         </div>
                     </div>
+                    <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
+                    <button class="btn_swiper_next_product rounded-circle border-0 text-white position-absolute end-0 opacity-50"><i class="fa-solid fa-chevron-right fs-3"></i></button>
+                    <div class="swiper-pagination ProductSwiperPagination"></div>
                 </div>
-                <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
-                <button class="btn_swiper_next_product rounded-circle border-0 text-white position-absolute end-0 opacity-50"><i class="fa-solid fa-chevron-right fs-3"></i></button>
-                <div class="swiper-pagination ProductSwiperPagination"></div>
+
+                <div thumbsSlider="" class="PreviewSwiper swiper my-3">
+                    <div class="swiper-wrapper align-items-center">
+                    </div>
+                    <div class="swiper-scrollbar"></div>
+                </div>
+
+                <ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2"></ul>
+                <span class="status d-none"></span>
             </div>
 
-            <div thumbsSlider="" class="PreviewSwiper swiper my-3">
-                <div class="swiper-wrapper align-items-center">
-                </div>
-                <div class="swiper-scrollbar"></div>
-            </div>
+            <div class="content col-md-6 col-sm-12">
+                <div class="pro_itemNo title fs-6 py-1"></div>
+                <h1 class="pro_title title fs-2">@Model.PageData.Title</h1>
 
-            <ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2"></ul>
-            <span class="status d-none"></span>
-        </div>
+                <div class="describe d-flex align-items-center justify-content-between position-relative">
+                    <ul class="introduce my-2"></ul>
 
-        <div class="content col-md-6 col-sm-12">
-            <div class="pro_itemNo title fs-6 py-1"></div>
-            <h1 class="pro_title title fs-2">@Model.PageData.Title</h1>
-
-            <div class="describe d-flex align-items-center justify-content-between position-relative">
-                <ul class="introduce my-2"></ul>
-
-                @if (ViewBag.LoginEnable)
-                {
-                    @if (ViewBag.isLogin)
+                    @if (ViewBag.LoginEnable)
                     {
-                        <div class="track text-center position-absolute">
-                            <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="@L.get("AddFavorite")">
-                                <div class="icon_love text-danger"></div>
-                            </button>
-                        </div>
+                        @if (ViewBag.isLogin)
+                        {
+                            <div class="track text-center position-absolute">
+                                <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="@L.get("AddFavorite")">
+                                    <div class="icon_love text-danger"></div>
+                                </button>
+                            </div>
+                        }
                     }
-                }
-            </div>
-
-            <hr class="m-1" />
-
-            <div class="specification text-center my-2">
-                <div id="SpecCollapse" class="collapse">
-                    <ul class="text-start w-100"></ul>
                 </div>
-                <button class="btn_detailed px-4 py-1 border-0 rounded-pill d-none" type="button" data-bs-toggle="collapse" data-bs-target="#SpecCollapse" aria-expanded="false" aria-controls="SpecCollapse">
-                    詳細規格
-                </button>
-            </div>
 
-            <div class="pro_tc px-3">
+                <hr class="m-1" />
+
+                <div class="specification text-center my-2">
+                    <div id="SpecCollapse" class="collapse">
+                        <ul class="text-start w-100"></ul>
+                    </div>
+                    <button class="btn_detailed px-4 py-1 border-0 rounded-pill d-none" type="button" data-bs-toggle="collapse" data-bs-target="#SpecCollapse" aria-expanded="false" aria-controls="SpecCollapse">
+                        詳細規格
+                    </button>
+                </div>
+
+                <div class="pro_tc px-3">
                     <div class="title">@L.get("CertificationMark")</div>
-                <ul class="image d-flex flex-wrap"></ul>
-            </div>
-            @if (ViewBag.storeBuyState.IndexOf("NoShow") < 0)
-            {
-                @* <div class="priceframe  flex-wrap"> *@
-                <template id="PriceListTemplate">
-                    <div class="price-option-card">
-                        <input type="radio" class="price-option-input d-none" name="priceRadio" />
+                    <ul class="image d-flex flex-wrap"></ul>
+                </div>
+                @if (ViewBag.storeBuyState.IndexOf("NoShow") < 0)
+                {
+                    @* <div class="priceframe  flex-wrap"> *@
+                    <template id="PriceListTemplate">
+                        <div class="price-option-card">
+                            <input type="radio" class="price-option-input d-none" name="priceRadio" />
 
-                        <label class="price-option-label" for="">
-                            <span class="price-option-body">
+                            <label class="price-option-label" for="">
+                                <span class="price-option-body">
 
-                                <span class="price-role-badge d-none">
-                                    <span class="price-role-name"></span>
+                                    <span class="price-role-badge d-none">
+                                        <span class="price-role-name"></span>
+                                    </span>
+
+                                    <span class="price-option-main">
+                                        <span class="sale-role-name d-none"></span>
+                                        <span class="sale-price text-danger fw-bold"></span>
+                                    </span>
+
+                                    <span class="price-option-sub d-none">
+                                        <span class="price-badge d-none"></span>
+                                        <span class="price-hint d-none"></span>
+                                    </span>
+
                                 </span>
+                            </label>
+                        </div>
+                    </template>
 
-                                <span class="price-option-main">
-                                    <span class="sale-role-name d-none"></span>
-                                    <span class="sale-price text-danger fw-bold"></span>
-                                </span>
+                    <div class="price-base-meta d-none">
+                        <div class="suggest-price d-none"></div>
+                        <div class="original-price d-none"></div>
+                    </div>
 
-                                <span class="price-option-sub d-none">
-                                    <span class="price-badge d-none"></span>
-                                    <span class="price-hint d-none"></span>
-                                </span>
-
-                            </span>
-                        </label>
+                    <div class="priceframe price-list flex-wrap"></div>
+                    <hr class="m-1" />
+                }
+                <template id="Template_Spec_Radio">
+                    <div class="radio d-flex align-items-center my-2">
+                        @*<div class="spec_title title"></div>*@
+                        <div class="spec_control control d-flex flex-wrap">
+                        </div>
                     </div>
                 </template>
-
-                <div class="price-base-meta d-none">
-                    <div class="suggest-price d-none"></div>
-                    <div class="original-price d-none"></div>
-                </div>
-
-                <div class="priceframe price-list flex-wrap"></div>
-                <hr class="m-1" />
-            }
-            <template id="Template_Spec_Radio">
-                <div class="radio d-flex align-items-center my-2">
-                    @*<div class="spec_title title"></div>*@
-                    <div class="spec_control control d-flex flex-wrap">
-                    </div>
-                </div>
-            </template>
-            @if (!string.IsNullOrWhiteSpace(ViewBag.linkMore)){
-                <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank" rel="noopener noreferrer">
-                    <div class="text-white">@L.get("LearnMore")</div>
-                </a>
-            }
+                @if (!string.IsNullOrWhiteSpace(ViewBag.linkMore))
+                {
+                    <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank" rel="noopener noreferrer">
+                        <div class="text-white">@L.get("LearnMore")</div>
+                    </a>
+                }
+            </div>
         </div>
-    </div>
 
-    <div id="CenterLine" class="container d-flex pt-sm-0 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
-        <div class="shareBlock d-none d-lg-flex align-items-center justify-content-center justify-content-sm-end">
-            <div>@L.get("Share")：</div>
-        </div>
-        <ul id="btn_tab" class="text d-flex pt-sm-0 nav nav-pills" role="tablist">
-            <li class="nav-item spec" role="presentation">
+        <div id="CenterLine" class="container d-flex pt-sm-0 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
+            <div class="shareBlock d-none d-lg-flex align-items-center justify-content-center justify-content-sm-end">
+                <div>@L.get("Share")：</div>
+            </div>
+            <ul id="btn_tab" class="text d-flex pt-sm-0 nav nav-pills" role="tablist">
+                <li class="nav-item spec" role="presentation">
                     <button class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductSpec" type="button" role="tab" aria-selected="true">@L.get("Specification")</button>
-            </li>
-            <li class="nav-item description" role="presentation">
-                <button id="pills-description-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="false">@L.get("ProductDescription")</button>
-            </li>
-            <li class="nav-item technical" role="presentation">
-                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("CertificationMark")</button>
-            </li>
-            <li class="nav-item files" role="presentation">
-                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#FileDownload" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("DownloadFile")</button>
-            </li>
-        </ul>
-    </div>
-
-    <div id="TabContent" class="tab-content container">
-        <div id="ProductSpec" class="container tab-pane fade show active" role="tabpanel" tabindex="0">
-            @if (shoppingEnable && hasShoppingCar && storeBuyState.IndexOf("noPay") < 0)
-            {
-                <partial name="_ProductAddOnPurchase" />
-            }
-            <div class="spec-list mt-3"></div>
-        </div>
-        <div id="ProductDescription" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
-            @* 商品說明由 GetMainDisplayOne 回傳已清洗、已 Decode 的 HTML。 *@
-            <Content></Content>
+                </li>
+                <li class="nav-item description" role="presentation">
+                    <button id="pills-description-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="false">@L.get("ProductDescription")</button>
+                </li>
+                <li class="nav-item technical" role="presentation">
+                    <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("CertificationMark")</button>
+                </li>
+                <li class="nav-item files" role="presentation">
+                    <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#FileDownload" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("DownloadFile")</button>
+                </li>
+            </ul>
         </div>
 
-        <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
-            <div class="techcert_list"></div>
-        </div>
+        <div id="TabContent" class="tab-content container">
+            <div id="ProductSpec" class="container tab-pane fade show active" role="tabpanel" tabindex="0">
+                @if (shoppingEnable && hasShoppingCar && storeBuyState.IndexOf("noPay") < 0)
+                {
+                    <partial name="_ProductAddOnPurchase" />
+                }
+                <div class="spec-list mt-3"></div>
+            </div>
+            <div id="ProductDescription" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
+                @* 商品說明由 GetMainDisplayOne 回傳已清洗、已 Decode 的 HTML。 *@
+                <Content></Content>
+            </div>
 
-        <div id="FileDownload" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
-            <div class="File_list"></div>
-        </div>
+            <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
+                <div class="techcert_list"></div>
+            </div>
+
+            <div id="FileDownload" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
+                <div class="File_list"></div>
+            </div>
         </div>
         <div class="shareBlock d-lg-none d-sm-flex mb-5 align-items-center justify-content-center">
             <div>@L.get("Share")：</div>

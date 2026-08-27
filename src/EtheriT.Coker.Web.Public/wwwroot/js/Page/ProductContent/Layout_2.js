@@ -41,9 +41,11 @@
         vis: { showPrice: false, showBuy: false },
         noStockManagement: false,
         state: null,
-        galleryItems: [],
-        galleryStartIndex: {}
+        gallerySpecs: [],
+        gallerySpecIndexById: {}
     };
+
+    let specSwiper = null;
 
     function t(key, fallback) {
         return M.resolveText(TEXT_OPTIONS, key, fallback);
@@ -326,8 +328,8 @@
             $card.append(
                 $('<img class="spec-thumb" alt="" />')
                     .attr('src', imgItems[0].link[0])
-                    // 圖片清單改由 renderContext 統一持有，這裡只記「從第幾張開始看」
-                    .data('galleryIndex', renderContext.galleryStartIndex[stock.id] ?? 0)
+                    // 燈箱以規格為單位切換，這裡記的是該規格在燈箱裡的位置
+                    .data('specIndex', renderContext.gallerySpecIndexById[stock.id] ?? -1)
             );
         } else {
             $card.append('<div class="spec-thumb spec-thumb-empty"></div>');
@@ -423,21 +425,139 @@
         });
     }
 
-    function openSpecGallery(startIndex) {
-        const page = window.productContentPage;
-        const viewer = page && page.mediaViewer;
-        if (!viewer || typeof bootstrap === 'undefined') return;
+    // 燈箱只顯示價格，不放數量與加入購物車（那些留在規格列表操作）。
+    // 計價邏輯與列表共用同一組函式，售價規則不會兩邊分岔。
+    function buildSpecPriceBlock(stock) {
+        const $box = $('<div class="spec-media-price"></div>');
+        const vis = renderContext.vis;
 
-        const items = renderContext.galleryItems;
-        if (!items.length) return;
+        if (!vis.showPrice) return $box;          // noPayNoShow：價格不顯示
 
-        const original = viewer.items;          // 先快照商品圖
-        viewer.setItems(items);                  // 換成「全部規格」的共用清單
-        viewer.showByIndex(startIndex);           // 從被點的規格那張開始（含 dots）
+        const plans = getPlans(stock);
+        const suggestText = buildSuggestText(stock, plans);
+
+        if (suggestText) {
+            $box.append($('<div class="spec-media-suggest text-decoration-line-through"></div>').text(suggestText));
+        }
+
+        plans.forEach(price => {
+            const $row = $('<div class="spec-media-plan"></div>')
+                .append($('<span class="spec-price"></span>').text(
+                    stock.timePrice ? local.MarketPrice : formatPlanPriceText(price.price, price.bonus)
+                ));
+
+            if (isBonusLack(price, renderContext.state)) {
+                $row.append($('<span class="spec-plan-badge"></span>').text(local.BonusInsufficient));
+            }
+
+            $box.append($row);
+        });
+
+        // 售完標示與列表一致，只在開放購買時才有意義
+        if (vis.showBuy && !stock.timePrice && !isStockAvailable(stock, renderContext.noStockManagement)) {
+            $box.append($('<div class="spec-media-empty"></div>').text(local.ProdEmpty));
+        }
+
+        return $box;
+    }
+
+    function fillSpecSlides() {
+        const template = $('#Template_Spec_Media_Slide').html();
+        const $wrapper = $('#SpecSwiper > .swiper-wrapper').empty();
+
+        renderContext.gallerySpecs.forEach(spec => {
+            const $slide = $(template);
+            const name = specName(spec.stock);
+
+            $slide.find('.spec-media-preview').attr('src', spec.items[0].link[0]);
+            // 與列表的名稱一樣可複製，data-copy 由 bindCopyName 讀取
+            $slide.find('.spec-media-name').attr('data-copy', name)
+                .find('.spec-media-name-text').text(name);
+            $slide.find('.spec-media-price').replaceWith(buildSpecPriceBlock(spec.stock));
+            // 與列表的 .spec-desc 一致，描述是後端已清洗的 HTML
+            $slide.find('.spec-media-desc').html(spec.stock.specDescription || '');
+            $wrapper.append($slide);
+        });
+    }
+
+    // 媒體舞台全站只有一組（#Pro_Image 等 id 寫死），用搬家的方式掛到目前這張 slide。
+    // media-viewer 每次都用全域 id 重抓節點、事件也委派在 modal 上，所以搬移不影響任何功能。
+    function mountStage(viewer, specIndex) {
+        const spec = renderContext.gallerySpecs[specIndex];
+        if (!spec) return;
 
         const $modal = $('#ProDisplayModal');
+        const $slides = $modal.find('.spec-media-slide').removeClass('is-stage-host');
+
+        $slides.eq(specIndex)
+            .addClass('is-stage-host')
+            .find('.spec-media-figure')
+            .append($modal.find('.spec-media-stage'));
+
+        viewer.setItems(spec.items);   // 只放這個規格自己的圖，dots 一併重畫
+        viewer.showByIndex(0);
+    }
+
+    // 關閉前一定要把舞台搬回 .modal-content，否則商品主圖的燈箱會找不到位置
+    function restoreStage() {
+        const $modal = $('#ProDisplayModal');
+        $modal.find('.spec-media-stage').insertAfter($modal.find('.btn-tool.prev-btn'));
+        $modal.find('.spec-media-slide').removeClass('is-stage-host');
+    }
+
+    function openSpecGallery(specIndex) {
+        const page = window.productContentPage;
+        const viewer = page && page.mediaViewer;
+        if (!viewer || typeof bootstrap === 'undefined' || typeof Swiper === 'undefined') return;
+        if (!renderContext.gallerySpecs[specIndex]) return;
+
+        const original = viewer.items;                    // 先快照商品圖
+        const $modal = $('#ProDisplayModal').addClass('has-spec-info');
+
+        fillSpecSlides();
+        viewer.setAutoFitModal(false);                    // 固定尺寸，不隨每張圖的比例縮放
+
+        // 規格模式下，燈箱的左右大箭頭改成換規格；圖片切換交給 dots 與滑動
+        viewer.navigateHandler = function (step) {
+            if (!specSwiper) return false;
+
+            if (step > 0) specSwiper.slideNext();
+            else specSwiper.slidePrev();
+
+            return true;
+        };
+
+        // swiper 在還沒顯示的 modal 裡量到的寬度是 0，必須等 shown 之後才建立
+        $modal.one('shown.bs.modal', function () {
+            specSwiper = new Swiper('#SpecSwiper', {
+                a11y: true,
+                initialSlide: specIndex,
+                rewind: true,
+                spaceBetween: 24,
+                observer: true,
+                observeParents: true,
+                // 在圖片上拖曳是「換圖 / 轉 360」，不是換規格
+                noSwipingClass: 'spec-media-stage',
+                on: {
+                    // 滑動途中舞台跟著舊 slide 移出、新 slide 用靜態預覽圖頂著，
+                    // 轉場結束才把舞台搬進來，中途不會有空白
+                    slideChangeTransitionEnd: sw => mountStage(viewer, sw.activeIndex)
+                }
+            });
+
+            mountStage(viewer, specIndex);
+        });
+
         $modal.one('hidden.bs.modal', function () {
-            viewer.setItems(original);           // 關閉後還原商品圖
+            restoreStage();
+            if (specSwiper) {
+                specSwiper.destroy(true, true);
+                specSwiper = null;
+            }
+            viewer.navigateHandler = null; 
+            viewer.setAutoFitModal(true);
+            $modal.removeClass('has-spec-info');
+            viewer.setItems(original);                    // 關閉後還原商品圖
         });
 
         bootstrap.Modal.getOrCreateInstance($modal.get(0)).show();
@@ -445,7 +565,7 @@
 
     function bindSpecGallery($container) {
         $container.on('click', '.spec-thumb', function () {
-            const index = normalizeNullableInt($(this).data('galleryIndex'), -1);
+            const index = normalizeNullableInt($(this).data('specIndex'), -1);
             if (index >= 0) openSpecGallery(index);
         });
     }
@@ -463,44 +583,32 @@
         $('#Product > .image').addClass('d-none');           // 沒圖 → 收掉 .image
         $('#Product > .content').removeClass('col-md-6 col-sm-12').addClass('col-12'); // .content 補滿
     }
-
-    function buildSharedGallery(stocks) {
-        const items = [];
-        const startIndex = {};
-        const seen = new Map();
+    // 只有帶圖片的規格會進燈箱，陣列順序就是 swiper 的 slide 順序
+    function buildGallerySpecs(stocks) {
+        const specs = [];
+        const indexById = {};
 
         stocks.forEach(stock => {
-            let first = -1;
+            const items = specImageItems(stock);
+            if (!items.length) return;
 
-            specImageItems(stock).forEach(item => {
-                const key = normalizeNullableInt(item.id, -1);
-                let index;
-
-                if (key >= 0 && seen.has(key)) {
-                    index = seen.get(key);          // 重複的圖沿用既有位置
-                } else {
-                    index = items.length;
-                    items.push(item);
-                    if (key >= 0) seen.set(key, index);
-                }
-
-                if (first < 0) first = index;
-            });
-            if (first >= 0) startIndex[stock.id] = first;
+            indexById[stock.id] = specs.length;
+            specs.push({ stock: stock, items: items });
         });
-        return { items: items, startIndex: startIndex };
+
+        return { specs: specs, indexById: indexById };
     }
 
     function render($container, result, state) {
         const stocks = result && Array.isArray(result.stocks) ? result.stocks : [];
-        const gallery = buildSharedGallery(stocks);
+        const gallery = buildGallerySpecs(stocks);
 
         renderContext = {
             vis: resolveVisibility(state, result),
             noStockManagement: !!(result && result.noStockManagement),
             state: state,
-            galleryItems: gallery.items,
-            galleryStartIndex: gallery.startIndex
+            gallerySpecs: gallery.specs,
+            gallerySpecIndexById: gallery.indexById
         };
 
         $container.empty();
@@ -526,6 +634,7 @@
         bindSpecGallery($container);
         bindAddToCart($container, state);
         bindCopyName($container);
+        bindCopyName($('#ProDisplayModal'));
         bindVariantSelection($container);
 
         Product.GetOne.ProdMainDisplay(pid)

@@ -13,6 +13,7 @@
     var fieldMemo = Model.key.Equals("priceCurrency", StringComparison.OrdinalIgnoreCase)
         ? "用於商品價格顯示與搜尋引擎結構化資料，不會換算商品金額，也不會變更第三方金流的交易幣別。目前金流僅支援新臺幣的網站請維持 TWD。"
         : Model.memo;
+    var fieldPattern = string.IsNullOrWhiteSpace(Model.pattern) ? null : Model.pattern;
 }
 
 <div class="store-setting-field h-100">
@@ -29,7 +30,7 @@
                    autocomplete="off"
                    class="form-control"
                    type="@Model.type"
-                   pattern="@Model.pattern"
+                   pattern="@fieldPattern"
                    maxlength="@Model.maxlength" />
             @if (!string.IsNullOrWhiteSpace(Model.memo))
             {

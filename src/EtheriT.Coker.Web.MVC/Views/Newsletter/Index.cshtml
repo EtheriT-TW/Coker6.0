@@ -12,6 +12,14 @@
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
 }
+<script>
+    window.CokerGrapesReady = Promise.resolve(window.CokerGrapesReady)
+        .then(async function (library) {
+            const { createNewsletterPlugin } = await import('/modules/grapesjs/etherit-coker-grapesjs-newsletter.min.js');
+            window.CokerGrapesNewsletterPlugin = createNewsletterPlugin();
+            return library;
+        });
+</script>
 <script src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
 <script src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
 <script src="/lib/CokerMultiStepForm/js/index.min.js" asp-append-version="true"></script>

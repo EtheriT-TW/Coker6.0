@@ -836,18 +836,6 @@ namespace EtheriT.Coker.Application
                         result.Css = sanitized.Css;
                         result.LastModificationTime = null;
                         result.Html = result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "").Replace("&lt;content&gt;", "").Replace("&lt;/content&gt;", "");
-                        if (string.IsNullOrEmpty(result.Description))
-                        {
-                            result.Description = htmlProcessor.text(
-                                htmlProcessor.RemoveNode(
-                                    htmlProcessor.RemoveNode(
-                                        htmlProcessor.RemoveNode(
-                                            stringHandler.HtmlDecode(result.Html), ".material-symbols-outlined"
-                                        ), ".anchor_directory"
-                                    ), ".d-none"
-                                )
-                            );
-                        }
                         result.CurrentUrl = $"/{menu.RouterName}";
                         result.VisibleFooter = menu.VisibleFooter;
                         result.VisibleHeader = menu.VisibleHeader;

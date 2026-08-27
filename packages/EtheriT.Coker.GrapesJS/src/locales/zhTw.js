@@ -1,0 +1,226 @@
+const traitInputAttr = { placeholder: '例如：輸入文字' };
+
+export const grapesZhTw = {
+    assetManager: {
+        addButton: '新增圖片',
+        inputPlh: 'http://path/to/the/image.jpg',
+        modalTitle: '選擇圖片',
+        uploadTitle: '點擊或拖曳圖片上傳'
+    },
+    domComponents: {
+        names: {
+            '': '區塊',
+            wrapper: '頁面',
+            text: '文字',
+            comment: '註解',
+            image: '圖片',
+            video: '影片',
+            label: '文字',
+            link: '超連結',
+            map: '地圖',
+            tfoot: '表尾',
+            tbody: '表身',
+            thead: '表頭',
+            table: '表格',
+            row: '行',
+            cell: '儲存格'
+        }
+    },
+    deviceManager: {
+        device: '設備',
+        devices: {
+            desktop: '電腦',
+            tablet: '平板',
+            mobileLandscape: '手機橫放',
+            mobilePortrait: '手機直放'
+        }
+    },
+    panels: {
+        buttons: {
+            titles: {
+                preview: '預覽',
+                fullscreen: '全螢幕',
+                'sw-visibility': '顯示元件邊界',
+                'export-template': '檢視原始碼',
+                'open-sm': '開啟樣式管理器',
+                'open-tm': '設定',
+                'open-layers': '開啟圖層管理器',
+                'open-blocks': '開啟元件區塊'
+            }
+        }
+    },
+    blockManager: {
+        labels: {
+            column1: '一欄位',
+            column2: '兩欄位',
+            column3: '三欄位',
+            'column2-3/7': '三七分欄位',
+            text: '文字',
+            link: '連結',
+            image: '圖片',
+            video: '影片',
+            map: '地圖',
+            'link-block': '區塊連結',
+            quote: '引用',
+            'text-section': '段落',
+            table: '表格',
+            nColumns: '欄位數'
+        }
+    },
+    selectorManager: {
+        label: '元件',
+        selected: '選擇器',
+        emptyState: '- 狀態 -',
+        states: {
+            hover: '滑鼠移入',
+            active: '點擊',
+            'nth-of-type(2n)': '偶數／奇數'
+        }
+    },
+    styleManager: {
+        empty: '設定樣式前，請選擇一個元素',
+        layer: '圖層',
+        fileButton: '圖片',
+        sectors: {
+            general: '常見',
+            layout: '排版',
+            typography: '文字',
+            decorations: '設計',
+            extra: '擴充',
+            flex: '模型',
+            dimension: '尺寸'
+        },
+        properties: {
+            display: '顯示方式',
+            width: '寬度',
+            height: '高度',
+            margin: '外距',
+            'margin-top-sub': '上方外距',
+            'margin-left-sub': '左方外距',
+            'margin-right-sub': '右方外距',
+            'margin-bottom-sub': '下方外距',
+            padding: '內距',
+            'padding-top-sub': '上方內距',
+            'padding-left-sub': '左方內距',
+            'padding-right-sub': '右方內距',
+            'padding-bottom-sub': '下方內距',
+            'min-width': '最小寬度',
+            'max-width': '最大寬度',
+            'min-height': '最小高度',
+            'max-height': '最大高度',
+            'font-family': '字型',
+            'font-size': '文字大小',
+            'font-weight': '字體粗細',
+            'letter-spacing': '文字間距',
+            color: '文字顏色',
+            'line-height': '行高',
+            'text-align': '文字對齊',
+            'text-shadow': '文字陰影',
+            background: '背景',
+            'background-color': '背景顏色',
+            'border-radius': '圓角',
+            border: '框線',
+            'border-width-sub': '框線寬度',
+            'border-style-sub': '框線樣式',
+            'box-shadow': '區塊陰影',
+            opacity: '透明度'
+        }
+    },
+    traitManager: {
+        empty: '設定前請選擇一個元素',
+        label: '元件設定',
+        traits: {
+            attributes: {
+                id: traitInputAttr,
+                alt: traitInputAttr,
+                title: traitInputAttr,
+                href: { placeholder: '例如：https://google.com' }
+            },
+            options: {
+                target: {
+                    false: '目前視窗',
+                    _blank: '另開新視窗'
+                }
+            }
+        }
+    }
+};
+
+export const tuiImageEditorZhTw = {
+    Resize: '調整尺寸',
+    Crop: '裁切',
+    Flip: '翻轉',
+    Rotate: '旋轉',
+    Draw: '繪圖',
+    Shape: '形狀',
+    Icon: '圖示',
+    Text: '文字',
+    Mask: '遮罩',
+    Filter: '濾鏡',
+    History: '歷程',
+    Undo: '復原',
+    Redo: '重做',
+    Reset: '重設',
+    Delete: '刪除',
+    DeleteAll: '全部刪除',
+    ZoomIn: '放大',
+    ZoomOut: '縮小',
+    Hand: '拖曳畫布',
+    Load: '載入',
+    Download: '下載',
+    Apply: '套用',
+    Cancel: '取消',
+    Custom: '自訂',
+    Square: '正方形',
+    Free: '自由繪製',
+    Straight: '直線',
+    Color: '顏色',
+    Range: '範圍',
+    'Flip X': '水平翻轉',
+    'Flip Y': '垂直翻轉',
+    Rectangle: '矩形',
+    Circle: '圓形',
+    Triangle: '三角形',
+    Fill: '填滿顏色',
+    Stroke: '框線',
+    Bold: '粗體',
+    Italic: '斜體',
+    Underline: '底線',
+    Left: '靠左',
+    Center: '置中',
+    Right: '靠右',
+    'Text size': '文字大小',
+    Width: '寬度',
+    Height: '高度',
+    'Lock Aspect Ratio': '鎖定長寬比',
+    'Load Mask Image': '載入遮罩圖片',
+    Arrow: '箭頭',
+    'Arrow-2': '箭頭 2',
+    'Arrow-3': '箭頭 3',
+    'Star-1': '星形 1',
+    'Star-2': '星形 2',
+    Polygon: '多邊形',
+    Location: '位置',
+    Heart: '愛心',
+    Bubble: '對話框',
+    'Custom icon': '自訂圖示',
+    Grayscale: '灰階',
+    Invert: '反相',
+    Sepia: '復古棕褐',
+    Sepia2: '復古棕褐 2',
+    Blur: '模糊',
+    Sharpen: '銳化',
+    Emboss: '浮雕',
+    'Remove White': '移除白色',
+    Distance: '容許範圍',
+    Brightness: '亮度',
+    Noise: '雜訊',
+    Pixelate: '像素化',
+    'Color Filter': '色彩篩選',
+    Threshold: '臨界值',
+    Tint: '著色',
+    Multiply: '色彩相乘',
+    Blend: '色彩混合',
+    'Zoom In': '放大',
+    'Zoom Out': '縮小'
+};

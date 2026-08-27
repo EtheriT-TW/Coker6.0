@@ -194,12 +194,12 @@ PublishScripts/
 
 # NuGet Packages
 *.nupkg
-# NuGet Symbol Packages
 *.snupkg
-# The packages folder can be ignored because of Package Restore
-**/[Pp]ackages/*
-# except build/, which is used as an MSBuild target.
-!**/[Pp]ackages/build/
+
+# Legacy NuGet packages folder.
+# Do not ignore root /packages because it is used for frontend workspace packages.
+src/**/[Pp]ackages/*
+!src/**/[Pp]ackages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
@@ -387,11 +387,16 @@ upload/**/*.*
 **/wwwroot/lib/devextreme/reporting/**/*.*
 **/wwwroot/lib/devextreme/analytics-core/**/*.*
 */*/wwwroot/dist/
-**/package-lock.json
 *.lock
 *.bak
 db/**/*.*
 .sonarqube/**/*.*
+
+# Ignore legacy / existing package-lock files under .NET projects.
+src/**/package-lock.json
+
+# Keep package-lock.json for frontend workspace packages.
+!packages/**/package-lock.json
 
 # Thumbnail image
 **/wwwroot/thumb/**/*.*
@@ -401,10 +406,14 @@ src/EtheriT.Coker.Web.MVC/appsettings2.json
 src/EtheriT.Coker.Web.Public/appsettings2.json
 src/EtheriT.Coker.Web.MVC/wwwroot/lib/bootstrap/LICENSE
 
-.gitignore
 appsettings.bronson.json
 launchSettings.json
 
 # codex
 .codex-*/
 **/devextreme-license.js
+
+# Frontend package build outputs
+packages/*/dist/
+
+!**/wwwroot/modules/**/*.min.js

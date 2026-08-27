@@ -11,6 +11,9 @@ namespace EtheriT.Coker.Application.Shared.Directory
     {
         public Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto);
         public Task<DirectoryGetDataDto> GetDataOne(long Id);
+        public Task<List<DirectoryGetDataDto>> GetSeoData(
+            IReadOnlyCollection<long> ids,
+            long websiteId);
         public Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto);
         public Task<MenuItemDto> GetReleMenu(DataIdWebsiteIdDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, bool includeAdvertise = false);

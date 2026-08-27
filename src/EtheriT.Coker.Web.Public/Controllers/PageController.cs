@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Shared.Advertise;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Currency;
+using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -66,6 +67,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly IConfiguration Configuration;
         private readonly IWebsiteApplication websiteApplication;
         private readonly IArticleAppService articleAppService;
+        private readonly IDirectoryAppService directoryAppService;
         private readonly IHtmlContentAppService htmlContentAppService;
         private readonly IProductAppService productAppService;
         private readonly ICustSearchAppService custSearchAppService;
@@ -93,6 +95,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             IConfiguration configuration,
             IWebsiteApplication websiteApplication,
             IArticleAppService articleAppService,
+            IDirectoryAppService directoryAppService,
             IHtmlContentAppService htmlContentAppService,
             IProductAppService productAppService,
             IStoreSetAppService storeSetAppService,
@@ -120,6 +123,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.Configuration = configuration;
             this.websiteApplication = websiteApplication;
             this.articleAppService = articleAppService;
+            this.directoryAppService = directoryAppService;
             this.htmlContentAppService = htmlContentAppService;
             this.productAppService = productAppService;
             this.stringHandler = stringHandler;
@@ -347,15 +351,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             Response.StatusCode = 404;
                             view = "../Error/NotFound";
                         }
-                        else
-                        {
-                            if (string.IsNullOrEmpty(model.PageData.Description))
-                            {
-                                string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
-                                model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
-                            }
-                            view = "Index";
-                        }
+                        else view = "Index";
                         break;
                     case "product":
                         htmlSanitizeSourceType = HtmlSanitizeSourceType.商品;
@@ -399,11 +395,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                     Link = "",
                                 });
 
-                                if (!string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.Description))
-                                {
-                                    string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
-                                    model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
-                                }
                                 productSeoData = await productAppService.GetSeoData(
                                     new ProdGetFrontContenInputDto
                                     {
@@ -452,15 +443,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             Response.StatusCode = 404;
                             view = "../Error/NotFound";
                         }
-                        else
-                        {
-                            if (string.IsNullOrEmpty(model.PageData.Description))
-                            {
-                                string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
-                                model.PageData.Description = Regex.Replace(htmlString, @"<(.|\n)*?>", "");
-                            }
-                            view = "Index";
-                        }
+                        else view = "Index";
                         break;
                     case "privacy":
                         htmlSanitizeSourceType = HtmlSanitizeSourceType.頁面;
@@ -547,15 +530,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 Response.StatusCode = 404;
                                 view = "../Error/NotFound";
                             }
-                            else
-                            {
-                                if (string.IsNullOrEmpty(model.PageData.Description))
-                                {
-                                    string htmlString = stringHandler.HtmlDecode(model.PageData.Html);
-                                    model.PageData.Description = Regex.Replace(htmlString, @"(<(.|\n)*?>|\s)", "");
-                                }
-                                view = "Index";
-                            }
+                            else view = "Index";
                         }
                         break;
                 }
@@ -709,7 +684,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ? model.PageData.SiteName
                 : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
             ViewBag.PageTagNameName = HttpUtility.HtmlAttributeEncode(ViewBag.PageTagNameName.Trim());
-            ViewData["Description"] = model.PageData.Description;
+            var seoDescription = await SeoMetaDescription.BuildAsync(
+                htmlProcessor,
+                model.PageData.Description,
+                model.SafeHtml,
+                defaultData.Description,
+                model.PageData.Title,
+                model.locale,
+                directoryIds => directoryAppService.GetSeoData(
+                    directoryIds,
+                    siteId));
+            ViewData["Description"] = seoDescription;
             ViewBag.GA4 = model.storeSet.GA4;
             ViewBag.GTM = model.storeSet.GTM;
             ViewBag.GoogleAds = model.storeSet.GoogleAds;
@@ -729,7 +714,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     canonicalPageUrl,
                     rootUri,
                     productImageUrl,
-                    model.PageData.Description,
+                    seoDescription,
                     priceCurrency.Code);
                 RemoveNullStructuredDataValues(productStructuredData);
 

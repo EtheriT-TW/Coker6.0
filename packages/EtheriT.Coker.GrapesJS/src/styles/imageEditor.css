@@ -1,0 +1,46 @@
+.coker-image-editor-save {
+    position: absolute;
+    z-index: 2;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    color: #ddd;
+    background: #3b3335;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.coker-image-editor-save:hover,
+.coker-image-editor-save:focus-visible {
+    color: #fff;
+    background: #4f4447;
+    outline: none;
+}
+
+.coker-image-editor-save:disabled {
+    color: #bbb;
+    background: #3b3335;
+    cursor: wait;
+    opacity: 0.85;
+}
+
+.coker-image-editor-save.is-uploading .material-symbols-outlined {
+    animation: coker-image-editor-spin 0.9s linear infinite;
+}
+
+.coker-image-editor-save .material-symbols-outlined {
+    font-size: 24px;
+}
+
+@keyframes coker-image-editor-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

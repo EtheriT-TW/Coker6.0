@@ -1,5 +1,4 @@
-﻿var $gjs_select = null;
-grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
+﻿function swiperPlugin(editor, options = {}) {
     const AssetManager = editor.AssetManager;
     const isSwiperSlide = cmp => {
         const classes = typeof cmp.getClasses === 'function' ? cmp.getClasses() : [];
@@ -637,4 +636,11 @@ grapesjs.plugins.add('grapesjs-Swiper', (editor, options) => {
         }
         return Link;
     }
-});
+}
+
+if (window.grapesjs && window.grapesjs.plugins) {
+    window.grapesjs.plugins.add('grapesjs-Swiper', swiperPlugin);
+}
+
+window.CokerGrapesLegacyPlugins = window.CokerGrapesLegacyPlugins || {};
+window.CokerGrapesLegacyPlugins.swiperPlugin = swiperPlugin;

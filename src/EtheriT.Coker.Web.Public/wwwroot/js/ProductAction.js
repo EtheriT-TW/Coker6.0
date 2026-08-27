@@ -291,9 +291,12 @@ function HeaderDataInsert($frame, data) {
                     if (data.available) {
                         if (data.bonus > 0) {
                             const price = parseInt($self.text());
+                            $self.toggleClass("price", price > 0);
                             if (price > 0) $self.text(`${price.toLocaleString()}+紅利${data.bonus}`);
                             else $self.text(`紅利${data.bonus}`);
-                        } else $self.text(parseInt($self.text()).toLocaleString())
+                        } else {
+                            $self.addClass("price").text(parseInt($self.text()).toLocaleString());
+                        }
                     }
                     break;
             };

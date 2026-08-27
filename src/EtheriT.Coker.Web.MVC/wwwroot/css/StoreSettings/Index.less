@@ -1,0 +1,46 @@
+#StoreSettingsMain {
+    max-width: 1200px;
+    margin: 0 auto;
+
+    .store-settings-section {
+        background: #fff;
+    }
+
+    .store-setting-field {
+        .form-control,
+        .form-select {
+            min-height: 2.75rem;
+        }
+
+        textarea.form-control {
+            min-height: 8rem;
+        }
+    }
+
+    .store-setting-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem 1.5rem;
+
+        .form-check {
+            margin-bottom: 0;
+        }
+    }
+
+    .store-settings-actions {
+        z-index: 10;
+        background: rgba(255, 255, 255, .94);
+        backdrop-filter: blur(6px);
+    }
+}
+
+@media (max-width: 767.98px) {
+    #StoreSettingsMain {
+        padding-right: .75rem !important;
+        padding-left: .75rem !important;
+
+        .card-body {
+            padding: 1rem !important;
+        }
+    }
+}

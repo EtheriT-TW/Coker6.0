@@ -64,6 +64,56 @@
             return null;
         }
 
+        getRequestedStockId() {
+            const value = new URLSearchParams(window.location.search).get('psid');
+            const stockId = normalizeNullableInt(value, 0);
+            return stockId > 0 ? stockId : null;
+        }
+
+        setVariantUrl(stockId) {
+            const normalizedStockId = normalizeNullableInt(stockId, 0);
+            const url = new URL(window.location.href);
+
+            if (normalizedStockId > 0) {
+                url.searchParams.set('psid', String(normalizedStockId));
+            } else {
+                url.searchParams.delete('psid');
+            }
+
+            if (url.href === window.location.href) return;
+
+            const historyState = $.extend({}, window.history.state || {}, {
+                productId: Number(this.state.productId)
+            });
+            window.history.replaceState(historyState, '', url.href);
+            this.refreshShareUrl();
+        }
+
+        syncVariantUrlFromSelection() {
+            const activeStock = this.state.selection?.getActiveStock?.();
+            if (activeStock?.id > 0) {
+                this.setVariantUrl(activeStock.id);
+            }
+        }
+
+        refreshShareUrl() {
+            const shareHref = window.location.pathname + window.location.search;
+            this.$pageRoot.find('.shareBlock').each(function () {
+                const $share = $(this);
+                $share.find('a[data-icon]').off().remove();
+                if (typeof window.ProShare === 'function') {
+                    $share.off('mouseenter', window.ProShare).off('mouseleave', window.ProShare);
+                }
+                $share.removeData('init')
+                    .data('href', shareHref)
+                    .attr('data-href', shareHref);
+            });
+
+            if (typeof window.ShareBlockInit === 'function') {
+                window.ShareBlockInit(this.$pageRoot);
+            }
+        }
+
         init() {
             this.bindStaticEvents();
             if (typeof this.bindNavigation === 'function') this.bindNavigation();
@@ -140,7 +190,15 @@
                 }
 
                 this.state.product = result;
-                this.state.selection = new ProductSelectionEngine(result, this.options);
+                const requestedStockId = this.getRequestedStockId();
+                this.state.selection = new ProductSelectionEngine(result, {
+                    ...this.options,
+                    initialStockId: requestedStockId
+                });
+
+                if (requestedStockId && !this.state.selection.initialStockMatched) {
+                    this.setVariantUrl(null);
+                }
 
                 if (typeof this.options.hooks.afterLoad === 'function') {
                     this.options.hooks.afterLoad(result, this);
@@ -203,6 +261,31 @@
 
             if (typeof this.afterProductNavigation === 'function') {
                 this.afterProductNavigation();
+            }
+
+            // AJAX 切換商品後同步檢查伺服器輸出的 JSON-LD 是否仍對應目前商品。
+            this.renderStructuredData();
+        }
+
+        renderStructuredData() {
+            const result = this.state.product;
+            const scriptId = 'product-structured-data';
+            const existingScript = document.getElementById(scriptId);
+            const renderedProductId = existingScript?.dataset?.productId;
+            const breadcrumbScript = document.getElementById('breadcrumb-structured-data');
+            const breadcrumbPageType = breadcrumbScript?.dataset?.pageType;
+            const breadcrumbPageId = breadcrumbScript?.dataset?.pageId;
+
+            // JSON-LD 僅採用伺服器端產生的非會員公開價格。
+            // AJAX 切換商品時沒有對應的伺服器 SEO 資料，移除舊商品資料以免內容不一致。
+            if (!result || !existingScript || String(result.id) !== String(renderedProductId)) {
+                existingScript?.remove();
+            }
+            if (!result ||
+                !breadcrumbScript ||
+                breadcrumbPageType !== 'Product' ||
+                String(result.id) !== String(breadcrumbPageId)) {
+                breadcrumbScript?.remove();
             }
         }
 
@@ -665,9 +748,7 @@
         }
 
         initShare() {
-            if (typeof window.ShareBlockInit === 'function') {
-                window.ShareBlockInit();
-            }
+            this.refreshShareUrl();
         }
 
         initFavorite() {

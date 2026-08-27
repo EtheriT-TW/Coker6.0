@@ -162,11 +162,19 @@
         return fallback;
     }
 
-    function formatPriceText(price, bonus, withDollar = true) {
+    function formatMoney(price) {
+        if (window.CokerCurrency && typeof window.CokerCurrency.format === 'function') {
+            return window.CokerCurrency.format(price);
+        }
+
+        return `NT$${formatNumber(price)}`;
+    }
+
+    function formatPriceText(price, bonus, withCurrency = true) {
         price = normalizeNullableInt(price);
         bonus = normalizeNullableInt(bonus);
 
-        const money = withDollar ? `$${formatNumber(price)}` : formatNumber(price);
+        const money = withCurrency ? formatMoney(price) : formatNumber(price);
 
         if (bonus > 0) {
             if (price === 0) return `${local.Bonus}:${formatNumber(bonus)}`;
@@ -231,8 +239,8 @@
 
         if (hasTimePrice && priceCandidates.length > 0) {
             return options.showRange
-                ? `$${formatNumber(min)} ~ ${local.MarketPrice}`
-                : `$${formatNumber(target)}`;
+                ? `${formatMoney(min)} ~ ${local.MarketPrice}`
+                : formatMoney(target);
         }
 
         if (options.showRange) {
@@ -240,7 +248,7 @@
                 const single = priceCandidates.find(x => x.total === min);
                 return formatPriceText(single.price, single.bonus);
             }
-            return `$${formatNumber(min)} ~ $${formatNumber(max)}`;
+            return `${formatMoney(min)} ~ ${formatMoney(max)}`;
         }
 
         const selected = priceCandidates.find(x => x.total === target);
@@ -273,7 +281,7 @@
             originalPrice !== currentPrice;
 
         const originalPriceText = showOriginalPrice
-            ? `${baseRoleName} $${formatNumber(originalPrice)}`
+            ? `${baseRoleName} ${formatMoney(originalPrice)}`
             : '';
 
         const showBonusLack =
@@ -292,7 +300,7 @@
             showRoleName,
             showSuggestPrice,
             suggestPriceText: showSuggestPrice
-                ? `${local.SuggestedPrice}$${formatNumber(suggestPrice)}`
+                ? `${local.SuggestedPrice}${formatMoney(suggestPrice)}`
                 : '',
             showOriginalPrice,
             originalPriceText,
@@ -337,13 +345,13 @@
             showSuggestPrice,
             suggestPriceLabel: local.SuggestedPrice,
             suggestPriceValue: showSuggestPrice
-                ? `$${formatNumber(suggestPrice)}`
+                ? formatMoney(suggestPrice)
                 : '',
 
             showOriginalPrice,
             originalPriceLabel: local.RolePriceLabel.format(baseRoleName),
             originalPriceValue: showOriginalPrice
-                ? `$${formatNumber(originalPrice)}`
+                ? formatMoney(originalPrice)
                 : ''
         };
     }

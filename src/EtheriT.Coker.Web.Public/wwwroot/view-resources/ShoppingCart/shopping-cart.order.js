@@ -137,7 +137,7 @@
         item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
         item_specification.append(result.s2Title == "" ? "" : '<span class="border px-1">' + result.s2Title + '</span>')
         if (result.price > 0)
-            item_unit.text(`$${(result.price).toLocaleString('en-US')}`)
+            item_unit.text(cart.Utils.formatMoney(result.price))
         if (result.bonusPrice > 0)
             item_unitBonus.text(`紅利：${(result.bonusPrice).toLocaleString('en-US')}`)
         item_quantity.text(result.quantity);

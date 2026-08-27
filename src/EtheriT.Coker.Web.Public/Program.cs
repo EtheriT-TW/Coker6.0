@@ -479,6 +479,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
+    name: "Robots",
+    pattern: "robots.txt",
+    defaults: new { controller = "Robots", action = "Index" }
+);
+
+app.MapControllerRoute(
     name: "Sitemap",
     pattern: "Sitemap",
     defaults: new { controller = "Sitemap", action = "Index" }

@@ -73,12 +73,14 @@ namespace EtheriT.Coker.Application.StoreSet
                                               memo = s.memo,
                                               pattern = s.pattern,
                                               type = s.type!,
+                                              DefaultValue = s.DefaultValue,
                                               storeSetItems = (
                                                  from item in db.StoreSetItems.Where(e => (e.Level == null || level >= e.Level) && e.FK_StoreSetId == s.Id)
                                                  select new StoreSetItemOutputDto
                                                  {
                                                      Key = item.Key,
                                                      Value = item.Value,
+                                                     IsDefault = item.IsDefault,
                                                  }
                                              ).ToList()
                                           }).ToList()

@@ -1,0 +1,123 @@
+@using EtheriT.Coker.Application.Dto.StoreSet
+@using EtheriT.Coker.Application.Shared.Currency
+@using EtheriT.Coker.Application.Shared.Dto.enumType
+@model StoreSetOutputDto
+
+@{
+    var fieldId = Model.key;
+    var defaultValue = Model.storeSetItems.FirstOrDefault(option => option.IsDefault)?.Key
+        ?? Model.DefaultValue;
+    var fieldName = Model.key.Equals("priceCurrency", StringComparison.OrdinalIgnoreCase)
+        ? "商品標價幣別（顯示與 SEO）"
+        : Model.name;
+    var fieldMemo = Model.key.Equals("priceCurrency", StringComparison.OrdinalIgnoreCase)
+        ? "用於商品價格顯示與搜尋引擎結構化資料，不會換算商品金額，也不會變更第三方金流的交易幣別。目前金流僅支援新臺幣的網站請維持 TWD。"
+        : Model.memo;
+}
+
+<div class="store-setting-field h-100">
+    @switch (Model.type)
+    {
+        case SeoSetDataTypeEnum.text:
+        case SeoSetDataTypeEnum.number:
+        case SeoSetDataTypeEnum.email:
+        case SeoSetDataTypeEnum.date:
+        case SeoSetDataTypeEnum.password:
+            <label class="form-label fw-semibold" for="@fieldId">@Model.name</label>
+            <input id="@fieldId"
+                   name="@Model.key"
+                   autocomplete="off"
+                   class="form-control"
+                   type="@Model.type"
+                   pattern="@Model.pattern"
+                   maxlength="@Model.maxlength" />
+            @if (!string.IsNullOrWhiteSpace(Model.memo))
+            {
+                <div class="form-text">@Model.memo</div>
+            }
+            break;
+
+        case SeoSetDataTypeEnum.textarea:
+            <label class="form-label fw-semibold" for="@fieldId">@Model.name</label>
+            <textarea id="@fieldId"
+                      name="@Model.key"
+                      autocomplete="off"
+                      class="form-control"
+                      placeholder="@Model.memo"
+                      maxlength="@Model.maxlength"
+                      rows="5"></textarea>
+            break;
+
+        case SeoSetDataTypeEnum.select:
+            <label class="form-label fw-semibold required_all" for="@fieldId">@fieldName</label>
+            <select id="@fieldId" name="@Model.key" class="form-select" autocomplete="off" required>
+                <option value="" disabled selected="@(string.IsNullOrWhiteSpace(defaultValue) ? "selected" : null)">請選擇 @fieldName</option>
+                @foreach (var option in Model.storeSetItems)
+                {
+                    var currency = Model.key.Equals("priceCurrency", StringComparison.OrdinalIgnoreCase)
+                        ? CurrencyCatalog.Find(option.Key)
+                        : null;
+                    var optionLabel = currency == null
+                        ? option.Value
+                        : $"{currency.Name}（{currency.Code}／{currency.Symbol}）";
+                    <option value="@option.Key" selected="@(string.Equals(option.Key, defaultValue, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@optionLabel</option>
+                }
+            </select>
+            @if (!string.IsNullOrWhiteSpace(fieldMemo))
+            {
+                <div class="form-text">@fieldMemo</div>
+            }
+            <div class="invalid-feedback">@fieldName 不可為空</div>
+            break;
+
+        case SeoSetDataTypeEnum.checkBox:
+            <fieldset>
+                <legend class="form-label fw-semibold">@Model.name</legend>
+                <div class="store-setting-options border rounded p-3">
+                    @foreach (var option in Model.storeSetItems)
+                    {
+                        var optionId = $"{Model.key}-{option.Key}";
+                        <div class="form-check">
+                            <input id="@optionId"
+                                   name="@Model.key"
+                                   class="form-check-input"
+                                   type="checkbox"
+                                   value="@option.Key"
+                                   checked="@(option.IsDefault ? "checked" : null)" />
+                            <label class="form-check-label" for="@optionId">@option.Value</label>
+                        </div>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.memo))
+                {
+                    <div class="form-text">@Model.memo</div>
+                }
+            </fieldset>
+            break;
+
+        case SeoSetDataTypeEnum.radio:
+            <fieldset>
+                <legend class="form-label fw-semibold">@Model.name</legend>
+                <div class="store-setting-options border rounded p-3">
+                    @foreach (var option in Model.storeSetItems)
+                    {
+                        var optionId = $"{Model.key}-{option.Key}";
+                        <div class="form-check">
+                            <input id="@optionId"
+                                   name="@Model.key"
+                                   class="form-check-input"
+                                   type="radio"
+                                   value="@option.Key"
+                                   checked="@(string.Equals(option.Key, defaultValue, StringComparison.OrdinalIgnoreCase) ? "checked" : null)" />
+                            <label class="form-check-label" for="@optionId">@option.Value</label>
+                        </div>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.memo))
+                {
+                    <div class="form-text">@Model.memo</div>
+                }
+            </fieldset>
+            break;
+    }
+</div>

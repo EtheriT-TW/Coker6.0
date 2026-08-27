@@ -106,7 +106,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
 
                 case "price": {
                     var price = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(data, "price"));
-                    $this.text(price > 0 ? `$${price.toLocaleString()}` : "");
+                    $this.text(price > 0 ? cart.Utils.formatMoney(price) : "");
                     break;
                 }
 
@@ -124,7 +124,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
 
                 case "subtotal": {
                     var subtotal = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(data, "subtotal"));
-                    $this.text(subtotal > 0 ? `$${subtotal.toLocaleString()}` : "");
+                    $this.text(subtotal > 0 ? cart.Utils.formatMoney(subtotal) : "");
                     break;
                 }
 

@@ -11,6 +11,10 @@ function contentReady(e) {
     }
 }
 
+function initSpecTypeRow(e) {
+    e.data.SeoVariantProperty = 0;
+}
+
 function dataSaving(e) {
     var first_char;
     if (typeof (e.newData) != "undefined") {

@@ -128,8 +128,8 @@
             discount.discountAmount = Math.max(0, Math.min(Number(discount.discountAmount || 0), remaining));
             remaining -= discount.discountAmount;
             discount.memo = discount.appliedTimes > 1
-                ? "行銷活動：" + discount.campaignName + "，折抵 " + discount.discountAmount.toLocaleString() + " 元，套用 " + discount.appliedTimes + " 次"
-                : "行銷活動：" + discount.campaignName + "，折抵 " + discount.discountAmount.toLocaleString() + " 元";
+                ? "行銷活動：" + discount.campaignName + "，折抵 " + cart.Utils.formatMoney(discount.discountAmount) + "，套用 " + discount.appliedTimes + " 次"
+                : "行銷活動：" + discount.campaignName + "，折抵 " + cart.Utils.formatMoney(discount.discountAmount);
         });
         selected = selected.filter(function (discount) { return discount.discountAmount > 0; });
         if (!selected.length) return emptyResult;
@@ -254,8 +254,8 @@
         }
 
         var memo = appliedTimes > 1
-            ? "行銷活動：" + campaignName + "，折抵 " + discount.toLocaleString() + " 元，套用 " + appliedTimes + " 次"
-            : "行銷活動：" + campaignName + "，折抵 " + discount.toLocaleString() + " 元";
+            ? "行銷活動：" + campaignName + "，折抵 " + cart.Utils.formatMoney(discount) + "，套用 " + appliedTimes + " 次"
+            : "行銷活動：" + campaignName + "，折抵 " + cart.Utils.formatMoney(discount);
 
         return {
             applied: true,
@@ -312,7 +312,7 @@
 
             return '<div class="summary-main-row marketingDiscountLine">' +
                 '<div class="summary-label">' + label + '</div>' +
-                '<div class="summary-amount price-negative">$' + amount.toLocaleString() + '</div>' +
+                '<div class="summary-amount price-negative">' + cart.Utils.formatMoney(amount) + '</div>' +
                 '</div>';
         }).join("");
 
@@ -460,9 +460,9 @@
         if (getValue(campaign, "repeatable")) itemLimit *= Math.max(1, qualification.times);
         var canIncrease = selected && quantity < itemLimit && campaignSelected < qualification.allowance;
         var tag = offerPrice <= 0 ? "贈品" : "加價購";
-        var priceText = offerPrice <= 0 ? "免費" : "NT$ " + offerPrice.toLocaleString();
+        var priceText = offerPrice <= 0 ? "免費" : cart.Utils.formatMoney(offerPrice);
         var original = originalPrice > 0
-            ? '<span class="cart-reward-original">原價 NT$ ' + originalPrice.toLocaleString() + '</span>'
+            ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoney(originalPrice) + '</span>'
             : "";
 
         return '<article class="cart-reward-card' + (selected ? ' is-selected' : '') + (disabled ? ' is-disabled' : '') + '"' +
@@ -557,7 +557,7 @@
             var hideZeroScopeStatus = !q.qualified && Number(getValue(campaign, "conditionType")) === 2 && q.amount <= 0;
             var status = q.qualified
                 ? '已符合資格，可選 <strong>' + q.allowance + '</strong> 件，目前已選 <strong>' + selected + '</strong> 件'
-                : hideZeroScopeStatus ? '' : conditionName + '目前 <strong>NT$ ' + q.amount.toLocaleString() + '</strong>，再買 <strong>NT$ ' + q.shortage.toLocaleString() + '</strong> 即可選購';
+                : hideZeroScopeStatus ? '' : conditionName + '目前 <strong>' + cart.Utils.formatMoney(q.amount) + '</strong>，再買 <strong>' + cart.Utils.formatMoney(q.shortage) + '</strong> 即可選購';
             var items = (getValue(campaign, "rewardItems") || []).map(function (item) {
                 return renderRewardItem(campaign, item, q, selected);
             }).join("");
@@ -566,7 +566,7 @@
 
             return '<section class="cart-marketing-campaign' + (q.qualified ? ' is-qualified' : '') + '">' +
                 '<div class="cart-campaign-header"><div><h4>' + escapeHtml(getValue(campaign, "name")) + '</h4>' +
-                (status ? '<p>' + status + '</p>' : '') + '</div><span class="cart-campaign-threshold">' + conditionName + '滿 NT$ ' + q.minAmount.toLocaleString() + '</span></div>' +
+                (status ? '<p>' + status + '</p>' : '') + '</div><span class="cart-campaign-threshold">' + conditionName + '滿 ' + cart.Utils.formatMoney(q.minAmount) + '</span></div>' +
                 scopeProducts + '<div class="cart-reward-track">' + items + '</div></section>';
         }).join("");
 
@@ -706,8 +706,8 @@
             '<div class="cart-reward-name" title="' + escapeHtml(getValue(item, "productName")) + '">' + escapeHtml(getValue(item, "productName")) + '</div>' +
             '<div class="cart-reward-spec">' + escapeHtml(getValue(item, "stockName")) + '</div>' +
             '<button type="button" class="cart-reward-preview-button">查看完整名稱</button>' +
-            '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? '免費' : 'NT$ ' + offerPrice.toLocaleString()) + '</strong>' +
-            (originalPrice > 0 ? '<span class="cart-reward-original">原價 NT$ ' + originalPrice.toLocaleString() + '</span>' : '') + '</div></div>' +
+            '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? '免費' : cart.Utils.formatMoney(offerPrice)) + '</strong>' +
+            (originalPrice > 0 ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoney(originalPrice) + '</span>' : '') + '</div></div>' +
             '<div class="cart-reward-quantity"><button type="button" class="js-product-addon-minus" aria-label="減少"' + (selected ? '' : ' disabled') + '>−</button>' +
             '<span>' + quantity + '</span><button type="button" class="js-product-addon-plus" aria-label="增加"' + (canIncrease ? '' : ' disabled') + '>＋</button></div></article>';
     }

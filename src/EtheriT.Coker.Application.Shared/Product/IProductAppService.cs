@@ -44,6 +44,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto);
         public Task<ResponseMessageDto> HasAnyItemNo();
         public Task<GetFrontContenOutputDto> GetFrontConten(ProdGetFrontContenInputDto dto);
+        public Task<ProductSeoDataDto?> GetSeoData(ProdGetFrontContenInputDto dto, bool orderLowToHigh);
         public Task<List<TagGetSelectedDto>> GetProductListTags();
 
     }

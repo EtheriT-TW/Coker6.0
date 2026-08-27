@@ -554,6 +554,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "B001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 8, 21, 10, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 33,
+                    key = "priceCurrency",
+                    name = "商品幣別",
+                    memo = "商品價格與搜尋引擎結構化資料使用的 ISO 4217 幣別",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.select,
+                    maxlength = 3,
+                    pattern = "^[A-Z]{3}$",
+                    IsDeleted = false,
+                    DefaultValue = "TWD",
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -734,6 +749,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 7, 17, 11, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 20,
+                    Key = "TWD",
+                    Value = "新臺幣（TWD）",
+                    FK_StoreSetId = 33,
+                    IsDefault = true,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 21,
+                    Key = "USD",
+                    Value = "美元（USD）",
+                    FK_StoreSetId = 33,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

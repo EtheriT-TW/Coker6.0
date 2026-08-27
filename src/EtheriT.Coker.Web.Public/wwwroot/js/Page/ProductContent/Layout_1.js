@@ -9,14 +9,14 @@
     }
 
     const normalizeNullableInt = M.normalizeNullableInt;
-    const formatNumber = M.formatNumber;
-    const formatPriceText = M.formatPriceText;
     const cloneTemplate = M.cloneTemplate;
     const analyzeSpecStructure = M.analyzeSpecStructure;
     const isLoggedIn = M.isLoggedIn;
     const isStockAvailable = M.isStockAvailable;
     const runBuyGuard = M.runBuyGuard;
     const submitCart = M.submitCart;
+    const buildPriceViewModel = M.buildPriceViewModel;
+    const buildPriceBaseViewModel = M.buildPriceBaseViewModel;
 
     const SELECTORS = {
         options: '.options',
@@ -32,107 +32,6 @@
         specRadio: '#Template_Spec_Radio',
         priceItem: '#PriceListTemplate'
     };
-
-    function buildPriceViewModel(priceItem, stock, controller, product) {
-        const currentPrice = normalizeNullableInt(priceItem.price);
-        const currentBonus = normalizeNullableInt(priceItem.bonus);
-        const originalPrice = normalizeNullableInt(priceItem.oriPrice);
-        const suggestPrice = normalizeNullableInt(stock.suggestPrice);
-        const isTimePrice = !!stock.timePrice;
-        const disabled = !!priceItem.disabled;
-
-        const itemRoleName = priceItem.roleName || '';
-        const baseRoleName = product.baseRoleName || priceItem.baseRoleName || local.NonMember;
-
-        const saleText = isTimePrice
-            ? local.MarketPrice
-            : formatPriceText(currentPrice, currentBonus);
-
-        const showSuggestPrice =
-            !isTimePrice &&
-            suggestPrice > 0 &&
-            suggestPrice !== currentPrice;
-
-        const showOriginalPrice =
-            !isTimePrice &&
-            originalPrice > 0 &&
-            originalPrice !== currentPrice;
-
-        const originalPriceText = showOriginalPrice
-            ? `${baseRoleName} $${formatNumber(originalPrice)}`
-            : '';
-
-        const showBonusLack =
-            disabled &&
-            currentBonus > 0;
-
-        // 核心規則：
-        // 只有「這筆價格有自己的角色名稱，且它不是基準角色」時才顯示
-        const showRoleName =
-            !!itemRoleName &&
-            itemRoleName !== baseRoleName;
-
-        return {
-            saleText,
-            roleName: itemRoleName,
-            showRoleName,
-            showSuggestPrice,
-            suggestPriceText: showSuggestPrice
-                ? `${local.SuggestedPrice}$${formatNumber(suggestPrice)}`
-                : '',
-            showOriginalPrice,
-            originalPriceText,
-            showBonusLack
-        };
-    }
-
-    function buildPriceBaseViewModel(stock, priceOptions, controller, product) {
-        stock = stock || {};
-        const safePrices = Array.isArray(priceOptions) ? priceOptions : [];
-
-        const suggestPrice = normalizeNullableInt(stock.suggestPrice);
-        const baseRoleName =
-            product?.baseRoleName ||
-            safePrices.map(x => x.baseRoleName).find(x => !!x) ||
-            local.NonMember;
-
-        const originalPrice = safePrices
-            .map(x => normalizeNullableInt(x.oriPrice))
-            .find(x => x > 0) || 0;
-
-        const currentPrices = safePrices.map(x => normalizeNullableInt(x.price));
-        const currentBonuses = safePrices.map(x => normalizeNullableInt(x.bonus));
-
-        const hasSameSuggestPrice = currentPrices.some(x => x === suggestPrice);
-        const hasSameOriginalPrice = currentPrices.some((price, index) =>
-            price === originalPrice && currentBonuses[index] === 0
-        );
-
-        const showSuggestPrice =
-            !stock.timePrice &&
-            suggestPrice > 0 &&
-            !hasSameSuggestPrice;
-
-        const showOriginalPrice =
-            !stock.timePrice &&
-            originalPrice > 0 &&
-            !hasSameOriginalPrice &&
-            originalPrice !== suggestPrice;
-
-        return {
-            showSuggestPrice,
-            suggestPriceLabel: local.SuggestedPrice,
-            suggestPriceValue: showSuggestPrice
-                ? `$${formatNumber(suggestPrice)}`
-                : '',
-
-            showOriginalPrice,
-            originalPriceLabel: local.RolePriceLabel.format(baseRoleName),
-            originalPriceValue: showOriginalPrice
-                ? `$${formatNumber(originalPrice)}`
-                : ''
-        };
-    }
 
     function createLayout1(controller) {
         const $pageRoot = controller.$pageRoot;
@@ -502,11 +401,13 @@
             $pageRoot.off('change.productContent', 'input[name="S1_Radio"]').on('change.productContent', 'input[name="S1_Radio"]', (e) => {
                 controller.state.selection.setSpec(1, $(e.currentTarget).val());
                 renderSelectionArea();
+                controller.syncVariantUrlFromSelection();
             });
 
             $pageRoot.off('change.productContent', 'input[name="S2_Radio"]').on('change.productContent', 'input[name="S2_Radio"]', (e) => {
                 controller.state.selection.setSpec(2, $(e.currentTarget).val());
                 renderSelectionArea();
+                controller.syncVariantUrlFromSelection();
             });
 
             $pageRoot.off('change.productContent', 'input[name="priceRadio"]').on('change.productContent', 'input[name="priceRadio"]', (e) => {

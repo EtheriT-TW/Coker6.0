@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using EtheriT.Coker.Application.Shared.Specification;
 using Microsoft.EntityFrameworkCore;
 using EtheriT.Coker.Application.Shared.Dto.Specification;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 
 namespace EtheriT.Coker.Application.Specification
 {
@@ -28,6 +29,11 @@ namespace EtheriT.Coker.Application.Specification
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
             var data = JsonConvert.DeserializeObject<SpecTypeListDto>(dto.Values);
+            if (data == null)
+            {
+                output.Error = "規格類型資料格式錯誤";
+                return output;
+            }
             data.Id = dto.Key == null ? 0 : (long)dto.Key;
 
             try
@@ -37,10 +43,24 @@ namespace EtheriT.Coker.Application.Specification
 
                 if (data.Id == 0)
                 {
+                    if (string.IsNullOrWhiteSpace(data.Type))
+                    {
+                        output.Error = "請輸入規格類型";
+                        return output;
+                    }
+
+                    var seoVariantProperty = data.SeoVariantProperty ?? SeoVariantPropertyEnum.None;
+                    if (!Enum.IsDefined(typeof(SeoVariantPropertyEnum), seoVariantProperty))
+                    {
+                        output.Error = "Google 商品變體屬性設定錯誤";
+                        return output;
+                    }
+
                     Core.Models.Prod_Spec_Type st = new Core.Models.Prod_Spec_Type
                     {
                         FK_WebsiteId = webid,
-                        Type = data.Type,
+                        Type = data.Type.Trim(),
+                        SeoVariantProperty = seoVariantProperty,
                         CreatorUserId = userId,
                     };
                     db.Prod_Spec_Types.Add(st);
@@ -51,7 +71,28 @@ namespace EtheriT.Coker.Application.Specification
                     var db_st = await db.Prod_Spec_Types.Where(e => e.Id == data.Id && !e.IsDeleted && e.FK_WebsiteId == webid).FirstOrDefaultAsync();
                     if (db_st != null)
                     {
-                        db_st.Type = data.Type;
+                        if (data.Type != null)
+                        {
+                            if (string.IsNullOrWhiteSpace(data.Type))
+                            {
+                                output.Error = "請輸入規格類型";
+                                return output;
+                            }
+
+                            db_st.Type = data.Type.Trim();
+                        }
+
+                        if (data.SeoVariantProperty.HasValue)
+                        {
+                            if (!Enum.IsDefined(typeof(SeoVariantPropertyEnum), data.SeoVariantProperty.Value))
+                            {
+                                output.Error = "Google 商品變體屬性設定錯誤";
+                                return output;
+                            }
+
+                            db_st.SeoVariantProperty = data.SeoVariantProperty.Value;
+                        }
+
                         db_st.LastModifierUserId = userId;
                         db_st.LastModificationTime = DateTime.Now;
                         await loginUserData.SaveChanges(db_st);
@@ -143,7 +184,8 @@ namespace EtheriT.Coker.Application.Specification
                                 select new SpecTypeListDto
                                 {
                                     Id = pst.Id,
-                                    Type = pst.Type
+                                    Type = pst.Type,
+                                    SeoVariantProperty = pst.SeoVariantProperty
                                 };
 
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
@@ -201,6 +243,7 @@ namespace EtheriT.Coker.Application.Specification
                         {
                             Id = db_pt[pt_i].Id,
                             Type = db_pt[pt_i].Type,
+                            SeoVariantProperty = db_pt[pt_i].SeoVariantProperty,
                         });
                     }
                 }

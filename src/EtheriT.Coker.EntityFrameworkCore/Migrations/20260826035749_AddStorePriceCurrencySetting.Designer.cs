@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826035749_AddStorePriceCurrencySetting")]
+    partial class AddStorePriceCurrencySetting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -5276,11 +5279,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("SeoVariantProperty")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -5299,7 +5297,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 2L,
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
-                            SeoVariantProperty = 0,
                             Type = "顏色"
                         },
                         new
@@ -5309,7 +5306,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 2L,
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
-                            SeoVariantProperty = 0,
                             Type = "尺寸"
                         },
                         new
@@ -5319,7 +5315,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreatorUserId = 2L,
                             FK_WebsiteId = 2L,
                             IsDeleted = false,
-                            SeoVariantProperty = 0,
                             Type = "其他"
                         });
                 });

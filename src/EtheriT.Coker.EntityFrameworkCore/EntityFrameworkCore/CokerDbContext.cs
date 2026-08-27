@@ -397,6 +397,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Prod_Spec_Type>(o =>
             {
+                o.Property(p => p.SeoVariantProperty).HasDefaultValue(SeoVariantPropertyEnum.None);
                 o.HasOne(u => u.Website)
                     .WithMany(u => u.Prod_Spec_Types)
                     .HasForeignKey(f => f.FK_WebsiteId)

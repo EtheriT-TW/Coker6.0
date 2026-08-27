@@ -17,15 +17,10 @@
 /* ── 電腦版：四欄對齊網格（圖 | 名稱 | 描述 | 方案區）── */
 .spec-card {
     display: grid;
-    grid-template-columns: 72px 170px minmax(140px, 2fr) auto;
+    grid-template-columns: 110px 170px minmax(140px, 2fr) auto;
     align-items: center;
-    column-gap: 1rem;
+    column-gap: .5rem;
     padding: .875rem 0; /* 只留上下間距，左右貼齊 */
-}
-
-.spec-card.is-selected {
-    outline: 2px solid currentColor;
-    outline-offset: 2px;
 }
 
     .spec-card:not(:last-child) {
@@ -105,6 +100,7 @@
         display: flex;
         background: unset;
         border: unset;
+        text-align:start;
     }
 
         .spec-body .copy_btn .copy-icon {
@@ -121,8 +117,8 @@
         }
 
 .spec-thumb {
-    width: 72px;
-    height: 72px;
+    width: 110px;
+    height: 110px;
     object-fit: cover;
     border-radius: .375rem;
     background: #f5f5f5;
@@ -132,15 +128,15 @@
    .text-primary 帶 !important，且頁面編輯器的自訂 CSS（#frameCss）會改寫 primary 色系，
    掛上去就會被該站的佈景色蓋掉。複製 icon 為子元素，顏色由此繼承。 */
 .spec-name {
-    font-weight: 600;
-    font-size: 1rem;
+    font-weight: 700;
+    font-size: 1.2rem;
     min-width: 0;
     color: #0d6efd;
 }
 
 .spec-desc {
     color: #777;
-    font-size: .875rem;
+    font-size: 1rem;
     min-width: 0;
     overflow-wrap: anywhere;
 }
@@ -240,8 +236,212 @@
     cursor: default;
 }
 
+/* ── 規格圖燈箱：外層 swiper 換規格，一張 slide ＝ 一個規格的左圖右文 ──
+   全部限定在 .has-spec-info 之下，商品主圖燈箱完全不受影響 */
+#ProDisplayModal .spec-swiper{
+    display: none;
+}
+
+#ProDisplayModal.has-spec-info .spec-swiper {
+    display: block;
+    width: 100%;
+}
+
+#ProDisplayModal.has-spec-info .modal-dialog {
+    /* fitModalByImage 已關閉，但先前殘留的 inline 寬高只能用 !important 中和 */
+    width: min(1100px, 92vw) !important;
+    height: auto !important;
+    max-width: 92vw;
+}
+
+#ProDisplayModal.has-spec-info .modal-content {
+    background-color: #fff;
+    border-radius: .5rem;
+    padding: 1rem;
+}
+
+/* 一張 slide：手機上圖下文 */
+#ProDisplayModal.has-spec-info .spec-media-slide {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 1rem;
+    height: auto;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-figure {
+    position: relative;
+    flex: 0 0 auto; /* 手機版直向排列時不吸收多餘高度，圖片位置才會每張一致 */
+    min-width: 0;
+    height: 45vh;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* 舞台搬進來的那張 slide，預覽圖收掉 */
+#ProDisplayModal.has-spec-info .is-stage-host .spec-media-preview {
+    display: none;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-stage {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+#ProDisplayModal.has-spec-info .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important; /* 原規則是 height:0，必須蓋掉 */
+    padding: 0;
+}
+
+#ProDisplayModal.has-spec-info .pro-display-dots {
+    position: static; /* 原本是絕對定位貼在整個 modal 底部 */
+    transform: none;
+    bottom: auto;
+    flex: 0 0 auto;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-info {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-name {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    padding: 0;
+    background: unset;
+    border: unset;
+    text-align: start;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #0d6efd; /* 與列表 .spec-name 同色，不用 .text-primary */
+    margin-bottom: .75rem;
+}
+
+    /* 燈箱不像列表有 hover 才浮出 icon（手機沒有 hover），這裡固定顯示 */
+    #ProDisplayModal.has-spec-info .spec-media-name .copy-icon {
+        font-size: 1.5rem;
+    }
+
+#ProDisplayModal.has-spec-info .spec-media-price {
+    margin-bottom: .75rem;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-suggest {
+    font-size: .8125rem;
+    color: #999;
+    line-height: 1.1;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-plan {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+}
+
+    /* 列表的 .spec-price 是靠右＋固定寬，燈箱要靠左並依內容伸縮 */
+    #ProDisplayModal.has-spec-info .spec-media-plan .spec-price {
+        min-width: 0;
+        text-align: left;
+        font-size: 1.15rem;
+    }
+
+#ProDisplayModal.has-spec-info .spec-media-empty {
+    margin-top: .25rem;
+    font-size: .9375rem;
+    color: #999;
+}
+
+#ProDisplayModal.has-spec-info .spec-media-desc {
+    color: #777;
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+}
+
+    #ProDisplayModal.has-spec-info .spec-media-desc p {
+        margin: 0;
+    }
+
+        #ProDisplayModal.has-spec-info .spec-media-desc p + p {
+            margin-top: .25rem;
+        }
+
+/* 平板以上：一張 slide 內左圖右文 */
+@media (min-width: 768px) {
+    #ProDisplayModal.has-spec-info .spec-media-slide {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 1.5rem;
+    }
+
+    #ProDisplayModal.has-spec-info .spec-media-figure {
+        flex: 1 1 auto; /* 桌機是橫向排列，這裡要吃掉文字欄以外的寬度 */
+        height: min(72vh, 620px);
+    }
+
+    #ProDisplayModal.has-spec-info .spec-media-info {
+        flex: 0 0 clamp(260px, 32vw, 340px);
+        border-left: 1px solid #e5e5e5;
+        padding-left: 1.5rem;
+        overflow-y: auto;
+    }
+}
+
+@media (min-width: 992px) {
+    #ProDisplayModal.has-spec-info .spec-media-info {
+        flex-basis: 380px;
+    }
+}
+
+
+/* 手機版原本把大箭頭藏起來（ProductContent.css ≤576px），
+   但規格模式要靠它換規格，這裡放回來並縮小 */
+@media (max-width: 576px) {
+    #ProDisplayModal.has-spec-info .btn-tool.prev-btn,
+    #ProDisplayModal.has-spec-info .btn-tool.next-btn {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1080;
+        width: 2.5rem;
+        height: 2.5rem;
+        padding: 0;
+        border-radius: 50%;
+        color: #fff;
+        background: rgba(0, 0, 0, .58);
+        font-size: 1.6rem;
+        line-height: 1;
+        text-decoration: none;
+    }
+
+    /* 360 圖在手機版原本要碰一下才浮出箭頭，規格模式要一直看得到 */
+    #ProDisplayModal.has-spec-info.is-360-media .btn-tool.prev-btn,
+    #ProDisplayModal.has-spec-info.is-360-media .btn-tool.next-btn {
+        opacity: .82;
+        pointer-events: auto;
+        transform: translate(0, -50%);
+    }
+}
+
+
 /* ── 手機版（≤576px）：取消 grid 與 contents，回到堆疊卡片 ── */
 @media (max-width: 576px) {
+    .spec-thumb {
+        align-self: flex-start;
+    }
+
     .spec-card {
         display: flex;
         flex-wrap: wrap;

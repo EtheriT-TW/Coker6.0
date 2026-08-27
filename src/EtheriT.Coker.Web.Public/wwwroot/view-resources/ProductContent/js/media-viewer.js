@@ -25,6 +25,8 @@
             this.$dots = this.$modal.find('.pro-display-dots');
             this.items = [];
             this.renderToken = 0;
+            this.autoFitModal = true;
+            this.navigateHandler = null;
             this.swipeStartX = 0;
             this.swipeStartY = 0;
             this.swipeStartTime = 0;
@@ -36,6 +38,18 @@
         setItems(items) {
             this.items = Array.isArray(items) ? items : [];
             this.renderDots();
+        }
+
+        setAutoFitModal(enabled) {
+            this.autoFitModal = enabled !== false;
+        }
+
+        fitMedia(src, callback) {
+            if (this.autoFitModal) {
+                this.fitModalByImage(src, callback);
+                return;
+            }
+            if (typeof callback === 'function') callback();
         }
 
         renderDots() {
@@ -138,12 +152,12 @@
 
             this.$modal.find('.btn-tool.prev-btn').off('click').on('click', (e) => {
                 e.preventDefault();
-                this.move(-1);
+                this.navigate(-1);
             });
 
             this.$modal.find('.btn-tool.next-btn').off('click').on('click', (e) => {
                 e.preventDefault();
-                this.move(1);
+                this.navigate(1);
             });
 
             this.$modal
@@ -416,6 +430,14 @@
                 .append($image);
         }
 
+        // 左右箭頭的行為可被外部接管（版型二的規格燈箱用它來換規格）。
+        // 觸控滑動仍直接呼叫 move()，所以「滑圖片＝換圖」不受影響。
+        navigate(step) {
+            if (typeof this.navigateHandler === 'function' && this.navigateHandler(step) === true) return;
+
+            this.move(step);
+        }
+
         move(step) {
             if (!this.items.length) return;
 
@@ -664,7 +686,7 @@
 
                 this.initializeFrameViewer(this.$view360, imageList, item.alt || item.name);
 
-                this.fitModalByImage(src, () => {
+                this.fitMedia(src, () => {
                     if (renderToken !== this.renderToken) return;
                     this.refreshMediaElements();
                     this.$view360.removeClass('d-none');
@@ -691,7 +713,7 @@
 
             this.initializeZoomViewer(this.$image, src, item.alt || item.name);
 
-            this.fitModalByImage(src, () => {
+            this.fitMedia(src, () => {
                 if (renderToken !== this.renderToken) return;
 
                 this.refreshMediaElements();

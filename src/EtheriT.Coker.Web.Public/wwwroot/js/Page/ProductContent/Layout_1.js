@@ -25,6 +25,7 @@
         counter: '.counter',
         quantityInput: '.input_pro_quantity',
         quantityWrap: '.counter_input',
+        emptyProduct: '.emptyProd',
         addToCartButton: '.btn_addToCar'
     };
 
@@ -38,6 +39,7 @@
         const $root = controller.$root;
         const $quantityInput = $root.find(SELECTORS.quantityInput);
         const $quantityWrap = $root.find(SELECTORS.quantityWrap);
+        const $emptyProduct = $root.find(SELECTORS.emptyProduct);
         const $addToCartButton = $pageRoot.find(SELECTORS.addToCartButton);
 
         function renderSelectionArea() {
@@ -279,9 +281,11 @@
             }
 
             if (!noStock && stock.stock < stock.minQty) {
-                $quantityWrap.addClass('isEmpty');
+                $quantityWrap.removeClass('isLoading').addClass('isEmpty');
+                $emptyProduct.text(controller.t('prodEmpty', '商品已售完'));
             } else {
-                $quantityWrap.removeClass('isEmpty');
+                $quantityWrap.removeClass('isLoading isEmpty');
+                $emptyProduct.text('');
             }
 
             if (window.ProductAddOnPurchase && typeof window.ProductAddOnPurchase.updateQuantity === 'function') {

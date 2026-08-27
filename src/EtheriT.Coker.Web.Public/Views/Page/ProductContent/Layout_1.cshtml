@@ -237,7 +237,7 @@
                 {
                     <div class="counter d-flex align-items-center my-2">
                         <label class="title" for="quantityInput">@L.get("Quantity")</label>
-                        <div class="counter_input d-flex isEmpty">
+                        <div class="counter_input d-flex isLoading">
                             <div class="quantity">
                                 <button class="btn_count_minus bg-white my-1">
                                     <i class="fa-solid fa-minus"></i>
@@ -251,7 +251,7 @@
                                     <span class="d-none">@L.get("Increase")</span>
                                 </button>
                             </div>
-                            <div class="emptyProd">@L.get("ProdEmpty")</div>
+                            <div class="emptyProd" aria-live="polite"></div>
                         </div>
                     </div>
                 }

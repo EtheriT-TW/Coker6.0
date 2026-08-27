@@ -272,6 +272,11 @@ input:disabled + .btn_radio {
     display: none;
 }
 
+.counter_input.isLoading > .quantity,
+.counter_input.isLoading > .emptyProd {
+    display: none;
+}
+
 .counter_input.isEmpty > .quantity {
     display: none;
 }

@@ -662,7 +662,7 @@
                         'data-amount-x': imageList.length
                     });
 
-                this.initializeFrameViewer(this.$view360, imageList, item.name);
+                this.initializeFrameViewer(this.$view360, imageList, item.alt || item.name);
 
                 this.fitModalByImage(src, () => {
                     if (renderToken !== this.renderToken) return;
@@ -689,7 +689,7 @@
                     height: '100%'
                 });
 
-            this.initializeZoomViewer(this.$image, src, item.name);
+            this.initializeZoomViewer(this.$image, src, item.alt || item.name);
 
             this.fitModalByImage(src, () => {
                 if (renderToken !== this.renderToken) return;

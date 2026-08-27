@@ -313,26 +313,31 @@
         return $actions;
     }
 
-    function buildRow(stock, vis, noStockManagement, state) {
+    function buildRow(stock, vis, noStockManagement, state, productTitle) {
         const $card = $('<div class="spec-card"></div>')
             .attr('data-stock-id', stock.id)
             .data('stock', stock)
             .data('noStockManagement', !!noStockManagement);
 
+        const name = specName(stock);
         const imgItems = specImageItems(stock);
         if (imgItems.length) {
+            const altParts = [productTitle, name].filter(Boolean);
+            const galleryItems = imgItems.map((item, index) => ({
+                ...item,
+                alt: `${altParts.join(' - ')}${index > 0 ? ` - ${index + 1}` : ''}`
+            }));
             $card.append(
-                $('<img class="spec-thumb" alt="" />')
+                $('<img class="spec-thumb" />')
                     .attr('src', imgItems[0].link[0])
-                    .data('images', imgItems)
+                    .attr('alt', altParts.join(' - '))
+                    .data('images', galleryItems)
             );
         } else {
             $card.append('<div class="spec-thumb spec-thumb-empty"></div>');
         }
 
         const $body = $('<div class="spec-body"></div>');
-        const name = specName(stock);
-
         // 不用 Bootstrap 的 .text-primary：它帶 !important，而頁面編輯器存的自訂 CSS
         // （_Layout 最後注入的 #frameCss）會重新定義 primary 色系，讓這裡跟著變色。
         // 顏色改由 Layout_2.css 的 .spec-name 指定。
@@ -464,12 +469,18 @@
         renderContext = {
             vis: resolveVisibility(state, result),
             noStockManagement: !!(result && result.noStockManagement),
-            state: state
+            state: state,
+            productTitle: result && result.title ? result.title : ''
         };
 
         $container.empty();
         stocks.forEach(stock => $container.append(
-            buildRow(stock, renderContext.vis, renderContext.noStockManagement, renderContext.state)
+            buildRow(
+                stock,
+                renderContext.vis,
+                renderContext.noStockManagement,
+                renderContext.state,
+                renderContext.productTitle)
         ));
     }
 
@@ -477,7 +488,12 @@
         const stock = $card.data('stock');
         if (!stock) return;
 
-        $card.replaceWith(buildRow(stock, renderContext.vis, renderContext.noStockManagement, renderContext.state));
+        $card.replaceWith(buildRow(
+            stock,
+            renderContext.vis,
+            renderContext.noStockManagement,
+            renderContext.state,
+            renderContext.productTitle));
     }
 
     function init() {

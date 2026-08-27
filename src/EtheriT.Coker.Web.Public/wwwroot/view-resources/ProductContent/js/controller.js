@@ -29,6 +29,30 @@
         return path;
     }
 
+    function buildProductMediaAlt(productTitle, fileType, index) {
+        const title = String(productTitle || '').trim() || 'Product';
+        const number = index + 1;
+        const isChinese = /^zh(?:-|$)/i.test(document.documentElement.lang || '');
+
+        if (fileType === 2) {
+            return isChinese
+                ? `${title} - 360° 商品圖 ${number}`
+                : `${title} - 360° product image ${number}`;
+        }
+
+        if (fileType === 3 || fileType === 4) {
+            return isChinese
+                ? `${title} - 商品影片 ${number}`
+                : `${title} - product video ${number}`;
+        }
+
+        if (index === 0) return title;
+
+        return isChinese
+            ? `${title} - 商品圖片 ${number}`
+            : `${title} - product image ${number}`;
+    }
+
     class ProductContentController {
         constructor(options) {
             this.options = $.extend(true, {}, DEFAULTS, options || {});
@@ -555,12 +579,13 @@
 
             medium.forEach((img, index) => {
                 let $slide;
+                const mediaAlt = buildProductMediaAlt(result.title, img.fileType, index);
 
                 if (img.fileType === 3) {
                     $slide = cloneTemplate(templates.videoSlide);
                     $slide.find('.pro_display').attr({
                         src: img.link[0],
-                        alt: img.name,
+                        alt: mediaAlt,
                         'data-id': img.id,
                         'data-index': index,
                         'data-display-protype': 'video'
@@ -571,7 +596,7 @@
                     const thumbnail = img.thumbnail || img.link?.[1] || externalVideo?.thumbnail || '/images/defaultImage/video.jpg';
                     $slide.find('.pro_display').attr({
                         src: normalizePublicMediaPath(thumbnail, this.options.orgName),
-                        alt: img.name,
+                        alt: mediaAlt,
                         'data-id': img.id,
                         'data-index': index,
                         'data-external-video': img.name,
@@ -586,7 +611,7 @@
                     const $display = $slide.find('.pro_display');
                     $display.attr({
                         src: links[0] || '',
-                        alt: img.name,
+                        alt: mediaAlt,
                         'data-id': img.id,
                         'data-index': index,
                         'data-display-protype': '360view',
@@ -598,7 +623,7 @@
                     $slide = cloneTemplate(templates.imageSlide);
                     $slide.find('.pro_display').attr({
                         src: img.link[0],
-                        alt: img.name,
+                        alt: mediaAlt,
                         'data-id': img.id,
                         'data-index': index,
                         'data-display-protype': 'image'
@@ -613,6 +638,7 @@
                 const $slide = cloneTemplate(templates.previewSlide);
                 const $img = $slide.find('img');
                 let src = img.link?.[0] || '';
+                const mediaAlt = buildProductMediaAlt(result.title, img.fileType, index);
 
                 if (img.fileType === 3) {
                     src = '/images/videopreview.jpg';
@@ -635,7 +661,7 @@
 
                 $img.attr({
                     src,
-                    alt: img.name,
+                    alt: mediaAlt,
                     'data-id': img.id,
                     'data-index': index
                 });
@@ -643,7 +669,10 @@
                 $previewWrapper.append($slide);
             });
 
-            this.mediaViewer.setItems(original);
+            this.mediaViewer.setItems(original.map((img, index) => ({
+                ...img,
+                alt: buildProductMediaAlt(result.title, img.fileType, index)
+            })));
             this.initSwipers(small.length);
         }
 

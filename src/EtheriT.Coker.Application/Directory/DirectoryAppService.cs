@@ -371,6 +371,43 @@ namespace EtheriT.Coker.Application.Directory
                 return null;
             }
         }
+
+        public async Task<List<DirectoryGetDataDto>> GetSeoData(
+            IReadOnlyCollection<long> ids,
+            long websiteId)
+        {
+            if (websiteId <= 0 || ids == null || ids.Count == 0)
+            {
+                return new List<DirectoryGetDataDto>();
+            }
+
+            var directoryIds = ids
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (directoryIds.Count == 0)
+            {
+                return new List<DirectoryGetDataDto>();
+            }
+
+            return await db.Directory
+                .AsNoTracking()
+                .Where(e =>
+                    directoryIds.Contains(e.Id) &&
+                    !e.IsDeleted &&
+                    e.FK_WebsiteId == websiteId)
+                .Select(e => new DirectoryGetDataDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    Description = e.Description,
+                    Type = e.Type,
+                    Visible = e.Visible
+                })
+                .ToListAsync();
+        }
+
         private async Task<DirectoryReleInfoGetDto> TechCertReleInfo(DirectoryReleInfoInputDto dto)
         {
             var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };

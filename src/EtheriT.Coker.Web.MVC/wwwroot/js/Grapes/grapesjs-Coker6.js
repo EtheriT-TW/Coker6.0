@@ -14,32 +14,11 @@
     const panelManager = editor.Panels;
     let $gjs_select = null;
 
-    //設定UI文字
-    editor.I18n.setMessages({ tw: tw });
-
     /*檔案管理*/
     AssetManager.addType('image', {
         view: {
             attributes: { 'Guid': 'custom-value' }
         }
-    });
-
-    // Wait for CKEDITOR load
-    setInterval(() => {
-        if (typeof (CKEDITOR) != "undefined") {
-            CKEDITOR.dtd.$editable.a = 1;
-            CKEDITOR.dtd.$editable.p = 1;
-            CKEDITOR.dtd.$editable.span = 1;
-            CKEDITOR.dtd.$editable.li = 1;
-            CKEDITOR.dtd.$editable.strong = 1;
-            CKEDITOR.dtd.$editable.div = 1;
-            CKEDITOR.dtd.$removeEmpty.span = 0;
-            CKEDITOR.dtd.$removeEmpty.i = 0;
-        }
-    }, 200);
-
-    editor.on("run:modal-open:modalckeditor", function () {
-        //console.log("run:modal-open:modalckeditor");
     });
 
     editor.on('asset:add', (option) => {

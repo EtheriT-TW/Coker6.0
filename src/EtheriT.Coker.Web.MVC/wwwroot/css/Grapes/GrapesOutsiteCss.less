@@ -14,8 +14,9 @@ body.grapesEdit {
         background: #000;
         color: #FFF;
         border-radius: 1rem;
-        top: -2.2rem;
-        transition: top 0.5s 0.5s;
+        top: 0;
+        transform: translateY(calc(-100% + 2rem));
+        transition: transform 0.5s 0.5s;
         position: absolute;
         display: block;
         width: auto;
@@ -33,24 +34,28 @@ body.grapesEdit {
         }
 
         &:hover {
-            top: 1rem;
-            transition: top 0.5s;
+            transform: translateY(1rem);
+            transition: transform 0.5s;
         }
 
         .d-flex {
+            align-items: center;
+            gap: 1rem;
+
             > .btn {
+                flex: 0 0 auto;
+                min-width: 7rem;
                 font-size: 1rem;
-                padding: 0 0.5rem;
+                padding: 0.5rem 1rem;
+                white-space: nowrap;
             }
 
             > .title {
-                margin-right: 1rem;
-                max-width: 20rem;
-                display: -webkit-box;
-                -webkit-line-clamp: 1;
-                -webkit-box-orient: vertical;
+                flex: 1 1 auto;
+                min-width: 0;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                white-space: nowrap;
                 font-size: 1rem !important;
             }
         }

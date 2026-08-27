@@ -2,11 +2,14 @@ import { createEditorAdapter } from './core/createEditorAdapter.js';
 import { registerCokerPlugins } from './plugins/registerCokerPlugins.js';
 import { registerBasePlugins } from './core/registerBasePlugins.js';
 import { createCokerGrapesEditor, grapesjs } from './core/createCokerGrapesEditor.js';
+import { createOfficialPlugins, officialPluginIds } from './plugins/officialPlugins.js';
+import 'grapesjs/dist/css/grapes.min.css';
 
 export { createEditorAdapter };
 export { registerCokerPlugins };
 export { registerBasePlugins };
 export { createCokerGrapesEditor };
+export { createOfficialPlugins, officialPluginIds };
 export { grapesjs };
 
 

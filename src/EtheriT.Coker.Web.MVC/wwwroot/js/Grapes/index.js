@@ -43,6 +43,37 @@ var grapesInit = function (options) {
     if (typeof (frameLevel) != "undefined" && frameLevel != null && frameLevel != 0) {
         insertData.css.push(`/Layout/Layout_${frameLevel}_Site.min.css`);
     }
+
+    const externalPluginFunctions = [
+        function legacyCoker6(editor) {
+            window.CokerGrapesLegacyPlugins.coker6Plugin(editor, options);
+        },
+
+        function legacyCoker6Form(editor) {
+            window.CokerGrapesLegacyPlugins.coker6FormPlugin(editor, {});
+        },
+
+        function legacySwiper(editor) {
+            window.CokerGrapesLegacyPlugins.swiperPlugin(editor, {});
+        }
+    ];
+
+    if (options.enableImageEditor !== false) {
+        if (typeof window.CokerGrapesTuiImageEditorPlugin !== "function") {
+            throw new Error("GrapesJS 圖片編輯模組尚未載入，無法建立畫布。");
+        }
+
+        externalPluginFunctions.push(window.CokerGrapesTuiImageEditorPlugin);
+    }
+
+    if (options.enableNewsletter) {
+        if (typeof window.CokerGrapesNewsletterPlugin !== "function") {
+            throw new Error("GrapesJS 電子報模組尚未載入，無法建立電子報畫布。");
+        }
+
+        externalPluginFunctions.push(window.CokerGrapesNewsletterPlugin);
+    }
+
     var editor = window.EtheriTCokerGrapesJS.createEditor({
         container: container,
         height: '100vh',
@@ -56,199 +87,14 @@ var grapesInit = function (options) {
             flexGrid: true
         },
 
-        externalPlugins: [
-            'grapesjs-preset-webpage',
-            'grapesjs-style-bg',
-            'grapesjs-tabs',
-            'grapesjs-custom-code',
-            //'grapesjs-tui-image-editor',
-            'grapesjs-blocks-table',
-            //'grapesjs-table',
-            'grapesjs-parser-postcss',
-            //'grapesjs-plugin-ckeditor',
-            //'gjs-plugin-ckeditor5',
-            //'grapesjs-rte-extensions'
-        ],
-        externalPluginFunctions: [
-            function legacyCoker6(editor) {
-                window.CokerGrapesLegacyPlugins.coker6Plugin(editor, options);
-            },
-
-            function legacyCoker6Form(editor) {
-                window.CokerGrapesLegacyPlugins.coker6FormPlugin(editor, {});
-            },
-
-            function legacySwiper(editor) {
-                window.CokerGrapesLegacyPlugins.swiperPlugin(editor, {});
-            }
-        ],
-        externalPluginsOpts: {
+        externalPluginFunctions,
+        officialPluginsOptions: {
             "grapesjs-table": {},
-
-            'grapesjs-preset-webpage': {
-                modalImportButton: '匯入',
-                modalImportTitle: '匯入原始碼',
-                modalImportLabel: '<div style="margin-bottom: 10px; font-size: 1rem;">請輸入您的原始碼</div>',
-                modalImportContent: function (editor) {
-                    return editor.getHtml() + '<style>' + editor.getCss() + '</style>';
-                },
-            },
-
-            'grapesjs-tabs': {
-                tabsBlock: { category: 'Extra' }
-            },
-
-            'grapesjs-tui-image-editor': {
-                script: [
-                    //'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/1.6.7/fabric.min.js',
-                    '/lib/tui-code/js/tui-code-snippet.min.js',
-                    '/lib/tui-code/js/tui-color-picker.min.js',
-                    '/lib/tui-code/js/tui-image-editor.min.js'
-                ],
-                style: [
-                    '/lib/tui-code/css/tui-color-picker.min.css',
-                    '/lib/tui-code/css/tui-image-editor.min.css',
-                ]
-            },
-            'grapesjs-blocks-table': {
-                containerId: container,
-                componentCell: ".test"
-            },
-            'grapesjs-preset-newsletter': {
-                modalLabelExport: 'Copy the code and use it wherever you want',
-                codeViewerTheme: 'material',
-                cellStyle: {
-                    'font-size': '1rem',
-                    'font-weight': 300,
-                    'vertical-align': 'top',
-                    color: 'rgb(111, 119, 125)',
-                    margin: 0,
-                    padding: 0,
-                }
-            },
-
-            'grapesjs-plugin-ckeditor': {
-                onToolbar: el => {
-                    el.style.minWidth = '350px';
-                },
-                ckeditor: "https://cdn.ckeditor.com/4.22.1/full-all/ckeditor.js",
-                options: {
-                    language: 'zh',
-                    startupFocus: true,
-                    extraAllowedContent: '*(*);*{*}',
-                    allowedContent: true,
-                    enterMode: 2,
-                    extraPlugins: 'sharedspace,justify,colorbutton,panelbutton,font',
-                    removePlugins: 'exportpdf',
-                    fontSize_sizes: '0.8rem;1rem;1.2rem;1.5rem;2rem;2.5rem;3rem;',
-                    colorButton_enableMore: true,
-                    toolbar: [
-                        { name: 'styles', items: ['Font', 'FontSize'] },
-                        ['Bold', 'Italic', 'Underline', 'Strike'],
-                        { name: 'paragraph', items: ['NumberedList', 'BulletedList'] },
-                        { name: 'links', items: ['Link', 'Unlink'] },
-                        { name: 'colors', items: ['TextColor', 'BGColor'] },
-                    ],
-                }
-            },
-
-            'gjs-plugin-ckeditor5': {
-                position: 'left',
-                options: {
-                    trackChanges: {},
-                    toolbar: {
-                        items: [
-                            '|',
-                            'fontColor',
-                            'fontSize',
-                            'fontFamily',
-                            'fontBackgroundColor',
-                            'alignment',
-                            'bold',
-                            'italic',
-                            'underline',
-                            'strikethrough',
-                            'link',
-                            'bulletedList',
-                            'numberedList',
-                            'horizontalLine',
-                            '|',
-                            'outdent',
-                            'indent',
-                            '|',
-                            'blockQuote',
-                            'insertTable',
-                            '|',
-                            'undo',
-                            'redo'
-                        ]
-                    },
-                    language: 'zh',
-                    fontSize: {
-                        options: ['0.8rem', '1rem', '1.2rem', '1.5rem', '2rem', '2.5rem', '3rem']
-                    },
-                    table: {
-                        contentToolbar: [
-                            'tableColumn',
-                            'tableRow',
-                            'mergeTableCells',
-                            'tableCellProperties',
-                            'tableProperties'
-                        ]
-                    },
-                    htmlSupport: {
-                        allow: [
-                            {
-                                name: /.*/,
-                                attributes: true,
-                                classes: true,
-                                styles: true
-                            }
-                        ]
-                    },
-                    licenseKey: ''
-                }
-            },
-
-            'grapesjs-rte-extensions': {
-                base: {
-                    bold: true,
-                    italic: true,
-                    underline: true,
-                    strikethrough: true,
-                    link: true,
-                },
-                fonts: {
-                    fontColor: true,
-                    hilite: true,
-                },
-                format: {
-                    heading2: true,
-                    heading3: true,
-                    heading4: false,
-                    paragraph: true,
-                    clearFormatting: true,
-                },
-                subscriptSuperscript: false,
-                indentOutdent: false,
-                list: false,
-                align: true,
-                actions: false,
-                undoredo: false,
-                extra: false,
-                darkColorPicker: true,
-                maxWidth: '600px'
-            }
         },
         initOptions: {
             showOffsets: 1,
             noticeOnUnload: 0,
             protectedCss: "",
-
-            i18n: {
-                locale: 'tw',
-                localeFallback: 'tw',
-            },
 
             selectorManager: {
                 componentFirst: true,
@@ -256,13 +102,82 @@ var grapesInit = function (options) {
 
             assetManager: {
                 custom: false,
-                uploadFile: function (e) {
-                    var files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+                uploadFile: function (e, uploadDone) {
+                    const sourceFiles = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+                    const files = Array.from(sourceFiles || []);
+                    const maxFileSize = 10 * 1024 * 1024;
+                    const extensionByMimeType = {
+                        'image/gif': 'gif',
+                        'image/jpeg': 'jpg',
+                        'image/png': 'png',
+                        'image/webp': 'webp'
+                    };
+                    const completeUpload = typeof uploadDone === "function"
+                        ? uploadDone
+                        : function () {};
+                    const finishUpload = function (data, success) {
+                        completeUpload({ data: data });
+                        editor.trigger('coker:image-editor:upload:complete', {
+                            success: success
+                        });
+                    };
+                    const selectedComponent = typeof editor.getSelected === "function"
+                        ? editor.getSelected()
+                        : null;
+                    const selectedSrc = selectedComponent && typeof selectedComponent.get === "function"
+                        ? selectedComponent.get("src") || ""
+                        : "";
+                    const sourceAsset = editor.AssetManager.getAll().find(function (asset) {
+                        return asset.get("src") === selectedSrc;
+                    });
+                    const sourceName = sourceAsset
+                        ? sourceAsset.get("name") || ""
+                        : "";
+
+                    const getEditedFileStem = function () {
+                        const sourcePath = (sourceName || selectedSrc || "image")
+                            .split(/[?#]/)[0]
+                            .replace(/\\/g, "/");
+                        let fileName = sourcePath.split("/").pop() || "image";
+
+                        try {
+                            fileName = decodeURIComponent(fileName);
+                        } catch (_) {
+                            // Keep the original value when the path is not URI encoded.
+                        }
+
+                        return fileName
+                            .replace(/\.[^.]+$/, "")
+                            .replace(/-edited-\d+(?:-\d+)?$/, "") || "image";
+                    };
+
+                    if (!files.length) {
+                        finishUpload([], false);
+                        return;
+                    }
+
+                    if (files.some(file => file.size > maxFileSize)) {
+                        co.sweet.error("錯誤", "圖片編輯結果不可超過 10 MB", null, false);
+                        finishUpload([], false);
+                        return;
+                    }
+
                     var formData = new FormData();
 
-                    for (var i in files) {
-                        formData.append('files', files[i]);
-                    }
+                    files.forEach(function (file, index) {
+                        const hasExtension = typeof file.name === "string" && /\.[a-z0-9]{1,10}$/i.test(file.name);
+                        const contentType = file.type || 'image/png';
+                        const extension = extensionByMimeType[contentType] || 'png';
+                        const uploadFile = hasExtension
+                            ? file
+                            : new File(
+                                [file],
+                                `${getEditedFileStem()}-edited-${Date.now()}-${index}.${extension}`,
+                                { type: contentType, lastModified: Date.now() }
+                            );
+
+                        formData.append('files', uploadFile, uploadFile.name);
+                    });
 
                     formData.append("type", 0);
 
@@ -279,9 +194,19 @@ var grapesInit = function (options) {
                             });
 
                             editor.AssetManager.add(myJSON);
-                        } else if (result.errorFiles[0] == "Type Error") {
-                            co.sweet.error("錯誤", "不支援的檔案格式", null, false);
+                            finishUpload(myJSON, myJSON.length > 0);
+                        } else {
+                            finishUpload([], false);
+
+                            if (result.errorFiles && result.errorFiles[0] == "Type Error") {
+                                co.sweet.error("錯誤", "不支援的檔案格式", null, false);
+                            } else {
+                                co.sweet.error("錯誤", "圖片上傳失敗", null, false);
+                            }
                         }
+                    }).fail(function () {
+                        finishUpload([], false);
+                        co.sweet.error("錯誤", "圖片上傳失敗", null, false);
                     });
                 }
             },

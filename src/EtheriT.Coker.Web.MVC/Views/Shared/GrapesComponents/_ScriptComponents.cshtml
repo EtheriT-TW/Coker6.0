@@ -1,34 +1,27 @@
 ﻿<!--導入grapesjs-->
-<link rel="stylesheet" href="/lib/grapesjs/css/grapes.min.css">
+<link rel="stylesheet" href="/modules/grapesjs/etherit-coker-grapesjs.min.css" asp-append-version="true">
+<link rel="stylesheet" href="/modules/grapesjs/etherit-coker-grapesjs-image-editor.min.css" asp-append-version="true">
 <link rel="stylesheet" href="/css/Grapes/GrapesOutsiteCss.min.css" asp-append-version="true">
 <link rel="stylesheet" href="/css/Grapes/GrapesJs-Coker6-Form.min.css" asp-append-version="true">
-<link href="/lib/grapesjs/plugin/grapesjs-rte-extensions/grapesjs-rte-extensions.min.css" rel="stylesheet">
-<script src="/lib/grapesjs/grapes.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-preset-webpage/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-blocks-basic/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-style-bg/grapesjs-style-bg.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-tabs/grapesjs-tabs.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-blocks-table/grapesjs-blocks-table.min.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-custom-code/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-tui-image-editor/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-parser-postcss/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-plugin-ckeditor/index.js"></script>
-<script src="/lib/grapesjs/plugin/grapesjs-rte-extensions/grapesjs-rte-extensions.min.js"></script>
-<!--<script src="/lib/ckeditor5/ckeditor.js"></script>-->
-<!--<script src="/lib/grapesjs/plugin/grapesjs-plugin-ckeditor5/grapesjs-plugin-ckeditor5.min.js"></script>-->
-<script src="/lib/grapesjs/plugin/grapesjs-preset-newsletter/index.js"></script>
-<script src="~/js/Grapes/locale/tw.min.js" asp-append-version="true"></script>
 <script src="~/js/Grapes/grapesJs-Coker6-Form.min.js" charset="utf-8" asp-append-version="true"></script>
 <script src="~/js/Grapes/grapesjs-Swiper.min.js" charset="utf-8" asp-append-version="true"></script>
 <script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
 
-<script type="module">
+<script>
     window.CokerGrapesReady = (async function () {
+        const [grapesModule, imageEditorModule] = await Promise.all([
+            import('/modules/grapesjs/etherit-coker-grapesjs.min.js'),
+            import('/modules/grapesjs/etherit-coker-grapesjs-image-editor.min.js')
+        ]);
         const {
             createCokerGrapesLibrary,
-            registerBasePlugins,
-            createCokerGrapesEditor
-        } = await import('/modules/grapesjs/etherit-coker-grapesjs.min.js');
+            createCokerGrapesEditor,
+            grapesjs: viteGrapesjs
+        } = grapesModule;
+
+        // Preserve the legacy global API while using the Vite-managed instance.
+        window.grapesjs = viteGrapesjs;
+        window.CokerGrapesTuiImageEditorPlugin = imageEditorModule.createTuiImageEditorPlugin();
 
         window.EtheriTCokerGrapesJS = createCokerGrapesLibrary({
             ui: {
@@ -38,13 +31,7 @@
             }
         });
 
-        const basePlugins = registerBasePlugins(window.grapesjs, {
-            pluginName: 'etherit-coker-base-blocks'
-        });
-
-        window.EtheriTCokerGrapesJS.basePlugins = basePlugins;
         window.EtheriTCokerGrapesJS.createEditor = createCokerGrapesEditor;
-        window.EtheriTCokerGrapesJS.registerPlugins(window.grapesjs);
 
         console.log('[EtheriT.Coker.GrapesJS] module loaded', window.EtheriTCokerGrapesJS);
         return window.EtheriTCokerGrapesJS;

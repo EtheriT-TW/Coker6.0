@@ -8,6 +8,7 @@ let $form, tempHtml,tempMailHtml;
 function PageReady() {
     // 啟動
     const editor = grapesInit({
+        enableNewsletter: true,
         save: function (html, css) {
             var _dfr = $.Deferred();
             const e = $(html);

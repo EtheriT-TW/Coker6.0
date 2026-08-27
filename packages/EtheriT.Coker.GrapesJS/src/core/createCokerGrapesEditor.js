@@ -2,18 +2,29 @@ import grapesjs from 'grapesjs';
 import { createEditorAdapter } from './createEditorAdapter.js';
 import { baseBlocksPlugin } from '../plugins/baseBlocksPlugin.js';
 import { cokerCorePlugin } from '../plugins/cokerCorePlugin.js';
+import { createOfficialPlugins } from '../plugins/officialPlugins.js';
+import { grapesZhTw } from '../locales/zhTw.js';
 
 export function createCokerGrapesEditor(options = {}) {
     const adapter = options.adapter || createEditorAdapter(options);
+    const initOptions = options.initOptions || {};
+    const i18nOptions = initOptions.i18n || {};
 
     const externalPlugins = options.externalPlugins || [];
     const externalPluginFunctions = options.externalPluginFunctions || [];
-    const externalPluginsOpts = options.externalPluginsOpts || {};
+    const officialPluginsOptions = options.officialPluginsOptions ||
+        options.externalPluginsOpts ||
+        {};
+    const container = options.container || '#gjs';
+    const officialPlugins = createOfficialPlugins(grapesjs, {
+        container,
+        pluginOptions: officialPluginsOptions
+    });
 
     const editor = grapesjs.init({
-        ...options.initOptions,
+        ...initOptions,
 
-        container: options.container || '#gjs',
+        container,
         height: options.height || '100vh',
         fromElement: options.fromElement ?? true,
 
@@ -21,23 +32,28 @@ export function createCokerGrapesEditor(options = {}) {
             autoload: false
         },
 
-        plugins: [
-            baseBlocksPlugin,
-            ...externalPlugins,
-            ...externalPluginFunctions,
-            cokerCorePlugin
-        ],
+        i18n: {
+            locale: 'tw',
+            localeFallback: 'tw',
+            ...i18nOptions,
+            messages: {
+                tw: grapesZhTw,
+                ...(i18nOptions.messages || {})
+            }
+        },
 
-        pluginsOpts: {
-            [baseBlocksPlugin]: {
+        plugins: [
+            grapesjs.usePlugin(baseBlocksPlugin, {
                 flexGrid: true,
                 ...(options.baseBlocksOptions || {})
-            },
-            ...externalPluginsOpts,
-            [cokerCorePlugin]: {
+            }),
+            ...officialPlugins,
+            ...externalPlugins,
+            ...externalPluginFunctions,
+            grapesjs.usePlugin(cokerCorePlugin, {
                 adapter
-            }
-        }
+            })
+        ]
     });
 
     return editor;

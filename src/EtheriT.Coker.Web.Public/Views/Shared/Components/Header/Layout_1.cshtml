@@ -19,24 +19,14 @@
                 if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
             }
             <a href="@Model.HomeLink" target="@home_target" title="@home_title" @(rel != null ? $"rel=\"{rel}\"" : "")>
-                @if (string.IsNullOrEmpty(Model.Title))
+                @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
                 {
-                    @if (Model.UseSiteTitleAsMainHeading)
-                    {
-                        <h1>@Model.Title</h1>
-                    }
-                    else
-                    {
-                        <span>@Model.Title</span>
-                    }
+                    <span class="logo-text">@Model.Title</span>
                 }
                 else
                 {
                     <img src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-                    @if (Model.UseSiteTitleAsMainHeading)
-                    {
-                        <h1 class="sr-only">@Model.Title</h1>
-                    }
+                    <span class="logo-text-fallback">@Model.Title</span>
                 }
             </a>
         </div>
@@ -48,7 +38,17 @@
             <!-- Menu Canvas Search Block -->
             <div class="offcanvas-header pt-3 mx-3">
                 <div class="offcanvas-title fs-5 fw-bold" id="offcanvasLabel">
-                    <a href="/"><img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" /></a>
+                    <a href="/">
+                        @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
+                        {
+                            <span class="logo-text">@Model.Title</span>
+                        }
+                        else
+                        {
+                            <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
+                            <span class="logo-text-fallback">@Model.Title</span>
+                        }
+                    </a>
                 </div>
             </div>
 
@@ -191,24 +191,14 @@
                 var logo_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
             }
             <a href="@Model.HomeLink" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
-                @if (string.IsNullOrEmpty(Model.Title))
+                @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
                 {
-                    @if (Model.UseSiteTitleAsMainHeading)
-                    {
-                        <h1>@Model.Title</h1>
-                    }
-                    else
-                    {
-                        <span>@Model.Title</span>
-                    }
+                    <span class="logo-text">@Model.Title</span>
                 }
                 else
                 {
                     <img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-                    @if (Model.UseSiteTitleAsMainHeading)
-                    {
-                        <h1 class="d-none">@Model.Title</h1>
-                    }
+                    <span class="logo-text-fallback">@Model.Title</span>
                 }
             </a>
         </div>

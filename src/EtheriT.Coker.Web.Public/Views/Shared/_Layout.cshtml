@@ -657,16 +657,23 @@
             }
             string VisibleHeader = bool.Parse((ViewData["VisibleHeader"] ?? "true").ToString() ?? "true") ? "" : "d-none";
             string VisibleFooter = bool.Parse((ViewData["VisibleFooter"] ?? "true").ToString() ?? "true") ? "" : "d-none";
+            bool useSiteTitleAsMainHeading = ViewData["UseSiteTitleAsMainHeading"] as bool? ??
+                !string.Equals(
+                    ViewData["PageView"]?.ToString(),
+                    "Product",
+                    StringComparison.OrdinalIgnoreCase);
+            string mainHeading = ViewData["MainHeading"]?.ToString() ??
+                ViewData["PageName"]?.ToString() ??
+                ViewData["SideName"]?.ToString() ??
+                string.Empty;
 
         }
         <header class="@VisibleHeader @ViewBag.HeaderLayoutClass @(ViewBag.HasFullBanner == true ? "overlap-banner" : "")">
-            @await Component.InvokeAsync(nameof(Header), new
+            @if (useSiteTitleAsMainHeading && !string.IsNullOrWhiteSpace(mainHeading))
             {
-                useSiteTitleAsMainHeading = !string.Equals(
-                    ViewData["PageView"]?.ToString(),
-                    "Product",
-                    StringComparison.OrdinalIgnoreCase)
-            })
+                <h1 class="visually-hidden">@mainHeading</h1>
+            }
+            @await Component.InvokeAsync(nameof(Header))
         </header>
         <noscript>
             <p id="noscript">

@@ -16,7 +16,6 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         public string? UploadPath { get; set; }
         public bool? Sitemap_Target { get; set; }
         public bool? HasShoppingCar { get; set; }
-        public bool UseSiteTitleAsMainHeading { get; set; } = true;
         public bool ShowPagePath { get; set; } = true;
         public bool ShowMarquee { get; set; } = true;
         public string marqueeBagroundImage { get; set; } = string.Empty;

@@ -1,6 +1,9 @@
 ﻿@using EtheriT.Coker.Web.Public.Models;
 @using EtheriT.Coker.Application.Shared.i18n;
 @model PageViewModel
+@{
+    ViewData["UseSiteTitleAsMainHeading"] = false;
+}
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
     <style nonce="@ViewBag.Nonce">

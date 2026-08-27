@@ -15,10 +15,14 @@
                         var homte_title = Model.HomeTarget == true ? "連結至：首頁(另開視窗)" : "連結至：首頁";
                         }
                     <a class="d-flex navbar-brand me-0 me-sm-3" href="@Model.HomeLink" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@homte_title">
-                        <img class="logo" src="@Model.LogoImageUrl" alt="@(Model.UseSiteTitleAsMainHeading ? "" : Model.Title)" asp-append-version="true">
-                        @if (Model.UseSiteTitleAsMainHeading)
+                        @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
                         {
-                            <h1 class="sr-only">@Model.Title</h1>
+                            <span class="logo-text">@Model.Title</span>
+                        }
+                        else
+                        {
+                            <img class="logo" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true">
+                            <span class="logo-text-fallback">@Model.Title</span>
                         }
                     </a>
                     <button class="btn_expand navbar-toggler pt-1 h-100" type="button" data-bs-toggle="collapse" data-bs-target="#NavbarContent" aria-controls="NavbarContent" aria-expanded="false" aria-label="Toggle navigation">

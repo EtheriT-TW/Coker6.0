@@ -1,5 +1,9 @@
 ﻿
 /* Mega Menu */
+.logo-text-fallback {
+    display: none;
+}
+
 #Mega_Menu > .btn_menu {
     margin-top: 0.25rem;
     transition: 0.3s;
@@ -20,6 +24,10 @@
     }
 
 /* Button Car Dropdown */
+#btn_car_dropdown {
+    padding: 1px 6px;
+}
+
 #btn_car_dropdown > i.open {
     color: var(--red-popup);
 }

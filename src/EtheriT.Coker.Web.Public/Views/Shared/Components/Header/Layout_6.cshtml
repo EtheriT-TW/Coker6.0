@@ -23,10 +23,14 @@
                     </span>
                 </a>
                 <a class="navbar-brand p-0 m-0 order-1" href="/" title="連結至:首頁">
-                    <img class="logoimg" src="@Model.LogoImageUrl" alt="@(Model.UseSiteTitleAsMainHeading ? "" : Model.Title)" asp-append-version="true">
-                    @if (Model.UseSiteTitleAsMainHeading)
+                    @if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
                     {
-                        <h1 class="sr-only">@Model.Title</h1>
+                        <span class="logo-text">@Model.Title</span>
+                    }
+                    else
+                    {
+                        <img class="logoimg" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true">
+                        <span class="logo-text-fallback">@Model.Title</span>
                     }
                 </a>
                 <div class="collapse navbar-collapse order-lg-2 order-3" id="headermenu">

@@ -32,6 +32,7 @@ using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.Product;
+using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Remote;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.Shared.Templates;
@@ -40,6 +41,7 @@ using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Templates;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Web.Public.Models;
+using EtheriT.Coker.Web.Public.Helpers;
 using EtheriT.Coker.Web.Public.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -80,6 +82,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly StringHandler stringHandler;
         private readonly LoginUserData loginUserData;
         private readonly RemoteTrackingTokenService remoteTrackingTokenService;
+        private readonly IHtmlProcessor htmlProcessor;
         private readonly IWebHostEnvironment _env;
 
         public PageController(
@@ -106,6 +109,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             StringHandler stringHandler,
             LoginUserData loginUserData,
             RemoteTrackingTokenService remoteTrackingTokenService,
+            IHtmlProcessor htmlProcessor,
             IWebHostEnvironment env
         )
         {
@@ -132,6 +136,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.bonusManagementAppService = bonusManagementAppService;
             this.loginUserData = loginUserData;
             this.remoteTrackingTokenService = remoteTrackingTokenService;
+            this.htmlProcessor = htmlProcessor;
             this._env = env;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
@@ -665,6 +670,40 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 key,
                 "home",
                 StringComparison.OrdinalIgnoreCase);
+            var rendersInheritedHtml = string.Equals(
+                    view,
+                    "Index",
+                    StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(
+                    view,
+                    "ShoppingCar",
+                    StringComparison.OrdinalIgnoreCase);
+            var renderedContentHtml = rendersInheritedHtml
+                ? MainHeadingHtml.PrepareInheritedContent(
+                    htmlProcessor,
+                    model.SafeHtml,
+                    model.ParentSafeHtml)
+                : string.Empty;
+            var contentMainHeadingCount = MainHeadingHtml.CountMainHeadings(
+                htmlProcessor,
+                renderedContentHtml);
+            var viewHasOwnMainHeading = isProductPage ||
+                view.Contains("Error/", StringComparison.OrdinalIgnoreCase);
+
+            if (contentMainHeadingCount > 1)
+            {
+                _logger.LogWarning(
+                    "Page {PageId} ({PageView}) contains {HeadingCount} H1 elements after inherited content composition.",
+                    model.PageData.Id,
+                    model.PageData.PageView,
+                    contentMainHeadingCount);
+            }
+
+            ViewData["UseSiteTitleAsMainHeading"] = !viewHasOwnMainHeading &&
+                contentMainHeadingCount == 0;
+            ViewData["MainHeading"] = isHomePage
+                ? model.PageData.SiteName
+                : model.PageData.Title;
             var canonicalPageUrl = BuildCanonicalPageUrl(model);
             ViewBag.PageTagNameName = isHomePage
                 ? model.PageData.SiteName

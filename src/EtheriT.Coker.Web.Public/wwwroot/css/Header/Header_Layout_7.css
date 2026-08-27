@@ -67,7 +67,8 @@
         align-items: center;
     }
 
-.icon-logged-in {
+#HiUser .material-symbols-outlined.icon-logged-in,
+#MenuHiUser .material-symbols-outlined.icon-logged-in {
     font-variation-settings: 'FILL' 1;
 }
 

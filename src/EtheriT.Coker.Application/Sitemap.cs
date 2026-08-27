@@ -90,7 +90,7 @@ namespace EtheriT.Coker.Application
                 Arti.ForEach(a => {
                     Urls.Add(new UrlDto
                     {
-                        loc = $"{siteUrl}/{site.OrgName}/Search/Article/{a.Id}".Replace("//", "/").Replace(":/", "://"),
+                        loc = $"{siteUrl}/{site.OrgName}/search/article/{a.Id}".Replace("//", "/").Replace(":/", "://"),
                         priority = "1.0",
                         lastmod = (a.LastModificationTime ?? a.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
                         changefreq = "never"

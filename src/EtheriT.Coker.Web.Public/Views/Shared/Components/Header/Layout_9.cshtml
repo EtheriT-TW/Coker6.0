@@ -30,24 +30,14 @@
 					var logo_title = Model.HomeTarget == true ? string.Format(L.get("LinkToAndBlank"), L.get("HomePage")) : string.Format(L.get("LinkTo"), L.get("HomePage"));
 				}
 				<a href="/" target="@logo_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@logo_title">
-					@if (string.IsNullOrEmpty(Model.Title))
+					@if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
 					{
-						@if (Model.UseSiteTitleAsMainHeading)
-						{
-							<h1>@Model.Title</h1>
-						}
-						else
-						{
-							<span>@Model.Title</span>
-						}
+						<span class="logo-text">@Model.Title</span>
 					}
 					else
 					{
 						<img class="" src="@Model.LogoImageUrl" alt="@Model.Title" asp-append-version="true" />
-						@if (Model.UseSiteTitleAsMainHeading)
-						{
-							<h1 class="sr-only">@Model.Title</h1>
-						}
+						<span class="logo-text-fallback">@Model.Title</span>
 					}
 				</a>
 			</div>
@@ -67,24 +57,14 @@
 						if (string.IsNullOrEmpty(Model.HomeLink)) Model.HomeLink = "/";
 					}
 					<a href="/" target="@home_target" rel="@(Model.HomeTarget == true ? $"noopener noreferrer" : "")" title="@home_title">
-						@if (string.IsNullOrEmpty(Model.Title))
+						@if (string.IsNullOrWhiteSpace(Model.LogoImageUrl))
 						{
-							@if (Model.UseSiteTitleAsMainHeading)
-							{
-								<h1>@Model.Title</h1>
-							}
-							else
-							{
-								<span>@Model.Title</span>
-							}
+							<span class="logo-text">@Model.Title</span>
 						}
 						else
 						{
 							<img src="@Model.LogoImageUrl" alt="@Model.Title" class="logo-img" asp-append-version="true" />
-							@if (Model.UseSiteTitleAsMainHeading)
-							{
-								<h1 class="d-none">@Model.Title</h1>
-							}
+							<span class="logo-text-fallback">@Model.Title</span>
 						}
 					</a>
 				</div>

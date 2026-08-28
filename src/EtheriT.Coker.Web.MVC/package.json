@@ -6,6 +6,7 @@
   "scripts": {
     "generate-devextreme-license": "devextreme-license --non-modular --out wwwroot/js/devextreme/devextreme-license.js --force",
     "ensure-devextreme-license": "node scripts/ensure-devextreme-license.js",
+    "init-grapesjs": "node scripts/init-grapesjs.js",
     "precreate-bundles": "npm run ensure-devextreme-license",
     "create-bundles": "yarn && gulp buildDev",
     "prebuild": "npm run ensure-devextreme-license",

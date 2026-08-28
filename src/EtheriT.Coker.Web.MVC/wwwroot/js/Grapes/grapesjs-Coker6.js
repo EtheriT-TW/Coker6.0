@@ -711,14 +711,27 @@
         blockControl();
     })
 
+    const addBlockMetadata = function (html, name) {
+        const template = document.createElement('template');
+        template.innerHTML = html;
+
+        const rootElement = template.content.firstElementChild;
+        if (!rootElement) {
+            return html;
+        }
+
+        const blockName = String(name || "");
+        rootElement.setAttribute('data-block-name', blockName);
+        rootElement.setAttribute('data-gjs-name', blockName);
+
+        return template.innerHTML;
+    };
+
     //載入儲存的元件
     settings.getComponer().done(function (result) {
         $(result).each(function () {
             const html = co.Data.HtmlDecode(this.html);
-            const htmlWithAttr = html.replace(
-                /<([a-zA-Z0-9-]+)([^>]*)>/,
-                `<$1$2 data-block-name="${this.title}">`
-            );
+            const htmlWithAttr = addBlockMetadata(html, this.title);
             const elementHtmlCss = `${htmlWithAttr}<style>${this.css}</style>`;
             let blockId = 'customBlockTemplate_' + this.id;
             let iconText = (this.icon || "").replace("material-symbols-outlined", "").trim();
@@ -792,7 +805,7 @@
             blockCss += rule.toCSS();
         });
         const css = `<style>${blockCss}</style>`;
-        const elementHtmlCss = finalHtml + css;
+        const elementHtmlCss = addBlockMetadata(finalHtml, name) + css;
         const category = $('#ComponerTypeList>option:selected').text();
         const object = {
             id: name_blockId.id,

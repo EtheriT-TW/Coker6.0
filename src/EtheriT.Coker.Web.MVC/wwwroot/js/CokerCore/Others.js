@@ -210,11 +210,11 @@
         }
     }, Grapes: {
         setEditor: (editor,html,css) => {
-            editor.DomComponents.clear(); // Clear components
-            editor.CssComposer.clear();  // Clear styles
+            // setStyle/setComponents 本身就會覆蓋原內容，不要先重複 clear，
+            // 避免大量 component:remove 與 component:add 事件交錯。
+            editor.setStyle(css || "");
+            editor.setComponents(html || "");
             editor.UndoManager.clear(); // Clear undo history
-            editor.setStyle(css);
-            editor.setComponents(html);
         },
         setFile: function (editor, id, type) {
             if(!!!id) return

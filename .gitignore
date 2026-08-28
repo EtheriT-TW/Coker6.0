@@ -416,4 +416,7 @@ launchSettings.json
 # Frontend package build outputs
 packages/*/dist/
 
-!**/wwwroot/modules/**/*.min.js
+# GrapesJS Vite publish outputs used directly by MVC.
+# Keep these in Git so MVC-only developers don't need to run build:mvc.
+!src/EtheriT.Coker.Web.MVC/wwwroot/modules/grapesjs/*.min.js
+!src/EtheriT.Coker.Web.MVC/wwwroot/modules/grapesjs/*.min.css

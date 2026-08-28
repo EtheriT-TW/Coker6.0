@@ -74,6 +74,9 @@ var grapesInit = function (options) {
         externalPluginFunctions.push(window.CokerGrapesNewsletterPlugin);
     }
 
+    const pendingCanvasProcessorClasses = new Set();
+    let canvasProcessorDebounceTimer = null;
+
     var editor = window.EtheriTCokerGrapesJS.createEditor({
         container: container,
         height: '100vh',
@@ -219,10 +222,26 @@ var grapesInit = function (options) {
             domComponents: {
                 processor: (obj) => {
                     if (!!obj.classes) {
+                        $(obj.classes).each(function () {
+                            pendingCanvasProcessorClasses.add(this.toString());
+                        });
+
+                        clearTimeout(canvasProcessorDebounceTimer);
+                        canvasProcessorDebounceTimer = setTimeout(function () {
+                            const processorClasses = Array.from(pendingCanvasProcessorClasses);
+                            pendingCanvasProcessorClasses.clear();
+
                         const isrun = false;
                         let timer = null;
 
-                        const waitIframeReady = (cb) => {
+                        const waitIframeReady = (cb, retryCount) => {
+                            retryCount = retryCount || 0;
+
+                            if (retryCount >= 50) {
+                                console.warn('[GrapesJS] 畫布 iframe 等待逾時，略過本次元件初始化。');
+                                return;
+                            }
+
                             const iframeEl = editor &&
                                 editor.Canvas &&
                                 typeof editor.Canvas.getFrameEl === "function"
@@ -230,13 +249,13 @@ var grapesInit = function (options) {
                                     : null;
 
                             if (!iframeEl) {
-                                return setTimeout(() => waitIframeReady(cb), 100);
+                                return setTimeout(() => waitIframeReady(cb, retryCount + 1), 100);
                             }
 
                             const iframe = iframeEl.contentWindow;
 
                             if (iframe.document.readyState !== "complete") {
-                                return setTimeout(() => waitIframeReady(cb), 100);
+                                return setTimeout(() => waitIframeReady(cb, retryCount + 1), 100);
                             }
 
                             cb(iframe);
@@ -258,15 +277,21 @@ var grapesInit = function (options) {
 
                             iframe.OrgName = typeof OrgName === "undefined" ? "" : OrgName;
 
-                            const init = function () {
+                            const init = function (retryCount) {
                                 if (typeof (iframe.jqueryExtend) != "undefined" && typeof (iframe.local) != "undefined") {
                                     iframe.jqueryExtend();
+                                } else if (retryCount < 50) {
+                                    timer = setTimeout(function () {
+                                        init(retryCount + 1);
+                                    }, 100);
                                 } else {
-                                    timer = setTimeout(init, 100);
+                                    console.warn('[GrapesJS] jqueryExtend 等待逾時，略過本次初始化。');
                                 }
                             };
 
-                            timer = setTimeout(init, 100);
+                            timer = setTimeout(function () {
+                                init(0);
+                            }, 100);
 
                             let checkClass = [
                                 { key: "SwiperInit", state: false, run: true, class: [], parameter: { autoplay: false } },
@@ -288,7 +313,7 @@ var grapesInit = function (options) {
                                 checkClass[index].class.push(`.${str}`);
                             };
 
-                            $(obj.classes).each(function () {
+                            $(processorClasses).each(function () {
                                 var s = this.toString();
 
                                 switch (s) {
@@ -353,7 +378,7 @@ var grapesInit = function (options) {
                                 }
                             });
 
-                            const checkEle = function () {
+                            const checkEle = function (retryCount) {
                                 var runAll = true;
 
                                 $(checkClass).each(function () {
@@ -389,13 +414,20 @@ var grapesInit = function (options) {
                                     runAll = runAll && this.run;
                                 });
 
-                                if (!runAll) {
-                                    setTimeout(checkEle, 300);
+                                if (!runAll && retryCount < 20) {
+                                    setTimeout(function () {
+                                        checkEle(retryCount + 1);
+                                    }, 300);
+                                } else if (!runAll) {
+                                    console.warn('[GrapesJS] 畫布元件初始化等待逾時，停止本次重試。');
                                 }
                             };
 
-                            setTimeout(checkEle, 300);
+                            setTimeout(function () {
+                                checkEle(0);
+                            }, 300);
                         });
+                        }, 0);
                     }
                 }
             }

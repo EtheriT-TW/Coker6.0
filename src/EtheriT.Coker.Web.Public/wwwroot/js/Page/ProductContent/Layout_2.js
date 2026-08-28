@@ -580,10 +580,17 @@
     }
 
     function applyImageLayout(result) {
-        if (hasRealProductImage(result))
-            return;          // 有真圖 → 維持原樣
-        $('#Product > .image').addClass('d-none');           // 沒圖 → 收掉 .image
-        $('#Product > .content').removeClass('col-md-6 col-sm-12').addClass('col-12'); // .content 補滿
+        const $image = $('#Product > .image');
+        const $content = $('#Product > .content');
+
+        if (hasRealProductImage(result)) {
+            $image.removeClass('d-none');
+            $content.removeClass('col-12').addClass('col-md-6 col-sm-12');
+            return;
+        }
+
+        $image.addClass('d-none');
+        $content.removeClass('col-md-6 col-sm-12').addClass('col-12');
     }
     // 只有帶圖片的規格會進燈箱，陣列順序就是 swiper 的 slide 順序
     function buildGallerySpecs(stocks, productTitle) {
@@ -643,30 +650,36 @@
             renderContext.productTitle));
     }
 
-    function init() {
-        const pid = window.PageId;
-        const $container = $('.spec-list');
-        if (!pid || $container.length === 0 || typeof Product === 'undefined' || !Product.GetOne) return;
+    function createLayout2(controller) {
+        const specList = () => $('.spec-list');
 
-        const state = readState();
-        bindQtyStepper($container);
-        bindSpecGallery($container);
-        bindAddToCart($container, state);
-        bindCopyName($container);
-        bindCopyName($('#ProDisplayModal'));
-        bindVariantSelection($container);
+        function bindEvents() {
+            const $container = specList();
+            if ($container.length === 0)
+                return;
 
-        Product.GetOne.ProdMainDisplay(pid)
-            .done(result => {
-                render($container, result, state);
-                applyRequestedStock($container);
-                applyImageLayout(result);
-            })
-            .fail(() => {
-                console.error('Layout_2: 讀取規格資料失敗');
-            });
+            const state = readState();
+            bindQtyStepper($container);
+            bindSpecGallery($container);
+            bindAddToCart($container, state);
+            bindCopyName($container);
+            bindCopyName($('#ProDisplayModal'));
+            bindVariantSelection($container);
+        }
+
+        function renderSelectionArea() {
+            const $container = specList();
+            const result = controller.state.product;
+            if ($container.length === 0 || !result)
+                return;
+            render($container, result, readState());
+            applyRequestedStock($container);
+            applyImageLayout(result);
+        }
+
+        return { bindEvents, renderSelectionArea };
     }
 
-    $(init);
+    M.registerLayout(createLayout2);
 
 })(window.jQuery);

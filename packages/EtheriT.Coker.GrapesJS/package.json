@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "init-grapesjs": "node scripts/init-grapesjs.cjs",
     "build": "vite build",
     "build:mvc": "vite build && node scripts/copy-to-mvc.mjs",
     "preview": "vite preview"

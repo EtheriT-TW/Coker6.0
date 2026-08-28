@@ -1,12 +1,12 @@
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const mvcDirectory = path.resolve(__dirname, '..');
-const repositoryDirectory = path.resolve(mvcDirectory, '..', '..');
-const grapesJsDirectory = path.join(
+const grapesJsDirectory = path.resolve(__dirname, '..');
+const repositoryDirectory = path.resolve(grapesJsDirectory, '..', '..');
+const mvcDirectory = path.join(
     repositoryDirectory,
-    'packages',
-    'EtheriT.Coker.GrapesJS'
+    'src',
+    'EtheriT.Coker.Web.MVC'
 );
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 

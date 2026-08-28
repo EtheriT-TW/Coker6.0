@@ -256,6 +256,7 @@
             $root.find(selectors.specList).html(descHtml);
 
             this.toggleSpecDetailButton();
+            this.renderSpecTab();
             this.renderHtmlContent();
             this.renderTechCerts();
             this.renderFiles();
@@ -431,6 +432,19 @@
             if (window.LinkWithIconInit) {
                 window.LinkWithIconInit();
             }
+        }
+
+        renderSpecTab() {
+            const result = this.state.product;
+            const $sections = this.$pageRoot.find('#btn_tab > .spec,#ProductSpec');
+
+            if (!Array.isArray(result.stocks) || result.stocks.length === 0) {
+                $sections.addClass('d-none');
+                this.$pageRoot.find('#ProductSpec').removeClass('show active');
+                return;
+            }
+
+            $sections.removeClass('d-none');
         }
 
         renderTags() {

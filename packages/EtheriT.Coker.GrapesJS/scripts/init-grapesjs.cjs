@@ -66,7 +66,7 @@ function main() {
     );
     runNpm(
         mvcDirectory,
-        ['ci', '--include=dev'],
+        ['install', '--include=dev'],
         '安裝 MVC 前端依賴'
     );
     runNpm(

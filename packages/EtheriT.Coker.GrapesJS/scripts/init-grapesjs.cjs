@@ -8,7 +8,7 @@ const mvcDirectory = path.join(
     'src',
     'EtheriT.Coker.Web.MVC'
 );
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmCliPath = process.env.npm_execpath;
 
 function assertSupportedNodeVersion() {
     const [major, minor] = process.versions.node.split('.').map(Number);
@@ -29,7 +29,11 @@ function runNpm(directory, args, description) {
     console.log(`目錄：${directory}`);
     console.log(`指令：npm ${args.join(' ')}`);
 
-    const result = spawnSync(npmCommand, args, {
+    if (!npmCliPath) {
+        throw new Error('找不到 npm CLI 路徑，請使用 npm run init-grapesjs 執行本腳本。');
+    }
+
+    const result = spawnSync(process.execPath, [npmCliPath, ...args], {
         cwd: directory,
         env: {
             ...process.env,

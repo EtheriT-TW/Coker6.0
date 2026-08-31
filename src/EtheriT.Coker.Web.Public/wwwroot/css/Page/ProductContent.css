@@ -60,7 +60,7 @@ i.fa-chevron-right {
 }
 
     #ProDisplayModal > .modal-dialog > .modal-content > button {
-        z-index: 1;
+        z-index: 2;
         background-color: white;
         opacity: 0.75;
     }

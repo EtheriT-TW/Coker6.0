@@ -17,7 +17,7 @@
 /* ── 電腦版：四欄對齊網格（圖 | 名稱 | 描述 | 方案區）── */
 .spec-card {
     display: grid;
-    grid-template-columns: 110px 170px minmax(140px, 2fr) auto;
+    grid-template-columns: 110px 170px minmax(140px, 830px) auto;
     align-items: center;
     column-gap: .5rem;
     padding: .875rem 0; /* 只留上下間距，左右貼齊 */
@@ -42,6 +42,7 @@
     --spec-col-gap: 1rem;
     display: flex;
     flex-direction: column;
+    margin-left: 1rem; /* 與描述欄的間距：column-gap .5rem + 這裡 1rem = 1.5rem */
 }
 
 /* 不開放購買時沒有數量框與按鈕，兩欄收成 0，建議售價會自動跟著回到最右 */
@@ -236,9 +237,14 @@
     cursor: default;
 }
 
+#Product > .content > .btn_learnMore {
+    max-width: 848px;
+    margin-left: auto;
+    margin-right: auto;
+}
 /* ── 規格圖燈箱：外層 swiper 換規格，一張 slide ＝ 一個規格的左圖右文 ──
    全部限定在 .has-spec-info 之下，商品主圖燈箱完全不受影響 */
-#ProDisplayModal .spec-swiper{
+#ProDisplayModal .spec-swiper {
     display: none;
 }
 
@@ -460,6 +466,7 @@
     .spec-actions {
         width: 100%;
         margin-top: .5rem;
+        margin-left: 0; /* 手機版是 flex 堆疊，取消電腦版的欄間距補償 */
     }
 
     .spec-plan {

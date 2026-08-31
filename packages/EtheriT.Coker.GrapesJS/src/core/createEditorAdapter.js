@@ -1,26 +1,24 @@
 export function createEditorAdapter(options = {}) {
+    const hostWindow = typeof window === 'undefined' ? null : window;
+    const nativeAlert = message => hostWindow?.alert?.(String(message ?? ''));
+
     const adapter = {
         ui: {
             alert(message) {
-                window.alert(message);
+                nativeAlert(message);
             },
 
             confirm(message) {
-                return window.confirm(message);
+                return hostWindow?.confirm?.(String(message ?? '')) ?? false;
             },
 
             success(message) {
-                window.alert(message);
+                nativeAlert(message);
             },
 
             error(message) {
-                window.alert(message);
+                nativeAlert(message);
             }
-        },
-
-        asset: {
-            upload: null,
-            delete: null
         },
 
         content: {
@@ -36,10 +34,6 @@ export function createEditorAdapter(options = {}) {
         ui: {
             ...adapter.ui,
             ...(options.ui || {})
-        },
-        asset: {
-            ...adapter.asset,
-            ...(options.asset || {})
         },
         content: {
             ...adapter.content,

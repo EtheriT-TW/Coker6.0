@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.Webs.Dto;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +28,7 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly LoginUserData loginUserData;
         private readonly IConfiguration configuration;
         private readonly IOrderAppService orderAppService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMapper mapper;
         public LinePayAppService(
             IHttpClientFactory httpClientFactory,
@@ -34,7 +36,8 @@ namespace EtheriT.Coker.Application.ThirdParty
             LoginUserData loginUserData,
             IConfiguration configuration,
             IOrderAppService orderAppService,
-            IMapper mapper
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor
         )
         {
             ThirdPartyClient_Line = httpClientFactory.CreateClient("ThirdPartyClient_Line");
@@ -43,6 +46,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.configuration = configuration;
             this.orderAppService = orderAppService;
             this.mapper = mapper;
+            this._httpContextAccessor = httpContextAccessor;
         }
         public async Task<ResponseMessageDto> LinePayRequest(long ohid)
         {
@@ -342,28 +346,43 @@ namespace EtheriT.Coker.Application.ThirdParty
                             GetResponse.EnsureSuccessStatusCode();
                             var jsonResponse = await GetResponse.Content.ReadAsStringAsync();
                             linePayResponse = JsonConvert.DeserializeObject<LinePayResponseDto>(jsonResponse);
-                            response.Success = true;
                             response.Error = linePayResponse.ReturnCode;
                             switch (linePayResponse.ReturnCode)
                             {
                                 case "0000":
                                     ohdata.State = OrderStatusEnum.待確認;
+                                    response.Success = true;
                                     break;
                                 case "0110":
                                     ohdata.State = OrderStatusEnum.待付款;
+                                    response.Success = true;
                                     break;
                                 case "0121":
                                     response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
                                     break;
+                                case "0122":
+                                    ohdata.State = OrderStatusEnum.付款失敗;
+                                    response.Success = true;
+                                    break;
                                 case "0123":
                                     ohdata.State = OrderStatusEnum.已付款;
+                                    response.Success = true;
                                     break;
                                 default:
-                                    ohdata.State = OrderStatusEnum.付款失敗;
+                                    response.Success = false;
                                     break;
                             }
-                            db.SaveChanges();
-                            response.Message = $"{(int)ohdata.State},{linePayResponse.ReturnMessage}";
+                            if (response.Success)
+                            {
+                                db.SaveChanges();
+                                response.Message = $"{(int)ohdata.State},{linePayResponse.ReturnMessage}";
+                            }
+                            else
+                            {
+                                response.Message = linePayResponse.ReturnCode == "1150"
+                                    ? "LINE Pay 查無此交易，請確認交易建立時與目前使用相同的 Sandbox/正式環境及 Channel。"
+                                    : $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
+                            }
                         }
                     }
                 }
@@ -493,6 +512,11 @@ namespace EtheriT.Coker.Application.ThirdParty
             try
             {
                 ResponseMessageDto temp_response = await LinePayCheckPaymentStatus(ohid);
+                if (!temp_response.Success)
+                {
+                    return temp_response;
+                }
+
                 var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 if (ohdata != null)
                 {
@@ -501,11 +525,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                         switch (ohdata.State)
                         {
                             case OrderStatusEnum.待付款:
-                                response = await LinePayVoid(ohdata.Id);
+                                response = await orderAppService.OrderStateChange(
+                                    ohdata.Id,
+                                    (int)OrderStatusEnum.已取消);
                                 if (response.Success) response.Message = "訂單已取消。";
                                 break;
                             case OrderStatusEnum.待確認:
-                                response = await LinePayVoid(ohdata.Id);
+                                response = await orderAppService.OrderStateChange(
+                                    ohdata.Id,
+                                    (int)OrderStatusEnum.已取消);
                                 if (response.Success) response.Message = "訂單已取消。";
                                 break;
                             case OrderStatusEnum.已付款:
@@ -600,10 +628,22 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 RequestBody = mapper.Map<LinePayRequestBodyDto>(payData);
 
+                var callbackBaseUrl = Website.DefaultUrl;
+
+                var httpContext = _httpContextAccessor.HttpContext;
+
+                if (httpContext != null &&
+                    IsLoopbackHost(httpContext.Request.Host.Host))
+                {
+                    callbackBaseUrl =
+                        $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
+                }
+
                 RequestBody.redirectUrls = new LinePayRedirectUrlsDto
                 {
-                    confirmUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayConfirm",
-                    cancelUrl = $"{Website.DefaultUrl}/api/ThirdParty/LinePayCancel"
+                    confirmUrl = $"{callbackBaseUrl}/api/ThirdParty/LinePayConfirm",
+
+                    cancelUrl = $"{callbackBaseUrl}/api/ThirdParty/LinePayCancel"
                 };
 
                 RequestBody.options = new LinePayOptionDto
@@ -621,9 +661,27 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-
+                throw new Exception(
+                    $"建立 LINE Pay RequestBody 失敗：{ex.Message}",
+                    ex
+                );
             }
             return RequestBody;
+        }
+        private static bool IsLoopbackHost(string host)
+        {
+            if (string.Equals(
+                host,
+                "localhost",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return System.Net.IPAddress.TryParse(
+                       host,
+                       out var address)
+                   && System.Net.IPAddress.IsLoopback(address);
         }
         private string encrypt(string keys, string data)
         {

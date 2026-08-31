@@ -4,7 +4,6 @@
 <link rel="stylesheet" href="/css/Grapes/GrapesOutsiteCss.min.css" asp-append-version="true">
 <link rel="stylesheet" href="/css/Grapes/GrapesJs-Coker6-Form.min.css" asp-append-version="true">
 <script src="~/js/Grapes/grapesJs-Coker6-Form.min.js" charset="utf-8" asp-append-version="true"></script>
-<script src="~/js/Grapes/grapesjs-Swiper.min.js" charset="utf-8" asp-append-version="true"></script>
 <script src="~/js/Grapes/grapesjs-Coker6.min.js" charset="utf-8" asp-append-version="true"></script>
 
 <script>
@@ -23,15 +22,61 @@
         window.grapesjs = viteGrapesjs;
         window.CokerGrapesTuiImageEditorPlugin = imageEditorModule.createTuiImageEditorPlugin();
 
-        window.EtheriTCokerGrapesJS = createCokerGrapesLibrary({
+        const library = createCokerGrapesLibrary({
             ui: {
+                alert(message) {
+                    if (window.co?.sweet?.warn) {
+                        window.co.sweet.warn('提示', message);
+                        return;
+                    }
+
+                    window.alert(message);
+                },
+
                 success(message) {
-                    console.log('[EtheriT.Coker.GrapesJS]', message);
+                    if (window.co?.sweet?.success) {
+                        window.co.sweet.success(message);
+                        return;
+                    }
+
+                    window.alert(message);
+                },
+
+                error(message) {
+                    if (window.co?.sweet?.error) {
+                        window.co.sweet.error('錯誤', message);
+                        return;
+                    }
+
+                    window.alert(message);
+                },
+
+                confirm(message, options = {}) {
+                    if (!window.co?.sweet?.confirm) {
+                        return window.confirm(message);
+                    }
+
+                    return new Promise(resolve => {
+                        window.co.sweet.confirm(
+                            options.title || '確認',
+                            message,
+                            options.confirmText || '確定',
+                            options.cancelText || '取消',
+                            () => resolve(true),
+                            () => resolve(false)
+                        );
+                    });
                 }
             }
         });
 
-        window.EtheriTCokerGrapesJS.createEditor = createCokerGrapesEditor;
+        library.createEditor = function (options = {}) {
+            return createCokerGrapesEditor({
+                ...options,
+                adapter: options.adapter || library.adapter
+            });
+        };
+        window.EtheriTCokerGrapesJS = library;
 
         console.log('[EtheriT.Coker.GrapesJS] module loaded', window.EtheriTCokerGrapesJS);
         return window.EtheriTCokerGrapesJS;
@@ -42,6 +87,5 @@
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/iconset/google_Material_Symbols_Outlined.min.js" asp-append-version="true"></script>
 <script type="text/javascript" src="/lib/bootstrap/iconpicker/js/bootstrap-iconpicker.min.js" asp-append-version="true"></script>
 @{
-    await Html.RenderPartialAsync(@"GrapesComponents\_SwiperModal");
     await Html.RenderPartialAsync(@"GrapesComponents\_PopupDirectory");
 }

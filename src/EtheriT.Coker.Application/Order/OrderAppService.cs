@@ -5063,15 +5063,29 @@ namespace EtheriT.Coker.Application.Order
                     {
                         DetailId = x.Id,
                         CartId = x.ShoppingCart != null ? x.ShoppingCart.Id : 0,
+
                         ProductId = x.ShoppingCart != null
                             ? x.ShoppingCart.ProductId ?? 0
                             : 0,
+
                         ProductName =
-                            x.ShoppingCart != null && !string.IsNullOrWhiteSpace(x.ShoppingCart.ProdName)
+                            x.ShoppingCart != null &&
+                            !string.IsNullOrWhiteSpace(x.ShoppingCart.ProdName)
                                 ? x.ShoppingCart.ProdName
                                 : null,
-                        Quantity = x.ShoppingCart != null ? x.ShoppingCart.Quantity : 0,
-                        UnitPrice = x.ShoppingCart != null ? x.ShoppingCart.Price : 0m
+
+                        Quantity = x.ShoppingCart != null
+                            ? x.ShoppingCart.Quantity
+                            : 0,
+
+                        UnitPrice = x.ShoppingCart != null
+                            ? x.ShoppingCart.Price
+                            : 0m,
+
+                        // ★ 新增：商品本身需要的紅利點數
+                        BonusPrice = x.ShoppingCart != null
+                            ? x.ShoppingCart.Bonus ?? 0
+                            : 0
                     })
                     .ToListAsync();
 
@@ -5143,18 +5157,37 @@ namespace EtheriT.Coker.Application.Order
 
                 int totalAdjustment = 0;
 
-                if (order.UseBonusAmount > 0)
-                {
-                    int bonus = order.UseBonusAmount;
+                int productBonus = details.Sum(x =>
+                    (int)Math.Round(
+                        Convert.ToDecimal(x.BonusPrice) * x.Quantity,
+                        MidpointRounding.AwayFromZero
+                    )
+                );
 
+                int redeemBonus = Math.Max(
+                    order.UseBonusAmount - productBonus,
+                    0
+                );
+
+                if (productBonus > order.UseBonusAmount)
+                {
+                    throw new Exception(
+                        $"訂單紅利資料異常，" +
+                        $"訂單使用紅利：{order.UseBonusAmount}，" +
+                        $"商品紅利：{productBonus}"
+                    );
+                }
+
+                if (redeemBonus > 0)
+                {
                     payData.Adjustments.Add(new PayOrderAdjustment
                     {
                         Type = "Bonus",
                         Name = "紅利折抵",
-                        Amount = bonus
+                        Amount = redeemBonus
                     });
 
-                    totalAdjustment += bonus;
+                    totalAdjustment += redeemBonus;
                 }
 
                 if (order.CouponDiscount > 0)

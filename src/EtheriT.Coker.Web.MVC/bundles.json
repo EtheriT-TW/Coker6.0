@@ -171,12 +171,6 @@
       ]
     },
     {
-      "outputFolder": "lib/grapesjs/plugin/grapesjs-table",
-      "input": [
-        "node_modules/grapesjs-table/dist/*"
-      ]
-    },
-    {
       "outputFolder": "lib/ace-builds",
       "input": [
         "node_modules/ace-builds/src-min-noconflict/ace.js",

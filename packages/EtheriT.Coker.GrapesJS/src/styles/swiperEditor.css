@@ -1,0 +1,455 @@
+.coker-swiper-modal .gjs-mdl-dialog {
+    width: min(1120px, 94vw);
+    max-height: 92vh;
+}
+
+.coker-swiper-modal .gjs-mdl-content {
+    max-height: calc(92vh - 58px);
+    overflow: auto;
+}
+
+.coker-swiper-editor {
+    color: #f4f4f4;
+    font-size: 14px;
+}
+
+.coker-swiper-editor button,
+.coker-swiper-editor input,
+.coker-swiper-editor select,
+.coker-swiper-editor textarea {
+    font: inherit;
+}
+
+.coker-swiper-toolbar,
+.coker-swiper-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.coker-swiper-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.coker-swiper-batch-hint {
+    color: #ccc;
+    font-size: 13px;
+}
+
+.coker-swiper-editor button {
+    padding: 7px 12px;
+    color: #fff;
+    background: #555;
+    border: 1px solid #777;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.coker-swiper-editor button:hover {
+    background: #666;
+}
+
+.coker-swiper-editor button:disabled,
+.coker-swiper-editor.is-busy button {
+    cursor: wait;
+    opacity: .55;
+}
+
+.coker-swiper-workspace {
+    display: grid;
+    grid-template-columns: minmax(280px, 40%) minmax(360px, 1fr);
+    gap: 16px;
+    margin-top: 14px;
+}
+
+.coker-swiper-list {
+    max-height: 560px;
+    overflow: auto;
+    border: 1px solid #666;
+    border-radius: 5px;
+}
+
+.coker-swiper-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 24px auto 84px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-bottom: 1px solid #555;
+}
+
+.coker-swiper-item:last-child {
+    border-bottom: 0;
+}
+
+.coker-swiper-item.is-active {
+    box-shadow: inset 3px 0 #b77bb7;
+    background: rgba(183, 123, 183, .12);
+}
+
+.coker-swiper-drag-handle {
+    display: grid;
+    width: 24px;
+    height: 42px;
+    place-items: center;
+    color: #ddd;
+    font-size: 24px;
+    line-height: 1;
+    cursor: grab;
+    user-select: none;
+}
+
+.coker-swiper-drag-handle:active {
+    cursor: grabbing;
+}
+
+.coker-swiper-item.is-dragging {
+    opacity: .42;
+}
+
+.coker-swiper-item.is-drop-before::before,
+.coker-swiper-item.is-drop-after::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    right: 6px;
+    left: 6px;
+    border-top: 3px dashed #e29aef;
+    pointer-events: none;
+}
+
+.coker-swiper-item.is-drop-before::before {
+    top: -2px;
+}
+
+.coker-swiper-item.is-drop-after::after {
+    bottom: -2px;
+}
+
+.coker-swiper-preview-frame {
+    position: relative;
+    width: 84px;
+    height: 56px;
+}
+
+.coker-swiper-preview-frame > img,
+.coker-swiper-video-preview {
+    width: 84px;
+    height: 56px;
+    object-fit: cover;
+    background: #222;
+    border-radius: 3px;
+}
+
+.coker-swiper-video-preview {
+    display: grid;
+    place-items: center;
+    color: #ddd;
+}
+
+.coker-swiper-item-description {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding: 4px;
+    text-align: left;
+    border: 0;
+    background: transparent;
+}
+
+.coker-swiper-item-description strong,
+.coker-swiper-item-description span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.coker-swiper-editor button.coker-swiper-visibility {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    place-items: center;
+    color: #fff;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.coker-swiper-editor button.coker-swiper-visibility:hover,
+.coker-swiper-editor button.coker-swiper-visibility:active {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.coker-swiper-editor button.coker-swiper-visibility .material-symbols-outlined {
+    font-size: 19px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+}
+
+.coker-swiper-editor button.coker-swiper-duplicate {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    place-items: center;
+    color: #fff;
+    background: rgba(0, 0, 0, .55);
+    border: 0;
+    border-radius: 3px;
+    box-shadow: none;
+}
+
+.coker-swiper-editor button.coker-swiper-duplicate:hover {
+    background: rgba(0, 0, 0, .78);
+}
+
+.coker-swiper-editor button.coker-swiper-duplicate .material-symbols-outlined {
+    font-size: 17px;
+}
+
+.coker-swiper-settings form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+}
+
+.coker-swiper-input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.coker-swiper-settings .coker-swiper-input-group > input {
+    min-width: 0;
+    border-radius: 3px 0 0 3px;
+}
+
+.coker-swiper-input-group > button {
+    display: grid;
+    flex: 0 0 40px;
+    width: 40px;
+    padding: 0;
+    place-items: center;
+    border-left: 0;
+    border-radius: 0 3px 3px 0;
+}
+
+.coker-swiper-input-group .material-symbols-outlined {
+    font-size: 21px;
+}
+
+.coker-swiper-settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.coker-swiper-settings [hidden] {
+    display: none;
+}
+
+.coker-swiper-settings label:has(textarea),
+.coker-swiper-field-row,
+.coker-swiper-check {
+    grid-column: 1 / -1;
+}
+
+.coker-swiper-settings input,
+.coker-swiper-settings select,
+.coker-swiper-settings textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 7px 8px;
+    color: #222;
+    background: #fff;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+}
+
+.coker-swiper-field-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.coker-swiper-settings .coker-swiper-check {
+    flex-direction: row;
+    align-items: center;
+}
+
+.coker-swiper-check input {
+    width: auto;
+}
+
+.coker-swiper-advanced-text {
+    grid-column: 1 / -1;
+    border: 1px solid #666;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, .1);
+}
+
+.coker-swiper-advanced-text > summary {
+    padding: 9px 11px;
+    color: #f4f4f4;
+    cursor: pointer;
+    user-select: none;
+}
+
+.coker-swiper-advanced-text > summary:hover {
+    background: rgba(255, 255, 255, .06);
+}
+
+.coker-swiper-advanced-text-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 10px;
+    border-top: 1px solid #666;
+}
+
+.coker-swiper-advanced-text-fields label:has(textarea) {
+    grid-column: 1 / -1;
+}
+
+.coker-swiper-advanced-text-fields label > span {
+    overflow: hidden;
+    color: #ddd;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.coker-swiper-bulk-dialog[hidden] {
+    display: none;
+}
+
+.coker-swiper-bulk-dialog {
+    position: fixed;
+    z-index: 100;
+    inset: 0;
+    display: grid;
+    padding: 20px;
+    place-items: center;
+}
+
+.coker-swiper-bulk-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .68);
+}
+
+.coker-swiper-bulk-panel {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    width: min(640px, 94vw);
+    max-height: 88vh;
+    padding: 18px;
+    overflow: auto;
+    background: #454545;
+    border: 1px solid #777;
+    border-radius: 6px;
+    box-shadow: 0 16px 50px rgba(0, 0, 0, .45);
+}
+
+.coker-swiper-bulk-panel > header,
+.coker-swiper-bulk-panel > footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.coker-swiper-bulk-panel h3,
+.coker-swiper-bulk-panel p {
+    margin: 0;
+}
+
+.coker-swiper-bulk-panel > p {
+    margin-top: 10px;
+    color: #ddd;
+}
+
+.coker-swiper-bulk-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.coker-swiper-bulk-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.coker-swiper-bulk-fields [hidden] {
+    display: none;
+}
+
+.coker-swiper-bulk-fields label:first-child {
+    grid-column: 1 / -1;
+}
+
+.coker-swiper-bulk-fields input,
+.coker-swiper-bulk-fields select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 7px 8px;
+    color: #222;
+    background: #fff;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+}
+
+.coker-swiper-footer {
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #666;
+}
+
+.coker-swiper-editor .coker-swiper-primary {
+    background: #785580;
+    border-color: #a875b2;
+}
+
+@media (max-width: 800px) {
+    .coker-swiper-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .coker-swiper-list {
+        max-height: 300px;
+    }
+
+    .coker-swiper-item {
+        grid-template-columns: 24px auto 64px minmax(0, 1fr);
+        gap: 6px;
+    }
+
+    .coker-swiper-preview-frame,
+    .coker-swiper-preview-frame > img,
+    .coker-swiper-video-preview {
+        width: 64px;
+        height: 48px;
+    }
+
+    .coker-swiper-bulk-fields {
+        grid-template-columns: 1fr;
+    }
+}

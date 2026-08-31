@@ -1,3 +1,5 @@
+import { attachAlertManager } from '../core/createAlertManager.js';
+
 const emptyLayoutTags = new Set([
     'ARTICLE',
     'ASIDE',
@@ -8,6 +10,52 @@ const emptyLayoutTags = new Set([
     'NAV',
     'SECTION'
 ]);
+
+const canvasEditorStyleId = 'etherit-coker-canvas-editor-styles';
+const canvasEditorCss = `
+.backstageType {
+    position: relative !important;
+    isolation: isolate;
+}
+
+.backstageType::before {
+    content: "前台不顯示";
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    background: rgba(32, 32, 32, 0.72) !important;
+    color: #fff !important;
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1.4;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none;
+}
+`;
+
+function registerCanvasEditorStyles(editor) {
+    const injectStyles = frameEvent => {
+        const document = frameEvent?.window?.document || editor.Canvas?.getDocument?.();
+        if (!document?.head || document.getElementById(canvasEditorStyleId)) {
+            return;
+        }
+
+        const style = document.createElement('style');
+        style.id = canvasEditorStyleId;
+        style.textContent = canvasEditorCss;
+        document.head.append(style);
+    };
+
+    editor.on('canvas:frame:load', injectStyles);
+    editor.on('load', injectStyles);
+}
 
 function isEmptyLayoutElement(element) {
     if (!element || !emptyLayoutTags.has(element.tagName)) {
@@ -69,24 +117,20 @@ function stabilizeWebpageImportCommand(editor) {
 }
 
 export function cokerCorePlugin(editor, options = {}) {
+    const alertManager = attachAlertManager(editor, options.adapter);
     registerEmptyLayoutComponent(editor);
+    registerCanvasEditorStyles(editor);
     stabilizeWebpageImportCommand(editor);
 
     editor.EtheriTCoker = {
+        ...(editor.EtheriTCoker || {}),
         options,
         pluginOptions: options
     };
 
     editor.Commands.add('etherit:coker:test', {
         run() {
-            const adapter = options.adapter;
-
-            if (adapter?.ui?.success) {
-                adapter.ui.success('EtheriT.Coker.GrapesJS plugin loaded.');
-                return;
-            }
-
-            window.alert('EtheriT.Coker.GrapesJS plugin loaded.');
+            alertManager.success('EtheriT.Coker.GrapesJS plugin loaded.');
         }
     });
 }

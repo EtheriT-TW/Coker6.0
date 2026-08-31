@@ -62,16 +62,16 @@ function SwiperInit(obj) {
 
             const checkSlides = function () {
                 if (Array.isArray(swiper)) swiper = swiper[swiper.length - 1];
-                if (swiper == null) return;
+                if (swiper == null || swiper.destroyed || !swiper.slides || !swiper.params) return;
                 const totalSlides = swiper.slides.length;
                 const slidesPerView = swiper.params.slidesPerView;
                 // 檢查導航元素
-                const nextEl = swiper.navigation.nextEl ? swiper.navigation.nextEl : null;
-                const prevEl = swiper.navigation.prevEl ? swiper.navigation.prevEl : null;
-                const paginationEl = swiper.pagination.el;
+                const nextEl = swiper.navigation?.nextEl ? swiper.navigation.nextEl : null;
+                const prevEl = swiper.navigation?.prevEl ? swiper.navigation.prevEl : null;
+                const paginationEl = swiper.pagination?.el;
                 if (totalSlides <= slidesPerView) {
                     // 停止自動輪播
-                    swiper.autoplay.stop();
+                    swiper.autoplay?.stop?.();
                     // 隱藏左右箭頭
                     if (!!nextEl && !Array.isArray(nextEl)) nextEl.classList.add("d-none");
                     if (!!prevEl && !Array.isArray(prevEl)) prevEl.classList.add("d-none");
@@ -84,23 +84,27 @@ function SwiperInit(obj) {
                 }
             }
             const stop = function () {
+                if (!swiper || swiper.destroyed || !swiper.slides) return;
                 var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
                 var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
                 var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
+                if (!activeSlide) return;
                 if ($(activeSlide).find("video").length > 0) {
                     return;
                 }
-                swiper.autoplay.stop()
+                swiper.autoplay?.stop?.()
             }
             const start = function () {
+                if (!swiper || swiper.destroyed || !swiper.slides) return;
                 var activeIndex = swiper.activeIndex;   // 当前活动滑块的索引
                 var realIndex = swiper.realIndex;       // 如果使用了循环模式，获取真实的滑块索引
                 var activeSlide = swiper.slides[activeIndex]; // 获取当前活动的滑块元素
+                if (!activeSlide) return;
 
                 if ($(activeSlide).find("video").length > 0) {
                     return;
                 }
-                swiper.autoplay.start()
+                swiper.autoplay?.start?.()
             }
             const thisSwiper = $(this);
             $(this).off("mouseover").on("mouseover", stop);
@@ -264,41 +268,108 @@ function SwiperInit(obj) {
             $self.swiperBindEven(swiper);
         }
     });
-    //單欄輪播+兩欄縮圖
+    // 單欄輪播 + 六欄縮圖
     $(".one_swiper_thumbs").each(function () {
         var $self = $(this);
-        const index = $self.index(this);
-        $self.find(".six_thumbs > .swiper-wrapper").empty();
+
         if (!!!$self.data("isInit")) {
-            if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
-            var Id = "#" + $self.attr("id") + " .swiper";
+
+            if (typeof ($self.attr("id")) == "undefined") {
+                $self.attr(
+                    "id",
+                    `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`
+                );
+            }
+
+            const selfId = $self.attr("id");
+
+            // 主 Swiper，只抓直接的主 swiper，避免抓到 six_thumbs
+            var Id = `#${selfId} > .swiper`;
+
+            // 第一次初始化時才清空縮圖
+            $self.find(".six_thumbs > .swiper-wrapper").empty();
+
             const canNext = $(Id).find(".swiper-slide").length >= 2;
+
             var effect = $self.data("effect");
             var speed = $self.data("effect-speed");
 
-            var swiperThumbs = new Swiper(".six_thumbs", {
-                spaceBetween: 10,
-                slidesPerView: 6,
-                freeMode: true,
-                watchSlidesProgress: true,
-            });
-            if (typeof effect === 'undefined' || effect === false) effect = "slide";
-            if (typeof speed === 'undefined' || speed === false) speed = 300;
-            else speed = parseInt(speed);
+            if (typeof effect === "undefined" || effect === false) {
+                effect = "slide";
+            }
+
+            if (typeof speed === "undefined" || speed === false) {
+                speed = 300;
+            } else {
+                speed = parseInt(speed);
+            }
+
             var autoplay = obj.autoplay ? canNext : false;
+
+            // 先取得主輪播圖片
+            const $images = [];
+            const $alts = [];
+            const $class = [];
+
+            $(Id).find(".swiper-slide img").each(function () {
+                $images.push($(this).attr("src"));
+                $alts.push($(this).attr("alt") || "");
+
+                if ($(this).closest(".swiper-slide").hasClass("backstageType")) {
+                    $class.push("backstageType");
+                } else {
+                    $class.push("");
+                }
+            });
+
+            // 建立縮圖 Swiper
+            var swiperThumbs = new Swiper(
+                `#${selfId} .six_thumbs`,
+                {
+                    spaceBetween: 10,
+                    slidesPerView: 6,
+                    freeMode: true,
+                    watchSlidesProgress: true,
+                }
+            );
+
+            // 自動建立縮圖
+            if (!$self.hasClass("selfThumbs")) {
+
+                if ($images.length > 1) {
+
+                    for (let i = 0; i < $images.length; i++) {
+
+                        const newSlide =
+                            `<div class="swiper-slide ${$class[i]}">
+                            <img src="${$images[i]}" alt="${$alts[i]}" />
+                        </div>`;
+
+                        swiperThumbs.appendSlide(newSlide);
+                    }
+
+                    swiperThumbs.update();
+                }
+            }
+
             var selfConfig = Object.assign({}, config, {
                 pagination: {
-                    el: "#" + $self.attr("id") + " .swiper_pagination",
+                    el: `#${selfId} .swiper_pagination`,
                     clickable: true,
-                }, thumbs: {
+                },
+
+                thumbs: {
                     swiper: swiperThumbs,
                 },
+
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_button_next",
-                    prevEl: "#" + $self.attr("id") + " .swiper_button_prev",
+                    nextEl: `#${selfId} .swiper_button_next`,
+                    prevEl: `#${selfId} .swiper_button_prev`,
                 },
+
                 effect: effect,
                 speed: speed
+
             }, autoplay ? {
                 autoplay: {
                     delay: 5000,
@@ -306,37 +377,24 @@ function SwiperInit(obj) {
                 },
                 loop: true
             } : {});
+
             if (!canNext) {
-                $(`#${$self.attr("id")}`).find(".swiper_button_next,.swiper_button_prev").remove();
+                $(`#${selfId}`)
+                    .find(".swiper_button_next,.swiper_button_prev")
+                    .remove();
             }
 
-            if (!$self.find(".swiper").hasClass(".selfThumbs")) { //如果沒有swiper class的元素
-                const $images = [];
-                const $alts = [];
-                const $class = [];
-                $self.find(".swiper-slide img").each(function () { //遍歷所有thumnbs-image底下的img
-                    $images.push($(this).attr("src")); //儲存到$images變數
-                    $alts.push($(this).attr("alt"));
-                    if ($(this).closest('.swiper-slide').hasClass('backstageType')) {
-                        $class.push('backstageType');
-                    } else {
-                        $class.push("");
-                    }
-                });
-                if ($images.length > 1) {
-                    for (let i = 0; i < $images.length; i++) { //生成Thumbs
-                        const newSlide = `<div class="swiper-slide ${$class[i]}"><img src="${$images[i]}" alt="${$alts[i]}" /></div>`;
-                        swiperThumbs.appendSlide(newSlide); //放入siwperThumbs
-                    }
-                }
-            }
-            swiperThumbs.slideTo(index, 0);
             var swiper = new Swiper(Id, selfConfig);
-            $self.data("isInit", true)
+
+            $self.data("isInit", true);
+
             if (autoplay && swiper.slides.length - 2 > 1) {
                 $self.swiperBindEven(swiper);
             }
-            if (autoplay) PauseOnMouseEnter(swiper, $self.find(".swiper"))
+
+            if (autoplay) {
+                PauseOnMouseEnter(swiper, $(Id));
+            }
         }
     });
     $(".two_swiper").each(function () {
@@ -859,40 +917,112 @@ function SwiperInit(obj) {
         var $self = $(this);
         if (!!!$self.data("isInit")) {
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
-            var Id = "#" + $self.attr("id") + " .swiper"
-            const $template = $(Id).find(".swiper-slide").parents(".templatecontent,.template_slide");
-            const length = $template.length === 0 ? $(Id).find(".swiper-slide").length : $(Id).find(".swiper-slide").length - 1;
-            const canNext = length > 3;
-            var autoplay = obj.autoplay ? canNext : false;
-            var swiperThumbs = new Swiper(`#${$self.attr("id")} .swiper_thumbs`, {
-                slidesPerView: 1,
-                direction: "horizontal",
-                loop: true,
-                breakpoints: {
-                    768: {
-                        direction: "vertical",
-                        watchSlidesProgress: true,
-                        loop: canNext,
-                    },
-                },
-                navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper_thumbs .swiper_button_next",
-                    prevEl: "#" + $self.attr("id") + " .swiper_thumbs .swiper_button_prev",
-                },
+            const rootId = "#" + $self.attr("id");
+            const mainId = rootId + " > .swiper_thumbs";
+            const thumbsId = rootId + " > .float > .swiper";
+            const desktopSlidesPerView = 3;
+            const $thumbnailWrapper = $(thumbsId).children(".swiper-wrapper");
+            $thumbnailWrapper
+                .children('[data-coker-runtime-clone="true"]')
+                .remove();
+            const $mainSlides = $(mainId)
+                .children(".swiper-wrapper")
+                .children(".swiper-slide")
+                .not(".templatecontent,.template_slide");
+            let $thumbnailSlides = $(thumbsId)
+                .children(".swiper-wrapper")
+                .children(".swiper-slide")
+                .not(".templatecontent,.template_slide");
+
+            const getSlideIdentity = function ($slide, isThumbnail) {
+                const slideId = $slide.attr("data-coker-slide-id");
+                if (slideId) return "id:" + slideId;
+
+                const $image = isThumbnail
+                    ? $slide.find("img.original").first()
+                    : $slide.find(".image img").not(".mask").first();
+                const src = String($image.attr("src") || "")
+                    .split("?")[0]
+                    .toLowerCase();
+                if (src) return "src:" + src;
+
+                const alt = String($image.attr("alt") || "").trim().toLowerCase();
+                return alt ? "alt:" + alt : "";
+            };
+
+            // Legacy vertical sliders store their thumbnail slides in a
+            // different order from the full-content slides. Normalize the
+            // runtime DOM before Swiper assigns its slide indexes.
+            const thumbnailsByIdentity = new Map();
+            $thumbnailSlides.each(function (_, slide) {
+                const key = getSlideIdentity($(slide), true);
+                if (!key) return;
+                if (!thumbnailsByIdentity.has(key)) thumbnailsByIdentity.set(key, []);
+                thumbnailsByIdentity.get(key).push(slide);
             });
-            const selfConfig = Object.assign({}, config, {
-                loop: true,
+
+            const orderedThumbnailSlides = [];
+            $mainSlides.each(function (_, slide) {
+                const key = getSlideIdentity($(slide), false);
+                const matches = thumbnailsByIdentity.get(key);
+                if (matches?.length) orderedThumbnailSlides.push(matches.shift());
+            });
+
+            if (orderedThumbnailSlides.length === $mainSlides.length) {
+                $thumbnailWrapper.append(orderedThumbnailSlides);
+                $thumbnailSlides = $(thumbsId)
+                    .children(".swiper-wrapper")
+                    .children(".swiper-slide")
+                    .not(".templatecontent,.template_slide");
+            }
+
+            const length = Math.min($mainSlides.length, $thumbnailSlides.length);
+            const canLoopMain = length > 1;
+            const minimumCenteredLoopSlides = desktopSlidesPerView + 2;
+            const runtimeGroupCount = length > 1
+                ? Math.max(1, Math.ceil(minimumCenteredLoopSlides / length))
+                : 1;
+
+            $thumbnailSlides.each(function (index, slide) {
+                $(slide).attr("data-coker-thumb-index", index);
+            });
+
+            for (let group = 1; group < runtimeGroupCount; group++) {
+                $thumbnailSlides.each(function (index, slide) {
+                    const $clone = $(slide).clone(false, false);
+                    $clone
+                        .attr("data-coker-runtime-clone", "true")
+                        .attr("data-coker-thumb-index", index);
+                    $clone.find("[id]").addBack("[id]").removeAttr("id");
+                    $thumbnailWrapper.append($clone);
+                });
+            }
+
+            const runtimeThumbnailCount = $thumbnailWrapper
+                .children(".swiper-slide")
+                .not(".templatecontent,.template_slide")
+                .length;
+            const canLoopThumbs = length > 1 &&
+                runtimeThumbnailCount >= minimumCenteredLoopSlides;
+            var autoplay = obj.autoplay ? canLoopMain : false;
+
+            // Runtime-only thumbnail copies allow Swiper 11 to use a real
+            // centered loop with fewer than five source items. Main content
+            // and persisted data are not duplicated.
+            $thumbnailWrapper.children(".swiper-slide").removeClass("hidden-slide");
+            var swiperThumbs = new Swiper(thumbsId, {
                 slidesPerView: 1,
                 direction: "horizontal",
-                spaceBetween: 0,
+                loop: canLoopThumbs,
+                centeredSlides: canLoopThumbs,
+                watchSlidesProgress: true,
+                slideToClickedSlide: true,
                 breakpoints: {
                     768: {
                         direction: "vertical",
-                        loop: canNext,
-                        slidesPerView: 3,
+                        slidesPerView: desktopSlidesPerView,
                     },
                 },
-                centeredSlides: true,
                 effect: "coverflow",
                 coverflowEffect: {
                     rotate: 0,
@@ -901,35 +1031,75 @@ function SwiperInit(obj) {
                     modifier: 1,
                     slideShadows: true,
                 },
-                thumbs: {
-                    swiper: swiperThumbs,
+            });
+
+            // .swiper_thumbs contains the full slide content despite its
+            // historical class name; it is the main carousel.
+            const selfConfig = Object.assign({}, config, {
+                loop: canLoopMain,
+                slidesPerView: 1,
+                direction: "horizontal",
+                spaceBetween: 0,
+                breakpoints: {
+                    768: {
+                        direction: "vertical",
+                    },
                 },
                 navigation: {
-                    nextEl: "#" + $self.attr("id") + " .swiper .swiper_button_next",
-                    prevEl: "#" + $self.attr("id") + " .swiper .swiper_button_prev",
+                    nextEl: mainId + " .swiper_button_next",
+                    prevEl: mainId + " .swiper_button_prev",
                 },
-            }, obj.autoplay ? {
+            }, autoplay ? {
                 autoplay: {
                     delay: 5000,
                     disableOnInteraction: false,
                 }
             } : {});
-            var swiper = new Swiper(Id, selfConfig);
-            swiper.on('slideChange', function () {
-                var slides = $(swiper.slides);
-                slides.each(function (index, slide) {
-                    if (index < swiper.activeIndex - 1 || index > swiper.activeIndex + 1) {
-                        $(slide).addClass('hidden-slide');
-                    } else {
-                        $(slide).removeClass('hidden-slide');
-                    }
-                });
+            var swiper = new Swiper(mainId, selfConfig);
+
+            const positionSelectedThumbnail = function (speed) {
+                const realIndex = Number(swiper.realIndex) || 0;
+                const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+
+                if (isDesktop && canLoopThumbs) {
+                    const targetIndex = realIndex + ((runtimeGroupCount - 1) * length);
+                    swiperThumbs.slideToLoop(targetIndex, speed || 0, false);
+                } else {
+                    swiperThumbs.slideTo(realIndex, speed || 0, false);
+                }
+
+                const $thumbSlides = $(swiperThumbs.slides);
+                $thumbSlides.removeClass("swiper-slide-thumb-active");
+                $(swiperThumbs.slides[swiperThumbs.activeIndex])
+                    .addClass("swiper-slide-thumb-active");
+            };
+
+            swiper.on('slideChangeTransitionStart', function () {
+                positionSelectedThumbnail(swiper.params.speed);
             });
+            swiper.on('resize breakpoint', function () {
+                positionSelectedThumbnail(0);
+            });
+            $(thumbsId + " .swiper_button_next")
+                .off("click.cokerVerticalSwiper")
+                .on("click.cokerVerticalSwiper", function () {
+                    swiper.slideNext();
+                });
+            $(thumbsId + " .swiper_button_prev")
+                .off("click.cokerVerticalSwiper")
+                .on("click.cokerVerticalSwiper", function () {
+                    swiper.slidePrev();
+                });
+            swiperThumbs.on('tap', function () {
+                const clickedIndex = Number(
+                    swiperThumbs.clickedSlide?.getAttribute("data-coker-thumb-index")
+                );
+                if (Number.isInteger(clickedIndex)) swiper.slideToLoop(clickedIndex);
+            });
+            positionSelectedThumbnail(0);
+
             $self.data("isInit", true)
             autoplay && $self.swiperBindEven(swiper);
-            swiper.slideTo(0);
-            swiper.loopCreate();
-            swiper.update();
         }
     });
 

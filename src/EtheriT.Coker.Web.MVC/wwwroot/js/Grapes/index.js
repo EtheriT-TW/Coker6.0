@@ -51,10 +51,6 @@ var grapesInit = function (options) {
 
         function legacyCoker6Form(editor) {
             window.CokerGrapesLegacyPlugins.coker6FormPlugin(editor, {});
-        },
-
-        function legacySwiper(editor) {
-            window.CokerGrapesLegacyPlugins.swiperPlugin(editor, {});
         }
     ];
 
@@ -91,9 +87,6 @@ var grapesInit = function (options) {
         },
 
         externalPluginFunctions,
-        officialPluginsOptions: {
-            "grapesjs-table": {},
-        },
         initOptions: {
             showOffsets: 1,
             noticeOnUnload: 0,
@@ -113,7 +106,11 @@ var grapesInit = function (options) {
                         'image/gif': 'gif',
                         'image/jpeg': 'jpg',
                         'image/png': 'png',
-                        'image/webp': 'webp'
+                        'image/webp': 'webp',
+                        'video/mp4': 'mp4',
+                        'video/webm': 'webm',
+                        'video/ogg': 'ogv',
+                        'video/quicktime': 'mov'
                     };
                     const completeUpload = typeof uploadDone === "function"
                         ? uploadDone
@@ -159,7 +156,7 @@ var grapesInit = function (options) {
                         return;
                     }
 
-                    if (files.some(file => file.size > maxFileSize)) {
+                    if (files.some(file => file.type.startsWith('image/') && file.size > maxFileSize)) {
                         co.sweet.error("錯誤", "圖片編輯結果不可超過 10 MB", null, false);
                         finishUpload([], false);
                         return;

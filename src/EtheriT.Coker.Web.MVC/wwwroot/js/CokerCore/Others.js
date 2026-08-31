@@ -209,11 +209,14 @@
             return ($e.find(".county>select").val() + " " + $e.find(".district>select").val() + " " + $e.find(".address").val()).trim();
         }
     }, Grapes: {
-        setEditor: (editor,html,css) => {
-            // setStyle/setComponents 本身就會覆蓋原內容，不要先重複 clear，
-            // 避免大量 component:remove 與 component:add 事件交錯。
-            editor.setStyle(css || "");
-            editor.setComponents(html || "");
+        setEditor: (editor, html, css) => {
+            const content = normalizeGrapesEditorContent(html, css);
+
+            // 必須先建立元件，讓 GrapesJS 完成 id/class selector 關聯後再載入 CSS。
+            // 若先 setStyle 再 setComponents，元件替換期間可能讓既有規則變成未使用規則，
+            // 尤其是 #id selector 會在畫布初次顯示後消失。
+            editor.setComponents(content.html);
+            editor.setStyle(content.css);
             editor.UndoManager.clear(); // Clear undo history
         },
         setFile: function (editor, id, type) {
@@ -244,4 +247,29 @@
         }
     }
 });
+
+function normalizeGrapesEditorContent(html, css) {
+    const embeddedStyles = [];
+    const normalizedHtml = String(html || "").replace(
+        /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi,
+        function (_, styleText) {
+            const value = String(styleText || "").trim();
+            if (value) embeddedStyles.push(value);
+            return "";
+        }
+    );
+    const savedCss = String(css || "").trim();
+    const cssParts = embeddedStyles.filter(function (value, index, values) {
+        return values.indexOf(value) === index;
+    });
+
+    if (savedCss && cssParts.indexOf(savedCss) < 0) {
+        cssParts.push(savedCss);
+    }
+
+    return {
+        html: normalizedHtml,
+        css: cssParts.join("\n")
+    };
+}
 co.Cookie.EffectiveTime = co.Data.Time.DataRetentionTime;

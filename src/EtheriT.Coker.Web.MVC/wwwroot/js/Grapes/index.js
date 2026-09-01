@@ -117,6 +117,10 @@ var grapesInit = function (options) {
                         : function () {};
                     const finishUpload = function (data, success) {
                         completeUpload({ data: data });
+                        editor.trigger('coker:asset-upload:complete', {
+                            success: success,
+                            assets: data
+                        });
                         editor.trigger('coker:image-editor:upload:complete', {
                             success: success
                         });
@@ -156,6 +160,14 @@ var grapesInit = function (options) {
                         return;
                     }
 
+                    const supportedMediaPattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v)$/i;
+                    if (files.some(file => !/^(image|video)\//i.test(file.type || '') &&
+                        !supportedMediaPattern.test(file.name || ''))) {
+                        co.sweet.error("錯誤", "只支援圖片或影片檔案", null, false);
+                        finishUpload([], false);
+                        return;
+                    }
+
                     if (files.some(file => file.type.startsWith('image/') && file.size > maxFileSize)) {
                         co.sweet.error("錯誤", "圖片編輯結果不可超過 10 MB", null, false);
                         finishUpload([], false);
@@ -163,6 +175,7 @@ var grapesInit = function (options) {
                     }
 
                     var formData = new FormData();
+                    const submittedFiles = [];
 
                     files.forEach(function (file, index) {
                         const hasExtension = typeof file.name === "string" && /\.[a-z0-9]{1,10}$/i.test(file.name);
@@ -177,6 +190,7 @@ var grapesInit = function (options) {
                             );
 
                         formData.append('files', uploadFile, uploadFile.name);
+                        submittedFiles.push(uploadFile);
                     });
 
                     formData.append("type", 0);
@@ -185,11 +199,15 @@ var grapesInit = function (options) {
                         if (result.success) {
                             var myJSON = [];
 
-                            $(result.files).each(function () {
+                            $(result.files).each(function (index) {
+                                const submittedFile = submittedFiles.find(file => file.name === this.name) ||
+                                    submittedFiles[index];
                                 myJSON.push({
                                     src: this.path,
                                     name: this.name,
-                                    guid: this.guid
+                                    guid: this.guid,
+                                    type: submittedFile?.type?.startsWith('video/') ? 'video' : 'image',
+                                    mimeType: submittedFile?.type || ''
                                 });
                             });
 

@@ -34,6 +34,55 @@
     flex-wrap: wrap;
 }
 
+.coker-swiper-add-control {
+    display: flex;
+    align-items: center;
+    color: #fff;
+    background: #555;
+    border: 1px solid #777;
+    border-radius: 4px;
+}
+
+.coker-swiper-add-control > .material-symbols-outlined {
+    padding-left: 8px;
+    font-size: 19px;
+}
+
+.coker-swiper-add-method {
+    width: 92px;
+    padding: 7px 24px 7px 5px;
+    color: #fff;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+}
+
+.coker-swiper-add-method option {
+    color: #222;
+    background: #fff;
+}
+
+.coker-swiper-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.coker-swiper-actions button .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.coker-swiper-actions [data-role="bulk-count"] {
+    min-width: 18px;
+    padding: 1px 5px;
+    color: #fff;
+    background: rgba(0, 0, 0, .3);
+    border-radius: 10px;
+    font-size: 12px;
+    text-align: center;
+}
+
 .coker-swiper-batch-hint {
     color: #ccc;
     font-size: 13px;
@@ -337,6 +386,50 @@
     display: none;
 }
 
+.coker-swiper-upload-status[hidden] {
+    display: none;
+}
+
+.coker-swiper-upload-status {
+    position: fixed;
+    z-index: 100000;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    color: #fff;
+    background: rgba(20, 20, 20, .78);
+    font-size: 16px;
+    text-align: center;
+}
+
+.coker-swiper-upload-empty {
+    display: grid;
+    min-height: 220px;
+    padding: 24px;
+    place-items: center;
+    color: #ccc;
+    line-height: 1.7;
+    text-align: center;
+}
+
+.coker-swiper-upload-spinner {
+    width: 42px;
+    height: 42px;
+    border: 4px solid rgba(255, 255, 255, .28);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: coker-swiper-upload-spin .8s linear infinite;
+}
+
+@keyframes coker-swiper-upload-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .coker-swiper-bulk-dialog {
     position: fixed;
     z-index: 100;
@@ -355,23 +448,32 @@
 .coker-swiper-bulk-panel {
     position: relative;
     z-index: 1;
+    display: flex;
+    flex-direction: column;
     box-sizing: border-box;
     width: min(640px, 94vw);
     max-height: 88vh;
     padding: 18px;
-    overflow: auto;
+    overflow: hidden;
     background: #454545;
     border: 1px solid #777;
     border-radius: 6px;
     box-shadow: 0 16px 50px rgba(0, 0, 0, .45);
 }
 
-.coker-swiper-bulk-panel > header,
-.coker-swiper-bulk-panel > footer {
+.coker-swiper-bulk-header,
+.coker-swiper-bulk-actions {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.coker-swiper-bulk-actions {
+    justify-content: flex-end;
+    padding-top: 14px;
+    border-top: 1px solid #666;
 }
 
 .coker-swiper-bulk-panel h3,
@@ -389,6 +491,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin: 18px 0;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .coker-swiper-bulk-fields label {

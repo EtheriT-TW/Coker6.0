@@ -49,12 +49,24 @@ class SwiperEditorController {
         root.innerHTML = `
             <div class="coker-swiper-toolbar">
                 <div class="coker-swiper-actions">
-                    <button type="button" data-action="add">新增</button>
-                    <button type="button" data-action="select-all">全選</button>
-                    <button type="button" data-action="open-bulk" disabled>批次設定（已選 0 筆）</button>
-                    <button type="button" data-action="delete">刪除所選</button>
+                    <label class="coker-swiper-add-control" title="新增輪播項目">
+                        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                        <select class="coker-swiper-add-method" data-role="add-method" aria-label="新增輪播項目">
+                            <option value="">新增</option>
+                            <option value="upload">上傳媒體</option>
+                            <option value="embed">嵌入影片</option>
+                        </select>
+                    </label>
+                    <button type="button" data-action="select-all" title="全選或取消全選">
+                        <span class="material-symbols-outlined" aria-hidden="true">select_all</span><span>全選</span>
+                    </button>
+                    <button type="button" data-action="open-bulk" title="批次設定" disabled>
+                        <span class="material-symbols-outlined" aria-hidden="true">tune</span><span>批次</span><span data-role="bulk-count">0</span>
+                    </button>
+                    <button type="button" data-action="delete" title="刪除已勾選項目">
+                        <span class="material-symbols-outlined" aria-hidden="true">delete</span><span>刪除</span>
+                    </button>
                 </div>
-                <span class="coker-swiper-batch-hint">勾選左側項目後，可進行批次設定或刪除。</span>
             </div>
             <div class="coker-swiper-workspace">
                 <div class="coker-swiper-list" data-role="list"></div>
@@ -141,10 +153,10 @@ class SwiperEditorController {
             <div class="coker-swiper-bulk-dialog" data-role="bulk-dialog" hidden>
                 <div class="coker-swiper-bulk-backdrop" data-action="close-bulk"></div>
                 <section class="coker-swiper-bulk-panel" role="dialog" aria-modal="true" aria-labelledby="coker-swiper-bulk-title">
-                    <header>
+                    <div class="coker-swiper-bulk-header">
                         <h3 id="coker-swiper-bulk-title">批次設定</h3>
                         <button type="button" data-action="close-bulk" aria-label="關閉">×</button>
-                    </header>
+                    </div>
                     <p data-role="bulk-summary"></p>
                     <div class="coker-swiper-bulk-fields">
                         <label>指定媒體類型
@@ -185,10 +197,10 @@ class SwiperEditorController {
                             </select>
                         </label>
                     </div>
-                    <footer>
+                    <div class="coker-swiper-bulk-actions">
                         <button type="button" data-action="close-bulk">取消</button>
                         <button type="button" class="coker-swiper-primary" data-action="apply-bulk">套用至符合條件的項目</button>
-                    </footer>
+                    </div>
                 </section>
             </div>`;
 
@@ -204,7 +216,6 @@ class SwiperEditorController {
             }
 
             const actions = {
-                add: () => this.addSlide(),
                 'select-asset': button => this.selectAsset({
                     replaceId: this.activeId,
                     field: button.dataset.assetField,
@@ -238,6 +249,16 @@ class SwiperEditorController {
         root.querySelector('[data-role="bulk-media-filter"]').addEventListener('change', () => {
             this.renderBulkFields();
         });
+
+        root.querySelector('[data-role="add-method"]').addEventListener('change', event => {
+            const method = event.target.value;
+            event.target.value = '';
+            if (method === 'upload') {
+                this.uploadSlides();
+            } else if (method === 'embed') {
+                this.addEmbedSlide();
+            }
+        });
     }
 
     render() {
@@ -245,7 +266,7 @@ class SwiperEditorController {
         this.renderForm();
         const bulkButton = this.root.querySelector('[data-action="open-bulk"]');
         bulkButton.disabled = this.selectedIds.size === 0;
-        bulkButton.textContent = `批次設定（已選 ${this.selectedIds.size} 筆）`;
+        bulkButton.querySelector('[data-role="bulk-count"]').textContent = this.selectedIds.size;
     }
 
     renderList() {
@@ -494,16 +515,19 @@ class SwiperEditorController {
             }
 
             const additions = field === 'src'
-                ? assets.map(asset => normalizeSlide({
-                    id: createSlideId(),
-                    type: assetType,
-                    src: asset.src,
-                    title: fileNameWithoutExtension(asset.name || asset.src),
-                    hasCaption: this.supportsCaption,
-                    textFields: cloneTextFields(this.slideTemplateTextFields),
-                    thumbnailTemplateHtml: this.slideTemplateThumbnailHtml,
-                    templateHtml: this.slideTemplateHtml
-                }))
+                ? assets.map(asset => {
+                    const id = createSlideId();
+                    return normalizeSlide({
+                        id,
+                        type: assetType,
+                        src: asset.src,
+                        title: fileNameWithoutExtension(asset.name || asset.src),
+                        hasCaption: this.supportsCaption,
+                        textFields: cloneTextFields(this.slideTemplateTextFields),
+                        thumbnailTemplateHtml: cloneTemplateWithUniqueIds(this.slideTemplateThumbnailHtml, id),
+                        templateHtml: cloneTemplateWithUniqueIds(this.slideTemplateHtml, id)
+                    });
+                })
                 : [];
 
             this.slides.push(...additions);
@@ -532,17 +556,143 @@ class SwiperEditorController {
         });
     }
 
-    addSlide() {
+    uploadSlides() {
+        const assetManager = this.editor.AssetManager;
+        const collectedAssets = new Map();
+        const uploadStatus = createUploadStatus(this.root.ownerDocument || document);
+        let closeTimer = null;
+        let uploadInput = null;
+        let emptyHint = null;
+        let restored = false;
+
+        const scheduleClose = () => {
+            globalThis.clearTimeout(closeTimer);
+            closeTimer = globalThis.setTimeout(() => {
+                if (collectedAssets.size) {
+                    assetManager.close();
+                }
+            }, 80);
+        };
+
+        const collectAsset = asset => {
+            const normalized = normalizeAsset(asset);
+            if (normalized.src) {
+                collectedAssets.set(normalized.src, normalized);
+                uploadStatus.show(`已上傳 ${collectedAssets.size} 個檔案，正在建立輪播項目…`);
+                scheduleClose();
+            }
+        };
+        const handleUploadStart = () => {
+            uploadStatus.show('檔案上傳中，請稍候…');
+        };
+        const handleFileSelection = event => {
+            const fileCount = event.target?.files?.length || 0;
+            uploadStatus.show(fileCount > 1
+                ? `正在上傳 ${fileCount} 個檔案，請稍候…`
+                : '檔案上傳中，請稍候…');
+        };
+        const handleUploadEnd = result => {
+            const assets = result?.data || result?.assets || [];
+            assets.forEach(collectAsset);
+            if (!collectedAssets.size) {
+                uploadStatus.hide();
+            }
+        };
+        const handleUploadError = () => {
+            uploadStatus.hide();
+        };
+        const collectUploadResult = result => {
+            const assets = result?.assets || result?.data || [];
+            assets.forEach(collectAsset);
+
+            if (result?.success && collectedAssets.size) {
+                scheduleClose();
+            } else if (!result?.success) {
+                uploadStatus.hide();
+            }
+        };
+        const restoreEditor = () => {
+            if (restored) {
+                return;
+            }
+
+            restored = true;
+            globalThis.clearTimeout(closeTimer);
+            uploadInput?.removeEventListener('change', handleFileSelection);
+            emptyHint?.remove();
+            this.editor.off('asset:add', collectAsset);
+            this.editor.off('asset:upload:start', handleUploadStart);
+            this.editor.off('asset:upload:end', handleUploadEnd);
+            this.editor.off('asset:upload:error', handleUploadError);
+            this.editor.off('coker:asset-upload:complete', collectUploadResult);
+            uploadStatus.remove();
+
+            const additions = Array.from(collectedAssets.values())
+                .map(asset => {
+                    const type = detectAssetMediaType(asset);
+                    const id = createSlideId();
+                    return type ? normalizeSlide({
+                        id,
+                        type,
+                        src: asset.src,
+                        title: fileNameWithoutExtension(asset.name || asset.src),
+                        hasCaption: this.supportsCaption,
+                        textFields: cloneTextFields(this.slideTemplateTextFields),
+                        thumbnailTemplateHtml: cloneTemplateWithUniqueIds(this.slideTemplateThumbnailHtml, id),
+                        templateHtml: cloneTemplateWithUniqueIds(this.slideTemplateHtml, id)
+                    }) : null;
+                })
+                .filter(Boolean);
+
+            this.slides.push(...additions);
+            this.activeId = additions.at(-1)?.id || this.activeId;
+            globalThis.setTimeout(() => this.open(), 0);
+        };
+
+        this.editor.on('asset:add', collectAsset);
+        this.editor.on('asset:upload:start', handleUploadStart);
+        this.editor.on('asset:upload:end', handleUploadEnd);
+        this.editor.on('asset:upload:error', handleUploadError);
+        this.editor.on('coker:asset-upload:complete', collectUploadResult);
+        this.editor.once('asset:close', restoreEditor);
+        assetManager.open({
+            // Use a dedicated type which no persisted asset has, so this dialog
+            // is an upload-only surface instead of an asset picker.
+            types: ['coker-swiper-batch-upload'],
+            accept: 'image/*,video/*'
+        });
+        globalThis.setTimeout(() => {
+            const document = this.root.ownerDocument;
+            uploadInput = document?.querySelector('.gjs-mdl-content .gjs-am-file-uploader input[type="file"]') || null;
+            uploadInput?.addEventListener('change', handleFileSelection);
+
+            const assets = document?.querySelector('.gjs-mdl-content .gjs-am-assets');
+            if (assets && !assets.querySelector('.coker-swiper-upload-empty')) {
+                emptyHint = document.createElement('div');
+                emptyHint.className = 'coker-swiper-upload-empty';
+                emptyHint.textContent = '請從左側一次選取或拖曳多張圖片／影片；上傳成功後會自動建立輪播項目。';
+                assets.append(emptyHint);
+            }
+        }, 0);
+    }
+
+    addEmbedSlide() {
+        const id = createSlideId();
         const slide = normalizeSlide({
-            type: swiperMediaTypes.image,
+            id,
+            type: swiperMediaTypes.embed,
+            title: '嵌入式影片',
             hasCaption: this.supportsCaption,
             textFields: cloneTextFields(this.slideTemplateTextFields),
-            thumbnailTemplateHtml: this.slideTemplateThumbnailHtml,
-            templateHtml: this.slideTemplateHtml
+            thumbnailTemplateHtml: cloneTemplateWithUniqueIds(this.slideTemplateThumbnailHtml, id),
+            templateHtml: cloneTemplateWithUniqueIds(this.slideTemplateHtml, id)
         });
         this.slides.push(slide);
         this.activeId = slide.id;
         this.render();
+        globalThis.setTimeout(() => {
+            this.root.querySelector('[data-media="embed"] [data-field="src"]')?.focus();
+        }, 0);
     }
 
     duplicateSlide(slideId) {
@@ -552,9 +702,12 @@ class SwiperEditorController {
         }
 
         const source = this.slides[index];
+        const id = createSlideId();
         const duplicate = normalizeSlide({
             ...source,
-            id: createSlideId(),
+            id,
+            thumbnailTemplateHtml: cloneTemplateWithUniqueIds(source.thumbnailTemplateHtml, id),
+            templateHtml: cloneTemplateWithUniqueIds(source.templateHtml, id),
             textFields: cloneTextFields(source.textFields)
         });
         this.duplicateSourceIds.set(duplicate.id, source.id);
@@ -569,9 +722,18 @@ class SwiperEditorController {
             return;
         }
 
+        const selectedSlides = this.slides.filter(slide => this.selectedIds.has(slide.id));
+        const selectedMediaTypes = new Set(selectedSlides.map(slide => slide.type));
+        const initialMediaFilter = selectedMediaTypes.size === 1
+            ? selectedMediaTypes.values().next().value
+            : 'all';
         this.root.querySelectorAll('[data-bulk]').forEach(field => { field.value = ''; });
-        this.root.querySelector('[data-role="bulk-media-filter"]').value = 'all';
-        this.root.querySelector('[data-role="bulk-summary"]').textContent = `目前已勾選 ${this.selectedIds.size} 筆輪播項目。`;
+        this.root.querySelector('[data-role="bulk-media-filter"]').value = initialMediaFilter;
+        const mediaDescription = selectedMediaTypes.size === 1
+            ? `，已自動切換為${mediaTypeLabel(initialMediaFilter)}模式`
+            : '，包含混合媒體類型';
+        this.root.querySelector('[data-role="bulk-summary"]').textContent =
+            `目前已勾選 ${this.selectedIds.size} 筆輪播項目${mediaDescription}。`;
         this.root.querySelector('[data-role="bulk-dialog"]').hidden = false;
         this.renderBulkFields();
     }
@@ -642,6 +804,7 @@ class SwiperEditorController {
             return;
         }
 
+        let appliedCount = 0;
         this.slides = this.slides.map(slide => {
             if (!targetSlides.includes(slide)) {
                 return slide;
@@ -650,8 +813,21 @@ class SwiperEditorController {
             const applicableValues = Object.fromEntries(
                 Object.entries(values).filter(([key]) => isBulkSettingApplicable(key, slide.type))
             );
-            return normalizeSlide({ ...slide, ...applicableValues });
+            if (!Object.keys(applicableValues).length) {
+                return slide;
+            }
+
+            const updatedSlide = normalizeSlide({ ...slide, ...applicableValues });
+            if (serializeSlideState([updatedSlide]) !== serializeSlideState([slide])) {
+                appliedCount += 1;
+            }
+            return updatedSlide;
         });
+        if (!appliedCount) {
+            this.notify('alert', '目前填寫的設定不適用於所選媒體，或設定值與原資料相同。');
+            return;
+        }
+
         this.closeBulkDialog();
         this.render();
     }
@@ -723,12 +899,12 @@ class SwiperEditorController {
                 dirtyTextPaths: this.dirtyTextPaths
             })) {
                 this.notify('error', '輪播內容更新失敗，已保留原始內容。');
-                this.refreshSwiper(frameWindow, wrapper);
+                this.refreshSwiper(frameWindow);
                 return;
             }
 
             this.editor.Modal.close();
-            this.refreshSwiper(frameWindow, wrapper);
+            this.refreshSwiper(frameWindow);
             return;
         }
 
@@ -745,17 +921,17 @@ class SwiperEditorController {
         const frameWindow = this.destroySwiperInstances();
         if (!replaceSlideCollection(wrapper, renderedSlides, this.slides.length)) {
             this.notify('error', '輪播內容更新失敗，請重新整理畫布後再嘗試。');
-            this.refreshSwiper(frameWindow, wrapper);
+            this.refreshSwiper(frameWindow);
             return;
         }
         if (thumbnailWrapper && !replaceSlideCollection(thumbnailWrapper, renderedThumbnails, this.slides.length)) {
             this.notify('error', '輪播縮圖更新失敗，請重新整理畫布後再嘗試。');
-            this.refreshSwiper(frameWindow, wrapper);
+            this.refreshSwiper(frameWindow);
             return;
         }
 
         this.editor.Modal.close();
-        this.refreshSwiper(frameWindow, wrapper);
+        this.refreshSwiper(frameWindow);
     }
 
     destroySwiperInstances() {
@@ -784,21 +960,12 @@ class SwiperEditorController {
         return frameWindow;
     }
 
-    refreshSwiper(frameWindow, wrapper) {
+    refreshSwiper(frameWindow) {
         if (!frameWindow) {
             return;
         }
 
         frameWindow.requestAnimationFrame(() => {
-            const wrapperElement = wrapper?.getEl?.();
-            const slideCount = wrapperElement
-                ? Array.from(wrapperElement.children).filter(element => element.classList.contains('swiper-slide')).length
-                : 0;
-            if (!slideCount) {
-                this.notify('error', '輪播更新後未偵測到 slide，已停止重新初始化。');
-                return;
-            }
-
             try {
                 frameWindow.SwiperInit?.({ autoplay: false });
             } catch (error) {
@@ -833,8 +1000,64 @@ class SwiperEditorController {
 function normalizeAsset(asset) {
     return {
         src: asset?.get?.('src') || asset?.src || asset?.id || asset?.attributes?.src || '',
-        name: asset?.get?.('name') || asset?.name || asset?.attributes?.name || ''
+        name: asset?.get?.('name') || asset?.name || asset?.attributes?.name || '',
+        type: asset?.get?.('type') || asset?.type || asset?.attributes?.type || '',
+        mimeType: asset?.get?.('mimeType') || asset?.get?.('contentType') ||
+            asset?.mimeType || asset?.contentType || asset?.attributes?.mimeType ||
+            asset?.attributes?.contentType || ''
     };
+}
+
+function createUploadStatus(document) {
+    const element = document.createElement('div');
+    const message = document.createElement('strong');
+    element.className = 'coker-swiper-upload-status';
+    element.hidden = true;
+    element.setAttribute('role', 'status');
+    element.setAttribute('aria-live', 'polite');
+    element.innerHTML = '<span class="coker-swiper-upload-spinner" aria-hidden="true"></span>';
+    element.append(message);
+    document.body.append(element);
+
+    return {
+        show(value) {
+            message.textContent = value;
+            element.hidden = false;
+        },
+        hide() {
+            element.hidden = true;
+        },
+        remove() {
+            element.remove();
+        }
+    };
+}
+
+function detectAssetMediaType(asset) {
+    const declaredType = String(asset?.type || '').toLowerCase();
+    const mimeType = String(asset?.mimeType || '').toLowerCase();
+    if (mimeType.startsWith('video/')) {
+        return swiperMediaTypes.video;
+    }
+    if (mimeType.startsWith('image/')) {
+        return swiperMediaTypes.image;
+    }
+
+    const path = String(asset?.name || asset?.src || '').split(/[?#]/)[0].toLowerCase();
+    if (/\.(mp4|webm|ogg|ogv|mov|m4v)$/.test(path)) {
+        return swiperMediaTypes.video;
+    }
+    if (/\.(avif|bmp|gif|jpe?g|png|svg|webp)$/.test(path)) {
+        return swiperMediaTypes.image;
+    }
+    if (declaredType === swiperMediaTypes.video) {
+        return swiperMediaTypes.video;
+    }
+    if (declaredType === swiperMediaTypes.image) {
+        return swiperMediaTypes.image;
+    }
+
+    return null;
 }
 
 function fileNameWithoutExtension(value) {
@@ -1123,12 +1346,20 @@ function replaceSlideCollection(wrapper, html, expectedCount) {
     const originalHtml = Array.from(collection.models || collection)
         .map(component => component.toHTML())
         .join('');
+    let parsedDefinitionCount = 0;
 
     try {
-        // Parse the complete sibling set in one pass. Replacing each slide's
-        // children separately can make GrapesJS move matching child models
-        // between siblings, leaving all but the last slide empty.
-        wrapper.components(html);
+        const definitions = parseComponentDefinitions(collection, html);
+        parsedDefinitionCount = definitions.length;
+        if (parsedDefinitionCount !== expectedCount) {
+            throw new Error(`Parsed ${parsedDefinitionCount} of ${expectedCount} slide definitions.`);
+        }
+
+        // components(html) tries to reuse globally registered models by their
+        // element IDs. Slides cloned from one template can share those IDs and
+        // collapse to an empty collection. Resetting parsed definitions creates
+        // independent models for every sibling instead.
+        collection.reset(definitions);
     } catch (error) {
         console.error('[Coker Swiper] slide collection update failed', error);
         restoreWrapperComponents(wrapper, originalHtml);
@@ -1144,6 +1375,7 @@ function replaceSlideCollection(wrapper, html, expectedCount) {
     if (!succeeded) {
         console.error('[Coker Swiper] slide count mismatch', {
             expectedCount,
+            parsedDefinitionCount,
             currentCount: currentSlideCount,
             slidesWithMedia
         });
@@ -1155,10 +1387,39 @@ function replaceSlideCollection(wrapper, html, expectedCount) {
 
 function restoreWrapperComponents(wrapper, html) {
     try {
-        wrapper.components(html);
+        const collection = wrapper.components?.();
+        if (!collection) {
+            throw new Error('Wrapper component collection is unavailable.');
+        }
+        collection.reset(parseComponentDefinitions(collection, html));
     } catch (error) {
         console.error('[Coker Swiper] restoring original slide collection failed', error);
     }
+}
+
+function parseComponentDefinitions(collection, html) {
+    const parsed = collection.parseString(html, {
+        cloneRules: true,
+        keepIds: collectComponentIds(collection)
+    });
+    if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+    }
+    return parsed ? [parsed] : [];
+}
+
+function collectComponentIds(collection) {
+    const ids = [];
+    const stack = [...Array.from(collection.models || collection)];
+    while (stack.length) {
+        const component = stack.pop();
+        const id = component?.getId?.() || component?.getAttributes?.().id;
+        if (id) {
+            ids.push(id);
+        }
+        stack.push(...getChildComponents(component));
+    }
+    return ids;
 }
 
 function parseRenderedSlideElements(html) {
@@ -1200,4 +1461,55 @@ function serializeSlideState(slides) {
 
 function cloneTextFields(fields) {
     return Array.isArray(fields) ? fields.map(field => ({ ...field })) : [];
+}
+
+function cloneTemplateWithUniqueIds(html, slideId) {
+    if (!html) {
+        return '';
+    }
+
+    const parser = new DOMParser();
+    const document = parser.parseFromString(html, 'text/html');
+    const root = document.body.firstElementChild;
+    if (!root) {
+        return html;
+    }
+
+    const suffix = String(slideId || createSlideId()).replace(/[^a-z0-9_-]/gi, '');
+    const idMap = new Map();
+    const elementsWithIds = [root, ...root.querySelectorAll('[id]')].filter(element => element.id);
+    elementsWithIds.forEach((element, index) => {
+        const originalId = element.id;
+        const uniqueId = `${originalId}--coker-${suffix}-${index + 1}`;
+        idMap.set(originalId, uniqueId);
+        element.id = uniqueId;
+    });
+
+    const singleIdAttributes = ['for', 'form', 'list', 'aria-activedescendant'];
+    const multipleIdAttributes = ['aria-controls', 'aria-describedby', 'aria-labelledby', 'headers'];
+    [root, ...root.querySelectorAll('*')].forEach(element => {
+        singleIdAttributes.forEach(attribute => {
+            const value = element.getAttribute(attribute);
+            if (idMap.has(value)) {
+                element.setAttribute(attribute, idMap.get(value));
+            }
+        });
+        multipleIdAttributes.forEach(attribute => {
+            const value = element.getAttribute(attribute);
+            if (!value) {
+                return;
+            }
+            element.setAttribute(attribute, value.split(/\s+/)
+                .map(id => idMap.get(id) || id)
+                .join(' '));
+        });
+        ['href', 'xlink:href', 'data-bs-target', 'data-target'].forEach(attribute => {
+            const value = element.getAttribute(attribute);
+            if (value?.startsWith('#') && idMap.has(value.slice(1))) {
+                element.setAttribute(attribute, `#${idMap.get(value.slice(1))}`);
+            }
+        });
+    });
+
+    return root.outerHTML;
 }

@@ -527,6 +527,9 @@ namespace EtheriT.Coker.Application.Directory
                     break;
 
                 case SearchTargetIds.Article:
+                    // 「找文章」同時涵蓋一般內容頁（WebMenu）與文章管理內容。
+                    // 舊的搜尋代碼 0 原本即包含兩者；改用 -1 區分商品後仍需保留此行為。
+                    includeMenu = true;
                     includeArticle = true;
                     break;
 

@@ -1,4 +1,14 @@
 ﻿<!--導入grapesjs-->
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersionProvider
+@{
+    var grapesModuleUrl = FileVersionProvider.AddFileVersionToPath(
+        Context.Request.PathBase,
+        "/modules/grapesjs/etherit-coker-grapesjs.min.js");
+    var imageEditorModuleUrl = FileVersionProvider.AddFileVersionToPath(
+        Context.Request.PathBase,
+        "/modules/grapesjs/etherit-coker-grapesjs-image-editor.min.js");
+}
+
 <link rel="stylesheet" href="/modules/grapesjs/etherit-coker-grapesjs.min.css" asp-append-version="true">
 <link rel="stylesheet" href="/modules/grapesjs/etherit-coker-grapesjs-image-editor.min.css" asp-append-version="true">
 <link rel="stylesheet" href="/css/Grapes/GrapesOutsiteCss.min.css" asp-append-version="true">
@@ -9,8 +19,8 @@
 <script>
     window.CokerGrapesReady = (async function () {
         const [grapesModule, imageEditorModule] = await Promise.all([
-            import('/modules/grapesjs/etherit-coker-grapesjs.min.js'),
-            import('/modules/grapesjs/etherit-coker-grapesjs-image-editor.min.js')
+            import('@Html.Raw(grapesModuleUrl)'),
+            import('@Html.Raw(imageEditorModuleUrl)')
         ]);
         const {
             createCokerGrapesLibrary,

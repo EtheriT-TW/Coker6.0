@@ -1010,11 +1010,27 @@ function SwiperInit(obj) {
             // centered loop with fewer than five source items. Main content
             // and persisted data are not duplicated.
             $thumbnailWrapper.children(".swiper-slide").removeClass("hidden-slide");
+            $thumbnailWrapper
+                .find("img, a")
+                .attr("draggable", "false");
+            $thumbnailWrapper
+                .off("dragstart.cokerVerticalSwiper")
+                .on("dragstart.cokerVerticalSwiper", "img, a", function (event) {
+                    event.preventDefault();
+                });
             var swiperThumbs = new Swiper(thumbsId, {
                 slidesPerView: 1,
                 direction: "horizontal",
                 loop: canLoopThumbs,
                 centeredSlides: canLoopThumbs,
+                allowTouchMove: true,
+                simulateTouch: true,
+                grabCursor: true,
+                threshold: 3,
+                touchStartPreventDefault: true,
+                touchMoveStopPropagation: true,
+                preventClicks: true,
+                preventClicksPropagation: true,
                 watchSlidesProgress: true,
                 slideToClickedSlide: true,
                 breakpoints: {
@@ -1056,11 +1072,14 @@ function SwiperInit(obj) {
                 }
             } : {});
             var swiper = new Swiper(mainId, selfConfig);
+            let syncingThumbnailFromMain = false;
+            let syncingMainFromThumbnail = false;
 
             const positionSelectedThumbnail = function (speed) {
                 const realIndex = Number(swiper.realIndex) || 0;
                 const isDesktop = window.matchMedia("(min-width: 768px)").matches;
 
+                syncingThumbnailFromMain = true;
                 if (isDesktop && canLoopThumbs) {
                     const targetIndex = realIndex + ((runtimeGroupCount - 1) * length);
                     swiperThumbs.slideToLoop(targetIndex, speed || 0, false);
@@ -1072,9 +1091,25 @@ function SwiperInit(obj) {
                 $thumbSlides.removeClass("swiper-slide-thumb-active");
                 $(swiperThumbs.slides[swiperThumbs.activeIndex])
                     .addClass("swiper-slide-thumb-active");
+                syncingThumbnailFromMain = false;
+            };
+
+            const syncMainFromActiveThumbnail = function () {
+                if (syncingThumbnailFromMain) return;
+
+                const activeThumbnail = swiperThumbs.slides[swiperThumbs.activeIndex];
+                const targetIndex = Number(
+                    activeThumbnail?.getAttribute("data-coker-thumb-index")
+                );
+                if (!Number.isInteger(targetIndex) || targetIndex === swiper.realIndex) return;
+
+                syncingMainFromThumbnail = true;
+                swiper.slideToLoop(targetIndex);
+                syncingMainFromThumbnail = false;
             };
 
             swiper.on('slideChangeTransitionStart', function () {
+                if (syncingMainFromThumbnail) return;
                 positionSelectedThumbnail(swiper.params.speed);
             });
             swiper.on('resize breakpoint', function () {
@@ -1094,8 +1129,18 @@ function SwiperInit(obj) {
                 const clickedIndex = Number(
                     swiperThumbs.clickedSlide?.getAttribute("data-coker-thumb-index")
                 );
-                if (Number.isInteger(clickedIndex)) swiper.slideToLoop(clickedIndex);
+                if (!Number.isInteger(clickedIndex) || clickedIndex === swiper.realIndex) return;
+
+                syncingMainFromThumbnail = true;
+                swiper.slideToLoop(clickedIndex);
+                syncingMainFromThumbnail = false;
             });
+            swiperThumbs.on('slideChange', syncMainFromActiveThumbnail);
+            swiperThumbs.on('touchEnd', function () {
+                window.requestAnimationFrame(syncMainFromActiveThumbnail);
+            });
+            swiperThumbs.on('slideChangeTransitionEnd', syncMainFromActiveThumbnail);
+            swiperThumbs.on('transitionEnd', syncMainFromActiveThumbnail);
             positionSelectedThumbnail(0);
 
             $self.data("isInit", true)

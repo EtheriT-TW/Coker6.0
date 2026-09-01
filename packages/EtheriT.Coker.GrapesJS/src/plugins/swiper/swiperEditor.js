@@ -20,10 +20,14 @@ class SwiperEditorController {
         const templateSlide = this.slides.find(slide => slide.templateHtml);
         this.slideTemplateHtml = templateSlide?.templateHtml || '';
         this.slideTemplateTextFields = cloneTextFields(templateSlide?.textFields);
+        this.slideTemplateImageFields = cloneFields(templateSlide?.imageFields);
         this.slideTemplateThumbnailHtml = templateSlide?.thumbnailTemplateHtml || '';
         this.isVerticalSwiper = component.getClasses?.().includes('vertical_swiper_thumbs');
         this.duplicateSourceIds = new Map();
         this.dirtyTextPaths = new Map();
+        this.dirtyImagePaths = new Map();
+        this.dirtyVisibilityPaths = new Map();
+        this.dirtyGroupPaths = new Map();
         this.mainSlideComponents = mapMainSlideComponents(component, this.slides);
         this.thumbnailSlideComponents = mapThumbnailSlideComponents(component, this.slides);
         this.supportsCaption = this.slides.some(slide => slide.hasCaption);
@@ -139,10 +143,12 @@ class SwiperEditorController {
                             </label>
                         </div>
                         <label class="coker-swiper-check"><input type="checkbox" data-field="hidden"> 僅後台顯示（前台隱藏）</label>
-                        <details class="coker-swiper-advanced-text" data-role="advanced-text" hidden>
-                            <summary>進階文字編輯 <span data-role="advanced-text-count"></span></summary>
-                            <div class="coker-swiper-advanced-text-fields" data-role="advanced-text-fields"></div>
-                        </details>
+                        <button type="button" class="coker-swiper-advanced-trigger" data-action="open-advanced" data-role="advanced-trigger" hidden>
+                            <span class="material-symbols-outlined">tune</span>
+                            <span>進階內容編輯</span>
+                            <span data-role="advanced-group-count"></span>
+                            <span class="material-symbols-outlined">open_in_new</span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -202,6 +208,29 @@ class SwiperEditorController {
                         <button type="button" class="coker-swiper-primary" data-action="apply-bulk">套用至符合條件的項目</button>
                     </div>
                 </section>
+            </div>
+            <div class="coker-swiper-image-preview-dialog" data-role="image-preview-dialog" hidden>
+                <div class="coker-swiper-bulk-backdrop" data-action="close-image-preview"></div>
+                <section class="coker-swiper-image-preview-panel" role="dialog" aria-modal="true" aria-label="圖片預覽">
+                    <button type="button" data-action="close-image-preview" aria-label="關閉圖片預覽">×</button>
+                    <img data-role="image-preview" alt="">
+                </section>
+            </div>
+            <div class="coker-swiper-advanced-dialog" data-role="advanced-dialog" hidden>
+                <div class="coker-swiper-bulk-backdrop" data-action="close-advanced"></div>
+                <section class="coker-swiper-advanced-panel" role="dialog" aria-modal="true" aria-labelledby="coker-swiper-advanced-title">
+                    <div class="coker-swiper-advanced-panel-header">
+                        <div>
+                            <h3 id="coker-swiper-advanced-title">進階內容編輯</h3>
+                            <p data-role="advanced-summary"></p>
+                        </div>
+                        <button type="button" data-action="close-advanced" aria-label="關閉進階內容編輯">×</button>
+                    </div>
+                    <div class="coker-swiper-advanced-groups" data-role="advanced-group-fields"></div>
+                    <div class="coker-swiper-advanced-panel-actions">
+                        <button type="button" class="coker-swiper-primary" data-action="close-advanced">完成進階編輯</button>
+                    </div>
+                </section>
             </div>`;
 
         this.bindEvents(root);
@@ -219,8 +248,17 @@ class SwiperEditorController {
                 'select-asset': button => this.selectAsset({
                     replaceId: this.activeId,
                     field: button.dataset.assetField,
-                    assetType: button.dataset.assetType
+                    assetType: button.dataset.assetType,
+                    imageKey: button.dataset.imageKey
                 }),
+                'preview-advanced-image': button => this.openAdvancedImagePreview(button.dataset.imageKey),
+                'close-image-preview': () => this.closeAdvancedImagePreview(),
+                'open-advanced': () => this.openAdvancedDialog(),
+                'close-advanced': () => this.closeAdvancedDialog(),
+                'toggle-advanced-visibility': button => this.toggleAdvancedVisibility(
+                    button.dataset.advancedType,
+                    button.dataset.advancedKey
+                ),
                 'select-all': () => this.selectAll(),
                 'open-bulk': () => this.openBulkDialog(),
                 'close-bulk': () => this.closeBulkDialog(),
@@ -233,9 +271,19 @@ class SwiperEditorController {
             actions[button.dataset.action]?.(button);
         });
 
-        root.querySelector('[data-role="form"]').addEventListener('input', event => {
+        root.addEventListener('input', event => {
             if (event.target.matches('[data-text-path]')) {
                 this.updateAdvancedText(event.target);
+                return;
+            }
+
+            if (event.target.matches('[data-group-key]')) {
+                this.updateAdvancedGroup(event.target);
+                return;
+            }
+
+            if (event.target.matches('[data-image-key]')) {
+                this.updateAdvancedImage(event.target);
                 return;
             }
 
@@ -407,36 +455,103 @@ class SwiperEditorController {
             field.hidden = !field.dataset.media.split(',').includes(slide.type);
         });
         form.querySelector('[data-role="caption-field"]').hidden = !this.supportsCaption;
-        this.renderAdvancedTextFields(slide);
+        this.renderAdvancedGroups(slide);
     }
 
-    renderAdvancedTextFields(slide) {
-        const section = this.root.querySelector('[data-role="advanced-text"]');
-        const fieldsRoot = this.root.querySelector('[data-role="advanced-text-fields"]');
-        const count = this.root.querySelector('[data-role="advanced-text-count"]');
-        const textFields = slide.textFields || [];
+    renderAdvancedGroups(slide) {
+        const trigger = this.root.querySelector('[data-role="advanced-trigger"]');
+        const fieldsRoot = this.root.querySelector('[data-role="advanced-group-fields"]');
+        const count = this.root.querySelector('[data-role="advanced-group-count"]');
+        const groups = collectAdvancedGroups(slide);
 
-        section.hidden = textFields.length === 0;
-        count.textContent = `（${textFields.length} 項）`;
+        trigger.hidden = groups.length === 0;
+        count.textContent = `（${groups.length} 組）`;
         fieldsRoot.replaceChildren();
 
-        textFields.forEach(field => {
-            const label = document.createElement('label');
-            const caption = document.createElement('span');
-            const input = document.createElement(field.multiline ? 'textarea' : 'input');
+        groups.forEach(group => {
+            const card = document.createElement('section');
+            const header = document.createElement('div');
+            const heading = document.createElement('strong');
+            const firstItem = group.items[0];
+            const visibility = createAdvancedVisibilityButton(firstItem.type, firstItem.field);
 
-            caption.textContent = `${field.label} — ${field.value || '（空白）'}`;
-            caption.title = field.value;
-            if (field.multiline) {
-                input.rows = 2;
-            } else {
-                input.type = 'text';
+            card.className = 'coker-swiper-advanced-group';
+            header.className = 'coker-swiper-advanced-group-header';
+            heading.innerHTML = `<span class="material-symbols-outlined">${group.type === 'link' ? 'link' : 'view_in_ar'}</span><span></span>`;
+            heading.querySelector('span:last-child').textContent = group.label;
+            header.append(heading, visibility);
+            card.append(header);
+
+            if (group.type === 'link') {
+                const linkFields = document.createElement('div');
+                const hrefLabel = document.createElement('label');
+                const linkControl = document.createElement('div');
+                const href = document.createElement('input');
+                const target = document.createElement('select');
+                linkFields.className = 'coker-swiper-advanced-link-fields';
+                hrefLabel.textContent = '連結';
+                linkControl.className = 'coker-swiper-advanced-link-control';
+                href.type = 'text';
+                href.dataset.groupKey = group.key;
+                href.dataset.groupField = 'groupHref';
+                href.value = group.href;
+                href.setAttribute('aria-label', '連結網址');
+                target.dataset.groupKey = group.key;
+                target.dataset.groupField = 'groupTarget';
+                target.setAttribute('aria-label', '連結開啟方式');
+                target.innerHTML = '<option value="_self">目前視窗</option><option value="_blank">另開視窗</option>';
+                target.value = group.target;
+                linkControl.append(href, target);
+                hrefLabel.append(linkControl);
+                linkFields.append(hrefLabel);
+                card.append(linkFields);
             }
-            input.dataset.textPath = field.path;
-            input.value = field.value;
-            label.append(caption, input);
-            fieldsRoot.append(label);
+
+            const content = document.createElement('div');
+            content.className = 'coker-swiper-advanced-group-content';
+            group.items.forEach(item => {
+                content.append(item.type === 'image'
+                    ? createAdvancedImageField(item.field)
+                    : createAdvancedTextField(item.field));
+            });
+            card.append(content);
+            fieldsRoot.append(card);
         });
+    }
+
+    openAdvancedDialog() {
+        const slide = this.getActiveSlide();
+        if (!slide) {
+            return;
+        }
+        this.root.querySelector('[data-role="advanced-summary"]').textContent =
+            `目前項目：${slide.title || '未命名輪播項目'}`;
+        this.root.querySelector('[data-role="advanced-dialog"]').hidden = false;
+    }
+
+    closeAdvancedDialog() {
+        this.closeAdvancedImagePreview();
+        this.root.querySelector('[data-role="advanced-dialog"]').hidden = true;
+    }
+
+    updateAdvancedGroup(input) {
+        const slide = this.getActiveSlide();
+        const key = input.dataset.groupKey;
+        const property = input.dataset.groupField;
+        if (!slide || !key || !property) {
+            return;
+        }
+
+        let changed = false;
+        [...slide.textFields, ...slide.imageFields].forEach(field => {
+            if (getAdvancedGroupKey(field) === key) {
+                field[property] = input.value;
+                changed = true;
+            }
+        });
+        if (changed) {
+            markDirtyPath(this.dirtyGroupPaths, slide.id, key);
+        }
     }
 
     updateAdvancedText(input) {
@@ -449,6 +564,56 @@ class SwiperEditorController {
             }
             this.dirtyTextPaths.get(slide.id).add(field.path);
         }
+    }
+
+    updateAdvancedImage(input) {
+        const slide = this.getActiveSlide();
+        const field = slide?.imageFields?.find(item => getAdvancedFieldKey(item) === input.dataset.imageKey);
+        if (!field) {
+            return;
+        }
+
+        field.src = input.value;
+        markDirtyPath(this.dirtyImagePaths, slide.id, getAdvancedFieldKey(field));
+    }
+
+    toggleAdvancedVisibility(type, key) {
+        const slide = this.getActiveSlide();
+        const fields = type === 'text' ? slide?.textFields : slide?.imageFields;
+        const field = fields?.find(item => getAdvancedFieldKey(item) === key);
+        if (!slide || !field) {
+            return;
+        }
+
+        const visibilityKey = getAdvancedVisibilityKey(field);
+        const hidden = !field.hidden;
+        [...slide.textFields, ...slide.imageFields].forEach(item => {
+            if (getAdvancedVisibilityKey(item) === visibilityKey) {
+                item.hidden = hidden;
+            }
+        });
+        markDirtyPath(this.dirtyVisibilityPaths, slide.id, visibilityKey);
+        this.renderAdvancedGroups(slide);
+    }
+
+    openAdvancedImagePreview(imageKey) {
+        const slide = this.getActiveSlide();
+        const field = slide?.imageFields?.find(item => getAdvancedFieldKey(item) === imageKey);
+        if (!field) {
+            return;
+        }
+
+        const dialog = this.root.querySelector('[data-role="image-preview-dialog"]');
+        const image = dialog.querySelector('[data-role="image-preview"]');
+        image.src = field.src;
+        image.alt = field.alt || field.label;
+        dialog.hidden = false;
+    }
+
+    closeAdvancedImagePreview() {
+        const dialog = this.root.querySelector('[data-role="image-preview-dialog"]');
+        dialog.hidden = true;
+        dialog.querySelector('[data-role="image-preview"]').removeAttribute('src');
     }
 
     updateActiveSlide(field) {
@@ -507,14 +672,22 @@ class SwiperEditorController {
 
             if (replaceSlide && assets.length) {
                 const replacement = assets.shift();
-                replaceSlide[field] = replacement.src;
-                if (field === 'src') {
+                const advancedImage = options.imageKey
+                    ? replaceSlide.imageFields?.find(item => getAdvancedFieldKey(item) === options.imageKey)
+                    : null;
+                if (advancedImage) {
+                    advancedImage.src = replacement.src;
+                    markDirtyPath(this.dirtyImagePaths, replaceSlide.id, getAdvancedFieldKey(advancedImage));
+                } else if (!options.imageKey) {
+                    replaceSlide[field] = replacement.src;
+                }
+                if (!options.imageKey && field === 'src') {
                     replaceSlide.type = assetType;
                     replaceSlide.title = fileNameWithoutExtension(replacement.name || replacement.src);
                 }
             }
 
-            const additions = field === 'src'
+            const additions = !options.imageKey && field === 'src'
                 ? assets.map(asset => {
                     const id = createSlideId();
                     return normalizeSlide({
@@ -524,6 +697,7 @@ class SwiperEditorController {
                         title: fileNameWithoutExtension(asset.name || asset.src),
                         hasCaption: this.supportsCaption,
                         textFields: cloneTextFields(this.slideTemplateTextFields),
+                        imageFields: cloneFields(this.slideTemplateImageFields),
                         thumbnailTemplateHtml: cloneTemplateWithUniqueIds(this.slideTemplateThumbnailHtml, id),
                         templateHtml: cloneTemplateWithUniqueIds(this.slideTemplateHtml, id)
                     });
@@ -638,6 +812,7 @@ class SwiperEditorController {
                         title: fileNameWithoutExtension(asset.name || asset.src),
                         hasCaption: this.supportsCaption,
                         textFields: cloneTextFields(this.slideTemplateTextFields),
+                        imageFields: cloneFields(this.slideTemplateImageFields),
                         thumbnailTemplateHtml: cloneTemplateWithUniqueIds(this.slideTemplateThumbnailHtml, id),
                         templateHtml: cloneTemplateWithUniqueIds(this.slideTemplateHtml, id)
                     }) : null;
@@ -684,6 +859,7 @@ class SwiperEditorController {
             title: '嵌入式影片',
             hasCaption: this.supportsCaption,
             textFields: cloneTextFields(this.slideTemplateTextFields),
+            imageFields: cloneFields(this.slideTemplateImageFields),
             thumbnailTemplateHtml: cloneTemplateWithUniqueIds(this.slideTemplateThumbnailHtml, id),
             templateHtml: cloneTemplateWithUniqueIds(this.slideTemplateHtml, id)
         });
@@ -708,7 +884,8 @@ class SwiperEditorController {
             id,
             thumbnailTemplateHtml: cloneTemplateWithUniqueIds(source.thumbnailTemplateHtml, id),
             templateHtml: cloneTemplateWithUniqueIds(source.templateHtml, id),
-            textFields: cloneTextFields(source.textFields)
+            textFields: cloneTextFields(source.textFields),
+            imageFields: cloneFields(source.imageFields)
         });
         this.duplicateSourceIds.set(duplicate.id, source.id);
         this.slides.splice(index + 1, 0, duplicate);
@@ -896,7 +1073,10 @@ class SwiperEditorController {
                 mainSlideComponents: this.mainSlideComponents,
                 thumbnailSlideComponents: this.thumbnailSlideComponents,
                 duplicateSourceIds: this.duplicateSourceIds,
-                dirtyTextPaths: this.dirtyTextPaths
+                dirtyTextPaths: this.dirtyTextPaths,
+                dirtyImagePaths: this.dirtyImagePaths,
+                dirtyVisibilityPaths: this.dirtyVisibilityPaths,
+                dirtyGroupPaths: this.dirtyGroupPaths
             })) {
                 this.notify('error', '輪播內容更新失敗，已保留原始內容。');
                 this.refreshSwiper(frameWindow);
@@ -1130,7 +1310,10 @@ function replaceVerticalSwiperCollections(options) {
         mainSlideComponents,
         thumbnailSlideComponents,
         duplicateSourceIds,
-        dirtyTextPaths
+        dirtyTextPaths,
+        dirtyImagePaths,
+        dirtyVisibilityPaths,
+        dirtyGroupPaths
     } = options;
     const originalMain = getDirectSlideComponents(wrapper);
     const originalThumbnails = getDirectSlideComponents(thumbnailWrapper);
@@ -1142,7 +1325,14 @@ function replaceVerticalSwiperCollections(options) {
             if (!clone) {
                 throw new Error(`Unable to clone main slide ${slide.id}`);
             }
-            updateVerticalMainSlide(clone, slide, dirtyTextPaths.get(slide.id) || new Set());
+            updateVerticalMainSlide(
+                clone,
+                slide,
+                dirtyTextPaths.get(slide.id) || new Set(),
+                dirtyImagePaths.get(slide.id) || new Set(),
+                dirtyVisibilityPaths.get(slide.id) || new Set(),
+                dirtyGroupPaths.get(slide.id) || new Set()
+            );
             return clone;
         });
         const thumbnailComponents = thumbnailWrapper
@@ -1152,7 +1342,13 @@ function replaceVerticalSwiperCollections(options) {
                 if (!clone) {
                     throw new Error(`Unable to clone thumbnail slide ${slide.id}`);
                 }
-                updateVerticalThumbnailSlide(clone, slide);
+                updateVerticalThumbnailSlide(
+                    clone,
+                    slide,
+                    dirtyImagePaths.get(slide.id) || new Set(),
+                    dirtyVisibilityPaths.get(slide.id) || new Set(),
+                    dirtyGroupPaths.get(slide.id) || new Set()
+                );
                 return clone;
             })
             : [];
@@ -1189,7 +1385,7 @@ function resolveSourceComponent(slideId, componentMap, duplicateSourceIds) {
     return componentMap.get(sourceId) || null;
 }
 
-function updateVerticalMainSlide(component, slide, dirtyTextPaths) {
+function updateVerticalMainSlide(component, slide, dirtyTextPaths, dirtyImagePaths, dirtyVisibilityPaths, dirtyGroupPaths) {
     if (slide.type !== swiperMediaTypes.image) {
         throw new Error('vertical_swiper_thumbs currently requires image slides.');
     }
@@ -1205,8 +1401,7 @@ function updateVerticalMainSlide(component, slide, dirtyTextPaths) {
     if (!image) {
         throw new Error(`Main image not found for slide ${slide.id}`);
     }
-    image.addAttributes?.({
-        src: slide.src,
+    updateImageComponent(image, slide.src, {
         alt: slide.title,
         'data-keep_time': String(slide.duration)
     });
@@ -1238,9 +1433,32 @@ function updateVerticalMainSlide(component, slide, dirtyTextPaths) {
             throw new Error(`Text field ${index + 1} became empty for slide ${slide.id}`);
         }
     });
+
+    slide.imageFields.filter(field => field.scope === 'slide').forEach(field => {
+        if (!dirtyImagePaths.has(getAdvancedFieldKey(field))) {
+            return;
+        }
+        const target = findComponentByPath(component, field.path);
+        if (!target || getComponentTagName(target) !== 'img') {
+            throw new Error(`Advanced image ${field.path} not found for slide ${slide.id}`);
+        }
+        updateImageComponent(target, field.src);
+    });
+    updateAdvancedVisibilityComponents(
+        component,
+        [...slide.textFields, ...slide.imageFields.filter(field => field.scope === 'slide')],
+        dirtyVisibilityPaths,
+        slide.id
+    );
+    updateAdvancedGroupComponents(
+        component,
+        [...slide.textFields, ...slide.imageFields.filter(field => field.scope === 'slide')],
+        dirtyGroupPaths,
+        slide.id
+    );
 }
 
-function updateVerticalThumbnailSlide(component, slide) {
+function updateVerticalThumbnailSlide(component, slide, dirtyImagePaths, dirtyVisibilityPaths, dirtyGroupPaths) {
     setComponentStateClass(component, 'backstageType', slide.hidden);
     const image = findFirstComponent(component, model => (
         getComponentTagName(model) === 'img' && model.getClasses?.().includes('original')
@@ -1248,7 +1466,75 @@ function updateVerticalThumbnailSlide(component, slide) {
     if (!image) {
         throw new Error(`Thumbnail image not found for slide ${slide.id}`);
     }
-    image.addAttributes?.({ src: slide.poster || slide.src, alt: slide.title });
+    updateImageComponent(image, slide.poster || slide.src, { alt: slide.title });
+    slide.imageFields.filter(field => field.scope === 'thumbnail').forEach(field => {
+        if (!dirtyImagePaths.has(getAdvancedFieldKey(field))) {
+            return;
+        }
+        const target = findComponentByPath(component, field.path);
+        if (!target || getComponentTagName(target) !== 'img') {
+            throw new Error(`Thumbnail image ${field.path} not found for slide ${slide.id}`);
+        }
+        updateImageComponent(target, field.src);
+    });
+    updateAdvancedVisibilityComponents(
+        component,
+        slide.imageFields.filter(field => field.scope === 'thumbnail'),
+        dirtyVisibilityPaths,
+        slide.id
+    );
+    updateAdvancedGroupComponents(
+        component,
+        slide.imageFields.filter(field => field.scope === 'thumbnail'),
+        dirtyGroupPaths,
+        slide.id
+    );
+}
+
+function updateAdvancedVisibilityComponents(component, fields, dirtyVisibilityPaths, slideId) {
+    const applied = new Set();
+    fields.forEach(field => {
+        const key = getAdvancedVisibilityKey(field);
+        if (applied.has(key) || !dirtyVisibilityPaths.has(key)) {
+            return;
+        }
+        applied.add(key);
+        const target = findComponentByPath(component, field.visibilityPath);
+        if (!target) {
+            throw new Error(`Visibility target ${field.visibilityPath} not found for slide ${slideId}`);
+        }
+        setComponentStateClass(target, 'backstageType', field.hidden);
+    });
+}
+
+function updateAdvancedGroupComponents(component, fields, dirtyGroupPaths, slideId) {
+    const applied = new Set();
+    fields.forEach(field => {
+        const key = getAdvancedGroupKey(field);
+        if (applied.has(key) || !dirtyGroupPaths.has(key) || field.groupType !== 'link') {
+            return;
+        }
+        applied.add(key);
+        const target = findComponentByPath(component, field.groupPath);
+        if (!target || getComponentTagName(target) !== 'a') {
+            throw new Error(`Link group ${field.groupPath} not found for slide ${slideId}`);
+        }
+        const attributes = { target: field.groupTarget || '_self' };
+        if (field.groupHref) {
+            attributes.href = field.groupHref;
+        }
+        target.addAttributes?.(attributes);
+        if (!field.groupHref) {
+            target.removeAttributes?.(['href']);
+        }
+    });
+}
+
+function updateImageComponent(image, source, attributes = {}) {
+    // GrapesJS Image serializes `model.src` instead of attributes.src.
+    // Keep both values in sync so toHTML() does not restore the old image.
+    image.addAttributes?.({ ...attributes, src: source });
+    image.set?.({ src: source });
 }
 
 function setComponentStateClass(component, className, enabled) {
@@ -1297,6 +1583,18 @@ function getComponentMediaSource(component) {
         getComponentTagName(model) === 'img' && model.getClasses?.().includes('original')
     )) || findFirstComponent(component, model => getComponentTagName(model) === 'img');
     return image?.getAttributes?.().src || '';
+}
+
+function findComponentByPath(root, path) {
+    if (!path) {
+        return null;
+    }
+
+    return path.split('.').reduce((component, part) => {
+        const index = Number(part);
+        const elementChildren = getChildComponents(component).filter(child => getComponentTagName(child));
+        return Number.isInteger(index) ? elementChildren[index] : null;
+    }, root);
 }
 
 function findFirstComponent(component, predicate) {
@@ -1455,12 +1753,161 @@ function serializeSlideState(slides) {
         duration: slide.duration,
         ratio: slide.ratio,
         hidden: slide.hidden,
-        textFields: slide.textFields
+        textFields: slide.textFields,
+        imageFields: slide.imageFields
     })));
 }
 
 function cloneTextFields(fields) {
+    return cloneFields(fields);
+}
+
+function cloneFields(fields) {
     return Array.isArray(fields) ? fields.map(field => ({ ...field })) : [];
+}
+
+function getAdvancedFieldKey(field) {
+    return `${field.scope || 'slide'}:${field.path}`;
+}
+
+function getAdvancedVisibilityKey(field) {
+    return `${field.scope || 'slide'}:${field.visibilityPath || field.path}`;
+}
+
+function getAdvancedGroupKey(field) {
+    return `${field.scope || 'slide'}:${field.groupPath || field.path}`;
+}
+
+function collectAdvancedGroups(slide) {
+    const groups = new Map();
+    const items = [
+        ...slide.textFields.map(field => ({ type: 'text', field })),
+        ...slide.imageFields.map(field => ({ type: 'image', field }))
+    ].sort(compareAdvancedFieldPosition);
+    items.forEach(item => {
+        const key = getAdvancedGroupKey(item.field);
+        if (!groups.has(key)) {
+            groups.set(key, {
+                key,
+                type: item.field.groupType || 'content',
+                label: item.field.groupLabel || item.field.label,
+                href: item.field.groupHref || '',
+                target: item.field.groupTarget || '_self',
+                items: []
+            });
+        }
+        groups.get(key).items.push(item);
+    });
+    return Array.from(groups.values()).map((group, index) => ({
+        ...group,
+        label: `${getNeutralAdvancedGroupLabel(group)} ${index + 1}`
+    }));
+}
+
+function compareAdvancedFieldPosition(left, right) {
+    const leftScope = left.field.scope === 'thumbnail' ? 1 : 0;
+    const rightScope = right.field.scope === 'thumbnail' ? 1 : 0;
+    if (leftScope !== rightScope) {
+        return leftScope - rightScope;
+    }
+
+    const leftPath = String(left.field.path || '').split('.').map(Number);
+    const rightPath = String(right.field.path || '').split('.').map(Number);
+    const length = Math.max(leftPath.length, rightPath.length);
+    for (let index = 0; index < length; index += 1) {
+        const difference = (leftPath[index] ?? -1) - (rightPath[index] ?? -1);
+        if (difference) {
+            return difference;
+        }
+    }
+    return 0;
+}
+
+function getNeutralAdvancedGroupLabel(group) {
+    if (group.type === 'link') {
+        return '連結區域';
+    }
+    if (group.items.length > 1) {
+        return '內容區域';
+    }
+    return group.items[0]?.type === 'image' ? '圖片區域' : '文字區域';
+}
+
+function createAdvancedTextField(field) {
+    const label = document.createElement('label');
+    const caption = document.createElement('span');
+    const input = document.createElement(field.multiline ? 'textarea' : 'input');
+    caption.textContent = `${field.label} — ${field.value || '（空白）'}`;
+    caption.title = field.value;
+    if (field.multiline) {
+        input.rows = 2;
+    } else {
+        input.type = 'text';
+    }
+    input.dataset.textPath = field.path;
+    input.value = field.value;
+    label.append(caption, input);
+    return label;
+}
+
+function createAdvancedImageField(field) {
+    const entry = document.createElement('div');
+    const details = document.createElement('label');
+    const caption = document.createElement('span');
+    const inputGroup = document.createElement('div');
+    const input = document.createElement('input');
+    const preview = document.createElement('button');
+    const select = document.createElement('button');
+    const fieldKey = getAdvancedFieldKey(field);
+    entry.className = 'coker-swiper-advanced-image-entry';
+    caption.textContent = field.label;
+    caption.title = field.src;
+    inputGroup.className = 'coker-swiper-input-group';
+    preview.type = 'button';
+    preview.className = 'coker-swiper-advanced-image-preview';
+    preview.dataset.action = 'preview-advanced-image';
+    preview.dataset.imageKey = fieldKey;
+    preview.title = `放大預覽${field.label}`;
+    preview.setAttribute('aria-label', preview.title);
+    const thumbnail = document.createElement('img');
+    thumbnail.src = field.src;
+    thumbnail.alt = field.alt || field.label;
+    preview.append(thumbnail);
+    input.type = 'text';
+    input.dataset.imageKey = fieldKey;
+    input.value = field.src;
+    select.type = 'button';
+    select.dataset.action = 'select-asset';
+    select.dataset.assetType = swiperMediaTypes.image;
+    select.dataset.imageKey = fieldKey;
+    select.title = `選擇${field.label}`;
+    select.setAttribute('aria-label', select.title);
+    select.innerHTML = '<span class="material-symbols-outlined">image_search</span>';
+    inputGroup.append(input, select);
+    details.append(caption, inputGroup);
+    entry.append(preview, details);
+    return entry;
+}
+
+function createAdvancedVisibilityButton(type, field) {
+    const button = document.createElement('button');
+    const fieldKey = getAdvancedFieldKey(field);
+    button.type = 'button';
+    button.className = `coker-swiper-advanced-visibility${field.hidden ? ' is-hidden' : ''}`;
+    button.dataset.action = 'toggle-advanced-visibility';
+    button.dataset.advancedType = type;
+    button.dataset.advancedKey = fieldKey;
+    button.title = field.hidden ? '目前前台隱藏，點擊改為顯示' : '目前前台顯示，點擊改為隱藏';
+    button.setAttribute('aria-label', button.title);
+    button.innerHTML = `<span class="material-symbols-outlined">${field.hidden ? 'visibility_off' : 'visibility'}</span>`;
+    return button;
+}
+
+function markDirtyPath(collection, slideId, path) {
+    if (!collection.has(slideId)) {
+        collection.set(slideId, new Set());
+    }
+    collection.get(slideId).add(path);
 }
 
 function cloneTemplateWithUniqueIds(html, slideId) {

@@ -76,6 +76,7 @@ function renderTemplateSlide(slide) {
     element.dataset.swiperAutoplay = String(Math.round(slide.duration * 1000));
 
     applyTemplateTextFields(element, slide.textFields);
+    applyTemplateImageFields(element, slide.imageFields, 'slide');
     replaceTemplateMedia(element, slide, document);
 
     const title = element.querySelector('.synopsis_title, .title');
@@ -93,6 +94,20 @@ function renderTemplateSlide(slide) {
     return element.outerHTML;
 }
 
+function applyTemplateImageFields(slideElement, imageFields, scope) {
+    imageFields.filter(field => field.scope === scope).forEach(field => {
+        const target = findElementByPath(slideElement, field.path);
+        if (target?.tagName === 'IMG') {
+            target.setAttribute('src', field.src);
+            if (field.alt) {
+                target.setAttribute('alt', field.alt);
+            }
+        }
+        applyFieldVisibility(slideElement, field);
+        applyFieldGroup(slideElement, field);
+    });
+}
+
 function renderThumbnailSlide(input) {
     const slide = normalizeSlide(input);
     const parser = new DOMParser();
@@ -105,6 +120,7 @@ function renderThumbnailSlide(input) {
 
     element.classList.add('swiper-slide');
     element.classList.toggle('backstageType', slide.hidden);
+    applyTemplateImageFields(element, slide.imageFields, 'thumbnail');
     const image = element.querySelector('img.original') || element.querySelector('img');
     if (image) {
         image.setAttribute('src', slide.poster || slide.src);
@@ -123,7 +139,30 @@ function applyTemplateTextFields(slideElement, textFields) {
                 target.textContent = field.value;
             }
         }
+        applyFieldVisibility(slideElement, field);
+        applyFieldGroup(slideElement, field);
     });
+}
+
+function applyFieldVisibility(root, field) {
+    const target = findElementByPath(root, field.visibilityPath);
+    target?.classList.toggle('backstageType', field.hidden);
+}
+
+function applyFieldGroup(root, field) {
+    if (field.groupType !== 'link') {
+        return;
+    }
+    const target = findElementByPath(root, field.groupPath);
+    if (target?.tagName !== 'A') {
+        return;
+    }
+    if (field.groupHref) {
+        target.setAttribute('href', field.groupHref);
+    } else {
+        target.removeAttribute('href');
+    }
+    target.setAttribute('target', field.groupTarget || '_self');
 }
 
 function replaceTextWithLineBreaks(element, value) {
@@ -155,6 +194,15 @@ function replaceTemplateMedia(slideElement, slide, document) {
     const videoLink = slideElement.querySelector('a[data-link]');
     const image = slideElement.querySelector('img');
     const currentMedia = iframe || video || videoLink || image;
+
+    // Image templates often keep the visible title and other layout elements
+    // inside the same anchor as the image. Replacing the closest <a> would
+    // remove those siblings, so update an existing image/link in place.
+    if (image && slide.type === swiperMediaTypes.image) {
+        updateTemplateImage(image, slide, document, slideElement);
+        return;
+    }
+
     const replacement = createElementFromHtml(document, renderMedia(slide));
 
     if (!replacement) {
@@ -180,6 +228,43 @@ function replaceTemplateMedia(slideElement, slide, document) {
     }
 
     replaceTarget.replaceWith(replacement);
+}
+
+function updateTemplateImage(image, slide, document, slideElement) {
+    image.setAttribute('src', slide.src);
+    image.setAttribute('alt', slide.title);
+    image.setAttribute('data-keep_time', String(slide.duration));
+
+    const currentLink = image.closest('a');
+    const ordinaryLink = currentLink &&
+        currentLink !== slideElement &&
+        !currentLink.hasAttribute('data-link') &&
+        currentLink.getAttribute('href') !== '#SwiperModal'
+        ? currentLink
+        : null;
+
+    if (slide.link) {
+        if (ordinaryLink) {
+            ordinaryLink.setAttribute('href', slide.link);
+            ordinaryLink.setAttribute('title', slide.title);
+            ordinaryLink.setAttribute('target', slide.target);
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.setAttribute('href', slide.link);
+        link.setAttribute('title', slide.title);
+        link.setAttribute('target', slide.target);
+        image.replaceWith(link);
+        link.append(image);
+        return;
+    }
+
+    if (ordinaryLink) {
+        // Remove only the link semantics. Keep every child so visible captions
+        // and template-specific wrappers remain in the slide.
+        ordinaryLink.replaceWith(...Array.from(ordinaryLink.childNodes));
+    }
 }
 
 function createElementFromHtml(document, html) {

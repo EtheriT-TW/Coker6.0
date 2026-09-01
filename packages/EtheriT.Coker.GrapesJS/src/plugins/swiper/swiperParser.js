@@ -69,6 +69,16 @@ function attachThumbnailTemplates(root, slides) {
             ? available.splice(matchedIndex, 1)[0]
             : available[index] || thumbnails[index];
         slide.thumbnailTemplateHtml = thumbnail?.outerHTML || '';
+        if (thumbnail) {
+            const primaryImage = thumbnail.querySelector('img.original') || thumbnail.querySelector('img');
+            const fieldElements = collectEditableFieldElements(thumbnail, primaryImage, false);
+            slide.imageFields.push(...extractEditableImageFields(
+                thumbnail,
+                primaryImage,
+                'thumbnail',
+                fieldElements
+            ));
+        }
     });
 }
 
@@ -99,7 +109,9 @@ function parseSlideElement(element) {
         : video || isVideoFileUrl(source)
             ? swiperMediaTypes.video
             : swiperMediaTypes.image;
-    const textFields = extractEditableTextFields(element);
+    const fieldElements = collectEditableFieldElements(element, image);
+    const textFields = extractEditableTextFields(element, image, fieldElements);
+    const imageFields = extractEditableImageFields(element, image, 'slide', fieldElements);
 
     return normalizeSlide({
         id: element.dataset.cokerSlideId,
@@ -122,22 +134,133 @@ function parseSlideElement(element) {
         hidden: element.classList.contains('backstageType'),
         hasCaption: Boolean(element.querySelector('.synopsis_caption')),
         textFields,
+        imageFields,
         templateHtml: element.outerHTML
     });
 }
 
-function extractEditableTextFields(slideElement) {
+function extractEditableImageFields(slideElement, primaryImage, scope, fieldElements) {
+    return Array.from(slideElement.querySelectorAll('img'))
+        .filter(image => image !== primaryImage)
+        .map((image, index) => {
+            const groupElement = findFieldGroupElement(image, slideElement, primaryImage, fieldElements);
+            const visibilityTarget = findVisibilityTarget(image, slideElement, groupElement);
+            const group = createFieldGroup(image, slideElement, groupElement);
+            const label = createImageFieldLabel(image, index);
+            return {
+                path: getElementPath(image, slideElement),
+                label,
+                src: image.getAttribute('src') || '',
+                alt: image.getAttribute('alt') || '',
+                scope,
+                visibilityPath: getElementPath(visibilityTarget, slideElement),
+                hidden: visibilityTarget.classList.contains('backstageType'),
+                ...group
+            };
+        });
+}
+
+function findVisibilityTarget(element, root, groupElement) {
+    const hiddenAncestor = element.closest('.backstageType');
+    return hiddenAncestor && hiddenAncestor !== root ? hiddenAncestor : groupElement || element;
+}
+
+function createImageFieldLabel(image, index) {
+    const description = image.getAttribute('alt')?.trim();
+    return `圖片 ${index + 1}${description ? ` — ${description}` : ''}`;
+}
+
+function extractEditableTextFields(slideElement, primaryImage, fieldElements) {
     const selector = 'h1,h2,h3,h4,h5,h6,p,span,a,button,small,strong,em,li,figcaption,blockquote,div';
 
     return Array.from(slideElement.querySelectorAll(selector))
         .filter(element => isEditableTextElement(element, slideElement))
-        .map((element, index) => ({
-            path: getElementPath(element, slideElement),
-            label: createTextFieldLabel(element, index),
-            value: getEditableTextValue(element),
-            multiline: ['P', 'DIV', 'LI', 'FIGCAPTION', 'BLOCKQUOTE'].includes(element.tagName),
-            preserveLineBreaks: Array.from(element.children).some(child => child.tagName === 'BR')
-        }));
+        .map((element, index) => {
+            const groupElement = findFieldGroupElement(element, slideElement, primaryImage, fieldElements);
+            const visibilityTarget = findVisibilityTarget(element, slideElement, groupElement);
+            const group = createFieldGroup(element, slideElement, groupElement);
+            return {
+                path: getElementPath(element, slideElement),
+                label: createTextFieldLabel(element, index),
+                value: getEditableTextValue(element),
+                multiline: ['P', 'DIV', 'LI', 'FIGCAPTION', 'BLOCKQUOTE'].includes(element.tagName),
+                preserveLineBreaks: Array.from(element.children).some(child => child.tagName === 'BR'),
+                scope: 'slide',
+                visibilityPath: getElementPath(visibilityTarget, slideElement),
+                hidden: visibilityTarget.classList.contains('backstageType'),
+                ...group
+            };
+        });
+}
+
+function collectEditableFieldElements(root, primaryImage, includeText = true) {
+    const images = Array.from(root.querySelectorAll('img')).filter(image => image !== primaryImage);
+    if (!includeText) {
+        return images;
+    }
+
+    const selector = 'h1,h2,h3,h4,h5,h6,p,span,a,button,small,strong,em,li,figcaption,blockquote,div';
+    const text = Array.from(root.querySelectorAll(selector))
+        .filter(element => isEditableTextElement(element, root));
+    return [...images, ...text];
+}
+
+function findFieldGroupElement(element, root, primaryImage, fieldElements) {
+    const link = element.closest('a');
+    const isPrimaryMediaLink = link && primaryImage && link.contains(primaryImage);
+    if (link && !isPrimaryMediaLink) {
+        return link;
+    }
+
+    return findStructuralFieldGroup(element, root, fieldElements) || element;
+}
+
+function findStructuralFieldGroup(element, root, fieldElements) {
+    const unlinkedFields = fieldElements.filter(field => !field.closest('a'));
+    let candidate = element.parentElement;
+
+    while (candidate && candidate !== root) {
+        const contained = unlinkedFields.filter(field => candidate.contains(field));
+        if (contained.length > 1 && hasIndependentFieldBranches(candidate, contained)) {
+            return candidate;
+        }
+        candidate = candidate.parentElement;
+    }
+
+    return null;
+}
+
+function hasIndependentFieldBranches(container, fields) {
+    const branchCounts = new Map();
+    fields.forEach(field => {
+        let branch = field;
+        while (branch.parentElement && branch.parentElement !== container) {
+            branch = branch.parentElement;
+        }
+        branchCounts.set(branch, (branchCounts.get(branch) || 0) + 1);
+    });
+
+    return branchCounts.size > 1 && Array.from(branchCounts.values()).every(count => count === 1);
+}
+
+function createFieldGroup(element, root, groupElement) {
+    const isLink = groupElement.tagName === 'A';
+    return {
+        groupPath: getElementPath(groupElement, root),
+        groupType: isLink ? 'link' : 'content',
+        groupLabel: createGroupLabel(groupElement, element, isLink),
+        groupHref: isLink ? groupElement.getAttribute('href') || '' : '',
+        groupTarget: isLink ? groupElement.getAttribute('target') || '_self' : '_self'
+    };
+}
+
+function createGroupLabel(groupElement, fieldElement, isLink) {
+    if (isLink) {
+        return '連結區域';
+    }
+    return groupElement === fieldElement
+        ? fieldElement.tagName === 'IMG' ? '圖片區域' : '文字區域'
+        : '內容區域';
 }
 
 function isEditableTextElement(element, slideElement) {

@@ -47,9 +47,33 @@ export function normalizeSlide(slide = {}) {
         hidden: Boolean(slide.hidden),
         hasCaption: Boolean(slide.hasCaption),
         textFields: normalizeTextFields(slide.textFields),
+        imageFields: normalizeImageFields(slide.imageFields),
         thumbnailTemplateHtml: String(slide.thumbnailTemplateHtml || ''),
         templateHtml: String(slide.templateHtml || '')
     };
+}
+
+function normalizeImageFields(fields) {
+    if (!Array.isArray(fields)) {
+        return [];
+    }
+
+    return fields
+        .filter(field => field && typeof field.path === 'string')
+        .map(field => ({
+            path: field.path,
+            label: String(field.label || '圖片'),
+            src: String(field.src || ''),
+            alt: String(field.alt || ''),
+            scope: field.scope === 'thumbnail' ? 'thumbnail' : 'slide',
+            visibilityPath: String(field.visibilityPath || field.path),
+            hidden: Boolean(field.hidden),
+            groupPath: String(field.groupPath || field.path),
+            groupType: String(field.groupType || 'content'),
+            groupLabel: String(field.groupLabel || field.label || '內容'),
+            groupHref: String(field.groupHref || ''),
+            groupTarget: field.groupTarget === '_blank' ? '_blank' : '_self'
+        }));
 }
 
 function normalizeTextFields(fields) {
@@ -64,7 +88,15 @@ function normalizeTextFields(fields) {
             label: String(field.label || '文字'),
             value: String(field.value || ''),
             multiline: Boolean(field.multiline),
-            preserveLineBreaks: Boolean(field.preserveLineBreaks)
+            preserveLineBreaks: Boolean(field.preserveLineBreaks),
+            scope: 'slide',
+            visibilityPath: String(field.visibilityPath || field.path),
+            hidden: Boolean(field.hidden),
+            groupPath: String(field.groupPath || field.path),
+            groupType: String(field.groupType || 'content'),
+            groupLabel: String(field.groupLabel || field.label || '內容'),
+            groupHref: String(field.groupHref || ''),
+            groupTarget: field.groupTarget === '_blank' ? '_blank' : '_self'
         }));
 }
 

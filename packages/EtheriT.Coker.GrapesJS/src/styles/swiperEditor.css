@@ -298,6 +298,10 @@
     border-radius: 0 3px 3px 0;
 }
 
+.coker-swiper-input-group > button:not(:last-child) {
+    border-radius: 0;
+}
+
 .coker-swiper-input-group .material-symbols-outlined {
     font-size: 21px;
 }
@@ -393,6 +397,10 @@
     align-content: start;
 }
 
+.coker-swiper-advanced-group.is-wide {
+    grid-column: 1 / -1;
+}
+
 .coker-swiper-advanced-trigger {
     grid-column: 1 / -1;
     display: flex;
@@ -456,13 +464,43 @@
 
 .coker-swiper-advanced-group-content {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--advanced-field-columns, 2), minmax(0, 1fr));
     gap: 10px 12px;
     padding: 10px;
 }
 
 .coker-swiper-advanced-link-fields {
     padding: 10px 10px 0;
+}
+
+.coker-swiper-advanced-link-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 10px;
+}
+
+.coker-swiper-advanced-link-groups:has(> .coker-swiper-advanced-link-group:only-child) {
+    grid-template-columns: 1fr;
+}
+
+.coker-swiper-advanced-link-group {
+    min-width: 0;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .025);
+    border: 1px solid #5f5f5f;
+    border-radius: 4px;
+}
+
+.coker-swiper-advanced-link-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 40px;
+    padding: 6px 9px;
+    background: rgba(255, 255, 255, .045);
+    border-bottom: 1px solid #5f5f5f;
 }
 
 .coker-swiper-advanced-link-fields label,
@@ -475,12 +513,11 @@
 
 .coker-swiper-advanced-link-control {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 132px;
+    grid-template-columns: minmax(0, 1fr) 42px;
     align-items: stretch;
 }
 
 .coker-swiper-advanced-link-fields input,
-.coker-swiper-advanced-link-fields select,
 .coker-swiper-advanced-group-content input,
 .coker-swiper-advanced-group-content select,
 .coker-swiper-advanced-group-content textarea {
@@ -498,9 +535,30 @@
     border-radius: 3px 0 0 3px;
 }
 
-.coker-swiper-advanced-link-control > select {
+.coker-swiper-advanced-link-target {
+    display: grid;
+    width: 42px;
+    padding: 0;
+    place-items: center;
+    color: #dff3ff;
+    background: #4d4d4d;
     border-left: 0;
     border-radius: 0 3px 3px 0;
+}
+
+.coker-swiper-advanced-link-target:hover,
+.coker-swiper-advanced-link-target:focus-visible {
+    color: #fff;
+    background: #5d5d5d;
+}
+
+.coker-swiper-advanced-link-target.is-new-window {
+    color: #ffe0a6;
+    background: #5a4630;
+}
+
+.coker-swiper-advanced-link-target .material-symbols-outlined {
+    font-size: 20px;
 }
 
 .coker-swiper-advanced-link-fields {
@@ -509,6 +567,11 @@
 
 .coker-swiper-advanced-group-content label:has(textarea) {
     grid-column: 1 / -1;
+}
+
+.coker-swiper-advanced-group-content textarea {
+    min-height: 96px;
+    resize: vertical;
 }
 
 .coker-swiper-advanced-group-content label > span {
@@ -531,19 +594,49 @@
 }
 
 .coker-swiper-advanced-visibility {
-    display: grid;
+    position: relative;
+    display: block;
     flex: 0 0 40px;
     width: 40px;
+    height: 40px;
     padding: 0;
-    place-items: center;
+    align-self: center;
     color: #dff3ff;
+    line-height: 1;
+    border: 1px solid #777;
+    border-radius: 4px;
+}
+
+.coker-swiper-advanced-visibility .material-symbols-outlined {
+    position: absolute;
+    display: flex;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    line-height: 1;
+}
+
+.coker-swiper-advanced-field-control > .coker-swiper-advanced-visibility,
+.coker-swiper-input-group > .coker-swiper-advanced-visibility {
+    height: auto;
+    min-height: 38px;
+    align-self: stretch;
     border-left: 0;
-    border-radius: 0;
+    border-radius: 0 3px 3px 0;
 }
 
 .coker-swiper-advanced-visibility.is-hidden {
     color: #ffcf8a;
     background: #5a4630;
+}
+
+.coker-swiper-editor .coker-swiper-advanced-visibility:disabled {
+    color: #aaa;
+    background: #4a4a4a;
+    cursor: not-allowed;
+    opacity: .55;
 }
 
 .coker-swiper-advanced-image-entry {
@@ -863,11 +956,9 @@
     }
 
     .coker-swiper-advanced-groups,
-    .coker-swiper-advanced-group-content {
+    .coker-swiper-advanced-group-content,
+    .coker-swiper-advanced-link-groups {
         grid-template-columns: 1fr;
     }
 
-    .coker-swiper-advanced-link-control {
-        grid-template-columns: minmax(0, 1fr) 116px;
-    }
 }

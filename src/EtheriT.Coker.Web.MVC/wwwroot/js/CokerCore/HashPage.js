@@ -3,6 +3,78 @@
 
     Coker.extend({
         HashPage: {
+            createEditorState: function (options) {
+                const settings = $.extend({
+                    editHash: "edit",
+                    canvasHash: "canvas",
+                    onRestore: null
+                }, options || {});
+
+                function getHash() {
+                    const hash = (window.location.hash || "").replace(/^#/, "").trim();
+                    try {
+                        return decodeURIComponent(hash);
+                    } catch (_) {
+                        return "";
+                    }
+                }
+
+                function parse() {
+                    const parts = getHash().split("/");
+                    if (parts.length !== 2 || !/^\d+$/.test(parts[1])) return null;
+
+                    const route = parts[0].toLowerCase();
+                    let mode = null;
+                    if (route === String(settings.editHash).toLowerCase()) mode = "edit";
+                    if (route === String(settings.canvasHash).toLowerCase()) mode = "canvas";
+                    if (!mode) return null;
+
+                    return { mode: mode, id: parseInt(parts[1], 10) };
+                }
+
+                function replace(mode, id) {
+                    const route = mode === "edit"
+                        ? settings.editHash
+                        : mode === "canvas"
+                            ? settings.canvasHash
+                            : null;
+                    if (!route || id === null || id === undefined || id === "") return;
+
+                    const url = window.location.pathname
+                        + window.location.search
+                        + "#" + encodeURIComponent(route) + "/" + encodeURIComponent(String(id));
+                    window.history.replaceState(window.history.state, "", url);
+                }
+
+                function clear() {
+                    if (!window.location.hash) return;
+                    window.history.replaceState(
+                        window.history.state,
+                        "",
+                        window.location.pathname + window.location.search
+                    );
+                }
+
+                function restore() {
+                    const state = parse();
+                    if (state && typeof settings.onRestore === "function") {
+                        settings.onRestore(state);
+                    }
+                    return state;
+                }
+
+                window.addEventListener("hashchange", restore);
+
+                return {
+                    getState: parse,
+                    replace: replace,
+                    clear: clear,
+                    restore: restore,
+                    destroy: function () {
+                        window.removeEventListener("hashchange", restore);
+                    }
+                };
+            },
             create: function (options) {
                 const settings = $.extend(true, {
                     root: null,

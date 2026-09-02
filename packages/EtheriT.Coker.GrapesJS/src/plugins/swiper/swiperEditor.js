@@ -255,10 +255,16 @@ class SwiperEditorController {
                 'close-image-preview': () => this.closeAdvancedImagePreview(),
                 'open-advanced': () => this.openAdvancedDialog(),
                 'close-advanced': () => this.closeAdvancedDialog(),
-                'toggle-advanced-visibility': button => this.toggleAdvancedVisibility(
-                    button.dataset.advancedType,
-                    button.dataset.advancedKey
-                ),
+                'toggle-advanced-visibility': button => {
+                    if (!button.disabled) {
+                        this.toggleAdvancedVisibility(
+                            button.dataset.advancedType,
+                            button.dataset.advancedKey,
+                            button.dataset.visibilityLevel
+                        );
+                    }
+                },
+                'toggle-advanced-link-target': button => this.toggleAdvancedLinkTarget(button),
                 'select-all': () => this.selectAll(),
                 'open-bulk': () => this.openBulkDialog(),
                 'close-bulk': () => this.closeBulkDialog(),
@@ -472,49 +478,35 @@ class SwiperEditorController {
             const card = document.createElement('section');
             const header = document.createElement('div');
             const heading = document.createElement('strong');
-            const firstItem = group.items[0];
-            const visibility = createAdvancedVisibilityButton(firstItem.type, firstItem.field);
 
             card.className = 'coker-swiper-advanced-group';
+            card.classList.toggle('is-wide', shouldUseWideAdvancedGroup(group));
             header.className = 'coker-swiper-advanced-group-header';
             heading.innerHTML = `<span class="material-symbols-outlined">${group.type === 'link' ? 'link' : 'view_in_ar'}</span><span></span>`;
             heading.querySelector('span:last-child').textContent = group.label;
-            header.append(heading, visibility);
+            header.append(heading);
+            if (group.type !== 'link' || group.linkGroups.length > 1) {
+                const firstItem = group.items[0];
+                header.append(createAdvancedVisibilityButton(firstItem.type, firstItem.field, 'group'));
+            }
             card.append(header);
 
             if (group.type === 'link') {
-                const linkFields = document.createElement('div');
-                const hrefLabel = document.createElement('label');
-                const linkControl = document.createElement('div');
-                const href = document.createElement('input');
-                const target = document.createElement('select');
-                linkFields.className = 'coker-swiper-advanced-link-fields';
-                hrefLabel.textContent = '連結';
-                linkControl.className = 'coker-swiper-advanced-link-control';
-                href.type = 'text';
-                href.dataset.groupKey = group.key;
-                href.dataset.groupField = 'groupHref';
-                href.value = group.href;
-                href.setAttribute('aria-label', '連結網址');
-                target.dataset.groupKey = group.key;
-                target.dataset.groupField = 'groupTarget';
-                target.setAttribute('aria-label', '連結開啟方式');
-                target.innerHTML = '<option value="_self">目前視窗</option><option value="_blank">另開視窗</option>';
-                target.value = group.target;
-                linkControl.append(href, target);
-                hrefLabel.append(linkControl);
-                linkFields.append(hrefLabel);
-                card.append(linkFields);
+                const links = document.createElement('div');
+                const hasParentVisibility = group.linkGroups.length > 1;
+                const parentHidden = hasParentVisibility && Boolean(group.items[0]?.field.groupHidden);
+                links.className = 'coker-swiper-advanced-link-groups';
+                group.linkGroups.forEach((linkGroup, index) => {
+                    links.append(createAdvancedLinkGroup(linkGroup, index, parentHidden));
+                });
+                card.append(links);
+            } else {
+                card.append(createAdvancedGroupContent(
+                    group.items,
+                    true,
+                    Boolean(group.items[0]?.field.groupHidden)
+                ));
             }
-
-            const content = document.createElement('div');
-            content.className = 'coker-swiper-advanced-group-content';
-            group.items.forEach(item => {
-                content.append(item.type === 'image'
-                    ? createAdvancedImageField(item.field)
-                    : createAdvancedTextField(item.field));
-            });
-            card.append(content);
             fieldsRoot.append(card);
         });
     }
@@ -554,6 +546,12 @@ class SwiperEditorController {
         }
     }
 
+    toggleAdvancedLinkTarget(button) {
+        button.value = button.value === '_blank' ? '_self' : '_blank';
+        updateAdvancedLinkTargetButton(button);
+        this.updateAdvancedGroup(button);
+    }
+
     updateAdvancedText(input) {
         const slide = this.getActiveSlide();
         const field = slide?.textFields?.find(item => item.path === input.dataset.textPath);
@@ -577,7 +575,7 @@ class SwiperEditorController {
         markDirtyPath(this.dirtyImagePaths, slide.id, getAdvancedFieldKey(field));
     }
 
-    toggleAdvancedVisibility(type, key) {
+    toggleAdvancedVisibility(type, key, level = 'item') {
         const slide = this.getActiveSlide();
         const fields = type === 'text' ? slide?.textFields : slide?.imageFields;
         const field = fields?.find(item => getAdvancedFieldKey(item) === key);
@@ -585,11 +583,18 @@ class SwiperEditorController {
             return;
         }
 
-        const visibilityKey = getAdvancedVisibilityKey(field);
-        const hidden = !field.hidden;
+        const isGroup = level === 'group';
+        const visibilityKey = isGroup
+            ? getAdvancedGroupVisibilityKey(field)
+            : getAdvancedVisibilityKey(field);
+        const hiddenProperty = isGroup ? 'groupHidden' : 'hidden';
+        const hidden = !field[hiddenProperty];
         [...slide.textFields, ...slide.imageFields].forEach(item => {
-            if (getAdvancedVisibilityKey(item) === visibilityKey) {
-                item.hidden = hidden;
+            const itemKey = isGroup
+                ? getAdvancedGroupVisibilityKey(item)
+                : getAdvancedVisibilityKey(item);
+            if (itemKey === visibilityKey) {
+                item[hiddenProperty] = hidden;
             }
         });
         markDirtyPath(this.dirtyVisibilityPaths, slide.id, visibilityKey);
@@ -1494,16 +1499,28 @@ function updateVerticalThumbnailSlide(component, slide, dirtyImagePaths, dirtyVi
 function updateAdvancedVisibilityComponents(component, fields, dirtyVisibilityPaths, slideId) {
     const applied = new Set();
     fields.forEach(field => {
-        const key = getAdvancedVisibilityKey(field);
-        if (applied.has(key) || !dirtyVisibilityPaths.has(key)) {
-            return;
-        }
-        applied.add(key);
-        const target = findComponentByPath(component, field.visibilityPath);
-        if (!target) {
-            throw new Error(`Visibility target ${field.visibilityPath} not found for slide ${slideId}`);
-        }
-        setComponentStateClass(target, 'backstageType', field.hidden);
+        [
+            {
+                key: getAdvancedGroupVisibilityKey(field),
+                path: field.groupVisibilityPath,
+                hidden: field.groupHidden
+            },
+            {
+                key: getAdvancedVisibilityKey(field),
+                path: field.visibilityPath,
+                hidden: field.hidden
+            }
+        ].forEach(state => {
+            if (!state.path || applied.has(state.key) || !dirtyVisibilityPaths.has(state.key)) {
+                return;
+            }
+            applied.add(state.key);
+            const target = findComponentByPath(component, state.path);
+            if (!target) {
+                throw new Error(`Visibility target ${state.path} not found for slide ${slideId}`);
+            }
+            setComponentStateClass(target, 'backstageType', state.hidden);
+        });
     });
 }
 
@@ -1774,6 +1791,10 @@ function getAdvancedVisibilityKey(field) {
     return `${field.scope || 'slide'}:${field.visibilityPath || field.path}`;
 }
 
+function getAdvancedGroupVisibilityKey(field) {
+    return `${field.scope || 'slide'}:${field.groupVisibilityPath || field.groupPath || field.path}`;
+}
+
 function getAdvancedGroupKey(field) {
     return `${field.scope || 'slide'}:${field.groupPath || field.path}`;
 }
@@ -1789,6 +1810,9 @@ function collectAdvancedGroups(slide) {
         if (!groups.has(key)) {
             groups.set(key, {
                 key,
+                collectionKey: item.field.groupCollectionPath
+                    ? `${item.field.scope || 'slide'}:${item.field.groupCollectionPath}`
+                    : key,
                 type: item.field.groupType || 'content',
                 label: item.field.groupLabel || item.field.label,
                 href: item.field.groupHref || '',
@@ -1798,10 +1822,38 @@ function collectAdvancedGroups(slide) {
         }
         groups.get(key).items.push(item);
     });
-    return Array.from(groups.values()).map((group, index) => ({
-        ...group,
-        label: `${getNeutralAdvancedGroupLabel(group)} ${index + 1}`
-    }));
+    const displayGroups = [];
+    const linkCollections = new Map();
+    Array.from(groups.values()).forEach(group => {
+        if (group.type !== 'link') {
+            displayGroups.push(group);
+            return;
+        }
+
+        if (!linkCollections.has(group.collectionKey)) {
+            const collection = {
+                key: group.collectionKey,
+                type: 'link',
+                items: [],
+                linkGroups: []
+            };
+            linkCollections.set(group.collectionKey, collection);
+            displayGroups.push(collection);
+        }
+        const collection = linkCollections.get(group.collectionKey);
+        collection.items.push(...group.items);
+        collection.linkGroups.push(group);
+    });
+    const labelCounts = new Map();
+    return displayGroups.map(group => {
+        const neutralLabel = getNeutralAdvancedGroupLabel(group);
+        const count = (labelCounts.get(neutralLabel) || 0) + 1;
+        labelCounts.set(neutralLabel, count);
+        return {
+            ...group,
+            label: `${neutralLabel} ${count}`
+        };
+    });
 }
 
 function compareAdvancedFieldPosition(left, right) {
@@ -1833,24 +1885,105 @@ function getNeutralAdvancedGroupLabel(group) {
     return group.items[0]?.type === 'image' ? '圖片區域' : '文字區域';
 }
 
-function createAdvancedTextField(field) {
+function shouldUseWideAdvancedGroup(group) {
+    const hasMultilineText = group.items.some(item => item.type === 'text' && item.field.multiline);
+    return hasMultilineText || group.items.length > 1 || (group.linkGroups?.length || 0) > 1;
+}
+
+function createAdvancedGroupContent(items, showItemVisibility = true, parentHidden = false) {
+    const content = document.createElement('div');
+    content.className = 'coker-swiper-advanced-group-content';
+    content.style.setProperty('--advanced-field-columns', String(Math.min(items.length, 3)));
+    items.forEach(item => {
+        content.append(item.type === 'image'
+            ? createAdvancedImageField(item.field, showItemVisibility, parentHidden)
+            : createAdvancedTextField(item.field, showItemVisibility, parentHidden));
+    });
+    return content;
+}
+
+function createAdvancedLinkGroup(group, index, parentHidden = false) {
+    const entry = document.createElement('section');
+    const header = document.createElement('div');
+    const heading = document.createElement('strong');
+    const linkFields = document.createElement('div');
+    const hrefLabel = document.createElement('label');
+    const linkControl = document.createElement('div');
+    const href = document.createElement('input');
+    const target = createAdvancedLinkTargetButton(group);
+    const firstItem = group.items[0];
+
+    entry.className = 'coker-swiper-advanced-link-group';
+    header.className = 'coker-swiper-advanced-link-group-header';
+    heading.textContent = `連結 ${index + 1}`;
+    header.append(heading, createAdvancedVisibilityButton(
+        firstItem.type,
+        firstItem.field,
+        'item',
+        parentHidden
+    ));
+    linkFields.className = 'coker-swiper-advanced-link-fields';
+    hrefLabel.textContent = '網址';
+    linkControl.className = 'coker-swiper-advanced-link-control';
+    href.type = 'text';
+    href.dataset.groupKey = group.key;
+    href.dataset.groupField = 'groupHref';
+    href.value = group.href;
+    href.setAttribute('aria-label', `連結 ${index + 1} 網址`);
+    linkControl.append(href, target);
+    hrefLabel.append(linkControl);
+    linkFields.append(hrefLabel);
+    entry.append(header, linkFields, createAdvancedGroupContent(group.items, false));
+    return entry;
+}
+
+function createAdvancedLinkTargetButton(group) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'coker-swiper-advanced-link-target';
+    button.dataset.action = 'toggle-advanced-link-target';
+    button.dataset.groupKey = group.key;
+    button.dataset.groupField = 'groupTarget';
+    button.value = group.target || '_self';
+    updateAdvancedLinkTargetButton(button);
+    return button;
+}
+
+function updateAdvancedLinkTargetButton(button) {
+    const opensNewWindow = button.value === '_blank';
+    button.classList.toggle('is-new-window', opensNewWindow);
+    button.title = opensNewWindow
+        ? '另開視窗（點擊改為目前視窗）'
+        : '目前視窗（點擊改為另開視窗）';
+    button.setAttribute('aria-label', button.title);
+    button.setAttribute('aria-pressed', String(opensNewWindow));
+    button.innerHTML = `<span class="material-symbols-outlined">${opensNewWindow ? 'open_in_new' : 'web_asset'}</span>`;
+}
+
+function createAdvancedTextField(field, showItemVisibility = true, parentHidden = false) {
     const label = document.createElement('label');
     const caption = document.createElement('span');
     const input = document.createElement(field.multiline ? 'textarea' : 'input');
+    const control = document.createElement('span');
     caption.textContent = `${field.label} — ${field.value || '（空白）'}`;
     caption.title = field.value;
     if (field.multiline) {
-        input.rows = 2;
+        input.rows = 4;
     } else {
         input.type = 'text';
     }
     input.dataset.textPath = field.path;
     input.value = field.value;
-    label.append(caption, input);
+    control.className = 'coker-swiper-advanced-field-control';
+    control.append(input);
+    if (showItemVisibility && hasDistinctVisibilityTarget(field)) {
+        control.append(createAdvancedVisibilityButton('text', field, 'item', parentHidden));
+    }
+    label.append(caption, control);
     return label;
 }
 
-function createAdvancedImageField(field) {
+function createAdvancedImageField(field, showItemVisibility = true, parentHidden = false) {
     const entry = document.createElement('div');
     const details = document.createElement('label');
     const caption = document.createElement('span');
@@ -1884,22 +2017,38 @@ function createAdvancedImageField(field) {
     select.setAttribute('aria-label', select.title);
     select.innerHTML = '<span class="material-symbols-outlined">image_search</span>';
     inputGroup.append(input, select);
+    if (showItemVisibility && hasDistinctVisibilityTarget(field)) {
+        inputGroup.append(createAdvancedVisibilityButton('image', field, 'item', parentHidden));
+    }
     details.append(caption, inputGroup);
     entry.append(preview, details);
     return entry;
 }
 
-function createAdvancedVisibilityButton(type, field) {
+function hasDistinctVisibilityTarget(field) {
+    return getAdvancedVisibilityKey(field) !== getAdvancedGroupVisibilityKey(field);
+}
+
+function createAdvancedVisibilityButton(type, field, level = 'item', disabled = false) {
     const button = document.createElement('button');
     const fieldKey = getAdvancedFieldKey(field);
+    const hidden = level === 'group' ? field.groupHidden : field.hidden;
     button.type = 'button';
-    button.className = `coker-swiper-advanced-visibility${field.hidden ? ' is-hidden' : ''}`;
+    button.className = `coker-swiper-advanced-visibility${hidden ? ' is-hidden' : ''}`;
     button.dataset.action = 'toggle-advanced-visibility';
     button.dataset.advancedType = type;
     button.dataset.advancedKey = fieldKey;
-    button.title = field.hidden ? '目前前台隱藏，點擊改為顯示' : '目前前台顯示，點擊改為隱藏';
+    button.dataset.visibilityLevel = level;
+    button.disabled = disabled;
+    button.setAttribute('aria-disabled', String(disabled));
+    const subject = level === 'group' ? '此區域' : '此項目';
+    button.title = disabled
+        ? '上層區域目前隱藏，請先開啟上層區域'
+        : hidden
+            ? `${subject}目前前台隱藏，點擊改為顯示`
+            : `${subject}目前前台顯示，點擊改為隱藏`;
     button.setAttribute('aria-label', button.title);
-    button.innerHTML = `<span class="material-symbols-outlined">${field.hidden ? 'visibility_off' : 'visibility'}</span>`;
+    button.innerHTML = `<span class="material-symbols-outlined">${hidden ? 'visibility_off' : 'visibility'}</span>`;
     return button;
 }
 

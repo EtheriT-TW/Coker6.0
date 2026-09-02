@@ -5,6 +5,41 @@
     let purposeOptions = [];
     let selectedPurposeIdList = [];
 
+    function findComponentItem(id) {
+        const targetId = String(id);
+        return $("#myEditor").find("li").filter(function () {
+            const itemId = $(this).data("id") ?? $(this).data("Id");
+            return String(itemId) === targetId;
+        }).first();
+    }
+
+    function openComponentState(state) {
+        const $target = findComponentItem(state.id);
+        const buttonSelector = state.mode === "canvas" ? ".btnPage" : ".btnEdit";
+        const $button = $target.find(buttonSelector).first();
+        if (!$target.length || !$button.length) {
+            pageState.clear();
+            myOffcanvas.show();
+            return;
+        }
+
+        $target.parents("li").each(function () {
+            const $parent = $(this);
+            const $opener = $parent.find(".sortableListsOpener").first();
+            if ($parent.hasClass("sortableListsClosed") && $opener.length) {
+                $opener.trigger("mousedown");
+            }
+        });
+
+        $("#myEditor").find("li.selectItem").removeClass("selectItem");
+        $target.addClass("selectItem");
+        $button.trigger("click");
+    }
+
+    const pageState = Coker.HashPage.createEditorState({
+        onRestore: openComponentState
+    });
+
     function selectedPurposeIds() {
         return selectedPurposeIdList.slice();
     }
@@ -296,7 +331,7 @@
                         }
                     });
                 },
-                edit: function () {
+                edit: function (data) {
                     openEditForm();
                     $("#btnUpdate").removeClass("d-none");
                     $("#btnRefresh,#btnAdd").addClass("d-none");
@@ -304,6 +339,7 @@
                     setSelectedPurposeIds(itemData.purposeIds || []);
                     loadComponentImageFromForm();
                     updatePurposeVisibility();
+                    pageState.replace("edit", data.id);
                 },
                 del: function (data) {
                     if ($("#myEditor>li").length == 0) {
@@ -397,8 +433,11 @@
                             co.Grapes.setEditor(editor, html, result.conten.css);
                             $("body").addClass("grapesEdit");
                             $("#TopLine .title").text(data.text);
+                            pageState.replace("canvas", data.id);
                             myOffcanvas.hide();
                         } else {
+                            pageState.clear();
+                            myOffcanvas.show();
                             co.sweet.error(result.error);
                         }
                     });
@@ -420,7 +459,10 @@
     });
     $('#offcanvasSite').on("click", ".btn-close", function (e) {
         e.preventDefault();
-        if ($("#offcanvasSite.offcanvas-lg").length > 0) closeEdit();
+        if ($("#offcanvasSite.offcanvas-lg").length > 0) {
+            closeEdit();
+            pageState.clear();
+        }
         else myOffcanvas.hide();
     });
     $("#btnExtend").on("click", function () {
@@ -448,8 +490,10 @@
             $("#myEditor").removeClass("d-none");
             if (result.list.length > 0) $("#myEditor + .emptyList").addClass("d-none");
             else $("#myEditor").addClass("d-none");
-            myOffcanvas.show();
+            const initialState = pageState.getState();
+            if (!initialState || initialState.mode !== "canvas") myOffcanvas.show();
             updatePurposeVisibility();
+            pageState.restore();
         } else {
             menuEditor.setData([]);
         }

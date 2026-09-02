@@ -1,5 +1,6 @@
 ﻿function PageReady() {
     var menuEditor;
+    var initialStateRestored = false;
     const myOffcanvas = new bootstrap.Offcanvas('#offcanvasSite');
     const menuForm = new CokerMenuEditorForm({
         getPageTypes: function () {
@@ -27,6 +28,47 @@
         $("#myEditor").find("li.selectItem").removeClass("selectItem");
         $target.addClass("selectItem");
         $target.find(".btnEdit").first().trigger("click");
+    }
+
+    function findMenuItem(id) {
+        const targetId = String(id);
+        return $("#myEditor").find("li").filter(function () {
+            const itemId = $(this).data("id") ?? $(this).data("Id");
+            return String(itemId) === targetId;
+        }).first();
+    }
+
+    function openMenuItemState(state) {
+        const $target = findMenuItem(state.id);
+        const buttonSelector = state.mode === "canvas" ? ".btnPage" : ".btnEdit";
+        const $button = $target.find(buttonSelector).first();
+        if (!$target.length || !$button.length) {
+            pageState.clear();
+            myOffcanvas.show();
+            return;
+        }
+
+        $target.parents("li").each(function () {
+            const $parent = $(this);
+            const $opener = $parent.find(".sortableListsOpener").first();
+            if ($parent.hasClass("sortableListsClosed") && $opener.length) {
+                $opener.trigger("mousedown");
+            }
+        });
+
+        $("#myEditor").find("li.selectItem").removeClass("selectItem");
+        $target.addClass("selectItem");
+        $button.trigger("click");
+    }
+
+    const pageState = Coker.HashPage.createEditorState({
+        onRestore: openMenuItemState
+    });
+
+    function restoreInitialState() {
+        if (initialStateRestored) return;
+        initialStateRestored = true;
+        pageState.restore();
     }
 
     var editor = grapesInit({
@@ -88,8 +130,9 @@
                     );
                 });
             },
-            edit: function () {
+            edit: function (data) {
                 menuForm.prepareEdit();
+                pageState.replace("edit", data.id);
             },
             loadEditData: function (summary) {
                 return co.WebMesnus.getEditorDetail(summary.id).then(function (result) {
@@ -359,8 +402,11 @@
                         co.Grapes.setFile(editor, data.id, 1);
                         $("body").addClass("grapesEdit");
                         $("#TopLine .title").text(data.text);
+                        pageState.replace("canvas", data.id);
                         myOffcanvas.hide();
                     } else {
+                        pageState.clear();
+                        myOffcanvas.show();
                         co.sweet.error(result.error);
                     }
                 });
@@ -482,7 +528,10 @@
         });
         $('#offcanvasSite').on("click", ".btn-close", function (e) {
             e.preventDefault();
-            if ($("#offcanvasSite.offcanvas-lg").length > 0) menuForm.close();
+            if ($("#offcanvasSite.offcanvas-lg").length > 0) {
+                menuForm.close();
+                pageState.clear();
+            }
             else myOffcanvas.hide();
         });
         $("#btnExtend").on("click", function () {
@@ -491,7 +540,13 @@
             updateMenuEditorAddTitle();
         });
 
-        menuReload(menuEditor, myOffcanvas);
+        const initialState = pageState.getState();
+        menuReload(
+            menuEditor,
+            myOffcanvas,
+            restoreInitialState,
+            !initialState || initialState.mode !== "canvas"
+        );
     });
     /*$(".material-symbols-outlined").each(function () {
         console.log(`"${$(this).text().trim()}"`);
@@ -523,7 +578,7 @@ function updateMenuEditorAddTitle() {
     $("#MenuEditorForm>.card-header>.title").text(titleText);
 }
 
-function menuReload(menuEditor, myOffcanvas, afterReload) {
+function menuReload(menuEditor, myOffcanvas, afterReload, showOffcanvas) {
     co.WebMesnus.getAll().done(function (result) {
         if (result.success) {
             //console.log(result.maps)
@@ -532,7 +587,7 @@ function menuReload(menuEditor, myOffcanvas, afterReload) {
             $("#myEditor").removeClass("d-none");
             if (result.maps.length > 0) $("#myEditor + .emptyList").addClass("d-none");
             else $("#myEditor").addClass("d-none");
-            myOffcanvas.show();
+            if (showOffcanvas !== false) myOffcanvas.show();
             typeof afterReload === "function" && afterReload();
         } else {
             menuEditor.setData([]);

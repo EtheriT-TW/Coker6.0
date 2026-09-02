@@ -12,6 +12,8 @@ const emptyLayoutTags = new Set([
 ]);
 
 const canvasEditorStyleId = 'etherit-coker-canvas-editor-styles';
+const compactBackstageClass = 'coker-backstage-compact';
+const compactBackstageWidth = 220;
 const canvasEditorCss = `
 .backstageType {
     position: relative !important;
@@ -38,23 +40,91 @@ const canvasEditorCss = `
     visibility: visible !important;
     pointer-events: none;
 }
+
+.backstageType.${compactBackstageClass}::before {
+    content: "visibility_off";
+    font-family: "Material Symbols Outlined", sans-serif;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+    white-space: nowrap;
+    font-feature-settings: "liga";
+    -webkit-font-feature-settings: "liga";
+}
 `;
 
 function registerCanvasEditorStyles(editor) {
+    let stopObserving = null;
+
     const injectStyles = frameEvent => {
         const document = frameEvent?.window?.document || editor.Canvas?.getDocument?.();
-        if (!document?.head || document.getElementById(canvasEditorStyleId)) {
+        if (!document?.head) {
             return;
         }
 
-        const style = document.createElement('style');
-        style.id = canvasEditorStyleId;
-        style.textContent = canvasEditorCss;
-        document.head.append(style);
+        if (!document.getElementById(canvasEditorStyleId)) {
+            const style = document.createElement('style');
+            style.id = canvasEditorStyleId;
+            style.textContent = canvasEditorCss;
+            document.head.append(style);
+        }
+
+        stopObserving?.();
+        stopObserving = observeBackstageVisibility(document);
     };
 
     editor.on('canvas:frame:load', injectStyles);
     editor.on('load', injectStyles);
+}
+
+function observeBackstageVisibility(document) {
+    const frameWindow = document.defaultView;
+    if (!document.body || !frameWindow?.ResizeObserver || !frameWindow?.MutationObserver) {
+        return () => {};
+    }
+
+    const observed = new Set();
+    const updateCompactState = (element, width = element.getBoundingClientRect().width) => {
+        element.classList.toggle(compactBackstageClass, width > 0 && width <= compactBackstageWidth);
+    };
+    const resizeObserver = new frameWindow.ResizeObserver(entries => {
+        entries.forEach(entry => updateCompactState(entry.target, entry.contentRect.width));
+    });
+
+    const syncElements = () => {
+        observed.forEach(element => {
+            if (!element.isConnected || !element.classList.contains('backstageType')) {
+                resizeObserver.unobserve(element);
+                element.classList.remove(compactBackstageClass);
+                observed.delete(element);
+            }
+        });
+
+        document.querySelectorAll('.backstageType').forEach(element => {
+            if (!observed.has(element)) {
+                observed.add(element);
+                resizeObserver.observe(element);
+            }
+            updateCompactState(element);
+        });
+    };
+
+    const mutationObserver = new frameWindow.MutationObserver(syncElements);
+    mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class']
+    });
+    syncElements();
+
+    return () => {
+        mutationObserver.disconnect();
+        resizeObserver.disconnect();
+        observed.forEach(element => element.classList.remove(compactBackstageClass));
+        observed.clear();
+    };
 }
 
 function isEmptyLayoutElement(element) {

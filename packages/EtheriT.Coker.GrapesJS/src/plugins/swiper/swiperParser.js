@@ -144,8 +144,7 @@ function extractEditableImageFields(slideElement, primaryImage, scope, fieldElem
         .filter(image => image !== primaryImage)
         .map((image, index) => {
             const groupElement = findFieldGroupElement(image, slideElement, primaryImage, fieldElements);
-            const visibilityTarget = findVisibilityTarget(image, slideElement, groupElement);
-            const group = createFieldGroup(image, slideElement, groupElement);
+            const group = createFieldGroup(image, slideElement, groupElement, primaryImage, fieldElements);
             const label = createImageFieldLabel(image, index);
             return {
                 path: getElementPath(image, slideElement),
@@ -153,16 +152,9 @@ function extractEditableImageFields(slideElement, primaryImage, scope, fieldElem
                 src: image.getAttribute('src') || '',
                 alt: image.getAttribute('alt') || '',
                 scope,
-                visibilityPath: getElementPath(visibilityTarget, slideElement),
-                hidden: visibilityTarget.classList.contains('backstageType'),
                 ...group
             };
         });
-}
-
-function findVisibilityTarget(element, root, groupElement) {
-    const hiddenAncestor = element.closest('.backstageType');
-    return hiddenAncestor && hiddenAncestor !== root ? hiddenAncestor : groupElement || element;
 }
 
 function createImageFieldLabel(image, index) {
@@ -177,8 +169,7 @@ function extractEditableTextFields(slideElement, primaryImage, fieldElements) {
         .filter(element => isEditableTextElement(element, slideElement))
         .map((element, index) => {
             const groupElement = findFieldGroupElement(element, slideElement, primaryImage, fieldElements);
-            const visibilityTarget = findVisibilityTarget(element, slideElement, groupElement);
-            const group = createFieldGroup(element, slideElement, groupElement);
+            const group = createFieldGroup(element, slideElement, groupElement, primaryImage, fieldElements);
             return {
                 path: getElementPath(element, slideElement),
                 label: createTextFieldLabel(element, index),
@@ -186,8 +177,6 @@ function extractEditableTextFields(slideElement, primaryImage, fieldElements) {
                 multiline: ['P', 'DIV', 'LI', 'FIGCAPTION', 'BLOCKQUOTE'].includes(element.tagName),
                 preserveLineBreaks: Array.from(element.children).some(child => child.tagName === 'BR'),
                 scope: 'slide',
-                visibilityPath: getElementPath(visibilityTarget, slideElement),
-                hidden: visibilityTarget.classList.contains('backstageType'),
                 ...group
             };
         });
@@ -243,15 +232,42 @@ function hasIndependentFieldBranches(container, fields) {
     return branchCounts.size > 1 && Array.from(branchCounts.values()).every(count => count === 1);
 }
 
-function createFieldGroup(element, root, groupElement) {
+function createFieldGroup(element, root, groupElement, primaryImage, fieldElements) {
     const isLink = groupElement.tagName === 'A';
+    const linkCollection = isLink
+        ? findLinkCollectionElement(groupElement, root, primaryImage, fieldElements)
+        : null;
+    const itemVisibilityTarget = isLink ? groupElement : element;
+    const groupVisibilityTarget = linkCollection || groupElement;
     return {
+        visibilityPath: getElementPath(itemVisibilityTarget, root),
+        hidden: itemVisibilityTarget.classList.contains('backstageType'),
         groupPath: getElementPath(groupElement, root),
+        groupCollectionPath: linkCollection ? getElementPath(linkCollection, root) : '',
+        groupVisibilityPath: getElementPath(groupVisibilityTarget, root),
+        groupHidden: groupVisibilityTarget.classList.contains('backstageType'),
         groupType: isLink ? 'link' : 'content',
         groupLabel: createGroupLabel(groupElement, element, isLink),
         groupHref: isLink ? groupElement.getAttribute('href') || '' : '',
         groupTarget: isLink ? groupElement.getAttribute('target') || '_self' : '_self'
     };
+}
+
+function findLinkCollectionElement(link, root, primaryImage, fieldElements) {
+    const links = Array.from(new Set(fieldElements
+        .map(field => field.closest('a'))
+        .filter(candidate => candidate && (!primaryImage || !candidate.contains(primaryImage)))));
+    let candidate = link.parentElement;
+
+    while (candidate && candidate !== root) {
+        const contained = links.filter(item => candidate.contains(item));
+        if (contained.length > 1 && hasIndependentFieldBranches(candidate, contained)) {
+            return candidate;
+        }
+        candidate = candidate.parentElement;
+    }
+
+    return null;
 }
 
 function createGroupLabel(groupElement, fieldElement, isLink) {

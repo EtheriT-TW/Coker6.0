@@ -18,6 +18,12 @@ namespace EtheriT.Coker.Application.Shared.Cdn
         FastlyPublicIpList
     }
 
+    public enum CdnClientIpHeaderSelection
+    {
+        First,
+        Last
+    }
+
     public sealed record CdnIpSourceDefinition(
         Uri Url,
         CdnIpSourceFormat Format,
@@ -28,6 +34,7 @@ namespace EtheriT.Coker.Application.Shared.Cdn
         string ClientIpHeader,
         IReadOnlyList<CdnIpSourceDefinition> IpSources,
         int MinimumRangeCount,
+        CdnClientIpHeaderSelection ClientIpHeaderSelection = CdnClientIpHeaderSelection.First,
         string? AutomaticSyncUnavailableReason = null)
     {
         public bool SupportsAutomaticSync => IpSources.Count > 0;
@@ -62,7 +69,8 @@ namespace EtheriT.Coker.Application.Shared.Cdn
                             CdnIpSourceFormat.AwsIpRanges,
                             "CLOUDFRONT")
                     },
-                    MinimumRangeCount: 10),
+                    MinimumRangeCount: 10,
+                    ClientIpHeaderSelection: CdnClientIpHeaderSelection.Last),
 
                 [CdnProviderKeys.AzureFrontDoor] = new(
                     CdnProviderKeys.AzureFrontDoor,
@@ -81,6 +89,7 @@ namespace EtheriT.Coker.Application.Shared.Cdn
                     "X-Forwarded-For",
                     Array.Empty<CdnIpSourceDefinition>(),
                     MinimumRangeCount: 0,
+                    ClientIpHeaderSelection: CdnClientIpHeaderSelection.Last,
                     AutomaticSyncUnavailableReason:
                         "Google Cloud CDN 的來源 IP 範圍依 Load Balancer 與 Backend 類型而異，必須先提供部署型態。"),
 

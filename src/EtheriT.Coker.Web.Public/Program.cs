@@ -4,6 +4,7 @@ using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.BonusManagement;
+using EtheriT.Coker.Application.Cdn;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Contact;
@@ -222,6 +223,7 @@ builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 builder.Services.AddScoped<IMarketingAppService, MarketingAppService>();
 builder.Services.AddScoped<ICheckoutDiscountService, CheckoutDiscountService>();
 builder.Services.AddSingleton<RemoteTrackingTokenService>();
+builder.Services.AddScoped<CdnClientIpResolver>();
 
 builder.Services.AddSingleton<JumpRedirectCache>();
 
@@ -452,6 +454,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
+app.UseMiddleware<CdnTrustedProxyMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsProduction())

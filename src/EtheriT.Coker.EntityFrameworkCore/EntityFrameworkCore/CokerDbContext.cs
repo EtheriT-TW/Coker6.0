@@ -119,6 +119,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<BackgroundTaskRecord> BackgroundTasks { get; set; }
         public DbSet<UserNotification> Notifications { get; set; }
         public DbSet<PageTextBackfillState> PageTextBackfillStates { get; set; }
+        public DbSet<CdnProviderIpRange> CdnProviderIpRanges { get; set; }
+        public DbSet<CdnProviderSyncState> CdnProviderSyncStates { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -177,6 +179,27 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.ToTable("PageTextBackfillStates");
                 o.HasIndex(x => new { x.FK_WebsiteId, x.ContentType }).IsUnique();
                 o.HasIndex(x => new { x.Status, x.LastModificationTime });
+            });
+            modelBuilder.Entity<CdnProviderIpRange>(o =>
+            {
+                o.ToTable("CdnProviderIpRanges");
+                o.Property(x => x.Provider).IsRequired();
+                o.Property(x => x.Cidr).IsRequired();
+                o.Property(x => x.IpVersion).HasColumnType("tinyint");
+                o.HasIndex(x => new { x.Provider, x.Cidr })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+                o.HasIndex(x => new { x.Provider, x.IpVersion, x.IsDeleted });
+            });
+            modelBuilder.Entity<CdnProviderSyncState>(o =>
+            {
+                o.ToTable("CdnProviderSyncStates");
+                o.Property(x => x.Provider).IsRequired();
+                o.Property(x => x.ConsecutiveFailureCount).HasDefaultValue(0);
+                o.Property(x => x.AlertSent).HasDefaultValue(false);
+                o.HasIndex(x => x.Provider)
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
             });
             modelBuilder.Entity<UserTagStatistic>(o =>
             {

@@ -835,7 +835,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Key = "GoogleCloudCdn",
                     Value = "Google Cloud CDN",
                     FK_StoreSetId = 34,
-                    IsDeleted = false,
+                    IsDeleted = true,
+                    DeleterUserId = 1,
+                    DeletionTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459),
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }, new storeSetItem

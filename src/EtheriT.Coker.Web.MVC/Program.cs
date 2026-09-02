@@ -8,6 +8,7 @@ using EtheriT.Coker.Application.AuditLog;
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.BackgroundJob;
 using EtheriT.Coker.Application.BonusManagement;
+using EtheriT.Coker.Application.Cdn;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Company;
 using EtheriT.Coker.Application.Configuration;
@@ -350,6 +351,9 @@ builder.Services.AddScoped<ProductExportBackgroundJob>();
 builder.Services.AddScoped<BackgroundTaskService>();
 builder.Services.AddScoped<PageTextBackfillJob>();
 builder.Services.AddScoped<HtmlLegacyAttributeNormalizationJob>();
+builder.Services.AddScoped<CdnProviderIpRangeDownloader>();
+builder.Services.AddScoped<CdnProviderSyncAlertService>();
+builder.Services.AddScoped<CdnProviderIpRangeSyncJob>();
 builder.Services.AddScoped<IFrontRoleContextService, FrontRoleContextService>();
 builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceService>();
 builder.Services.AddScoped<IHtmlContentAppService, HtmlContentAppService>();
@@ -497,6 +501,11 @@ builder.Services.AddHttpClient("ThirdPartyClient_ECPayLogistics", client =>
 {
     client.BaseAddress = new Uri("https://logistics-stage.ecpay.com.tw");
     //client.BaseAddress = new Uri("https://logistics.ecpay.com.tw");
+});
+builder.Services.AddHttpClient(CdnProviderIpRangeDownloader.HttpClientName, client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("EtheriT.Coker-CDN-IP-Sync/1.0");
 });
 builder.Services.AddDevExpressControls();
 // DevExpress Reporting

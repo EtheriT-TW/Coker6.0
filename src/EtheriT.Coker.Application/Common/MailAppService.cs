@@ -100,13 +100,46 @@ namespace EtheriT.Coker.Application.Common
         }
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, string? webSiteName)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
             long websiteId = await loginUserData.GetCommonWebsiteId();
+            return await SendMailForSiteAsync(dto, webSiteName, websiteId);
+        }
+
+        public Task<ResponseMessageDto> sendSystemMail(SenderDto dto)
+        {
+            return Task.FromResult(SendMailCore(
+                dto,
+                "Coker 系統",
+                "System",
+                string.Empty,
+                null));
+        }
+
+        private async Task<ResponseMessageDto> SendMailForSiteAsync(
+            SenderDto dto,
+            string? webSiteName,
+            long websiteId)
+        {
             var website = db.Websites.FirstOrDefault(e => e.Id == websiteId);
             if (website == null) throw new Exception("找不到網站");
             dto.SMTP = await SetSMTP(websiteId);
             string webUrl = website.DefaultUrl ?? string.Empty;
             string OrgName = website.OrgName;
+            return SendMailCore(
+                dto,
+                webSiteName,
+                OrgName,
+                webUrl,
+                website.ContactMail);
+        }
+
+        private ResponseMessageDto SendMailCore(
+            SenderDto dto,
+            string? webSiteName,
+            string OrgName,
+            string webUrl,
+            string? contactMail)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
             // 建立郵件
             var message = new MimeMessage();
 
@@ -133,8 +166,8 @@ namespace EtheriT.Coker.Application.Common
             {
                 dto.Sender.Email = smtpEmail;
             }
-            else if (!string.IsNullOrWhiteSpace(website.ContactMail) &&
-                     stringHandler.TryNormalizeEmail(website.ContactMail, out var contactEmail))
+            else if (!string.IsNullOrWhiteSpace(contactMail) &&
+                     stringHandler.TryNormalizeEmail(contactMail, out var contactEmail))
             {
                 dto.Sender.Email = contactEmail;
             }
@@ -143,7 +176,7 @@ namespace EtheriT.Coker.Application.Common
             {
                 response.Success = false;
                 response.Message = "寄件人信箱格式錯誤";
-                response.Error = $"Sender.Email={dto.Sender.Email}, SMTP.UserName={dto.SMTP.UserName}, ContactMail={website.ContactMail}";
+                response.Error = $"Sender.Email={dto.Sender.Email}, SMTP.UserName={dto.SMTP.UserName}, ContactMail={contactMail}";
                 return response;
             }
 

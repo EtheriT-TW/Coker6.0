@@ -53,6 +53,11 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 "HtmlLegacyAttributeNormalization",
                 job => job.Run(),
                 Cron.Daily(2, 30));
+            _recurringJobManager.AddOrUpdate<CdnProviderIpRangeSyncJob>(
+                "CdnProviderIpRangeSync",
+                job => job.SynchronizeAllAsync(),
+                Cron.Daily(1),
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
             _recurringJobManager.RemoveIfExists("FlowSizes"); //暫時移除該工作
             //_recurringJobManager.AddOrUpdate<FlowSizesWorking>("FlowSizes", job => job.FlowSizeCollection(), Cron.Daily(17, 00));
         }

@@ -26,9 +26,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
         public async Task<IActionResult> SEO()
         {
-            var response = await _storeSetAppService.getAll(new List<long> { 1 });
+            var response = await _storeSetAppService.getAll(new List<long> { 1, 8 });
             response.StoreSetGroupId = 1;
             ViewData["Title"] = "SEO";
+            ViewData["PageHeading"] = "SEO設定";
             return View("SEO", response);
         }
     }

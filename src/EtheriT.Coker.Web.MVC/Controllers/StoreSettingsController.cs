@@ -35,6 +35,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var response = await _storeSetAppService.getAll(new List<long> { 3 });
             response.StoreSetGroupId = 3;
             ViewData["Title"] = "SMTPServer";
+            ViewData["PageHeading"] = "信件伺服器設定";
             return View("~/Views/SystemManagement/SEO.cshtml", response);
         }
         public IActionResult BonusSettings() {

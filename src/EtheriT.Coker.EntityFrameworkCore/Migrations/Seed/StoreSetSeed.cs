@@ -73,6 +73,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2025, 12, 16, 17, 07, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSetGroup
+                {
+                    Id = 8,
+                    Title = "CDN 設定",
+                    Image = "",
+                    Description = "設定網站目前使用的 CDN 服務商",
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<StoreSet>().HasData(
@@ -569,6 +578,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "E001",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 34,
+                    key = "cdnProvider",
+                    name = "CDN 服務商",
+                    memo = "此設定只供系統辨識 CDN 來源，不會自動變更 DNS、啟用外部服務或調整伺服器防火牆。請在 CDN 設定完成後選擇對應服務商。",
+                    FK_StoreSetGroupId = 8,
+                    type = SeoSetDataTypeEnum.radio,
+                    maxlength = 30,
+                    pattern = "",
+                    IsDeleted = false,
+                    DefaultValue = "None",
+                    jobID = "S003",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -768,6 +792,61 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 8, 26, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 22,
+                    Key = "None",
+                    Value = "未使用 CDN",
+                    FK_StoreSetId = 34,
+                    IsDefault = true,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 23,
+                    Key = "Cloudflare",
+                    Value = "Cloudflare",
+                    FK_StoreSetId = 34,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 24,
+                    Key = "CloudFront",
+                    Value = "AWS CloudFront",
+                    FK_StoreSetId = 34,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 25,
+                    Key = "AzureFrontDoor",
+                    Value = "Azure Front Door",
+                    FK_StoreSetId = 34,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 26,
+                    Key = "GoogleCloudCdn",
+                    Value = "Google Cloud CDN",
+                    FK_StoreSetId = 34,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 27,
+                    Key = "Fastly",
+                    Value = "Fastly",
+                    FK_StoreSetId = 34,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

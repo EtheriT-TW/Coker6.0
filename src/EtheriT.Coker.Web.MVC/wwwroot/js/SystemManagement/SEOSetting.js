@@ -15,7 +15,11 @@
         });
         return false;
     });
-    co.StoreSet.GetValues({ StoreSetGroupId: $(`#${formId}`).data("groupid") }).done(function (result) {
+    const keys = [...document.querySelectorAll(`#${formId} [name]`)]
+        .map(element => element.name)
+        .filter((key, index, values) => key && values.indexOf(key) === index);
+
+    co.StoreSet.GetValues({ keys }).done(function (result) {
         if (result.success)
             co.Form.insertData(co.Object.arrayToObject(result.storeSetDetails));
     });

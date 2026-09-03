@@ -609,6 +609,7 @@
                     <div id="Spec_Frame" class="data_upload mx-2 border rounded position-relative">
                         <ul class="px-1 specList mb-0 border-0">
                             <li class="specHeader">
+                                <div class="specVisible"></div>
                                 <div class="serNo">排序</div>
                                 <div class="spec_img @(((bool)ViewBag.IsLayout2) ? "" : "d-none")">規格圖片</div>
                                 <div class="specd_desc @(((bool)ViewBag.IsLayout2) ? "" : "d-none")">規格說明</div>
@@ -647,6 +648,11 @@
 
                 <template id="TemplateSpecification">
                     <li class="spec_list p-1 py-3 mb-3 rounded @(((bool)ViewBag.IsLayout2) ? "" : "spec-optional")">
+                        <div class="specVisible">
+                            <button type="button" class="btn_spec_visible form-control border-0 px-1 bg-transparent" title="顯示" aria-pressed="true">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
                         <div class="upload_list">
                             <div>
                                 <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>

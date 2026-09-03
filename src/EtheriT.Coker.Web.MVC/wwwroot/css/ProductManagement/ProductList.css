@@ -342,7 +342,9 @@ input[type="number"] {
         #Spec_Frame > .specList > .specHeader > div.del,
         #Spec_Frame > .specList > .ui-sortable-helper > div.del,
         #Spec_Frame > .specList > .specHeader > div.specDesc,
-        #Spec_Frame > .specList > .ui-sortable-helper > div.specDesc {
+        #Spec_Frame > .specList > .ui-sortable-helper > div.specDesc,
+        #Spec_Frame > .specList > .specHeader > div.specVisible,
+        #Spec_Frame > .specList > .ui-sortable-helper > div.specVisible {
             width: 52px;
         }
 

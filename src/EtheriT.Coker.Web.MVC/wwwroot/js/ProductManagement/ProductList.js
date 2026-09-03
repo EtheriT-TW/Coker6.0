@@ -2099,6 +2099,7 @@ function SpecAdd(result) {
         item_packingPoint = item.find(".input_packingPoint_number"),
         item_alert = item.find(".input_alert_number"),
         item_collapse = item.find(".collapse"),
+        item_btn_visible = item.find(".btn_spec_visible"),
         item_btn_expand = item.find(".btn_expand"),
         item_btn_delete = item.find(".btn_remove");
 
@@ -2249,6 +2250,13 @@ function SpecAdd(result) {
     item_packingPoint.val(result != null ? result.packingPoint ?? 1 : 1);
     item_alert.val("");
     item_alert.val(result != null ? result.alert_Qty : "");
+    item.data("visible", result != null ? !!result.visible : true);
+    refreshSpecVisible(item);
+    item_btn_visible.on("click", function (e) {
+        e.preventDefault();
+        item.data("visible", !item.data("visible"));
+        refreshSpecVisible(item);
+    });
     item_collapse.attr("id", "CollapseDetail" + spec_num);
     item_btn_expand.attr("data-bs-target", "#CollapseDetail" + spec_num);
     item_btn_expand.attr("aria-controls", "CollapseDetail" + spec_num);
@@ -2490,6 +2498,15 @@ function refreshSpecThumb($row) {
     }
 }
 
+function refreshSpecVisible($row) {
+    var isVisible = !!$row.data("visible");
+    var $btn = $row.find(".btn_spec_visible");
+    $btn.attr("aria-pressed", isVisible ? "true" : "false");
+    $btn.attr("title", isVisible ? "顯示" : "不顯示");
+    $btn.toggleClass("text-black-50", !isVisible);
+    $btn.children("span").text(isVisible ? "visibility" : "visibility_off");
+}
+
 function AddUp(success_text, error_text, target) {
     var stock_addup_list = []
     var status = parseInt($(`[name="ProdStatus"] > option:selected`).val() || 0);
@@ -2530,6 +2547,7 @@ function AddUp(success_text, error_text, target) {
         obj["TempPSid"] = $self.data("temppsid") || 0;
         obj['SubItemNo'] = $self.find(".input_subItemNo").val();
         obj["SpecDescription"] = $self.data("specdesc") || "";
+        obj["Visible"] = $self.data("visible") !== false;
         updateStock = updateStock || parseInt(obj["Stock"] || 0) > parseInt(obj['OldStock'] || 0);
         var price_list = [];
         modal_price_list.forEach(function (item) {

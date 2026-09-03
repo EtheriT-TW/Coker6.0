@@ -27,6 +27,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public int? Min_Qty { get; set; }
         public int? Alert_Qty { get; set; }
         public bool TimePrice { get; set; }
+        public bool Visible { get; set; } = true;
         /// <summary>共用的規格購買狀態，前台各入口不可再自行重算。</summary>
         public bool CanPurchase { get; set; }
         public int? MaxPurchaseQuantity { get; set; }

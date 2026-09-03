@@ -589,6 +589,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(f => f.Website).WithMany(u => u.AuditLogs).HasForeignKey(f => f.FK_WebsiteId);
                 o.HasIndex(f => f.ExecutionTime);
+                o.HasIndex(f => new { f.FK_WebsiteId, f.ServiceName, f.MethodName, f.ExecutionTime })
+                    .HasDatabaseName("IX_AuditLogs_CanvasHistory");
             });
             modelBuilder.Entity<MappingCompanyAndWebsites>(o =>
             {

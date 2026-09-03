@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.Dto.AuditLog;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -11,5 +12,6 @@ namespace EtheriT.Coker.Application.AuditLog
 	public interface IAuditLogAppService
 	{
 		public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
+		public Task<CanvasAuditLogOutputDto> GetCanvasHistory(CanvasAuditLogInputDto input);
 	}
 }

@@ -44,6 +44,9 @@ namespace EtheriT.Coker.Application.Marketing
 
             var query = db.MarketingCampaigns
                 .Where(x => x.FK_WebsiteId == websiteId)
+                .OrderByDescending(x => x.LastModificationTime ?? x.CreationTime)
+                .ThenByDescending(x => x.CreationTime)
+                .ThenByDescending(x => x.Id)
                 .Select(x => new MarketingCampaignListDto
                 {
                     Id = x.Id,

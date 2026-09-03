@@ -665,7 +665,7 @@ namespace EtheriT.Coker.Application.Article
                     Html = dto.SaveHtml,
                     Css = dto.SaveCss
                 };
-                var s = await SaveConten(dto);
+                var s = await SaveContenInternal(dto, writeAuditLog: false);
                 var user = await loginUserData.GetUser();
                 var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 if (article != null)
@@ -708,7 +708,11 @@ namespace EtheriT.Coker.Application.Article
             }
             return response;
         }
-        public async Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto)
+        public Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto)
+        {
+            return SaveContenInternal(dto, writeAuditLog: true);
+        }
+        private async Task<ResponseMessageDto> SaveContenInternal(ArticleSaveContenDto dto, bool writeAuditLog)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -807,7 +811,10 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                if (writeAuditLog)
+                {
+                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                }
             }
             return response;
         }

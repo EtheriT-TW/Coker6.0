@@ -15,6 +15,13 @@
     ).Trim();
     // DevExtreme 檔案較大，預設不載入；需要的頁面設定 ViewData["UseDevExtreme"] = true。
     var useDevExtreme = ViewData["UseDevExtreme"] as bool? == true;
+    var pageLocale = ViewData["Locale"]?.ToString()?.Trim().ToLowerInvariant() ?? "zh-tw";
+    var openGraphLocale = pageLocale switch
+    {
+        "en" or "en-us" => "en_US",
+        "zh-tw" => "zh_TW",
+        _ => pageLocale.Replace('-', '_')
+    };
 }
 <!DOCTYPE html>
 <html lang="@ViewData["Locale"]">
@@ -113,8 +120,16 @@
     {
         <meta property="og:image" content="@Html.Raw(ViewBag.ImageUrl)">
     }
-    <meta property="og:locale" content="zh-tw" />
+    <meta property="og:locale" content="@openGraphLocale" />
     <meta name="csp-nonce" content="@Html.Raw(ViewBag.Nonce)" />
+    @if (ViewBag.WebsiteStructuredDataJson is string websiteStructuredDataJson &&
+         !string.IsNullOrWhiteSpace(websiteStructuredDataJson))
+    {
+        <script id="website-structured-data"
+                type="application/ld+json"
+                data-website-id="@ViewBag.WebsiteStructuredDataWebsiteId"
+                nonce="@ViewBag.Nonce">@Html.Raw(websiteStructuredDataJson)</script>
+    }
     @if (ViewBag.ProductStructuredDataJson is string productStructuredDataJson &&
          !string.IsNullOrWhiteSpace(productStructuredDataJson))
     {

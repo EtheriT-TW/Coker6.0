@@ -2352,7 +2352,7 @@ namespace EtheriT.Coker.Application.Product
                     Html = dto.SaveHtml,
                     Css = dto.SaveCss
                 };
-                var s = await SaveConten(dto);
+                var s = await SaveContenInternal(dto, writeAuditLog: false);
                 if (!s.Success)
                     throw new Exception(s.Error ?? "商品內容儲存失敗");
                 var user = await loginUserData.GetUser();
@@ -2393,9 +2393,17 @@ namespace EtheriT.Coker.Application.Product
                 response.Success = false;
                 response.Error = ex.Message;
             }
+            finally
+            {
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
             return response;
         }
-        public async Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto)
+        public Task<ResponseMessageDto> SaveConten(ProdSaveContenDto dto)
+        {
+            return SaveContenInternal(dto, writeAuditLog: true);
+        }
+        private async Task<ResponseMessageDto> SaveContenInternal(ProdSaveContenDto dto, bool writeAuditLog)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -2422,6 +2430,13 @@ namespace EtheriT.Coker.Application.Product
             {
                 response.Success = false;
                 response.Error = ex.Message;
+            }
+            finally
+            {
+                if (writeAuditLog)
+                {
+                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                }
             }
             return response;
         }

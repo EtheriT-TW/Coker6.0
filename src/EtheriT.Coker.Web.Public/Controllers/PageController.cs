@@ -702,7 +702,31 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ViewBag.ImageUrl = new Uri(new Uri(model.root), shareImage[0].Link).AbsoluteUri;
             }
             else ViewBag.ImageUrl = string.IsNullOrEmpty(model.PageData.ImageUrl) ? "" : new Uri(new Uri(model.root), model.PageData.ImageUrl).AbsoluteUri;
-            if (isProductPage && productSeoData?.PublicPrice != null)
+            if (isHomePage)
+            {
+                var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
+                var websiteData = (await websiteApplication.GetAllData(siteId))
+                    .FirstOrDefault(e => e.Id == siteId);
+                var organizationLogoUrl = ResolveStructuredDataImage(rootUri, websiteData?.Logo);
+                var websiteStructuredData = BuildWebsiteStructuredData(
+                    model.PageData.SiteName,
+                    canonicalPageUrl,
+                    seoDescription,
+                    model.locale,
+                    organizationLogoUrl);
+                RemoveNullStructuredDataValues(websiteStructuredData);
+
+                ViewBag.WebsiteStructuredDataWebsiteId = siteId;
+                ViewBag.WebsiteStructuredDataJson = JsonConvert.SerializeObject(
+                    websiteStructuredData,
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        StringEscapeHandling = StringEscapeHandling.EscapeHtml
+                    });
+            }
+            if (isProductPage && productSeoData != null)
             {
                 var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
                 var productImageUrl = string.IsNullOrWhiteSpace(model.PageData.ImageUrl)
@@ -828,11 +852,13 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     ["description"] = description,
                     ["image"] = productImageUrl == null ? null : new[] { productImageUrl },
                     ["sku"] = NormalizeStructuredDataSku(product.ItemNo),
-                    ["offers"] = BuildProductOffer(
-                        canonicalUrl,
-                        product.PublicPrice!.Value,
-                        product.IsAvailable,
-                        priceCurrency)
+                    ["offers"] = product.PublicPrice.HasValue
+                        ? BuildProductOffer(
+                            canonicalUrl,
+                            product.PublicPrice.Value,
+                            product.IsAvailable,
+                            priceCurrency)
+                        : null
                 };
             }
 
@@ -913,6 +939,50 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ["productGroupID"] = $"product-{product.Id.ToString(CultureInfo.InvariantCulture)}",
                 ["variesBy"] = variesBy.Length == 0 ? null : variesBy,
                 ["hasVariant"] = hasVariant
+            };
+        }
+
+        private static Dictionary<string, object?> BuildWebsiteStructuredData(
+            string? siteName,
+            string canonicalUrl,
+            string? description,
+            string? locale,
+            string? organizationLogoUrl)
+        {
+            var organizationId = $"{canonicalUrl}#organization";
+            var websiteId = $"{canonicalUrl}#website";
+            var normalizedLocale = string.Equals(locale, "zh-tw", StringComparison.OrdinalIgnoreCase)
+                ? "zh-TW"
+                : locale?.Trim();
+
+            return new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@graph"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "Organization",
+                        ["@id"] = organizationId,
+                        ["name"] = siteName,
+                        ["url"] = canonicalUrl,
+                        ["description"] = description,
+                        ["logo"] = organizationLogoUrl
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "WebSite",
+                        ["@id"] = websiteId,
+                        ["name"] = siteName,
+                        ["url"] = canonicalUrl,
+                        ["description"] = description,
+                        ["inLanguage"] = normalizedLocale,
+                        ["publisher"] = new Dictionary<string, object?>
+                        {
+                            ["@id"] = organizationId
+                        }
+                    }
+                }
             };
         }
 

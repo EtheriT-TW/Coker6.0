@@ -296,7 +296,7 @@ namespace EtheriT.Coker.Application.Templates
                     .FirstOrDefaultAsync();
                 if (foot != null)
                 {
-                    await saveDefaultFooter(dto);
+                    await SaveDefaultFooterInternal(dto, writeAuditLog: false);
                     FooterTemplate importDto = new FooterTemplate
                     {
                         Id = dto.Id,
@@ -339,7 +339,11 @@ namespace EtheriT.Coker.Application.Templates
             }
             return response;
         }
-        public async Task<ResponseMessageDto> saveDefaultFooter(MenuSaveContenDto dto)
+        public Task<ResponseMessageDto> saveDefaultFooter(MenuSaveContenDto dto)
+        {
+            return SaveDefaultFooterInternal(dto, writeAuditLog: true);
+        }
+        private async Task<ResponseMessageDto> SaveDefaultFooterInternal(MenuSaveContenDto dto, bool writeAuditLog)
         {
             var response = new ResponseMessageDto();
             try
@@ -366,7 +370,10 @@ namespace EtheriT.Coker.Application.Templates
             }
             finally
             {
-                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                if (writeAuditLog)
+                {
+                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                }
             }
             return response;
         }

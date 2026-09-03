@@ -556,7 +556,7 @@ namespace EtheriT.Coker.Application.Advertise
                     Css = dto.SaveCss
                 };
 
-                var saveResponse = await SaveConten(dto);
+                var saveResponse = await SaveContenInternal(dto, writeAuditLog: false);
 
                 if (!saveResponse.Success)
                 {
@@ -607,7 +607,11 @@ namespace EtheriT.Coker.Application.Advertise
 
             return response;
         }
-        public async Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto) {
+        public Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto)
+        {
+            return SaveContenInternal(dto, writeAuditLog: true);
+        }
+        private async Task<ResponseMessageDto> SaveContenInternal(ArticleSaveContenDto dto, bool writeAuditLog) {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
@@ -628,7 +632,10 @@ namespace EtheriT.Coker.Application.Advertise
             }
             finally
             {
-                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                if (writeAuditLog)
+                {
+                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                }
             }
             return response;
         }

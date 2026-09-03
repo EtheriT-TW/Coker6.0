@@ -858,7 +858,7 @@ namespace EtheriT.Coker.Application
             {
                 dto.SaveHtml = HttpUtility.HtmlEncode(dto.SaveHtml);
                 MenuContenDto importDto = mapper.Map<MenuContenDto>(dto);
-                var s = await saveConten(dto);
+                var s = await SaveContenInternal(dto, writeAuditLog: false);
                 var user = await loginUserData.GetUser();
                 var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 if (menu != null)
@@ -947,7 +947,11 @@ namespace EtheriT.Coker.Application
 
             return (sanitized.Html, sanitized.Css);
         }
-        public async Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto)
+        public Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto)
+        {
+            return SaveContenInternal(dto, writeAuditLog: true);
+        }
+        private async Task<ResponseMessageDto> SaveContenInternal(MenuSaveContenDto dto, bool writeAuditLog)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -966,7 +970,10 @@ namespace EtheriT.Coker.Application
                 response.Success = false;
                 response.Error = ex.Message;
             }
-            await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            if (writeAuditLog)
+            {
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
             return response;
         }
         public async Task<ResponseMessageDto> Delete(DataDelectDto dto)

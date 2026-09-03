@@ -1,5 +1,6 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.AuditLog;
+using EtheriT.Coker.Application.Dto.AuditLog;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,6 +19,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
 		{
 			return await auditLogAppService.GetAllList(loadOptions);
+		}
+
+		[HttpGet]
+		public async Task<CanvasAuditLogOutputDto> GetCanvasHistory([FromQuery] CanvasAuditLogInputDto input)
+		{
+			return await auditLogAppService.GetCanvasHistory(input);
 		}
 	}
 }

@@ -13,5 +13,6 @@ namespace EtheriT.Coker.Application.AuditLog
 	{
 		public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
 		public Task<CanvasAuditLogOutputDto> GetCanvasHistory(CanvasAuditLogInputDto input);
+		public Task<CanvasAuditLogDetailOutputDto> GetCanvasHistoryDetail(CanvasAuditLogDetailInputDto input);
 	}
 }

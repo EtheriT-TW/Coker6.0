@@ -4,6 +4,7 @@ var technicalCertificate_list
 
 function PageReady() {
     const editor = grapesInit({
+        restoreHistory: { source: "TechnicalCertificate" },
         save:null,
         import: function (html, css) {
             var _dfr = $.Deferred();

@@ -248,6 +248,7 @@
     }
 
     var editor = grapesInit({
+        restoreHistory: { source: "ObjectType" },
         save: null,
         import: function (html, css) {
             var _dfr = $.Deferred();

@@ -26,5 +26,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		{
 			return await auditLogAppService.GetCanvasHistory(input);
 		}
+
+		[HttpGet]
+		public async Task<CanvasAuditLogDetailOutputDto> GetCanvasHistoryDetail([FromQuery] CanvasAuditLogDetailInputDto input)
+		{
+			return await auditLogAppService.GetCanvasHistoryDetail(input);
+		}
 	}
 }

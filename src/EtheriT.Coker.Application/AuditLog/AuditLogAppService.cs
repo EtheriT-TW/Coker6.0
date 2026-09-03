@@ -7,6 +7,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -71,9 +72,9 @@ namespace EtheriT.Coker.Application.AuditLog
 					throw new ArgumentException("開始日期不可晚於結束日期");
 				}
 
-				if ((endDate - startDate).TotalDays >= MaxHistoryDays)
+				if ((endDate - startDate).TotalDays > MaxHistoryDays)
 				{
-					throw new ArgumentException($"一次最多查詢 {MaxHistoryDays} 天");
+					throw new ArgumentException($"開始與結束日期最多相差 {MaxHistoryDays} 天");
 				}
 
 				var siteId = await loginUserData.GetWebsiteId();
@@ -147,11 +148,17 @@ namespace EtheriT.Coker.Application.AuditLog
 						    SELECT * FROM [PreviousDailyRows]
 						)
 						SELECT TOP ({TotalHistoryLimit})
-						    [Id], [ExecutionTime], [ClientName], [MethodName], [Operation]
+						    [Id], [ExecutionTime], [ClientName], [MethodName], [Operation],
+						    CAST(0 AS bit) AS [IsCurrent]
 						FROM [Combined]
 						ORDER BY [ExecutionTime] DESC, [Id] DESC
 						""")
 					.ToListAsync();
+
+				if (endDate == today && output.Items.Count > 0)
+				{
+					output.Items[0].IsCurrent = true;
+				}
 
 				output.Success = true;
 			}
@@ -161,6 +168,108 @@ namespace EtheriT.Coker.Application.AuditLog
 			}
 
 			return output;
+		}
+
+		public async Task<CanvasAuditLogDetailOutputDto> GetCanvasHistoryDetail(CanvasAuditLogDetailInputDto input)
+		{
+			var output = new CanvasAuditLogDetailOutputDto();
+
+			try
+			{
+				if (input.AuditLogId <= 0 || input.Id <= 0)
+				{
+					throw new ArgumentException("畫布歷程資料不正確");
+				}
+
+				var source = GetCanvasAuditLogSource(input.Source);
+				var siteId = await loginUserData.GetWebsiteId();
+				var allowedMethods = new[] { source.SaveMethod, source.PublishMethod }
+					.Where(x => !string.IsNullOrWhiteSpace(x))
+					.Distinct()
+					.ToList();
+
+				var auditLog = await db.AuditLogs
+					.AsNoTracking()
+					.Where(x => x.Id == input.AuditLogId)
+					.Where(x => x.FK_WebsiteId == siteId)
+					.Where(x => x.ServiceName == source.ServiceName)
+					.Where(x => allowedMethods.Contains(x.MethodName!))
+					.Select(x => new
+					{
+						x.Parameters,
+						x.ReturnValue,
+						x.ExecutionTime,
+						x.ClientName,
+						x.MethodName
+					})
+					.FirstOrDefaultAsync();
+
+				if (auditLog == null)
+				{
+					throw new InvalidOperationException("找不到畫布歷程紀錄");
+				}
+
+				var parameters = ParseJsonObject(auditLog.Parameters, "畫布歷程內容格式不正確");
+				var loggedId = GetJsonValue(parameters, "Id")?.Value<long?>();
+
+				if (loggedId != input.Id)
+				{
+					throw new InvalidOperationException("畫布歷程紀錄與目前資料不符");
+				}
+
+				var returnValue = ParseJsonObject(auditLog.ReturnValue, "畫布歷程執行結果格式不正確");
+				if (GetJsonValue(returnValue, "Success")?.Value<bool?>() != true)
+				{
+					throw new InvalidOperationException("失敗的操作紀錄不可還原");
+				}
+
+				var htmlToken = GetJsonValue(parameters, "SaveHtml") ?? GetJsonValue(parameters, "Html");
+				var cssToken = GetJsonValue(parameters, "SaveCss") ?? GetJsonValue(parameters, "Css");
+
+				if (htmlToken == null)
+				{
+					throw new InvalidOperationException("此紀錄沒有可還原的畫布內容");
+				}
+
+				output.Html = htmlToken.Type == JTokenType.Null ? string.Empty : htmlToken.Value<string>() ?? string.Empty;
+				output.Css = cssToken == null || cssToken.Type == JTokenType.Null
+					? string.Empty
+					: cssToken.Value<string>() ?? string.Empty;
+				output.ExecutionTime = auditLog.ExecutionTime;
+				output.ClientName = auditLog.ClientName ?? string.Empty;
+				output.Operation = source.PublishMethod != null && auditLog.MethodName == source.PublishMethod
+					? "publish"
+					: "save";
+				output.Success = true;
+			}
+			catch (Exception ex)
+			{
+				output.Error = ex.Message;
+			}
+
+			return output;
+		}
+
+		private static JObject ParseJsonObject(string? json, string errorMessage)
+		{
+			if (string.IsNullOrWhiteSpace(json))
+			{
+				throw new InvalidOperationException(errorMessage);
+			}
+
+			try
+			{
+				return JObject.Parse(json);
+			}
+			catch (JsonException ex)
+			{
+				throw new InvalidOperationException(errorMessage, ex);
+			}
+		}
+
+		private static JToken? GetJsonValue(JObject json, string propertyName)
+		{
+			return json.GetValue(propertyName, StringComparison.OrdinalIgnoreCase);
 		}
 
 		private static CanvasAuditLogSourceSetting GetCanvasAuditLogSource(CanvasAuditLogSource source)

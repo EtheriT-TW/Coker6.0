@@ -195,6 +195,7 @@
             }
 
             state.editor = grapesInit({
+                restoreHistory: { source: "Advertise" },
                 save: function (html, css) {
                     const defer = $.Deferred();
                     const id = getCanvasId();

@@ -72,6 +72,7 @@
     }
 
     var editor = grapesInit({
+        restoreHistory: { source: "WebMenu" },
         save: function (html, css) {
             var _dfr = $.Deferred();
             co.WebMesnus.saveConten({

@@ -1262,6 +1262,7 @@ async function PageReady() {
 
     // 啟動
     const editor = grapesInit({
+        restoreHistory: { source: "Product" },
         save: function (html, css) {
             var _dfr = $.Deferred();
             co.Product.Content.SaveConten({

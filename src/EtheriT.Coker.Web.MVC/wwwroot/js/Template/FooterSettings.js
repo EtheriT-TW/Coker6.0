@@ -1,5 +1,6 @@
 ﻿function PageReady() {
     var editor = grapesInit({
+        restoreHistory: { source: "TemplateFooter" },
         save: function (html, css) {
             var _dfr = $.Deferred();
             co.Templates.saveDefaultFooter({

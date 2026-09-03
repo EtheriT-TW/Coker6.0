@@ -9,6 +9,7 @@ function PageReady() {
     // 啟動
     const editor = grapesInit({
         enableNewsletter: true,
+        restoreHistory: { source: "Article" },
         save: function (html, css) {
             var _dfr = $.Deferred();
             const e = $(html);

@@ -2,6 +2,7 @@
     let settings = {
         save: function () { return false; },
         import: function () { return false; },
+        restoreHistory: null,
         getComponer: function () { return false; },
         asset: [],
         iconPickerOpt: { cols: 4, rows: 4, footer: false, iconset: "GoogleMaterialSymbolsOutlined" }
@@ -1049,10 +1050,295 @@
         });
     };
 
+    const getCanvasHistoryId = function () {
+        if (typeof settings.getPageId === "function") {
+            return Number(settings.getPageId() || 0);
+        }
+
+        return Number($(settings.container || "#gjs").data("id") || 0);
+    };
+
+    const formatHistoryDate = function (value, includeTime) {
+        if (!value) return "";
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+
+        const pad = function (number) {
+            return String(number).padStart(2, "0");
+        };
+        const dateText = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
+        return includeTime
+            ? `${dateText} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+            : dateText;
+    };
+
+    const decodeCanvasHistoryHtml = function (html) {
+        const value = String(html || "");
+
+        // AuditLog 內大多是經後端 HtmlEncode 後的內容；避免對已是原始 HTML 的舊紀錄
+        // 再跑 HtmlDecode，否則瀏覽器會把標籤當成節點並只留下文字。
+        if (/&(?:amp;)*(?:lt|#0*60|#x0*3c);/i.test(value) &&
+            co.Data && typeof co.Data.HtmlDecode === "function") {
+            return co.Data.HtmlDecode(value);
+        }
+
+        return value;
+    };
+
+    const requestCanvasHistory = function (url, data) {
+        return $.ajax({
+            url: url,
+            type: "GET",
+            contentType: "application/json; charset=utf-8",
+            headers: co.Data.Header,
+            data: data,
+            dataType: "json"
+        });
+    };
+
+    const showCanvasHistory = function (currentEditor) {
+        const historySettings = settings.restoreHistory;
+        const pageId = getCanvasHistoryId();
+
+        if (!historySettings || historySettings.enabled === false || !historySettings.source) return;
+        if (!pageId) {
+            co.sweet.error("錯誤", "找不到目前畫布資料", null, true);
+            return;
+        }
+
+        const $content = $(`
+            <div class="coker-canvas-history px-2 pb-2">
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-sm-5">
+                        <label class="form-label mb-1 text-white">開始日期</label>
+                        <input type="date" class="form-control" data-role="start-date">
+                    </div>
+                    <div class="col-sm-5">
+                        <label class="form-label mb-1 text-white">結束日期</label>
+                        <input type="date" class="form-control" data-role="end-date">
+                    </div>
+                    <div class="col-sm-2 d-grid">
+                        <button type="button" class="btn btn-primary" data-role="search">搜尋</button>
+                    </div>
+                </div>
+                <div class="small text-white mb-2">
+                    今天最多顯示 20 筆；其他日期每天顯示最後一筆，合計最多 30 筆。
+                </div>
+                <div class="alert alert-light border py-2 d-none" data-role="message"></div>
+                <div class="table-responsive" style="max-height: 55vh; overflow-y: auto;">
+                    <table class="table table-sm table-hover align-middle mb-0 bg-white text-dark"
+                           style="--bs-table-color: #212529; --bs-table-bg: #fff; color: #212529;">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>紀錄時間</th>
+                                <th>更新者</th>
+                                <th>類型</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody data-role="rows"></tbody>
+                    </table>
+                </div>
+            </div>
+        `);
+        const $rows = $content.find('[data-role="rows"]');
+        const $message = $content.find('[data-role="message"]');
+        const $search = $content.find('[data-role="search"]');
+        const $startDate = $content.find('[data-role="start-date"]');
+        const $endDate = $content.find('[data-role="end-date"]');
+        const modal = currentEditor.Modal;
+
+        const todayText = formatHistoryDate(new Date(), false);
+        $startDate.attr("max", todayText);
+        $endDate.attr("max", todayText);
+
+        const updateEndDateFromStart = function () {
+            const startValue = $startDate.val();
+            if (!startValue) {
+                $endDate.removeAttr("min");
+                return;
+            }
+
+            const suggestedEnd = new Date(`${startValue}T00:00:00`);
+            suggestedEnd.setDate(suggestedEnd.getDate() + 90);
+            const suggestedEndText = formatHistoryDate(suggestedEnd, false);
+
+            $endDate
+                .attr("min", startValue)
+                .val(suggestedEndText > todayText ? todayText : suggestedEndText);
+        };
+
+        $startDate.on("change", updateEndDateFromStart);
+
+        const setMessage = function (message, isError) {
+            $message
+                .toggleClass("d-none", !message)
+                .toggleClass("alert-danger", isError === true)
+                .toggleClass("alert-light", isError !== true)
+                .text(message || "");
+        };
+
+        const restoreHistory = function (item, $button) {
+            $button.prop("disabled", true);
+            setMessage("正在讀取畫布內容…", false);
+
+            requestCanvasHistory("/api/AuditLog/GetCanvasHistoryDetail", {
+                AuditLogId: item.id,
+                Id: pageId,
+                Source: historySettings.source
+            }).done(function (result) {
+                if (!result || result.success !== true) {
+                    setMessage((result && result.error) || "讀取畫布歷程失敗", true);
+                    return;
+                }
+
+                co.Grapes.setEditor(
+                    currentEditor,
+                    decodeCanvasHistoryHtml(result.html),
+                    result.css || ""
+                );
+                modal.close();
+                co.sweet.success("歷程已載入畫布，請確認後再儲存或發布");
+            }).fail(function (xhr) {
+                const response = xhr && xhr.responseJSON;
+                setMessage((response && (response.error || response.message)) || "讀取畫布歷程失敗", true);
+            }).always(function () {
+                $button.prop("disabled", false);
+            });
+        };
+
+        const confirmRestore = function (item, $button) {
+            const message = "這會取代目前尚未儲存的畫布內容，但不會自動儲存或發布。是否繼續？";
+            const run = function () {
+                restoreHistory(item, $button);
+            };
+
+            if (co.sweet && typeof co.sweet.confirm === "function") {
+                co.sweet.confirm("還原畫布", message, "確定還原", "取消", run);
+            } else if (window.confirm(message)) {
+                run();
+            }
+        };
+
+        const renderRows = function (items) {
+            $rows.empty();
+
+            if (!items || items.length === 0) {
+                setMessage("此區間沒有可還原的成功紀錄。", false);
+                return;
+            }
+
+            setMessage("", false);
+            items.forEach(function (item) {
+                const $row = $("<tr>");
+                const operationText = item.operation === "publish" ? "發布" : "儲存";
+                const $action = item.isCurrent
+                    ? $('<span class="badge text-bg-success">目前版本</span>')
+                    : $('<button type="button" class="btn btn-sm btn-outline-primary">還原</button>');
+
+                if (item.isCurrent) {
+                    $row.addClass("table-success");
+                }
+
+                $("<td>").text(formatHistoryDate(item.executionTime, true)).appendTo($row);
+                $("<td>").text(item.clientName || "-").appendTo($row);
+                $("<td>").text(operationText).appendTo($row);
+                $("<td>").addClass("text-end").append($action).appendTo($row);
+
+                if (!item.isCurrent) {
+                    $action.on("click", function () {
+                        confirmRestore(item, $action);
+                    });
+                }
+                $rows.append($row);
+            });
+        };
+
+        const loadHistory = function () {
+            const request = {
+                Id: pageId,
+                Source: historySettings.source
+            };
+            const startDate = $startDate.val();
+            const endDate = $endDate.val();
+
+            if (startDate) request.StartDate = startDate;
+            if (endDate) request.EndDate = endDate;
+
+            $search.prop("disabled", true);
+            $rows.empty();
+            setMessage("正在讀取歷程…", false);
+
+            requestCanvasHistory("/api/AuditLog/GetCanvasHistory", request)
+                .done(function (result) {
+                    if (!result || result.success !== true) {
+                        setMessage((result && result.error) || "讀取畫布歷程失敗", true);
+                        return;
+                    }
+
+                    if (!startDate) {
+                        $startDate.val(formatHistoryDate(result.startDate, false));
+                    }
+                    if (!endDate) {
+                        $endDate.val(formatHistoryDate(result.endDate, false));
+                    }
+                    $endDate.attr("min", $startDate.val());
+                    renderRows(result.items || []);
+                })
+                .fail(function (xhr) {
+                    const response = xhr && xhr.responseJSON;
+                    setMessage((response && (response.error || response.message)) || "讀取畫布歷程失敗", true);
+                })
+                .always(function () {
+                    $search.prop("disabled", false);
+                });
+        };
+
+        $search.on("click", loadHistory);
+        modal.setTitle('<span class="text-white">還原畫布歷程</span>');
+        modal.setContent($content.get(0));
+        modal.open();
+        loadHistory();
+    };
+
+    const addHistoryButton = function () {
+        if (!settings.restoreHistory || settings.restoreHistory.enabled === false) return;
+        if (panelManager.getButton('options', 'panelRestoreHistory')) return;
+
+        const button = {
+            id: 'panelRestoreHistory',
+            className: 'someClass',
+            label: '<i title="還原歷程" class="fa fa-clock-rotate-left"></i>',
+            command: function (currentEditor) {
+                if (typeof settings.canSave === "function" && settings.canSave() !== true) {
+                    if (typeof settings.readonlyMessage === "function") settings.readonlyMessage();
+                    return;
+                }
+
+                showCanvasHistory(currentEditor);
+            },
+            attributes: { title: 'restore history' },
+            active: false,
+        };
+        const optionsPanel = panelManager.getPanel('options');
+        const redoButton = panelManager.getButton('options', 'redo');
+
+        if (optionsPanel && optionsPanel.buttons && redoButton) {
+            optionsPanel.buttons.add(button, {
+                at: optionsPanel.buttons.indexOf(redoButton) + 1
+            });
+        } else {
+            panelManager.addButton('options', button);
+        }
+    };
+
     editor.setSavePanelVisible = function (visible) {
         if (visible === true) {
             addSaveButton();
             addImportButton();
+            addHistoryButton();
         } else {
             if (panelManager.getButton('options', 'panelSave')) {
                 panelManager.removeButton('options', 'panelSave');
@@ -1060,6 +1346,10 @@
 
             if (panelManager.getButton('options', 'panelImport')) {
                 panelManager.removeButton('options', 'panelImport');
+            }
+
+            if (panelManager.getButton('options', 'panelRestoreHistory')) {
+                panelManager.removeButton('options', 'panelRestoreHistory');
             }
         }
     };

@@ -341,6 +341,7 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
     setPage = function(id) {
         $("body").addClass("grapesEdit"), showCanvasBackButton(), editor || (editor = GrapesEditorManager.create("article", {
             container: "#gjs",
+            restoreHistory: { source: "Article" },
             getPageId: function() {
                 return Number($("#gjs").data("id") || 0);
             },

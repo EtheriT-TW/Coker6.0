@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Core.Models
         public Prod? Prod { get; set; }
         public List<ShoppingCart> ShoppingCarts { get; set; }
         public List<Prod_Price> Prod_Prices { get; set; }
+        public bool Visible { get; set; } = true;
 
     }
 }

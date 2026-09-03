@@ -434,6 +434,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .OnDelete(DeleteBehavior.NoAction);
                 o.Property(p => p.IsTimePrice).HasDefaultValue(false);
                 o.Property(p => p.PackingPoint).HasDefaultValue(1);
+                o.Property(p => p.Visible).HasDefaultValue(true).ValueGeneratedNever();
             });
             modelBuilder.Entity<ShoppingCart>(o =>
             {

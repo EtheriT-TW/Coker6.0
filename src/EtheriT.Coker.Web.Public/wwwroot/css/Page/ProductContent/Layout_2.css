@@ -234,7 +234,7 @@
     }
 
 .spec-thumb-empty {
-    cursor: default;
+    object-fit: cover;
 }
 
 #Product > .content > .btn_learnMore {
@@ -384,6 +384,11 @@
 
 /* 平板以上：一張 slide 內左圖右文 */
 @media (min-width: 768px) {
+    #Product > .content.col-12 > .btn_learnMore {
+        max-width: calc(50% - .75rem);
+        margin-right: 0;
+    }
+
     #ProDisplayModal.has-spec-info .spec-media-slide {
         flex-direction: row;
         align-items: stretch;

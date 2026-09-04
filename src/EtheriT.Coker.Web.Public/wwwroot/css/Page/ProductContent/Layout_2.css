@@ -339,6 +339,14 @@
         font-size: 1.5rem;
     }
 
+/* 沒有規格名稱時的佔位：不可點、沒有 icon，但保留一個行高，
+   讓描述與價格在每張 slide 都落在同一個高度 */
+#ProDisplayModal.has-spec-info .spec-media-name-empty {
+    cursor: default;
+    min-height: 1.8rem; /* 1.2rem × 1.5 行高，給不支援 lh 單位的舊瀏覽器 */
+    min-height: 1lh;
+}
+
 #ProDisplayModal.has-spec-info .spec-media-price {
     margin-bottom: .75rem;
 }
@@ -467,6 +475,11 @@
         flex-direction: column;
         gap: .1rem;
     }
+
+        /* 手機版不是 grid，沒有欄位要對齊，空名稱佔位直接收掉 */
+        .spec-body .spec-name:empty {
+            display: none;
+        }
 
     .spec-actions {
         width: 100%;

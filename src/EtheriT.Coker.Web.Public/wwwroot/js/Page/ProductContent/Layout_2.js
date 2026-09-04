@@ -353,10 +353,11 @@
         // 不用 Bootstrap 的 .text-primary：它帶 !important，而頁面編輯器存的自訂 CSS
         // （_Layout 最後注入的 #frameCss）會重新定義 primary 色系，讓這裡跟著變色。
         // 顏色改由 Layout_2.css 的 .spec-name 指定。
-        $body.append($('<button type="button" class="spec-name copy_btn">')
-            .attr('data-copy', name)
-            .text(name)
-            .append('<span class="material-symbols-outlined copy-icon">content_copy</span>'));
+        $body.append(name
+            ? $('<button type="button" class="spec-name copy_btn">')
+                .attr('data-copy', name)
+                .text(name)
+                .append('<span class="material-symbols-outlined copy-icon">content_copy</span>') : $('<div class="spec-name"></div>'));
 
         // 描述固定佔一格（即使空的），否則沒描述的規格會整列往左位移
         $body.append($('<div class="spec-desc"></div>').html(stock.specDescription || ''));
@@ -483,8 +484,14 @@
 
             $slide.find('.spec-media-preview').attr('src', spec.items[0].link[0]);
             // 與列表的名稱一樣可複製，data-copy 由 bindCopyName 讀取
-            $slide.find('.spec-media-name').attr('data-copy', name)
-                .find('.spec-media-name-text').text(name);
+            const $mediaName = $slide.find('.spec-media-name');
+            if (name) {
+                $mediaName.attr('data-copy', name).find('.spec-media-name-text').text(name);
+            } else {
+                // 沒設定規格名稱：換成不可點的空佔位（不掛 copy_btn，事件委派就不會命中），
+                // 但保留原本的行高與下邊距，描述與價格才不會整塊往上移
+                $mediaName.replaceWith('<div class="spec-media-name spec-media-name-empty"></div>');
+            }
             $slide.find('.spec-media-price').replaceWith(buildSpecPriceBlock(spec.stock));
             // 與列表的 .spec-desc 一致，描述是後端已清洗的 HTML
             $slide.find('.spec-media-desc').html(spec.stock.specDescription || '');

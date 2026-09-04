@@ -285,7 +285,9 @@ namespace EtheriT.Coker.Application
                 .ReverseMap();
             CreateMap<DirectoryPriceResultDto, DirectoryReleInfoDto>();
             CreateMap<ProductStockDto, ProductImportDto>()
+                .ForMember(e => e.Visible, option => option.Ignore())
                 .ReverseMap()
+                .ForMember(e => e.Visible, option => option.Ignore())
                 .ForMember(e => e.S1_Name, option => option.MapFrom(c => c.Spec1Name))
                 .ForMember(e => e.S2_Name, option => option.MapFrom(c => c.Spec2Name))
                 .ForMember(e => e.S1_Title, option => option.MapFrom(c => c.Spec1))

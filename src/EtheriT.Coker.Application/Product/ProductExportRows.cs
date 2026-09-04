@@ -42,6 +42,7 @@ namespace EtheriT.Coker.Application.Product
         public string Spec2 { get; set; } = "";
         public string SpecImage { get; set; } = "";
         public string SpecDescription { get; set; } = "";
+        public string SpecVisible { get; set; } = "";
         public int Stock { get; set; }
         public int Min_Qty { get; set; }
         public int Alert_Qty { get; set; }

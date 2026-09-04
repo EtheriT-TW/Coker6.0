@@ -30,7 +30,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
 		public string? Spec2 { get; set; }
 		public string? SpecImage { get; set; }
 		public string? SpecDescription { get; set; }
-		public int? Stock { get; set; }
+		public string? SpecVisible { get; set; }
+        public int? Stock { get; set; }
 		public int? Min_Qty { get; set; } = 1;
 		public int? Alert_Qty { get; set; } = 0;
 		public decimal? SuggestPrice { get; set; } = 0;

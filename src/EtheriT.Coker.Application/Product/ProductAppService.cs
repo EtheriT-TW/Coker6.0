@@ -724,6 +724,7 @@ namespace EtheriT.Coker.Application.Product
                         Spec2 = spec2?.Title ?? "",
                         SpecImage = stringHandler.ResolveFrontUploadPath(specImage, orgName),
                         SpecDescription = stock?.SpecDescription ?? "",
+                        SpecVisible = stock == null ? "" : (stock.Visible ? "是" : "否"),
                         Stock = stock?.Stock ?? 0,
                         Min_Qty = stock?.Min_Qty ?? 1,
                         Alert_Qty = stock?.Alert_Qty ?? 0,

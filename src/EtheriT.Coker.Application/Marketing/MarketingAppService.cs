@@ -763,6 +763,7 @@ namespace EtheriT.Coker.Application.Marketing
                             .Where(x => !x.IsDeleted && x.Enabled && x.ProdStock != null && !x.ProdStock.IsDeleted &&
                                         x.ProdStock.Prod != null && !x.ProdStock.Prod.IsDeleted &&
                                         x.ProdStock.Prod.Visible && !x.ProdStock.Prod.RemovedFromShelves &&
+                                        x.ProdStock.Visible &&
                                         (x.ProdStock.Prod.NoStockManagement || (x.ProdStock.Stock ?? 0) > 0))
                             .OrderBy(x => x.SortOrder).ThenBy(x => x.Id)
                             .Select(x =>
@@ -980,7 +981,7 @@ namespace EtheriT.Coker.Application.Marketing
                             .Where(x => !x.IsDeleted && x.Enabled &&
                                         x.ProdStock != null && !x.ProdStock.IsDeleted &&
                                         x.ProdStock.Prod != null && !x.ProdStock.Prod.IsDeleted &&
-                                        x.ProdStock.Prod.Visible && !x.ProdStock.Prod.RemovedFromShelves &&
+                                        x.ProdStock.Visible && x.ProdStock.Prod.Visible && !x.ProdStock.Prod.RemovedFromShelves &&
                                         (x.ProdStock.Prod.NoStockManagement || (x.ProdStock.Stock ?? 0) > 0))
                             .OrderBy(x => x.SortOrder)
                             .ThenBy(x => x.Id)

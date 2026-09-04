@@ -198,7 +198,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         ? e.Id == dto.FK_PSid
                         : (e.FK_Pid == dto.FK_Pid && e.FK_S1id == dto.FK_S1id && e.FK_S2id == dto.FK_S2id));
 
-                if (proStock == null)
+                if (proStock == null || !proStock.Visible)
                     throw new Exception(L.get("SpecNotFound"));
 
                 var prod = await db.Prods.FirstOrDefaultAsync(e => e.Id == proStock.FK_Pid && !e.RemovedFromShelves);
@@ -1274,6 +1274,12 @@ namespace EtheriT.Coker.Application.ShoppingCart
                     {
                         if (!temp_output.Available)
                         {
+                            temp_output.ValidationCode = "ProductUnavailable";
+                            temp_output.Describe = "此商品目前已下架或無法購買，請移除該品項。";
+                        }
+                        else if (prod_stocks?.Visible != true)
+                        {
+                            temp_output.Available = false;
                             temp_output.ValidationCode = "ProductUnavailable";
                             temp_output.Describe = "此商品目前已下架或無法購買，請移除該品項。";
                         }

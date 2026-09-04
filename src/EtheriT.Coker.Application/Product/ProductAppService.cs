@@ -1516,6 +1516,7 @@ namespace EtheriT.Coker.Application.Product
                     var stockDatas = await this.GetStockDataAll(output.Id);
                     if (stockDatas != null)
                     {
+                        stockDatas = stockDatas.Where(e => e.Visible).ToList();
                         var prices = await productDisplayPriceService.GetDisplayPricesByStockAsync(stockDatas.Select(e => e.Id).ToList(), roleContext);
                         var stockIds = stockDatas.Select(x => x.Id).ToList();
                         var stockEntities = await db.Prod_Stocks

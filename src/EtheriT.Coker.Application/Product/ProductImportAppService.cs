@@ -950,7 +950,8 @@ namespace EtheriT.Coker.Application.Product
                 nameof(ProductImportDto.SubItemNo), nameof(ProductImportDto.Spec1Name),
                 nameof(ProductImportDto.Spec1), nameof(ProductImportDto.Spec2Name),
                 nameof(ProductImportDto.Spec2), nameof(ProductImportDto.SpecImage),
-                nameof(ProductImportDto.SpecDescription)))
+                nameof(ProductImportDto.SpecDescription),
+                nameof(ProductImportDto.SpecVisible)))
                 scopes.Add("規格");
 
             if (HasAny(
@@ -3278,6 +3279,10 @@ namespace EtheriT.Coker.Application.Product
                         }
 
                         var isNewStock = stockEntity.Id == 0;
+                        if (isNewStock || HasImportedColumn(dto, nameof(dto.SpecVisible))) {
+                            ApplyImportFlag(s.SpecVisible, value => stockEntity.Visible = value, dto.ProdName, "規格顯示", errors);
+                        }
+
                         // 詢價（不刪舊價；只標記並把通用價歸零）
                         var requestedIsTimePrice = hasPrice ? s.TimePrice || s.Price < 0 : stockEntity.IsTimePrice;
                         if (!isNewStock

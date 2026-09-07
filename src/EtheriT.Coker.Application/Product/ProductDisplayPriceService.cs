@@ -44,7 +44,7 @@ namespace EtheriT.Coker.Application.Product
                 var bonusEnabled = bonusSetting?.BonusEnabled == true;
 
                 var stocks = await db.Prod_Stocks
-                    .Where(e => productIds.Contains(e.FK_Pid) && !e.IsDeleted)
+                    .Where(e => productIds.Contains(e.FK_Pid) && !e.IsDeleted && e.Visible)
                     .ToListAsync();
 
                 if (!stocks.Any())

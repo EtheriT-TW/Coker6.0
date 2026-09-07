@@ -279,6 +279,7 @@ namespace EtheriT.Coker.Application.Product
                             SubItemNo = item.SubItemNo,
                             SpecDescription = item.SpecDescription,
                             CreatorUserId = usetId,
+                            Visible = item.Visible,
                         };
                         db.Prod_Stocks.Add(ps);
                         await db.SaveChangesAsync();
@@ -319,6 +320,7 @@ namespace EtheriT.Coker.Application.Product
                             db_ps.Price = item.Price;
                             db_ps.LastModificationTime = DateTime.Now;
                             db_ps.LastModifierUserId = usetId;
+                            db_ps.Visible = item.Visible;
                         }
                         else throw new Exception("商品規格不屬於目前網站，已停止儲存");
                     }
@@ -722,6 +724,7 @@ namespace EtheriT.Coker.Application.Product
                         Spec2 = spec2?.Title ?? "",
                         SpecImage = stringHandler.ResolveFrontUploadPath(specImage, orgName),
                         SpecDescription = stock?.SpecDescription ?? "",
+                        SpecVisible = stock == null ? "" : (stock.Visible ? "是" : "否"),
                         Stock = stock?.Stock ?? 0,
                         Min_Qty = stock?.Min_Qty ?? 1,
                         Alert_Qty = stock?.Alert_Qty ?? 0,
@@ -1257,6 +1260,7 @@ namespace EtheriT.Coker.Application.Product
                                         Ser_No = ps.Ser_No,
                                         SuggestPrice = ps.Price,
                                         Prices = new List<ProductPriceDto>(),
+                                        Visible = ps.Visible,
                                     }).ToListAsync();
 
 
@@ -1513,6 +1517,7 @@ namespace EtheriT.Coker.Application.Product
                     var stockDatas = await this.GetStockDataAll(output.Id);
                     if (stockDatas != null)
                     {
+                        stockDatas = stockDatas.Where(e => e.Visible).ToList();
                         var prices = await productDisplayPriceService.GetDisplayPricesByStockAsync(stockDatas.Select(e => e.Id).ToList(), roleContext);
                         var stockIds = stockDatas.Select(x => x.Id).ToList();
                         var stockEntities = await db.Prod_Stocks
@@ -2138,7 +2143,7 @@ namespace EtheriT.Coker.Application.Product
             try
             {
                 var output = await (from ps in db.Prod_Stocks
-                                    where ps.FK_Pid == id && !ps.IsDeleted
+                                    where ps.FK_Pid == id && !ps.IsDeleted && ps.Visible
                                     orderby ps.Price ascending
                                     select new ProductStockDto
                                     {
@@ -2502,7 +2507,7 @@ namespace EtheriT.Coker.Application.Product
             var now = DateTime.Now;
             var stocks = await db.Prod_Stocks
                 .AsNoTracking()
-                .Where(e => e.FK_Pid == product.Id && !e.IsDeleted && !e.IsTimePrice)
+                .Where(e => e.FK_Pid == product.Id && !e.IsDeleted && !e.IsTimePrice && e.Visible)
                 .ToListAsync();
 
             var stockIds = stocks.Select(e => e.Id).ToList();

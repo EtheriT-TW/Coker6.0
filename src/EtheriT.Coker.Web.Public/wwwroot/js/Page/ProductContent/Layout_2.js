@@ -2,6 +2,7 @@
     'use strict';
 
     const M = window.ProductContentModule;
+    const NO_IMAGE_SRC = '/images/noImg.jpg';
 
     if (!M) {
         console.error('Layout_2: ProductContentModule 未載入，請確認 ProductContent.min.js 在本檔之前載入。');
@@ -149,6 +150,14 @@
     function specImageItems(stock) {
         const mm = Array.isArray(stock.multimedia) ? stock.multimedia : [];
         return mm.filter(m => (m.fileType === 1 || m.fileType === 2) && Array.isArray(m.link) && m.link[0]);
+    }
+
+    function resolveNoImageSrc() {
+        const fallback = $("meta[property='og:image']").attr('content') ||
+                         $('.logo-img').attr('src') ||
+                         $("link[rel='icon']").attr('href');
+
+        return fallback && fallback.trim() !== '' ? fallback : NO_IMAGE_SRC;
     }
 
     function buyGuardPassed(price, state) {
@@ -326,27 +335,29 @@
 
         const name = specName(stock);
         const imgItems = specImageItems(stock);
-        if (imgItems.length) {
-            const altParts = [productTitle, name].filter(Boolean);
-            $card.append(
-                $('<img class="spec-thumb" />')
-                    .attr('src', imgItems[0].link[0])
-                    .attr('alt', altParts.join(' - '))
-                    // 燈箱以規格為單位切換，這裡記的是該規格在燈箱裡的位置
-                    .data('specIndex', renderContext.gallerySpecIndexById[stock.id] ?? -1)
-            );
-        } else {
-            $card.append('<div class="spec-thumb spec-thumb-empty"></div>');
-        }
+        const altParts = [productTitle, name].filter(Boolean);
+        const hasImage = imgItems.length > 0;
+
+        // 有圖沒圖都是同一顆可點的縮圖，差別只有 src 與 .spec-thumb-empty 的樣式
+        const $thumb = $('<img class="spec-thumb" />')
+            .toggleClass('spec-thumb-empty', !hasImage)
+            .attr('src', hasImage ? imgItems[0].link[0] : resolveNoImageSrc())
+            .attr('alt', altParts.join(' - '))
+            // 燈箱以規格為單位切換，這裡記的是該規格在燈箱裡的位置
+            .data('specIndex', renderContext.gallerySpecIndexById[stock.id] ?? -1);
+        // 圖片 404 時回報死圖並換成 noImg（與目錄一致）
+        if (typeof $thumb.imgCheck === 'function') $thumb.imgCheck();
+        $card.append($thumb);
 
         const $body = $('<div class="spec-body"></div>');
         // 不用 Bootstrap 的 .text-primary：它帶 !important，而頁面編輯器存的自訂 CSS
         // （_Layout 最後注入的 #frameCss）會重新定義 primary 色系，讓這裡跟著變色。
         // 顏色改由 Layout_2.css 的 .spec-name 指定。
-        $body.append($('<button type="button" class="spec-name copy_btn">')
-            .attr('data-copy', name)
-            .text(name)
-            .append('<span class="material-symbols-outlined copy-icon">content_copy</span>'));
+        $body.append(name
+            ? $('<button type="button" class="spec-name copy_btn">')
+                .attr('data-copy', name)
+                .text(name)
+                .append('<span class="material-symbols-outlined copy-icon">content_copy</span>') : $('<div class="spec-name"></div>'));
 
         // 描述固定佔一格（即使空的），否則沒描述的規格會整列往左位移
         $body.append($('<div class="spec-desc"></div>').html(stock.specDescription || ''));
@@ -473,8 +484,14 @@
 
             $slide.find('.spec-media-preview').attr('src', spec.items[0].link[0]);
             // 與列表的名稱一樣可複製，data-copy 由 bindCopyName 讀取
-            $slide.find('.spec-media-name').attr('data-copy', name)
-                .find('.spec-media-name-text').text(name);
+            const $mediaName = $slide.find('.spec-media-name');
+            if (name) {
+                $mediaName.attr('data-copy', name).find('.spec-media-name-text').text(name);
+            } else {
+                // 沒設定規格名稱：換成不可點的空佔位（不掛 copy_btn，事件委派就不會命中），
+                // 但保留原本的行高與下邊距，描述與價格才不會整塊往上移
+                $mediaName.replaceWith('<div class="spec-media-name spec-media-name-empty"></div>');
+            }
             $slide.find('.spec-media-price').replaceWith(buildSpecPriceBlock(spec.stock));
             // 與列表的 .spec-desc 一致，描述是後端已清洗的 HTML
             $slide.find('.spec-media-desc').html(spec.stock.specDescription || '');
@@ -575,7 +592,7 @@
     function hasRealProductImage(result) {
         const imgs = result && Array.isArray(result.img_Medium) ? result.img_Medium : [];
         return imgs.some(img =>
-            Array.isArray(img.link) && img.link[0] && img.link[0] !== '/images/noImg.jpg'
+            Array.isArray(img.link) && img.link[0] && img.link[0] !== NO_IMAGE_SRC
         );
     }
 
@@ -592,7 +609,8 @@
         $image.addClass('d-none');
         $content.removeClass('col-md-6 col-sm-12').addClass('col-12');
     }
-    // 只有帶圖片的規格會進燈箱，陣列順序就是 swiper 的 slide 順序
+    // 每個規格都會進燈箱，陣列順序就是 swiper 的 slide 順序。
+    // 沒圖的規格補一張佔位圖當唯一一張，讓它跟有圖的規格走完全相同的流程。
     function buildGallerySpecs(stocks, productTitle) {
         const specs = [];
         const indexById = {};
@@ -604,7 +622,18 @@
                 ...item,
                 alt: `${altParts.join(' - ')}${index > 0 ? ` - ${index + 1}` : ''}`
             }));
-            if (!items.length) return;
+
+            // media-viewer 只認 fileType / link[0] / alt；fileType 1 會走一般圖片分支
+            //（2=360、3=影片、4=外嵌影片），所以合成一筆就能當正常圖片播。
+            if (!items.length) {
+                items.push({
+                    id: 0,
+                    fileType: 1,
+                    link: [resolveNoImageSrc()],
+                    name: '',
+                    alt: altParts.join(' - ')
+                });
+            }
 
             indexById[stock.id] = specs.length;
             specs.push({ stock: stock, items: items });

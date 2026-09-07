@@ -24,9 +24,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public string SubItemNo { get; set; } = string.Empty;
         public string? SpecImage { get; set; }
         public string? SpecDescription { get; set; }
+        /// <summary>匯入專用：Excel「是／否」原始值，null 代表未提供。實際狀態請用 Visible</summary>
+        public string? SpecVisible { get; set; }
         public int? Min_Qty { get; set; }
         public int? Alert_Qty { get; set; }
         public bool TimePrice { get; set; }
+        public bool Visible { get; set; } = true;
         /// <summary>共用的規格購買狀態，前台各入口不可再自行重算。</summary>
         public bool CanPurchase { get; set; }
         public int? MaxPurchaseQuantity { get; set; }

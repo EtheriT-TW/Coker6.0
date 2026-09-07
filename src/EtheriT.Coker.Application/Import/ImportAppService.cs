@@ -162,6 +162,7 @@ namespace EtheriT.Coker.Application.Import
             row.SubItemNo = CustomDtoMapper.Normalize(row.SubItemNo);
             row.Visible = CustomDtoMapper.Normalize(row.Visible);
             row.OnShelf = CustomDtoMapper.Normalize(row.OnShelf);
+            row.SpecVisible = CustomDtoMapper.Normalize(row.SpecVisible);
             row.Spec1Name = CustomDtoMapper.Normalize(row.Spec1Name);
             row.Spec1 = CustomDtoMapper.Normalize(row.Spec1);
             row.Spec2Name = CustomDtoMapper.Normalize(row.Spec2Name);

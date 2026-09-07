@@ -86,6 +86,19 @@ var grapesInit = function (options) {
             flexGrid: true
         },
 
+        richTextOptions: {
+            provider: 'native',
+            ...(options.richTextOptions || {}),
+            jodit: {
+                ...(options.joditRteOptions || {}),
+                ...(options.richTextOptions?.jodit || {})
+            },
+            tinymce: {
+                ...(options.tinyMceRteOptions || {}),
+                ...(options.richTextOptions?.tinymce || {})
+            }
+        },
+
         externalPluginFunctions,
         initOptions: {
             showOffsets: 1,
@@ -102,6 +115,8 @@ var grapesInit = function (options) {
                     const sourceFiles = e.dataTransfer ? e.dataTransfer.files : e.target.files;
                     const files = Array.from(sourceFiles || []);
                     const maxFileSize = 10 * 1024 * 1024;
+                    const assetOpenOptions = editor.AssetManager.__getBehaviour?.().options || {};
+                    const isLinkAssetUpload = assetOpenOptions.cokerLinkAsset === true;
                     const extensionByMimeType = {
                         'image/gif': 'gif',
                         'image/jpeg': 'jpg',
@@ -161,9 +176,30 @@ var grapesInit = function (options) {
                     }
 
                     const supportedMediaPattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v)$/i;
-                    if (files.some(file => !/^(image|video)\//i.test(file.type || '') &&
-                        !supportedMediaPattern.test(file.name || ''))) {
-                        co.sweet.error("錯誤", "只支援圖片或影片檔案", null, false);
+                    const supportedLinkFilePattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v|mp3|wav|wma|pdf|docx?|xlsx?|ods|pptx?|odp|txt|csv|xml|zip|rar)$/i;
+                    const supportedLinkMimePattern = /^(?:image|video|audio|text)\//i;
+                    const supportedLinkApplicationMimePattern = /^application\/(?:pdf|msword|vnd\.(?:ms-excel|ms-powerpoint|openxmlformats-officedocument|oasis\.opendocument|rar)|zip|x-zip-compressed|octet-stream)$/i;
+                    const hasUnsupportedFile = files.some(file => {
+                        const contentType = file.type || '';
+                        const fileName = file.name || '';
+
+                        if (isLinkAssetUpload) {
+                            return !supportedLinkMimePattern.test(contentType) &&
+                                !supportedLinkApplicationMimePattern.test(contentType) &&
+                                !supportedLinkFilePattern.test(fileName);
+                        }
+
+                        return !/^(image|video)\//i.test(contentType) &&
+                            !supportedMediaPattern.test(fileName);
+                    });
+
+                    if (hasUnsupportedFile) {
+                        co.sweet.error(
+                            "錯誤",
+                            isLinkAssetUpload ? "不支援的檔案格式" : "只支援圖片或影片檔案",
+                            null,
+                            false
+                        );
                         finishUpload([], false);
                         return;
                     }

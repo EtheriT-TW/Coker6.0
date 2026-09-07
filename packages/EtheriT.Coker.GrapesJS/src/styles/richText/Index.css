@@ -1,0 +1,431 @@
+.gjs-rte-toolbar:has(.tox-tinymce-inline) {
+    padding: 0;
+    border-radius: 6px;
+    overflow: visible;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+}
+
+.gjs-rte-toolbar .tox.tox-tinymce-inline {
+    position: static !important;
+    width: auto !important;
+    border: 0;
+}
+
+.gjs-rte-toolbar .tox .tox-editor-header {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+}
+
+.tox.tox-tinymce-aux,
+.tox .tox-dialog-wrap {
+    z-index: 10050 !important;
+}
+
+/* Jodit toolbar inside the GrapesJS floating RTE container. */
+.gjs-rte-toolbar:has(.jodit-toolbar__box) {
+    padding: 4px;
+    border: 1px solid #d7dce2;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 5px 18px rgba(20, 30, 45, 0.24);
+    color: #26313d;
+}
+
+.gjs-rte-toolbar .jodit-toolbar__box,
+.gjs-rte-toolbar .jodit-toolbar-collection {
+    background: #ffffff;
+}
+
+.gjs-rte-toolbar .jodit-toolbar-button,
+.gjs-rte-toolbar .jodit-toolbar-select {
+    --jd-color-icon: #26313d;
+    color: #26313d;
+}
+
+.gjs-rte-toolbar .jodit-toolbar-button__text,
+.gjs-rte-toolbar .jodit-toolbar-select__text {
+    color: #26313d;
+}
+
+.gjs-rte-toolbar .jodit-toolbar-select_cokerFontSize,
+.gjs-rte-toolbar [data-ref="cokerFontSize"] {
+    min-width: 92px;
+}
+
+.gjs-rte-toolbar .jodit-toolbar-button:hover,
+.gjs-rte-toolbar .jodit-toolbar-select:hover {
+    background: #eaf3ff;
+}
+
+.gjs-rte-toolbar.coker-rte-toolbar--modal-open {
+    display: none !important;
+}
+
+/* Link editor uses the GrapesJS modal to avoid iframe/Bootstrap CSS conflicts. */
+.coker-rte-link-modal-wrapper .gjs-mdl-dialog {
+    width: min(520px, calc(100vw - 32px));
+    max-width: 520px;
+}
+
+.coker-rte-link-modal {
+    display: grid;
+    gap: 16px;
+    padding: 8px 2px 4px;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+
+.coker-rte-link-modal *,
+.coker-rte-link-modal *::before,
+.coker-rte-link-modal *::after {
+    box-sizing: border-box;
+}
+
+.coker-rte-link-modal__field {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.coker-rte-link-modal__field small {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 12px;
+}
+
+.coker-rte-link-modal__field input {
+    width: 100%;
+    height: 40px;
+    padding: 8px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 6px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+    font: inherit;
+}
+
+.coker-rte-link-modal__field input:focus {
+    border-color: #71b7f1;
+    box-shadow: 0 0 0 2px rgba(113, 183, 241, 0.2);
+}
+
+.coker-rte-link-modal__options {
+    display: grid;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 14px;
+}
+
+.coker-rte-link-modal__options label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+}
+
+.coker-rte-link-modal__options input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.coker-rte-link-modal__error {
+    padding: 9px 11px;
+    border-radius: 5px;
+    background: rgba(220, 53, 69, 0.2);
+    color: #ffb8c0;
+    font-size: 13px;
+}
+
+.coker-rte-link-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding-top: 4px;
+}
+
+.coker-rte-link-modal__actions button {
+    min-height: 38px;
+    padding: 8px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.coker-rte-link-modal__actions .coker-rte-link-modal__submit {
+    border-color: #3b97e3;
+    background: #3b97e3;
+}
+
+/* Native GrapesJS RTE: no editor wrapper is inserted into canvas components. */
+.gjs-rte-toolbar-ui {
+    box-sizing: border-box;
+    max-width: calc(100vw - 16px);
+    padding: 4px;
+    border: 1px solid #d7dce2;
+    border-radius: 7px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: #ffffff;
+    box-shadow: 0 5px 18px rgba(20, 30, 45, 0.24);
+    color: #26313d;
+}
+
+.gjs-rte-toolbar-ui .gjs-rte-actionbar {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 4px;
+    width: max-content;
+    min-width: 100%;
+    white-space: nowrap;
+}
+
+.gjs-rte-toolbar-ui .gjs-rte-action {
+    display: inline-flex;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    min-width: 32px;
+    min-height: 32px;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: 4px;
+    color: #26313d;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.gjs-rte-toolbar-ui .gjs-rte-action:hover,
+.gjs-rte-toolbar-ui .gjs-rte-active {
+    background: #e5f1ff;
+    color: #1268ad;
+}
+
+.coker-native-rte-font-size {
+    box-sizing: border-box;
+    flex: 0 0 92px;
+    width: 92px;
+    min-width: 92px;
+    height: 28px;
+    padding: 3px 25px 3px 7px;
+    border: 1px solid #c7cdd4;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #26313d;
+    font-size: 13px;
+}
+
+.gjs-rte-toolbar-ui .gjs-rte-action:has(.coker-native-rte-font-size) {
+    width: 100px;
+    min-width: 100px;
+    padding: 2px 4px;
+}
+
+.gjs-rte-toolbar-ui .gjs-rte-action:has(.coker-native-rte-list-icon) {
+    width: 34px;
+    min-width: 34px;
+    padding-right: 6px;
+    padding-left: 6px;
+}
+
+.coker-native-rte-list-icon {
+    display: inline-grid;
+    grid-template-columns: 10px 12px;
+    align-items: center;
+    width: 22px;
+    height: 18px;
+    line-height: 1;
+}
+
+.coker-native-rte-list-icon b,
+.coker-native-rte-list-icon i {
+    display: block;
+    margin: 0;
+    color: inherit;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    text-align: center;
+}
+
+.coker-native-rte-list-icon i {
+    font-size: 17px;
+    transform: translateY(-1px);
+}
+
+.coker-native-rte-color {
+    position: relative;
+    display: inline-flex;
+    min-width: 25px;
+    height: 25px;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 3px solid var(--coker-rte-current-color, #111111);
+    color: #26313d;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.coker-native-rte-color--transparent {
+    background-image:
+        linear-gradient(45deg, #d7dce2 25%, transparent 25%),
+        linear-gradient(-45deg, #d7dce2 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #d7dce2 75%),
+        linear-gradient(-45deg, transparent 75%, #d7dce2 75%);
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+    background-size: 8px 8px;
+}
+
+.coker-native-rte-color input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.coker-link-traits-wrapper .gjs-mdl-dialog {
+    width: min(560px, calc(100vw - 32px)) !important;
+    max-width: 560px !important;
+}
+
+.coker-link-traits-wrapper .gjs-mdl-content {
+    padding: 20px !important;
+}
+
+.coker-link-traits {
+    display: grid;
+    gap: 18px;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+}
+
+.coker-link-traits__description {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* This is GrapesJS' real TraitManager view, temporarily shown in the modal. */
+.coker-link-traits__fields > .gjs-trt-traits {
+    display: grid;
+    gap: 14px;
+}
+
+.coker-link-traits__fields .gjs-trt-trait {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    padding: 8px 0;
+}
+
+.coker-link-traits:not([data-link-type="link"])
+    .gjs-trt-trait:has([data-coker-link-only="true"]) {
+    display: none;
+}
+
+/* GrapesJS does not forward custom attributes from every Trait type
+   (notably button Traits). The first category is always:
+   1. type, 2. destination value, 3. file picker.
+   All types need a destination value; only regular links need the file picker. */
+.coker-link-traits:not([data-link-type="link"])
+    .gjs-trait-category:first-child
+    .gjs-trt-trait:nth-child(n + 3) {
+    display: none;
+}
+
+.coker-link-traits__fields .coker-link-trait--hidden {
+    display: none !important;
+}
+
+.coker-link-traits__fields .gjs-label-wrp,
+.coker-link-traits__fields .gjs-field-wrp {
+    width: 100%;
+    min-width: 0;
+}
+
+.coker-link-traits__fields .gjs-label {
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+}
+
+.coker-link-traits__fields .gjs-trait-category {
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.coker-link-traits__fields .gjs-trait-category > .gjs-title {
+    min-height: 38px;
+    padding: 9px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.coker-link-traits__fields .gjs-trait-category .gjs-traits-c {
+    padding: 8px 14px 12px;
+}
+
+.coker-link-traits__fields .gjs-field {
+    min-height: 40px;
+    border-radius: 6px;
+}
+
+.coker-link-traits__fields .gjs-field input,
+.coker-link-traits__fields .gjs-field select {
+    min-height: 40px;
+    font-size: 14px;
+}
+
+.coker-link-traits__fields .gjs-field input[readonly] {
+    background: rgba(255, 255, 255, 0.045);
+    color: rgba(255, 255, 255, 0.72);
+    cursor: default;
+}
+
+.coker-link-traits__fields .gjs-field-button {
+    min-height: 40px;
+    border: 1px solid #71b7f1;
+    border-radius: 6px;
+    color: #d8edff;
+}
+
+.coker-link-traits__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.coker-link-traits__actions button {
+    min-width: 88px;
+    min-height: 40px;
+    padding: 8px 18px;
+    border: 1px solid #3b97e3;
+    border-radius: 6px;
+    background: #3b97e3;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.coker-link-traits__actions .coker-link-traits__remove {
+    border-color: #d96772;
+    background: transparent;
+    color: #ffd9dc;
+}

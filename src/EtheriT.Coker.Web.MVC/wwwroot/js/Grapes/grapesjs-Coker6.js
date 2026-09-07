@@ -58,11 +58,13 @@
             assetsBody.insertBefore(filter[0], assetsHeader);
         }
         AssetManager.onSelect((result) => {
-            //console.log("result", result)
-            var name = result.attributes.name;
-            console.log(result, name);
-            $gjs_select.addAttributes({ alt: name.substring(0, name.lastIndexOf(".")) });
-            $gjs_select = null;
+            if (!$gjs_select || !$gjs_select.is("image")) return;
+
+            const name = result.attributes.name || "";
+            const extensionIndex = name.lastIndexOf(".");
+            $gjs_select.addAttributes({
+                alt: extensionIndex > 0 ? name.substring(0, extensionIndex) : name
+            });
         });
     });
 
@@ -191,48 +193,6 @@
         }
     });
 
-    /*連結 */
-    editor.DomComponents.addType('連結', {
-        isComponent: el => el.tagName == 'A',
-        model: {
-            defaults: {
-                traits: [
-                    // Strings are automatically converted to text types
-                    { name: 'title', type: 'text', label: '名稱', placeholder: '請輸入連結名稱' },
-                    { name: 'data-text', type: 'text', label: '顯示文字', placeholder: '請輸入顯示文字' },
-                    { name: 'href', type: 'text', label: '超連結', placeholder: '請輸入連結位子' },
-                    {
-                        name: 'file', type: 'button',
-                        text: "選擇檔案",
-                        command: editor => {
-                            AssetManager.open();
-                            AssetManager.onSelect((resule) => {
-                                editor.getSelected().set("attributes", { "href": resule.id });
-                                AssetManager.close();
-                            });
-                        },
-                    },
-                    {
-                        name: 'target', type: 'select', label: '開啟方式',
-                        options: [
-                            { id: '_self', name: '直接連結' },
-                            { id: '_blank', name: '另開視窗', label: '另開視窗' }
-                        ]
-                    }
-                ]
-            }, init() {
-                this.on('change:attributes:data-text', function (component) {
-                    if (typeof (component.getEl()) != "undefined") {
-                        if (component.find(".name").length > 0)
-                            component.find(".name")[0].components(component.getAttributes()["data-text"]);
-                        else
-                            component.components(component.getAttributes()["data-text"]);
-                    }
-                });
-            }
-        },
-    });
-
     editor.DomComponents.addType('電子書', {
         isComponent: el => el.classList?.contains('FlipBookItem'),
         model: {
@@ -319,61 +279,6 @@
         }
     });
 
-    //QA元件
-    editor.DomComponents.addType('QA元件', {
-        isComponent: el => el.classList?.contains('qa'),
-
-        view: {
-            init() {
-                // id 改變就重跑
-                this.listenTo(this.model, 'change:attributes:id', this.updateQaAttrs);
-            },
-
-            onRender() {
-                // 視圖每次渲染都會呼叫，等同你說的 finish
-                this.updateQaAttrs();
-            },
-
-            updateQaAttrs() {
-                const comp = this.model;
-                const ccid = comp.get('ccid') || comp.getId();
-                if (!ccid) return;
-
-                const link = comp.find('a.qa-bg')[0];     // 請用實際存在的 selector
-                const collapse = comp.find('div.collapse')[0];
-                if (!link || !collapse) return;
-
-                link.addAttributes({
-                    href: `#${ccid}_content`,
-                    title: '展開QA',
-                    'data-bs-toggle': 'collapse'
-                });
-
-                collapse.addAttributes({
-                    id: `${ccid}_content`
-                });
-
-                this.el.querySelector('a.qa-bg')?.setAttribute('data-bs-toggle', '');
-            }
-        }
-    });
-
-    editor.DomComponents.addType('QA元件鎖定版型', {
-        isComponent: el => {
-            const fa = $(el).parents(".qa");
-            return $(fa).length > 0 && (el.classList?.contains('collapse') || el.classList?.contains('card') || el.classList?.contains('fas') || el.classList?.contains('qa-bg'));
-        },
-        model: {
-            defaults: {
-                hoverable: false,
-                selectable: false,
-                droppable: false,
-                copyable: false,
-                removable: false,
-                editable: false,
-            }
-        }
-    });
     //名片
     editor.DomComponents.addType('名片介紹', {
         isComponent: el => el.classList?.contains('frame_type_2'),

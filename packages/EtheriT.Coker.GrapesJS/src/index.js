@@ -7,6 +7,7 @@ import { createOfficialPlugins, officialPluginIds } from './plugins/officialPlug
 import 'grapesjs/dist/css/grapes.min.css';
 import './styles/swiperEditor.css';
 import './styles/componentInsert/Modal.css';
+import './styles/richText/Index.css';
 
 export { createEditorAdapter };
 export { AlertManager, attachAlertManager };

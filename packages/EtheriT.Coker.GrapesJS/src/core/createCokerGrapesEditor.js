@@ -4,6 +4,9 @@ import { baseBlocksPlugin } from '../plugins/baseBlocksPlugin.js';
 import { cokerCorePlugin } from '../plugins/cokerCorePlugin.js';
 import { swiperPlugin } from '../plugins/swiper/swiperPlugin.js';
 import { componentInsertPlugin } from '../plugins/componentInsert/Index.js';
+import { faqComponentPlugin } from '../plugins/faq/faqComponentPlugin.js';
+import { linkComponentPlugin } from '../plugins/link/linkComponentPlugin.js';
+import { richTextProviderPlugin } from '../plugins/richText/Index.js';
 import { createOfficialPlugins } from '../plugins/officialPlugins.js';
 import { grapesZhTw } from '../locales/zhTw.js';
 
@@ -54,6 +57,19 @@ export function createCokerGrapesEditor(options = {}) {
                 adapter,
                 componentOutlinesOnLoad: true,
                 ...(options.cokerCoreOptions || {})
+            }),
+            grapesjs.usePlugin(faqComponentPlugin),
+            grapesjs.usePlugin(linkComponentPlugin),
+            grapesjs.usePlugin(richTextProviderPlugin, {
+                ...(options.richTextOptions || {}),
+                jodit: {
+                    ...(options.joditRteOptions || {}),
+                    ...(options.richTextOptions?.jodit || {})
+                },
+                tinymce: {
+                    ...(options.tinyMceRteOptions || {}),
+                    ...(options.richTextOptions?.tinymce || {})
+                }
             }),
             ...externalPlugins,
             ...externalPluginFunctions,

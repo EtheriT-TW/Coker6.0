@@ -780,6 +780,28 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         });
                 }
             }
+            var faqContentHtml = (rendersInheritedHtml || isProductContentView) &&
+                                 !view.Contains("Error/", StringComparison.OrdinalIgnoreCase)
+                // Only mark up the current page's FAQs. Inherited parent content can
+                // appear on many child pages and would create duplicate FAQ markup.
+                ? model.SafeHtml
+                : string.Empty;
+            var faqStructuredData = BuildFaqStructuredData(
+                htmlProcessor,
+                faqContentHtml,
+                canonicalPageUrl);
+            if (faqStructuredData != null)
+            {
+                ViewBag.FaqStructuredDataPageId = model.PageData.Id;
+                ViewBag.FaqStructuredDataJson = JsonConvert.SerializeObject(
+                    faqStructuredData,
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        StringEscapeHandling = StringEscapeHandling.EscapeHtml
+                    });
+            }
             ViewBag.NoCopy = _env.IsProduction() && NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
@@ -1162,6 +1184,76 @@ namespace EtheriT.Coker.Web.Public.Controllers
                    left.TrimEnd('/'),
                    right.TrimEnd('/'),
                    StringComparison.OrdinalIgnoreCase);
+
+        private static Dictionary<string, object?>? BuildFaqStructuredData(
+            IHtmlProcessor htmlProcessor,
+            string? html,
+            string canonicalUrl)
+        {
+            if (string.IsNullOrWhiteSpace(html))
+            {
+                return null;
+            }
+
+            var document = htmlProcessor.LoadHtml(html);
+            var entities = new List<Dictionary<string, object?>>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var faq in htmlProcessor.Find(document, ".qa"))
+            {
+                var questionNode = faq.SelectSingleNode(
+                        ".//*[@data-coker-faq-question]") ??
+                    faq.SelectSingleNode(
+                        ".//a[contains(concat(' ', normalize-space(@class), ' '), ' qa-bg ')]");
+                var answerNode = faq.SelectSingleNode(
+                        ".//*[@data-coker-faq-answer]") ??
+                    faq.SelectSingleNode(
+                        ".//*[contains(concat(' ', normalize-space(@class), ' '), ' card-body ')]");
+                var question = NormalizeFaqText(questionNode?.InnerText);
+                var answerHtml = answerNode?.InnerHtml?.Trim();
+                var answerText = NormalizeFaqText(answerNode?.InnerText);
+
+                if (string.IsNullOrWhiteSpace(question) ||
+                    string.IsNullOrWhiteSpace(answerText) ||
+                    string.IsNullOrWhiteSpace(answerHtml))
+                {
+                    continue;
+                }
+
+                var duplicateKey = $"{question}\n{answerText}";
+                if (!seen.Add(duplicateKey))
+                {
+                    continue;
+                }
+
+                entities.Add(new Dictionary<string, object?>
+                {
+                    ["@type"] = "Question",
+                    ["name"] = question,
+                    ["acceptedAnswer"] = new Dictionary<string, object?>
+                    {
+                        ["@type"] = "Answer",
+                        ["text"] = answerHtml
+                    }
+                });
+            }
+
+            return entities.Count == 0
+                ? null
+                : new Dictionary<string, object?>
+                {
+                    ["@context"] = "https://schema.org",
+                    ["@type"] = "FAQPage",
+                    ["@id"] = $"{canonicalUrl}#faq",
+                    ["mainEntity"] = entities
+                };
+        }
+
+        private static string NormalizeFaqText(string? value)
+        {
+            var decoded = HttpUtility.HtmlDecode(value ?? string.Empty);
+            return Regex.Replace(decoded, @"\s+", " ").Trim();
+        }
 
         private static void RemoveNullStructuredDataValues(object? value)
         {

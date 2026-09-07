@@ -3,6 +3,7 @@ import { createEditorAdapter } from './createEditorAdapter.js';
 import { baseBlocksPlugin } from '../plugins/baseBlocksPlugin.js';
 import { cokerCorePlugin } from '../plugins/cokerCorePlugin.js';
 import { swiperPlugin } from '../plugins/swiper/swiperPlugin.js';
+import { componentInsertPlugin } from '../plugins/componentInsert/Index.js';
 import { createOfficialPlugins } from '../plugins/officialPlugins.js';
 import { grapesZhTw } from '../locales/zhTw.js';
 
@@ -50,11 +51,16 @@ export function createCokerGrapesEditor(options = {}) {
             }),
             ...officialPlugins,
             grapesjs.usePlugin(cokerCorePlugin, {
-                adapter
+                adapter,
+                componentOutlinesOnLoad: true,
+                ...(options.cokerCoreOptions || {})
             }),
             ...externalPlugins,
             ...externalPluginFunctions,
             grapesjs.usePlugin(swiperPlugin, {
+                adapter
+            }),
+            grapesjs.usePlugin(componentInsertPlugin, {
                 adapter
             })
         ]

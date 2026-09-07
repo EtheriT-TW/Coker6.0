@@ -6,6 +6,7 @@ import { createCokerGrapesEditor, grapesjs } from './core/createCokerGrapesEdito
 import { createOfficialPlugins, officialPluginIds } from './plugins/officialPlugins.js';
 import 'grapesjs/dist/css/grapes.min.css';
 import './styles/swiperEditor.css';
+import './styles/componentInsert/Modal.css';
 
 export { createEditorAdapter };
 export { AlertManager, attachAlertManager };

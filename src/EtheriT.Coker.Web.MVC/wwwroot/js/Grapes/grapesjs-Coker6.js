@@ -1133,7 +1133,8 @@
                         <thead class="table-light sticky-top">
                             <tr>
                                 <th>紀錄時間</th>
-                                <th>更新者</th>
+                                <th>角色</th>
+                                <th>帳號</th>
                                 <th>類型</th>
                                 <th class="text-end">操作</th>
                             </tr>
@@ -1243,6 +1244,7 @@
                 }
 
                 $("<td>").text(formatHistoryDate(item.executionTime, true)).appendTo($row);
+                $("<td>").text(item.roleName || "未設定角色").appendTo($row);
                 $("<td>").text(item.clientName || "-").appendTo($row);
                 $("<td>").text(operationText).appendTo($row);
                 $("<td>").addClass("text-end").append($action).appendTo($row);

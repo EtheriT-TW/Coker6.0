@@ -186,11 +186,40 @@ function stabilizeWebpageImportCommand(editor) {
     });
 }
 
+function keepComponentOutlinesEnabled(editor) {
+    const commandId = 'core:component-outline';
+    const buttonId = 'sw-visibility';
+
+    const enableOutlines = () => {
+        if (!editor.Commands.get(commandId)) {
+            return;
+        }
+
+        const button = editor.Panels.getButton('options', buttonId);
+
+        if (button && !button.get('active')) {
+            button.set('active', true);
+            return;
+        }
+
+        if (!editor.Commands.isActive(commandId)) {
+            editor.runCommand(commandId);
+        }
+    };
+
+    editor.on('load', enableOutlines);
+    editor.on('canvas:frame:load', enableOutlines);
+}
+
 export function cokerCorePlugin(editor, options = {}) {
     const alertManager = attachAlertManager(editor, options.adapter);
     registerEmptyLayoutComponent(editor);
     registerCanvasEditorStyles(editor);
     stabilizeWebpageImportCommand(editor);
+
+    if (options.componentOutlinesOnLoad !== false) {
+        keepComponentOutlinesEnabled(editor);
+    }
 
     editor.EtheriTCoker = {
         ...(editor.EtheriTCoker || {}),

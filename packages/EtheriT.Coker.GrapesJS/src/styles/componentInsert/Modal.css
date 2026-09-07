@@ -1,0 +1,871 @@
+﻿/* ============================================================
+ * Component Insert Modal
+ * ============================================================
+ *
+ * GrapesJS Editor Document 專用。
+ *
+ * src/index.js:
+ *
+ * import './styles/componentInsert/Modal.css';
+ * ============================================================
+ */
+
+
+/* ============================================================
+ * Root
+ * ============================================================ */
+
+.coker-component-insert-modal {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 0 18px;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+}
+
+    .coker-component-insert-modal *,
+    .coker-component-insert-modal *::before,
+    .coker-component-insert-modal *::after {
+        box-sizing: border-box;
+    }
+
+
+/* ============================================================
+ * Header
+ * ============================================================ */
+
+.coker-component-insert-modal__header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+
+/* ============================================================
+ * Heading
+ * ============================================================ */
+
+.coker-component-insert-modal__heading {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.coker-component-insert-modal__current-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 21px;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+.coker-component-insert-modal__description {
+    margin-top: 4px;
+    color: rgba( 255, 255, 255, 0.65 );
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+
+/* ============================================================
+ * Back Button
+ * ============================================================ */
+
+.coker-component-insert-modal__back {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 8px 13px;
+    border: 1px solid rgba( 255, 255, 255, 0.22 );
+    border-radius: 8px;
+    outline: none;
+    background: rgba( 255, 255, 255, 0.09 );
+    color: #ffffff;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+    .coker-component-insert-modal__back:hover {
+        border-color: rgba( 255, 255, 255, 0.42 );
+        background: rgba( 255, 255, 255, 0.16 );
+    }
+
+    .coker-component-insert-modal__back[hidden] {
+        display: none !important;
+    }
+
+.coker-component-insert-modal__back-icon {
+    display: block;
+    width: 17px;
+    height: 17px;
+}
+
+    .coker-component-insert-modal__back-icon svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* ============================================================
+ * Search
+ * ============================================================ */
+
+.coker-component-insert-modal__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 9px;
+}
+
+.coker-component-insert-modal__search-icon {
+    position: absolute;
+    z-index: 2;
+    left: 15px;
+    top: 50%;
+    width: 19px;
+    height: 19px;
+    transform: translateY(-50%);
+    color: #7b8491;
+    pointer-events: none;
+}
+
+    .coker-component-insert-modal__search-icon svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+.coker-component-insert-modal__search-input {
+    display: block;
+    width: 100%;
+    height: 46px;
+    padding: 8px 16px 8px 44px;
+    border: 1px solid #d6dae0;
+    border-radius: 10px;
+    outline: none;
+    background: #ffffff;
+    color: #20242a;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba( 0, 0, 0, 0.05 );
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .coker-component-insert-modal__search-input::placeholder {
+        color: #949ca8;
+    }
+
+    .coker-component-insert-modal__search-input:focus {
+        border-color: #6b91b2;
+        box-shadow: 0 0 0 3px rgba( 65, 116, 158, 0.14 );
+    }
+
+
+/* ============================================================
+ * Summary
+ * ============================================================ */
+
+.coker-component-insert-modal__summary {
+    min-height: 20px;
+    margin: 0 0 12px;
+    color: rgba( 255, 255, 255, 0.56 );
+    font-size: 12px;
+    line-height: 20px;
+}
+
+
+/* ============================================================
+ * Body
+ * ============================================================ */
+
+.coker-component-insert-modal__body {
+    width: 100%;
+    max-height: 62vh;
+    padding: 2px 6px 8px 2px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+
+/* ============================================================
+ * Category Grid
+ * ============================================================ */
+
+.coker-component-insert-modal__category-grid {
+    display: grid;
+    grid-template-columns: repeat( 3, minmax(0, 1fr) );
+    gap: 14px;
+}
+
+
+/* ============================================================
+ * Category Card
+ * ============================================================ */
+
+.coker-component-insert-modal__category-card {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 13px;
+    min-height: 92px;
+    padding: 16px;
+    border: 1px solid #e2e5e9;
+    border-radius: 12px;
+    outline: none;
+    background: #ffffff;
+    color: #20242a;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba( 0, 0, 0, 0.045 );
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .coker-component-insert-modal__category-card:hover {
+        transform: translateY(-2px);
+        border-color: #aeb8c4;
+        box-shadow: 0 8px 20px rgba( 0, 0, 0, 0.10 );
+    }
+
+
+/* ============================================================
+ * Category Icon
+ * ============================================================ */
+
+.coker-component-insert-modal__category-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: #f1f4f7;
+    color: #2f5d7c;
+}
+
+.coker-component-insert-modal__svg-icon {
+    display: block;
+    width: 23px;
+    height: 23px;
+}
+
+    .coker-component-insert-modal__svg-icon svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* ============================================================
+ * Category Content
+ * ============================================================ */
+
+.coker-component-insert-modal__category-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 4px;
+}
+
+.coker-component-insert-modal__category-title {
+    overflow: hidden;
+    color: #171a1f;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.coker-component-insert-modal__category-count {
+    color: #8b929d;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+
+/* ============================================================
+ * Category Arrow
+ * ============================================================ */
+
+.coker-component-insert-modal__category-arrow {
+    display: block;
+    width: 20px;
+    height: 20px;
+    color: #87919c;
+}
+
+    .coker-component-insert-modal__category-arrow svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* ============================================================
+ * Block Grid
+ * ============================================================ */
+
+.coker-component-insert-modal__block-grid {
+    display: grid;
+    grid-template-columns: repeat( 3, minmax(0, 1fr) );
+    gap: 16px;
+}
+
+
+/* ============================================================
+ * Block Card
+ * ============================================================ */
+
+.coker-component-insert-modal__block-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #e0e4e8;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #20242a;
+    box-shadow: 0 2px 6px rgba( 0, 0, 0, 0.055 );
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .coker-component-insert-modal__block-card:hover {
+        transform: translateY(-2px);
+        border-color: #aeb8c4;
+        box-shadow: 0 10px 24px rgba( 0, 0, 0, 0.11 );
+    }
+
+
+/* ============================================================
+ * Block Preview
+ * ============================================================ */
+
+.coker-component-insert-modal__block-preview {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 148px;
+    min-height: 148px;
+    padding: 16px;
+    overflow: hidden;
+    background: linear-gradient( 135deg, #f7f8fa, #eef1f4 );
+    border-bottom: 1px solid #e8ebee;
+}
+
+
+/* ============================================================
+ * Block Media
+ * ============================================================ */
+
+.coker-component-insert-modal__block-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    color: #445d70;
+    font-size: 56px;
+    line-height: 1;
+}
+
+
+    /* IMG */
+
+    .coker-component-insert-modal__block-media img {
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: 88% !important;
+        max-height: 88% !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        object-fit: contain !important;
+        border-radius: 6px;
+    }
+
+
+    /* SVG */
+
+    .coker-component-insert-modal__block-media svg {
+        display: block;
+        width: 78px !important;
+        height: 78px !important;
+        max-width: 72% !important;
+        max-height: 72% !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        flex: 0 0 auto;
+    }
+
+
+    /* Font Icons */
+
+    .coker-component-insert-modal__block-media i,
+    .coker-component-insert-modal__block-media
+    .material-symbols-outlined,
+    .coker-component-insert-modal__block-media
+    .material-icons,
+    .coker-component-insert-modal__block-media
+    .material-icons-outlined {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: auto !important;
+        height: auto !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        max-width: none !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 58px !important;
+        line-height: 1 !important;
+        color: inherit;
+        transform: none !important;
+    }
+
+
+    /* Generic Wrapper */
+
+    .coker-component-insert-modal__block-media > div,
+    .coker-component-insert-modal__block-media > span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+
+/* Custom Media */
+
+.coker-component-insert-modal__block-media--custom {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* Fallback */
+
+.coker-component-insert-modal__block-media--fallback {
+    color: #71808e;
+}
+
+.coker-component-insert-modal__fallback-icon {
+    display: block;
+    width: 62px !important;
+    height: 62px !important;
+}
+
+    .coker-component-insert-modal__fallback-icon svg {
+        display: block;
+        width: 62px !important;
+        height: 62px !important;
+        max-width: none !important;
+        max-height: none !important;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.45;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* ============================================================
+ * Zoom Button
+ * ============================================================ */
+
+.coker-component-insert-modal__block-zoom {
+    position: absolute;
+    z-index: 4;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid rgba( 255, 255, 255, 0.7 );
+    border-radius: 50%;
+    outline: none;
+    background: rgba( 25, 30, 35, 0.72 );
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba( 0, 0, 0, 0.18 );
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+    .coker-component-insert-modal__block-zoom:hover {
+        background: rgba( 25, 30, 35, 0.92 );
+        transform: scale(1.06);
+    }
+
+.coker-component-insert-modal__block-zoom-icon {
+    display: block;
+    width: 19px;
+    height: 19px;
+}
+
+    .coker-component-insert-modal__block-zoom-icon svg {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* ============================================================
+ * Block Content
+ * ============================================================ */
+
+.coker-component-insert-modal__block-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    padding: 15px;
+}
+
+
+/* ============================================================
+ * Block Title
+ * ============================================================ */
+
+.coker-component-insert-modal__block-title {
+    min-height: 22px;
+    overflow: hidden;
+    color: #171a1f;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.45;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+ * Block Category
+ * ============================================================ */
+
+.coker-component-insert-modal__block-category {
+    margin-top: 3px;
+    color: #8b929d;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* ============================================================
+ * Insert Button
+ * ============================================================ */
+
+.coker-component-insert-modal__block-insert {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    height: 40px;
+    margin-top: 14px;
+    padding: 0 12px;
+    border: 1px solid #ccd4dc;
+    border-radius: 8px;
+    outline: none;
+    background: #f7f9fa;
+    color: #324d61;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+    .coker-component-insert-modal__block-insert:hover {
+        border-color: #577b95;
+        background: #edf3f7;
+        color: #244a65;
+        box-shadow: 0 2px 6px rgba( 36, 74, 101, 0.12 );
+    }
+
+.coker-component-insert-modal__block-insert-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+}
+
+    .coker-component-insert-modal__block-insert-icon svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+
+/* ============================================================
+ * Image Viewer
+ * ============================================================ */
+
+.coker-component-insert-modal__image-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background: rgba( 0, 0, 0, 0.78 );
+}
+
+
+/* ============================================================
+ * Image Viewer Panel
+ * ============================================================ */
+
+.coker-component-insert-modal__image-viewer-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    max-width: 92vw;
+    max-height: 90vh;
+    padding: 18px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 18px 60px rgba( 0, 0, 0, 0.38 );
+}
+
+
+/* ============================================================
+ * Image Viewer Image Area
+ * ============================================================ */
+
+.coker-component-insert-modal__image-viewer-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 320px;
+    min-height: 220px;
+    max-width: 88vw;
+    max-height: 76vh;
+    overflow: auto;
+    border-radius: 9px;
+    background: #f3f4f6;
+}
+
+    .coker-component-insert-modal__image-viewer-image img {
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: 86vw;
+        max-height: 74vh;
+        object-fit: contain;
+    }
+
+
+/* ============================================================
+ * Image Viewer Close
+ * ============================================================ */
+
+.coker-component-insert-modal__image-viewer-close {
+    position: absolute;
+    z-index: 3;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    outline: none;
+    background: rgba( 0, 0, 0, 0.68 );
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    font-size: 27px;
+    font-weight: 300;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba( 0, 0, 0, 0.20 );
+}
+
+    .coker-component-insert-modal__image-viewer-close:hover {
+        background: rgba( 0, 0, 0, 0.86 );
+    }
+
+
+/* ============================================================
+ * Image Viewer Title
+ * ============================================================ */
+
+.coker-component-insert-modal__image-viewer-title {
+    padding: 13px 6px 2px;
+    color: #20242a;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+}
+
+
+/* ============================================================
+ * Empty
+ * ============================================================ */
+
+.coker-component-insert-modal__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+    padding: 36px;
+    text-align: center;
+}
+
+.coker-component-insert-modal__empty-icon {
+    display: block;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 12px;
+    color: rgba( 255, 255, 255, 0.36 );
+}
+
+    .coker-component-insert-modal__empty-icon svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+.coker-component-insert-modal__empty-title {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.coker-component-insert-modal__empty-description {
+    margin-top: 5px;
+    color: rgba( 255, 255, 255, 0.55 );
+    font-size: 12px;
+}
+
+
+/* ============================================================
+ * Scrollbar
+ * ============================================================ */
+
+.coker-component-insert-modal__body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.coker-component-insert-modal__body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.coker-component-insert-modal__body::-webkit-scrollbar-thumb {
+    border-radius: 20px;
+    background: rgba( 255, 255, 255, 0.18 );
+}
+
+    .coker-component-insert-modal__body::-webkit-scrollbar-thumb:hover {
+        background: rgba( 255, 255, 255, 0.30 );
+    }
+
+
+/* ============================================================
+ * Responsive
+ * ============================================================ */
+
+@media (max-width: 900px) {
+
+    .coker-component-insert-modal__category-grid {
+        grid-template-columns: repeat( 2, minmax(0, 1fr) );
+    }
+
+    .coker-component-insert-modal__block-grid {
+        grid-template-columns: repeat( 2, minmax(0, 1fr) );
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .coker-component-insert-modal__header {
+        align-items: flex-start;
+    }
+
+    .coker-component-insert-modal__current-title {
+        font-size: 18px;
+    }
+
+    .coker-component-insert-modal__category-grid,
+    .coker-component-insert-modal__block-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .coker-component-insert-modal__block-preview {
+        height: 170px;
+        min-height: 170px;
+    }
+
+    .coker-component-insert-modal__image-viewer {
+        padding: 14px;
+    }
+
+    .coker-component-insert-modal__image-viewer-image {
+        min-width: 0;
+        min-height: 180px;
+    }
+}

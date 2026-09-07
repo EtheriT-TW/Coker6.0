@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Application.AuditLog
 		private const int MaxHistoryDays = 90;
 		private const int TodayHistoryLimit = 20;
 		private const int TotalHistoryLimit = 30;
+		private const int HistoryCommandTimeoutSeconds = 120;
 
 		private readonly CokerDbContext db;
 		private readonly LoginUserData loginUserData;
@@ -82,18 +83,25 @@ namespace EtheriT.Coker.Application.AuditLog
 				var firstMethod = source.SaveMethod ?? source.PublishMethod;
 				var secondMethod = source.PublishMethod ?? source.SaveMethod;
 				var publishMethod = source.PublishMethod ?? string.Empty;
+				var parameterPrefix = $"{{\"Id\":{input.Id},";
+				var originalCommandTimeout = db.Database.GetCommandTimeout();
 
 				output.StartDate = startDate;
 				output.EndDate = endDate;
-				output.Items = await db.Database
-					.SqlQuery<CanvasAuditLogItemDto>(
+
+				try
+				{
+					db.Database.SetCommandTimeout(HistoryCommandTimeoutSeconds);
+					output.Items = await db.Database
+						.SqlQuery<CanvasAuditLogItemDto>(
 						$"""
 						WITH [Filtered] AS
 						(
 						    SELECT
 						        [log].[Id],
 						        [log].[ExecutionTime],
-						        COALESCE([log].[ClientName], N'') AS [ClientName],
+						        COALESCE([user].[Account], [log].[ClientName], N'') AS [ClientName],
+						        COALESCE([actorRole].[RoleName], N'未設定角色') AS [RoleName],
 						        COALESCE([log].[MethodName], N'') AS [MethodName],
 						        CASE
 						            WHEN [log].[MethodName] = {publishMethod} THEN N'publish'
@@ -105,11 +113,31 @@ namespace EtheriT.Coker.Application.AuditLog
 						            ORDER BY [log].[ExecutionTime] DESC, [log].[Id] DESC
 						        ) AS [DailyRowNumber]
 						    FROM [dbo].[AuditLogs] AS [log] WITH (READPAST)
+						    LEFT JOIN [dbo].[Users] AS [user] ON [user].[Id] = [log].[UserId]
+						    OUTER APPLY
+						    (
+						        SELECT TOP (1) [role].[Name] AS [RoleName]
+						        FROM [dbo].[MappingUserAndRoles] AS [mapping]
+						        INNER JOIN [dbo].[Roles] AS [role] ON [role].[Id] = [mapping].[RoleId]
+						        WHERE [mapping].[UserId] = [log].[UserId]
+						          AND [mapping].[IsDeleted] = CAST(0 AS bit)
+						          AND [role].[IsDeleted] = CAST(0 AS bit)
+						          AND ([role].[Type] = 0 OR [role].[FK_WebsiteId] = {siteId})
+						        ORDER BY
+						            CASE
+						                WHEN [role].[Type] = 0 THEN 0
+						                WHEN [role].[IsSuperUser] = CAST(1 AS bit) THEN 1
+						                ELSE 2
+						            END,
+						            [role].[Ser_No],
+						            [role].[Id]
+						    ) AS [actorRole]
 						    WHERE [log].[FK_WebsiteId] = {siteId}
 						      AND [log].[ServiceName] = {source.ServiceName}
 						      AND [log].[MethodName] IN ({firstMethod}, {secondMethod})
 						      AND [log].[ExecutionTime] >= {startDate}
 						      AND [log].[ExecutionTime] < {endExclusive}
+						      AND LEFT([log].[Parameters], LEN({parameterPrefix})) = {parameterPrefix}
 						      AND TRY_CONVERT
 						          (
 						              bigint,
@@ -128,7 +156,7 @@ namespace EtheriT.Coker.Application.AuditLog
 						[TodayRows] AS
 						(
 						    SELECT TOP ({TodayHistoryLimit})
-						        [Id], [ExecutionTime], [ClientName], [MethodName], [Operation]
+						        [Id], [ExecutionTime], [ClientName], [RoleName], [MethodName], [Operation]
 						    FROM [Filtered]
 						    WHERE [ExecutionTime] >= {today}
 						      AND [ExecutionTime] < {today.AddDays(1)}
@@ -136,7 +164,7 @@ namespace EtheriT.Coker.Application.AuditLog
 						),
 						[PreviousDailyRows] AS
 						(
-						    SELECT [Id], [ExecutionTime], [ClientName], [MethodName], [Operation]
+						    SELECT [Id], [ExecutionTime], [ClientName], [RoleName], [MethodName], [Operation]
 						    FROM [Filtered]
 						    WHERE [ExecutionTime] < {today}
 						      AND [DailyRowNumber] = 1
@@ -148,12 +176,17 @@ namespace EtheriT.Coker.Application.AuditLog
 						    SELECT * FROM [PreviousDailyRows]
 						)
 						SELECT TOP ({TotalHistoryLimit})
-						    [Id], [ExecutionTime], [ClientName], [MethodName], [Operation],
+						    [Id], [ExecutionTime], [ClientName], [RoleName], [MethodName], [Operation],
 						    CAST(0 AS bit) AS [IsCurrent]
 						FROM [Combined]
 						ORDER BY [ExecutionTime] DESC, [Id] DESC
 						""")
-					.ToListAsync();
+						.ToListAsync();
+				}
+				finally
+				{
+					db.Database.SetCommandTimeout(originalCommandTimeout);
+				}
 
 				if (endDate == today && output.Items.Count > 0)
 				{

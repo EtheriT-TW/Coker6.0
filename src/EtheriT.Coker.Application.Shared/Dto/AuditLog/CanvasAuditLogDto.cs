@@ -27,6 +27,7 @@ namespace EtheriT.Coker.Application.Dto.AuditLog
         public long Id { get; set; }
         public DateTime ExecutionTime { get; set; }
         public string ClientName { get; set; } = string.Empty;
+        public string RoleName { get; set; } = string.Empty;
         public string MethodName { get; set; } = string.Empty;
         public string Operation { get; set; } = string.Empty;
         public bool IsCurrent { get; set; }

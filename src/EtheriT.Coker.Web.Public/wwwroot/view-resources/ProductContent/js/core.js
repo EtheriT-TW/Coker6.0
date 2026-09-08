@@ -213,6 +213,16 @@
         };
     }
 
+    function specName(stock) {
+        return [stock.s1_Title, stock.s2_Title].filter(Boolean).join(' / ');
+    }
+
+    // 規格圖只收圖片(1)與 360(2)，與版型二既有條件一致
+    function specImageItems(stock) {
+        const mm = Array.isArray(stock.multimedia) ? stock.multimedia : [];
+        return mm.filter(m => (m.fileType === 1 || m.fileType === 2) && Array.isArray(m.link) && m.link[0]);
+    }
+
     function buildPriceSummary(stocks, options) {
         const safeStocks = Array.isArray(stocks) ? stocks : [];
         const hasTimePrice = safeStocks.some(x => !!x.timePrice);
@@ -639,6 +649,7 @@
         toInt, normalizeNullableInt, readMinQty, cloneTemplate, formatNumber, formatText,
         resolveText, defaultI18n, formatPriceText, analyzeSpecStructure, buildPriceSummary,
         buildPriceViewModel, buildPriceBaseViewModel, isStockAvailable, clampQuantity,
-        isLoggedIn, createCartPayload, runBuyGuard, submitCart, parseExternalVideo
+        isLoggedIn, createCartPayload, runBuyGuard, submitCart, parseExternalVideo,
+        specName, specImageItems
     });
 })(window, window.jQuery);

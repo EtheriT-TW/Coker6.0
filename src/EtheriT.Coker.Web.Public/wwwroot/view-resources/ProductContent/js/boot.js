@@ -11,8 +11,8 @@
         readMinQty, cloneTemplate, formatNumber, formatText, resolveText, defaultI18n,
         formatPriceText, analyzeSpecStructure, buildPriceSummary, buildPriceViewModel,
         buildPriceBaseViewModel, isStockAvailable, clampQuantity, isLoggedIn,
-        createCartPayload, runBuyGuard, submitCart, ProductSelectionEngine, ProductMediaViewer,
-        ProductContentController
+        createCartPayload, runBuyGuard, submitCart, specName, specImageItems,
+        ProductSelectionEngine, ProductMediaViewer, ProductContentController
     } = I;
 
     function createProductContent(options) {
@@ -45,7 +45,9 @@
         createCartPayload,
         runBuyGuard,
         submitCart,
-        analyzeSpecStructure
+        analyzeSpecStructure,
+        specName,
+        specImageItems
     };
 
     window.PageReady = function () {

@@ -4,6 +4,7 @@ import {
     mkdirSync,
     readFileSync,
     readdirSync,
+    unlinkSync,
     writeFileSync
 } from 'node:fs';
 import { resolve } from 'node:path';
@@ -157,6 +158,19 @@ const entryFileNames = new Set([
 ]);
 const supportChunkNames = readdirSync(distDir)
     .filter(fileName => fileName.endsWith('.js') && !entryFileNames.has(fileName));
+const supportChunkNameSet = new Set(supportChunkNames);
+const generatedChunkPattern = /-[A-Za-z0-9_-]{8}\.js$/;
+const staleSupportChunkNames = readdirSync(targetDir)
+    .filter(fileName =>
+        generatedChunkPattern.test(fileName) &&
+        !supportChunkNameSet.has(fileName)
+    );
+
+for (const fileName of staleSupportChunkNames) {
+    const staleChunkPath = resolve(targetDir, fileName);
+    unlinkSync(staleChunkPath);
+    console.log(`[copy-to-mvc] Stale support chunk removed from ${staleChunkPath}`);
+}
 
 for (const fileName of supportChunkNames) {
     copyFileSync(resolve(distDir, fileName), resolve(targetDir, fileName));

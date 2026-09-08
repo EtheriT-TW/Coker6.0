@@ -1,6 +1,4 @@
-import { joditRtePlugin } from './joditRtePlugin.js';
 import { nativeRtePlugin } from './nativeRtePlugin.js';
-import { tinyMceRtePlugin } from './tinyMceRtePlugin.js';
 
 export function richTextProviderPlugin(editor, options = {}) {
     const provider = String(options.provider || 'builtin').toLowerCase();
@@ -17,11 +15,11 @@ export function richTextProviderPlugin(editor, options = {}) {
             return;
 
         case 'jodit':
-            joditRtePlugin(editor, options.jodit || {});
-            return;
-
         case 'tinymce':
-            tinyMceRtePlugin(editor, options.tinymce || {});
+            editor.log(
+                `[EtheriT.Coker.GrapesJS] RTE provider ${provider} 未包含於目前的前端套件，改用 GrapesJS 內建 RTE。`,
+                { ns: 'rich-text-provider', level: 'warning' }
+            );
             return;
 
         default:

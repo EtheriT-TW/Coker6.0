@@ -65,13 +65,13 @@ export function openLinkComponentEditor(editor, component) {
 
     const modal = editor.Modal;
     const traitManager = editor.TraitManager;
-    const modalDocument = modal.getContainer?.()?.ownerDocument || document;
+    const modalContainer = modal.getContainer?.() || modal.modal?.el || null;
+    const modalDocument = modalContainer?.ownerDocument || document;
     const root = modalDocument.createElement('div');
     const description = modalDocument.createElement('p');
     const traitHost = modalDocument.createElement('div');
     const actions = modalDocument.createElement('div');
     const removeButton = modalDocument.createElement('button');
-    const doneButton = modalDocument.createElement('button');
 
     root.className = 'coker-link-traits';
     const updateVisibleFields = () => {
@@ -105,15 +105,13 @@ export function openLinkComponentEditor(editor, component) {
     updateVisibleFields();
     component.on('change:attributes:data-link-type', updateVisibleFields);
     description.className = 'coker-link-traits__description';
-    description.textContent = '請先選擇類型，再輸入網址、電話、郵件或地址。只有一般連結可從檔案庫選擇下載檔案。';
+    description.textContent = '請先選擇類型，再輸入網址、電話、郵件或地址。所有變更會自動儲存；只有一般連結可從檔案庫選擇下載檔案。';
     traitHost.className = 'coker-link-traits__fields';
     actions.className = 'coker-link-traits__actions';
     removeButton.type = 'button';
     removeButton.className = 'coker-link-traits__remove';
     removeButton.textContent = '移除連結';
-    doneButton.type = 'button';
-    doneButton.textContent = '完成';
-    actions.append(removeButton, doneButton);
+    actions.append(removeButton);
     root.append(description, traitHost, actions);
 
     let traitsElement;
@@ -121,6 +119,44 @@ export function openLinkComponentEditor(editor, component) {
     let traitsNextSibling;
     let active = true;
     let suspended = false;
+    let backdropGuardAttached = false;
+
+    const preventBackdropClose = event => {
+        if (event.target === modalContainer) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    };
+
+    const closeOnEscape = event => {
+        if (event.key !== 'Escape' || suspended || !active) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        modal.close();
+    };
+
+    const attachBackdropGuard = () => {
+        if (!modalContainer || backdropGuardAttached) {
+            return;
+        }
+
+        modalContainer.addEventListener('click', preventBackdropClose, true);
+        modalDocument.addEventListener('keydown', closeOnEscape, true);
+        backdropGuardAttached = true;
+    };
+
+    const detachBackdropGuard = () => {
+        if (!modalContainer || !backdropGuardAttached) {
+            return;
+        }
+
+        modalContainer.removeEventListener('click', preventBackdropClose, true);
+        modalDocument.removeEventListener('keydown', closeOnEscape, true);
+        backdropGuardAttached = false;
+    };
 
     const detachTraits = () => {
         restoreElement(traitsElement, traitsParent, traitsNextSibling);
@@ -132,6 +168,7 @@ export function openLinkComponentEditor(editor, component) {
         }
 
         active = false;
+        detachBackdropGuard();
         detachTraits();
         component.off('change:attributes:data-link-type', updateVisibleFields);
         editor.off('modal:close', handleClose);
@@ -157,6 +194,7 @@ export function openLinkComponentEditor(editor, component) {
 
         traitHost.appendChild(traitsElement);
         updateVisibleFields();
+        attachBackdropGuard();
         modal.setTitle('編輯連結');
         modal.setContent(root);
         modal.open({ attributes: { class: 'coker-link-traits-wrapper' } });
@@ -177,6 +215,7 @@ export function openLinkComponentEditor(editor, component) {
                 return;
             }
             suspended = true;
+            detachBackdropGuard();
             editor.off('modal:close', handleClose);
             detachTraits();
         },
@@ -196,7 +235,6 @@ export function openLinkComponentEditor(editor, component) {
             editor.select(replacements[0] || parent);
         });
     });
-    doneButton.addEventListener('click', () => modal.close());
     editor.__cokerLinkEditor = controller;
     show();
 }
@@ -215,6 +253,50 @@ function updateDisplayText(component) {
     }
 }
 
+function inferLinkTypeFromText(value) {
+    const text = String(value || '').trim();
+    if (!text) {
+        return 'link';
+    }
+
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(text)) {
+        return 'email';
+    }
+
+    // Avoid treating common date formats as telephone numbers.
+    const isDate = /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(text);
+    const isPhoneShape = /^\+?[\d\s().-]+(?:\s*(?:#|ext\.?|分機)\s*\d+)?$/iu.test(text);
+    const digitCount = (text.match(/\d/g) || []).length;
+    if (!isDate && isPhoneShape && digitCount >= 7 && digitCount <= 20) {
+        return 'phone';
+    }
+
+    return 'link';
+}
+
+function getComponentTextContent(component) {
+    const children = component.components?.().models || [];
+    if (!children.length) {
+        return String(component.get?.('content') || '');
+    }
+
+    return children
+        .map(child => getComponentTextContent(child))
+        .join('');
+}
+
+function initializeDisplayText(component) {
+    const attributes = component.getAttributes();
+    if (Object.prototype.hasOwnProperty.call(attributes, 'data-text')) {
+        return;
+    }
+
+    const displayText = getComponentTextContent(component).trim();
+    if (displayText) {
+        component.addAttributes({ 'data-text': displayText });
+    }
+}
+
 function inferLinkType(attributes) {
     if (linkTypes.has(attributes['data-link-type'])) {
         return attributes['data-link-type'];
@@ -224,6 +306,7 @@ function inferLinkType(attributes) {
     if (/^tel:/i.test(href)) return 'phone';
     if (/^mailto:/i.test(href)) return 'email';
     if (/google\.[^/]+\/maps\/search|google\.com\/maps\/search/i.test(href)) return 'address';
+    if (!href.trim()) return inferLinkTypeFromText(attributes['data-text']);
     return 'link';
 }
 
@@ -241,13 +324,33 @@ function getInitialDestinationValue(type, attributes) {
     }
 
     const href = String(attributes.href || '');
-    if (type === 'phone') return href.replace(/^tel:/i, '');
-    if (type === 'email') return href.replace(/^mailto:/i, '');
+    if (type === 'phone') {
+        return href
+            ? href
+                .replace(/^tel:/i, '')
+                .replace(/;ext=(\d+)$/i, '#$1')
+            : String(attributes['data-text'] || '').trim();
+    }
+    if (type === 'email') {
+        return href
+            ? href.replace(/^mailto:/i, '')
+            : String(attributes['data-text'] || '').trim();
+    }
     if (type === 'address') {
         const query = href.match(/[?&]query=([^&#]*)/i)?.[1];
         return query ? decodeValue(query) : '';
     }
-    return href;
+    return href || (type !== 'link'
+        ? String(attributes['data-text'] || '').trim()
+        : '');
+}
+
+function getLinkDestinationValues(component) {
+    if (!component.__cokerLinkDestinationValues) {
+        component.__cokerLinkDestinationValues = {};
+    }
+
+    return component.__cokerLinkDestinationValues;
 }
 
 function getDestinationPresentation(type) {
@@ -279,8 +382,14 @@ function createGeneratedHref(type, destinationValue) {
     if (!value) return '';
 
     switch (type) {
-        case 'phone':
-            return `tel:${value.replace(/\s+/g, '')}`;
+        case 'phone': {
+            const extension = value.match(/\s*(?:#|ext\.?|分機)\s*(\d+)\s*$/iu);
+            const number = (extension
+                ? value.slice(0, extension.index)
+                : value
+            ).replace(/\s+/g, '');
+            return `tel:${number}${extension ? `;ext=${extension[1]}` : ''}`;
+        }
         case 'email':
             return `mailto:${value}`;
         case 'address':
@@ -314,13 +423,16 @@ function synchronizeLinkAttributes(component, options = {}) {
     }
 
     component.__cokerSynchronizingLink = true;
+
     try {
         const attributes = component.getAttributes();
         const type = inferLinkType(attributes);
+
         const target = options.applyDefaultTarget
             ? getDefaultTarget(type)
             : attributes.target || getDefaultTarget(type);
-        const changes = {
+
+        const desiredValues = {
             'data-link-type': type,
             target,
             title: createGeneratedTitle(
@@ -329,45 +441,119 @@ function synchronizeLinkAttributes(component, options = {}) {
                 target
             )
         };
-        const generatedHref = options.generateHref
-            ? createGeneratedHref(type, attributes['data-link-value'])
-            : null;
 
-        if (options.resetDestination) {
-            const destinationValue = type === 'address'
-                ? String(attributes['data-text'] || '').trim()
-                : '';
-            changes['data-link-value'] = destinationValue;
-            changes.href = createGeneratedHref(type, destinationValue);
-        } else if (generatedHref !== null) {
-            changes.href = generatedHref;
+        if (Object.prototype.hasOwnProperty.call(options, 'destinationValue')) {
+            const destinationValue = String(options.destinationValue || '');
+            desiredValues['data-link-value'] =
+                destinationValue;
+
+            desiredValues.href =
+                createGeneratedHref(
+                    type,
+                    destinationValue
+                );
+        } else if (options.generateHref) {
+            desiredValues.href =
+                createGeneratedHref(
+                    type,
+                    attributes['data-link-value']
+                );
         }
 
-        component.addAttributes(changes);
+        /*
+         * 只寫入真正有改變的 attribute。
+         *
+         * GrapesJS 的 addAttributes 即使資料邏輯相同，
+         * 仍可能造成 attributes model 更新，
+         * 進而觸發 change:attributes:* listener。
+         */
+        const changes = {};
+
+        Object.entries(desiredValues).forEach(
+            ([name, value]) => {
+                const currentValue =
+                    attributes[name] == null
+                        ? ''
+                        : String(attributes[name]);
+
+                const nextValue =
+                    value == null
+                        ? ''
+                        : String(value);
+
+                if (currentValue !== nextValue) {
+                    changes[name] = value;
+                }
+            }
+        );
+
+        if (Object.keys(changes).length > 0) {
+            component.addAttributes(changes);
+        }
     } finally {
         component.__cokerSynchronizingLink = false;
     }
 }
 
 function updateTargetSecurity(component) {
-    const attributes = component.getAttributes();
-    const rel = new Set(String(attributes.rel || '').split(/\s+/).filter(Boolean));
-
-    if (attributes.target === '_blank') {
-        rel.add('noopener');
-    } else {
-        rel.delete('noopener');
+    if (component.__cokerUpdatingTargetSecurity) {
+        return;
     }
 
-    if (rel.size) {
-        component.addAttributes({ rel: Array.from(rel).join(' ') });
-    } else {
-        component.removeAttributes('rel');
+    component.__cokerUpdatingTargetSecurity = true;
+
+    try {
+        const attributes = component.getAttributes();
+
+        const currentRel = String(
+            attributes.rel || ''
+        )
+            .split(/\s+/)
+            .filter(Boolean);
+
+        const rel = new Set(currentRel);
+
+        if (attributes.target === '_blank') {
+            rel.add('noopener');
+        } else {
+            rel.delete('noopener');
+        }
+
+        const newRel = Array
+            .from(rel)
+            .join(' ');
+
+        const oldRel = String(
+            attributes.rel || ''
+        ).trim();
+
+        // 沒改變就什麼都不要做
+        if (newRel === oldRel) {
+            return;
+        }
+
+        if (newRel) {
+            component.addAttributes({
+                rel: newRel
+            });
+        } else if (
+            Object.prototype.hasOwnProperty.call(
+                attributes,
+                'rel'
+            )
+        ) {
+            // 只有真的存在 rel 才 remove
+            component.removeAttributes('rel');
+        }
+    } finally {
+        component.__cokerUpdatingTargetSecurity = false;
     }
 }
 
 export function linkComponentPlugin(editor) {
     editor.DomComponents.addType(linkComponentType, {
+        extend: 'link',
+        extendView: 'text',
         isComponent(element) {
             return element.tagName === 'A'
                 ? { type: linkComponentType, name: linkComponentType }
@@ -448,13 +634,19 @@ export function linkComponentPlugin(editor) {
                 ]
             },
             init() {
+                initializeDisplayText(this);
                 const initialAttributes = this.getAttributes();
                 const initialType = inferLinkType(initialAttributes);
+                const initialDestinationValue = initialType === 'address'
+                    ? String(initialAttributes['data-text'] || '').trim()
+                    : getInitialDestinationValue(initialType, initialAttributes);
+
+                getLinkDestinationValues(this)[initialType] =
+                    initialDestinationValue;
+
                 if (initialType === 'address') {
                     this.addAttributes({
-                        'data-link-value': String(
-                            initialAttributes['data-text'] || ''
-                        ).trim()
+                        'data-link-value': initialDestinationValue
                     });
                 } else if (!Object.prototype.hasOwnProperty.call(
                     initialAttributes,
@@ -480,11 +672,31 @@ export function linkComponentPlugin(editor) {
                     synchronizeLinkAttributes(component);
                 });
                 this.on('change:attributes:data-link-value', component => {
+                    const attributes = component.getAttributes();
+                    const type = inferLinkType(attributes);
+                    getLinkDestinationValues(component)[type] =
+                        String(attributes['data-link-value'] || '');
+
                     synchronizeLinkAttributes(component, { generateHref: true });
                 });
                 this.on('change:attributes:data-link-type', component => {
+                    const attributes = component.getAttributes();
+                    const previousAttributes = component.previous('attributes') || {};
+                    const previousType = inferLinkType(previousAttributes);
+                    const type = inferLinkType(attributes);
+                    const destinationValues = getLinkDestinationValues(component);
+
+                    destinationValues[previousType] =
+                        getInitialDestinationValue(previousType, previousAttributes);
+
+                    if (!Object.prototype.hasOwnProperty.call(destinationValues, type)) {
+                        destinationValues[type] = type === 'address'
+                            ? String(attributes['data-text'] || '').trim()
+                            : '';
+                    }
+
                     synchronizeLinkAttributes(component, {
-                        resetDestination: true,
+                        destinationValue: destinationValues[type],
                         applyDefaultTarget: true
                     });
                 });

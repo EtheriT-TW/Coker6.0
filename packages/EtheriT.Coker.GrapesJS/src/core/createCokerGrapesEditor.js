@@ -32,6 +32,9 @@ export function createCokerGrapesEditor(options = {}) {
         container,
         height: options.height || '100vh',
         fromElement: options.fromElement ?? true,
+        // Frontend output must not depend on style attributes. GrapesJS stores
+        // component styles as #id CSS rules and getHtml() omits inline styles.
+        avoidInlineStyle: true,
 
         storageManager: options.storageManager || {
             autoload: false

@@ -11,6 +11,41 @@ const emptyLayoutTags = new Set([
     'SECTION'
 ]);
 
+// Keep the text-editable HTML policy in one place. Tags backed by a special
+// GrapesJS component type (eg. table cells) are listed separately below so we
+// can retain their model/commands and only add the RTE behaviour they need.
+const genericEditableTextTags = new Set([
+    'ADDRESS',
+    'BLOCKQUOTE',
+    'BUTTON',
+    'CAPTION',
+    'DD',
+    'DT',
+    'FIGCAPTION',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'LEGEND',
+    'LI',
+    'P',
+    'PRE',
+    'SUMMARY'
+]);
+
+const typedEditableTextComponents = Object.freeze([
+    // GrapesJS built-in label component (preserves the `for` trait).
+    'label',
+    // GrapesJS built-in cells and grapesjs-blocks-table cell types.
+    'cell',
+    'tbl-cell',
+    'th'
+]);
+
+const basicDesignTraitNames = new Set(['id', 'title']);
+
 const canvasEditorStyleId = 'etherit-coker-canvas-editor-styles';
 const compactBackstageClass = 'coker-backstage-compact';
 const compactBackstageWidth = 220;
@@ -140,6 +175,50 @@ function isEmptyLayoutElement(element) {
     });
 }
 
+function registerEditableTextComponent(editor) {
+    // Preserve special component types while giving them the same editing view
+    // as GrapesJS text components. In particular, TD/TH must keep their table
+    // types because the table plugin identifies them by type for row/column
+    // operations.
+    typedEditableTextComponents.forEach(type => {
+        if (!editor.DomComponents.getType(type)) {
+            return;
+        }
+
+        editor.DomComponents.addType(type, {
+            extendView: 'text',
+            model: {
+                defaults: {
+                    editable: true
+                }
+            }
+        });
+    });
+
+    // GrapesJS only infers `text` for a limited set of child markup. Register a
+    // single semantic text-container type so elements such as P with SPAN/BR,
+    // LI and BUTTON remain editable regardless of their current children.
+    editor.DomComponents.addType('coker-editable-text', {
+        extend: 'text',
+        model: {
+            defaults: {
+                name: '文字'
+            }
+        },
+        isComponent(element) {
+            if (!element || !genericEditableTextTags.has(element.tagName)) {
+                return;
+            }
+
+            return {
+                type: 'coker-editable-text',
+                name: element.tagName.toLowerCase(),
+                tagName: element.tagName.toLowerCase()
+            };
+        }
+    });
+}
+
 function registerEmptyLayoutComponent(editor) {
     const defaultType = editor.DomComponents.getType('default');
 
@@ -211,11 +290,56 @@ function keepComponentOutlinesEnabled(editor) {
     editor.on('canvas:frame:load', enableOutlines);
 }
 
+function hasComponentSettings(component) {
+    const preference = component?.get?.('cokerOpenSettingsOnSelect');
+    if (typeof preference === 'boolean') {
+        return preference;
+    }
+
+    // Every ordinary GrapesJS component has id/title traits. Treat a component
+    // as configurable only when it declares something beyond those basic
+    // design fields. Custom components can force this behaviour on or off with
+    // `cokerOpenSettingsOnSelect`.
+    return component?.getTraits?.().some(trait => {
+        const name = trait.getName?.() || trait.get?.('name') || '';
+        return !basicDesignTraitNames.has(name);
+    }) || false;
+}
+
+function openSettingsForConfigurableComponents(editor) {
+    editor.on('component:selected', component => {
+        if (!hasComponentSettings(component)) {
+            return;
+        }
+
+        // Wait until GrapesJS has finished changing the TraitManager target.
+        queueMicrotask(() => {
+            if (editor.getSelected() !== component) {
+                return;
+            }
+
+            // The link editor temporarily moves the TraitManager DOM into its
+            // modal. Opening the sidebar at the same time would move those
+            // fields back out and leave an empty modal.
+            if (editor.__cokerLinkEditor?.component === component) {
+                return;
+            }
+
+            const settingsButton = editor.Panels.getButton('views', 'open-tm');
+            if (settingsButton && !settingsButton.get('active')) {
+                settingsButton.set('active', true);
+            }
+        });
+    });
+}
+
 export function cokerCorePlugin(editor, options = {}) {
     const alertManager = attachAlertManager(editor, options.adapter);
     registerEmptyLayoutComponent(editor);
+    registerEditableTextComponent(editor);
     registerCanvasEditorStyles(editor);
     stabilizeWebpageImportCommand(editor);
+    openSettingsForConfigurableComponents(editor);
 
     if (options.componentOutlinesOnLoad !== false) {
         keepComponentOutlinesEnabled(editor);

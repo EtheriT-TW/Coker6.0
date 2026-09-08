@@ -20,6 +20,50 @@ const defaultFontSizes = [
     '6rem'
 ];
 
+const toolbarViewportPadding = 8;
+
+function clampToolbarPositionToCanvas(position) {
+    const {
+        canvasOffsetLeft,
+        canvasOffsetTop,
+        canvasRect,
+        targetHeight,
+        targetWidth
+    } = position || {};
+    const canvasWidth = Number(canvasRect?.width);
+    const canvasHeight = Number(canvasRect?.height);
+    const offsetLeft = Number(canvasOffsetLeft);
+    const offsetTop = Number(canvasOffsetTop);
+    const toolbarWidth = Number(targetWidth);
+    const toolbarHeight = Number(targetHeight);
+
+    if (
+        Number.isFinite(canvasWidth) &&
+        Number.isFinite(offsetLeft) &&
+        Number.isFinite(toolbarWidth)
+    ) {
+        const minLeft = toolbarViewportPadding - offsetLeft;
+        const maxLeft = canvasWidth - toolbarViewportPadding - toolbarWidth - offsetLeft;
+
+        position.left = maxLeft >= minLeft
+            ? Math.min(Math.max(Number(position.left) || 0, minLeft), maxLeft)
+            : minLeft;
+    }
+
+    if (
+        Number.isFinite(canvasHeight) &&
+        Number.isFinite(offsetTop) &&
+        Number.isFinite(toolbarHeight)
+    ) {
+        const minTop = toolbarViewportPadding - offsetTop;
+        const maxTop = canvasHeight - toolbarViewportPadding - toolbarHeight - offsetTop;
+
+        position.top = maxTop >= minTop
+            ? Math.min(Math.max(Number(position.top) || 0, minTop), maxTop)
+            : minTop;
+    }
+}
+
 function getSelectionElement(rte) {
     const selection = rte.selection();
     let node = selection?.anchorNode;
@@ -59,10 +103,189 @@ function getCurrentLink(rte) {
     }) || null;
 }
 
+const inlineFormattingProperties = [
+    'background-color',
+    'color',
+    'font-family',
+    'font-size',
+    'font-style',
+    'font-weight',
+    'letter-spacing',
+    'line-height',
+    'text-decoration',
+    'text-transform'
+];
+
+const formattingTags = new Set([
+    'B',
+    'EM',
+    'FONT',
+    'I',
+    'S',
+    'STRIKE',
+    'STRONG',
+    'U'
+]);
+
+function unwrapElement(element) {
+    const parent = element.parentNode;
+    if (!parent) {
+        return;
+    }
+
+    while (element.firstChild) {
+        parent.insertBefore(element.firstChild, element);
+    }
+    element.remove();
+}
+
+function clearElementFormatting(element) {
+    inlineFormattingProperties.forEach(property => {
+        element.style?.removeProperty(property);
+    });
+
+    if (!element.getAttribute?.('style')?.trim()) {
+        element.removeAttribute?.('style');
+    }
+
+    if (formattingTags.has(element.tagName)) {
+        unwrapElement(element);
+    }
+}
+
+function isFormattingOnlySpan(element) {
+    if (element.tagName !== 'SPAN') {
+        return false;
+    }
+
+    return Array.from(element.attributes).every(attribute =>
+        ['class', 'id', 'style'].includes(attribute.name) ||
+        attribute.name.startsWith('data-gjs-')
+    );
+}
+
+function getInlineFormattingElements(rte) {
+    const selection = rte.selection();
+    if (!selection?.rangeCount) {
+        return [];
+    }
+
+    const range = selection.getRangeAt(0);
+    const elements = new Set();
+
+    [selection.anchorNode, selection.focusNode].forEach(selectedNode => {
+        let element = selectedNode?.nodeType === 1
+            ? selectedNode
+            : selectedNode?.parentElement;
+
+        while (element && element !== rte.el) {
+            elements.add(element);
+            element = element.parentElement;
+        }
+    });
+
+    if (!range.collapsed) {
+        rte.el.querySelectorAll('*').forEach(element => {
+            try {
+                if (range.intersectsNode(element)) {
+                    elements.add(element);
+                }
+            } catch {
+                // Ignore nodes invalidated by the browser's removeFormat command.
+            }
+        });
+    }
+
+    return Array.from(elements).sort((left, right) => {
+        if (left.contains(right)) {
+            return 1;
+        }
+        if (right.contains(left)) {
+            return -1;
+        }
+        return 0;
+    });
+}
+
+function findComponentByElement(component, element) {
+    if (component.getEl?.() === element) {
+        return component;
+    }
+
+    const children = component.components?.().models || [];
+    for (const child of children) {
+        const match = findComponentByElement(child, element);
+        if (match) {
+            return match;
+        }
+    }
+
+    return null;
+}
+
+function clearComponentFormatting(editor, element) {
+    const component = findComponentByElement(editor.getWrapper(), element);
+    if (!component) {
+        return null;
+    }
+
+    const style = { ...component.getStyle() };
+    let changed = false;
+
+    inlineFormattingProperties.forEach(property => {
+        if (Object.prototype.hasOwnProperty.call(style, property)) {
+            delete style[property];
+            changed = true;
+        }
+    });
+
+    if (changed) {
+        // With avoidInlineStyle enabled, this updates the component's #id CSS
+        // rule instead of writing a style attribute back to the canvas element.
+        component.setStyle(style);
+    }
+
+    return component;
+}
+
+function clearInlineFormatting(editor, elements) {
+    elements.forEach(element => {
+        const formattingOnlySpan = isFormattingOnlySpan(element);
+        const component = clearComponentFormatting(editor, element);
+
+        if (element.tagName === 'SPAN') {
+            // Stop this occurrence from inheriting a shared class rule without
+            // deleting that rule or changing any other component using it.
+            component?.setClass([]);
+            element.removeAttribute('class');
+
+            if (formattingOnlySpan) {
+                const idRule = component
+                    ? editor.Css.getIdRule(component.getId())
+                    : null;
+                if (idRule) {
+                    editor.Css.remove(idRule);
+                }
+
+                unwrapElement(element);
+                return;
+            }
+        }
+
+        clearElementFormatting(element);
+    });
+}
+
 async function clearSelectedFormatting(editor, rte) {
     const currentLink = getCurrentLink(rte);
+    const formattingElements = getInlineFormattingElements(rte);
+
     if (currentLink?.parentNode) {
         if (currentLink === rte.el) {
+            formattingElements.push(currentLink);
+            clearInlineFormatting(editor, formattingElements);
+            rte.el.dispatchEvent(new rte.doc.defaultView.Event('input', { bubbles: true }));
+
             const editingView = editor.getModel().get('editing');
             const editingComponent = editingView?.model || editor.getEditing();
             const parentComponent = editingComponent?.parent?.();
@@ -82,17 +305,19 @@ async function clearSelectedFormatting(editor, rte) {
             parent.insertBefore(currentLink.firstChild, currentLink);
         }
         currentLink.remove();
-        rte.el.dispatchEvent(new rte.doc.defaultView.Event('input', { bubbles: true }));
-        return;
     }
 
     const selection = rte.selection();
-    if (!selection?.rangeCount || selection.getRangeAt(0).collapsed) {
+    if (!selection?.rangeCount) {
         return;
     }
 
-    rte.exec('removeFormat');
-    rte.exec('unlink');
+    if (!selection.getRangeAt(0).collapsed) {
+        rte.exec('removeFormat');
+        rte.exec('unlink');
+    }
+
+    clearInlineFormatting(editor, formattingElements);
     rte.el.dispatchEvent(new rte.doc.defaultView.Event('input', { bubbles: true }));
 }
 
@@ -198,16 +423,161 @@ function findComponentByAttribute(component, name, value) {
     return null;
 }
 
+async function replaceEditingSpanWithLink(editor, rte, range) {
+    if (!range.collapsed) {
+        return false;
+    }
+
+    const selectionElement = getSelectionElement(rte);
+    const spanElement = selectionElement?.closest?.('span');
+    if (!spanElement || !rte.el?.contains?.(spanElement)) {
+        return false;
+    }
+
+    // Only replace a SPAN represented by a real GrapesJS component. This
+    // avoids converting temporary/internal RTE markup.
+    const currentSpanComponent = findComponentByElement(
+        editor.getWrapper(),
+        spanElement
+    );
+    if (currentSpanComponent?.get?.('tagName') !== 'span') {
+        return false;
+    }
+
+    const editingView = editor.getModel().get('editing');
+    const markerName = 'data-coker-span-to-link';
+    const markerValue = `span-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}`;
+    const displayText = spanElement.textContent?.trim() || '連結文字';
+
+    // The edited RTE root may be a parent DIV/P rather than the SPAN itself.
+    // Mark the exact DOM node so it can be found again after RTE synchronization.
+    spanElement.setAttribute(markerName, markerValue);
+    rte.el.dispatchEvent(new rte.doc.defaultView.Event('input', { bubbles: true }));
+
+    // Finish the current RTE session before replacing a component inside it.
+    await editingView?.disableEditing?.();
+
+    const spanComponent = findComponentByAttribute(
+        editor.getWrapper(),
+        markerName,
+        markerValue
+    );
+    if (!spanComponent) {
+        spanElement.removeAttribute(markerName);
+        return false;
+    }
+
+    const attributes = { ...spanComponent.getAttributes() };
+    delete attributes[markerName];
+    const innerHtml = spanComponent.getInnerHTML();
+
+    const replacements = spanComponent.replaceWith({
+        type: linkComponentType,
+        name: linkComponentType,
+        tagName: 'a',
+        attributes: {
+            ...attributes,
+            'data-text': displayText
+        },
+        components: innerHtml
+    });
+    const linkComponent = replacements[0];
+
+    if (linkComponent) {
+        editor.select(linkComponent);
+        openLinkComponentEditor(editor, linkComponent);
+    }
+
+    return true;
+}
+
 async function openLinkTraits(editor, rte) {
     const selection = rte.selection();
+
     if (!selection?.rangeCount) {
         return;
     }
 
     const range = selection.getRangeAt(0);
-    const markerName = 'data-coker-link-editor';
-    const markerValue = `link-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     let link = getCurrentLink(rte);
+
+    // A short standalone value (phone, mail, etc.) is commonly wrapped in a
+    // SPAN. Requiring users to drag-select it is difficult because GrapesJS may
+    // start component dragging first. With only a caret, convert that complete
+    // SPAN component into a link while preserving its id/classes and content.
+    if (!link && await replaceEditingSpanWithLink(editor, rte, range)) {
+        return;
+    }
+
+    /*
+     * 情況 1：
+     * 原本 HTML 就是一個 <a> Component。
+     *
+     * 此時 RTE 的根節點 rte.el 本身就是 <a>，
+     * 不要再透過 DOM marker + input 反查 Component，
+     * 直接取得目前正在 Editing 的 GrapesJS Component。
+     */
+    if (link && link === rte.el) {
+        const editingView =
+            editor.getModel().get('editing');
+
+        const editingComponent =
+            editingView?.model ||
+            editor.getEditing();
+
+        if (!editingComponent) {
+            return;
+        }
+
+        // 舊資料可能沒有 data-text，補成目前顯示文字
+        const attributes =
+            editingComponent.getAttributes?.() || {};
+
+        if (
+            !Object.prototype.hasOwnProperty.call(
+                attributes,
+                'data-text'
+            )
+        ) {
+            editingComponent.addAttributes({
+                'data-text':
+                    link.textContent?.trim() ||
+                    '連結文字'
+            });
+        }
+
+        /*
+         * 先結束 RTE。
+         * 此時不要 dispatch input，
+         * 因為 editingComponent 就是我們要的 Component。
+         */
+        await editingView?.disableEditing?.();
+
+        openLinkComponentEditor(
+            editor,
+            editingComponent
+        );
+
+        return;
+    }
+
+    /*
+     * 情況 2：
+     * 使用者在一般文字 Component 的 RTE 裡
+     * 新增了一個 <a>。
+     *
+     * 這時 <a> 還只是 rte.el 裡面的 DOM，
+     * 必須使用 marker 讓 GrapesJS 同步後再找到 Component。
+     */
+    const markerName =
+        'data-coker-link-editor';
+
+    const markerValue =
+        `link-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2)}`;
 
     if (!link) {
         link = rte.doc.createElement('a');
@@ -217,32 +587,60 @@ async function openLinkTraits(editor, rte) {
             link.textContent = '連結文字';
             range.insertNode(link);
         } else {
-            link.appendChild(range.extractContents());
+            link.appendChild(
+                range.extractContents()
+            );
+
             range.insertNode(link);
         }
     }
 
-    link.setAttribute(markerName, markerValue);
-    if (!link.hasAttribute('data-text')) {
-        link.setAttribute('data-text', link.textContent?.trim() || '連結文字');
-    }
-    rte.el.dispatchEvent(new rte.doc.defaultView.Event('input', { bubbles: true }));
-
-    const editingView = editor.getModel().get('editing');
-    await editingView?.disableEditing?.();
-
-    const component = findComponentByAttribute(
-        editor.getWrapper(),
+    link.setAttribute(
         markerName,
         markerValue
     );
+
+    if (!link.hasAttribute('data-text')) {
+        link.setAttribute(
+            'data-text',
+            link.textContent?.trim() ||
+            '連結文字'
+        );
+    }
+
+    rte.el.dispatchEvent(
+        new rte.doc.defaultView.Event(
+            'input',
+            {
+                bubbles: true
+            }
+        )
+    );
+
+    const editingView =
+        editor.getModel().get('editing');
+
+    await editingView?.disableEditing?.();
+
+    const component =
+        findComponentByAttribute(
+            editor.getWrapper(),
+            markerName,
+            markerValue
+        );
 
     if (!component) {
         return;
     }
 
-    component.removeAttributes(markerName);
-    openLinkComponentEditor(editor, component);
+    component.removeAttributes(
+        markerName
+    );
+
+    openLinkComponentEditor(
+        editor,
+        component
+    );
 }
 
 function colorAction(property, title, label) {
@@ -334,23 +732,21 @@ function registerNativeActions(editor, options) {
     rte.add('clearFormat', {
         icon: '&#8856;',
         attributes: {
-            title: '取消目前連結；不在連結內時清除選取文字的格式'
+            title: '清除文字格式與連結；未反白時清除游標所在的行內格式'
         },
-        state: currentRte => {
-            if (getCurrentLink(currentRte)) {
-                return 0;
-            }
-            const selection = currentRte.selection();
-            return !selection?.rangeCount || selection.getRangeAt(0).collapsed
-                ? -1
-                : 0;
-        },
+        state: () => 0,
         result: currentRte => clearSelectedFormatting(editor, currentRte)
     });
 }
 
 export function nativeRtePlugin(editor, options = {}) {
     let registered = false;
+
+    // GrapesJS aligns the RTE to the edited component. When the toolbar is
+    // wider than that component, its own element-width constraint can produce
+    // a negative left position. Clamp the final coordinates to the visible
+    // canvas on every enable, scroll and resize-driven position update.
+    editor.on('rteToolbarPosUpdate', clampToolbarPositionToCanvas);
 
     editor.onReady(() => {
         if (registered) {

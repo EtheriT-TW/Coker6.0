@@ -1,0 +1,23 @@
+.gjs-rte-toolbar:has(.tox-tinymce-inline) {
+    padding: 0;
+    border-radius: 6px;
+    overflow: visible;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+}
+
+.gjs-rte-toolbar .tox.tox-tinymce-inline {
+    position: static !important;
+    width: auto !important;
+    border: 0;
+}
+
+.gjs-rte-toolbar .tox .tox-editor-header {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+}
+
+.tox.tox-tinymce-aux,
+.tox .tox-dialog-wrap {
+    z-index: 10050 !important;
+}

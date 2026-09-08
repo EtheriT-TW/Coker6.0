@@ -1,4 +1,4 @@
-(function (window, $) {
+﻿(function (window, $) {
     'use strict';
 
     if (!$) {
@@ -601,13 +601,23 @@
             const templates = this.options.templates;
             const $productWrapper = this.$root.find(selectors.productSwiperWrapper).empty();
             const $previewWrapper = this.$root.find(selectors.previewSwiperWrapper).empty();
-            const medium = Array.isArray(result.img_Medium) ? result.img_Medium : [];
-            const small = Array.isArray(result.img_Small) ? result.img_Small : [];
-            const original = Array.isArray(result.img_Original) ? result.img_Original : [];
+
+            // 版型可選擇性擴充媒體清單（版型一：把規格圖併進 ProductSwiper）。
+            // 沒實作 buildMediaLists 的版型走原路徑，行為完全不變。
+            const lists = (this.layout && typeof this.layout.buildMediaLists === 'function')
+                ? this.layout.buildMediaLists(result)
+                : null;
+
+            const medium = Array.isArray(lists?.medium) ? lists.medium
+                : (Array.isArray(result.img_Medium) ? result.img_Medium : []);
+            const small = Array.isArray(lists?.small) ? lists.small
+                : (Array.isArray(result.img_Small) ? result.img_Small : []);
+            const original = Array.isArray(lists?.original) ? lists.original
+                : (Array.isArray(result.img_Original) ? result.img_Original : []);
 
             medium.forEach((img, index) => {
                 let $slide;
-                const mediaAlt = buildProductMediaAlt(result.title, img.fileType, index);
+                const mediaAlt = img.alt || buildProductMediaAlt(result.title, img.fileType, index);
 
                 if (img.fileType === 3) {
                     $slide = cloneTemplate(templates.videoSlide);
@@ -666,7 +676,7 @@
                 const $slide = cloneTemplate(templates.previewSlide);
                 const $img = $slide.find('img');
                 let src = img.link?.[0] || '';
-                const mediaAlt = buildProductMediaAlt(result.title, img.fileType, index);
+                const mediaAlt = img.alt || buildProductMediaAlt(result.title, img.fileType, index);
 
                 if (img.fileType === 3) {
                     src = '/images/videopreview.jpg';
@@ -699,7 +709,7 @@
 
             this.mediaViewer.setItems(original.map((img, index) => ({
                 ...img,
-                alt: buildProductMediaAlt(result.title, img.fileType, index)
+                alt: img.alt || buildProductMediaAlt(result.title, img.fileType, index)
             })));
             this.initSwipers(small.length);
         }

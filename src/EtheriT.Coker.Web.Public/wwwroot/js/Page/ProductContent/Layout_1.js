@@ -17,6 +17,8 @@
     const submitCart = M.submitCart;
     const buildPriceViewModel = M.buildPriceViewModel;
     const buildPriceBaseViewModel = M.buildPriceBaseViewModel;
+    const specName = M.specName;
+    const specImageItems = M.specImageItems;
 
     const SELECTORS = {
         options: '.options',
@@ -34,6 +36,8 @@
         priceItem: '#PriceListTemplate'
     };
 
+    const SPEC_SLIDE_SPEED_MS = 0;
+
     function createLayout1(controller) {
         const $pageRoot = controller.$pageRoot;
         const $root = controller.$root;
@@ -42,11 +46,79 @@
         const $emptyProduct = $root.find(SELECTORS.emptyProduct);
         const $addToCartButton = $pageRoot.find(SELECTORS.addToCartButton);
 
+        // 規格 id → 該規格第一張圖在 ProductSwiper 的 slide 索引
+        let specSlideIndexById = {};
+
+        // 開頁網址帶的 psid 只能在這裡讀一次：使用者一旦切過規格，
+        // syncVariantUrlFromSelection 就會持續改寫網址，之後再讀就不是「深連結」了。
+        const deepLinkStockId = controller.getRequestedStockId();
+        let deepLinkJumpDone = false;
+
+        // 版型一：規格圖統一併進 ProductSwiper，接在商品主圖之後。
+        // 規格圖只有原圖一種尺寸，medium / small / original 三個清單塞同一筆，
+        // 維持 renderMedia 依賴的「三陣列等長同序」前提（data-index ↔ 燈箱索引）。
+        function buildMediaLists(result) {
+            const medium = Array.isArray(result.img_Medium) ? result.img_Medium.slice() : [];
+            const small = Array.isArray(result.img_Small) ? result.img_Small.slice() : [];
+            const original = Array.isArray(result.img_Original) ? result.img_Original.slice() : [];
+            const stocks = Array.isArray(result.stocks) ? result.stocks : [];
+            const indexById = {};
+
+            stocks.forEach(stock => {
+                const items = specImageItems(stock);
+                if (!items.length) return;   // 沒有規格圖就略過，不補佔位圖
+
+                indexById[stock.id] = medium.length;
+
+                const altParts = [result.title, specName(stock)].filter(Boolean);
+                items.forEach((item, index) => {
+                    const entry = {
+                        ...item,
+                        alt: `${altParts.join(' - ')}${index > 0 ? ` - ${index + 1}` : ''}`
+                    };
+                    medium.push(entry);
+                    small.push(entry);
+                    original.push(entry);
+                });
+            });
+
+            specSlideIndexById = indexById;
+
+            return { medium, small, original };
+        }
+
+        function slideToActiveSpec() {
+            const stock = controller.state.selection.getActiveStock();
+            const swiper = controller.state.productSwiper;
+            const index = stock ? specSlideIndexById[stock.id] : null;
+
+            if (index == null || !swiper) return;
+
+            if (typeof swiper.slideToLoop === 'function') {
+                swiper.slideToLoop(index, SPEC_SLIDE_SPEED_MS);
+            } else {
+                swiper.slideTo(index, SPEC_SLIDE_SPEED_MS);
+            }
+        }
+
+        // 帶 psid 進來時，首次渲染就把主圖停在該規格的圖上。
+        // 只做一次：之後的重繪（加入購物車、切換商品）不該把使用者拉回去。
+        function applyDeepLinkJump() {
+            if (deepLinkJumpDone || !deepLinkStockId) return;
+
+            deepLinkJumpDone = true;
+
+            if (!controller.state.selection.initialStockMatched) return;
+
+            slideToActiveSpec();
+        }
+
         function renderSelectionArea() {
             renderSpecs();
             renderPrices();
             renderQuantity();
             syncButtonState();
+            applyDeepLinkJump();
 
             if (typeof controller.options.hooks.onSelectionChanged === 'function') {
                 controller.options.hooks.onSelectionChanged(controller.state.selection, controller);
@@ -407,12 +479,14 @@
             $pageRoot.off('change.productContent', 'input[name="S1_Radio"]').on('change.productContent', 'input[name="S1_Radio"]', (e) => {
                 controller.state.selection.setSpec(1, $(e.currentTarget).val());
                 renderSelectionArea();
+                slideToActiveSpec();
                 controller.syncVariantUrlFromSelection();
             });
 
             $pageRoot.off('change.productContent', 'input[name="S2_Radio"]').on('change.productContent', 'input[name="S2_Radio"]', (e) => {
                 controller.state.selection.setSpec(2, $(e.currentTarget).val());
                 renderSelectionArea();
+                slideToActiveSpec();
                 controller.syncVariantUrlFromSelection();
             });
 
@@ -424,7 +498,8 @@
 
         return {
             bindEvents,
-            renderSelectionArea
+            renderSelectionArea,
+            buildMediaLists
         };
     }
 

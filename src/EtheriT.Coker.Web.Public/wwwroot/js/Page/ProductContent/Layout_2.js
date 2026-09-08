@@ -17,6 +17,8 @@
     const runBuyGuard = M.runBuyGuard;
     const submitCart = M.submitCart;
     const formatNumber = M.formatNumber;
+    const specName = M.specName;
+    const specImageItems = M.specImageItems;
 
     // 沿用版型一的語系設定；額外保留舊 key（MarketPrice / ProdEmpty）的查詢，
     // 維持版型二原本「新 key 查不到就退回舊 key」的行為。
@@ -141,15 +143,6 @@
         if (money === 0) return local.Bonus + ' ' + formatNumber(bonusValue);
 
         return '$' + formatNumber(money) + ' + ' + local.Bonus + ' ' + formatNumber(bonusValue);
-    }
-
-    function specName(stock) {
-        return [stock.s1_Title, stock.s2_Title].filter(Boolean).join(' / ');
-    }
-
-    function specImageItems(stock) {
-        const mm = Array.isArray(stock.multimedia) ? stock.multimedia : [];
-        return mm.filter(m => (m.fileType === 1 || m.fileType === 2) && Array.isArray(m.link) && m.link[0]);
     }
 
     function resolveNoImageSrc() {

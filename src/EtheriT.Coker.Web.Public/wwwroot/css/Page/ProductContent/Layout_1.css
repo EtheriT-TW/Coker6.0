@@ -288,6 +288,9 @@ input:disabled + .btn_radio {
 #Product > .content > .btn_addToCar {
     background-color: var(--red-main);
     line-height: 3;
+    max-width: 50%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
     /* 按鈕文字改由 Layout_1.cshtml 的 data-label-* 提供，值來自詞本（@L.get），以支援多語系。 */

@@ -476,6 +476,7 @@ input[type="number"] {
 
     #Spec_Frame .btn_spec_img_edit,
     #Spec_Frame .btn_spec_desc_edit,
+    #Spec_Frame .btn_spec_visible,
     #Spec_Frame .btn_remove {
         display: flex;
         width: fit-content;

@@ -414,8 +414,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 24,
                     key = "HasInvoice",
-                    name = "開立發票",
-                    memo = "網站是否需要開立發票",
+                    name = "發票開立方式",
+                    memo = "設定前台結帳時提供的發票資料填寫方式。",
                     FK_StoreSetGroupId = 2,
                     type = SeoSetDataTypeEnum.select,
                     maxlength = null,
@@ -731,16 +731,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 {
                     Id = 15,
                     Key = "EnabledInvoice",
-                    Value = "是",
+                    Value = "填寫完整發票資料",
                     FK_StoreSetId = 24,
+                    IsDefault = true,
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2024, 7, 17, 18, 04, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }, new storeSetItem
                 {
+                    Id = 28,
+                    Key = "UniformIdOnly",
+                    Value = "僅填寫統一編號",
+                    FK_StoreSetId = 24,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 9, 8, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
                     Id = 16,
                     Key = "DisabledInvoice",
-                    Value = "否",
+                    Value = "不開立發票",
                     FK_StoreSetId = 24,
                     IsDeleted = false,
                     CreatorUserId = 1,

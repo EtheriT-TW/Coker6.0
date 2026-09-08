@@ -7,6 +7,20 @@
     }
 
     .store-setting-field {
+        .store-setting-label {
+            display: block;
+            float: none;
+            width: auto;
+            margin-bottom: .5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .store-setting-fieldset {
+            min-width: 0;
+            margin: 0;
+        }
+
         .form-control,
         .form-select {
             min-height: 2.75rem;
@@ -20,7 +34,11 @@
     .store-setting-options {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
+        min-height: 2.75rem;
+        padding: .625rem .875rem !important;
         gap: .75rem 1.5rem;
+        background: #fff;
 
         .form-check {
             margin-bottom: 0;

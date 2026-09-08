@@ -66,8 +66,11 @@
             AddPhonePairIssue(issues, "#RecipientInputTelPhoneArea", "#RecipientInputTelPhone", "收件人");
         }
 
+        var invoiceMode = $("#invoiceType").data("invoice-mode");
         var invoiceType = $('[name="InvoiceType"]:checked').val();
-        if (invoiceType === "company") {
+        if (invoiceMode === "UniformIdOnly" && invoiceType === "company") {
+            AddInvalidFields(issues, "#Form_Invoice", "統一編號");
+        } else if (invoiceType === "company") {
             AddInvalidFields(issues, "#Form_Invoice", "發票");
         } else if (invoiceType === "personal" && $('[name="PersonalInvoiceMode"]:checked').val() === "mobile") {
             AddInvalidFields(issues, "#Form_InvoicePersonalType", "發票");

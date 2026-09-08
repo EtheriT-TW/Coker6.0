@@ -372,6 +372,27 @@
         updateState(state.purchaseQuantity);
     }
 
+    function refreshCart() {
+        state.selected.clear();
+        const request = window.Product?.GetAll?.Cart
+            ? window.Product.GetAll.Cart()
+            : $.Deferred().resolve([]).promise();
+
+        request.done(items => {
+            state.cartItems = Array.isArray(items) ? items : [];
+            updateState(state.purchaseQuantity);
+        });
+
+        return request;
+    }
+
+    function handleCartCleared() {
+        state.cartItems = [];
+        state.selected.clear();
+        state.purchaseQuantity = 1;
+        updateState(1);
+    }
+
     function load(productId) {
         const targetProductId = number(productId);
         const token = ++state.requestToken;
@@ -423,10 +444,15 @@
         });
         $root().on('click', '.product-addon__qty-button', function () { changeQuantity($(this).closest('.product-addon__card'), number($(this).data('delta'))); });
         $(document).on('change.productAddon input.productAddon', '.input_pro_quantity, .spec-qty-input', function () { updateState($(this).val()); });
+        $(document)
+            .off('coker:cart-changed.productAddon')
+            .on('coker:cart-changed.productAddon', refreshCart)
+            .off('coker:cart-cleared.productAddon')
+            .on('coker:cart-cleared.productAddon', handleCartCleared);
 
         load(window.PageId);
     }
 
-    window.ProductAddOnPurchase = { applyToPayload, updateQuantity: updateState, reset, load };
+    window.ProductAddOnPurchase = { applyToPayload, updateQuantity: updateState, reset, refreshCart, load };
     $(init);
 })(window, window.jQuery);

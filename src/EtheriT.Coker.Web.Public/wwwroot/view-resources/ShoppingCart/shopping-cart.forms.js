@@ -200,6 +200,27 @@
     }
     function InvoiceTypeRadio() {
         const value = $("[name='InvoiceType']:checked").val();
+        const invoiceMode = $("#invoiceType").data("invoice-mode");
+
+        if (invoiceMode === "UniformIdOnly") {
+            const requiresUniformId = value === "company";
+            $("#Form_Invoice").toggleClass("d-none", !requiresUniformId);
+            $("#InvoiceInputPersonal").toggleClass("d-none", requiresUniformId);
+            $("#InvoiceInputUniformId")
+                .prop("required", requiresUniformId)
+                .closest("form")
+                .removeClass("was-validated");
+
+            if (requiresUniformId) {
+                $(S.InvoicePersonalTypeForms).find("input").prop("required", false);
+                $("#invoiceType .invoice-row").addClass("d-none");
+            } else {
+                const selectedPersonalMode = $('[name="PersonalInvoiceMode"]:checked').get(0);
+                if (selectedPersonalMode) PersonalInvoiceMode.call(selectedPersonalMode);
+            }
+            return;
+        }
+
         $(`#invoiceType .invoice-block`).addClass("d-none");
         switch (value) {
             case "personal":
@@ -349,6 +370,47 @@
     }
     function InvoiceDataGet() {
         var checkform = false;
+        var invoiceMode = $("#invoiceType").data("invoice-mode");
+
+        S.invoice_data = {};
+        delete S.order_header_data.PersonalInvoiceType;
+        delete S.order_header_data.Carrier;
+        delete S.order_header_data.invoiceTitle;
+        delete S.order_header_data.uniformId;
+        delete S.order_header_data.invoiceAddress;
+        delete S.order_header_data.invoiceRecipient;
+
+        if (!invoiceMode) {
+            S.order_header_data.invoiceType = 3;
+            return true;
+        }
+
+        if (invoiceMode === "UniformIdOnly") {
+            if ($(`[name="InvoiceType"]:checked`).val() !== "company") {
+                S.order_header_data.invoiceType = 1;
+                const personalInvoiceMode = $(`[name="PersonalInvoiceMode"]:checked`).val() || "paper";
+
+                if (personalInvoiceMode === "mobile") {
+                    if (S.InvoicePersonalTypeForms.length && !cart.Forms.FormCheck(S.InvoicePersonalTypeForms)) return false;
+                    S.order_header_data.PersonalInvoiceType = 2;
+                    S.invoiceType_data = co.Form.getJson("Form_InvoicePersonalType");
+                    S.order_header_data.Carrier = S.invoiceType_data["MobileCarrier"];
+                } else {
+                    S.order_header_data.PersonalInvoiceType = 1;
+                }
+                return true;
+            }
+
+            S.invoice_data = co.Form.getJson($("#Form_Invoice").attr("id"));
+            S.order_header_data.invoiceType = 2;
+
+            for (var uniformIdKey in S.invoice_data) {
+                S.order_header_data[uniformIdKey] = S.invoice_data[uniformIdKey];
+            }
+
+            return cart.Forms.FormCheck(S.InvoiceForms);
+        }
+
         switch ($(`[name="InvoiceType"]:checked`).val()) {
             case "personal":
                 if (S.InvoicePersonalTypeForms.length && !cart.Forms.FormCheck(S.InvoicePersonalTypeForms)) return false;

@@ -263,12 +263,20 @@
         var productAmount = cart.Utils.toNumberValue(
             cart.Utils.getValueIgnoreCase(header, "productSubtotal")
         );
-        var showGeneralProductAmount = eligibleAmount > 0 && productAmount > eligibleAmount;
+        var addOnProductAmount = Math.max(0, productAmount - eligibleAmount);
+        var showProductAmountBreakdown = eligibleAmount > 0 && addOnProductAmount > 0;
 
         $("#Step4 .step4GeneralProductAmountLine")
-            .toggleClass("d-none", !showGeneralProductAmount);
+            .toggleClass("d-none", !showProductAmountBreakdown);
+        $("#Step4 .step4AddOnProductAmountLine")
+            .toggleClass("d-none", !showProductAmountBreakdown);
+        $("#Step4 .step4ProductAmountLine")
+            .toggleClass("d-none", showProductAmountBreakdown);
         $("#Step4 .step4GeneralProductAmount").text(
-            showGeneralProductAmount ? eligibleAmount.toLocaleString() : ""
+            showProductAmountBreakdown ? eligibleAmount.toLocaleString() : ""
+        );
+        $("#Step4 .step4AddOnProductAmount").text(
+            showProductAmountBreakdown ? addOnProductAmount.toLocaleString() : ""
         );
 
         if (!Array.isArray(items) || !items.length) {
@@ -313,6 +321,19 @@
         var invoiceTypeTitle = String(cart.Utils.getValueIgnoreCase(header, "invoiceTypeTitle") || "");
         var personalInvoiceTypeTitle = String(cart.Utils.getValueIgnoreCase(header, "personalInvoiceTypeTitle") || "");
         var carrier = String(cart.Utils.getValueIgnoreCase(header, "carrier") || "");
+        var invoiceMode = $("#Step4 .invoice_type").data("invoice-mode");
+
+        if (invoiceMode === "UniformIdOnly") {
+            var uniformId = String(cart.Utils.getValueIgnoreCase(header, "uniformId") || "");
+            var isCompanyInvoice = uniformId !== "" || invoiceTypeTitle.indexOf("公司") >= 0;
+            $("#Step4 .uniformIdOnlyValue").toggleClass("d-none", !isCompanyInvoice);
+            $("#Step4 .uniformPersonalTypeValue").toggleClass("d-none", isCompanyInvoice);
+            $("#Step4 .invoice_type .mobileCarrier").toggleClass(
+                "d-none",
+                isCompanyInvoice || (carrier === "" && personalInvoiceTypeTitle.indexOf("載具") < 0 && personalInvoiceTypeTitle.indexOf("手機") < 0)
+            );
+            return;
+        }
 
         if (invoiceTypeTitle.indexOf("公司") >= 0) {
             $("#Step4 .invoice_type .company").removeClass("d-none");

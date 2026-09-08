@@ -2614,22 +2614,26 @@ body > .popover.bs-popover-auto.fade {
         border-top: none !important;
     }
 
-    /* 手機版金額順序：一般商品金額在上，商品金額在下 */
+    /* 手機版金額順序：一般商品、加價購商品，無拆分時則顯示商品金額 */
     #Step1 .cart-summary-section .priceline-step1 {
         display: flex;
         flex-direction: column;
     }
 
     #Step1 .cart-summary-section .priceline-step1 > * {
-        order: 3;
+        order: 4;
     }
 
     #Step1 .cart-summary-section .priceline-step1 > .generalProductAmountLine {
         order: 1;
     }
 
-    #Step1 .cart-summary-section .priceline-step1 > .productAmountLine {
+    #Step1 .cart-summary-section .priceline-step1 > .addOnProductAmountLine {
         order: 2;
+    }
+
+    #Step1 .cart-summary-section .priceline-step1 > .productAmountLine {
+        order: 3;
     }
 
     #Step1 .cart-summary-section .summary-main-row,

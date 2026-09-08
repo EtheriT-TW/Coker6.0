@@ -443,8 +443,17 @@
         return true;
     }
 
+    let pendingCartRequest = null;
+
     // 送出加入購物車並處理結果；成功後的狀態更新由 onSuccess 交給呼叫端。
     function submitCart(options) {
+        if (pendingCartRequest) {
+            if (typeof options.onAlways === 'function') {
+                pendingCartRequest.always(options.onAlways);
+            }
+            return pendingCartRequest;
+        }
+
         const t = options.t;
         const api = options.api || {};
         const addToCart = typeof api.addToCart === 'function'
@@ -463,6 +472,10 @@
                         Coker.sweet.warning(local.StockNotEnough, result.message, function () {
                             location.reload(true);
                         });
+                    } else if (error === 'CartBusy') {
+                        Coker.sweet.warning('購物車更新中', result.message || '請稍後再試。');
+                    } else if (error === 'CartUpdateFailed') {
+                        Coker.sweet.error('購物車更新失敗', result.message || local.AddCartError, null);
                     } else {
                         Coker.sweet.error(
                             local.Error,
@@ -518,6 +531,11 @@
                     true
                 );
             });
+
+        pendingCartRequest = request;
+        request.always(function () {
+            if (pendingCartRequest === request) pendingCartRequest = null;
+        });
 
         if (typeof options.onAlways === 'function') {
             request.always(options.onAlways);

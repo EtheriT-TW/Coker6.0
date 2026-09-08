@@ -236,6 +236,8 @@ function CartDropDelete(self, id, success, error) {
         Coker.sweet.success(result.message || success, null, true);
         if (parseInt($("#Car_Badge").text()) <= 0) {
             CartClear();
+        } else {
+            $(document).trigger("coker:cart-changed");
         }
     }).fail(function () {
         Coker.sweet.error("錯誤", error, null, true);
@@ -246,6 +248,7 @@ function CartClear() {
     $("#Car_Badge").text("");
     $("#Car_Dropdown_Null").removeClass("d-none");
     $("#Car_Dropdown > .btn_car_buy").attr("disabled", "");
+    $(document).trigger("coker:cart-cleared");
 }
 function HeaderDataInsert($frame, data) {
     $frame.find("*").each(function () {

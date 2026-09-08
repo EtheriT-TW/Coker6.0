@@ -30,10 +30,18 @@ function TotalCount() {
     S.subtotal = Number(sum || 0) + rewardAmount;
     S.order_data.bonus = Number(bonus || 0);
 
-    var showGeneralProductAmount = S.subtotal > Number(discountEligibleSum || 0);
-    $(".generalProductAmountLine").toggleClass("d-none", !showGeneralProductAmount);
-    $(".generalProductAmount").text(showGeneralProductAmount
-        ? Number(discountEligibleSum || 0).toLocaleString()
+    var generalProductAmount = Number(discountEligibleSum || 0);
+    var addOnProductAmount = Math.max(0, S.subtotal - generalProductAmount);
+    var showProductAmountBreakdown = addOnProductAmount > 0;
+
+    $(".generalProductAmountLine").toggleClass("d-none", !showProductAmountBreakdown);
+    $(".addOnProductAmountLine").toggleClass("d-none", !showProductAmountBreakdown);
+    $(".productAmountLine").toggleClass("d-none", showProductAmountBreakdown);
+    $(".generalProductAmount").text(showProductAmountBreakdown
+        ? generalProductAmount.toLocaleString()
+        : "");
+    $(".addOnProductAmount").text(showProductAmountBreakdown
+        ? addOnProductAmount.toLocaleString()
         : "");
 
     // 行銷活動折扣：只影響畫面試算，不作為正式訂單依據
@@ -178,8 +186,8 @@ function TotalCount() {
                 }
             }
 
-            // ===== 可折抵但實際=0（紅利不足）=====
-            else {
+            // ===== 未實際折抵但仍有剩餘紅利時，才顯示提示 =====
+            else if (memberBonusAmount > 0) {
 
                 $redeemRuleText.text(
                     `目前剩餘紅利 ${memberBonusAmount.toLocaleString()} 點`

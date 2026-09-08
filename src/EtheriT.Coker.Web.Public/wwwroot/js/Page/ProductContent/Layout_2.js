@@ -194,7 +194,7 @@
                 if (window.productContentPage && typeof window.productContentPage.load === 'function') {
                     window.productContentPage.load();
                 }
-                if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.reset();
+                if (window.ProductAddOnPurchase?.refreshCart) window.ProductAddOnPurchase.refreshCart();
             },
             onAlways: function () { $btn.prop('disabled', false); }
         });

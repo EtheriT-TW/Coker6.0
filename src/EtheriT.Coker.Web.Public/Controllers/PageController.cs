@@ -206,7 +206,16 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var priceOrder = StoreSet.storeSetDetails?.Find(e => e.key == "priceOrder");
             var priceCurrencySetting = StoreSet.storeSetDetails?.Find(e => e.key == "priceCurrency");
             var priceCurrency = CurrencyCatalog.Resolve(priceCurrencySetting?.value?.FirstOrDefault());
-            var HasInvoice = string.Join(",", StoreSet.storeSetDetails?.Find(e => e.key == "HasInvoice")?.value ?? Enumerable.Empty<string>()) != "DisabledInvoice";
+            var invoiceMode = StoreSet.storeSetDetails?
+                .Find(e => e.key == "HasInvoice")?
+                .value?
+                .FirstOrDefault();
+            if (invoiceMode != "EnabledInvoice" &&
+                invoiceMode != "UniformIdOnly" &&
+                invoiceMode != "DisabledInvoice")
+            {
+                invoiceMode = "EnabledInvoice";
+            }
             var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
             List<string> Carrier = StoreSet.storeSetDetails?.Find(e => e.key == "ExtraInviiceCarrier")?.value ?? new List<string>();
 
@@ -226,7 +235,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.PriceCurrencyDecimalDigits = priceCurrency.DecimalDigits;
             ViewBag.MemberRegister = !MemberRegister;
             ViewBag.PrivacyPolicy = privacyPolicy != null && privacyPolicy.value != null && privacyPolicy.value.Any() ? string.Join(",", privacyPolicy.value) : "";
-            ViewBag.HasInvoice = HasInvoice;
+            ViewBag.InvoiceMode = invoiceMode;
             ViewBag.Carrier = Carrier;
             ViewBag.BonusEnabled = bonusSetting.BonusEnabled;
             var headerStyleView = defaultData.View;

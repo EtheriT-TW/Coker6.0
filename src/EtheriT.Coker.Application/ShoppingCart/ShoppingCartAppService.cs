@@ -18,6 +18,8 @@ using EtheriT.Coker.Core.Product;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Marketing;
@@ -36,6 +38,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IFrontRoleContextService frontRoleContextService;
+        private readonly ILogger<ShoppingCartAppService> logger;
         public ShoppingCartAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -45,7 +48,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
             IProductAppService productAppService,
             IBonusManagementAppService bonusManagementAppService,
             IStoreSetAppService storeSetsAppService,
-            IFrontRoleContextService frontRoleContextService
+            IFrontRoleContextService frontRoleContextService,
+            ILogger<ShoppingCartAppService> logger
         )
         {
             this.db = db;
@@ -57,6 +61,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             this.bonusManagementAppService = bonusManagementAppService;
             this.storeSetAppService = storeSetsAppService;
             this.frontRoleContextService = frontRoleContextService;
+            this.logger = logger;
         }
         public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
         {
@@ -386,8 +391,21 @@ namespace EtheriT.Coker.Application.ShoppingCart
             {
                 if (transaction != null)
                     await transaction.RollbackAsync();
-                response.Error = "Error";
-                response.Message = ex.Message;
+
+                logger.LogError(ex, "Failed to add product stock {ProductStockId} to the shopping cart.", dto.FK_PSid);
+
+                if (IsDatabaseException(ex))
+                {
+                    response.Error = IsSqlDeadlock(ex) ? "CartBusy" : "CartUpdateFailed";
+                    response.Message = IsSqlDeadlock(ex)
+                        ? "購物車正在更新，請稍後再試。"
+                        : "商品加入購物車失敗，請稍後再試。";
+                }
+                else
+                {
+                    response.Error = "Error";
+                    response.Message = ex.Message;
+                }
             }
             finally
             {
@@ -396,6 +414,25 @@ namespace EtheriT.Coker.Application.ShoppingCart
             }
 
             return response;
+        }
+
+        private static bool IsSqlDeadlock(Exception exception)
+        {
+            return GetExceptionChain(exception)
+                .OfType<SqlException>()
+                .Any(sqlException => sqlException.Number == 1205);
+        }
+
+        private static bool IsDatabaseException(Exception exception)
+        {
+            return GetExceptionChain(exception)
+                .Any(current => current is DbUpdateException || current is SqlException);
+        }
+
+        private static IEnumerable<Exception> GetExceptionChain(Exception exception)
+        {
+            for (Exception? current = exception; current != null; current = current.InnerException)
+                yield return current;
         }
 
         private async Task<List<long>> AddMarketingRewardItemsAsync(

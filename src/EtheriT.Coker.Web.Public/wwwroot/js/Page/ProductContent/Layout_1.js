@@ -363,18 +363,20 @@
                 );
             }
 
+            $addToCartButton.prop('disabled', true);
             submitCart({
                 t: t,
                 api: controller.options.api,
                 payload: payload,
                 onSuccess: function (result) {
                     controller.load();
-                    if (window.ProductAddOnPurchase) window.ProductAddOnPurchase.reset();
+                    if (window.ProductAddOnPurchase?.refreshCart) window.ProductAddOnPurchase.refreshCart();
 
                     if (typeof controller.options.hooks.afterAddToCart === 'function') {
                         controller.options.hooks.afterAddToCart(result, controller);
                     }
-                }
+                },
+                onAlways: function () { $addToCartButton.prop('disabled', false); }
             });
         }
 

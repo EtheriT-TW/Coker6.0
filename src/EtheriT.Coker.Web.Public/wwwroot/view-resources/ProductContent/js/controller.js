@@ -140,9 +140,23 @@
 
         init() {
             this.bindStaticEvents();
+            $(document)
+                .off('coker:cart-cleared.productContent')
+                .on('coker:cart-cleared.productContent', () => this.resetPurchaseQuantity());
             if (typeof this.bindNavigation === 'function') this.bindNavigation();
             this.logClick();
             return this.load();
+        }
+
+        resetPurchaseQuantity() {
+            const selection = this.state.selection;
+            const activeStock = selection?.getActiveStock?.();
+            if (!selection || !activeStock) return;
+
+            selection.setQuantity(activeStock.minQty || 1);
+            if (this.layout && typeof this.layout.renderSelectionArea === 'function') {
+                this.layout.renderSelectionArea();
+            }
         }
 
         bindStaticEvents() {

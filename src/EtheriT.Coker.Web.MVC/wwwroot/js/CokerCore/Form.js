@@ -168,6 +168,33 @@
                             $e.val(_c.Form.formatElementValue($e, value));
                         }
                         break;
+
+                    case "checkbox-list":
+                    case "array":
+                        if (($e.attr("type") || "").toLowerCase() === "checkbox") {
+                            const values = Array.isArray(value) ? value : [value];
+                            const selectedValues = values.map(item => String(item));
+
+                            $e.prop("checked", false);
+                            $e.each(function () {
+                                $(this).prop("checked", selectedValues.includes(String(this.value)));
+                            });
+
+                            // 相容過去單一 checkbox 被當成 boolean 儲存的資料。
+                            if ($e.length === 1 && !$e.first().prop("checked")) {
+                                const legacyChecked = values.some(item =>
+                                    item === true ||
+                                    String(item).toLowerCase() === "true" ||
+                                    String(item) === "1" ||
+                                    String(item).toLowerCase() === "on"
+                                );
+                                $e.first().prop("checked", legacyChecked);
+                            }
+                        } else {
+                            $e.val(_c.Form.formatElementValue($e, value));
+                        }
+                        break;
+
                     default:
                         $e.val(_c.Form.formatElementValue($e, value));
                         break;

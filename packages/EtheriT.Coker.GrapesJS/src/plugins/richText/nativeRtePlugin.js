@@ -32,11 +32,60 @@ function getSelectionElement(rte) {
 }
 
 function getCurrentLink(rte) {
-    const link = getSelectionElement(rte)?.closest?.('a');
-    return link && rte.el.contains(link) ? link : null;
+    const selection = rte.selection();
+    const nodes = [selection?.anchorNode, selection?.focusNode];
+
+    for (let node of nodes) {
+        if (node?.nodeType === 3) {
+            node = node.parentElement;
+        }
+        const link = node?.closest?.('a');
+        if (link && rte.el.contains(link)) {
+            return link;
+        }
+    }
+
+    if (!selection?.rangeCount) {
+        return null;
+    }
+
+    const range = selection.getRangeAt(0);
+    return Array.from(rte.el.querySelectorAll('a')).find(link => {
+        try {
+            return range.intersectsNode(link);
+        } catch {
+            return false;
+        }
+    }) || null;
 }
 
-function clearSelectedFormatting(rte) {
+async function clearSelectedFormatting(editor, rte) {
+    const currentLink = getCurrentLink(rte);
+    if (currentLink?.parentNode) {
+        if (currentLink === rte.el) {
+            const editingView = editor.getModel().get('editing');
+            const editingComponent = editingView?.model || editor.getEditing();
+            const parentComponent = editingComponent?.parent?.();
+            await editingView?.disableEditing?.();
+
+            if (String(editingComponent?.get?.('tagName')).toLowerCase() === 'a') {
+                const replacements = editingComponent.replaceWith(
+                    editingComponent.getInnerHTML()
+                );
+                editor.select(replacements[0] || parentComponent);
+            }
+            return;
+        }
+
+        const parent = currentLink.parentNode;
+        while (currentLink.firstChild) {
+            parent.insertBefore(currentLink.firstChild, currentLink);
+        }
+        currentLink.remove();
+        rte.el.dispatchEvent(new rte.doc.defaultView.Event('input', { bubbles: true }));
+        return;
+    }
+
     const selection = rte.selection();
     if (!selection?.rangeCount || selection.getRangeAt(0).collapsed) {
         return;
@@ -284,14 +333,19 @@ function registerNativeActions(editor, options) {
     });
     rte.add('clearFormat', {
         icon: '&#8856;',
-        attributes: { title: '清除選取文字的格式（需先反白文字）' },
+        attributes: {
+            title: '取消目前連結；不在連結內時清除選取文字的格式'
+        },
         state: currentRte => {
+            if (getCurrentLink(currentRte)) {
+                return 0;
+            }
             const selection = currentRte.selection();
             return !selection?.rangeCount || selection.getRangeAt(0).collapsed
                 ? -1
                 : 0;
         },
-        result: currentRte => clearSelectedFormatting(currentRte)
+        result: currentRte => clearSelectedFormatting(editor, currentRte)
     });
 }
 

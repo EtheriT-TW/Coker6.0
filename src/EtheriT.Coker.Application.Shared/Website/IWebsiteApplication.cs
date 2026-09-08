@@ -12,6 +12,7 @@ namespace EtheriT.Coker.Application
         public Task<WebsPageDto> GetPageAll(int? page);
         public Task<List<WebsDto>> GetSwitcherAll();
         public Task<List<WebsiteDataDto>> GetAllData(long SiteId);
+        public Task<Company.CompanyDto?> GetCompanyData(long siteId);
         public Task<ResponseMessageDto> GetPrivacyAndTerms();
         public Task<int> GetLayoutType(long Id);
         public Task<string> GetOrgName(long Id);

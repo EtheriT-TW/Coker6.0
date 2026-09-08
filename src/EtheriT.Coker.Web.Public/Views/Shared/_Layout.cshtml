@@ -138,6 +138,14 @@
                 data-product-id="@ViewBag.ProductStructuredDataProductId"
                 nonce="@ViewBag.Nonce">@Html.Raw(productStructuredDataJson)</script>
     }
+    @if (ViewBag.ArticleStructuredDataJson is string articleStructuredDataJson &&
+         !string.IsNullOrWhiteSpace(articleStructuredDataJson))
+    {
+        <script id="article-structured-data"
+                type="application/ld+json"
+                data-article-id="@ViewBag.ArticleStructuredDataArticleId"
+                nonce="@ViewBag.Nonce">@Html.Raw(articleStructuredDataJson)</script>
+    }
     @if (ViewBag.BreadcrumbStructuredDataJson is string breadcrumbStructuredDataJson &&
          !string.IsNullOrWhiteSpace(breadcrumbStructuredDataJson))
     {

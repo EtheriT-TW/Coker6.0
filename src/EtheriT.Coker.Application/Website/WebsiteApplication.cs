@@ -382,6 +382,24 @@ namespace EtheriT.Coker.Application
             }
             return date;
         }
+        public async Task<Company.CompanyDto?> GetCompanyData(long siteId)
+        {
+            return await db.MappingCompanyAndWebsites
+                .AsNoTracking()
+                .Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId)
+                .Where(e => e.Company != null && !e.Company.IsDeleted)
+                .OrderBy(e => e.Id)
+                .Select(e => new Company.CompanyDto
+                {
+                    Id = (int)e.Company!.Id,
+                    Name = e.Company.Name ?? string.Empty,
+                    TaxID = e.Company.TaxID ?? string.Empty,
+                    Contact = e.Company.Contact ?? string.Empty,
+                    Email = e.Company.Email ?? string.Empty,
+                    Address = e.Company.Address ?? string.Empty
+                })
+                .FirstOrDefaultAsync();
+        }
         public async Task<ResponseMessageDto> GetPrivacyAndTerms()
         {
             var response = new ResponseMessageDto() { Success = false };

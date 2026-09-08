@@ -641,6 +641,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 model.PageData.PageView,
                 "Product",
                 StringComparison.OrdinalIgnoreCase);
+            var isArticlePage = string.Equals(
+                model.PageData.PageView,
+                "Article",
+                StringComparison.OrdinalIgnoreCase);
             var isHomePage = !isProductPage && string.Equals(
                 key,
                 "home",
@@ -707,13 +711,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
                 var websiteData = (await websiteApplication.GetAllData(siteId))
                     .FirstOrDefault(e => e.Id == siteId);
+                var companyData = await websiteApplication.GetCompanyData(siteId);
                 var organizationLogoUrl = ResolveStructuredDataImage(rootUri, websiteData?.Logo);
                 var websiteStructuredData = BuildWebsiteStructuredData(
                     model.PageData.SiteName,
                     canonicalPageUrl,
                     seoDescription,
                     model.locale,
-                    organizationLogoUrl);
+                    organizationLogoUrl,
+                    companyData);
                 RemoveNullStructuredDataValues(websiteStructuredData);
 
                 ViewBag.WebsiteStructuredDataWebsiteId = siteId;
@@ -745,6 +751,34 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ViewBag.ProductStructuredDataProductId = productSeoData.Id;
                 ViewBag.ProductStructuredDataJson = JsonConvert.SerializeObject(
                     productStructuredData,
+                    Formatting.None,
+                    new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        StringEscapeHandling = StringEscapeHandling.EscapeHtml
+                    });
+            }
+            if (isArticlePage)
+            {
+                var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
+                var websiteData = (await websiteApplication.GetAllData(siteId))
+                    .FirstOrDefault(e => e.Id == siteId);
+                var articleImageUrl = ResolveStructuredDataImage(rootUri, model.PageData.ImageUrl);
+                var organizationLogoUrl = ResolveStructuredDataImage(rootUri, websiteData?.Logo);
+                var organizationUrl = new Uri(rootUri, $"{model.orgName}/home").AbsoluteUri;
+                var articleStructuredData = BuildArticleStructuredData(
+                    model.PageData,
+                    canonicalPageUrl,
+                    organizationUrl,
+                    articleImageUrl,
+                    organizationLogoUrl,
+                    seoDescription,
+                    model.locale);
+                RemoveNullStructuredDataValues(articleStructuredData);
+
+                ViewBag.ArticleStructuredDataArticleId = model.PageData.Id;
+                ViewBag.ArticleStructuredDataJson = JsonConvert.SerializeObject(
+                    articleStructuredData,
                     Formatting.None,
                     new JsonSerializerSettings
                     {
@@ -964,48 +998,157 @@ namespace EtheriT.Coker.Web.Public.Controllers
             };
         }
 
+        private static Dictionary<string, object?> BuildArticleStructuredData(
+            GetFrontContenOutputDto article,
+            string canonicalUrl,
+            string organizationUrl,
+            string? articleImageUrl,
+            string? organizationLogoUrl,
+            string? description,
+            string? locale)
+        {
+            var organization = new Dictionary<string, object?>
+            {
+                ["@type"] = "Organization",
+                ["name"] = article.SiteName,
+                ["url"] = organizationUrl
+            };
+            var publisher = new Dictionary<string, object?>(organization)
+            {
+                ["logo"] = organizationLogoUrl == null
+                    ? null
+                    : new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ImageObject",
+                        ["url"] = organizationLogoUrl
+                    }
+            };
+
+            return new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "Article",
+                ["@id"] = $"{canonicalUrl}#article",
+                ["mainEntityOfPage"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "WebPage",
+                    ["@id"] = canonicalUrl
+                },
+                ["url"] = canonicalUrl,
+                ["headline"] = article.Title,
+                ["description"] = description,
+                ["image"] = articleImageUrl == null ? null : new[] { articleImageUrl },
+                ["datePublished"] = FormatStructuredDataDate(article.CreationTime),
+                ["dateModified"] = FormatStructuredDataDate(
+                    article.LastModificationTime ?? article.CreationTime),
+                ["author"] = organization,
+                ["publisher"] = publisher,
+                ["inLanguage"] = NormalizeStructuredDataLocale(locale)
+            };
+        }
+
+        private static string? FormatStructuredDataDate(DateTime? value)
+        {
+            if (!value.HasValue)
+            {
+                return null;
+            }
+
+            var dateTime = value.Value;
+            var dateTimeOffset = dateTime.Kind switch
+            {
+                DateTimeKind.Utc => new DateTimeOffset(dateTime, TimeSpan.Zero),
+                DateTimeKind.Local => new DateTimeOffset(dateTime),
+                _ => new DateTimeOffset(dateTime, TimeZoneInfo.Local.GetUtcOffset(dateTime))
+            };
+            return dateTimeOffset.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture);
+        }
+
+        private static string? NormalizeStructuredDataLocale(string? locale)
+        {
+            return string.Equals(locale, "zh-tw", StringComparison.OrdinalIgnoreCase)
+                ? "zh-TW"
+                : locale?.Trim();
+        }
+
         private static Dictionary<string, object?> BuildWebsiteStructuredData(
             string? siteName,
             string canonicalUrl,
             string? description,
             string? locale,
-            string? organizationLogoUrl)
+            string? organizationLogoUrl,
+            EtheriT.Coker.Application.Company.CompanyDto? company)
         {
             var organizationId = $"{canonicalUrl}#organization";
             var websiteId = $"{canonicalUrl}#website";
-            var normalizedLocale = string.Equals(locale, "zh-tw", StringComparison.OrdinalIgnoreCase)
-                ? "zh-TW"
-                : locale?.Trim();
+            var normalizedLocale = NormalizeStructuredDataLocale(locale);
+            var hasCompany = company != null && !string.IsNullOrWhiteSpace(company.Name);
+            var graph = new List<object>();
+
+            if (hasCompany)
+            {
+                var contactName = NormalizeStructuredDataText(company!.Contact);
+                var email = NormalizeStructuredDataText(company.Email);
+                graph.Add(new Dictionary<string, object?>
+                {
+                    ["@type"] = "Organization",
+                    ["@id"] = organizationId,
+                    ["name"] = company.Name.Trim(),
+                    ["alternateName"] = string.Equals(
+                        company.Name.Trim(),
+                        siteName?.Trim(),
+                        StringComparison.OrdinalIgnoreCase)
+                            ? null
+                            : NormalizeStructuredDataText(siteName),
+                    ["url"] = canonicalUrl,
+                    ["description"] = description,
+                    ["logo"] = organizationLogoUrl,
+                    ["taxID"] = NormalizeStructuredDataText(company.TaxID),
+                    ["email"] = email,
+                    ["address"] = string.IsNullOrWhiteSpace(company.Address)
+                        ? null
+                        : new Dictionary<string, object?>
+                        {
+                            ["@type"] = "PostalAddress",
+                            ["streetAddress"] = company.Address.Trim()
+                        },
+                    ["contactPoint"] = contactName == null && email == null
+                        ? null
+                        : new Dictionary<string, object?>
+                        {
+                            ["@type"] = "ContactPoint",
+                            ["name"] = contactName,
+                            ["email"] = email
+                        }
+                });
+            }
+
+            graph.Add(new Dictionary<string, object?>
+            {
+                ["@type"] = "WebSite",
+                ["@id"] = websiteId,
+                ["name"] = siteName,
+                ["url"] = canonicalUrl,
+                ["description"] = description,
+                ["inLanguage"] = normalizedLocale,
+                ["publisher"] = hasCompany
+                    ? new Dictionary<string, object?>
+                    {
+                        ["@id"] = organizationId
+                    }
+                    : null
+            });
 
             return new Dictionary<string, object?>
             {
                 ["@context"] = "https://schema.org",
-                ["@graph"] = new object[]
-                {
-                    new Dictionary<string, object?>
-                    {
-                        ["@type"] = "Organization",
-                        ["@id"] = organizationId,
-                        ["name"] = siteName,
-                        ["url"] = canonicalUrl,
-                        ["description"] = description,
-                        ["logo"] = organizationLogoUrl
-                    },
-                    new Dictionary<string, object?>
-                    {
-                        ["@type"] = "WebSite",
-                        ["@id"] = websiteId,
-                        ["name"] = siteName,
-                        ["url"] = canonicalUrl,
-                        ["description"] = description,
-                        ["inLanguage"] = normalizedLocale,
-                        ["publisher"] = new Dictionary<string, object?>
-                        {
-                            ["@id"] = organizationId
-                        }
-                    }
-                }
+                ["@graph"] = graph
             };
+        }
+
+        private static string? NormalizeStructuredDataText(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
         private static string? NormalizeStructuredDataSku(string? sku)

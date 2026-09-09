@@ -325,6 +325,15 @@ input:disabled + .btn_radio {
 
 /* ===== RWD ===== */
 
+@media only screen and (max-width: 992px) {
+    .price-option-body, .price-base-meta {
+        padding-left: 1rem;
+    }
+    #Product > .content > .btn_addToCar {
+        margin-right: auto;
+    }
+}
+
 @media only screen and (max-width: 768px) {
     .sale-price {
         font-size: 1.55rem;
@@ -352,5 +361,16 @@ input:disabled + .btn_radio {
     .price-base-meta .price-meta-value,
     .price-option-sub {
         font-size: 0.85rem;
+    }
+}
+
+/* 加購按鈕與上方內容拉開距離；有加購區塊時由該區塊自然撐開，不再額外位移 */
+@media only screen and (min-width: 769px) {
+    #Product > .content > .btn_addToCar {
+        margin-top: 5rem;
+    }
+
+    #Product > .content > .product-addon:not(.d-none) ~ .btn_addToCar {
+        margin-top: 0;
     }
 }

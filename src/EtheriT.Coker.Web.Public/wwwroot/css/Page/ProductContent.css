@@ -822,6 +822,7 @@ i.fa-chevron-right {
 /* CenterLine */
 #CenterLine {
     background-color: var(--gray-light);
+    min-height:56px;
 }
 
     #CenterLine > div > div {
@@ -1039,6 +1040,13 @@ i.fa-chevron-right {
 
     #SwitchPage.container {
         padding: 1rem 0;
+    }
+    #Product > .content > .btn_learnMore {
+        margin-right:auto;
+    }
+
+    #Product > .content > .specification > .collapse:not(.show) {
+        height: 3rem;
     }
 }
 

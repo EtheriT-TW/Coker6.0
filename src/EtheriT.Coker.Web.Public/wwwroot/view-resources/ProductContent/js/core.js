@@ -669,6 +669,6 @@
         resolveText, defaultI18n, formatPriceText, analyzeSpecStructure, buildPriceSummary,
         buildPriceViewModel, buildPriceBaseViewModel, isStockAvailable, clampQuantity,
         isLoggedIn, createCartPayload, runBuyGuard, submitCart, parseExternalVideo,
-        specName, specImageItems
+        specName, specImageItems, formatMoney
     });
 })(window, window.jQuery);

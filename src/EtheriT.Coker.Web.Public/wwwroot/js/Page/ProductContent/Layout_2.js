@@ -17,6 +17,7 @@
     const runBuyGuard = M.runBuyGuard;
     const submitCart = M.submitCart;
     const formatNumber = M.formatNumber;
+    const formatMoney = M.formatMoney;
     const specName = M.specName;
     const specImageItems = M.specImageItems;
 
@@ -130,7 +131,7 @@
         if (suggest <= 0) return '';
         if (plans.some(p => normalizeNullableInt(p.price) === suggest)) return '';
 
-        return '$' + formatNumber(suggest);
+        return formatMoney(suggest);
     }
 
     // 版型二的紅利文字不帶冒號。
@@ -139,10 +140,10 @@
         const money = normalizeNullableInt(price);
         const bonusValue = normalizeNullableInt(bonus);
 
-        if (bonusValue <= 0) return '$' + formatNumber(money);
+        if (bonusValue <= 0) return formatMoney(money);
         if (money === 0) return local.Bonus + ' ' + formatNumber(bonusValue);
 
-        return '$' + formatNumber(money) + ' + ' + local.Bonus + ' ' + formatNumber(bonusValue);
+        return formatMoney(money) + ' + ' + local.Bonus + ' ' + formatNumber(bonusValue);
     }
 
     function resolveNoImageSrc() {

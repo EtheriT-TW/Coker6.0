@@ -802,6 +802,8 @@ i.fa-chevron-right {
 #Product > .content > .btn_learnMore {
     background-color: var(--red-main);
     line-height: 3;
+    max-width: 50%;
+    margin-left: auto;
 }
 
 .btn_favorites .icon_love::before {

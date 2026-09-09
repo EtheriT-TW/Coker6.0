@@ -118,203 +118,202 @@
 </template>
 
 <Content id="main">
-<coker-safe-inherited-content website-id="@Model.HtmlSanitizeWebsiteId"
-                              parent-content="@Model.ParentSafeHtml"
-                              parent-css="@Model.ParentSafeCss"
-                              parent-source-id="@Model.ParentHtmlSanitizeSourceId"
-                              sanitize-policy="@Model.HtmlSanitizePolicy"
-                              rewrite-upload-paths="@Model.RewriteUploadPaths"
-                              upload-org-name="@Model.UploadOrgName"
-                              upload-parent-org-names="@Model.UploadParentOrgNames">
-    <div id="Product" class="container row m-auto my-3">
-        <div class="image col-md-5 col-sm-12">
-            <div class="container-fluid position-relative">
-                <div class="ProductSwiper swiper">
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide product-media-loading">
-                            <img class="pro_display img-fluid" src="~/images/directory-loading.svg" alt="商品圖片載入中" />
+    <coker-safe-inherited-content website-id="@Model.HtmlSanitizeWebsiteId"
+                                  parent-content="@Model.ParentSafeHtml"
+                                  parent-css="@Model.ParentSafeCss"
+                                  parent-source-id="@Model.ParentHtmlSanitizeSourceId"
+                                  sanitize-policy="@Model.HtmlSanitizePolicy"
+                                  rewrite-upload-paths="@Model.RewriteUploadPaths"
+                                  upload-org-name="@Model.UploadOrgName"
+                                  upload-parent-org-names="@Model.UploadParentOrgNames">
+        <div id="Product" class="container row m-auto my-3">
+            <div class="image col-md-5 col-sm-12">
+                <div class="container-fluid position-relative">
+                    <div class="ProductSwiper swiper">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide product-media-loading">
+                                <img class="pro_display img-fluid" src="~/images/directory-loading.svg" alt="商品圖片載入中" />
+                            </div>
                         </div>
                     </div>
+                    <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
+                    <button class="btn_swiper_next_product rounded-circle border-0 text-white position-absolute end-0 opacity-50"><i class="fa-solid fa-chevron-right fs-3"></i></button>
+                    <div class="swiper-pagination ProductSwiperPagination"></div>
                 </div>
-                <button class="btn_swiper_prev_product rounded-circle border-0 text-white position-absolute start-0 opacity-50"><i class="fa-solid fa-chevron-left fs-3"></i></button>
-                <button class="btn_swiper_next_product rounded-circle border-0 text-white position-absolute end-0 opacity-50"><i class="fa-solid fa-chevron-right fs-3"></i></button>
-                <div class="swiper-pagination ProductSwiperPagination"></div>
+
+                <div thumbsSlider="" class="PreviewSwiper swiper my-3">
+                    <div class="swiper-wrapper align-items-center">
+                    </div>
+                    <div class="swiper-scrollbar"></div>
+                </div>
+
+                <ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2"></ul>
+                <span class="status d-none"></span>
             </div>
 
-            <div thumbsSlider="" class="PreviewSwiper swiper my-3">
-                <div class="swiper-wrapper align-items-center">
-                </div>
-                <div class="swiper-scrollbar"></div>
-            </div>
+            <div class="content col-md-7 col-sm-12">
+                <div class="pro_itemNo title fs-6 py-1"></div>
+                <h1 class="pro_title title fs-2">@Model.PageData.Title</h1>
 
-            <ul class="pro_tag col p-0 m-0 d-flex flex-wrap overflow-hidden my-2"></ul>
-            <span class="status d-none"></span>
-        </div>
+                <div class="describe d-flex align-items-center justify-content-between position-relative">
+                    <ul class="introduce my-2"></ul>
 
-        <div class="content col-md-7 col-sm-12">
-            <div class="pro_itemNo title fs-6 py-1"></div>
-            <h1 class="pro_title title fs-2">@Model.PageData.Title</h1>
-
-            <div class="describe d-flex align-items-center justify-content-between position-relative">
-                <ul class="introduce my-2"></ul>
-
-                @if (ViewBag.LoginEnable)
-                {
-                    @if (ViewBag.isLogin)
+                    @if (ViewBag.LoginEnable)
                     {
-                        <div class="track text-center position-absolute">
-                            <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="@L.get("AddFavorite")">
-                                <div class="icon_love text-danger"></div>
-                            </button>
-                        </div>
-                    }
-                }
-            </div>
-
-            <hr class="m-1" />
-
-            <div class="specification text-center my-2">
-                <div id="SpecCollapse" class="collapse">
-                    <ul class="text-start w-100"></ul>
-                </div>
-                <button class="btn_detailed px-4 py-1 border-0 rounded-pill d-none" type="button" data-bs-toggle="collapse" data-bs-target="#SpecCollapse" aria-expanded="false" aria-controls="SpecCollapse">
-                    詳細規格
-                </button>
-            </div>
-
-            <div class="pro_tc px-3">
-                    <div class="title">@L.get("CertificationMark")</div>
-                <ul class="image d-flex flex-wrap"></ul>
-            </div>
-
-            <hr class="m-1" data-storeTpe="@ViewBag.storeBuyState" />
-            @if (ViewBag.storeBuyState.IndexOf("NoShow") < 0)
-            {
-                @* <div class="priceframe  flex-wrap"> *@
-                <template id="PriceListTemplate">
-                    <div class="price-option-card">
-                        <input type="radio" class="price-option-input d-none" name="priceRadio" />
-
-                        <label class="price-option-label" for="">
-                            <span class="price-option-body">
-
-                                <span class="price-role-badge d-none">
-                                    <span class="price-role-name"></span>
-                                </span>
-
-                                <span class="price-option-main">
-                                    <span class="sale-role-name d-none"></span>
-                                    <span class="sale-price text-danger fw-bold"></span>
-                                </span>
-
-                                <span class="price-option-sub d-none">
-                                    <span class="price-badge d-none"></span>
-                                    <span class="price-hint d-none"></span>
-                                </span>
-
-                            </span>
-                        </label>
-                    </div>
-                </template>
-
-                <div class="price-base-meta d-none">
-                    <div class="suggest-price d-none"></div>
-                    <div class="original-price d-none"></div>
-                </div>
-
-                <div class="priceframe price-list flex-wrap"></div>
-                <hr class="m-1" />
-            }
-            <template id="Template_Spec_Radio">
-                <div class="radio d-flex align-items-center my-2">
-                    @*<div class="spec_title title"></div>*@
-                    <div class="spec_control control d-flex flex-wrap">
-                    </div>
-                </div>
-            </template>
-            <div class="options px-3">
-                @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
-                {
-                    <div class="counter d-flex align-items-center my-2">
-                        <label class="title" for="quantityInput">@L.get("Quantity")</label>
-                        <div class="counter_input d-flex isLoading">
-                            <div class="quantity">
-                                <button class="btn_count_minus bg-white my-1">
-                                    <i class="fa-solid fa-minus"></i>
-                                    <span class="d-none">@L.get("Decrease")</span>
-                                </button>
-
-                                <input id="quantityInput" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
-
-                                <button class="btn_count_plus bg-white my-1">
-                                    <i class="fa-solid fa-plus"></i>
-                                    <span class="d-none">@L.get("Increase")</span>
+                        @if (ViewBag.isLogin)
+                        {
+                            <div class="track text-center position-absolute">
+                                <button class="btn_favorites bg-transparent border-0 p-0" data-bs-toggle="tooltip" title="@L.get("AddFavorite")">
+                                    <div class="icon_love text-danger"></div>
                                 </button>
                             </div>
-                            <div class="emptyProd" aria-live="polite"></div>
+                        }
+                    }
+                </div>
+
+                <hr class="m-1 spec_divider d-none" />
+
+                <div class="specification text-center my-2">
+                    <div id="SpecCollapse" class="collapse">
+                        <ul class="text-start w-100"></ul>
+                    </div>
+                    <button class="btn_detailed px-4 py-1 border-0 rounded-pill d-none" type="button" data-bs-toggle="collapse" data-bs-target="#SpecCollapse" aria-expanded="false" aria-controls="SpecCollapse">
+                        詳細規格
+                    </button>
+                </div>
+
+                <div class="pro_tc px-3">
+                    <div class="title">@L.get("CertificationMark")</div>
+                    <ul class="image d-flex flex-wrap"></ul>
+                </div>
+
+                @if (ViewBag.storeBuyState.IndexOf("NoShow") < 0)
+                {
+                    @* <div class="priceframe  flex-wrap"> *@
+                    <template id="PriceListTemplate">
+                        <div class="price-option-card">
+                            <input type="radio" class="price-option-input d-none" name="priceRadio" />
+
+                            <label class="price-option-label" for="">
+                                <span class="price-option-body">
+
+                                    <span class="price-role-badge d-none">
+                                        <span class="price-role-name"></span>
+                                    </span>
+
+                                    <span class="price-option-main">
+                                        <span class="sale-role-name d-none"></span>
+                                        <span class="sale-price text-danger fw-bold"></span>
+                                    </span>
+
+                                    <span class="price-option-sub d-none">
+                                        <span class="price-badge d-none"></span>
+                                        <span class="price-hint d-none"></span>
+                                    </span>
+
+                                </span>
+                            </label>
+                        </div>
+                    </template>
+
+                    <div class="price-base-meta d-none">
+                        <div class="suggest-price d-none"></div>
+                        <div class="original-price d-none"></div>
+                    </div>
+
+                    <div class="priceframe price-list flex-wrap"></div>
+                }
+                <template id="Template_Spec_Radio">
+                    <div class="radio d-flex align-items-center my-2">
+                        @*<div class="spec_title title"></div>*@
+                        <div class="spec_control control d-flex flex-wrap">
                         </div>
                     </div>
+                </template>
+                <div class="options px-3">
+                    @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+                    {
+                        <div class="counter d-flex align-items-center my-2">
+                            <label class="title" for="quantityInput">@L.get("Quantity")</label>
+                            <div class="counter_input d-flex isLoading">
+                                <div class="quantity">
+                                    <button class="btn_count_minus bg-white my-1">
+                                        <i class="fa-solid fa-minus"></i>
+                                        <span class="d-none">@L.get("Decrease")</span>
+                                    </button>
+
+                                    <input id="quantityInput" class="input_pro_quantity text-center my-1" type="number" name="counter" value="1">
+
+                                    <button class="btn_count_plus bg-white my-1">
+                                        <i class="fa-solid fa-plus"></i>
+                                        <span class="d-none">@L.get("Increase")</span>
+                                    </button>
+                                </div>
+                                <div class="emptyProd" aria-live="polite"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+                {
+                    <partial name="_ProductAddOnPurchase" />
+                }
+                @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+                {
+                    <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button"
+                         data-label-add="@L.get("AddtoCart")"
+                         data-label-close="@L.get("ProdEmpty")"
+                         data-label-bonuslack="@L.get("BonusInsufficient")">
+                        <div class="icon_plus"></div>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(ViewBag.linkMore))
+                {
+                    <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank" rel="noopener noreferrer">
+                        <div class="text-white">@L.get("LearnMore")</div>
+                    </a>
                 }
             </div>
-            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
-            {
-                <partial name="_ProductAddOnPurchase" />
-            }
-            @if (ViewBag.ShoppingEnable && ViewBag.HasShoppingCar != null && ViewBag.HasShoppingCar && ViewBag.storeBuyState.IndexOf("noPay") < 0)
-            {
-                <div class="btn_addToCar d-flex mb-2 align-items-center justify-content-center text-white" type="button"
-                     data-label-add="@L.get("AddtoCart")"
-                     data-label-close="@L.get("ProdEmpty")"
-                     data-label-bonuslack="@L.get("BonusInsufficient")">
-                    <div class="icon_plus"></div>
-                </div>
-            }
-            @if (!string.IsNullOrWhiteSpace(ViewBag.linkMore)){
-                <a href="@ViewData["linkMore"]" class="btn_learnMore d-flex align-items-center justify-content-center text-white" type="button" target="_blank" rel="noopener noreferrer">
-                    <div class="text-white">@L.get("LearnMore")</div>
-                </a>
-            }
-        </div>
-    </div>
-
-    <div id="CenterLine" class="container d-flex flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
-        <div class="shareBlock d-none d-lg-flex align-items-center justify-content-center justify-content-sm-end">
-            <div>@L.get("Share")：</div>
-        </div>
-        <ul id="btn_tab" class="text d-flex nav nav-pills" role="tablist">
-            <li class="nav-item description" role="presentation">
-                <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">@L.get("ProductDescription")</button>
-            </li>
-            <li class="nav-item technical" role="presentation">
-                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("CertificationMark")</button>
-            </li>
-            <li class="nav-item files" role="presentation">
-                <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#FileDownload" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("DownloadFile")</button>
-            </li>
-        </ul>
-    </div>
-
-    <div id="TabContent" class="tab-content container">
-        <div id="ProductDescription" class="container tab-pane fade show active" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
-            @* 商品說明由 GetMainDisplayOne 回傳已清洗、已 Decode 的 HTML。 *@
-            <Content></Content>
         </div>
 
-        <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
-            <div class="techcert_list"></div>
+        <div id="CenterLine" class="container d-flex flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
+            <div class="shareBlock d-none d-lg-flex align-items-center justify-content-center justify-content-sm-end">
+                <div>@L.get("Share")：</div>
+            </div>
+            <ul id="btn_tab" class="text d-flex nav nav-pills" role="tablist">
+                <li class="nav-item description" role="presentation">
+                    <button id="pills-description-tab" class="mx-sm-0 nav-link active py-3" data-bs-toggle="pill" data-bs-target="#ProductDescription" type="button" role="tab" aria-controls="pills-description" aria-selected="true">@L.get("ProductDescription")</button>
+                </li>
+                <li class="nav-item technical" role="presentation">
+                    <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#TechnicalDocuments" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("CertificationMark")</button>
+                </li>
+                <li class="nav-item files" role="presentation">
+                    <button id="pills-documents-tab" class="mx-sm-0 nav-link py-3" data-bs-toggle="pill" data-bs-target="#FileDownload" type="button" role="tab" aria-controls="pills-documents" aria-selected="false">@L.get("DownloadFile")</button>
+                </li>
+            </ul>
         </div>
 
-        <div id="FileDownload" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
-            <div class="File_list"></div>
+        <div id="TabContent" class="tab-content container">
+            <div id="ProductDescription" class="container tab-pane fade show active" role="tabpanel" aria-labelledby="pills-description" tabindex="0">
+                @* 商品說明由 GetMainDisplayOne 回傳已清洗、已 Decode 的 HTML。 *@
+                <Content></Content>
+            </div>
+
+            <div id="TechnicalDocuments" class="pro_tc_content container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
+                <div class="techcert_list"></div>
+            </div>
+
+            <div id="FileDownload" class="container tab-pane fade" role="tabpanel" aria-labelledby="pills-documents" tabindex="0">
+                <div class="File_list"></div>
+            </div>
         </div>
-    </div>
 
         <div class="container d-flex pt-sm-0 pt-2 pb-0 flex-wrap flex-sm-row-reverse align-items-center justify-content-center justify-content-sm-between">
             <div class="shareBlock d-flex d-lg-none mb-3 align-items-center justify-content-center flex-nowrap">
                 <div>@L.get("Share")：</div>
             </div>
         </div>
-</coker-safe-inherited-content>
+    </coker-safe-inherited-content>
 </Content>
 <div id="SwitchPage" class="container my-3 my-lg-5 justify-content-center">
     <a href="" title="" target="_self" class="btn_prev disabled"><span class="translate">@L.get("Prev")</span></a>

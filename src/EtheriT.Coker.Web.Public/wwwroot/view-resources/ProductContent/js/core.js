@@ -50,6 +50,7 @@
             introduce: '.introduce',
             specList: '#SpecCollapse > ul',
             detailedButton: '.btn_detailed',
+            specDivider: '.spec_divider',
             htmlPanel: '#ProductDescription > Content',
             tagList: '.pro_tag',
             techCertRoot: '.pro_tc',

@@ -32,7 +32,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.12rem;
-    padding: 0.72rem 0.9rem;
+    padding: 0 .9rem .72rem 0;
     background-color: transparent;
     border: 1px solid transparent;
 }
@@ -138,9 +138,7 @@
 
 .price-base-meta {
     display: block;
-    margin: 0 0 0.55rem 0;
-    padding: 1rem 0 1rem 0.5rem;
-    border-bottom: 1px solid #e6e6e6;
+    padding-top: 1rem;
 }
 
     .price-base-meta .suggest-price,
@@ -290,7 +288,6 @@ input:disabled + .btn_radio {
     line-height: 3;
     max-width: 50%;
     margin-left: auto;
-    margin-right: auto;
 }
 
     /* 按鈕文字改由 Layout_1.cshtml 的 data-label-* 提供，值來自詞本（@L.get），以支援多語系。 */

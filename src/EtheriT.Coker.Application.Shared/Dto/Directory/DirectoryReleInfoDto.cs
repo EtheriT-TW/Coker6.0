@@ -46,6 +46,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string StatusName { get; set; } = string.Empty;
         public bool Visible { get; set; }
         public bool Available { get; set; }
+        public bool? CanPurchase { get; set; }
         public bool CanEdit { get; set; } = true;
         public List<ProductMarketingLabelDto> MarketingLabels { get; set; } = new();
         public List<TagGetSelectedDto>? tags { get; set; }

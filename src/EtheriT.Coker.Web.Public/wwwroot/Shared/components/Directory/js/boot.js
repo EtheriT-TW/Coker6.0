@@ -170,6 +170,16 @@
         const shownum = typeof $self.data("shownum") !== "undefined" ? $self.data("shownum") : 12;
         const maxlen = typeof $self.data("maxlen") !== "undefined" && $self.data("maxlen") !== "" ? $self.data("maxlen") : 0;
         const dirid = getDirIds($self);
+        const searchTarget = dirid.length > 0 ? dirid[0] : "";
+        const savedSearchSort = $self.find("#searchSortMenu").length > 0
+            && typeof w.SearchSortPreference?.read === "function"
+            ? w.SearchSortPreference.read(searchTarget)
+            : null;
+
+        if (savedSearchSort && typeof $self.data("searchSortBy") === "undefined") {
+            $self.data("searchSortBy", savedSearchSort.sortBy);
+            $self.data("searchSortDirection", savedSearchSort.direction);
+        }
 
         return {
             Ids: dirid,
@@ -179,6 +189,8 @@
             MaxLen: maxlen,
             Type: typeof $self.data("type") === "undefined" ? null : $self.data("type"),
             SearchText: typeof $self.data("searchText") === "undefined" ? null : ($self.data("searchText") || "").toString().trim(),
+            SearchSortBy: typeof $self.data("searchSortBy") === "undefined" ? null : $self.data("searchSortBy"),
+            SearchSortDirection: typeof $self.data("searchSortDirection") === "undefined" ? null : $self.data("searchSortDirection"),
             Filters: $self.data("filtered"),
             DirectoryType: $self.data("directoryTypeChecked") || 0,
             target: typeof $self.data("target") === "undefined" ? null : $self.data("target"),

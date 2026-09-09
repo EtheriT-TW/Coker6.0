@@ -158,7 +158,7 @@ function ArticleTagsInit(options) {
                 const $l = $el[0].tagName.toLowerCase() === "a" ? $el : $el.find("a").first();
 
                 $l.attr({
-                    href: `/${OrgName}/Search/Get/0/${item.title}`,
+                    href: `/${OrgName}/Search/Get/0/${encodeURIComponent(item.title)}`,
                     title: `連結至：搜尋${item.title}頁面(另開新視窗)`,
                     target: "_blank",
                     rel: "noopener noreferrer"

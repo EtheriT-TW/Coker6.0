@@ -13,8 +13,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public long Id { get; set; }
         public DirectoryTypeEnum Type { get; set; }
         public DateTime? NodeDate { get; set; } // 文章/選單可用（選單可能 null）
+        public DateTime? LastModified { get; set; }
         public int SerNo { get; set; }
+        public string? Title { get; set; }
         public string? ItemNo { get; set; }     // 商品用
+        public decimal? SortPrice { get; set; } // 商品目前角色可見的最低現金售價
         public ProdStatusEnum? ProdStatus { get; set; } // 商品用
         public int MatchCount { get; set; } // 使用者加權
         public int SortType { get; set; }          // 商品優先：商品=0，其它=1

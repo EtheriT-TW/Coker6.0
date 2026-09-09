@@ -473,7 +473,7 @@
             $tagList.removeClass('d-none');
 
             result.tagDatas.forEach(item => {
-                $tagList.prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="/${this.options.orgName}/Search/Get/-2/${item.tag_Name}">${item.tag_Name}</a></li>`);
+                $tagList.prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="/${this.options.orgName}/Search/Get/-2/${encodeURIComponent(item.tag_Name)}">${item.tag_Name}</a></li>`);
             });
         }
 

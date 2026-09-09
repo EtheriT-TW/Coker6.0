@@ -36,6 +36,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string StockNotEnough { get; } = "商品庫存不足";
         public static string SpecNotFound { get; } = "查無商品規格";
         public static string ProductUnavailable { get; } = "商品已下架";
+        public static string ShoppingClosed { get; } = "此網站目前未開放購物";
         public static string OutOfStock { get; } = "目前無庫存";
         public static string CartNotFound { get; } = "查無購物車資料";
         public static string CartLimitExceeded { get; } = "可購買上限 {0} 件，無法再加入 {1} 件";

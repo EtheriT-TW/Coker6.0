@@ -16,7 +16,7 @@
 
                     $b.on("click", function () {
                         $e.data("sid", $(this).data("id"));
-                        if ($t.val() != "") w.location.href = "/" + OrgName + "/Search/Get/" + $e.data("sid") + "/" + $t.val();
+                        if ($t.val() != "") w.location.href = "/" + OrgName + "/Search/Get/" + $e.data("sid") + "/" + encodeURIComponent($t.val());
                     });
 
                     $e.find(".btn_sear").on("click", function () {
@@ -26,7 +26,7 @@
                                 setTimeout(function () { $t2.trigger("focus"); }, 300);
                             }, false);
                         } else {
-                            w.location.href = "/" + OrgName + "/Search/Get/" + $e.data("sid") + "/" + $t.val();
+                            w.location.href = "/" + OrgName + "/Search/Get/" + $e.data("sid") + "/" + encodeURIComponent($t.val());
                         }
                         return false;
                     });
@@ -34,7 +34,7 @@
                     if ($t2.length != 0) {
                         $t2.on("keypress", function (e) {
                             if (e.which == 13) {
-                                w.location.href = "/" + OrgName + "/Search/Get/0/" + $t2.val();
+                                w.location.href = "/" + OrgName + "/Search/Get/0/" + encodeURIComponent($t2.val());
                             }
                         });
                     }

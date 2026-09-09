@@ -81,6 +81,49 @@
         <div id="Search_Result" class="col px-0">
             <div class="catalog_frame type_change_frame" data-type="search" data-ShowNum="24" data-dirid="@Model.SearchPalameter.SearchId" data-search-text="@Model.SearchPalameter.SearchText">
                 <div class="d-flex justify-content-end switch_control text-black-50">
+                    @if (Model.SearchPalameter.SearchId == SearchTargetIds.Product || Model.SearchPalameter.SearchId == SearchTargetIds.Article)
+                    {
+                        <div class="search-sort-control d-flex align-items-center me-auto text-black">
+                            <span class="sort-control-icon material-symbols-outlined me-2" aria-hidden="true" title="@L.get("SortBy")">sort</span>
+                            <span class="visually-hidden">@L.get("SortBy")</span>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="@L.get("SortBy")">
+                                <button id="searchSortDirection"
+                                        type="button"
+                                        class="search-sort-direction btn btn-outline-secondary"
+                                        aria-disabled="true"
+                                        data-ascending-label="@L.get("SortAscending")"
+                                        data-descending-label="@L.get("SortDescending")"
+                                        data-unavailable-label="@L.get("SortDirectionUnavailable")">
+                                    <span class="search-sort-label">@L.get("SortDefault")</span>
+                                    <span class="sort-direction-icon material-symbols-outlined d-none" aria-hidden="true">arrow_upward</span>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        aria-label="@L.get("SortOptions")"
+                                        title="@L.get("SortOptions")">
+                                    <span class="visually-hidden">@L.get("SortOptions")</span>
+                                </button>
+                                <ul id="searchSortMenu" class="dropdown-menu">
+                                    <li><button type="button" class="dropdown-item" data-sort="default">@L.get("SortDefault")</button></li>
+                                    @if (Model.SearchPalameter.SearchId == SearchTargetIds.Product)
+                                    {
+                                        <li><button type="button" class="dropdown-item" data-sort="price">@L.get("SortPrice")</button></li>
+                                        <li><button type="button" class="dropdown-item" data-sort="name">@L.get("SortName")</button></li>
+                                        <li><button type="button" class="dropdown-item" data-sort="productnumber">@L.get("SortProductNumber")</button></li>
+                                        <li><button type="button" class="dropdown-item" data-sort="model">@L.get("SortModel")</button></li>
+                                    }
+                                    else
+                                    {
+                                        <li><button type="button" class="dropdown-item" data-sort="title">@L.get("SortTitle")</button></li>
+                                        <li><button type="button" class="dropdown-item" data-sort="publishdate">@L.get("SortPublishDate")</button></li>
+                                        <li><button type="button" class="dropdown-item" data-sort="lastmodified">@L.get("SortLastModified")</button></li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    }
                     @if (Model.SearchPalameter.SearchId == SearchTargetIds.Product)
                     {
                         <button class="btn_filter_grid bg-transparent border-0 align-items-center mx-1 d-flex d-md-none" value="過濾">

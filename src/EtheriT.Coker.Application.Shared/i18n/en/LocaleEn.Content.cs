@@ -33,6 +33,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string StockNotEnough { get; } = "Insufficient stock";
         public static string SpecNotFound { get; } = "Product specification not found.";
         public static string ProductUnavailable { get; } = "This product is no longer available.";
+        public static string ShoppingClosed { get; } = "Shopping is currently unavailable on this website.";
         public static string OutOfStock { get; } = "Out of stock.";
         public static string CartNotFound { get; } = "Cart not found.";
         public static string CartLimitExceeded { get; } = "You may purchase up to {0} item(s); cannot add {1} more.";

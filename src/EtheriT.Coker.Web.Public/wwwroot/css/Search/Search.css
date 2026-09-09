@@ -252,10 +252,72 @@ body {
 
 .search-category .switch_control {
     padding-right: 3rem;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
 }
 
 html[lang="en"] .type_change_frame .switch_control {
     flex-wrap: unset;
+}
+
+.search-category .search-sort-control {
+    min-width: 0;
+}
+
+.search-category .sort-control-icon {
+    font-size: 1.25rem;
+}
+
+.search-category .search-sort-control .btn-group {
+    min-width: 8.5rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.search-category .search-sort-control .btn-group > .btn {
+    background-color: #fff;
+    border-color: #adb5bd;
+    color: #212529;
+}
+
+.search-category .search-sort-control .btn-group.sort-default > .btn:hover,
+.search-category .search-sort-control .btn-group.sort-default > .btn:focus {
+    background-color: #f8f9fa;
+    border-color: #6c757d;
+    color: #212529;
+}
+
+.search-category .search-sort-control .btn-group.sort-asc > .btn {
+    background-color: #f7fbff;
+    border-color: #0d6efd;
+    color: #0756b8;
+}
+
+.search-category .search-sort-control .btn-group.sort-desc > .btn {
+    background-color: #fff8f1;
+    border-color: #d97706;
+    color: #9a4f00;
+}
+
+.search-category .search-sort-direction {
+    min-width: 6.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+}
+
+.search-category .search-sort-direction.is-default {
+    cursor: default;
+    justify-content: center;
+}
+
+.search-category .search-sort-direction .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+.search-category .search-sort-control .dropdown-menu {
+    min-width: 100%;
 }
 
 header #Search {
@@ -678,6 +740,19 @@ h3.title {
         padding-right: 0;
     }
 
+    html[lang="en"] .search-category .switch_control {
+        flex-wrap: wrap;
+    }
+
+    .search-category .search-sort-control {
+        flex-basis: 100%;
+        width: 100%;
+    }
+
+    .search-category .search-sort-control .btn-group {
+        max-width: calc(100% - 3.5rem);
+    }
+
     .search-category .container {
         padding: 0;
     }
@@ -695,6 +770,18 @@ h3.title {
     }
 
     .catalog_frame .switch_control button {
+        width: 100%;
+    }
+
+    .catalog_frame .switch_control .search-sort-control button,
+    .catalog_frame .switch_control .btn_filter_grid,
+    .catalog_frame .switch_control .btn_prod_grid,
+    .catalog_frame .switch_control .btn_prod_list,
+    .catalog_frame .switch_control .btn_text {
+        width: auto;
+    }
+
+    .catalog_frame .switch_control .search-sort-control .dropdown-item {
         width: 100%;
     }
 }

@@ -13,6 +13,23 @@ function maskUserName(name) {
     return name.charAt(0) + "○" + name.charAt(name.length - 1);
 }
 
+function decodeSearchText(value) {
+    const text = String(value ?? "");
+
+    try {
+        return decodeURIComponent(text);
+    } catch {
+        // 保留使用者輸入的單獨 %，同時仍可還原 %2F 等有效編碼。
+        const normalizedText = text.replace(/%(?![0-9a-f]{2})/gi, "%25");
+
+        try {
+            return decodeURIComponent(normalizedText);
+        } catch {
+            return text;
+        }
+    }
+}
+
 function ready() {
     const $conten = $("#main");
     loginModal = $("#LoginModal").length > 0 ? new bootstrap.Modal($("#LoginModal")) : null;
@@ -66,7 +83,7 @@ function ready() {
     CokerI18n.apply(document);
     if (typeof AOS !== 'undefined' && AOS && typeof AOS.init === 'function') AOS.init();
     if ($(".search-input").val() != "") {
-        let encodedString = decodeURIComponent($(".search-input").val());
+        const encodedString = decodeSearchText($(".search-input").val());
         const textArea = document.createElement('textarea');
         textArea.innerHTML = encodedString;
         const searchKey = textArea.value;
@@ -168,13 +185,13 @@ function ready() {
     });
 
 
-    if (typeof (SearchWord) !== "undefined" && SearchWord !== "") {
-        // 取得 URL 關鍵字
-        const searchText = decodeURIComponent(SearchWord);
+    if (typeof SearchWord === "string" && SearchWord !== "") {
+        const searchText = decodeSearchText(SearchWord);
+        const escapedSearchText = searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const highlightClass = "highlight";
         const mainContainer = document.querySelector("#main");
         function highlightText(node) {
-            const regex = new RegExp(`(${searchText})`, "g");
+            const regex = new RegExp(`(${escapedSearchText})`, "g");
 
             // 確保 node 是純文字節點，且未被標記過
             if (node.nodeType === Node.TEXT_NODE && regex.test(node.nodeValue)) {

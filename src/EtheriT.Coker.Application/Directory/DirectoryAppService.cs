@@ -465,7 +465,7 @@ namespace EtheriT.Coker.Application.Directory
         // ✅ 修正 OrderBy / ThenBy、skip 計算
         // ✅ 共用：搜尋條件、Filters/DirectoryType 產生、使用者加權排序（無行為資料就回到預設）
         // ✅ 文章：只有「標籤」Filter；選單：無 Filter；商品：標籤 + 技術文件 + DirectoryType
-        // ✅ 商品排序規則（Status / Ser_No / ItemNo / Id）不變，只修正 ThenBy 串接與 EF 可翻譯性
+        // ✅ 商品支援價格、名稱、商品編號、型號排序；同值時仍依使用者加權排序
 
         private async Task<DirectoryReleInfoGetDto> SearchReleInfo(DirectoryReleInfoInputDto dto)
         {
@@ -552,7 +552,35 @@ namespace EtheriT.Coker.Application.Directory
 
             // ---------- 取得使用者加權資料（可為空） ----------
             var userCtx = await GetUserSearchContextAsync();
-            var currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteId);
+            var visiblePriceRoleIds = new List<long> { 0, 1 };
+            var isPriceSort = includeProd && string.Equals(
+                dto.SearchSortBy?.Trim(),
+                "price",
+                StringComparison.OrdinalIgnoreCase);
+            long? currentFrontRoleId;
+
+            if (isPriceSort)
+            {
+                try
+                {
+                    var orgName = await loginUserData.GetWebsiteOrgName(websiteId);
+                    var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
+                    currentFrontRoleId = roleContext.CurrentRoleId;
+                    visiblePriceRoleIds = visiblePriceRoleIds
+                        .Concat(roleContext.VisibleRoleIds)
+                        .Distinct()
+                        .ToList();
+                }
+                catch
+                {
+                    // 無法取得角色時以訪客價格排序。
+                    currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteId);
+                }
+            }
+            else
+            {
+                currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteId);
+            }
 
             // ---------- 建立 Query（只建需要的） ----------
             IQueryable<WebMenu>? menuQ = null;
@@ -659,9 +687,17 @@ namespace EtheriT.Coker.Application.Directory
             }
             // menu 沒有 filters（你說的 D）
 
-            // ---------- ✅ 統一計算總筆數：改成 union Count 一次 ----------
-            var unionForCount = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, dto);
-            int totalCount = await unionForCount.CountAsync();
+            // 商品搜尋的筆數直接由已套用條件的商品 Query 計算，避免為 Count 建立價格／偏好排序投影。
+            int totalCount;
+            if (prodQ != null && menuQ == null && articleQ == null)
+            {
+                totalCount = await prodQ.CountAsync();
+            }
+            else
+            {
+                var unionForCount = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, visiblePriceRoleIds, dto);
+                totalCount = await unionForCount.CountAsync();
+            }
 
             output.TotalCount = totalCount;
 
@@ -673,7 +709,7 @@ namespace EtheriT.Coker.Application.Directory
                 return output;
 
             // ---------- 建立「統一排序用」的 Union Row ----------
-            var union = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, dto);
+            var union = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, visiblePriceRoleIds, dto);
 
             // 只取當頁 ids（穩定排序：最後一定要有 TieBreaker）
             var pageRows = await union
@@ -1070,9 +1106,11 @@ namespace EtheriT.Coker.Application.Directory
             IQueryable<Prod>? prodQ,
             long websiteId,
             UserSearchContext? userCtx,
+            IReadOnlyList<long> visiblePriceRoleIds,
             DirectoryReleInfoInputDto dto)
         {
             IReadOnlyList<long> relevantTagIds = userCtx != null ? userCtx.RelevantTagIds : new List<long>();
+            var sortBy = (dto.SearchSortBy ?? "default").Trim().ToLowerInvariant();
 
             IQueryable<UnionRow>? union = null;
 
@@ -1086,8 +1124,11 @@ namespace EtheriT.Coker.Application.Directory
                         Id = m.Id,
                         Type = DirectoryTypeEnum.選單,
                         NodeDate = null,
+                        LastModified = m.LastModificationTime,
                         SerNo = m.SerNO,
+                        Title = m.Title,
                         ItemNo = null,
+                        SortPrice = null,
                         MatchCount = 0,
 
                         SortType = 1,
@@ -1108,8 +1149,11 @@ namespace EtheriT.Coker.Application.Directory
                         Id = a.Id,
                         Type = DirectoryTypeEnum.文章,
                         NodeDate = a.NodeDate,
+                        LastModified = a.LastModificationTime,
                         SerNo = a.SerNO,
+                        Title = a.Title,
                         ItemNo = null,
+                        SortPrice = null,
 
                         MatchCount = (relevantTagIds.Count == 0)
                             ? 0
@@ -1131,30 +1175,89 @@ namespace EtheriT.Coker.Application.Directory
             // 3) Product
             if (prodQ != null)
             {
-                var q =
-                    from p in prodQ
-                    select new UnionRow
-                    {
-                        Id = p.Id,
-                        Type = DirectoryTypeEnum.商品,
-                        NodeDate = null,
-                        SerNo = p.Ser_No,
-                        ItemNo = p.ItemNo,
+                IQueryable<UnionRow> q;
 
-                        MatchCount = (relevantTagIds.Count == 0)
-                            ? 0
-                            : db.Tag_Associates
-                                .Where(t => !t.IsDeleted
-                                            && t.Type == TagAssociateTypeEnum.商品
-                                            && t.FK_AId == p.Id
-                                            && relevantTagIds.Contains(t.FK_TId))
-                                .Count(),
+                if (sortBy == "price")
+                {
+                    var visibleStocks = db.Prod_Stocks
+                        .AsNoTracking()
+                        .Where(stock => !stock.IsDeleted && stock.Visible && !stock.IsTimePrice);
+                    var visiblePrices = db.Prod_Prices
+                        .AsNoTracking()
+                        .Where(price =>
+                            !price.IsDeleted
+                            && (price.Bonus ?? 0) == 0
+                            && (price.Price ?? 0) > 0
+                            && visiblePriceRoleIds.Contains(price.FK_RId));
 
-                        // ✅ 商品優先 + 商品狀態排序鍵（投影成欄位）
-                        SortType = 0,
-                        SortSoldOut = (p.Status == ProdStatusEnum.售完) ? 1 : 0,
-                        SortDiscontinued = (p.Status == ProdStatusEnum.停產) ? 1 : 0,
-                    };
+                    // 從本次搜尋結果開始 JOIN 並依商品一次彙總，避免逐商品相關子查詢或掃描其他站台商品。
+                    q =
+                        from p in prodQ
+                        join stock in visibleStocks
+                            on p.Id equals stock.FK_Pid into stockGroup
+                        from stock in stockGroup.DefaultIfEmpty()
+                        join price in visiblePrices
+                            on stock.Id equals price.FK_PSId into priceGroup
+                        from price in priceGroup.DefaultIfEmpty()
+                        group (price == null ? (decimal?)null : price.Price) by new
+                        {
+                            p.Id,
+                            p.Ser_No,
+                            p.Title,
+                            p.ItemNo,
+                            p.Status,
+                            p.LastModificationTime
+                        } into productGroup
+                        select new UnionRow
+                        {
+                            Id = productGroup.Key.Id,
+                            Type = DirectoryTypeEnum.商品,
+                            NodeDate = null,
+                            LastModified = productGroup.Key.LastModificationTime,
+                            SerNo = productGroup.Key.Ser_No,
+                            Title = productGroup.Key.Title,
+                            ItemNo = productGroup.Key.ItemNo,
+                            SortPrice = productGroup.Min(),
+                            MatchCount = (relevantTagIds.Count == 0)
+                                ? 0
+                                : db.Tag_Associates
+                                    .Where(t => !t.IsDeleted
+                                                && t.Type == TagAssociateTypeEnum.商品
+                                                && t.FK_AId == productGroup.Key.Id
+                                                && relevantTagIds.Contains(t.FK_TId))
+                                    .Count(),
+                            SortType = 0,
+                            SortSoldOut = (productGroup.Key.Status == ProdStatusEnum.售完) ? 1 : 0,
+                            SortDiscontinued = (productGroup.Key.Status == ProdStatusEnum.停產) ? 1 : 0,
+                        };
+                }
+                else
+                {
+                    q =
+                        from p in prodQ
+                        select new UnionRow
+                        {
+                            Id = p.Id,
+                            Type = DirectoryTypeEnum.商品,
+                            NodeDate = null,
+                            LastModified = p.LastModificationTime,
+                            SerNo = p.Ser_No,
+                            Title = p.Title,
+                            ItemNo = p.ItemNo,
+                            SortPrice = null,
+                            MatchCount = (relevantTagIds.Count == 0)
+                                ? 0
+                                : db.Tag_Associates
+                                    .Where(t => !t.IsDeleted
+                                                && t.Type == TagAssociateTypeEnum.商品
+                                                && t.FK_AId == p.Id
+                                                && relevantTagIds.Contains(t.FK_TId))
+                                    .Count(),
+                            SortType = 0,
+                            SortSoldOut = (p.Status == ProdStatusEnum.售完) ? 1 : 0,
+                            SortDiscontinued = (p.Status == ProdStatusEnum.停產) ? 1 : 0,
+                        };
+                }
 
                 union = union == null ? q : union.Union(q);
             }
@@ -1168,19 +1271,120 @@ namespace EtheriT.Coker.Application.Directory
                 return Enumerable.Empty<UnionRow>().AsQueryable();
             }
 
-            // ✅ 關鍵：ORDER BY 全部改成「欄位」，避免 SQL Server 判定為常數運算式
-            var ordered =
-                union
-                    .OrderBy(x => x.SortType)                 // 商品優先
-                    .ThenBy(x => x.SortSoldOut)               // 售完排後（升冪：0 在前、1 在後）
-                    .ThenBy(x => x.SortDiscontinued)          // 停產排後
-                    .ThenByDescending(x => x.MatchCount)      // 使用者匹配數（商品+文章）
-                    .ThenByDescending(x => x.NodeDate)        // 文章日期
-                    .ThenBy(x => x.SerNo)                     // 通用 SerNo
-                    .ThenBy(x => x.ItemNo)                    // 商品 ItemNo
-                    .ThenByDescending(x => x.Id);             // 最終穩定
+            // 商品的自訂排序仍保留售完／停產置後；排序值相同時，優先採用使用者習慣權重。
+            var descending = string.Equals(dto.SearchSortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+            var statusOrdered = union
+                .OrderBy(x => x.SortType)
+                .ThenBy(x => x.SortSoldOut)
+                .ThenBy(x => x.SortDiscontinued);
 
-            return ordered;
+            return sortBy switch
+            {
+                "title" when descending => statusOrdered
+                    .ThenBy(x => x.Title == null || x.Title == "")
+                    .ThenByDescending(x => x.Title)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenByDescending(x => x.NodeDate)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                "title" => statusOrdered
+                    .ThenBy(x => x.Title == null || x.Title == "")
+                    .ThenBy(x => x.Title)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenByDescending(x => x.NodeDate)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                "publishdate" when descending => statusOrdered
+                    .ThenBy(x => x.NodeDate == null)
+                    .ThenByDescending(x => x.NodeDate)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                "publishdate" => statusOrdered
+                    .ThenBy(x => x.NodeDate == null)
+                    .ThenBy(x => x.NodeDate)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                "lastmodified" when descending => statusOrdered
+                    .ThenBy(x => x.LastModified == null)
+                    .ThenByDescending(x => x.LastModified)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                "lastmodified" => statusOrdered
+                    .ThenBy(x => x.LastModified == null)
+                    .ThenBy(x => x.LastModified)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                "price" when descending => statusOrdered
+                    .ThenBy(x => x.SortPrice == null)
+                    .ThenByDescending(x => x.SortPrice)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenBy(x => x.ItemNo)
+                    .ThenByDescending(x => x.Id),
+
+                "price" => statusOrdered
+                    .ThenBy(x => x.SortPrice == null)
+                    .ThenBy(x => x.SortPrice)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenBy(x => x.ItemNo)
+                    .ThenByDescending(x => x.Id),
+
+                "name" when descending => statusOrdered
+                    .ThenByDescending(x => x.Title)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenBy(x => x.ItemNo)
+                    .ThenByDescending(x => x.Id),
+
+                "name" => statusOrdered
+                    .ThenBy(x => x.Title)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenBy(x => x.ItemNo)
+                    .ThenByDescending(x => x.Id),
+
+                "productnumber" when descending => statusOrdered
+                    .ThenByDescending(x => x.Id)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo),
+
+                "productnumber" => statusOrdered
+                    .ThenBy(x => x.Id)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo),
+
+                "model" when descending => statusOrdered
+                    .ThenBy(x => x.ItemNo == null || x.ItemNo == "")
+                    .ThenByDescending(x => x.ItemNo)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                "model" => statusOrdered
+                    .ThenBy(x => x.ItemNo == null || x.ItemNo == "")
+                    .ThenBy(x => x.ItemNo)
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenBy(x => x.SerNo)
+                    .ThenByDescending(x => x.Id),
+
+                _ => statusOrdered
+                    .ThenByDescending(x => x.MatchCount)
+                    .ThenByDescending(x => x.NodeDate)
+                    .ThenBy(x => x.SerNo)
+                    .ThenBy(x => x.ItemNo)
+                    .ThenByDescending(x => x.Id)
+            };
         }
 
         private async Task FillProdFiltersAndDirectoryTypeAsync(

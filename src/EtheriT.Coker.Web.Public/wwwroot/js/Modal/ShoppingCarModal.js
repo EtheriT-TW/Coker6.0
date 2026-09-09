@@ -190,11 +190,16 @@ function ModalBuildSpecGroup(type, stocks) {
     $options.prepend($group);
 }
 
+// CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
+function ModalFormatMoney(value) {
+    return window.CokerCurrency.format(Number(value) || 0);
+}
+
 function ModalFormatPrice(price) {
     var cash = Number(price && price.price || 0);
     var bonus = Number(price && price.bonus || 0);
     if (cash <= 0 && bonus > 0) return "紅利 " + bonus.toLocaleString("en-US") + " 點";
-    var text = "NT$ " + cash.toLocaleString("en-US");
+    var text = ModalFormatMoney(cash);
     return bonus > 0 ? text + " + 紅利 " + bonus.toLocaleString("en-US") + " 點" : text;
 }
 
@@ -213,7 +218,7 @@ function ModalSetPriceDisplay(stock, product) {
     if (product.priceDisplayText) {
         $pro_discount.text(product.priceDisplayText);
     } else if (product.price != null && product.price !== "") {
-        $pro_discount.text("NT$ " + Number(product.price).toLocaleString("en-US"));
+        $pro_discount.text(ModalFormatMoney(product.price));
     } else {
         $pro_discount.text("目前無售價資訊");
     }

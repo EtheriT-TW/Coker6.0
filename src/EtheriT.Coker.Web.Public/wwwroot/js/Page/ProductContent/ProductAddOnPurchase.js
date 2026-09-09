@@ -15,7 +15,8 @@
 
     const $root = () => $('[data-product-addon]').first();
     const number = value => Number.parseInt(value, 10) || 0;
-    const money = value => number(value).toLocaleString('zh-TW');
+    // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
+    const formatMoney = value => window.CokerCurrency.format(number(value));
     const read = (object, camel, pascal) => object?.[camel] ?? object?.[pascal];
 
     function qualificationCount(campaign, purchaseQuantity) {
@@ -229,9 +230,9 @@
         $card.append($('<div class="product-addon__stock-name"></div>').text(read(item, 'stockName', 'StockName') || ''));
 
         const $price = $('<div class="product-addon__price-row"></div>');
-        $price.append($('<span class="product-addon__offer"></span>').text(offerPrice === 0 ? '免費贈送' : `NT$ ${money(offerPrice)}`));
+        $price.append($('<span class="product-addon__offer"></span>').text(offerPrice === 0 ? '免費贈送' : formatMoney(offerPrice)));
         if (originalPrice > 0 && originalPrice !== offerPrice) {
-            $price.append($('<span class="product-addon__original"></span>').text(`原價 NT$ ${money(originalPrice)}`));
+            $price.append($('<span class="product-addon__original"></span>').text(`原價 ${formatMoney(originalPrice)}`));
         }
         $card.append($price);
         $card.append('<button type="button" class="product-addon__preview-button">查看詳情</button>');

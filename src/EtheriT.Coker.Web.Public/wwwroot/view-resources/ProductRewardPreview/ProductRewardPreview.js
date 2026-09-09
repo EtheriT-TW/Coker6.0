@@ -7,7 +7,8 @@
     var restoreParent = null;
     var rootSelector = '#ProductRewardPreviewModal';
     var number = function (value) { return Number.parseInt(value, 10) || 0; };
-    var money = function (value) { return number(value).toLocaleString('zh-TW'); };
+    // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
+    var formatMoney = function (value) { return window.CokerCurrency.format(number(value)); };
 
     function $root() { return $(rootSelector); }
 
@@ -37,9 +38,9 @@
         $modal.find('.product-reward-preview__benefit').text(options.benefitText || (offerPrice <= 0 ? '贈品' : '加價購'));
         $modal.find('.product-reward-preview__name').text(productName);
         $modal.find('.product-reward-preview__stock').text(options.stockName || '').toggle(!!options.stockName);
-        $modal.find('.product-reward-preview__offer').text(offerPrice <= 0 ? '免費贈送' : '優惠價 NT$ ' + money(offerPrice));
+        $modal.find('.product-reward-preview__offer').text(offerPrice <= 0 ? '免費贈送' : '優惠價 ' + formatMoney(offerPrice));
         $modal.find('.product-reward-preview__original')
-            .text(originalPrice > 0 && originalPrice !== offerPrice ? '原價 NT$ ' + money(originalPrice) : '')
+            .text(originalPrice > 0 && originalPrice !== offerPrice ? '原價 ' + formatMoney(originalPrice) : '')
             .toggle(originalPrice > 0 && originalPrice !== offerPrice);
         $modal.find('.product-reward-preview__link')
             .attr('href', options.productUrl || productUrl(options.productId))

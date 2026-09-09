@@ -163,12 +163,10 @@
         return fallback;
     }
 
+    // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義，
+    // 前台每頁都在所有外部 script 之前備妥，不需要再防它不存在。
     function formatMoney(price) {
-        if (window.CokerCurrency && typeof window.CokerCurrency.format === 'function') {
-            return window.CokerCurrency.format(price);
-        }
-
-        return `NT$${formatNumber(price)}`;
+        return window.CokerCurrency.format(price);
     }
 
     function formatPriceText(price, bonus, withCurrency = true) {

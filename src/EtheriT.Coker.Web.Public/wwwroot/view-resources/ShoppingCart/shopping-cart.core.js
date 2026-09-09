@@ -112,14 +112,11 @@
 
     cart.Utils = cart.Utils || {};
 
+    // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
     cart.Utils.formatMoney = function (value) {
         var amount = Number(String(value == null ? 0 : value).replaceAll(",", ""));
         if (!Number.isFinite(amount)) return "";
 
-        if (window.CokerCurrency && typeof window.CokerCurrency.format === "function") {
-            return window.CokerCurrency.format(amount);
-        }
-
-        return `NT$${amount.toLocaleString()}`;
+        return window.CokerCurrency.format(amount);
     };
 })(window, window.jQuery);

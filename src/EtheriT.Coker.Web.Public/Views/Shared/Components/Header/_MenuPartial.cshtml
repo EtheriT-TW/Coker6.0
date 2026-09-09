@@ -85,9 +85,9 @@
                                     }
                                 }
                             </a>
-                            @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0 && menu.Title != "產品專區")
+                            @if (secItem.menuItemModels != null && secItem.menuItemModels.Count() > 0)
                             {
-                                <ul class="row mx-0@($" hasRow{secItem.menuItemModels.Count() / 3 + 1}")">
+                                <ul class="row mx-0 d-lg-none@($" hasRow{secItem.menuItemModels.Count() / 3 + 1}")">
                                     @foreach (var thirdItem in secItem.menuItemModels ?? new List<MenuItemModel>())
                                     {
                                         iconclass = thirdItem.Icon == "" ? "d-none" : "";

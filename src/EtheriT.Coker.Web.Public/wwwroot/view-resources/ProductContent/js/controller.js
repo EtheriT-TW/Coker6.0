@@ -269,6 +269,10 @@
                 .join('');
             $root.find(selectors.specList).html(descHtml);
 
+            // 規格清單有文字時才顯示上方分隔線
+            const hasSpecText = $root.find(selectors.specList).text().trim().length > 0;
+            $root.find(selectors.specDivider).toggleClass('d-none', !hasSpecText);
+
             this.toggleSpecDetailButton();
             this.renderSpecTab();
             this.renderHtmlContent();

@@ -210,6 +210,17 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 if(prod == null) throw new Exception(L.get("ProductUnavailable"));
                 else if(!ProductPurchasePolicy.CanPurchaseProduct(prod)) throw new Exception(L.get("ProdEmpty"));
 
+                var storeBuyState = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
+                {
+                    key = "storeBuyState",
+                    SiteId = prod.FK_WebsiteId
+                });
+                var canPurchase = storeBuyState.Success
+                    && storeBuyState.detailItem?.value != null
+                    && !storeBuyState.detailItem.value.Any(value =>
+                        value.Contains("noPay", StringComparison.OrdinalIgnoreCase));
+                if (!canPurchase) throw new Exception(L.get("ShoppingClosed"));
+
                 var skipStock = prod.NoStockManagement;
 
                 var currentStock = proStock.Stock ?? 0;

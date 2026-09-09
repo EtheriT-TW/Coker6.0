@@ -1621,9 +1621,12 @@ namespace EtheriT.Coker.Application.Product
                     SiteId = websiteId
                 });
                 var showProductPrice = false;
+                var canPurchase = false;
 
                 if (storeBuyState.Success && storeBuyState.detailItem != null && storeBuyState.detailItem.value != null){
                     showProductPrice = !storeBuyState.detailItem.value.Contains("noPayNoShow");
+                    canPurchase = !storeBuyState.detailItem.value.Any(value =>
+                        value.Contains("noPay", StringComparison.OrdinalIgnoreCase));
                 }
 
                 var orderLowToHigh =
@@ -1668,6 +1671,7 @@ namespace EtheriT.Coker.Application.Product
                               SerNo = p.Ser_No,
                               Status = p.Status,
                               StatusName = Enum.GetName(typeof(ProdStatusEnum), (ProdStatusEnum)p.Status) ?? string.Empty,
+                              CanPurchase = canPurchase,
                               tags = new List<TagGetSelectedDto>(),
                               MainImage = "/images/noImg.jpg",
                           }).ToList();

@@ -331,7 +331,7 @@
             const tagData = result.tagDatas[i];
             const taglink = typeof w.OrgName === "undefined"
                 ? ""
-                : `/${w.OrgName}/Search/Get/${tagData.searchId}/${tagData.title}`;
+                : `/${w.OrgName}/Search/Get/${tagData.searchId}/${encodeURIComponent(tagData.title)}`;
 
             tags += `<a href="${taglink}" title="${getLinkTitle(tagData.title, false)}" class="pe-2">#${tagData.title}</a>`;
         }

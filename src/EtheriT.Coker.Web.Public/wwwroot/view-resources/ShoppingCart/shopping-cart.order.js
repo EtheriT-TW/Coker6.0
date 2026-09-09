@@ -6,8 +6,6 @@
     cart.Order = cart.Order || {};
 
     async function OrderHeaderAdd() {
-        Coker.sweet.loading();
-
         var paymentInfo = null;
 
         cart.Pricing.TotalCount();
@@ -24,8 +22,11 @@
             return;
         }
 
+        Coker.sweet.loading();
+
         Coker.Order.CheckStock(data).done(async function (result) {
             if (!result.success) {
+                Coker.sweet.close();
                 Coker.sweet.error("錯誤", result.message, null, false);
                 $("#Step1 > .card-body > .purchase_list > li").remove();
                 cart.Items.CardDataGet();
@@ -35,6 +36,9 @@
 
             cart.Pricing.TotalCount();
 
+            // 庫存檢查期間資料可能被其他流程更新，再次驗證前先結束 loading。
+            // 否則驗證警告會沿用 SweetAlert 的 loading 按鈕，造成視窗無法關閉。
+            Coker.sweet.close();
             var checksuccess = cart.Forms.AllDataGet(true);
 
             var shipping_radio = $(`[name="RadioShipping"]:checked`);
@@ -49,6 +53,8 @@
             if (!checksuccess) {
                 return;
             }
+
+            Coker.sweet.loading();
 
             S.order_header_data.OrderDetails = S.order_header_data.OrderDetails.filter(e => ids.includes(e.Id));
             S.order_header_data.RewardSelections = cart.Marketing && typeof cart.Marketing.getRewardSelections === "function"
@@ -66,6 +72,7 @@
                         return;
                     }
 
+                    Coker.sweet.close();
                     Coker.sweet.warning(
                         "付款資訊取得失敗",
                         result || "目前無法取得付款資訊，請重新操作一次；若問題持續發生，請聯絡客服協助。",
@@ -76,6 +83,9 @@
 
                 cart.Order.AddHeader(result || null);
             });
+        }).fail(function () {
+            Coker.sweet.close();
+            Coker.sweet.error("錯誤", "庫存確認失敗，請稍後再試。", null, false);
         });
     }
     function AddHeader(paymentInfo) {

@@ -124,6 +124,11 @@
                 warning: function (title, text, action) {
                     var executed = false;
 
+                    // 警告可能是在處理中流程觸發，先恢復確認按鈕，避免沿用 loading 轉圈。
+                    if (typeof Swal.hideLoading === "function") {
+                        Swal.hideLoading();
+                    }
+
                     function runActionOnce() {
                         if (executed) return;
                         executed = true;

@@ -82,8 +82,9 @@
         } else {
             hasBuyBtn = !!$item.data("hasbuybtn");
         }
+        const canPurchase = data.canPurchase !== false;
 
-        if (hasBuyBtn && ($("#btn_car_dropdown").length > 0 || typeof w.OrgName === "undefined")) {
+        if (hasBuyBtn && canPurchase && ($("#btn_car_dropdown").length > 0 || typeof w.OrgName === "undefined")) {
             $item.addClass("hasBuyBtn");
         } else {
             $item.removeClass("hasBuyBtn");

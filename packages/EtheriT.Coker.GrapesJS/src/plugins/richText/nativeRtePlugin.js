@@ -648,7 +648,10 @@ function colorAction(property, title, label) {
         icon: `<label class="coker-native-rte-color" title="${title}">
             <span>${label}</span><input type="color" value="#000000">
         </label>`,
-        event: 'input',
+        // A color input fires `input` continuously while its picker is dragged.
+        // Applying on each event repeatedly reparses the RTE and nests SPANs,
+        // which quickly becomes expensive. Commit once when the picker closes.
+        event: 'change',
         result(rte, action) {
             applyInlineStyle(rte, property, action.btn.querySelector('input').value);
         },

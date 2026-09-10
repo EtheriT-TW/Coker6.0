@@ -145,7 +145,10 @@ namespace EtheriT.Coker.Application.Advertise
                                     EndTime = a.EndDate,
                                     SerNO = a.SerNO,
                                     Visible = a.Visible,
-                                    ActionType = a.ActionType
+                                    ActionType = a.ActionType,
+                                    Link = a.Link,
+                                    Target = a.Target,
+                                    permanent = a.Permanent,
                                 };
                 var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
 

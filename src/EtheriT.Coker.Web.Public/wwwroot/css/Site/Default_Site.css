@@ -185,6 +185,42 @@ a[href="https://translate.google.com"] {
     font-size: 0.8rem;
 }
 
+.money {
+    white-space: nowrap;
+}
+
+.money__symbol {
+    font-size: 0.5em;
+    font-weight: 400;
+    margin-inline-end: 0.125rem;
+}
+
+.money__amount {
+    font-weight: inherit;
+}
+
+/* 主售價：符號略小於數字 */
+.sale-price .money__symbol {
+    font-size: 0.7em;
+}
+
+/* 附註列與劃線原價字級本身已偏小，符號維持與數字同大小 */
+.price-meta-value .money__symbol,
+.origin-price .money__symbol {
+    font-size: 1em;
+}
+
+/* 購物車：金額欄位一律維持符號與數字同大小 */
+.cart-price-block .money__symbol,
+.cart-price-main .money__symbol,
+.pro_unit .money__symbol,
+.pro_subtotal .money__symbol,
+.cart-reward-price .money__symbol,
+.cart-reward-original .money__symbol,
+.summary-amount .money__symbol {
+    font-size: 1em;
+}
+
 /* Login Modal */
 #LoginModal > .modal-dialog > .modal-content {
     max-width: 80vw;

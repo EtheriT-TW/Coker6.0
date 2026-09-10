@@ -202,7 +202,7 @@
                     }))
                     .append($('<span/>', {
                         class: 'price-meta-value',
-                        text: vm.suggestPriceValue
+                        html: vm.suggestPriceValue
                     }));
 
                 hasMeta = true;
@@ -220,7 +220,7 @@
                     }))
                     .append($('<span/>', {
                         class: 'price-meta-value',
-                        text: vm.originalPriceValue
+                        html: vm.originalPriceValue
                     }));
 
                 hasMeta = true;
@@ -310,7 +310,7 @@
 
                 // 每一筆價格方案只顯示自己的實際售價
                 $salePrice
-                    .text(vm.saleText)
+                    .html(vm.saleText)
                     .removeClass('bonus_lack');
 
                 let hasSub = false;

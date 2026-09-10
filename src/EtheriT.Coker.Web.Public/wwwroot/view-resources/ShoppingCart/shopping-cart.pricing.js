@@ -332,10 +332,11 @@ function setCartPriceBlock($target, cashText, bonusValue, mode) {
     // ⭐ 預設 fallback：Step1（單行）
     if (!mode) mode = "inline";
 
+    // cashText 由呼叫端以 cart.Utils.formatMoneyHtml 產生，是 HTML，一律用 .html() 注入
     if (mode === "block") {
         // ===== Step4：上下分行 =====
         if ($main.length && $bonus.length) {
-            $main.text(cashText || "");
+            $main.html(cashText || "");
 
             if (bonus > 0) {
                 $bonus.text(`紅利：${bonus.toLocaleString()}`);
@@ -349,19 +350,19 @@ function setCartPriceBlock($target, cashText, bonusValue, mode) {
             if (bonus > 0) {
                 $target.html(`${cashText}<br/>紅利：${bonus.toLocaleString()}`);
             } else {
-                $target.text(cashText || "");
+                $target.html(cashText || "");
             }
         }
     } else {
         // ===== Step1：單行 =====
         if (bonus > 0) {
-            $target.text(
+            $target.html(
                 cashText
                     ? `${cashText} + 紅利${bonus.toLocaleString()}`
                     : `紅利${bonus.toLocaleString()}`
             );
         } else {
-            $target.text(cashText || "");
+            $target.html(cashText || "");
         }
     }
 }

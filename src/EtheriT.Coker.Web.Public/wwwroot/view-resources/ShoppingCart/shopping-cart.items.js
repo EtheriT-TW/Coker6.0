@@ -741,16 +741,16 @@ function CartListInsert($frame, data) {
 
                     if (oldBonus > 0) {
                         if (original > 0) {
-                            oldText = `${cart.Utils.formatMoney(original)} + 紅利${oldBonus.toLocaleString()}`;
+                            oldText = `${cart.Utils.formatMoneyHtml(original)} + 紅利${oldBonus.toLocaleString()}`;
                         } else {
                             oldText = `紅利${oldBonus.toLocaleString()}`;
                         }
                     } else {
-                        oldText = cart.Utils.formatMoney(original);
+                        oldText = cart.Utils.formatMoneyHtml(original);
                     }
 
                     $self.removeClass("d-none");
-                    $self.text(oldText);
+                    $self.html(oldText);
 
                     if (priceChanged) {
                         if (current > original) {
@@ -776,11 +776,12 @@ function CartListInsert($frame, data) {
                     var bonus = Number(data.bonus || 0);
 
                     var cashText = unitPrice > 0
-                        ? cart.Utils.formatMoney(unitPrice)
+                        ? cart.Utils.formatMoneyHtml(unitPrice)
                         : "";
 
+                    // priceLabel 來自後端資料，進 .html() 前必須轉義
                     if (data.priceLabel != null && cashText) {
-                        cashText = `${data.priceLabel} ${cashText}`;
+                        cashText = `${cart.Utils.escapeHtml(data.priceLabel)} ${cashText}`;
                     }
 
                     var mode = $self.data("price-display-mode") || "inline";
@@ -795,7 +796,7 @@ function CartListInsert($frame, data) {
                     var sub_bonus = Number(data.bonus || 0) * qty;
 
                     var cashText = sub_price > 0
-                        ? cart.Utils.formatMoney(sub_price)
+                        ? cart.Utils.formatMoneyHtml(sub_price)
                         : "";
 
                     cart.Pricing.setCartPriceBlock($self, cashText, sub_bonus, "block");
@@ -849,7 +850,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
         self.data("subtotal_bonus", sub_bonus);
 
         var cashText = sub_price > 0
-            ? cart.Utils.formatMoney(sub_price)
+            ? cart.Utils.formatMoneyHtml(sub_price)
             : "";
 
         cart.Pricing.setCartPriceBlock(self, cashText, sub_bonus);

@@ -49,8 +49,8 @@
         const text = normalizeText(value);
         if (!text) return "";
 
-        if (w.CokerCurrency && typeof w.CokerCurrency.format === "function") {
-            return w.CokerCurrency.format(normalizeNumber(value));
+        if (w.CokerCurrency && typeof w.CokerCurrency.formatHtml === "function") {
+            return w.CokerCurrency.formatHtml(normalizeNumber(value));
         }
 
         return `NT$${text}`;

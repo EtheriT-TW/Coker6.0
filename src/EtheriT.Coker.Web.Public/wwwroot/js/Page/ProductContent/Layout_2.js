@@ -18,6 +18,8 @@
     const submitCart = M.submitCart;
     const formatNumber = M.formatNumber;
     const formatMoney = M.formatMoney;
+    const formatMoneyHtml = M.formatMoneyHtml;
+    const escapeHtml = M.escapeHtml;
     const specName = M.specName;
     const specImageItems = M.specImageItems;
 
@@ -131,19 +133,21 @@
         if (suggest <= 0) return '';
         if (plans.some(p => normalizeNullableInt(p.price) === suggest)) return '';
 
-        return formatMoney(suggest);
+        return formatMoneyHtml(suggest);
     }
 
     // 版型二的紅利文字不帶冒號。
     // 共用的 M.formatPriceText 版型一仍在用，不動它，這裡自己格式化。
+    // 回傳 HTML（貨幣符號已拆成 span），注入時必須用 .html()
     function formatPlanPriceText(price, bonus) {
         const money = normalizeNullableInt(price);
         const bonusValue = normalizeNullableInt(bonus);
+        const bonusLabel = escapeHtml(local.Bonus);
 
-        if (bonusValue <= 0) return formatMoney(money);
-        if (money === 0) return local.Bonus + ' ' + formatNumber(bonusValue);
+        if (bonusValue <= 0) return formatMoneyHtml(money);
+        if (money === 0) return bonusLabel + ' ' + formatNumber(bonusValue);
 
-        return formatMoney(money) + ' + ' + local.Bonus + ' ' + formatNumber(bonusValue);
+        return formatMoneyHtml(money) + ' + ' + bonusLabel + ' ' + formatNumber(bonusValue);
     }
 
     function resolveNoImageSrc() {
@@ -242,9 +246,10 @@
         const bonusLack = isBonusLack(price, options.state);
 
         const $priceCell = $('<div class="spec-plan-price"></div>')
-            .append($('<span class="spec-price"></span>').text(
-                stock.timePrice ? local.MarketPrice : formatPlanPriceText(price.price, price.bonus)
-            ));
+            .append(stock.timePrice
+                ? $('<span class="spec-price"></span>').text(local.MarketPrice)
+                : $('<span class="spec-price"></span>').html(formatPlanPriceText(price.price, price.bonus))
+            );
 
         if (bonusLack) {
             $priceCell.append($('<span class="spec-plan-badge"></span>').text(local.BonusInsufficient));
@@ -300,7 +305,7 @@
         if (suggestText) {
             $actions.append(
                 $('<div class="spec-suggest"></div>')
-                    .append($('<span class="spec-suggest-value text-decoration-line-through"></span>').text(suggestText))
+                    .append($('<span class="spec-suggest-value text-decoration-line-through"></span>').html(suggestText))
             );
         }
 
@@ -444,14 +449,15 @@
         const suggestText = buildSuggestText(stock, plans);
 
         if (suggestText) {
-            $box.append($('<div class="spec-media-suggest text-decoration-line-through"></div>').text(suggestText));
+            $box.append($('<div class="spec-media-suggest text-decoration-line-through"></div>').html(suggestText));
         }
 
         plans.forEach(price => {
             const $row = $('<div class="spec-media-plan"></div>')
-                .append($('<span class="spec-price"></span>').text(
-                    stock.timePrice ? local.MarketPrice : formatPlanPriceText(price.price, price.bonus)
-                ));
+                .append(stock.timePrice
+                    ? $('<span class="spec-price"></span>').text(local.MarketPrice)
+                    : $('<span class="spec-price"></span>').html(formatPlanPriceText(price.price, price.bonus))
+                );
 
             if (isBonusLack(price, renderContext.state)) {
                 $row.append($('<span class="spec-plan-badge"></span>').text(local.BonusInsufficient));

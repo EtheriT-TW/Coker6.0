@@ -195,6 +195,7 @@ function ModalFormatMoney(value) {
     return window.CokerCurrency.format(Number(value) || 0);
 }
 
+// 純文字版：給 label 等只能吃純文字的地方用
 function ModalFormatPrice(price) {
     var cash = Number(price && price.price || 0);
     var bonus = Number(price && price.bonus || 0);
@@ -203,7 +204,21 @@ function ModalFormatPrice(price) {
     return bonus > 0 ? text + " + 紅利 " + bonus.toLocaleString("en-US") + " 點" : text;
 }
 
+// 拆出貨幣符號的 HTML 版本，注入時必須用 .html()
+function ModalFormatMoneyHtml(value) {
+    return window.CokerCurrency.formatHtml(Number(value) || 0);
+}
+
+function ModalFormatPriceHtml(price) {
+    var cash = Number(price && price.price || 0);
+    var bonus = Number(price && price.bonus || 0);
+    if (cash <= 0 && bonus > 0) return "紅利 " + bonus.toLocaleString("en-US") + " 點";
+    var html = ModalFormatMoneyHtml(cash);
+    return bonus > 0 ? html + " + 紅利 " + bonus.toLocaleString("en-US") + " 點" : html;
+}
+
 function ModalSetPriceDisplay(stock, product) {
+    // priceDisplayText 來自後端資料，一律用 .text() 保持安全
     if (stock && stock.timePrice) {
         $pro_discount.text(product.priceDisplayText || "時價");
         return [];
@@ -211,14 +226,14 @@ function ModalSetPriceDisplay(stock, product) {
 
     var prices = stock && Array.isArray(stock.prices) ? stock.prices : [];
     if (prices.length) {
-        $pro_discount.text(ModalFormatPrice(prices[0]));
+        $pro_discount.html(ModalFormatPriceHtml(prices[0]));
         return prices;
     }
 
     if (product.priceDisplayText) {
         $pro_discount.text(product.priceDisplayText);
     } else if (product.price != null && product.price !== "") {
-        $pro_discount.text(ModalFormatMoney(product.price));
+        $pro_discount.html(ModalFormatMoneyHtml(product.price));
     } else {
         $pro_discount.text("目前無售價資訊");
     }
@@ -306,7 +321,7 @@ function ModalRefreshSelection(product) {
     }) || prices[0];
 
     modal_price_id = Number(selectedPrice.id || 0);
-    $pro_discount.text(ModalFormatPrice(selectedPrice));
+    $pro_discount.html(ModalFormatPriceHtml(selectedPrice));
     $modal.find(".btn_addToCar").removeClass("close").prop("disabled", false);
 
     if (prices.length > 1) {
@@ -320,7 +335,7 @@ function ModalRefreshSelection(product) {
             var $label = $("<label>", { "for": inputId, class: "btn_radio me-2 my-1 px-3 py-1 align-self-center", text: label });
             $input.prop("checked", Number(price.id || 0) === modal_price_id).on("change", function () {
                 modal_price_id = Number(price.id || 0);
-                $pro_discount.text(ModalFormatPrice(price));
+                $pro_discount.html(ModalFormatPriceHtml(price));
             });
             $control.append($input, $label);
         });

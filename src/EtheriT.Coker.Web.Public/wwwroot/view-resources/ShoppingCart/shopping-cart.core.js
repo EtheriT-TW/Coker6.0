@@ -119,4 +119,22 @@
 
         return window.CokerCurrency.format(amount);
     };
+
+    // 拆出貨幣符號的 HTML 版本。回傳值是 HTML，注入時必須用 .html()。
+    // 敘述句（紅利規則、行銷說明）請繼續用上面的 formatMoney。
+    cart.Utils.formatMoneyHtml = function (value) {
+        var amount = Number(String(value == null ? 0 : value).replaceAll(",", ""));
+        if (!Number.isFinite(amount)) return "";
+
+        return window.CokerCurrency.formatHtml(amount);
+    };
+
+    cart.Utils.escapeHtml = function (value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    };
 })(window, window.jQuery);

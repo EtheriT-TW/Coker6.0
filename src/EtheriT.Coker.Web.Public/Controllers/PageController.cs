@@ -163,6 +163,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var resule = await IndexAsync(orgName, "search", "article", id);
             ViewData["VisibleHeader"] = false;
             ViewData["VisibleFooter"] = false;
+            ViewData["Robots"] = "noindex, follow";
             ViewBag.ShowSwitchPage = false;
             return resule;
         }
@@ -859,6 +860,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["XSRF-TOKEN"] = model.token;
             ViewData["Locale"] = model.locale;
             ViewData["PageView"] = model.PageData.PageView;
+            ViewData["Robots"] = ResolveRobotsDirective(model.PageData.PageView, view);
             ViewData["Id"] = model.PageData.Id;
             ViewData["bodyClass"] = model.option?.ToLower() == "home" ? model.option.ToLower() : "page";
             var nonce = HttpContext.Items["CSPNonce"] as string;
@@ -894,6 +896,25 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 default:
                     return View(view, model);
             }
+        }
+
+        private static string? ResolveRobotsDirective(string? pageView, string? view)
+        {
+            if (string.Equals(pageView, "Search", StringComparison.OrdinalIgnoreCase))
+            {
+                return "noindex, follow";
+            }
+
+            var normalizedView = (view ?? string.Empty)
+                .Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault();
+            return normalizedView?.ToLowerInvariant() switch
+            {
+                "search" or "custsearch" or "columnarsearch" => "noindex, follow",
+                "shoppingcar" or "member" or "favorites" or "productdemo" => "noindex, nofollow",
+                _ => null
+            };
         }
 
         private static Dictionary<string, object?> BuildProductStructuredData(

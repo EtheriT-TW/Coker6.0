@@ -18,6 +18,16 @@ namespace EtheriT.Coker.Application
 {
     public class Sitemap : ISitemap
     {
+        private static readonly HashSet<string> NoIndexMenuRoutes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "search",
+            "demosearch",
+            "columnarsearch",
+            "shoppingcar",
+            "member",
+            "favorites",
+            "productdemo"
+        };
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly long siteId;
@@ -76,7 +86,9 @@ namespace EtheriT.Coker.Application
             {
                 if (!string.IsNullOrEmpty(map.RouterName))
                 {
-                    if (map.hasContan && map.RouterName != "home")
+                    if (map.hasContan &&
+                        !string.Equals(map.RouterName, "home", StringComparison.OrdinalIgnoreCase) &&
+                        !NoIndexMenuRoutes.Contains(map.RouterName))
                     {
                         orgName = webSites.Find(e => e.Id == map.FK_WebsiteId)?.OrgName??"";
                         Urls.Add(new UrlDto

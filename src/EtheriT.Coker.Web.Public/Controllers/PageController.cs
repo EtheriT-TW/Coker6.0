@@ -658,6 +658,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 key,
                 "home",
                 StringComparison.OrdinalIgnoreCase);
+            var isRootWebsite = siteId == rootSiteId;
             var rendersInheritedHtml = string.Equals(
                     view,
                     "Index",
@@ -692,7 +693,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["MainHeading"] = isHomePage
                 ? model.PageData.SiteName
                 : model.PageData.Title;
-            var canonicalPageUrl = BuildCanonicalPageUrl(model);
+            var canonicalPageUrl = BuildCanonicalPageUrl(model, isHomePage, isRootWebsite);
             ViewBag.PageTagNameName = isHomePage
                 ? model.PageData.SiteName
                 : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
@@ -774,7 +775,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     .FirstOrDefault(e => e.Id == siteId);
                 var articleImageUrl = ResolveStructuredDataImage(rootUri, model.PageData.ImageUrl);
                 var organizationLogoUrl = ResolveStructuredDataImage(rootUri, websiteData?.Logo);
-                var organizationUrl = new Uri(rootUri, $"{model.orgName}/home").AbsoluteUri;
+                var organizationUrl = BuildHomePageUrl(rootUri, model.orgName, isRootWebsite);
                 var articleStructuredData = BuildArticleStructuredData(
                     model.PageData,
                     canonicalPageUrl,
@@ -806,7 +807,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     model.PageData.Title,
                     canonicalPageUrl,
                     breadcrumbRootUri,
-                    new Uri(breadcrumbRootUri, $"{model.orgName}/home").AbsoluteUri,
+                    BuildHomePageUrl(breadcrumbRootUri, model.orgName, isRootWebsite),
                     model.PageData.PageView is "Article" or "Techcert");
                 if (breadcrumbStructuredData != null)
                 {
@@ -1170,12 +1171,20 @@ namespace EtheriT.Coker.Web.Public.Controllers
             return Regex.Replace(sku.Trim(), @"\s+", "-");
         }
 
-        private string BuildCanonicalPageUrl(PageViewModel model)
+        private string BuildCanonicalPageUrl(
+            PageViewModel model,
+            bool isHomePage,
+            bool isRootWebsite)
         {
             var rootUri = new Uri(
                 model.root.EndsWith("/", StringComparison.Ordinal)
                     ? model.root
                     : $"{model.root}/");
+            if (isHomePage)
+            {
+                return BuildHomePageUrl(rootUri, model.orgName, isRootWebsite);
+            }
+
             var pageView = model.PageData?.PageView ?? string.Empty;
             var relativeUrl = pageView switch
             {
@@ -1202,6 +1211,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 Query = $"Page={pageNumber.ToString(CultureInfo.InvariantCulture)}"
             };
             return canonicalUri.Uri.AbsoluteUri;
+        }
+
+        private static string BuildHomePageUrl(
+            Uri rootUri,
+            string? orgName,
+            bool isRootWebsite)
+        {
+            var normalizedOrgName = orgName?.Trim().Trim('/');
+            return isRootWebsite || string.IsNullOrWhiteSpace(normalizedOrgName)
+                ? rootUri.AbsoluteUri
+                : new Uri(rootUri, normalizedOrgName).AbsoluteUri;
         }
 
         private static bool HasSingleDirectoryCatalog(string html)

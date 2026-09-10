@@ -51,7 +51,7 @@ namespace EtheriT.Coker.Application
             {
                 urlset.Urls.Add(new UrlDto
                 {
-                    loc = siteId == site.Id ? siteUrl : $"{siteUrl}/{site.OrgName}",
+                    loc = BuildHomeUrl(site),
                     priority = "1.00",
 
                 });
@@ -59,7 +59,15 @@ namespace EtheriT.Coker.Application
             setWebMenuUrl(Maps.Maps, urlset.Urls, 0.9);
             await setArticleUrl(urlset.Urls);
             await setProductUrl(urlset.Urls);
+            await setTechnicalCertificateUrl(urlset.Urls);
             return urlset;
+        }
+        private string BuildHomeUrl(WebSiteOrgNameDto site)
+        {
+            var normalizedSiteUrl = siteUrl.TrimEnd('/');
+            return siteId == site.Id
+                ? $"{normalizedSiteUrl}/"
+                : $"{normalizedSiteUrl}/{(site.OrgName ?? string.Empty).Trim('/')}";
         }
         private void setWebMenuUrl(List<MenuItemDto> Maps, List<UrlDto> Urls, double priority = 1.0) {
             if (Maps == null || !Maps.Any()) return;
@@ -109,6 +117,35 @@ namespace EtheriT.Coker.Application
                         loc = $"{siteUrl}/{site.OrgName}/search/product/{p.Id}".Replace("//", "/").Replace(":/", "://"),
                         priority = "1.0",
                         lastmod = (p.LastModificationTime ?? p.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
+                        changefreq = "monthly"
+                    });
+                });
+            }
+        }
+        private async Task setTechnicalCertificateUrl(List<UrlDto> Urls)
+        {
+            var now = DateTime.Now;
+            foreach (var site in webSites)
+            {
+                var certificates = await db.TechnicalCertificates
+                    .Where(e =>
+                        e.FK_WebsiteId == site.Id &&
+                        !e.IsDeleted &&
+                        e.Disp_opt &&
+                        (e.Permanent ||
+                            ((!e.StartDate.HasValue || e.StartDate <= now) &&
+                             (!e.EndDate.HasValue || e.EndDate >= now))))
+                    .ToListAsync();
+                certificates.ForEach(certificate =>
+                {
+                    Urls.Add(new UrlDto
+                    {
+                        loc = $"{siteUrl}/{site.OrgName}/search/techcert/{certificate.Id}"
+                            .Replace("//", "/")
+                            .Replace(":/", "://"),
+                        priority = "1.0",
+                        lastmod = (certificate.LastModificationTime ?? certificate.CreationTime)
+                            .ToString("yyyy-MM-ddTHH:mm:sszzz"),
                         changefreq = "monthly"
                     });
                 });

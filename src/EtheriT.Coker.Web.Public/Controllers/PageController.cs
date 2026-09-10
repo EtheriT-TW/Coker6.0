@@ -851,9 +851,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
             ViewData["CanonicalUrl"] = canonicalPageUrl;
-            ViewData["OpenGraphUrl"] = isProductPage
-                ? $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}{Request.QueryString}"
-                : model.PageData.CurrentUrl;
+            ViewData["OpenGraphType"] = isArticlePage ? "article" : "website";
+            ViewData["OpenGraphUrl"] = canonicalPageUrl;
+            if (isArticlePage)
+            {
+                ViewData["ArticlePublishedTime"] = FormatStructuredDataDate(
+                    model.PageData.CreationTime);
+                ViewData["ArticleModifiedTime"] = FormatStructuredDataDate(
+                    model.PageData.LastModificationTime ?? model.PageData.CreationTime);
+            }
             ViewData["Root"] = model.root;
             ViewData["VisibleHeader"] = model.PageData.VisibleHeader;
             ViewData["VisibleFooter"] = model.PageData.VisibleFooter;

@@ -248,7 +248,7 @@
                     frame.find(".btn_buyInfo").data("ohid", orderHeader.id).removeClass("d-none");
 
                     frame.find(".btn_buyInfo").on("click.memberOrders", function () {
-                        MemberPage.OrderPayment.showECPayPaymentInfo(orderHeader, $(this).data("ohid"));
+                        MemberPage.OrderPayment.showPaymentInfo(orderHeader, $(this).data("ohid"));
                     });
                 }
             },

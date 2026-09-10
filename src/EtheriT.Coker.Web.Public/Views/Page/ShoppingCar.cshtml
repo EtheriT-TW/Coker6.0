@@ -22,7 +22,6 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 }
-<script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <!-- Modal -->
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -932,11 +931,11 @@
 
                             @if (Model.paymentModels.Any(e => e.Code == "ECPay" || e.FK_ThirdPartyId == 4))
                             {
-                                <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">
+                                <div class="payment_provider_loading text-start col-12 col-sm-3 my-2 py-2 d-none">
                                     支付方式載入中......
                                 </div>
 
-                                <div id="ECPayPayment"
+                                <div id="EmbeddedPayment"
                                      data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")"></div>
                             }
                         }
@@ -1275,6 +1274,7 @@
 </div>
 
 
-<script src="@(ViewBag.IsProduction
-                            ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
-                            : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>
+@section Scripts {
+    <script src="~/js/Payment/Payment.min.js" asp-append-version="true"></script>
+    <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
+}

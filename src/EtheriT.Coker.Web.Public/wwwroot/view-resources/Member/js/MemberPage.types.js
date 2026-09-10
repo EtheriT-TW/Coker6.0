@@ -28,7 +28,7 @@
  * @property {JQuery|null} resetEmailForm Reset email form jQuery object.
  * @property {bootstrap.Modal|null} reOrderAlertModal Bootstrap instance for ReOrderAlertModal.
  * @property {HTMLElement|null} reOrderAlertModalElement ReOrderAlertModal DOM element.
- * @property {bootstrap.Modal|null} ecPayModal Bootstrap instance for ECPayModal.
+ * @property {bootstrap.Modal|null} paymentModal Bootstrap instance for the embedded payment modal.
  */
 
 /**
@@ -48,7 +48,7 @@
  * @property {string} resetEmailCaptchaInput
  * @property {string} resetEmailCaptchaImage
  * @property {string} reOrderAlertModal
- * @property {string} ecPayModal
+ * @property {string} paymentModal
  */
 
 /**
@@ -106,12 +106,10 @@
 /**
  * Order payment and third-party payment flow behavior.
  * @typedef {Object} MemberPageOrderPayment
- * @property {function({orderHeader:Object}): void} repay Starts order repayment flow.
- * @property {function({orderHeader:Object}): void} requestPayment Requests third-party payment URL or ECPay embedded payment data.
- * @property {function({orderHeader:Object}, Object): void} openECPay Opens embedded ECPay modal.
- * @property {function(): void} submitECPay Gets ECPay token and creates payment.
- * @property {function(Object): void} handleECPayCreateResult Handles ECPay payment creation result.
- * @property {function(Object, number|string): void} showECPayPaymentInfo Shows ECPay ATM/CVS/BARCODE payment info.
+ * @property {function({orderHeader:Object}): void} repay Starts the shared provider repayment flow.
+ * @property {function({orderHeader:Object}): void} requestPayment Resolves the registered provider and starts redirect or embedded repayment.
+ * @property {function(): void} submitPayment Submits through the active embedded payment adapter.
+ * @property {function(Object, number|string): void} showPaymentInfo Shows provider-specific payment information through its adapter.
  */
 
 /**

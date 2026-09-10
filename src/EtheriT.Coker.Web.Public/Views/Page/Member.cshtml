@@ -7,17 +7,16 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/Member.min.css" asp-append-version="true" />
 }
-<script src="/js/Page/Member.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <!-- Modal -->
-<div class="modal fade" id="ECPayModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ECPayModal" aria-hidden="true" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")">
+<div class="modal fade" id="PaymentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="PaymentModalLabel" aria-hidden="true" data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title fs-5 mx-auto" id="ECPayModalLabel">選擇支付方式</h2>
+                <h2 class="modal-title fs-5 mx-auto" id="PaymentModalLabel">選擇支付方式</h2>
             </div>
             <div class="modal-body">
-                <div id="ECPayPayment"></div>
+                <div id="PaymentContainer"></div>
             </div>
             <div class="modal-footer justify-content-center">
                 <button type="button" class="btn btn_pay btn-primary rounded px-4">確認付款</button>
@@ -687,6 +686,7 @@
     </div>
 </Content>
 
-<script src="@(ViewBag.IsProduction
-                    ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
-                    : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>
+@section Scripts {
+    <script src="~/js/Payment/Payment.min.js" asp-append-version="true"></script>
+    <script src="/js/Page/Member.min.js" asp-append-version="true"></script>
+}

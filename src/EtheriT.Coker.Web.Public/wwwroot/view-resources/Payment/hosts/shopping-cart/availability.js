@@ -1,4 +1,4 @@
-// Central payment availability for standard and embedded payment providers.
+// Shopping-cart host adapter for payment availability.
 (function (cart, $) {
     "use strict";
 
@@ -110,7 +110,7 @@
             $fallback.append($input, $display);
 
             updateUnavailableDisplay($fallback, payment);
-            $fallback.insertBefore("#ECPayPayment");
+            $fallback.insertBefore("#EmbeddedPayment");
         });
     }
 
@@ -164,7 +164,7 @@
         } else {
             $entry.prop("checked", false);
             if (provider && typeof provider.clear === "function") provider.clear();
-            $(".ecpay_loading").addClass("d-none");
+            $(".payment_provider_loading").addClass("d-none");
         }
     }
 

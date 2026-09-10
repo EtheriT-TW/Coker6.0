@@ -10,7 +10,6 @@
 
     Object.assign(cart.State, {
         buy_step_swiper: undefined,
-        ECPayModal: undefined,
         gotop_switch: false,
         isCheckout: false,
         subtotal: undefined,
@@ -94,20 +93,9 @@
         hasProds: false,
         islogin: false,
         datachange: true,
-        HasECPay: false,
         HasECPayLogistics: false,
-        ECPayInit: false,
-        ECPayMonitor: false,
-        ECPayReady: false,
-        ECPayOrderSnapshot: "",
-        ECPayRefreshTimer: null,
-        ECPayChanging: false,
-        ECPayAvailable: false,
-        ECPayOperational: true,
-        SupportApplePay: false,
         isRestoringECPayLogistics: false,
         RecipientsList_dxData: undefined,
-        ECPAY_THIRD_PARTY_ID: 4,
         top_position: undefined
     });
 

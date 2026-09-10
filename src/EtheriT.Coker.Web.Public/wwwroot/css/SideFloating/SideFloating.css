@@ -16,10 +16,32 @@
         opacity: 1;
     }
 
+    #Floating_Center:not(.show) {
+        pointer-events: none;
+    }
+
     #Floating_Center .side-floating-trigger-image{
         display: block;
         width: var(--sideFloat-width);
         height: auto;
+    }
+
+/* Dismiss button (mobile only) */
+#btn_floating_center_close {
+    display: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    margin-left: auto;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+    #btn_floating_center_close:focus-visible {
+        outline: 2px solid var(--bs-primary, #0d6efd);
+        outline-offset: 2px;
     }
 
 /* Floating item */
@@ -160,6 +182,14 @@ button.side-floating-trigger {
         display: block;
         right: 0;
         z-index: 1030;
+    }
+
+        #Floating_Center.is-dismissed {
+            display: none;
+        }
+
+    #btn_floating_center_close {
+        display: block;
     }
 
     .side-floating-panel {

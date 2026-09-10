@@ -9,8 +9,12 @@
         item: ".side-floating-item",
         expandTrigger: ".side-floating-expand-trigger",
         panel: "[data-side-floating-panel]",
-        close: ".side-floating-close"
+        close: ".side-floating-close",
+        dismiss: "#btn_floating_center_close"
     };
+
+    const DISMISS_STORAGE_KEY = "SideFloating_Dismissed";
+    const DISMISSED_CLASS = "is-dismissed";
 
     function init(root) {
         const $scope = root ? $(root) : $(document);
@@ -32,6 +36,8 @@
         }
 
         $root.data("side-floating-init", true);
+
+        restoreDismissState($root);
 
         bindEvents($root);
         bindViewportEvents();
@@ -69,6 +75,38 @@
                 const $panel = $(this).closest(SELECTORS.panel);
                 closePanel($panel);
             });
+
+        $root
+            .off("click.sideFloatingDismiss", SELECTORS.dismiss)
+            .on("click.sideFloatingDismiss", SELECTORS.dismiss, function (event) {
+                event.preventDefault();
+
+                closeAllPanels($root);
+                $root.addClass(DISMISSED_CLASS);
+                writeDismissState(true);
+            });
+    }
+
+    function restoreDismissState($root) {
+        if (readDismissState()) {
+            $root.addClass(DISMISSED_CLASS);
+        }
+    }
+
+    function readDismissState() {
+        try {
+            return window.sessionStorage.getItem(DISMISS_STORAGE_KEY) === "true";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function writeDismissState(dismissed) {
+        try {
+            window.sessionStorage.setItem(DISMISS_STORAGE_KEY, dismissed ? "true" : "false");
+        } catch (e) {
+            // sessionStorage 不可用（無痕模式、瀏覽器封鎖儲存）時忽略，僅當次有效
+        }
     }
 
     function bindViewportEvents() {

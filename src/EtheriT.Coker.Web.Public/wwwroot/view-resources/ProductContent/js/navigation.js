@@ -18,6 +18,22 @@
         if (element) element.setAttribute('content', value || '');
     }
 
+    function setOptionalMetaContent(attributeName, attributeValue, value) {
+        const selector = `meta[${attributeName}="${attributeValue}"]`;
+        let element = document.querySelector(selector);
+        if (!value) {
+            if (element) element.remove();
+            return;
+        }
+
+        if (!element) {
+            element = document.createElement('meta');
+            element.setAttribute(attributeName, attributeValue);
+            document.head.appendChild(element);
+        }
+        element.setAttribute('content', value);
+    }
+
     function getDescription(product) {
         const text = product.description || product.introduction || product.html || '';
         return $('<div>').html(text).text().replace(/\s+/g, ' ').trim().slice(0, 200);
@@ -717,8 +733,12 @@
         const product = this.state.product || {};
         const title = product.title || '';
         const description = getDescription(product);
-        const imageUrl = getImageUrl(product);
-        const canonicalUrl = `${window.location.origin}/${this.options.orgName}/search/product/${this.state.productId}`;
+        const defaultSocialImage = document.querySelector('meta[name="coker:default-social-image"]')
+            ?.getAttribute('content') || '';
+        const imageUrl = getImageUrl(product) || defaultSocialImage;
+        const orgName = String(this.options.orgName || '').replace(/^\/+|\/+$/g, '');
+        const canonicalPath = `${orgName ? `/${encodeURIComponent(orgName)}` : ''}/search/product/${this.state.productId}`;
+        const canonicalUrl = new URL(canonicalPath, window.location.origin).href;
 
         document.title = `${title}${this.productTitleSuffix || ''}`;
         setMetaContent('meta[name="description"]', description);
@@ -726,11 +746,14 @@
         setMetaContent('meta[itemprop="description"]', description);
         setMetaContent('meta[name="twitter:title"]', document.title);
         setMetaContent('meta[name="twitter:description"]', description);
+        setMetaContent('meta[name="twitter:card"]', imageUrl ? 'summary_large_image' : 'summary');
         setMetaContent('meta[property="og:title"]', document.title);
-        setMetaContent('meta[property="og:url"]', window.location.href);
+        setMetaContent('meta[property="og:url"]', canonicalUrl);
         setMetaContent('meta[property="og:description"]', description);
-        setMetaContent('meta[name="twitter:image"]', imageUrl);
-        setMetaContent('meta[property="og:image"]', imageUrl);
+        setOptionalMetaContent('name', 'twitter:image', imageUrl);
+        setOptionalMetaContent('name', 'twitter:image:alt', imageUrl ? document.title : '');
+        setOptionalMetaContent('property', 'og:image', imageUrl);
+        setOptionalMetaContent('property', 'og:image:alt', imageUrl ? document.title : '');
 
         const canonical = document.querySelector('link[rel="canonical"]');
         if (canonical) canonical.setAttribute('href', canonicalUrl);

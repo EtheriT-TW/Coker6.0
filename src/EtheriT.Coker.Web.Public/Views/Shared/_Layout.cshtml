@@ -15,13 +15,24 @@
     ).Trim();
     // DevExtreme 檔案較大，預設不載入；需要的頁面設定 ViewData["UseDevExtreme"] = true。
     var useDevExtreme = ViewData["UseDevExtreme"] as bool? == true;
-    var pageLocale = ViewData["Locale"]?.ToString()?.Trim().ToLowerInvariant() ?? "zh-tw";
+    var pageLocale = ViewData["HtmlLocale"]?.ToString()?.Trim();
+    if (string.IsNullOrWhiteSpace(pageLocale))
+    {
+        var rawLocale = ViewData["Locale"]?.ToString()?.Trim().Replace('_', '-');
+        pageLocale = rawLocale?.ToLowerInvariant() switch
+        {
+            "en-us" => "en-US",
+            "zh-tw" => "zh-TW",
+            _ => string.IsNullOrWhiteSpace(rawLocale) ? "zh-TW" : rawLocale
+        };
+    }
+    pageLocale ??= "zh-TW";
     var robotsDirective = ViewData["Robots"]?.ToString()?.Trim();
     if (string.IsNullOrWhiteSpace(robotsDirective) && ViewContext.HttpContext.Response.StatusCode >= 400)
     {
         robotsDirective = "noindex, nofollow";
     }
-    var openGraphLocale = pageLocale switch
+    var openGraphLocale = pageLocale.ToLowerInvariant() switch
     {
         "en" or "en-us" => "en_US",
         "zh-tw" => "zh_TW",
@@ -30,9 +41,13 @@
     var openGraphType = ViewData["OpenGraphType"]?.ToString() ?? "website";
     var articlePublishedTime = ViewData["ArticlePublishedTime"]?.ToString();
     var articleModifiedTime = ViewData["ArticleModifiedTime"]?.ToString();
+    var hasSocialImage = !string.IsNullOrWhiteSpace(ViewBag.ImageUrl as string);
+    var defaultSocialImageUrl = ViewData["DefaultSocialImageUrl"]?.ToString();
+    var authorName = ViewData["Author"]?.ToString();
+    var copyrightOwner = ViewData["CopyrightOwner"]?.ToString();
 }
 <!DOCTYPE html>
-<html lang="@ViewData["Locale"]">
+<html lang="@pageLocale">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -112,23 +127,35 @@
     }
     @await Component.InvokeAsync(nameof(LayoutType))
 
-    <meta name="author" content="易碩網際科技股份有限公司" />
-    <meta name="copyright" content="易碩網際科技股份有限公司" />
+    @if (!string.IsNullOrWhiteSpace(authorName))
+    {
+        <meta name="author" content="@authorName" />
+    }
+    @if (!string.IsNullOrWhiteSpace(copyrightOwner))
+    {
+        <meta name="copyright" content="@copyrightOwner" />
+    }
     <meta name="description" content="@ViewData["Description"]">
     <meta itemprop="name" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta itemprop="description" content="@ViewData["Description"]" />
+    <meta name="twitter:card" content="@(hasSocialImage ? "summary_large_image" : "summary")" />
+    @if (!string.IsNullOrWhiteSpace(defaultSocialImageUrl))
+    {
+        <meta name="coker:default-social-image" content="@defaultSocialImageUrl" />
+    }
     <meta name="twitter:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta name="twitter:description" content="@ViewData["Description"]" />
-    @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
+    @if (hasSocialImage)
     {
         <meta name="twitter:image" content="@Html.Raw(ViewBag.ImageUrl)">
+        <meta name="twitter:image:alt" content="@Html.Raw(ViewBag.PageTagNameName)">
     }
     <meta property="og:title" content="@Html.Raw(ViewBag.PageTagNameName)" />
     <meta property="og:type" content="@openGraphType" />
     <meta property="og:url" content="@(ViewData["OpenGraphUrl"] ?? ViewData["CurrentUrl"])" />
     <meta property="og:site_name" content="@Html.Raw(ViewData["SideName"])" />
     <meta property="og:description" content="@ViewData["Description"]" />
-    @if (!string.IsNullOrEmpty(ViewBag.ImageUrl))
+    @if (hasSocialImage)
     {
         <meta property="og:image" content="@Html.Raw(ViewBag.ImageUrl)">
         <meta property="og:image:alt" content="@Html.Raw(ViewBag.PageTagNameName)">

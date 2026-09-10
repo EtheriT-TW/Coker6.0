@@ -489,8 +489,14 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "Sitemap",
-    pattern: "Sitemap",
+    pattern: "sitemap.xml",
     defaults: new { controller = "Sitemap", action = "Index" }
+);
+
+app.MapControllerRoute(
+    name: "SitemapLegacy",
+    pattern: "Sitemap",
+    defaults: new { controller = "Sitemap", action = "Legacy" }
 );
 
 app.MapControllerRoute(

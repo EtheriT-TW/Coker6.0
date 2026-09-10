@@ -75,6 +75,32 @@ function getSelectionElement(rte) {
     return node?.nodeType === 1 ? node : null;
 }
 
+function isIconElement(element) {
+    const tagName = String(element?.tagName || '').toLowerCase();
+    const classNames = String(element?.className || '');
+
+    return ['i', 'svg', 'use', 'path', 'img'].includes(tagName)
+        || element?.getAttribute?.('aria-hidden') === 'true'
+        || element?.getAttribute?.('role') === 'img'
+        || element?.hasAttribute?.('data-icon')
+        || /(^|\s)(?:fa[srlbd]?|fa-[\w-]+|material-icons(?:-outlined)?|material-symbols-[\w-]+|mdi(?:-[\w-]+)?|bi(?:-[\w-]+)?)(?=\s|$)/i.test(classNames);
+}
+
+function getElementDisplayText(element) {
+    if (!element || isIconElement(element)) {
+        return '';
+    }
+
+    const clone = element.cloneNode(true);
+    clone.querySelectorAll('*').forEach(child => {
+        if (isIconElement(child)) {
+            child.remove();
+        }
+    });
+
+    return clone.textContent?.trim() || '';
+}
+
 function getCurrentLink(rte) {
     const selection = rte.selection();
     const nodes = [selection?.anchorNode, selection?.focusNode];
@@ -449,7 +475,7 @@ async function replaceEditingSpanWithLink(editor, rte, range) {
     const markerValue = `span-${Date.now()}-${Math.random()
         .toString(36)
         .slice(2)}`;
-    const displayText = spanElement.textContent?.trim() || '連結文字';
+    const displayText = getElementDisplayText(spanElement) || '連結文字';
 
     // The edited RTE root may be a parent DIV/P rather than the SPAN itself.
     // Mark the exact DOM node so it can be found again after RTE synchronization.
@@ -543,7 +569,7 @@ async function openLinkTraits(editor, rte) {
         ) {
             editingComponent.addAttributes({
                 'data-text':
-                    link.textContent?.trim() ||
+                    getElementDisplayText(link) ||
                     '連結文字'
             });
         }
@@ -603,7 +629,7 @@ async function openLinkTraits(editor, rte) {
     if (!link.hasAttribute('data-text')) {
         link.setAttribute(
             'data-text',
-            link.textContent?.trim() ||
+            getElementDisplayText(link) ||
             '連結文字'
         );
     }

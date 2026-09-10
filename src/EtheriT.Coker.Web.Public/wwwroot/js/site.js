@@ -137,7 +137,11 @@ function ready() {
         $(this).trigger("mouseover");
     });
     $(".dropdown-toggle").on("focus", function () {
-        new bootstrap.Dropdown($(this)[0], {}).show();
+        // 只在鍵盤導覽導致的焦點下自動展開。
+        // 滑鼠點擊會先觸發 focus 再觸發 Bootstrap click，若 focus 先開啟，click 會立即又關閉。
+        if (typeof this.matches === "function" && !this.matches(":focus-visible")) return;
+
+        bootstrap.Dropdown.getOrCreateInstance(this).show();
     });
     $(".accesskey[href]").on("click", function (e) {
         const $self = $(this);
@@ -948,7 +952,7 @@ function ForgetAction() {
     co.User.PasswordForget(data).done((result) => {
         if (result.success) {
             Coker.sweet.success(local.SystemSendingResetMail, null, false);
-            registerModal.hide();
+            forgetModal.hide();
         } else {
             Coker.sweet.error(result.error, null, true);
             NewCaptcha($ForgetImgCaptcha, $InputForgetVCode);
@@ -963,8 +967,21 @@ function ResetAction(forgetid) {
         if (result.success) {
             Coker.sweet.success(local.PasswordResetSuccess, function () {
                 if (co.api && typeof co.api.clearAuth === "function") co.api.clearAuth();
-                resetModal.hide();
-                window.location.href = "/";
+
+                // 密碼已重設，移除一次性連結參數，避免重新整理時再次進入重設流程。
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                // Bootstrap modal 有關閉動畫；等重設視窗完全關閉後再顯示登入視窗，
+                // 否則兩個 modal 切換時可能只關閉舊視窗而沒有開啟新視窗。
+                const resetModalElement = document.getElementById("ResetModal");
+                if (resetModalElement && resetModal) {
+                    $(resetModalElement).one("hidden.bs.modal", function () {
+                        loginModal?.show();
+                    });
+                    resetModal.hide();
+                } else {
+                    loginModal?.show();
+                }
             }, false);
         } else {
             switch (result.message) {

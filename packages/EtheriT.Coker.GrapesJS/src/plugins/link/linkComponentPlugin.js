@@ -63,6 +63,20 @@ export function openLinkComponentEditor(editor, component) {
 
     editor.__cokerLinkEditor?.close?.();
 
+    // Traits only emit changes after the user edits a field. Persist the
+    // inferred initial values as well, so a valid prefilled link is already
+    // usable when the modal is closed without touching any input.
+    const initialAttributes = component.getAttributes();
+    const initialType = inferLinkType(initialAttributes);
+    const initialDestinationValue = initialType === 'address'
+        ? String(initialAttributes['data-text'] || '').trim()
+        : getInitialDestinationValue(initialType, initialAttributes);
+    synchronizeLinkAttributes(component, {
+        destinationValue: initialDestinationValue,
+        applyDefaultTarget: !initialAttributes.target
+    });
+    updateTargetSecurity(component);
+
     const modal = editor.Modal;
     const traitManager = editor.TraitManager;
     const modalContainer = modal.getContainer?.() || modal.modal?.el || null;
@@ -77,7 +91,9 @@ export function openLinkComponentEditor(editor, component) {
     const updateVisibleFields = () => {
         const type = inferLinkType(component.getAttributes());
         const isRegularLink = type === 'link';
+        const displayTextLocked = updateDisplayTextTraitState(component);
         root.dataset.linkType = isRegularLink ? 'link' : 'generated';
+        root.dataset.displayTextLocked = String(displayTextLocked);
 
         const destinationCategoryElement = traitHost.querySelector(
             '.gjs-trait-category'
@@ -101,11 +117,52 @@ export function openLinkComponentEditor(editor, component) {
             input.readOnly = type === 'address';
             input.setAttribute('aria-readonly', String(type === 'address'));
         }
+
+        const displayTextInput = traitHost.querySelector(
+            'input[placeholder="請輸入顯示文字"]'
+        );
+        if (displayTextInput) {
+            const displayTextTrait = displayTextInput.closest('.gjs-trt-trait');
+            const displayTextLabel = displayTextTrait?.querySelector('.gjs-label');
+            let lockNote = displayTextTrait?.querySelector(
+                '.coker-link-display-lock-note'
+            );
+            displayTextInput.readOnly = displayTextLocked;
+            displayTextInput.disabled = displayTextLocked;
+            displayTextInput.setAttribute(
+                'aria-readonly',
+                String(displayTextLocked)
+            );
+            displayTextInput.setAttribute(
+                'aria-disabled',
+                String(displayTextLocked)
+            );
+            displayTextInput.title = displayTextLocked
+                ? '此連結包含多個文字區塊，請直接在畫布中個別編輯'
+                : '';
+            displayTextTrait?.classList.toggle(
+                'coker-link-trait--locked',
+                displayTextLocked
+            );
+            if (displayTextLabel) {
+                displayTextLabel.textContent = displayTextLocked
+                    ? '顯示文字（請於畫布編輯）'
+                    : '顯示文字';
+            }
+            if (displayTextLocked && displayTextTrait && !lockNote) {
+                lockNote = modalDocument.createElement('div');
+                lockNote.className = 'coker-link-display-lock-note';
+                lockNote.setAttribute('role', 'note');
+                lockNote.textContent = '此連結包含多個文字區塊（圖示不計入）。為避免覆蓋內容，請直接回畫布逐一編輯文字。';
+                displayTextTrait.append(lockNote);
+            }
+            lockNote?.classList.toggle('d-none', !displayTextLocked);
+        }
     };
     updateVisibleFields();
     component.on('change:attributes:data-link-type', updateVisibleFields);
     description.className = 'coker-link-traits__description';
-    description.textContent = '請先選擇類型，再輸入網址、電話、郵件或地址。所有變更會自動儲存；只有一般連結可從檔案庫選擇下載檔案。';
+    description.textContent = '請先選擇類型，再輸入網址、電話、郵件或地址。預設值與所有變更都會自動儲存；只有一般連結可從檔案庫選擇下載檔案。';
     traitHost.className = 'coker-link-traits__fields';
     actions.className = 'coker-link-traits__actions';
     removeButton.type = 'button';
@@ -245,12 +302,34 @@ function updateDisplayText(component) {
         return;
     }
 
-    const nameComponent = component.find('.name')[0];
-    if (nameComponent) {
-        nameComponent.components(text);
-    } else {
-        component.components(text);
+    if (hasMultipleDisplayTextComponents(component)) {
+        return;
     }
+
+    const nameComponent = component.find('.name')[0];
+    const textRoot = nameComponent || component;
+    const textComponents = getEditableTextComponents(textRoot);
+    const primaryTextComponent = textComponents.find(textComponent =>
+        String(textComponent.get?.('content') || '').trim()
+    ) || textComponents[0];
+
+    if (!primaryTextComponent) {
+        textRoot.append({
+            type: 'textnode',
+            content: text
+        });
+        return;
+    }
+
+    primaryTextComponent.set('content', text);
+    textComponents.forEach(textComponent => {
+        if (
+            textComponent !== primaryTextComponent
+            && String(textComponent.get?.('content') || '').trim()
+        ) {
+            textComponent.set('content', '');
+        }
+    });
 }
 
 function inferLinkTypeFromText(value) {
@@ -274,24 +353,122 @@ function inferLinkTypeFromText(value) {
     return 'link';
 }
 
+function getComponentClassNames(component) {
+    const attributes = component.getAttributes?.() || {};
+    const classes = component.getClasses?.() || [];
+    return [attributes.class, ...classes]
+        .filter(Boolean)
+        .join(' ');
+}
+
+function isIconComponent(component) {
+    const tagName = String(component.get?.('tagName') || '').toLowerCase();
+    const attributes = component.getAttributes?.() || {};
+    const classNames = getComponentClassNames(component);
+
+    return ['i', 'svg', 'use', 'path', 'img'].includes(tagName)
+        || attributes['aria-hidden'] === 'true'
+        || attributes.role === 'img'
+        || Object.prototype.hasOwnProperty.call(attributes, 'data-icon')
+        || /(^|\s)(?:fa[srlbd]?|fa-[\w-]+|material-icons(?:-outlined)?|material-symbols-[\w-]+|mdi(?:-[\w-]+)?|bi(?:-[\w-]+)?)(?=\s|$)/i.test(classNames);
+}
+
+function getEditableTextComponents(component) {
+    if (isIconComponent(component)) {
+        return [];
+    }
+
+    const children = component.components?.().models || [];
+    if (children.length) {
+        return children.flatMap(child => getEditableTextComponents(child));
+    }
+
+    const content = component.get?.('content');
+    return typeof content === 'string' ? [component] : [];
+}
+
+function hasMultipleDisplayTextComponents(component) {
+    const nameComponent = component.find?.('.name')?.[0];
+    const textRoot = nameComponent || component;
+    return getEditableTextComponents(textRoot)
+        .filter(textComponent =>
+            String(textComponent.get?.('content') || '').trim()
+        )
+        .length > 1;
+}
+
+function updateDisplayTextTraitState(component) {
+    const locked = hasMultipleDisplayTextComponents(component);
+    const trait = component.getTrait?.('data-text');
+
+    if (!trait) {
+        return locked;
+    }
+
+    const attributes = { ...(trait.get?.('attributes') || {}) };
+    if (locked) {
+        attributes.readonly = 'readonly';
+        attributes['aria-readonly'] = 'true';
+        attributes.disabled = 'disabled';
+        attributes['aria-disabled'] = 'true';
+        attributes.title = '此連結包含多個文字區塊，請直接在畫布中個別編輯';
+    } else {
+        delete attributes.readonly;
+        delete attributes['aria-readonly'];
+        delete attributes.disabled;
+        delete attributes['aria-disabled'];
+        delete attributes.title;
+    }
+
+    trait.set({
+        label: locked ? '顯示文字（請於畫布編輯）' : '顯示文字',
+        attributes
+    });
+    return locked;
+}
+
 function getComponentTextContent(component) {
+    return getEditableTextComponents(component)
+        .map(textComponent => String(textComponent.get?.('content') || ''))
+        .join('');
+}
+
+function getRawComponentTextContent(component) {
     const children = component.components?.().models || [];
     if (!children.length) {
         return String(component.get?.('content') || '');
     }
 
     return children
-        .map(child => getComponentTextContent(child))
+        .map(child => getRawComponentTextContent(child))
         .join('');
 }
 
 function initializeDisplayText(component) {
     const attributes = component.getAttributes();
-    if (Object.prototype.hasOwnProperty.call(attributes, 'data-text')) {
+    const displayText = getComponentTextContent(component).trim();
+    const hasDisplayText = Object.prototype.hasOwnProperty.call(
+        attributes,
+        'data-text'
+    );
+
+    if (hasDisplayText) {
+        const currentDisplayText = String(attributes['data-text'] || '').trim();
+        const rawDisplayText = getRawComponentTextContent(component).trim();
+
+        // Repair values previously initialized from element.textContent,
+        // which also included ligature names such as "Telephone" from a
+        // Material Symbols icon. Preserve deliberately customized values.
+        if (
+            displayText
+            && displayText !== rawDisplayText
+            && currentDisplayText === rawDisplayText
+        ) {
+            component.addAttributes({ 'data-text': displayText });
+        }
         return;
     }
 
-    const displayText = getComponentTextContent(component).trim();
     if (displayText) {
         component.addAttributes({ 'data-text': displayText });
     }
@@ -432,15 +609,34 @@ function synchronizeLinkAttributes(component, options = {}) {
             ? getDefaultTarget(type)
             : attributes.target || getDefaultTarget(type);
 
+        const generatedTitle = createGeneratedTitle(
+            type,
+            attributes['data-text'],
+            target
+        );
         const desiredValues = {
             'data-link-type': type,
-            target,
-            title: createGeneratedTitle(
-                type,
-                attributes['data-text'],
-                target
-            )
+            target
         };
+
+        const currentTitle = String(attributes.title || '');
+        let shouldGenerateTitle = !currentTitle.trim();
+        if (options.refreshGeneratedTitle && currentTitle) {
+            const previousAttributes = component.previous('attributes') || {};
+            const previousType = inferLinkType(previousAttributes);
+            const previousTarget = previousAttributes.target
+                || getDefaultTarget(previousType);
+            const previousGeneratedTitle = createGeneratedTitle(
+                previousType,
+                previousAttributes['data-text'],
+                previousTarget
+            );
+            shouldGenerateTitle = currentTitle === previousGeneratedTitle;
+        }
+
+        if (shouldGenerateTitle) {
+            desiredValues.title = generatedTitle;
+        }
 
         if (Object.prototype.hasOwnProperty.call(options, 'destinationValue')) {
             const destinationValue = String(options.destinationValue || '');
@@ -624,12 +820,9 @@ export function linkComponentPlugin(editor) {
                     {
                         name: 'title',
                         type: 'text',
-                        label: '提示文字（自動產生）',
-                        category: hintCategory,
-                        attributes: {
-                            readonly: 'readonly',
-                            'aria-readonly': 'true'
-                        }
+                        label: '提示文字（留空時自動產生）',
+                        placeholder: '留空時由系統自動產生',
+                        category: hintCategory
                     }
                 ]
             },
@@ -662,6 +855,9 @@ export function linkComponentPlugin(editor) {
 
                 this.on('change:attributes:data-text', component => {
                     updateDisplayText(component);
+                    synchronizeLinkAttributes(component, {
+                        refreshGeneratedTitle: true
+                    });
                     if (inferLinkType(component.getAttributes()) === 'address') {
                         component.addAttributes({
                             'data-link-value': String(
@@ -669,7 +865,6 @@ export function linkComponentPlugin(editor) {
                             ).trim()
                         });
                     }
-                    synchronizeLinkAttributes(component);
                 });
                 this.on('change:attributes:data-link-value', component => {
                     const attributes = component.getAttributes();
@@ -697,12 +892,15 @@ export function linkComponentPlugin(editor) {
 
                     synchronizeLinkAttributes(component, {
                         destinationValue: destinationValues[type],
-                        applyDefaultTarget: true
+                        applyDefaultTarget: true,
+                        refreshGeneratedTitle: true
                     });
                 });
                 this.on('change:attributes:target', component => {
+                    synchronizeLinkAttributes(component, {
+                        refreshGeneratedTitle: true
+                    });
                     updateTargetSecurity(component);
-                    synchronizeLinkAttributes(component);
                 });
                 synchronizeLinkAttributes(this, {
                     generateHref: true

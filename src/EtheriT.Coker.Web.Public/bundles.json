@@ -77,6 +77,7 @@
         "wwwroot/Shared/components/Directory/js/parts.js",
         "wwwroot/Shared/components/Directory/js/renderer.js",
         "wwwroot/Shared/components/Directory/js/blocks.js",
+        "wwwroot/Shared/components/Directory/js/sort.js",
         "wwwroot/Shared/components/Directory/js/boot.js",
         "wwwroot/Shared/components/Form/js/DynamicForm.validation.js",
         "wwwroot/Shared/components/Form/js/DynamicForm.behavior.js",

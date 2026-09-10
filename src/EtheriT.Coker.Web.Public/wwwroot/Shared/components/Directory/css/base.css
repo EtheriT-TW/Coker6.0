@@ -2,6 +2,119 @@
     flex-wrap: wrap;
 }
 
+/* ===== Directory Sort Control ===== */
+.directory-sort-control {
+    min-width: 0;
+}
+
+.directory-sort-control .sort-control-icon {
+    font-size: 1.25rem;
+}
+
+.directory-sort-control .sort-control-icon.is-ascending {
+    transform: rotate(180deg);
+}
+
+.directory-sort-control .btn-group {
+    min-width: 8.5rem;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.directory-sort-control .btn-group > .btn {
+    background-color: #fff;
+    border: 1px solid #adb5bd;
+    border-bottom: 2px solid currentColor;
+    color: #212529;
+    box-shadow: none;
+}
+
+.directory-sort-control .btn-group > .btn:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.directory-sort-control .btn-group.sort-default > .btn:hover,
+.directory-sort-control .btn-group.sort-default > .btn:focus {
+    background-color: #f8f9fa;
+    border-color: #6c757d;
+    color: #212529;
+}
+
+.directory-sort-control .btn-group.sort-asc > .btn {
+    background-color: #f7fbff;
+    border-color: #0d6efd;
+    color: #0756b8;
+}
+
+.directory-sort-control .btn-group.sort-desc > .btn {
+    background-color: #fff8f1;
+    border-color: #d97706;
+    color: #9a4f00;
+}
+
+.directory-sort-direction {
+    min-width: 6.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.directory-sort-direction.is-default {
+    cursor: default;
+}
+
+.directory-sort-control .dropdown-menu {
+    --bs-dropdown-spacer: 0;
+    min-width: 100%;
+    margin-top: 0 !important;
+    padding: 0;
+    border-top: 0;
+    border-radius: 0;
+    border-color: #adb5bd;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.14);
+}
+
+.directory-sort-control .dropdown-item {
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+}
+
+.directory-sort-control .btn-group.sort-default .dropdown-item.active {
+    background-color: #f1f3f5;
+    color: #212529;
+}
+
+.directory-sort-control .btn-group.sort-asc .dropdown-item.active {
+    background-color: #f7fbff;
+    color: #0756b8;
+}
+
+.directory-sort-control .btn-group.sort-desc .dropdown-item.active {
+    background-color: #fff8f1;
+    color: #9a4f00;
+}
+
+.directory-sort-control .dropdown-item.active {
+    font-weight: 600;
+}
+
+@media (max-width: 576px) {
+    .directory-sort-control {
+        flex-basis: 100%;
+        width: 100%;
+    }
+
+    .directory-sort-control .btn-group {
+        max-width: calc(100% - 3.5rem);
+    }
+
+    .catalog_frame .switch_control .directory-sort-control button {
+        width: auto;
+    }
+}
+
 /* ===== Common ===== */
 .text-border {
     border-left: #888888 solid .5rem;

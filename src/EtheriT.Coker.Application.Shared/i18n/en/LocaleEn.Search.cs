@@ -27,11 +27,10 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string Category { get; } = "Category";
         public static string SelectCategory { get; } = "Choose Category";
         public static string SortBy { get; } = "Sort by";
-        public static string SortDefault { get; } = "Default";
+        public static string SortDefault { get; } = "Recommended";
         public static string SortPrice { get; } = "Price";
         public static string SortName { get; } = "Name";
         public static string SortTitle { get; } = "Title";
-        public static string SortProductNumber { get; } = "Product number";
         public static string SortModel { get; } = "Model";
         public static string SortPublishDate { get; } = "Publish date";
         public static string SortLastModified { get; } = "Last edited";

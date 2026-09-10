@@ -662,11 +662,32 @@ class SwiperEditorController {
             ? swiperMediaTypes.video
             : swiperMediaTypes.image;
         const collectedAssets = new Map();
+        let closeTimer = null;
         let restored = false;
+        const scheduleClose = () => {
+            globalThis.clearTimeout(closeTimer);
+            closeTimer = globalThis.setTimeout(() => {
+                if (collectedAssets.size) {
+                    assetManager.close();
+                }
+            }, 80);
+        };
         const collectAsset = asset => {
             const normalized = normalizeAsset(asset);
             if (normalized.src) {
                 collectedAssets.set(normalized.src, normalized);
+            }
+        };
+        const handleAssetAdd = asset => {
+            collectAsset(asset);
+            scheduleClose();
+        };
+        const collectUploadResult = result => {
+            const assets = result?.data || result?.assets || [];
+            assets.forEach(collectAsset);
+
+            if ((result?.success !== false) && collectedAssets.size) {
+                scheduleClose();
             }
         };
         const applyCollectedAssets = () => {
@@ -718,12 +739,17 @@ class SwiperEditorController {
             }
 
             restored = true;
-            this.editor.off('asset:add', collectAsset);
+            globalThis.clearTimeout(closeTimer);
+            this.editor.off('asset:add', handleAssetAdd);
+            this.editor.off('asset:upload:end', collectUploadResult);
+            this.editor.off('coker:asset-upload:complete', collectUploadResult);
             applyCollectedAssets();
             globalThis.setTimeout(() => this.open(), 0);
         };
 
-        this.editor.on('asset:add', collectAsset);
+        this.editor.on('asset:add', handleAssetAdd);
+        this.editor.on('asset:upload:end', collectUploadResult);
+        this.editor.on('coker:asset-upload:complete', collectUploadResult);
         this.editor.once('asset:close', restoreEditor);
         assetManager.open({
             types: [assetType],

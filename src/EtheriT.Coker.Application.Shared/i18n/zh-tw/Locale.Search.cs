@@ -27,11 +27,10 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string Category { get; } = "分類";
         public static string SelectCategory { get; } = "請選擇分類";
         public static string SortBy { get; } = "排序";
-        public static string SortDefault { get; } = "預設";
+        public static string SortDefault { get; } = "推薦";
         public static string SortPrice { get; } = "價格";
         public static string SortName { get; } = "名稱";
         public static string SortTitle { get; } = "標題";
-        public static string SortProductNumber { get; } = "商品編號";
         public static string SortModel { get; } = "型號";
         public static string SortPublishDate { get; } = "發布日期";
         public static string SortLastModified { get; } = "最後編輯時間";

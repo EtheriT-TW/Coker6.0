@@ -163,6 +163,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var resule = await IndexAsync(orgName, "search", "article", id);
             ViewData["VisibleHeader"] = false;
             ViewData["VisibleFooter"] = false;
+            ViewData["Robots"] = "noindex, follow";
             ViewBag.ShowSwitchPage = false;
             return resule;
         }
@@ -658,6 +659,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 key,
                 "home",
                 StringComparison.OrdinalIgnoreCase);
+            var isRootWebsite = siteId == rootSiteId;
             var rendersInheritedHtml = string.Equals(
                     view,
                     "Index",
@@ -692,7 +694,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["MainHeading"] = isHomePage
                 ? model.PageData.SiteName
                 : model.PageData.Title;
-            var canonicalPageUrl = BuildCanonicalPageUrl(model);
+            var canonicalPageUrl = BuildCanonicalPageUrl(model, isHomePage, isRootWebsite);
             ViewBag.PageTagNameName = isHomePage
                 ? model.PageData.SiteName
                 : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
@@ -774,7 +776,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     .FirstOrDefault(e => e.Id == siteId);
                 var articleImageUrl = ResolveStructuredDataImage(rootUri, model.PageData.ImageUrl);
                 var organizationLogoUrl = ResolveStructuredDataImage(rootUri, websiteData?.Logo);
-                var organizationUrl = new Uri(rootUri, $"{model.orgName}/home").AbsoluteUri;
+                var organizationUrl = BuildHomePageUrl(rootUri, model.orgName, isRootWebsite);
                 var articleStructuredData = BuildArticleStructuredData(
                     model.PageData,
                     canonicalPageUrl,
@@ -806,7 +808,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     model.PageData.Title,
                     canonicalPageUrl,
                     breadcrumbRootUri,
-                    new Uri(breadcrumbRootUri, $"{model.orgName}/home").AbsoluteUri,
+                    BuildHomePageUrl(breadcrumbRootUri, model.orgName, isRootWebsite),
                     model.PageData.PageView is "Article" or "Techcert");
                 if (breadcrumbStructuredData != null)
                 {
@@ -849,15 +851,22 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;
             ViewData["CurrentUrl"] = model.PageData.CurrentUrl;
             ViewData["CanonicalUrl"] = canonicalPageUrl;
-            ViewData["OpenGraphUrl"] = isProductPage
-                ? $"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}{Request.QueryString}"
-                : model.PageData.CurrentUrl;
+            ViewData["OpenGraphType"] = isArticlePage ? "article" : "website";
+            ViewData["OpenGraphUrl"] = canonicalPageUrl;
+            if (isArticlePage)
+            {
+                ViewData["ArticlePublishedTime"] = FormatStructuredDataDate(
+                    model.PageData.CreationTime);
+                ViewData["ArticleModifiedTime"] = FormatStructuredDataDate(
+                    model.PageData.LastModificationTime ?? model.PageData.CreationTime);
+            }
             ViewData["Root"] = model.root;
             ViewData["VisibleHeader"] = model.PageData.VisibleHeader;
             ViewData["VisibleFooter"] = model.PageData.VisibleFooter;
             ViewData["XSRF-TOKEN"] = model.token;
             ViewData["Locale"] = model.locale;
             ViewData["PageView"] = model.PageData.PageView;
+            ViewData["Robots"] = ResolveRobotsDirective(model.PageData.PageView, view);
             ViewData["Id"] = model.PageData.Id;
             ViewData["bodyClass"] = model.option?.ToLower() == "home" ? model.option.ToLower() : "page";
             var nonce = HttpContext.Items["CSPNonce"] as string;
@@ -893,6 +902,25 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 default:
                     return View(view, model);
             }
+        }
+
+        private static string? ResolveRobotsDirective(string? pageView, string? view)
+        {
+            if (string.Equals(pageView, "Search", StringComparison.OrdinalIgnoreCase))
+            {
+                return "noindex, follow";
+            }
+
+            var normalizedView = (view ?? string.Empty)
+                .Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault();
+            return normalizedView?.ToLowerInvariant() switch
+            {
+                "search" or "custsearch" or "columnarsearch" => "noindex, follow",
+                "shoppingcar" or "member" or "favorites" or "productdemo" => "noindex, nofollow",
+                _ => null
+            };
         }
 
         private static Dictionary<string, object?> BuildProductStructuredData(
@@ -1170,12 +1198,20 @@ namespace EtheriT.Coker.Web.Public.Controllers
             return Regex.Replace(sku.Trim(), @"\s+", "-");
         }
 
-        private string BuildCanonicalPageUrl(PageViewModel model)
+        private string BuildCanonicalPageUrl(
+            PageViewModel model,
+            bool isHomePage,
+            bool isRootWebsite)
         {
             var rootUri = new Uri(
                 model.root.EndsWith("/", StringComparison.Ordinal)
                     ? model.root
                     : $"{model.root}/");
+            if (isHomePage)
+            {
+                return BuildHomePageUrl(rootUri, model.orgName, isRootWebsite);
+            }
+
             var pageView = model.PageData?.PageView ?? string.Empty;
             var relativeUrl = pageView switch
             {
@@ -1202,6 +1238,17 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 Query = $"Page={pageNumber.ToString(CultureInfo.InvariantCulture)}"
             };
             return canonicalUri.Uri.AbsoluteUri;
+        }
+
+        private static string BuildHomePageUrl(
+            Uri rootUri,
+            string? orgName,
+            bool isRootWebsite)
+        {
+            var normalizedOrgName = orgName?.Trim().Trim('/');
+            return isRootWebsite || string.IsNullOrWhiteSpace(normalizedOrgName)
+                ? rootUri.AbsoluteUri
+                : new Uri(rootUri, normalizedOrgName).AbsoluteUri;
         }
 
         private static bool HasSingleDirectoryCatalog(string html)

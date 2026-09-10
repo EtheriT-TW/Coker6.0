@@ -105,13 +105,16 @@ namespace EtheriT.Coker.Application.Member
             try
             {
                 long websiteId = await loginUserData.GetWebsiteId();
-                await EnsureMissingFrontRoleMappingsAsync(websiteId);
 
-                var baseQuery =
-                    from f in db.FrontUsers
-                    join s in db.MappingFrontUserAndWebsite on f.Id equals s.FK_UserId
-                    where s.FK_WebsiteId == websiteId && !s.IsDeleted && !f.IsDeleted
-                    select f;
+                // 列表 API 必須維持純讀取。舊資料補綁會掃描全站會員並逐筆修復，
+                // 若放在每次分頁、搜尋請求前執行，會員數越多 TTFB 就越長。
+                var baseQuery = db.FrontUsers
+                    .AsNoTracking()
+                    .Where(f => !f.IsDeleted)
+                    .Where(f => db.MappingFrontUserAndWebsite.Any(s =>
+                        s.FK_UserId == f.Id &&
+                        s.FK_WebsiteId == websiteId &&
+                        !s.IsDeleted));
 
                 // 1) 這裡只放「明文」欄位（不要呼叫任何 MaskXXX）
                 var dataQuery = baseQuery.Select(f => new MemberGetAllListDto
@@ -125,13 +128,13 @@ namespace EtheriT.Coker.Application.Member
                     Email = f.Email ?? "",
                     RoleId = db.MappingUserAndRoles
                         .Where(m => !m.IsDeleted && m.UUID == f.UUID)
-                        .Where(m => f.FK_User.HasValue && m.UserId == f.FK_User.Value)
                         .Where(m => m.Role != null)
                         .Where(m => m.Role!.FK_WebsiteId == websiteId)
                         .Where(m => m.Role!.Type == RoleTypeEnum.前台)
                         .Where(m => !m.Role!.IsDeleted)
+                        .OrderBy(m => m.Id)
                         .Select(m => (long?)m.RoleId)
-                        .FirstOrDefault(),
+                        .FirstOrDefault() ?? f.Level,
                     CreationTime = f.CreationTime,
                     Total = (
                         from order in db.Order_Headers
@@ -153,10 +156,11 @@ namespace EtheriT.Coker.Application.Member
 
                     var uuids = page.Select(x => x.UUID).ToList();
                     var userBonus = await _bonusManagementAppService.GetQueryFrontUsersTotalAvaliableBonus(uuids);
+                    var bonusByUuid = userBonus.ToDictionary(x => x.UserUUID, x => x.TotalAvaliableBonus);
 
                     foreach (var item in page)
                     {
-                        item.Bonus = userBonus.FirstOrDefault(x => x.UserUUID == item.UUID)?.TotalAvaliableBonus ?? 0;
+                        item.Bonus = bonusByUuid.GetValueOrDefault(item.UUID);
 
                         item.Name = _stringHandler.MaskName(item.Name);
                         item.CellPhone = _stringHandler.MaskCellPhone(item.CellPhone);
@@ -175,7 +179,7 @@ namespace EtheriT.Coker.Application.Member
             }
             catch
             {
-                // 補綁或清單查詢失敗都是真正錯誤，不可偽裝成空清單。
+                // 清單查詢失敗是真正錯誤，不可偽裝成空清單。
                 throw;
             }
         }

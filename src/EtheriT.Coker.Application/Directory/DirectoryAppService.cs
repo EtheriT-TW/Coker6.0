@@ -543,6 +543,9 @@ namespace EtheriT.Coker.Application.Directory
                     includeArticle = true;
                     break;
             }
+            output.ContentType = includeProd
+                ? DirectoryTypeEnum.商品
+                : DirectoryTypeEnum.文章;
             bool hasAnyFilter = HasAnyEffectiveFilter(dto);
 
             if (hasAnyFilter || (searchId == SearchTargetIds.Article && dto.DirectoryType > 0))
@@ -2335,7 +2338,8 @@ namespace EtheriT.Coker.Application.Directory
         {
             var output = new DirectoryReleInfoGetDto
             {
-                ReleInfos = new List<DirectoryReleInfoDto>()
+                ReleInfos = new List<DirectoryReleInfoDto>(),
+                ContentType = (DirectoryTypeEnum)directories[0].Type
             };
             var directoryType = (DirectoryTypeEnum)directories[0].Type;
             var candidateIds = new HashSet<long>();
@@ -2375,19 +2379,61 @@ namespace EtheriT.Coker.Application.Directory
                 output.TotalPage = showNum > 0
                     ? (int)Math.Ceiling(output.TotalCount / (double)showNum)
                     : 0;
-                pageIds = await query
-                    .OrderBy(x => x.Ser_No)
-                    .ThenByDescending(x => x.Status == ProdStatusEnum.新品)
-                    .ThenByDescending(x => x.Status != ProdStatusEnum.售完)
-                    .ThenByDescending(x => x.Status != ProdStatusEnum.停產)
-                    .ThenBy(x => x.ItemNo)
-                    .ThenBy(x => x.Title)
-                    .ThenByDescending(x => x.Id)
-                    .Select(x => x.Id)
-                    .Take(output.TotalCount)
-                    .Skip((page - 1) * showNum)
-                    .Take(showNum)
-                    .ToListAsync();
+                var sortBy = (dto.SearchSortBy ?? "default").Trim().ToLowerInvariant();
+                var isCustomSort = new[] { "price", "name", "model" }.Contains(sortBy);
+
+                if (isCustomSort)
+                {
+                    var visiblePriceRoleIds = new List<long> { 0, 1 };
+                    if (sortBy == "price")
+                    {
+                        try
+                        {
+                            var orgName = await loginUserData.GetWebsiteOrgName(websiteId);
+                            var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
+                            visiblePriceRoleIds = visiblePriceRoleIds
+                                .Concat(roleContext.VisibleRoleIds)
+                                .Distinct()
+                                .ToList();
+                        }
+                        catch
+                        {
+                            if (currentFrontRoleId.HasValue)
+                                visiblePriceRoleIds.Add(currentFrontRoleId.Value);
+                        }
+                    }
+
+                    var sortedQuery = BuildUnionQuery(
+                        null,
+                        null,
+                        query,
+                        websiteId,
+                        null,
+                        visiblePriceRoleIds,
+                        dto);
+                    pageIds = await sortedQuery
+                        .Select(x => x.Id)
+                        .Take(output.TotalCount)
+                        .Skip((page - 1) * showNum)
+                        .Take(showNum)
+                        .ToListAsync();
+                }
+                else
+                {
+                    pageIds = await query
+                        .OrderBy(x => x.Ser_No)
+                        .ThenByDescending(x => x.Status == ProdStatusEnum.新品)
+                        .ThenByDescending(x => x.Status != ProdStatusEnum.售完)
+                        .ThenByDescending(x => x.Status != ProdStatusEnum.停產)
+                        .ThenBy(x => x.ItemNo)
+                        .ThenBy(x => x.Title)
+                        .ThenByDescending(x => x.Id)
+                        .Select(x => x.Id)
+                        .Take(output.TotalCount)
+                        .Skip((page - 1) * showNum)
+                        .Take(showNum)
+                        .ToListAsync();
+                }
 
                 var items = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
                 {
@@ -2442,15 +2488,38 @@ namespace EtheriT.Coker.Application.Directory
             }
             else
             {
-                pageIds = await articleQuery
-                    .OrderBy(x => x.SerNO)
-                    .ThenByDescending(x => x.NodeDate)
-                    .ThenByDescending(x => x.Id)
-                    .Select(x => x.Id)
-                    .Take(output.TotalCount)
-                    .Skip((page - 1) * showNum)
-                    .Take(showNum)
-                    .ToListAsync();
+                var sortBy = (dto.SearchSortBy ?? "default").Trim().ToLowerInvariant();
+                var isCustomSort = new[] { "title", "publishdate", "lastmodified" }.Contains(sortBy);
+
+                if (isCustomSort)
+                {
+                    var sortedQuery = BuildUnionQuery(
+                        null,
+                        articleQuery,
+                        null,
+                        websiteId,
+                        null,
+                        Array.Empty<long>(),
+                        dto);
+                    pageIds = await sortedQuery
+                        .Select(x => x.Id)
+                        .Take(output.TotalCount)
+                        .Skip((page - 1) * showNum)
+                        .Take(showNum)
+                        .ToListAsync();
+                }
+                else
+                {
+                    pageIds = await articleQuery
+                        .OrderBy(x => x.SerNO)
+                        .ThenByDescending(x => x.NodeDate)
+                        .ThenByDescending(x => x.Id)
+                        .Select(x => x.Id)
+                        .Take(output.TotalCount)
+                        .Skip((page - 1) * showNum)
+                        .Take(showNum)
+                        .ToListAsync();
+                }
             }
 
             var articles = await articleAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto

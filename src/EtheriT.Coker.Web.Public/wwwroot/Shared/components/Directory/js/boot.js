@@ -170,16 +170,6 @@
         const shownum = typeof $self.data("shownum") !== "undefined" ? $self.data("shownum") : 12;
         const maxlen = typeof $self.data("maxlen") !== "undefined" && $self.data("maxlen") !== "" ? $self.data("maxlen") : 0;
         const dirid = getDirIds($self);
-        const searchTarget = dirid.length > 0 ? dirid[0] : "";
-        const savedSearchSort = $self.find("#searchSortMenu").length > 0
-            && typeof w.SearchSortPreference?.read === "function"
-            ? w.SearchSortPreference.read(searchTarget)
-            : null;
-
-        if (savedSearchSort && typeof $self.data("searchSortBy") === "undefined") {
-            $self.data("searchSortBy", savedSearchSort.sortBy);
-            $self.data("searchSortDirection", savedSearchSort.direction);
-        }
 
         return {
             Ids: dirid,
@@ -212,6 +202,12 @@
         if (!canAutoLoadCatalog($self)) return;
         // 鄰近據點必須等瀏覽器定位完成，避免送出缺少座標的查詢。
         if (!hasNearestCoordinates($self)) return;
+
+        // 搜尋頁可由 data-dirid 直接判斷類型；一般目錄則會在首次 API
+        // 回應帶回 ContentType 後由 renderer 建立相同元件。
+        if (w.DirectorySortControl && typeof w.DirectorySortControl.init === "function") {
+            w.DirectorySortControl.init($self);
+        }
 
         const dirid = getDirIds($self);
         const locationPage = page != null ? page.toString() : getLocationPage();

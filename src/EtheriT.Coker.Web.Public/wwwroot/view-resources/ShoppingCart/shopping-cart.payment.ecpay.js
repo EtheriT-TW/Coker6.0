@@ -67,6 +67,25 @@
                 return Number(item.Id || 0) > 0 && Number(item.Quantity || 0) > 0;
             });
     }
+    function HandleECPayLoadFailure(stage, detail, preferredPaymentValue) {
+        console.error("[ECPay] " + stage, detail || "串接綠界發生錯誤，請稍後嘗試");
+
+        S.ECPayOperational = false;
+        S.HasECPay = false;
+        S.ECPayChanging = false;
+        S.ECPayReady = false;
+        S.ECPayOrderSnapshot = "";
+
+        $(".ecpay_loading").addClass("d-none").text("");
+        $("#ECPayPayment").empty();
+        GetECPayEntryRadio().prop("checked", false).closest(".form-check").addClass("d-none");
+
+        if (S.PaymentAvailabilityLoaded &&
+            cart.Payment.Availability &&
+            typeof cart.Payment.Availability.apply === "function") {
+            cart.Payment.Availability.apply(preferredPaymentValue);
+        }
+    }
     function ECPaymentChange() {
         if (!S.ECPayMonitor) {
             return;
@@ -131,7 +150,6 @@
 
         $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
         $(".checkoutValidationWarning").addClass("d-none");
-        $("#RadioPayment > .form-check").addClass("d-none");
         $("#ECPayPayment").empty();
 
         var timeout = 0;
@@ -145,8 +163,11 @@
                 timeout += 100;
                 if (timeout >= 10000) {
                     clearInterval(checkInterval);
-                    S.ECPayChanging = false;
-                    $(".ecpay_loading").text("串接綠界發生錯誤(初始化失敗-逾時)");
+                    HandleECPayLoadFailure(
+                        "初始化逾時",
+                        "ECPay.initialize did not complete within 10 seconds.",
+                        restorePaymentAfterSync
+                    );
                 }
                 return;
             }
@@ -156,22 +177,23 @@
                 .done(function (result) {
                     if (requestVersion !== ecpayRequestVersion) return;
 
-                    if (!result.success) {
-                        S.ECPayChanging = false;
-                        S.ECPayReady = false;
-                        $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");
+                    if (!result || !result.success) {
+                        HandleECPayLoadFailure("取得 Token 失敗", result, restorePaymentAfterSync);
                         return;
                     }
 
-                    var message = result.message.split(",");
+                    var message = String(result.message || "").split(",");
+                    if (message.length < 2 || !message[0] || !message[1]) {
+                        HandleECPayLoadFailure("Token 回傳格式錯誤", result, restorePaymentAfterSync);
+                        return;
+                    }
+
                     S.order_header_data.orderId = message[0];
                     ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
                         if (requestVersion !== ecpayRequestVersion) return;
 
                         if (errMsg != null) {
-                            S.ECPayChanging = false;
-                            S.ECPayReady = false;
-                            $(".ecpay_loading").text(`串接綠界發生錯誤(${errMsg})`);
+                            HandleECPayLoadFailure("建立付款模組失敗", errMsg, restorePaymentAfterSync);
                             return;
                         }
 
@@ -256,12 +278,19 @@
                         }, 100);
                     }, "V2");
                 })
-                .fail(function () {
+                .fail(function (xhr, textStatus, errorThrown) {
                     if (requestVersion !== ecpayRequestVersion) return;
 
-                    S.ECPayChanging = false;
-                    S.ECPayReady = false;
-                    $(".ecpay_loading").text("串接綠界發生錯誤，請稍後嘗試");
+                    HandleECPayLoadFailure(
+                        "取得 Token 請求失敗",
+                        {
+                            status: xhr && xhr.status,
+                            textStatus: textStatus,
+                            error: errorThrown,
+                            response: xhr && xhr.responseJSON
+                        },
+                        restorePaymentAfterSync
+                    );
                 });
         }, 100);
     }
@@ -783,12 +812,12 @@
             }
 
             S.HasECPay = false;
+            S.ECPayOperational = true;
             S.ECPayMonitor = true;
             S.SupportApplePay = CanUseApplePay();
             ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
                 if (errMsg != null) {
-                    GetECPayEntryRadio().closest(".form-check").addClass("d-none");
-                    co.sweet.error("串接綠界發生錯誤");
+                    HandleECPayLoadFailure("SDK 初始化失敗", errMsg, null);
                     return;
                 }
 

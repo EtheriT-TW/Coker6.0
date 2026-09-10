@@ -31,7 +31,7 @@ export function renderSlide(input) {
     const caption = renderCaption(slide);
     const autoplay = Math.round(slide.duration * 1000);
 
-    return `<div class="${classes.join(' ')}" data-coker-slide-id="${escapeAttribute(slide.id)}" data-coker-media-type="${slide.type}" data-swiper-autoplay="${autoplay}">${media}${caption}</div>`;
+    return `<div class="${classes.join(' ')}" data-coker-slide-id="${escapeAttribute(slide.id)}" data-coker-media-type="${slide.type}" data-swiper-autoplay="${autoplay}"${attribute('data-coker-poster', slide.poster)}>${media}${caption}</div>`;
 }
 
 function renderMedia(slide) {
@@ -74,6 +74,11 @@ function renderTemplateSlide(slide) {
     element.dataset.cokerSlideId = slide.id;
     element.dataset.cokerMediaType = slide.type;
     element.dataset.swiperAutoplay = String(Math.round(slide.duration * 1000));
+    if (slide.poster) {
+        element.dataset.cokerPoster = slide.poster;
+    } else {
+        delete element.dataset.cokerPoster;
+    }
 
     applyTemplateTextFields(element, slide.textFields);
     applyTemplateImageFields(element, slide.imageFields, 'slide');

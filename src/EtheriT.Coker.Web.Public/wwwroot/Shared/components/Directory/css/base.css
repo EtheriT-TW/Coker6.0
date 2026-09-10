@@ -106,13 +106,26 @@
         width: 100%;
     }
 
-    .directory-sort-control .btn-group {
-        max-width: calc(100% - 3.5rem);
-    }
+        .directory-sort-control .btn-group {
+            max-width: calc(100% - 3.5rem);
+        }
 
     .catalog_frame .switch_control .directory-sort-control button {
         width: auto;
     }
+
+    /* 排序器加入後空間不足，小螢幕只留圖示，文字以 font-size:0 收起 */
+    /* 文字是裸文字節點無法選取，故用字級歸零；圖示的 .fs-5 為 !important 不受影響 */
+    .catalog_frame .switch_control .btn_prod_grid,
+    .catalog_frame .switch_control .btn_prod_list {
+        font-size: 0;
+    }
+
+        .catalog_frame .switch_control .btn_prod_grid .material-symbols-outlined,
+        .catalog_frame .switch_control .btn_prod_list .material-symbols-outlined {
+            margin-right: 0 !important;
+            font-size:1.5rem !important;
+        }
 }
 
 /* ===== Common ===== */

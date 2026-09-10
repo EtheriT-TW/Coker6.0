@@ -196,18 +196,54 @@ a[href="https://translate.google.com"] {
 }
 
 .money__amount {
+    font-size:1.3rem;
     font-weight: inherit;
 }
 
 /* 主售價：符號略小於數字 */
 .sale-price .money__symbol {
-    font-size: 0.7em;
+    font-size: 0.6em;
 }
 
-/* 附註列與劃線原價字級本身已偏小，符號維持與數字同大小 */
+/* 劃線原價：數字略小於主售價 */
+.origin-price .money__amount {
+    font-size:.9rem;
+}
+
+.product-addon__offer .money__symbol {
+    font-size: 0.6em;
+}
+
+/* 附註列與劃線原價：符號縮小 */
 .price-meta-value .money__symbol,
 .origin-price .money__symbol {
-    font-size: 1em;
+    font-size: 0.6em;
+}
+
+/* 劃線價（列表原價、商品頁建議售價）：不用 text-decoration，改以背景漸層畫線。
+   text-decoration 的高度由字型度量決定、無法調整，符號一縮小就會沉到線下方；
+   改用背景後線的高度由 background-position 控制，與符號字級無關。
+   原本的劃線來源已一併移除：
+     .origin-price                             → price.js buildOriginPriceLine 的 class
+     .price-meta-value                         → Layout_1.css 的 text-decoration
+     .spec-suggest-value / .spec-media-suggest → Layout_2.js 的 class */
+.origin-price .money,
+.price-meta-value .money,
+.spec-suggest-value .money,
+.spec-media-suggest .money {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 100% 1px;
+    background-position: 0 50%;
+    background-repeat: no-repeat;
+    /* 撐寬讓線左右各延伸 0.15em，再用負 margin 抵銷，不影響排版位置 */
+    padding-inline: 0.15em;
+    margin-inline: -0.15em;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.price-meta-value .money__amount {
+    font-size: .88rem;
 }
 
 /* 購物車：金額欄位一律維持符號與數字同大小 */

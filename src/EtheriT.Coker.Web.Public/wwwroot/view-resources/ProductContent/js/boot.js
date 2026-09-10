@@ -9,10 +9,11 @@
     const {
         DEFAULT_TEXTS, DEFAULTS, registerLayout, getLayoutFactory, toInt, normalizeNullableInt,
         readMinQty, cloneTemplate, formatNumber, formatText, resolveText, defaultI18n,
-        formatPriceText, analyzeSpecStructure, buildPriceSummary, buildPriceViewModel,
-        buildPriceBaseViewModel, isStockAvailable, clampQuantity, isLoggedIn,
+        formatPriceText, formatPriceTextHtml, analyzeSpecStructure, buildPriceSummary,
+        buildPriceViewModel, buildPriceBaseViewModel, isStockAvailable, clampQuantity, isLoggedIn,
         createCartPayload, runBuyGuard, submitCart, specName, specImageItems,
-        ProductSelectionEngine, ProductMediaViewer, ProductContentController, formatMoney
+        ProductSelectionEngine, ProductMediaViewer, ProductContentController,
+        formatMoney, formatMoneyHtml, escapeHtml
     } = I;
 
     function createProductContent(options) {
@@ -32,10 +33,13 @@
         normalizeNullableInt,
         formatNumber,
         formatMoney,
+        formatMoneyHtml,
+        escapeHtml,
         readMinQty,
         defaultI18n,
         cloneTemplate,
         formatPriceText,
+        formatPriceTextHtml,
         buildPriceSummary,
         buildPriceViewModel,
         buildPriceBaseViewModel,

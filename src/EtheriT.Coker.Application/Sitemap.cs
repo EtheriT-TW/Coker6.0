@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,16 +62,14 @@ namespace EtheriT.Coker.Application
             {
                 urlset.Urls.Add(new UrlDto
                 {
-                    loc = BuildHomeUrl(site),
-                    priority = "1.00",
-
+                    loc = BuildHomeUrl(site)
                 });
             }
-            setWebMenuUrl(Maps.Maps, urlset.Urls, 0.9);
+            setWebMenuUrl(Maps.Maps, urlset.Urls);
             await setArticleUrl(urlset.Urls);
             await setProductUrl(urlset.Urls);
             await setTechnicalCertificateUrl(urlset.Urls);
-            return urlset;
+            return NormalizeUrlset(urlset);
         }
         private string BuildHomeUrl(WebSiteOrgNameDto site)
         {
@@ -79,7 +78,7 @@ namespace EtheriT.Coker.Application
                 ? $"{normalizedSiteUrl}/"
                 : $"{normalizedSiteUrl}/{(site.OrgName ?? string.Empty).Trim('/')}";
         }
-        private void setWebMenuUrl(List<MenuItemDto> Maps, List<UrlDto> Urls, double priority = 1.0) {
+        private void setWebMenuUrl(List<MenuItemDto> Maps, List<UrlDto> Urls) {
             if (Maps == null || !Maps.Any()) return;
             string orgName;
             Maps.ForEach(map =>
@@ -94,12 +93,10 @@ namespace EtheriT.Coker.Application
                         Urls.Add(new UrlDto
                         {
                             loc = $"{siteUrl}/{orgName}/{map.RouterName}".Replace("//", "/").Replace(":/", "://"),
-                            priority = priority.ToString(),
-                            lastmod = (map.LastModificationTime ?? map.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                            changefreq = "monthly"
+                            lastmod = FormatLastModified(map.LastModificationTime ?? map.CreationTime)
                         });
                     }
-                    if (map.Children!=null && map.Children.Any()) setWebMenuUrl(map.Children, Urls, priority - 0.1);
+                    if (map.Children!=null && map.Children.Any()) setWebMenuUrl(map.Children, Urls);
                 }
             });
             return;
@@ -111,9 +108,7 @@ namespace EtheriT.Coker.Application
                     Urls.Add(new UrlDto
                     {
                         loc = $"{siteUrl}/{site.OrgName}/search/article/{a.Id}".Replace("//", "/").Replace(":/", "://"),
-                        priority = "1.0",
-                        lastmod = (a.LastModificationTime ?? a.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                        changefreq = "never"
+                        lastmod = FormatLastModified(a.LastModificationTime ?? a.CreationTime)
                     });
                 });
             }
@@ -127,9 +122,7 @@ namespace EtheriT.Coker.Application
                     Urls.Add(new UrlDto
                     {
                         loc = $"{siteUrl}/{site.OrgName}/search/product/{p.Id}".Replace("//", "/").Replace(":/", "://"),
-                        priority = "1.0",
-                        lastmod = (p.LastModificationTime ?? p.CreationTime).ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                        changefreq = "monthly"
+                        lastmod = FormatLastModified(p.LastModificationTime ?? p.CreationTime)
                     });
                 });
             }
@@ -155,13 +148,84 @@ namespace EtheriT.Coker.Application
                         loc = $"{siteUrl}/{site.OrgName}/search/techcert/{certificate.Id}"
                             .Replace("//", "/")
                             .Replace(":/", "://"),
-                        priority = "1.0",
-                        lastmod = (certificate.LastModificationTime ?? certificate.CreationTime)
-                            .ToString("yyyy-MM-ddTHH:mm:sszzz"),
-                        changefreq = "monthly"
+                        lastmod = FormatLastModified(
+                            certificate.LastModificationTime ?? certificate.CreationTime)
                     });
                 });
             }
         }
+
+        private static Urlset NormalizeUrlset(Urlset urlset)
+        {
+            var normalizedUrls = new List<UrlDto>();
+            var urlsByLocation = new Dictionary<string, UrlDto>(StringComparer.OrdinalIgnoreCase);
+            foreach (var url in urlset.Urls)
+            {
+                var location = NormalizeLocation(url.loc);
+                if (location == null)
+                {
+                    continue;
+                }
+
+                if (urlsByLocation.TryGetValue(location, out var existing))
+                {
+                    if (IsLaterLastModified(url.lastmod, existing.lastmod))
+                    {
+                        existing.lastmod = url.lastmod;
+                    }
+                    continue;
+                }
+
+                url.loc = location;
+                urlsByLocation[location] = url;
+                normalizedUrls.Add(url);
+            }
+
+            urlset.Urls = normalizedUrls;
+            return urlset;
+        }
+
+        private static string? NormalizeLocation(string? location)
+        {
+            if (!Uri.TryCreate(location?.Trim(), UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                return null;
+            }
+
+            var builder = new UriBuilder(uri)
+            {
+                Fragment = string.Empty
+            };
+
+            if (builder.Path.Length > 1)
+            {
+                builder.Path = builder.Path.TrimEnd('/');
+            }
+
+            return builder.Uri.AbsoluteUri;
+        }
+
+        private static bool IsLaterLastModified(string? candidate, string? current)
+        {
+            if (!DateTimeOffset.TryParse(
+                    candidate,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var candidateDate))
+            {
+                return false;
+            }
+
+            return !DateTimeOffset.TryParse(
+                       current,
+                       CultureInfo.InvariantCulture,
+                       DateTimeStyles.None,
+                       out var currentDate) ||
+                   candidateDate > currentDate;
+        }
+
+        private static string FormatLastModified(DateTime value)
+            => value.ToString("yyyy-MM-ddTHH:mm:sszzz", CultureInfo.InvariantCulture);
     }
 }

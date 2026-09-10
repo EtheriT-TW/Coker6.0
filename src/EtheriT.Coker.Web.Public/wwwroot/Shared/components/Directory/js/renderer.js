@@ -831,6 +831,15 @@
             $(".searchCount").text(result.totalCount);
         }
 
+        if (w.DirectorySortControl && typeof w.DirectorySortControl.init === "function") {
+            const sortControlState = w.DirectorySortControl.init($item, result);
+            if (sortControlState?.requiresReload && w.DirectoryBoot) {
+                $item.removeData("page");
+                w.DirectoryBoot.initElemntAndLoadDir($item, option.Page || 1);
+                return;
+            }
+        }
+
         renderPager($item, option, result);
         resetType4CaptionHeights($item);
 

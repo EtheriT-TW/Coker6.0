@@ -246,6 +246,35 @@
     cursor: default;
 }
 
+.gjs-traits-c .gjs-field input[disabled][aria-disabled="true"] {
+    border: 1px dashed rgba(255, 196, 92, 0.72);
+    background: rgba(0, 0, 0, 0.24);
+    color: rgba(255, 255, 255, 0.58);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.coker-link-traits__fields .coker-link-trait--locked .gjs-field {
+    border: 1px dashed rgba(255, 196, 92, 0.72);
+    background: rgba(0, 0, 0, 0.16);
+    opacity: 0.62;
+}
+
+.coker-link-traits__fields .coker-link-trait--locked input[disabled] {
+    color: rgba(255, 255, 255, 0.68);
+    cursor: not-allowed;
+}
+
+.coker-link-display-lock-note {
+    padding: 8px 10px;
+    border-left: 3px solid #f0b44d;
+    border-radius: 3px;
+    background: rgba(240, 180, 77, 0.11);
+    color: #ffe0a8;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
 .coker-link-traits__fields .gjs-field-button {
     min-height: 40px;
     border: 1px solid #71b7f1;

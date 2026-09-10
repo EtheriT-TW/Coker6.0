@@ -223,7 +223,7 @@ function ViewTypeChangeInit(root) {
                 if ($btn.length === 0 || $btn.hasClass("d-none")) visible_btns += 1;
             }
 
-            if (visible_btns >= 4) $self.find(".switch_control").addClass("d-none");
+            if (visible_btns >= 4 && $self.find(".directory-sort-control").length === 0) $self.find(".switch_control").addClass("d-none");
             else $self.find(".switch_control").removeClass("d-none");
         }
         $self.data("isInit", true);

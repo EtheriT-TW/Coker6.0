@@ -148,7 +148,7 @@
             ? provider.getEntryRadio()
             : $();
 
-        S.ECPayAvailable = ecpayPayments.length > 0;
+        S.ECPayAvailable = ecpayPayments.length > 0 && S.ECPayOperational !== false;
         S.HasECPay = S.ECPayAvailable && $entry.length > 0;
 
         if (!$entry.length) return;

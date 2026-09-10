@@ -103,6 +103,7 @@
         ECPayRefreshTimer: null,
         ECPayChanging: false,
         ECPayAvailable: false,
+        ECPayOperational: true,
         SupportApplePay: false,
         isRestoringECPayLogistics: false,
         RecipientsList_dxData: undefined,

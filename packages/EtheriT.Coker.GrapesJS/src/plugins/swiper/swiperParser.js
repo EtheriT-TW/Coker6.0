@@ -117,7 +117,10 @@ function parseSlideElement(element) {
         id: element.dataset.cokerSlideId,
         type,
         src: source,
-        poster: video?.getAttribute('poster') || (type !== swiperMediaTypes.image ? image?.getAttribute('src') : '') || '',
+        poster: element.dataset.cokerPoster ||
+            video?.getAttribute('poster') ||
+            (type !== swiperMediaTypes.image ? image?.getAttribute('src') : '') ||
+            '',
         title: image?.getAttribute('alt') ||
             video?.getAttribute('title') ||
             iframe?.getAttribute('title') ||

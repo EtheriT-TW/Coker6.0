@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
@@ -37,9 +38,17 @@ namespace EtheriT.Coker.Application.Common
         {
             if (string.IsNullOrWhiteSpace(name)) return "";
             name = name.Trim();
-            if (name.Length == 1) return "○";
-            if (name.Length == 2) return name.Substring(0, 1) + "○";
-            return name.Substring(0, 1) + "○" + name.Substring(name.Length - 1);
+
+            // 不可用 char/Substring(..., 1) 切姓名；emoji、罕見字及組合字元可能由
+            // 多個 UTF-16 code unit 組成，切半後序列化會顯示成 replacement character (�)。
+            var textElementIndexes = StringInfo.ParseCombiningCharacters(name);
+            if (textElementIndexes.Length == 1) return "○";
+
+            var first = StringInfo.GetNextTextElement(name, textElementIndexes[0]);
+            if (textElementIndexes.Length == 2) return first + "○";
+
+            var last = StringInfo.GetNextTextElement(name, textElementIndexes[^1]);
+            return first + "○" + last;
         }
 
         public string MaskCellPhone(string? phone)

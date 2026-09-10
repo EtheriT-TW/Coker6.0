@@ -752,10 +752,18 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (!orderMessage.Success)
                     throw new Exception($"建立或更新暫存訂單發生錯誤：{orderMessage.Error}, {orderMessage.Message}");
 
-                var messageParts = (orderMessage.Message ?? "").Split(",");
-
-                if (messageParts.Length < 2 || !long.TryParse(messageParts[1], out var tempOrderId))
-                    throw new Exception($"暫存訂單回傳格式錯誤：{orderMessage.Message}");
+                long tempOrderId;
+                if (orderMessage.Object is long orderId)
+                {
+                    tempOrderId = orderId;
+                }
+                else
+                {
+                    // 相容尚未改用 Object 回傳訂單 ID 的舊格式。
+                    var messageParts = (orderMessage.Message ?? "").Split(",");
+                    if (messageParts.Length < 2 || !long.TryParse(messageParts[1], out tempOrderId))
+                        throw new Exception($"暫存訂單回傳格式錯誤：{orderMessage.Message}");
+                }
 
                 dto.OrderId = tempOrderId;
 

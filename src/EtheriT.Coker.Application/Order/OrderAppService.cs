@@ -306,6 +306,7 @@ namespace EtheriT.Coker.Application.Order
                 await FillPaymentMessageAndSendMailAsync(dto, websiteId, header!, output);
 
                 output.Success = true;
+                output.Object = header.Id;
             }
             catch (Exception ex)
             {

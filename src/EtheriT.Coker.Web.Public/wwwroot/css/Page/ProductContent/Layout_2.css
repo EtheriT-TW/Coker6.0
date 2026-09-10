@@ -169,7 +169,7 @@
 
 .spec-price {
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     color: #d0021b;
     text-align: right;
     white-space: nowrap;
@@ -329,7 +329,7 @@
     text-align: start;
     cursor: pointer;
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: 1.8rem;
     color: #0d6efd; /* 與列表 .spec-name 同色，不用 .text-primary */
     margin-bottom: .75rem;
 }
@@ -348,6 +348,7 @@
 }
 
 #ProDisplayModal.has-spec-info .spec-media-price {
+    margin-top: 1rem;
     margin-bottom: .75rem;
 }
 
@@ -378,7 +379,7 @@
 
 #ProDisplayModal.has-spec-info .spec-media-desc {
     color: #777;
-    font-size: 1rem;
+    font-size: 1.1rem;
     overflow-wrap: anywhere;
 }
 
@@ -411,7 +412,9 @@
     #ProDisplayModal.has-spec-info .spec-media-info {
         flex: 0 0 clamp(260px, 32vw, 340px);
         border-left: 1px solid #e5e5e5;
+        padding-top: 1.5rem;
         padding-left: 1.5rem;
+        padding-right: 1.5rem;
         overflow-y: auto;
     }
 }

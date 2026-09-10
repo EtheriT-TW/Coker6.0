@@ -312,7 +312,7 @@
 
             return '<div class="summary-main-row marketingDiscountLine">' +
                 '<div class="summary-label">' + label + '</div>' +
-                '<div class="summary-amount price-negative">' + cart.Utils.formatMoney(amount) + '</div>' +
+                '<div class="summary-amount price-negative">' + cart.Utils.formatMoneyHtml(amount) + '</div>' +
                 '</div>';
         }).join("");
 
@@ -460,9 +460,9 @@
         if (getValue(campaign, "repeatable")) itemLimit *= Math.max(1, qualification.times);
         var canIncrease = selected && quantity < itemLimit && campaignSelected < qualification.allowance;
         var tag = offerPrice <= 0 ? "贈品" : "加價購";
-        var priceText = offerPrice <= 0 ? "免費" : cart.Utils.formatMoney(offerPrice);
+        var priceText = offerPrice <= 0 ? "免費" : cart.Utils.formatMoneyHtml(offerPrice);
         var original = originalPrice > 0
-            ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoney(originalPrice) + '</span>'
+            ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoneyHtml(originalPrice) + '</span>'
             : "";
 
         return '<article class="cart-reward-card' + (selected ? ' is-selected' : '') + (disabled ? ' is-disabled' : '') + '"' +
@@ -706,8 +706,8 @@
             '<div class="cart-reward-name" title="' + escapeHtml(getValue(item, "productName")) + '">' + escapeHtml(getValue(item, "productName")) + '</div>' +
             '<div class="cart-reward-spec">' + escapeHtml(getValue(item, "stockName")) + '</div>' +
             '<button type="button" class="cart-reward-preview-button">查看完整名稱</button>' +
-            '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? '免費' : cart.Utils.formatMoney(offerPrice)) + '</strong>' +
-            (originalPrice > 0 ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoney(originalPrice) + '</span>' : '') + '</div></div>' +
+            '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? '免費' : cart.Utils.formatMoneyHtml(offerPrice)) + '</strong>' +
+            (originalPrice > 0 ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoneyHtml(originalPrice) + '</span>' : '') + '</div></div>' +
             '<div class="cart-reward-quantity"><button type="button" class="js-product-addon-minus" aria-label="減少"' + (selected ? '' : ' disabled') + '>−</button>' +
             '<span>' + quantity + '</span><button type="button" class="js-product-addon-plus" aria-label="增加"' + (canIncrease ? '' : ' disabled') + '>＋</button></div></article>';
     }

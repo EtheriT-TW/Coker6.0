@@ -163,12 +163,24 @@
         return fallback;
     }
 
+    // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義，
+    // 前台每頁都在所有外部 script 之前備妥，不需要再防它不存在。
     function formatMoney(price) {
-        if (window.CokerCurrency && typeof window.CokerCurrency.format === 'function') {
-            return window.CokerCurrency.format(price);
-        }
+        return window.CokerCurrency.format(price);
+    }
 
-        return `NT$${formatNumber(price)}`;
+    function formatMoneyHtml(price) {
+        return window.CokerCurrency.formatHtml(price);
+    }
+
+    // 供各版型把語系字串安全塞進 .html() 用
+    function escapeHtml(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
     }
 
     function formatPriceText(price, bonus, withCurrency = true) {
@@ -180,6 +192,21 @@
         if (bonus > 0) {
             if (price === 0) return `${local.Bonus}:${formatNumber(bonus)}`;
             return `${money} + ${local.Bonus}:${formatNumber(bonus)}`;
+        }
+
+        return money;
+    }
+
+    function formatPriceTextHtml(price, bonus) {
+        price = normalizeNullableInt(price);
+        bonus = normalizeNullableInt(bonus);
+
+        const money = formatMoneyHtml(price);
+        const bonusLabel = escapeHtml(local.Bonus);
+
+        if (bonus > 0) {
+            if (price === 0) return `${bonusLabel}:${formatNumber(bonus)}`;
+            return `${money} + ${bonusLabel}:${formatNumber(bonus)}`;
         }
 
         return money;
@@ -277,9 +304,10 @@
         const itemRoleName = priceItem.roleName || '';
         const baseRoleName = product.baseRoleName || priceItem.baseRoleName || local.NonMember;
 
+        // saleText 現在是 HTML（符號已拆成 span），消費端必須用 .html() 注入
         const saleText = isTimePrice
-            ? local.MarketPrice
-            : formatPriceText(currentPrice, currentBonus);
+            ? escapeHtml(local.MarketPrice)
+            : formatPriceTextHtml(currentPrice, currentBonus);
 
         const showSuggestPrice =
             !isTimePrice &&
@@ -354,15 +382,16 @@
 
         return {
             showSuggestPrice,
+            // Label 仍是純文字（消費端用 .text()）；Value 是 HTML（消費端用 .html()）
             suggestPriceLabel: local.SuggestedPrice,
             suggestPriceValue: showSuggestPrice
-                ? formatMoney(suggestPrice)
+                ? formatMoneyHtml(suggestPrice)
                 : '',
 
             showOriginalPrice,
             originalPriceLabel: local.RolePriceLabel.format(baseRoleName),
             originalPriceValue: showOriginalPrice
-                ? formatMoney(originalPrice)
+                ? formatMoneyHtml(originalPrice)
                 : ''
         };
     }
@@ -666,9 +695,10 @@
         DEFAULT_TEXTS, DEFAULTS, registerLayout,
         getLayoutFactory: () => layoutFactory,
         toInt, normalizeNullableInt, readMinQty, cloneTemplate, formatNumber, formatText,
-        resolveText, defaultI18n, formatPriceText, analyzeSpecStructure, buildPriceSummary,
+        resolveText, defaultI18n, formatPriceText, formatPriceTextHtml,
+        analyzeSpecStructure, buildPriceSummary,
         buildPriceViewModel, buildPriceBaseViewModel, isStockAvailable, clampQuantity,
         isLoggedIn, createCartPayload, runBuyGuard, submitCart, parseExternalVideo,
-        specName, specImageItems
+        specName, specImageItems, formatMoney, formatMoneyHtml, escapeHtml
     });
 })(window, window.jQuery);

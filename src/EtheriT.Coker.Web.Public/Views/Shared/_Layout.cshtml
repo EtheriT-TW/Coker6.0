@@ -224,9 +224,30 @@
             window.orderPrice = orderPrice;
             window.OrgName = OrgName;
             window.PageKey = PageKey;
+
+            // 只回傳純數字部分，不含符號
+            const formatAmount = function(value) {
+                const amount = Number(value);
+                if (!Number.isFinite(amount)) return "";
+                const locale = document.documentElement.lang || "zh-TW";
+                return amount.toLocaleString(locale, {
+                    minimumFractionDigits: priceCurrency.decimalDigits,
+                    maximumFractionDigits: priceCurrency.decimalDigits
+                });
+            };
+            
+            // 回傳拆好的 HTML 結構
+            const formatMoneyHtml = function(value) {
+                const amountText = formatAmount(value);
+                if (!amountText) return "";
+                return `<span class="money"><span class="money__symbol">${priceCurrency.symbol}</span><span class="money__amount">${amountText}</span></span>`;
+            };
+
             window.CokerCurrency = Object.freeze({
                 ...priceCurrency,
-                format: formatMoney
+                format: formatMoney,
+                formatAmount: formatAmount, // 只要數字
+                formatHtml: formatMoneyHtml // 要拆好的 HTML
             });
             window.RemoteTrackingToken = RemoteTrackingToken;
             window.onload = function() {

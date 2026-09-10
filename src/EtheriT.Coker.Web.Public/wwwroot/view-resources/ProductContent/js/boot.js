@@ -12,7 +12,7 @@
         formatPriceText, analyzeSpecStructure, buildPriceSummary, buildPriceViewModel,
         buildPriceBaseViewModel, isStockAvailable, clampQuantity, isLoggedIn,
         createCartPayload, runBuyGuard, submitCart, specName, specImageItems,
-        ProductSelectionEngine, ProductMediaViewer, ProductContentController
+        ProductSelectionEngine, ProductMediaViewer, ProductContentController, formatMoney
     } = I;
 
     function createProductContent(options) {
@@ -31,6 +31,7 @@
         toInt,
         normalizeNullableInt,
         formatNumber,
+        formatMoney,
         readMinQty,
         defaultI18n,
         cloneTemplate,

@@ -305,7 +305,8 @@
         if (suggestText) {
             $actions.append(
                 $('<div class="spec-suggest"></div>')
-                    .append($('<span class="spec-suggest-value text-decoration-line-through"></span>').html(suggestText))
+                    // 劃線由 CSS 的 .spec-suggest-value .money 背景漸層繪製
+                    .append($('<span class="spec-suggest-value"></span>').html(suggestText))
             );
         }
 
@@ -449,7 +450,8 @@
         const suggestText = buildSuggestText(stock, plans);
 
         if (suggestText) {
-            $box.append($('<div class="spec-media-suggest text-decoration-line-through"></div>').html(suggestText));
+            // 劃線由 CSS 的 .spec-media-suggest .money 背景漸層繪製
+            $box.append($('<div class="spec-media-suggest"></div>').html(suggestText));
         }
 
         plans.forEach(price => {

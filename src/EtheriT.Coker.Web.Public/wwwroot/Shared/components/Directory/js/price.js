@@ -65,7 +65,8 @@
     function buildOriginPriceLine(label, value, extraClass) {
         if (!hasDisplayValue(value)) return "";
         const safeClass = extraClass ? ` ${extraClass}` : "";
-        return `<div class="origin-price text-decoration-line-through${safeClass}">${formatMoney(value)}</div>`;
+        // 劃線改由 CSS 的 .origin-price .money 背景漸層繪製，線的高度才能精準控制
+        return `<div class="origin-price${safeClass}">${formatMoney(value)}</div>`;
     }
 
     function buildLabeledPriceLine(label, value, className) {

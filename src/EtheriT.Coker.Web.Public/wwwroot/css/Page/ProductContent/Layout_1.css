@@ -162,11 +162,11 @@
         text-decoration: none;
     }
 
+    /* 劃線改由 Default_Site.css 的 .price-meta-value .money 背景漸層繪製，
+       這樣線的高度才不會受貨幣符號字級影響 */
     .price-base-meta .price-meta-value {
         display: inline;
         color: #8a8a8a;
-        text-decoration: line-through;
-        text-decoration-thickness: 1px;
     }
 
 /* 保留舊 class 防呆：若舊模板或快取還有 price-option-meta，不讓它撐版 */
@@ -330,7 +330,12 @@ input:disabled + .btn_radio {
         padding-left: 1rem;
     }
     #Product > .content > .btn_addToCar {
+        margin-top:2.5rem;
         margin-right: auto;
+    }
+
+    #Product > .content > .product-addon:not(.d-none) ~ .btn_addToCar {
+        margin-top: 0;
     }
 }
 

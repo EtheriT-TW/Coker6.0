@@ -29,8 +29,8 @@
 /* Dismiss button (mobile only) */
 #btn_floating_center_close {
     display: none;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
     padding: 0;
     margin-left: auto;
     margin-bottom: 0.5rem;

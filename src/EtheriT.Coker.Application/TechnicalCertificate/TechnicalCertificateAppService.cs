@@ -558,6 +558,10 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 							Size =1,
 							Type = (int) FileBindTypeEnum.技術證照
 						});
+                        if (img.Count > 0)
+                        {
+                            result.ImageUrl = img[0].Link;
+                        }
                         result.Id = (int)TechCert.Id;
                         result.Title = TechCert.Title;
                         result.Description = TechCert.Description;

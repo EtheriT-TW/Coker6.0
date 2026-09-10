@@ -271,7 +271,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 layout = $"layout{defaultData.Layout_Type}",
                 root = defaultData.Root,
                 Level = defaultData.Level,
-                locale = defaultData.locale,
+                locale = NormalizeApplicationLocale(defaultData.locale),
                 token = httpContextAccessor.HttpContext.Request.Cookies["XSRF-TOKEN"],
                 storeSet = new StoreSetFrontDto
                 {
@@ -643,8 +643,6 @@ namespace EtheriT.Coker.Web.Public.Controllers
 				ViewBag.Css += HttpUtility.HtmlEncode(defaultData.Css);
 
 
-			ViewData["SideName"] = model.PageData!.SiteName;
-            ViewData["PageName"] = model.PageData.Title;
             ViewData["OrgName"] = model.orgName;
             ViewData["Layout"] = model.layout;
             var isProductPage = string.Equals(
@@ -655,11 +653,33 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 model.PageData.PageView,
                 "Article",
                 StringComparison.OrdinalIgnoreCase);
+            var isTechnicalCertificatePage = string.Equals(
+                model.PageData.PageView,
+                "Techcert",
+                StringComparison.OrdinalIgnoreCase);
             var isHomePage = !isProductPage && string.Equals(
                 key,
                 "home",
                 StringComparison.OrdinalIgnoreCase);
             var isRootWebsite = siteId == rootSiteId;
+            var resolvedSiteName = NormalizeStructuredDataText(model.PageData.SiteName) ??
+                NormalizeStructuredDataText(defaultData.OrgName) ??
+                Request.Host.Host;
+            var parentMenuTitle = NormalizeStructuredDataText(PageData?.Title);
+            var breadcrumbTitle = NormalizeStructuredDataText(
+                model.MenuBread?
+                    .LastOrDefault(e => !string.IsNullOrWhiteSpace(e.Title))?
+                    .Title);
+            var resolvedPageTitle = isHomePage
+                ? resolvedSiteName
+                : NormalizeStructuredDataText(model.PageData.Title) ??
+                  parentMenuTitle ??
+                  breadcrumbTitle ??
+                  resolvedSiteName;
+            model.PageData.SiteName = resolvedSiteName;
+            model.PageData.Title = resolvedPageTitle;
+            ViewData["SideName"] = resolvedSiteName;
+            ViewData["PageName"] = resolvedPageTitle;
             var rendersInheritedHtml = string.Equals(
                     view,
                     "Index",
@@ -691,20 +711,28 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
             ViewData["UseSiteTitleAsMainHeading"] = !viewHasOwnMainHeading &&
                 contentMainHeadingCount == 0;
-            ViewData["MainHeading"] = isHomePage
-                ? model.PageData.SiteName
-                : model.PageData.Title;
+            ViewData["MainHeading"] = resolvedPageTitle;
             var canonicalPageUrl = BuildCanonicalPageUrl(model, isHomePage, isRootWebsite);
-            ViewBag.PageTagNameName = isHomePage
-                ? model.PageData.SiteName
-                : $"{model.PageData.Title} - 【{model.PageData.SiteName}】";
-            ViewBag.PageTagNameName = HttpUtility.HtmlAttributeEncode(ViewBag.PageTagNameName.Trim());
+            var companyData = await websiteApplication.GetCompanyData(siteId);
+            var siteOwnerName = NormalizeStructuredDataText(companyData?.Name) ??
+                NormalizeStructuredDataText(model.PageData.SiteName) ??
+                NormalizeStructuredDataText(defaultData.OrgName);
+            ViewData["Author"] = siteOwnerName;
+            ViewData["CopyrightOwner"] = siteOwnerName;
+            var pageTagTitle = isHomePage ||
+                               string.Equals(
+                                   resolvedPageTitle,
+                                   resolvedSiteName,
+                                   StringComparison.OrdinalIgnoreCase)
+                ? resolvedPageTitle
+                : $"{resolvedPageTitle} - 【{resolvedSiteName}】";
+            ViewBag.PageTagNameName = HttpUtility.HtmlAttributeEncode(pageTagTitle);
             var seoDescription = await SeoMetaDescription.BuildAsync(
                 htmlProcessor,
                 model.PageData.Description,
                 model.SafeHtml,
                 defaultData.Description,
-                model.PageData.Title,
+                resolvedPageTitle,
                 model.locale,
                 directoryIds => directoryAppService.GetSeoData(
                     directoryIds,
@@ -713,16 +741,25 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.GA4 = model.storeSet.GA4;
             ViewBag.GTM = model.storeSet.GTM;
             ViewBag.GoogleAds = model.storeSet.GoogleAds;
-            if (shareImage!=null && shareImage.Any()) {
-                ViewBag.ImageUrl = new Uri(new Uri(model.root), shareImage[0].Link).AbsoluteUri;
-            }
-            else ViewBag.ImageUrl = string.IsNullOrEmpty(model.PageData.ImageUrl) ? "" : new Uri(new Uri(model.root), model.PageData.ImageUrl).AbsoluteUri;
+            var socialRootUri = new Uri(
+                model.root.EndsWith("/", StringComparison.Ordinal)
+                    ? model.root
+                    : $"{model.root}/");
+            var configuredShareImageUrl = ResolveStructuredDataImage(
+                socialRootUri,
+                shareImage?.FirstOrDefault()?.Link);
+            ViewData["DefaultSocialImageUrl"] = configuredShareImageUrl;
+            var trustedPageImageUrl = isProductPage ||
+                                      isArticlePage ||
+                                      isTechnicalCertificatePage
+                ? ResolveStructuredDataImage(socialRootUri, model.PageData.ImageUrl)
+                : null;
+            ViewBag.ImageUrl = trustedPageImageUrl ?? configuredShareImageUrl ?? string.Empty;
             if (isHomePage)
             {
                 var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
                 var websiteData = (await websiteApplication.GetAllData(siteId))
                     .FirstOrDefault(e => e.Id == siteId);
-                var companyData = await websiteApplication.GetCompanyData(siteId);
                 var organizationLogoUrl = ResolveStructuredDataImage(rootUri, websiteData?.Logo);
                 var websiteStructuredData = BuildWebsiteStructuredData(
                     model.PageData.SiteName,
@@ -746,9 +783,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             if (isProductPage && productSeoData != null)
             {
                 var rootUri = new Uri(model.root.EndsWith("/", StringComparison.Ordinal) ? model.root : $"{model.root}/");
-                var productImageUrl = string.IsNullOrWhiteSpace(model.PageData.ImageUrl)
-                    ? null
-                    : new Uri(rootUri, model.PageData.ImageUrl.TrimStart('/')).AbsoluteUri;
+                var productImageUrl = ResolveStructuredDataImage(
+                    rootUri,
+                    model.PageData.ImageUrl);
 
                 var productStructuredData = BuildProductStructuredData(
                     productSeoData,
@@ -780,6 +817,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 var articleStructuredData = BuildArticleStructuredData(
                     model.PageData,
                     canonicalPageUrl,
+                    siteOwnerName,
                     organizationUrl,
                     articleImageUrl,
                     organizationLogoUrl,
@@ -865,6 +903,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["VisibleFooter"] = model.PageData.VisibleFooter;
             ViewData["XSRF-TOKEN"] = model.token;
             ViewData["Locale"] = model.locale;
+            ViewData["HtmlLocale"] = NormalizeStructuredDataLocale(model.locale);
             ViewData["PageView"] = model.PageData.PageView;
             ViewData["Robots"] = ResolveRobotsDirective(model.PageData.PageView, view);
             ViewData["Id"] = model.PageData.Id;
@@ -1038,16 +1077,21 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private static Dictionary<string, object?> BuildArticleStructuredData(
             GetFrontContenOutputDto article,
             string canonicalUrl,
+            string? organizationName,
             string organizationUrl,
             string? articleImageUrl,
             string? organizationLogoUrl,
             string? description,
             string? locale)
         {
+            var resolvedOrganizationName = NormalizeStructuredDataText(organizationName) ??
+                NormalizeStructuredDataText(article.SiteName);
+            var organizationId = $"{organizationUrl.TrimEnd('/')}#organization";
             var organization = new Dictionary<string, object?>
             {
                 ["@type"] = "Organization",
-                ["name"] = article.SiteName,
+                ["@id"] = organizationId,
+                ["name"] = resolvedOrganizationName,
                 ["url"] = organizationUrl
             };
             var publisher = new Dictionary<string, object?>(organization)
@@ -1101,12 +1145,26 @@ namespace EtheriT.Coker.Web.Public.Controllers
             return dateTimeOffset.ToString("yyyy-MM-dd'T'HH:mm:sszzz", CultureInfo.InvariantCulture);
         }
 
-        private static string? NormalizeStructuredDataLocale(string? locale)
+        private static string NormalizeApplicationLocale(string? locale)
         {
-            return string.Equals(locale, "zh-tw", StringComparison.OrdinalIgnoreCase)
-                ? "zh-TW"
-                : locale?.Trim();
+            var candidate = locale?.Trim().Replace('_', '-');
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return "zh-tw";
+            }
+
+            try
+            {
+                return CultureInfo.GetCultureInfo(candidate).Name.ToLowerInvariant();
+            }
+            catch (CultureNotFoundException)
+            {
+                return "zh-tw";
+            }
         }
+
+        private static string NormalizeStructuredDataLocale(string? locale)
+            => CultureInfo.GetCultureInfo(NormalizeApplicationLocale(locale)).Name;
 
         private static Dictionary<string, object?> BuildWebsiteStructuredData(
             string? siteName,
@@ -1631,12 +1689,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
         private static string? ResolveStructuredDataImage(Uri rootUri, string? imageUrl)
         {
-            if (string.IsNullOrWhiteSpace(imageUrl))
+            if (string.IsNullOrWhiteSpace(imageUrl) ||
+                !Uri.TryCreate(rootUri, imageUrl.Trim(), out var resolvedUri) ||
+                (resolvedUri.Scheme != Uri.UriSchemeHttp &&
+                 resolvedUri.Scheme != Uri.UriSchemeHttps))
             {
                 return null;
             }
 
-            return new Uri(rootUri, imageUrl.Trim()).AbsoluteUri;
+            return resolvedUri.AbsoluteUri;
         }
 
         private async Task<bool> IsFrontRoleDeniedAsync(long targetId, PermissionDetailsTypeEnum type)

@@ -35,7 +35,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 return StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
 
-            var sitemapUrl = new Uri(websiteUri, "/Sitemap").AbsoluteUri;
+            var sitemapUrl = new Uri(websiteUri, "/sitemap.xml").AbsoluteUri;
             var content = $"User-agent: *\nAllow: /\n\nSitemap: {sitemapUrl}\n";
 
             return Content(content, "text/plain", Encoding.UTF8);

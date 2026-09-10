@@ -7,14 +7,26 @@
 @{
     var nonce = ViewContext.HttpContext.Items["CSPNonce"] as string;
     ViewBag.Nonce = nonce;
+
+    // 沒有圖片的廣告不會被渲染，先過濾掉，避免只剩關閉鈕沒有廣告
+    var visibleAds = (Model.rightSideAd ?? new List<AdvertiseDisplayDto>())
+        .Where(ad => !string.IsNullOrWhiteSpace(ad.FileLink?.FirstOrDefault()?.Link))
+        .ToList();
 }
 <link rel="stylesheet" href="~/css/SideFloating/SideFloating.min.css" asp-append-version="true" />
 <script src="~/js/SideFloating/SideFloating.min.js" asp-append-version="true"></script>
 
 <div id="Floating_Center" class="position-fixed flex-column align-items-center">
-	@if (Model.rightSideAd.Count > 0)
-	{
-        @foreach (var rightSideAd in Model.rightSideAd ?? new List<AdvertiseDisplayDto>())
+    @if (visibleAds.Count > 0)
+    {
+        <button type="button"
+                id="btn_floating_center_close"
+                class="bg-black border-0 text-white rounded-circle"
+                aria-label="關閉浮動廣告">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        @foreach (var rightSideAd in visibleAds)
         {
             var image = rightSideAd.FileLink?.FirstOrDefault()?.Link ?? "";
             var actionType = (int)rightSideAd.ActionType;
@@ -23,11 +35,6 @@
             var title = rightSideAd.Target == true
             ? L.get("LinkToAndBlank", rightSideAd.Title)
             : L.get("LinkTo", rightSideAd.Title);
-
-            if (string.IsNullOrWhiteSpace(image))
-            {
-                continue;
-            }
 
             <div class="side-floating-item"
                  data-aid="@rightSideAd.Id"

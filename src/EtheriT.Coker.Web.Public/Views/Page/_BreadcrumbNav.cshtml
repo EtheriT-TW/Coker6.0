@@ -1,0 +1,25 @@
+﻿@using EtheriT.Coker.Web.Public.Models
+@model PageViewModel
+
+@if (Model.GlobalSettings.Visibility.ShowPagePath && (Model.MenuBread?.Count ?? 0) > 0)
+{
+    <nav class="bread coker-breadcrumb" aria-label="麵包屑">
+        <ol class="list-unstyled d-flex flex-wrap my-0">
+            @for (var i = 0; i < Model.MenuBread!.Count; i++)
+            {
+                var menu = Model.MenuBread[i];
+                // 最後一項才是當前頁，與有沒有連結無關。
+                var isCurrent = i == Model.MenuBread.Count - 1;
+
+                if (string.IsNullOrEmpty(menu.Link))
+                {
+                    <li class="px-1" aria-current="@(isCurrent ? "page" : null)">@menu.Title</li>
+                }
+                else
+                {
+                    <li class="px-1" aria-current="@(isCurrent ? "page" : null)"><a class="text-decoration-none" href="@menu.Link" title="連結至:@menu.Title">@menu.Title</a></li>
+                }
+            }
+        </ol>
+    </nav>
+}

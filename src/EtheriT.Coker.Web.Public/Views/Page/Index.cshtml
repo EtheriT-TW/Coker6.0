@@ -3,6 +3,7 @@
 @using EtheriT.Coker.Application.Shared.Dto.enumType;
 @using EtheriT.Coker.Web.Public.Models;
 @using EtheriT.Coker.Application.Shared.i18n;
+@using EtheriT.Coker.Web.Public.Helpers
 @model PageViewModel
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
@@ -20,6 +21,11 @@
 
 @{
     var breadcrumbInsideMain = Model.PageData.LayoutType is 6 or 7;
+
+    // 內容區有麵包屑元件時才渲染，交給 coker-safe-html 在伺服器端填進空殼。
+    var breadcrumbBlockHtml = Model.HasBreadcrumbBlock
+        ? (await Html.PartialAsync("_BreadcrumbNav", Model)).ToHtmlString()
+        : string.Empty;
 }
 @if (!breadcrumbInsideMain)
 {
@@ -87,7 +93,8 @@
                              content-wrapper-class="@(Model.PageData.PageView == "Article" ? "container isArticle" : "")"
                              rewrite-upload-paths="@Model.RewriteUploadPaths"
                              upload-org-name="@Model.UploadOrgName"
-                             upload-parent-org-names="@Model.UploadParentOrgNames"></coker-safe-html>
+                             upload-parent-org-names="@Model.UploadParentOrgNames"
+                             breadcrumb-html="@breadcrumbBlockHtml"></coker-safe-html>
         </div>
     }
     else
@@ -109,7 +116,8 @@
                          content-wrapper-class="@(Model.PageData.PageView == "Article" ? "container isArticle" : "")"
                          rewrite-upload-paths="@Model.RewriteUploadPaths"
                          upload-org-name="@Model.UploadOrgName"
-                         upload-parent-org-names="@Model.UploadParentOrgNames"></coker-safe-html>
+                         upload-parent-org-names="@Model.UploadParentOrgNames"
+                         breadcrumb-html="@breadcrumbBlockHtml"></coker-safe-html>
     }
 </Content>
 @if (ViewBag.ShowSwitchPage && Model.PageData != null && Model.PageData.holdPage == HoldPageNameEnum.Article)

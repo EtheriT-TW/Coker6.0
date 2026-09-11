@@ -100,6 +100,7 @@ p {
 
 .price::before {
     content: var(--currency-symbol, 'NT$');
+    font-size: 0.7em;
 }
 
 .unavailable .price::before {
@@ -254,7 +255,7 @@ a[href="https://translate.google.com"] {
 .cart-reward-price .money__symbol,
 .cart-reward-original .money__symbol,
 .summary-amount .money__symbol {
-    font-size: 1em;
+    font-size: .7em;
 }
 
 /* Login Modal */

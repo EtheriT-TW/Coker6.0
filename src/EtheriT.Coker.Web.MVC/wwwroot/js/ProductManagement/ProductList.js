@@ -1668,6 +1668,7 @@ function ElementInit() {
     });
     specMediaManager = new Coker.FileListManager("#SpecMedia", {
         type: Coker.FileListManager.Types.Image,
+        maxCount: parseInt($("#SpecMedia").data("max-count"), 10) || 0,
         onChange: function () {
             var $row = $("#SpecMedia").data("spec-row");
             if ($row && $row.length) refreshSpecThumb($row);
@@ -2808,6 +2809,15 @@ function AddUp(success_text, error_text, target) {
                 (result.object || []).forEach(function (m) {
                     stockIdMap["T" + m.tempPSid] = m.id;   // 新規格：temppsid -> 真實 id
                 });
+
+                // 刪除必須跑在新增之前：後端對規格圖有張數上限檢查，
+                // 換圖時若新增先送達、舊圖還在，會被判定超量而擋掉。
+                // 所以這裡只先「收集」動作，等刪除全部結束再送出新增／排序。
+                var specDeletes = [];
+                var specWrites = [];
+                var specMediaTask = $.Deferred();
+                fileListSave.push(specMediaTask.promise());
+
                 Object.keys(spec_media_map).forEach(function (key) {
                     var stockId = key.charAt(0) === "P" ? parseInt(key.substring(1)) : stockIdMap[key];
                     if (!stockId) return;
@@ -2816,7 +2826,7 @@ function AddUp(success_text, error_text, target) {
                         // 刪除既有
                         if (f.IsDelete) {
                             if (typeof f.Id != "undefined") {
-                                fileListSave.push(co.File.DeleteFileById({
+                                specDeletes.push(co.File.DeleteFileById({
                                     Sid: stockId,
                                     Type: 16,               // 產品規格圖
                                     Fid: [f.Id]
@@ -2825,60 +2835,76 @@ function AddUp(success_text, error_text, target) {
                             return;
                         }
                         serno += 1;
+                        var currentSerNo = serno;   // serno 是共用變數，延後執行前必須快照
                         // 已存在（有 Id 且 File 是字串網址）→ 僅排序
                         if (typeof f.Id != "undefined" && typeof f.File == "string") {
-                            fileListSave.push(co.File.fileSortChange({ Id: f.Id, Sid: stockId, SerNo: serno }));
+                            specWrites.push(function () {
+                                return co.File.fileSortChange({ Id: f.Id, Sid: stockId, SerNo: currentSerNo });
+                            });
                             return;
                         }
                         // 新增
                         switch (f.Type) {
                             case 1: {   // 圖片（f.File 是 [原圖, 壓縮, 縮圖] 陣列）
-                                var fd = new FormData();
-                                fd.append("type", 16);
-                                fd.append("sid", stockId);
-                                fd.append("serno", serno);
-                                for (var i = 0; i < f.File.length; i++) fd.append("files", f.File[i]);
-                                fileListSave.push(co.File.Upload(fd).done(function (r) {
-                                    if (r.success) { f.Id = r.files[0].id; f.File = r.files[0].path; }
-                                }));
+                                specWrites.push(function () {
+                                    var fd = new FormData();
+                                    fd.append("type", 16);
+                                    fd.append("sid", stockId);
+                                    fd.append("serno", currentSerNo);
+                                    for (var i = 0; i < f.File.length; i++) fd.append("files", f.File[i]);
+                                    return co.File.Upload(fd).done(function (r) {
+                                        if (r.success) { f.Id = r.files[0].id; f.File = r.files[0].path; }
+                                    });
+                                });
                                 break;
                             }
                             case 3: {   // 影片
-                                var fd = new FormData();
-                                fd.append("files", f.File);
-                                fd.append("type", 16);
-                                fd.append("sid", stockId);
-                                fd.append("serno", serno);
-                                fileListSave.push(co.File.Upload(fd).done(function (r) {
-                                    if (r.success) { f.Id = r.files[0].id; f.File = r.files[0].path; }
-                                }));
+                                specWrites.push(function () {
+                                    var fd = new FormData();
+                                    fd.append("files", f.File);
+                                    fd.append("type", 16);
+                                    fd.append("sid", stockId);
+                                    fd.append("serno", currentSerNo);
+                                    return co.File.Upload(fd).done(function (r) {
+                                        if (r.success) { f.Id = r.files[0].id; f.File = r.files[0].path; }
+                                    });
+                                });
                                 break;
                             }
-                        case 4: {   // 外嵌影片（相容舊 YouTube 資料）
-                                var externalVideoData = new FormData();
-                                externalVideoData.append("Id", typeof f.Id == "undefined" ? 0 : f.Id);
-                                externalVideoData.append("File", f.File + "");
-                                externalVideoData.append("SId", stockId);
-                                externalVideoData.append("Type", 16);
-                                externalVideoData.append("SerNo", serno);
-                                externalVideoData.append("removeThumbnail", f.RemoveThumbnail === true);
-                                externalVideoData.append("aspectRatio", f.AspectRatio || "auto");
-                                if (f.ThumbnailFile instanceof File) externalVideoData.append("thumbnail", f.ThumbnailFile);
-                                fileListSave.push(co.File.UploadExternalVideo(externalVideoData).done(function (r) {
-                                    if (r.success) {
-                                        var saved = r.object || r.Object || {};
-                                        f.Id = saved.id || saved.Id || f.Id;
-                                        f.Thumbnail = saved.thumbnail || saved.Thumbnail || f.Thumbnail || "";
-                                        f.AspectRatio = saved.aspectRatio || saved.AspectRatio || f.AspectRatio || "auto";
-                                        f.ThumbnailFile = null;
-                                        f.RemoveThumbnail = false;
-                                    }
-                                }));
+                            case 4: {   // 外嵌影片（相容舊 YouTube 資料）
+                                specWrites.push(function () {
+                                    var externalVideoData = new FormData();
+                                    externalVideoData.append("Id", typeof f.Id == "undefined" ? 0 : f.Id);
+                                    externalVideoData.append("File", f.File + "");
+                                    externalVideoData.append("SId", stockId);
+                                    externalVideoData.append("Type", 16);
+                                    externalVideoData.append("SerNo", currentSerNo);
+                                    externalVideoData.append("removeThumbnail", f.RemoveThumbnail === true);
+                                    externalVideoData.append("aspectRatio", f.AspectRatio || "auto");
+                                    if (f.ThumbnailFile instanceof File) externalVideoData.append("thumbnail", f.ThumbnailFile);
+                                    return co.File.UploadExternalVideo(externalVideoData).done(function (r) {
+                                        if (r.success) {
+                                            var saved = r.object || r.Object || {};
+                                            f.Id = saved.id || saved.Id || f.Id;
+                                            f.Thumbnail = saved.thumbnail || saved.Thumbnail || f.Thumbnail || "";
+                                            f.AspectRatio = saved.aspectRatio || saved.AspectRatio || f.AspectRatio || "auto";
+                                            f.ThumbnailFile = null;
+                                            f.RemoveThumbnail = false;
+                                        }
+                                    });
+                                });
                                 break;
                             }
                             // case 2 (360) 比照商品圖目前未實作，先略
                         }
                     });
+                });
+
+                // 等刪除全部結束（含失敗）再送新增／排序，最後才讓外層的 HashDataEdit 收尾。
+                // 兩層都用 always：任何一支失敗也要放行，否則畫面會卡在舊資料不重整。
+                $.when.apply(null, specDeletes).always(function () {
+                    var writes = specWrites.map(function (write) { return write(); });
+                    $.when.apply(null, writes).always(function () { specMediaTask.resolve(); });
                 });
                 // ===== 規格圖結束 =====
 

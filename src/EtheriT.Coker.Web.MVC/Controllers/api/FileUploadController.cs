@@ -8,6 +8,8 @@ using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Freight;
 using EtheriT.Coker.Application.Shared.HtmlContent;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.StoreSet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
@@ -20,14 +22,18 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     [Authorize]
     public class FileUploadController : Controller
     {
+        private const int SpecMediaLimitForLayout1 = 1;
+
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IHtmlContentAppService htmlContentAppService;
+        private readonly IStoreSetAppService storeSetAppService;
 
 
-        public FileUploadController(IFileUploadAppService fileUploadAppService, IHtmlContentAppService htmlContentAppService)
+        public FileUploadController(IFileUploadAppService fileUploadAppService, IHtmlContentAppService htmlContentAppService, IStoreSetAppService storeSetAppService)
         {
             this.fileUploadAppService = fileUploadAppService;
             this.htmlContentAppService = htmlContentAppService;
+            this.storeSetAppService = storeSetAppService;
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
@@ -39,7 +45,29 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 case FileBindTypeEnum.產品:
                     return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
                 case FileBindTypeEnum.產品規格圖:
-                    return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
+                    {
+                        var productPageLayout = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ProductPageLayout" });
+                        var isLayout2 = productPageLayout.Success
+                            && productPageLayout.detailItem?.value != null
+                            && productPageLayout.detailItem.value.Contains("Layout_2");
+
+                        if (!isLayout2)
+                        {
+                            // 一次呼叫的多個 files 是「同一張圖的原圖／壓縮／縮圖」，只會建立一筆 FileBind，
+                            // 所以這裡比的是既有張數，不是 files.Count。
+                            var existing = await fileUploadAppService.CountBindFilesAsync((long)sid, type);
+                            if (existing >= SpecMediaLimitForLayout1)
+                            {
+                                return new ResponseMessageDto
+                                {
+                                    Success = false,
+                                    Error = $"目前商品頁版型的規格圖片最多 {SpecMediaLimitForLayout1} 張"
+                                };
+                            }
+                        }
+
+                        return await fileUploadAppService.uploadMediaFiles(files, type, (long)sid, serno, "Product", convert);
+                    }
                 case FileBindTypeEnum.產品檔案:
                     return await fileUploadAppService.uploadFiles(files, filename ?? "", areakey ?? "", type, id ?? 0, (long)sid, serno, "Product/File", isVisible, false);
                 case FileBindTypeEnum.選單圖:

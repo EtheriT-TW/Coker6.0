@@ -149,7 +149,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div id="SpecMedia" class="data_upload row mx-0 border rounded p-3 position-relative">
+                @* 規格圖上限：版型二不限張數，其餘版型（版型一）只能一張 *@
+                <div id="SpecMedia" class="data_upload row mx-0 border rounded p-3 position-relative"
+                     data-max-count="@(((bool)ViewBag.IsLayout2) ? 0 : 1)">
                     <ul class="col-12 border p-2 overflow-auto mb-0">
                         <li class="btn_upload_add border mb-1 p-1 shadow-sm">
                             <button class="bg-transparent border-0 d-flex justify-content-center p-0 w-100" title="新增檔案">

@@ -252,6 +252,7 @@
             mode: "media",
             type: null,
             files: [],
+            maxCount: 0,          // 可新增的檔案數上限，0 表示不限
             template: "#TemplateUploadList",
             renderItem: null,
             onChange: null,
@@ -555,6 +556,24 @@
         this.$root.append(`<div class="preview_frame"><div class="default_frame h-100 d-flex">點選 + 號新增檔案</div>${selector}<div class="upload_frame custom-file-container d-none" data-upload-id="${uploadId}"></div>${media}${externalVideo}</div>`);
     };
 
+    FileListManager.prototype._remaining = function () {
+        const max = Number(this.options.maxCount) || 0;
+        if (max <= 0) return Infinity;
+        return Math.max(0, max - this.files.filter(file => !file.IsDelete).length);
+    };
+
+    // 達上限就把「＋」按鈕收起來，避免使用者一直點一直被擋
+    FileListManager.prototype._applyMaxCount = function () {
+        this.$root.children("ul").children(".btn_upload_add")
+            .toggleClass("d-none", this._remaining() <= 0);
+    };
+
+    FileListManager.prototype._limitWarning = function () {
+        const max = Number(this.options.maxCount) || 0;
+        if (typeof co !== "undefined" && co.sweet)
+            co.sweet.error("已達數量上限", `最多只能設定 ${max} 個檔案`, null, null);
+    };
+
     FileListManager.prototype._notify = function (name, payload) {
         if (typeof this.options.onChange === "function") {
             this.options.onChange.call(this, { type: name, item: payload || null, files: this.files });
@@ -677,6 +696,10 @@
             if (activate === true) this.activate($row);
             this._notify("add", item);
             return item;
+        }
+        if (this._remaining() <= 0) {
+            this._limitWarning();
+            return null;
         }
 
         this.$root.find('.upload_list[data-file-list-placeholder="true"]').remove();
@@ -842,7 +865,20 @@
 
     FileListManager.prototype._acceptFiles = async function (cachedFiles) {
         const type = Number(this.activeItem.data("uploadtype"));
-        const files = cachedFiles.map(copyFile);
+        const remaining = this._remaining();
+
+        if (remaining <= 0) {
+            if (this.activeItem.data("file-list-placeholder") === true) this.activeItem.remove();
+            this.activeItem = null;
+            this.clearPreview();
+            this._limitWarning();
+            return;
+        }
+
+        // 360 是「多個檔案＝一筆資料」，不能按檔案數截斷
+        const picked = cachedFiles.map(copyFile);
+        const files = type === FileType.Image360 ? picked : picked.slice(0, remaining);
+        if (files.length < picked.length) this._limitWarning();
         if (!files.length) return;
 
         try {
@@ -1107,6 +1143,7 @@
         this.files.length = 0;
         Array.prototype.push.apply(this.files, ordered);
         this.$root.data("file_num", this.$root.find(".upload_list").length);
+        this._applyMaxCount();
         if (notify !== false) this._notify("sort");
     };
 

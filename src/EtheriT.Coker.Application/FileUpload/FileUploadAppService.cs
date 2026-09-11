@@ -1324,6 +1324,13 @@ namespace EtheriT.Coker.Application
             return getBindMultimedia(Pid, size, FileBindTypeEnum.產品規格圖);
         }
 
+        public async Task<int> CountBindFilesAsync(long sid, int type)
+        {
+            return await db.FileBinds
+                .Where(e => e.Sid == sid && e.type == type && !e.IsDeleted)
+                .CountAsync();
+        }
+
         private async Task<List<FileGetProdDisplayDto>> getBindMultimedia(long Pid, int size, FileBindTypeEnum bindType)
         {
             var output = new List<FileGetProdDisplayDto>();

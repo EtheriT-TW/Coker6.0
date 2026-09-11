@@ -65,7 +65,8 @@
             const indexById = {};
 
             stocks.forEach(stock => {
-                const items = specImageItems(stock);
+                // 版型一每個規格只呈現一張；後台若殘留多張（例如從版型二切回來）只取第一張
+                const items = specImageItems(stock).slice(0, 1);
                 if (!items.length) return;   // 沒有規格圖就略過，不補佔位圖
 
                 indexById[stock.id] = medium.length;

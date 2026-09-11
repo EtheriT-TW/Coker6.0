@@ -126,3 +126,18 @@
         color: #FFF;
     }
 }
+
+/* 麵包屑元件：畫布內的空殼提示（僅後台可見，不會輸出到前台） */
+.coker-breadcrumb-block:empty {
+    min-height: 2.5rem;
+    border: 1px dashed #9aa0a6;
+    border-radius: 4px;
+}
+
+.coker-breadcrumb-block:empty::before {
+    content: '麵包屑（前台自動產生）';
+    display: block;
+    padding: 0.5rem;
+    color: #5f6368;
+    font-size: 0.85rem;
+}

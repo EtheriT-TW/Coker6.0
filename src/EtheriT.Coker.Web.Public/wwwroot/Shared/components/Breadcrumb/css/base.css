@@ -1,0 +1,32 @@
+﻿/* 內容區可拖曳的麵包屑元件 */
+.coker-breadcrumb-block {
+    padding: 0.5rem 0;
+}
+
+    .coker-breadcrumb-block li {
+        color: var(--gray-path);
+        cursor: default;
+        font-size: 0.9rem;
+    }
+
+        .coker-breadcrumb-block li a {
+            color: var(--gray-path);
+        }
+
+        .coker-breadcrumb-block li:not(:first-child)::before {
+            content: '/';
+            padding-right: 0.25rem;
+            color: var(--gray-path);
+        }
+
+/* 手機：字級縮小，過長路徑改為橫向捲動，避免撐破版面 */
+@media (max-width: 767.98px) {
+    .coker-breadcrumb-block li {
+        font-size: 0.8rem;
+    }
+
+    .coker-breadcrumb-block .coker-breadcrumb > ol {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+}

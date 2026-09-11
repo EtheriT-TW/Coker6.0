@@ -379,6 +379,29 @@
         },
     });
 
+    // 麵包屑：畫布只存空殼，實際內容由前台伺服器端填入
+    editor.DomComponents.addType('麵包屑', {
+        isComponent: el => el.dataset?.cokerBlock === 'breadcrumb',
+        model: {
+            defaults: {
+                name: '麵包屑',
+                droppable: false,
+                editable: false,
+                copyable: false,
+                traits: [
+                    { name: 'id', type: 'text', label: 'ID', placeholder: '元件ID名稱' },
+                ],
+            }
+        },
+    });
+
+    BlockManager.add('coker-breadcrumb', {
+        label: '麵包屑',
+        category: '系統元件',
+        media: '<i class="material-symbols-outlined fa-5x">route</i>',
+        content: '<div class="coker-breadcrumb-block" data-coker-block="breadcrumb" data-gjs-type="麵包屑"></div>',
+    });
+
     var PopupDirectory = null;
     //目錄
     editor.DomComponents.addType('目錄', {

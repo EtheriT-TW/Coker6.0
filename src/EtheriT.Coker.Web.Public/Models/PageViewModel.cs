@@ -8,6 +8,7 @@ using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Web.Public.Helpers;
 
 namespace EtheriT.Coker.Web.Public.Models
 {
@@ -45,5 +46,15 @@ namespace EtheriT.Coker.Web.Public.Models
         public List<GetMenuBreadDto>? MenuBread { get; set; }
         public StoreSetFrontDto storeSet { get; set; }
         public GlobalSettingsDto GlobalSettings { get; set; } = new GlobalSettingsDto();
+        private bool? hasBreadcrumbBlock;
+
+        /// <summary>
+        /// 頁面內容或父層選單範本是否放置了麵包屑元件。
+        /// 為 true 時原生麵包屑的 nav 不輸出，改由內容區的元件呈現。
+        /// </summary>
+        public bool HasBreadcrumbBlock =>
+            hasBreadcrumbBlock ??= BreadcrumbBlockHtml.Exists(SafeHtml)
+                                || BreadcrumbBlockHtml.Exists(ParentSafeHtml);
+
     }
 }

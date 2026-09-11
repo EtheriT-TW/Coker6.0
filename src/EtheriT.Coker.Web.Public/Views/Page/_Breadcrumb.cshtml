@@ -3,6 +3,10 @@
 @using EtheriT.Coker.Web.Public.Models
 @model PageViewModel
 
+@{
+    // 內容區已放置麵包屑元件時，原生麵包屑的 nav 不再輸出（頁面標題仍保留）。
+    var hideNativeNav = Model.HasBreadcrumbBlock;
+}
 @if (Model.GlobalSettings.Visibility.ShowPagePath)
 {
     switch (Model.PageData.LayoutType)
@@ -11,6 +15,8 @@
         case 6:
         case 7:
         case 8:
+            // 此版型框內只有 nav，nav 被抑制時整個外框都不輸出。
+            if (hideNativeNav) break;
             <div id="breadcrumb" class="top_title_1 p-3 coker-desktop-breadcrumb">
                 <nav class="bread container">
                     <ol class="list-unstyled d-flex my-0">
@@ -33,10 +39,10 @@
             if (ViewData["bodyClass"]?.ToString() == "home") break;
             goto case 3;
         case 3:
-            if ((Model.MenuBread?.Count ?? 0) > 0 || Model.PageData.VisibleTitle)
+            if (Model.PageData.VisibleTitle || (!hideNativeNav && (Model.MenuBread?.Count ?? 0) > 0))
             {
                 <div id="breadcrumb" class="top_title_3 p-3 coker-desktop-breadcrumb">
-                    @if ((Model.MenuBread?.Count ?? 0) > 0 && Model.ParentData?.VisibleHeader == true)
+                    @if (!hideNativeNav && (Model.MenuBread?.Count ?? 0) > 0 && Model.ParentData?.VisibleHeader == true)
                     {
                         <nav class="bread container">
                             <ol class="list-unstyled d-flex">
@@ -68,10 +74,12 @@
             }
             break;
         case 4:
-            if ((Model.MenuBread?.Count ?? 0) > 0 && (Model.PageData.VisibleHeader || Model.PageData.VisibleTitle))
+            if ((Model.MenuBread?.Count ?? 0) > 0
+                && (Model.PageData.VisibleHeader || Model.PageData.VisibleTitle)
+                && (!hideNativeNav || Model.ParentData?.VisibleTitle == true))
             {
                 <div id="breadcrumb" class="top_title p-3 bg-white container coker-desktop-breadcrumb">
-                    @if (Model.ParentData?.VisibleHeader == true)
+                    @if (!hideNativeNav && Model.ParentData?.VisibleHeader == true)
                     {
                         <nav class="bread container">
                             <ol class="list-unstyled d-flex">

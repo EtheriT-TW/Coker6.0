@@ -237,6 +237,7 @@
         "wwwroot/Shared/css/Activity.less",
         "wwwroot/Shared/css/AnchorPoint.css",
         "wwwroot/Shared/css/BGCanvas.css",
+        "wwwroot/Shared/components/Breadcrumb/css/base.css",
         "wwwroot/Shared/components/Directory/css/base.css",
         "wwwroot/Shared/components/Directory/css/catalog-line.css",
         "wwwroot/Shared/components/Directory/css/price.css",

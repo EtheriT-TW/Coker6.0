@@ -62,6 +62,9 @@ namespace EtheriT.Coker.Web.Public.Helpers
         [HtmlAttributeName("content-wrapper-class")]
         public string ContentWrapperClass { get; set; } = "";
 
+        [HtmlAttributeName("breadcrumb-html")]
+        public string? BreadcrumbHtml { get; set; }
+
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             output.TagName = null;
@@ -161,6 +164,13 @@ namespace EtheriT.Coker.Web.Public.Helpers
                     RegexOptions.IgnoreCase
                 );
             }
+
+            // 清洗完成後才注入麵包屑：注入的是後端可信 markup，
+            // 且不影響前面用原始 Content 計算的 hash 驗證。
+            renderedHtml = BreadcrumbBlockHtml.Inject(
+                htmlProcessor,
+                renderedHtml,
+                BreadcrumbHtml);
 
             // 子內容與父選單都在後端完成 hash 驗證後，才組合並輸出 HTML。
             output.Content.SetHtmlContent(renderedHtml);

@@ -19,6 +19,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType.Payment;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Files;
 using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Currency;
 using EtheriT.Coker.Application.Shared.Dto.Order;
 using EtheriT.Coker.Application.Shared.Dto.Recipients;
 using EtheriT.Coker.Application.Shared.Dto.ShoppingCart;
@@ -925,12 +926,13 @@ namespace EtheriT.Coker.Application.Order
             {
                 ShoppingCarts = carts,
                 StockDict = stockDict,
-                Subtotal = (int)Math.Round(subtotal, MidpointRounding.AwayFromZero),
+                Subtotal = subtotal,
                 Discount = checkoutDiscount,
                 DiscountBreakdownJson = SerializeDiscountBreakdown(
                     discountResult,
                     productSubtotalBeforeDiscount
                 ),
+                // 紅利是點數，維持整數
                 TotalBonus = (int)Math.Round(totalBonus, MidpointRounding.AwayFromZero),
                 Freight = freightResult.Freight,
                 PackingPointTotal = freightResult.PackingPointTotal,
@@ -1621,6 +1623,23 @@ namespace EtheriT.Coker.Application.Order
                 ? string.Join("；", memoParts)
                 : null;
         }
+        // 金額顯示格式：依商店標價幣別的小數位數。
+        // 設定未存過時 CurrencyCatalog 會退回預設（TWD／0 位小數）。
+        // 紅利與包材是點數不是金額，一律維持 "#,##0"。
+        private async Task<string> GetPriceFormatAsync(long websiteId)
+        {
+            var currencyCode = await (
+                from sd in db.StoreSetDetail
+                join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                where sd.FK_WebsiteId == websiteId
+                where ss.key == "priceCurrency"
+                select sd.value
+            ).FirstOrDefaultAsync();
+
+            var digits = CurrencyCatalog.Resolve(currencyCode).DecimalDigits;
+            return digits > 0 ? "#,##0." + new string('0', digits) : "#,##0";
+        }
+
         private static void ApplyDetailResultToHeader(Order_Header oh, DetailBuildResult? detailResult)
         {
             if (detailResult == null) return;
@@ -2282,6 +2301,7 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
+                var priceFormat = await GetPriceFormatAsync(WebsiteId);
                 List<Order_Header> order_headers = new List<Order_Header>();
                 if (check)
                 {
@@ -2322,14 +2342,14 @@ namespace EtheriT.Coker.Application.Order
                         temp_output.OrdererId = userdata.Id;
                     }
 
-                    temp_output.Subtotal = order_header.Subtotal.ToString("#,##0");
-                    temp_output.Discount = (order_header.Discount ?? 0).ToString("#,##0");
+                    temp_output.Subtotal = order_header.Subtotal.ToString(priceFormat);
+                    temp_output.Discount = (order_header.Discount ?? 0).ToString(priceFormat);
                     temp_output.DiscountBreakdown = DeserializeDiscountBreakdown(order_header.DiscountBreakdownJson);
                     temp_output.Bonus = (order_header.Bonus ?? 0).ToString("#,##0");
                     temp_output.GetBonus = (order_header.GetBonus ?? 0).ToString("#,##0");
                     temp_output.CouponId = order_header.CouponId?.ToString() ?? "";
-                    temp_output.Freight = order_header.Freight.ToString("#,##0");
-                    temp_output.Total = (order_header.Subtotal + order_header.Freight).ToString("#,##0");
+                    temp_output.Freight = order_header.Freight.ToString(priceFormat);
+                    temp_output.Total = (order_header.Subtotal + order_header.Freight).ToString(priceFormat);
                     temp_output.StateStr = ((OrderStatusEnum)temp_output.State).ToString();
                     temp_output.InvoiceTypeTitle = order_header.InvoiceType.ToString();
                     temp_output.PersonalInvoiceTypeTitle = order_header.PersonalInvoiceType?.ToString();
@@ -2576,6 +2596,10 @@ namespace EtheriT.Coker.Application.Order
             try
             {
                 var order_headers = await GetHeaderDisplay(ohids, check);
+                var priceFormat = await GetPriceFormatAsync(
+                    configuration.GetValue<long>("WebConfig:SiteId") != 0
+                        ? configuration.GetValue<long>("WebConfig:SiteId")
+                        : await loginUserData.GetWebsiteId());
 
                 if (order_headers.Any())
                 {
@@ -2594,7 +2618,7 @@ namespace EtheriT.Coker.Application.Order
 
                         var redeemBonus = Math.Max(0, totalBonus - productBonus);
 
-                        order_header.ProductSubtotal = productSubtotal.ToString("#,##0");
+                        order_header.ProductSubtotal = productSubtotal.ToString(priceFormat);
                         order_header.ProductBonus = productBonus.ToString("#,##0");
                         order_header.RedeemBonus = redeemBonus.ToString("#,##0");
 
@@ -2622,6 +2646,7 @@ namespace EtheriT.Coker.Application.Order
         {
             OrderDisplayDto output = new OrderDisplayDto();
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+            var priceFormat = await GetPriceFormatAsync(WebsiteId);
 
             try
             {
@@ -2657,7 +2682,7 @@ namespace EtheriT.Coker.Application.Order
                 if (!change_details.Any())
                     throw new Exception("查無詳細訂單資訊");
 
-                var oldsubtotal = int.Parse(ohdata[0].Subtotal.Replace(",", ""));
+                var oldsubtotal = decimal.Parse(ohdata[0].Subtotal.Replace(",", ""));
                 ohdata[0].OldSubtotal = oldsubtotal;
 
                 var subtotal = oldsubtotal;
@@ -2685,7 +2710,7 @@ namespace EtheriT.Coker.Application.Order
                         var quantity = temp_detail.Quantity;
 
                         subtotal -= price * quantity;
-                        ohdata[0].Subtotal = subtotal.ToString("#,##0");
+                        ohdata[0].Subtotal = subtotal.ToString(priceFormat);
 
                         dis_details.Add(temp_detail);
                         continue;
@@ -2732,7 +2757,7 @@ namespace EtheriT.Coker.Application.Order
                     if (change)
                     {
                         subtotal += (new_price * new_quantity) - (old_price * old_quantity);
-                        ohdata[0].Subtotal = subtotal.ToString("#,##0");
+                        ohdata[0].Subtotal = subtotal.ToString(priceFormat);
                         dis_details.Add(temp_detail);
                     }
                 }
@@ -3110,7 +3135,7 @@ namespace EtheriT.Coker.Application.Order
                     S1Title = sc.S1Title ?? "",
                     S2Title = sc.S2Title ?? "",
 
-                    Price = (int)Math.Round(sc.Price, MidpointRounding.AwayFromZero),
+                    Price = sc.Price,
                     Bonus = sc.Bonus ?? 0,
                     Quantity = sc.Quantity,
                     IsAdditional = sc.IsAdditional,
@@ -3118,7 +3143,7 @@ namespace EtheriT.Coker.Application.Order
                     AdditionalParentShoppingCartId = sc.AdditionalParentShoppingCartId,
                     AdditionalParentLabel = sc.AdditionalParentLabel,
 
-                    Subtotal = (int)Math.Round(sc.Price * sc.Quantity, MidpointRounding.AwayFromZero),
+                    Subtotal = sc.Price * sc.Quantity,
                     SubtotalBonus = (sc.Bonus ?? 0) * sc.Quantity,
 
                     // 規格圖優先：買的是哪個規格就顯示哪個規格的圖，

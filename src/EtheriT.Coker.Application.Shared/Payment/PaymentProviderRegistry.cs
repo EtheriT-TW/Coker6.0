@@ -51,5 +51,14 @@ namespace EtheriT.Coker.Application.Shared.Payment
                 RenderMode = "Standard"
             };
         }
+
+        /// <summary>
+        /// 是否為真正的線上金流（支付連／LINE Pay／綠界）。
+        /// 轉帳、貨到付款、郵政劃撥雖然也有 ThirdParty 資料列，但不走線上金流。
+        /// </summary>
+        public static bool IsOnlineGateway(long thirdPartyId)
+        {
+            return Providers.ContainsKey(thirdPartyId);
+        }
     }
 }

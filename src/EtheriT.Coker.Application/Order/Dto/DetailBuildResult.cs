@@ -12,11 +12,11 @@ namespace EtheriT.Coker.Application.Order.Dto
     {
         public List<Core.Models.ShoppingCart> ShoppingCarts { get; set; } = new();
         public Dictionary<long, Prod_Stock> StockDict { get; set; } = new();
-        public int Subtotal { get; set; }              // 金額小計
-        public int TotalBonus { get; set; }            // 總紅利
-        public int Freight { get; set; }
-        public int PackingPointTotal { get; set; }
-        public int Discount { get; set; }
+        public decimal Subtotal { get; set; }          // 金額小計
+        public int TotalBonus { get; set; }            // 總紅利（點數，非金額）
+        public decimal Freight { get; set; }
+        public int PackingPointTotal { get; set; }     // 包材點數，非金額
+        public decimal Discount { get; set; }
         public string? DiscountBreakdownJson { get; set; }
         public List<BoxUsageResult> BoxUsages { get; set; } = new();
     }

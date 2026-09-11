@@ -36,11 +36,11 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int Shipping { get; set; }
         public int Payment { get; set; }
         public int State { get; set; }
-        public int Subtotal { get; set; }
-        public int? Discount { get; set; }
+        public decimal Subtotal { get; set; }
+        public decimal? Discount { get; set; }
         public int? Bonus { get; set; }
         public long? CouponId { get; set; }
-        public int Freight { get; set; }
+        public decimal Freight { get; set; }
         public int? Service_Charge { get; set; }
         public string? CVSStoreID { get; set; }
         public string? CVSStoreName { get; set; }

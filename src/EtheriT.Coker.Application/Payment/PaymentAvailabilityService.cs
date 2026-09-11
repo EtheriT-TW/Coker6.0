@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Shared.Payment;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using EtheriT.Coker.Application.Shared.Currency;
 
 namespace EtheriT.Coker.Application.Payment
 {
@@ -43,6 +44,22 @@ namespace EtheriT.Coker.Application.Payment
                 orderby paymentType.SerNo, paymentType.Id
                 select paymentType
             ).ToListAsync();
+
+            // 線上金流只支援新臺幣，幣別非 TWD 時整個隱藏，不列入可選清單。
+            var currencyCode = await (
+                from sd in db.StoreSetDetail
+                join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                where sd.FK_WebsiteId == websiteId
+                where ss.key == "priceCurrency"
+                select sd.value
+            ).FirstOrDefaultAsync();
+
+            if (!string.Equals(CurrencyCatalog.Resolve(currencyCode).Code, "TWD", StringComparison.OrdinalIgnoreCase))
+            {
+                payments = payments
+                    .Where(x => !PaymentProviderRegistry.IsOnlineGateway(x.FK_ThirdPartyId))
+                    .ToList();
+            }
 
             if (payments.Count == 0)
                 return new List<PaymentAvailabilityItemDto>();

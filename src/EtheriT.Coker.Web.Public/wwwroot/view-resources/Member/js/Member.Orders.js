@@ -8,6 +8,19 @@
     function factory(C) {
         var MemberPage = (w.MemberPage = w.MemberPage || {});
 
+        // 金額可能含小數（例：USD 385.99），不可走 parseInt，小數會被截斷。
+        // 數量與紅利點數是整數，仍用 parseInt。
+        function toMoney(value) {
+            var num = Number(String(value == null ? 0 : value).replace(/,/g, "").trim());
+            return isNaN(num) ? 0 : num;
+        }
+
+        // 只回傳數字、不含幣別符號——符號由 CSS 的 .price::before 提供。
+        // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
+        function moneyText(value) {
+            return w.CokerCurrency.formatAmount(toMoney(value));
+        }
+
         MemberPage.Orders = {
             loadPage: function (number) {
                 var $pane = $(MemberPage.Selectors.orderPane);
@@ -348,20 +361,20 @@
                     if (detail.s1Title != "") listFrame.find(".spec").append("<span class='border px-1 me-1'>" + detail.s1Title + "</span>");
                     if (detail.s2Title != "") listFrame.find(".spec").append("<span class='border px-1 me-1'>" + detail.s2Title + "</span>");
 
-                    listFrame.find(".price").html(detail.price > 0
-                        ? (detail.bonus > 0 ? parseInt(detail.price, 10).toLocaleString() + "<br />紅利：" + detail.bonus.toLocaleString() : parseInt(detail.price, 10).toLocaleString())
+                    listFrame.find(".price").html(toMoney(detail.price) > 0
+                        ? (detail.bonus > 0 ? moneyText(detail.price) + "<br />紅利：" + detail.bonus.toLocaleString() : moneyText(detail.price))
                         : "紅利：" + detail.bonus.toLocaleString());
 
                     listFrame.find(".quantity").text(C.util.string.thousandSign(detail.quantity));
 
-                    var detailPrice = parseInt(detail.price || 0, 10);
+                    var detailPrice = toMoney(detail.price);
                     var detailQty = parseInt(detail.quantity || 0, 10);
                     var detailBonus = parseInt(detail.bonus || 0, 10);
                     var detailSubtotal = detailPrice * detailQty;
                     var detailBonusSubtotal = detailBonus * detailQty;
 
                     listFrame.find(".subtotal").html(detailPrice > 0
-                        ? (detailBonus > 0 ? detailSubtotal.toLocaleString() + "<br />紅利：" + detailBonusSubtotal.toLocaleString() : detailSubtotal.toLocaleString())
+                        ? (detailBonus > 0 ? moneyText(detailSubtotal) + "<br />紅利：" + detailBonusSubtotal.toLocaleString() : moneyText(detailSubtotal))
                         : "紅利：" + detailBonusSubtotal.toLocaleString());
 
                     $list.append(listFrame);
@@ -375,7 +388,7 @@
                 $.each(orderDetails, function (index, detail) {
                     if (detail == null) return;
 
-                    var price = parseInt(detail.price || 0, 10);
+                    var price = toMoney(detail.price);
                     var qty = parseInt(detail.quantity || 0, 10);
                     var bonus = parseInt(detail.bonus || 0, 10);
 
@@ -385,14 +398,14 @@
 
                 var totalBonus = parseInt(orderHeader.bonus || 0, 10);
                 var redeemBonus = Math.max(totalBonus - productBonus, 0);
-                var discount = parseInt(orderHeader.discount || 0, 10);
+                var discount = toMoney(orderHeader.discount);
 
-                frame.find(".collapse .header_subtotal").text(C.util.string.thousandSign(productAmount));
-                frame.find(".collapse .header_freight").text(C.util.string.thousandSign(orderHeader.freight));
-                frame.find(".collapse .header_total").text(C.util.string.thousandSign(orderHeader.total));
+                frame.find(".collapse .header_subtotal").text(moneyText(productAmount));
+                frame.find(".collapse .header_freight").text(moneyText(orderHeader.freight));
+                frame.find(".collapse .header_total").text(moneyText(orderHeader.total));
 
                 if (discount > 0) {
-                    frame.find(".collapse .header_discount").text(C.util.string.thousandSign(discount));
+                    frame.find(".collapse .header_discount").text(moneyText(discount));
                 } else {
                     frame.find(".collapse .discount_summary_row").remove();
                 }

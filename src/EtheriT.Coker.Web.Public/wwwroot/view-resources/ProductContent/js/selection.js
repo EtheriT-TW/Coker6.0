@@ -158,11 +158,15 @@
                 this.current.s1 = value;
 
                 if (this.specMode === 'double') {
-                    const validS2 = this.getSpec2Options(value).filter(x => x.enabled);
-                    if (validS2.length === 0) {
+                    const s2Options = this.getSpec2Options(value);
+                    const purchasable = s2Options.filter(x => x.enabled);
+                    // 優先挑可購買的；整排都不能買時退而挑第一個，才有 activeStock 可以顯示圖與價格
+                    const candidates = purchasable.length > 0 ? purchasable : s2Options;
+
+                    if (candidates.length === 0) {
                         this.current.s2 = null;
-                    } else if (!validS2.some(x => x.id === this.current.s2)) {
-                        this.current.s2 = validS2[0].id;
+                    } else if (!candidates.some(x => x.id === this.current.s2)) {
+                        this.current.s2 = candidates[0].id;
                     }
                 }
             }

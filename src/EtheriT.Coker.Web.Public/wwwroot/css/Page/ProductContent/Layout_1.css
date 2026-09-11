@@ -237,14 +237,31 @@ input:checked + .btn_radio {
     font-weight: bold;
     border-color: var(--red-main);
     border-width: medium;
-    cursor: default;
 }
 
+/* 價格 radio 用（紅利不足）；規格 radio 已改用 .is-unavailable */
 input:disabled + .btn_radio {
-    border: var(--gray-light);
+    border-color: var(--gray-light);
     background-color: var(--gray-light);
     color: var(--gray-text);
     cursor: default;
+}
+
+/* 時價／庫存不足：維持灰階提示，但仍可點擊切換圖片 */
+.btn_radio.is-unavailable {
+    border-color: var(--gray-light);
+    background-color: var(--gray-light);
+    color: var(--gray-text);
+}
+
+.counter_input {
+    /* 控制項 2rem + 上下 my-1 各 0.25rem。缺貨提示與載入中都要撐到同一高度，
+       切換規格時數量列才不會忽高忽低。 */
+    --counter-control-height: 2rem;
+    --counter-row-height: calc(var(--counter-control-height) + 0.5rem);
+
+    min-height: var(--counter-row-height);
+    align-items: center;
 }
 
 [class*=btn_count_] {
@@ -252,13 +269,13 @@ input:disabled + .btn_radio {
     color: var(--gray-text);
     border: 1px solid var(--gray-text);
     width: 2rem;
-    height: 2rem;
+    height: var(--counter-control-height, 2rem);
 }
 
 .input_pro_quantity {
     border: 1px solid var(--gray-text);
     width: 8rem;
-    height: 2rem;
+    height: var(--counter-control-height, 2rem);
     border-radius: 0;
 }
 
@@ -268,6 +285,8 @@ input:disabled + .btn_radio {
 
 .counter_input > .emptyProd {
     display: none;
+    align-items: center;
+    min-height: var(--counter-row-height);
 }
 
 .counter_input.isLoading > .quantity,

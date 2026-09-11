@@ -145,12 +145,13 @@
 
                 spec2Options.forEach(item => {
                     const checked = item.id === controller.state.selection.current.s2 ? 'checked' : '';
-                    const disabled = item.enabled ? '' : 'disabled="disabled"';
+                    // 不能買（時價／庫存不足）只做視覺提示，不鎖住 input，否則點不動也就看不到該規格的圖
+                    const unavailable = item.enabled ? '' : ' is-unavailable';
                     $control.append(`
-                        <input id="s2_${item.id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${item.id}" ${checked} ${disabled}>
+                        <input id="s2_${item.id}" type="radio" class="btn-check" name="S2_Radio" autocomplete="off" value="${item.id}" ${checked}>
                     `);
                     $control.append(`
-                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s2_${item.id}">
+                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center${unavailable}" for="s2_${item.id}">
                             ${item.title}
                         </label>
                     `);
@@ -165,12 +166,13 @@
 
                 spec1Options.forEach(item => {
                     const checked = item.id === controller.state.selection.current.s1 ? 'checked' : '';
-                    const disabled = item.enabled ? '' : 'disabled="disabled"';
+                    // 不能買（時價／庫存不足）只做視覺提示，不鎖住 input，否則點不動也就看不到該規格的圖
+                    const unavailable = item.enabled ? '' : ' is-unavailable';
                     $spec1Control.append(`
-                        <input id="s1_${item.id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${item.id}" ${checked} ${disabled}>
+                        <input id="s1_${item.id}" type="radio" class="btn-check" name="S1_Radio" autocomplete="off" value="${item.id}" ${checked}>
                     `);
                     $spec1Control.append(`
-                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center" for="s1_${item.id}">
+                        <label class="btn_radio me-2 my-1 px-3 py-1 align-self-center${unavailable}" for="s1_${item.id}">
                             ${item.title}
                         </label>
                     `);
@@ -391,8 +393,9 @@
                 }
             }
 
-            const stockUnavailable = stock && stock.canPurchase !== true;
-            if (!controller.options.canShop || !stock || stock.timePrice || stockUnavailable) {
+            // 不能買的規格（時價／庫存不足）仍保留數量列：售完由 renderQuantity 換成售完提示，
+            // 能不能結帳一律由 canAddToCart() 與加入購物車按鈕把關。
+            if (!controller.options.canShop || !stock) {
                 $root.find(SELECTORS.counter).addClass('d-none');
             } else {
                 $root.find(SELECTORS.counter).removeClass('d-none');
@@ -488,6 +491,19 @@
                 renderSelectionArea();
                 slideToActiveSpec();
                 controller.syncVariantUrlFromSelection();
+            });
+
+            // 點已選取的規格不會觸發 change，這裡補上：讓使用者滑走圖片後還能點回來
+            $pageRoot.off('click.productContent', 'input[name="S1_Radio"]').on('click.productContent', 'input[name="S1_Radio"]', (e) => {
+                const value = normalizeNullableInt($(e.currentTarget).val());
+                if (value !== normalizeNullableInt(controller.state.selection.current.s1)) return; // 換規格交給 change 處理
+                slideToActiveSpec();
+            });
+
+            $pageRoot.off('click.productContent', 'input[name="S2_Radio"]').on('click.productContent', 'input[name="S2_Radio"]', (e) => {
+                const value = normalizeNullableInt($(e.currentTarget).val());
+                if (value !== normalizeNullableInt(controller.state.selection.current.s2)) return;
+                slideToActiveSpec();
             });
 
             $pageRoot.off('change.productContent', 'input[name="priceRadio"]').on('change.productContent', 'input[name="priceRadio"]', (e) => {

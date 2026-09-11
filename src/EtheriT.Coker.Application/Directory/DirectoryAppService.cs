@@ -10,6 +10,7 @@ using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Advertise;
 using EtheriT.Coker.Application.Shared.Dto.Article;
+using EtheriT.Coker.Application.Shared.Currency;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
@@ -1617,6 +1618,20 @@ namespace EtheriT.Coker.Application.Directory
             return dict;
         }
 
+        // 商品標價幣別的顯示格式。設定未存過時 CurrencyCatalog 會退回預設（TWD／0 位小數）。
+        private async Task<string> GetPriceFormatAsync(long websiteId)
+        {
+            var currencyCode = await (
+                from sd in db.StoreSetDetail
+                join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                where sd.FK_WebsiteId == websiteId
+                where ss.key == "priceCurrency"
+                select sd.value
+            ).FirstOrDefaultAsync();
+
+            return "N" + CurrencyCatalog.Resolve(currencyCode).DecimalDigits;
+        }
+
         private async Task FillProdPriceAsync(DirectoryReleInfoDto data, long websiteId)
         {
             // 你原本的 showprice 判斷
@@ -1656,15 +1671,18 @@ namespace EtheriT.Coker.Application.Directory
                 return;
             }
 
+            var priceFormat = await GetPriceFormatAsync(websiteId);
+
             if (token?.UserID == null && tempPrice?.FK_RId == 1)
             {
                 var suggest = stock.Price;
-                if (suggest > 0) data.SuggestPrice = suggest.ToString("N0");
+                if (suggest > 0) data.SuggestPrice = suggest.ToString(priceFormat);
             }
 
+            // 紅利是點數（int），不跟著幣別帶小數。
             data.Bonus = tempPrice?.Bonus.ToString("N0");
-            data.Price = tempPrice?.Price?.ToString("N0") ?? "0";
-            data.OriPrice = tempPrice?.OriPrice?.ToString("N0") ?? "0";
+            data.Price = tempPrice?.Price?.ToString(priceFormat) ?? "0";
+            data.OriPrice = tempPrice?.OriPrice?.ToString(priceFormat) ?? "0";
         }
         private async Task<DirectoryReleInfoGetDto> SearchProd(DirectoryReleInfoInputDto dto)
         {
@@ -1955,14 +1973,17 @@ namespace EtheriT.Coker.Application.Directory
                     }
                     else
                     {
+                        var priceFormat = await GetPriceFormatAsync(WebsiteID);
+
                         if (token?.UserID == null && temp_price?.FK_RId == 1)
                         {
                             var SuggestPrice = stock?.Price ?? 0;
-                            if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString("N0");
+                            if (SuggestPrice > 0) data.SuggestPrice = (SuggestPrice).ToString(priceFormat);
                         }
+                        // 紅利是點數（int），不跟著幣別帶小數。
                         data.Bonus = temp_price?.Bonus.ToString("N0");
-                        data.Price = temp_price?.Price?.ToString("N0") ?? "0";
-                        data.OriPrice = temp_price?.OriPrice?.ToString("N0") ?? "0";
+                        data.Price = temp_price?.Price?.ToString(priceFormat) ?? "0";
+                        data.OriPrice = temp_price?.OriPrice?.ToString(priceFormat) ?? "0";
                     }
                 }
             }

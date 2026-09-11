@@ -1,11 +1,12 @@
-﻿using EtheriT.Coker.Application.StoreSet;
-using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+﻿using EtheriT.Coker.Application.Shared.Currency;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Specification;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Product;
 using EtheriT.Coker.Application.Shared.Specification;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Web.MVC.Models.ProductManagement;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -29,6 +30,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var chackHasAnyItemNo = await productAppService.HasAnyItemNo();
             var storeBuyStatus = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "storeBuyState" });
             var productPageLayout = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "ProductPageLayout" });
+            var priceCurrencySetting = await storeSetAppService.getValues(new StoreSetGetValueInput { key = "priceCurrency" });
+            var priceCurrency = CurrencyCatalog.Resolve(priceCurrencySetting.detailItem?.value?.FirstOrDefault());
             bool priceOptional = storeBuyStatus.Success && storeBuyStatus.detailItem?.value != null && storeBuyStatus.detailItem.value.Contains("noPayNoShow");
             bool isLayout2 = productPageLayout.Success && productPageLayout.detailItem?.value != null && productPageLayout.detailItem.value.Contains("Layout_2");
 
@@ -38,13 +41,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 ProdStatus = Enum.GetValues(typeof(ProdStatusEnum)).Cast<ProdStatusEnum>().ToList(),
                 Roles = JsonConvert.DeserializeObject<List<AddRoleDto>>(JsonConvert.SerializeObject((await productAppService.GetRolesAll()).Value)),
                 HasAnyItemNo = chackHasAnyItemNo.Success,
-                PriceOptional = priceOptional
+                PriceOptional = priceOptional,
+                PriceDecimalDigits = priceCurrency.DecimalDigits
             };
 
             ViewBag.IsLayout2 = isLayout2;
             return View("ProductList", model);
         }
-        public async Task<IActionResult> SaleQuantityStaging() {
+        public async Task<IActionResult> SaleQuantityStaging()
+        {
             return View("SaleQuantityStaging");
         }
         public IActionResult TechnicalCertificate()

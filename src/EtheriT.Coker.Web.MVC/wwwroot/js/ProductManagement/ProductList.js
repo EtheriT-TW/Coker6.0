@@ -2053,7 +2053,7 @@ function SpecPriceSave() {
                 ? 0
                 : GetFormattedNumberValue($bonusInput);
             obj["IsDelete"] = false;
-            if (parseInt(obj["Price"] || 0, 10) === 0 && parseInt(obj["Bonus"] || 0, 10) === 0) {
+            if (Number(obj["Price"] || 0) === 0 && Number(obj["Bonus"] || 0) === 0) {
                 co.sweet.error("商品現金與紅利不可同時為空", null, true)
                 $(".alert_text").text("商品現金與紅利不可同時為空")
                 $(".alert_text").removeClass("d-none");
@@ -2230,7 +2230,7 @@ function SpecAdd(result) {
         } else item_price_count.addClass("d-none");
         filter.map(item => {
             if (text != "") text += "\n";
-            if (parseInt(item["Price"]) > 0) text += "現金：" + co.String.thousandSign(item["Price"]);
+            if (Number(item["Price"]) > 0) text += "現金：" + co.String.thousandSign(item["Price"]);
             if (parseInt(item["Bonus"]) > 0) text += " 紅利：" + co.String.thousandSign(item["Bonus"]);
         });
         if (filter.length > 0) {

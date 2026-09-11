@@ -119,6 +119,15 @@
         return window.CokerCurrency.formatHtml(amount);
     };
 
+    // 只回傳數字、不含幣別符號。給 class="price" 的元素用——
+    // 幣別符號由 CSS 的 .price::before 提供，這裡再加就會重複。
+    cart.Utils.formatAmount = function (value) {
+        var amount = Number(String(value == null ? 0 : value).replaceAll(",", ""));
+        if (!Number.isFinite(amount)) return "";
+
+        return window.CokerCurrency.formatAmount(amount);
+    };
+
     cart.Utils.escapeHtml = function (value) {
         return String(value == null ? "" : value)
             .replace(/&/g, "&amp;")

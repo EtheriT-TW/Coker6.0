@@ -47,7 +47,7 @@ function ShoppingCartDataInsert(data, $self) {
 
         if ($this.hasClass("price")) {
             var num = cart.Utils.toNumberValue(value);
-            $this.text(num > 0 ? num.toLocaleString() : "");
+            $this.text(num > 0 ? cart.Utils.formatAmount(num) : "");
         } else {
             $this.text(value);
         }
@@ -152,7 +152,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
 
                     if ($this.hasClass("price")) {
                         var num = cart.Utils.toNumberValue(value);
-                        $this.text(num > 0 ? num.toLocaleString() : "");
+                        $this.text(num > 0 ? cart.Utils.formatAmount(num) : "");
                     } else {
                         $this.text(value);
                     }

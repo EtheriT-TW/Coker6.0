@@ -38,10 +38,10 @@ function TotalCount() {
     $(".addOnProductAmountLine").toggleClass("d-none", !showProductAmountBreakdown);
     $(".productAmountLine").toggleClass("d-none", showProductAmountBreakdown);
     $(".generalProductAmount").text(showProductAmountBreakdown
-        ? generalProductAmount.toLocaleString()
+        ? cart.Utils.formatAmount(generalProductAmount)
         : "");
     $(".addOnProductAmount").text(showProductAmountBreakdown
-        ? addOnProductAmount.toLocaleString()
+        ? cart.Utils.formatAmount(addOnProductAmount)
         : "");
 
     // 行銷活動折扣：只影響畫面試算，不作為正式訂單依據
@@ -71,7 +71,7 @@ function TotalCount() {
     S.boxFees = shippingMeta.boxFees || [];
 
     // 商品金額
-    $(".subtotal").text(S.subtotal.toLocaleString());
+    $(".subtotal").text(cart.Utils.formatAmount(S.subtotal));
 
     // 商品紅利（作為附註，不放進主計算列）
     const $bonusParts = $(".dual-price .bonus-part");
@@ -199,7 +199,7 @@ function TotalCount() {
     }
 
     // Step1 小計（所有折抵後，不含運費）
-    $(".payable_subtotal").text(parseInt(payableSubtotal, 10).toLocaleString());
+    $(".payable_subtotal").text(cart.Utils.formatAmount(payableSubtotal));
 
     // ===== 紅利回饋提示 =====
     // 回饋紅利基準使用所有折抵後的商品小計，需與後端 BuildDetailSectionAsync 一致
@@ -281,11 +281,11 @@ function TotalCount() {
     var freightResult = cart.Shipping.calculateFreight(payableSubtotal);
     S.freight = Number(freightResult.freight || 0);
 
-    $(".shipping_fee").text(S.freight.toLocaleString());
+    $(".shipping_fee").text(cart.Utils.formatAmount(S.freight));
 
     // 運費提醒：單筆 / 箱型都支援，只要有門檻且未達成就顯示
     if (cart.Shipping.shouldShowShippingShortage(freightResult)) {
-        $(".shipping_memo .price").text(Number(freightResult.shortage).toLocaleString());
+        $(".shipping_memo .price").text(cart.Utils.formatAmount(freightResult.shortage));
         $(".shipping_memo").removeClass("d-none");
     } else {
         $(".shipping_memo").addClass("d-none");
@@ -321,7 +321,7 @@ function TotalCount() {
 
     // ===== Step3 小計（所有折抵後 + 運費）=====
     S.total = payableSubtotal + S.freight;
-    $(".total_amount").text(parseInt(S.total, 10).toLocaleString());
+    $(".total_amount").text(cart.Utils.formatAmount(S.total));
 }
 function setCartPriceBlock($target, cashText, bonusValue, mode) {
     const bonus = Number(bonusValue || 0);

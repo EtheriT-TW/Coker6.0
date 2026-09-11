@@ -106,6 +106,18 @@
         return toInt(value, fallback);
     }
 
+    // 金額可能含小數（例：USD 99.99），不可走 parseInt，小數會被截斷。
+    // 整數欄位（id／數量／庫存／紅利點數）請繼續用 toInt / normalizeNullableInt。
+    function toMoney(value, fallback = 0) {
+        const num = Number(String(value).replace(/,/g, '').trim());
+        return Number.isFinite(num) ? num : fallback;
+    }
+
+    function normalizeNullableMoney(value, fallback = 0) {
+        if (value === null || typeof value === 'undefined' || value === '') return fallback;
+        return toMoney(value, fallback);
+    }
+
     function readMinQty(stock) {
         if (!stock) return 1;
         return Math.max(normalizeNullableInt(stock.min_Qty ?? stock.minQty, 1), 1);
@@ -184,7 +196,7 @@
     }
 
     function formatPriceText(price, bonus, withCurrency = true) {
-        price = normalizeNullableInt(price);
+        price = normalizeNullableMoney(price);
         bonus = normalizeNullableInt(bonus);
 
         const money = withCurrency ? formatMoney(price) : formatNumber(price);
@@ -198,7 +210,7 @@
     }
 
     function formatPriceTextHtml(price, bonus) {
-        price = normalizeNullableInt(price);
+        price = normalizeNullableMoney(price);
         bonus = normalizeNullableInt(bonus);
 
         const money = formatMoneyHtml(price);
@@ -257,8 +269,8 @@
         const priceCandidates = safeStocks
             .filter(x => !x.timePrice)
             .flatMap(x => (x.prices || []).map(p => ({
-                total: normalizeNullableInt(p.price) + normalizeNullableInt(p.bonus),
-                price: normalizeNullableInt(p.price),
+                total: normalizeNullableMoney(p.price) + normalizeNullableInt(p.bonus),
+                price: normalizeNullableMoney(p.price),
                 bonus: normalizeNullableInt(p.bonus)
             })));
 
@@ -294,10 +306,10 @@
     }
 
     function buildPriceViewModel(priceItem, stock, controller, product) {
-        const currentPrice = normalizeNullableInt(priceItem.price);
+        const currentPrice = normalizeNullableMoney(priceItem.price);
         const currentBonus = normalizeNullableInt(priceItem.bonus);
-        const originalPrice = normalizeNullableInt(priceItem.oriPrice);
-        const suggestPrice = normalizeNullableInt(stock.suggestPrice);
+        const originalPrice = normalizeNullableMoney(priceItem.oriPrice);
+        const suggestPrice = normalizeNullableMoney(stock.suggestPrice);
         const isTimePrice = !!stock.timePrice;
         const disabled = !!priceItem.disabled;
 
@@ -351,17 +363,17 @@
         stock = stock || {};
         const safePrices = Array.isArray(priceOptions) ? priceOptions : [];
 
-        const suggestPrice = normalizeNullableInt(stock.suggestPrice);
+        const suggestPrice = normalizeNullableMoney(stock.suggestPrice);
         const baseRoleName =
             product?.baseRoleName ||
             safePrices.map(x => x.baseRoleName).find(x => !!x) ||
             local.NonMember;
 
         const originalPrice = safePrices
-            .map(x => normalizeNullableInt(x.oriPrice))
+            .map(x => normalizeNullableMoney(x.oriPrice))
             .find(x => x > 0) || 0;
 
-        const currentPrices = safePrices.map(x => normalizeNullableInt(x.price));
+        const currentPrices = safePrices.map(x => normalizeNullableMoney(x.price));
         const currentBonuses = safePrices.map(x => normalizeNullableInt(x.bonus));
 
         const hasSameSuggestPrice = currentPrices.some(x => x === suggestPrice);
@@ -694,7 +706,7 @@
     Object.assign(I, {
         DEFAULT_TEXTS, DEFAULTS, registerLayout,
         getLayoutFactory: () => layoutFactory,
-        toInt, normalizeNullableInt, readMinQty, cloneTemplate, formatNumber, formatText,
+        toInt, normalizeNullableInt, toMoney, normalizeNullableMoney, readMinQty, cloneTemplate, formatNumber, formatText,
         resolveText, defaultI18n, formatPriceText, formatPriceTextHtml,
         analyzeSpecStructure, buildPriceSummary,
         buildPriceViewModel, buildPriceBaseViewModel, isStockAvailable, clampQuantity,

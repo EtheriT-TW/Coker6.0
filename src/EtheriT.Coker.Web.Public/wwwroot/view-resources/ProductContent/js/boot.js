@@ -8,6 +8,7 @@
     const I = (window.ProductContentInternals = window.ProductContentInternals || {});
     const {
         DEFAULT_TEXTS, DEFAULTS, registerLayout, getLayoutFactory, toInt, normalizeNullableInt,
+        toMoney, normalizeNullableMoney,
         readMinQty, cloneTemplate, formatNumber, formatText, resolveText, defaultI18n,
         formatPriceText, formatPriceTextHtml, analyzeSpecStructure, buildPriceSummary,
         buildPriceViewModel, buildPriceBaseViewModel, isStockAvailable, clampQuantity, isLoggedIn,
@@ -31,6 +32,8 @@
         DEFAULT_TEXTS,
         toInt,
         normalizeNullableInt,
+        toMoney,
+        normalizeNullableMoney,
         formatNumber,
         formatMoney,
         formatMoneyHtml,

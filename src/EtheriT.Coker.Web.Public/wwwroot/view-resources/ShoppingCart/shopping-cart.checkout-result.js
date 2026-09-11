@@ -249,7 +249,7 @@
         // Step4 運費是費用列，0 元也要顯示
         var freightText = String(cart.Utils.getValueIgnoreCase(header, "freight") ?? "");
         if (freightText !== "") {
-            $("#Step4 .shipping_fee").text(cart.Utils.toNumberValue(freightText).toLocaleString());
+            $("#Step4 .shipping_fee").text(cart.Utils.formatAmount(cart.Utils.toNumberValue(freightText)));
         }
     }
 
@@ -273,10 +273,10 @@
         $("#Step4 .step4ProductAmountLine")
             .toggleClass("d-none", showProductAmountBreakdown);
         $("#Step4 .step4GeneralProductAmount").text(
-            showProductAmountBreakdown ? eligibleAmount.toLocaleString() : ""
+            showProductAmountBreakdown ? cart.Utils.formatAmount(eligibleAmount) : ""
         );
         $("#Step4 .step4AddOnProductAmount").text(
-            showProductAmountBreakdown ? addOnProductAmount.toLocaleString() : ""
+            showProductAmountBreakdown ? cart.Utils.formatAmount(addOnProductAmount) : ""
         );
 
         if (!Array.isArray(items) || !items.length) {
@@ -296,7 +296,7 @@
 
             return '<div class="py-2 d-flex justify-content-end text-end step4MarketingDiscountLine">' +
                 '<div>' + label + '</div>' +
-                '<div class="step4MarketingDiscount col-4 price-negative price">' + amount.toLocaleString() + '</div>' +
+                '<div class="step4MarketingDiscount col-4 price-negative price">' + cart.Utils.formatAmount(amount) + '</div>' +
                 '</div>';
         }).join("");
 

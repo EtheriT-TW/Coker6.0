@@ -63,7 +63,7 @@ function updateGroupSelectedSubtotal($group) {
             sum += Number($li.find('[data-key="subtotal"]').data('subtotal') || 0);
         }
     });
-    $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(sum.toLocaleString());
+    $group.find('.js-group-subtotal').attr('data-subtotal', sum).text(cart.Utils.formatAmount(sum));
     cart.Items.syncHeaderCheckbox($group);
 }
 function syncAdditionalSelection($group) {
@@ -283,8 +283,8 @@ function updateOverallSubtotal() {
     $('#Step1 .purchase_list .purchase_group_header [data-field="subtotal"]').each(function () {
         sum += Number($(this).attr('data-subtotal') || 0);
     });
-    $('#Step1 [data-key="subtotal"].subtotal').text(sum.toLocaleString());
-    $('#Step1 [data-key="total"].subtotal').text(sum.toLocaleString());
+    $('#Step1 [data-key="subtotal"].subtotal').text(cart.Utils.formatAmount(sum));
+    $('#Step1 [data-key="total"].subtotal').text(cart.Utils.formatAmount(sum));
 }
 function CartInit(result) {
     $("#Step1 > .card-body").removeClass("d-none");

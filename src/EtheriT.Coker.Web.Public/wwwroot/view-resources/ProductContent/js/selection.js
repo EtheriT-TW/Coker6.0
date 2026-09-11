@@ -8,6 +8,7 @@
     const I = (window.ProductContentInternals = window.ProductContentInternals || {});
     const {
         DEFAULT_TEXTS, DEFAULTS, registerLayout, getLayoutFactory, toInt, normalizeNullableInt,
+        normalizeNullableMoney,
         readMinQty, cloneTemplate, formatNumber, formatText, resolveText, defaultI18n,
         formatPriceText, analyzeSpecStructure, buildPriceSummary, buildPriceViewModel,
         buildPriceBaseViewModel, isStockAvailable, clampQuantity, isLoggedIn,
@@ -49,14 +50,14 @@
                     : normalizeNullableInt(stock.maxPurchaseQuantity),
                 purchaseUnavailableReason: stock.purchaseUnavailableReason || '',
                 timePrice: !!stock.timePrice,
-                suggestPrice: normalizeNullableInt(stock.suggestPrice ?? stock.price),
+                suggestPrice: normalizeNullableMoney(stock.suggestPrice ?? stock.price),
                 prices: prices.map(p => ({
                     id: normalizeNullableInt(p.id),
                     roleId: normalizeNullableInt(p.fK_RId ?? p.roleId),
                     roleName: p.roleName || p.baseRoleName || '',
-                    price: normalizeNullableInt(p.price),
+                    price: normalizeNullableMoney(p.price),
                     bonus: normalizeNullableInt(p.bonus),
-                    oriPrice: normalizeNullableInt(p.oriPrice)
+                    oriPrice: normalizeNullableMoney(p.oriPrice)
                 }))
             };
 

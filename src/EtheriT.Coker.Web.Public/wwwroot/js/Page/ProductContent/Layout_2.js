@@ -10,6 +10,7 @@
     }
 
     const normalizeNullableInt = M.normalizeNullableInt;
+    const normalizeNullableMoney = M.normalizeNullableMoney;
     const clampQuantity = M.clampQuantity;
     const isStockAvailable = M.isStockAvailable;
     const readMinQty = M.readMinQty;
@@ -129,9 +130,9 @@
     function buildSuggestText(stock, plans) {
         if (stock.timePrice) return '';
 
-        const suggest = normalizeNullableInt(stock.suggestPrice);
+        const suggest = normalizeNullableMoney(stock.suggestPrice);
         if (suggest <= 0) return '';
-        if (plans.some(p => normalizeNullableInt(p.price) === suggest)) return '';
+        if (plans.some(p => normalizeNullableMoney(p.price) === suggest)) return '';
 
         return formatMoneyHtml(suggest);
     }
@@ -140,7 +141,7 @@
     // 共用的 M.formatPriceText 版型一仍在用，不動它，這裡自己格式化。
     // 回傳 HTML（貨幣符號已拆成 span），注入時必須用 .html()
     function formatPlanPriceText(price, bonus) {
-        const money = normalizeNullableInt(price);
+        const money = normalizeNullableMoney(price);
         const bonusValue = normalizeNullableInt(bonus);
         const bonusLabel = escapeHtml(local.Bonus);
 

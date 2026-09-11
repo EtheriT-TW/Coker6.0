@@ -300,6 +300,12 @@
             return value;
         },
 
+        getDecimalDigits: function (elementOrJq) {
+            const $e = elementOrJq instanceof jQuery ? elementOrJq : $(elementOrJq);
+            const digits = parseInt($e.attr("data-decimal-digits"), 10);
+            return Number.isFinite(digits) && digits > 0 ? Math.min(digits, 4) : 0;
+        },
+
         formatElementValue: function (elementOrJq, value) {
             const $e = elementOrJq instanceof jQuery ? elementOrJq : $(elementOrJq);
 
@@ -318,7 +324,11 @@
             ) {
                 const raw = String(value).replace(/,/g, "").trim();
                 if (raw === "" || isNaN(raw)) return "";
-                return Number(raw).toLocaleString();
+                const digits = _c.Form.getDecimalDigits($e);
+                return Number(raw).toLocaleString("zh-TW", {
+                    minimumFractionDigits: digits,
+                    maximumFractionDigits: digits
+                });
             }
 
             return value;
@@ -348,7 +358,7 @@
                 }
 
                 if (!$e.attr("inputmode")) {
-                    $e.attr("inputmode", "numeric");
+                    $e.attr("inputmode", _c.Form.getDecimalDigits($e) > 0 ? "decimal" : "numeric");
                 }
 
                 if (!$e.attr("data-form-type")) {
@@ -364,8 +374,15 @@
                 });
 
                 $e.on("input.numberFormat", function () {
-                    let val = $e.val();
-                    val = String(val).replace(/[^\d]/g, "");
+                    const digits = _c.Form.getDecimalDigits($e);
+                    let val = String($e.val());
+                    if (digits > 0) {
+                        val = val.replace(/[^\d.]/g, "");
+                        const parts = val.split(".");
+                        val = parts.length > 1 ? parts[0] + "." + parts.slice(1).join("").slice(0, digits) : parts[0];
+                    } else {
+                        val = String(val).replace(/[^\d]/g, "");
+                    }
                     $e.val(val);
                 });
 

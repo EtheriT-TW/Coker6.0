@@ -4,6 +4,7 @@ using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Currency;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
@@ -1059,6 +1060,17 @@ namespace EtheriT.Coker.Application.Product
 
                 string L_MarketPrice = L.get("MarketPrice");
 
+                var priceCurrencySetting = await storeSetAppService.getValues(new Shared.Dto.StoreSet.StoreSetGetValueInput
+                {
+                    key = "priceCurrency",
+                    SiteId = webid
+                });
+                var priceCurrency = CurrencyCatalog.Resolve(priceCurrencySetting.detailItem?.value?.FirstOrDefault());
+                // 幣別有小數位時補滿位數（USD -> "###,##0.00"），台幣維持原本的整數格式
+                string priceFormat = priceCurrency.DecimalDigits > 0
+                    ? "###,##0." + new string('0', priceCurrency.DecimalDigits)
+                    : "###,###";
+
                 var finalRows = pageRows.Select(p =>
                 {
                     string priceText = "";
@@ -1073,8 +1085,10 @@ namespace EtheriT.Coker.Application.Product
                             var minPrice = agg.MinPrice.GetValueOrDefault();
                             var maxPrice = agg.MaxPrice.GetValueOrDefault();
                             priceText = agg.HasTimePrice
-                                ? $"{minPrice:###,###}~{L_MarketPrice}"
-                                : (minPrice == maxPrice ? $"{maxPrice:###,###}" : $"{minPrice:###,###}~{maxPrice:###,###}");
+                                ? $"{minPrice.ToString(priceFormat)}~{L_MarketPrice}"
+                                : (minPrice == maxPrice
+                                    ? minPrice.ToString(priceFormat)
+                                    : $"{minPrice.ToString(priceFormat)}~{maxPrice.ToString(priceFormat)}");
                         }
                     }
 

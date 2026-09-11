@@ -292,13 +292,17 @@ function HeaderDataInsert($frame, data) {
             switch (type) {
                 case "price":
                     if (data.available) {
+                        // 金額可能含小數（例：USD 385.99），不可走 parseInt。
+                        // 幣別符號由 CSS 的 .price::before 提供，故這裡只輸出數字。
+                        // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
+                        const price = Number(String($self.text() || 0).replaceAll(",", "")) || 0;
+                        const priceText = window.CokerCurrency.formatAmount(price);
                         if (data.bonus > 0) {
-                            const price = parseInt($self.text());
                             $self.toggleClass("price", price > 0);
-                            if (price > 0) $self.text(`${price.toLocaleString()}+紅利${data.bonus}`);
+                            if (price > 0) $self.text(`${priceText}+紅利${data.bonus}`);
                             else $self.text(`紅利${data.bonus}`);
                         } else {
-                            $self.addClass("price").text(parseInt($self.text()).toLocaleString());
+                            $self.addClass("price").text(priceText);
                         }
                     }
                     break;

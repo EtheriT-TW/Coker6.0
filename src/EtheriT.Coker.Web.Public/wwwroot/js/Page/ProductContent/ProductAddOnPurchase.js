@@ -15,10 +15,15 @@
 
     const $root = () => $('[data-product-addon]').first();
     const number = value => Number.parseInt(value, 10) || 0;
+    // 金額可能含小數（例：USD 99.99），不可走 parseInt，小數會被截斷。
+    const money = value => {
+        const num = Number(String(value).replace(/,/g, '').trim());
+        return Number.isFinite(num) ? num : 0;
+    };
     // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
-    const formatMoney = value => window.CokerCurrency.format(number(value));
+    const formatMoney = value => window.CokerCurrency.format(money(value));
     // 拆出貨幣符號的 HTML 版本，注入時必須用 .html()
-    const formatMoneyHtml = value => window.CokerCurrency.formatHtml(number(value));
+    const formatMoneyHtml = value => window.CokerCurrency.formatHtml(money(value));
     const read = (object, camel, pascal) => object?.[camel] ?? object?.[pascal];
 
     function qualificationCount(campaign, purchaseQuantity) {
@@ -201,8 +206,8 @@
         const ruleId = number(read(campaign, 'ruleId', 'RuleId'));
         const rewardItemId = number(read(item, 'rewardItemId', 'RewardItemId'));
         const productStockId = number(read(item, 'productStockId', 'ProductStockId'));
-        const offerPrice = number(read(item, 'offerPrice', 'OfferPrice'));
-        const originalPrice = number(read(item, 'originalPrice', 'OriginalPrice'));
+        const offerPrice = money(read(item, 'offerPrice', 'OfferPrice'));
+        const originalPrice = money(read(item, 'originalPrice', 'OriginalPrice'));
         const $card = $('<article class="product-addon__card"></article>')
             .attr('data-reward-item-id', rewardItemId)
             .attr({

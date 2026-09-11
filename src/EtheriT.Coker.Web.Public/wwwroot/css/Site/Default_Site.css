@@ -201,6 +201,14 @@ a[href="https://translate.google.com"] {
     font-weight: inherit;
 }
 
+.spec-suggest-value .money__amount {
+    font-size: .8125rem;
+}
+
+.spec-suggest-value .money__symbol,
+.spec-suggest-value .money__symbol {
+    font-size: 0.7em;
+}
 /* 主售價：符號略小於數字 */
 .sale-price .money__symbol {
     font-size: 0.6em;

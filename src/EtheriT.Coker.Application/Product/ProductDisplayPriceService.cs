@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Shared.BonusManagement;
+using EtheriT.Coker.Application.Shared.Currency;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.Role;
@@ -42,6 +43,16 @@ namespace EtheriT.Coker.Application.Product
                     .ToList();
                 var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit();
                 var bonusEnabled = bonusSetting?.BonusEnabled == true;
+
+                // 商品標價幣別的顯示格式。設定未存過時 CurrencyCatalog 會退回預設（TWD／0 位小數）。
+                var currencyCode = await (
+                    from sd in db.StoreSetDetail
+                    join ss in db.StoreSet on sd.FK_StoreSetId equals ss.Id
+                    where sd.FK_WebsiteId == websiteId
+                    where ss.key == "priceCurrency"
+                    select sd.value
+                ).FirstOrDefaultAsync();
+                var priceFormat = "N" + CurrencyCatalog.Resolve(currencyCode).DecimalDigits;
 
                 var stocks = await db.Prod_Stocks
                     .Where(e => productIds.Contains(e.FK_Pid) && !e.IsDeleted && e.Visible)
@@ -143,13 +154,14 @@ namespace EtheriT.Coker.Application.Product
                         result[productId] = new DirectoryPriceResultDto
                         {
                             ProductId = productId,
-                            Price = priceValue > 0 ? priceValue.ToString("N0") : null,
+                            Price = priceValue > 0 ? priceValue.ToString(priceFormat) : null,
+                            // 紅利是點數（int），不跟著幣別帶小數。
                             Bonus = bonusValue > 0 ? bonusValue.ToString("N0") : null,
                             OriPrice = chosen.OriPrice.HasValue && chosen.OriPrice.Value > 0
-                                ? chosen.OriPrice.Value.ToString("N0")
+                                ? chosen.OriPrice.Value.ToString(priceFormat)
                                 : null,
                             SuggestPrice = chosen.Stock.Price > 0
-                                ? chosen.Stock.Price.ToString("N0")
+                                ? chosen.Stock.Price.ToString(priceFormat)
                                 : null,
                             IsTimePrice = false,
                             IsMemberPrice = chosen.IsMemberPrice,

@@ -11,5 +11,6 @@ namespace EtheriT.Coker.Web.MVC.Models.ProductManagement
         public List<ProdStatusEnum> ProdStatus { get; set; }
         public bool HasAnyItemNo { get; set; } = false;
         public bool PriceOptional { get; set; } = false;
+        public int PriceDecimalDigits { get; set; } = 0;
     }
 }

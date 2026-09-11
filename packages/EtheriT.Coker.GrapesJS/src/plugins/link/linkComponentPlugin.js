@@ -1,3 +1,8 @@
+import {
+    fileAssetAccept,
+    openFileAssetManager
+} from '../file/fileComponentPlugin.js';
+
 export const linkComponentType = '連結';
 
 const linkTypes = new Set(['link', 'phone', 'email', 'address']);
@@ -22,20 +27,10 @@ export function getAssetSource(asset) {
 }
 
 export function openLinkAssetManager(editor, onSelect) {
-    const assetManager = editor.AssetManager;
-
-    assetManager.open({
-        types: [],
-        accept: 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ods,.ppt,.pptx,.odp,.txt,.csv,.xml,.zip,.rar',
-        cokerLinkAsset: true,
-        select(asset) {
-            const source = getAssetSource(asset);
-            if (!source) {
-                return;
-            }
-
+    openFileAssetManager(editor, {
+        accept: fileAssetAccept,
+        onSelect(asset, source) {
             onSelect(source, asset);
-            assetManager.close();
         }
     });
 }

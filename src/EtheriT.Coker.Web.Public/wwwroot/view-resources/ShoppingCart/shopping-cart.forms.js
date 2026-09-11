@@ -75,7 +75,7 @@
         });
         S.$pay_method = $("input[name=RadioPayment]");
     }
-    function OrdererEdit(isopen, suppressECPayChange) {
+    function OrdererEdit(isopen, suppressPaymentRefresh) {
         if (isopen == null) {
             isopen = !S.OrdererOpen;
         }
@@ -99,7 +99,7 @@
             }
         }
 
-        if (suppressECPayChange !== true) {
+        if (suppressPaymentRefresh !== true) {
             cart.Payment.Core.onAmountChanged();
             cart.Payment.Core.reloadActiveEmbeddedProvider();
         }
@@ -297,7 +297,6 @@
         S.order_header_data.Service_Charge = 0;
         S.order_header_data.OrderDetails = cart.Items.getSelectedCartItems();
 
-        S.order_header_data.SupportApplePay = S.SupportApplePay === true;
     }
     function OrdererDataGet() {
         S.order_data = co.Form.getJson($("#Form_Orderer").attr("id"));

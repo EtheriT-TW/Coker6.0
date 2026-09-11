@@ -347,8 +347,52 @@
  * ========================================================= */
 
 /**
+ * @typedef {Object} CokerPaymentCore
+ * @property {(providerFactory:Object)=>Object} register
+ * @property {(identifier:any)=>Object|null} get
+ * @property {(identifier:any)=>string} resolveCode
+ * @property {(identifier:any, options?:Object)=>Object} create
+ * @property {(identifier:any)=>boolean} has
+ * @property {()=>string[]} list
+ */
+
+/**
+ * @typedef {Object} CokerPaymentEmbedded
+ * @property {(providerCode:string, hostCode:string, factory:function(Object):Object)=>void} registerAdapter
+ * @property {(providerCode:string, hostCode:string, context:Object)=>Object|null} createAdapter
+ * @property {(providerCodes:string[], hostCode:string, context:Object)=>Object[]} attach
+ * @property {(hostCode:string, context:Object)=>Object[]} attachAll
+ */
+
+/**
+ * @typedef {Object} CokerPaymentCatalog
+ * @property {(identifier:any)=>string} resolveCode
+ * @property {(identifier:any)=>Object|null} get
+ * @property {(filter?:{mode?:string,host?:string})=>Object[]} list
+ */
+
+/**
+ * @typedef {Object} CokerPaymentLoader
+ * @property {(identifier:any)=>Promise<string>} ensure
+ * @property {(identifiers:any[])=>Promise<string[]>} ensureAll
+ */
+
+/**
+ * @typedef {Object} CokerPaymentFlow
+ * @property {(providerOrCode:any, context:Object, callback:function(boolean, any):void)=>any} prepareCheckout
+ * @property {(providerOrCode:any, context:Object)=>any} afterOrderCreated
+ * @property {(providerOrCode:any, context:Object)=>any} repay
+ */
+
+/**
  * @typedef {Object} CokerPaymentApi
  * @property {(paytypeid:number)=>JQuery.jqXHR<any>} GetPaymentInfo
+ * @property {(data:any)=>JQuery.jqXHR<any>} Repay
+ * @property {CokerPaymentCore} Core
+ * @property {CokerPaymentCatalog} Catalog
+ * @property {CokerPaymentLoader} Loader
+ * @property {CokerPaymentEmbedded} Embedded
+ * @property {CokerPaymentFlow} Flow
  */
 
 /* =========================================================

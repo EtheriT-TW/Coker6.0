@@ -116,7 +116,7 @@ var grapesInit = function (options) {
                     const files = Array.from(sourceFiles || []);
                     const maxFileSize = 10 * 1024 * 1024;
                     const assetOpenOptions = editor.AssetManager.__getBehaviour?.().options || {};
-                    const isLinkAssetUpload = assetOpenOptions.cokerLinkAsset === true;
+                    const isFileAssetUpload = assetOpenOptions.cokerFileAsset === true;
                     const extensionByMimeType = {
                         'image/gif': 'gif',
                         'image/jpeg': 'jpg',
@@ -176,17 +176,17 @@ var grapesInit = function (options) {
                     }
 
                     const supportedMediaPattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v)$/i;
-                    const supportedLinkFilePattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v|mp3|wav|wma|pdf|docx?|xlsx?|ods|pptx?|odp|txt|csv|xml|zip|rar)$/i;
-                    const supportedLinkMimePattern = /^(?:image|video|audio|text)\//i;
-                    const supportedLinkApplicationMimePattern = /^application\/(?:pdf|msword|vnd\.(?:ms-excel|ms-powerpoint|openxmlformats-officedocument|oasis\.opendocument|rar)|zip|x-zip-compressed|octet-stream)$/i;
+                    const supportedFilePattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v|mp3|wav|wma|pdf|docx?|xlsx?|ods|pptx?|odp|txt|csv|xml|zip|rar)$/i;
+                    const supportedFileMimePattern = /^(?:image|video|audio|text)\//i;
+                    const supportedApplicationMimePattern = /^application\/(?:pdf|msword|vnd\.(?:ms-excel|ms-powerpoint|openxmlformats-officedocument|oasis\.opendocument|rar)|zip|x-zip-compressed)$/i;
                     const hasUnsupportedFile = files.some(file => {
                         const contentType = file.type || '';
                         const fileName = file.name || '';
 
-                        if (isLinkAssetUpload) {
-                            return !supportedLinkMimePattern.test(contentType) &&
-                                !supportedLinkApplicationMimePattern.test(contentType) &&
-                                !supportedLinkFilePattern.test(fileName);
+                        if (isFileAssetUpload) {
+                            return !supportedFileMimePattern.test(contentType) &&
+                                !supportedApplicationMimePattern.test(contentType) &&
+                                !supportedFilePattern.test(fileName);
                         }
 
                         return !/^(image|video)\//i.test(contentType) &&
@@ -196,7 +196,7 @@ var grapesInit = function (options) {
                     if (hasUnsupportedFile) {
                         co.sweet.error(
                             "錯誤",
-                            isLinkAssetUpload ? "不支援的檔案格式" : "只支援圖片或影片檔案",
+                            isFileAssetUpload ? "不支援的檔案格式" : "只支援圖片或影片檔案",
                             null,
                             false
                         );
@@ -242,7 +242,11 @@ var grapesInit = function (options) {
                                     src: this.path,
                                     name: this.name,
                                     guid: this.guid,
-                                    type: submittedFile?.type?.startsWith('video/') ? 'video' : 'image',
+                                    type: submittedFile?.type?.startsWith('image/')
+                                        ? 'image'
+                                        : submittedFile?.type?.startsWith('video/')
+                                            ? 'video'
+                                            : 'file',
                                     mimeType: submittedFile?.type || ''
                                 });
                             });

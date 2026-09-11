@@ -1,4 +1,4 @@
-// Central payment availability for standard and embedded payment providers.
+// Shopping-cart host adapter for payment availability.
 (function (cart, $) {
     "use strict";
 
@@ -11,12 +11,57 @@
         return String(cart.Payment.Core.GetCheckedPaymentValue() || "");
     }
 
-    function getEcpayPayments(items) {
-        return (items || []).filter(function (item) {
-            return item.providerCode === "ECPay" &&
-                item.renderMode === "Embedded" &&
-                item.isAvailable === true;
+    function getEmbeddedProviders() {
+        return cart.Payment.Core.getProviders().filter(function (provider) {
+            return provider && provider.type === "embedded";
         });
+    }
+
+    function applyEmbeddedAvailability(items) {
+        return getEmbeddedProviders().map(function (provider) {
+            if (typeof provider.applyAvailability === "function") {
+                var state = provider.applyAvailability(items) || {};
+                state.provider = provider;
+                state.items = state.items || [];
+                state.availableItems = state.availableItems || [];
+                state.available = state.available === true;
+                state.entry = state.entry || $();
+                return state;
+            }
+
+            var providerItems = typeof provider.getAvailabilityItems === "function"
+                ? provider.getAvailabilityItems(items)
+                : [];
+            var availableItems = providerItems.filter(function (item) {
+                return item.isAvailable === true;
+            });
+
+            return {
+                provider: provider,
+                items: providerItems,
+                availableItems: availableItems,
+                available: availableItems.length > 0,
+                entry: typeof provider.getEntryRadio === "function"
+                    ? provider.getEntryRadio()
+                    : $()
+            };
+        });
+    }
+
+    function getEmbeddedStateByProvider(states, provider) {
+        return (states || []).find(function (state) {
+            return state.provider === provider;
+        }) || null;
+    }
+
+    function getEmbeddedStateByPaymentValue(states, value) {
+        var target = String(value || "");
+
+        return (states || []).find(function (state) {
+            return (state.items || []).some(function (item) {
+                return String(item.id) === target;
+            });
+        }) || null;
     }
 
     function getPaymentById(items, paymentTypeId) {
@@ -71,6 +116,8 @@
             })
                 .attr("data-availability-id", payment.id)
                 .attr("data-third-party-id", payment.thirdPartyId || 0)
+                .attr("data-provider-code", payment.providerCode || "")
+                .attr("data-render-mode", payment.renderMode || "")
                 .attr("data-code", payment.code || "")
                 .attr("data-cvs-store-selection-mode", payment.cvsStoreSelectionMode || 0)
                 .attr("data-title", payment.title || "");
@@ -110,14 +157,14 @@
             $fallback.append($input, $display);
 
             updateUnavailableDisplay($fallback, payment);
-            $fallback.insertBefore("#ECPayPayment");
+            $fallback.insertBefore("#EmbeddedPayment");
         });
     }
 
     function reloadAvailableEmbeddedProviders() {
         var requests = [];
 
-        cart.Payment.Core.getProvidersByType("embedded").forEach(function (provider) {
+        getEmbeddedProviders().forEach(function (provider) {
             if (typeof provider.reload !== "function") return;
 
             var request = provider.reload();
@@ -142,32 +189,6 @@
         return $warning;
     }
 
-    function updateEcpayEntry(ecpayPayments) {
-        var provider = cart.Payment.Core.getProvider("ECPay");
-        var $entry = provider && typeof provider.getEntryRadio === "function"
-            ? provider.getEntryRadio()
-            : $();
-
-        S.ECPayAvailable = ecpayPayments.length > 0 && S.ECPayOperational !== false;
-        S.HasECPay = S.ECPayAvailable && $entry.length > 0;
-
-        if (!$entry.length) return;
-
-        if (S.ECPayAvailable) {
-            var first = ecpayPayments[0];
-            $entry
-                .val(first.id)
-                .attr("data-code", first.code)
-                .attr("data-cvs-store-selection-mode", first.cvsStoreSelectionMode || 0)
-                .attr("data-minamount", first.minAmount)
-                .attr("data-maxamount", first.maxAmount == null ? "" : first.maxAmount);
-        } else {
-            $entry.prop("checked", false);
-            if (provider && typeof provider.clear === "function") provider.clear();
-            $(".ecpay_loading").addClass("d-none");
-        }
-    }
-
     function apply(preferredPaymentValue) {
         var payments = S.AvailablePayments || [];
         var available = payments.filter(function (item) {
@@ -176,7 +197,6 @@
         var allowedIds = new Set(available.map(function (item) {
             return String(item.id);
         }));
-        var ecpayPayments = getEcpayPayments(payments);
         var selectedValue = preferredPaymentValue != null && preferredPaymentValue !== ""
             ? String(preferredPaymentValue)
             : getSelectedPaymentValue();
@@ -187,7 +207,9 @@
         $("#RadioPayment > .form-check").each(function () {
             var $formCheck = $(this);
             var $input = $formCheck.find('input[name="RadioPayment"]').first();
-            var isEmbedded = cart.Payment.Core.isEmbeddedPaymentRadio($input);
+            var isEmbedded =
+                String($input.attr("data-render-mode") || "").toLowerCase() === "embedded" ||
+                cart.Payment.Core.isEmbeddedPaymentRadio($input);
             var availabilityId = $input.attr("data-availability-id") || $input.val();
             var payment = getPaymentById(payments, availabilityId);
 
@@ -208,17 +230,14 @@
 
         renderUnavailableEmbeddedPayments(payments);
 
-        updateEcpayEntry(ecpayPayments);
+        var embeddedStates = applyEmbeddedAvailability(payments);
+        var selectedEmbeddedState = getEmbeddedStateByPaymentValue(
+            embeddedStates,
+            selectedValue
+        );
 
-        var provider = cart.Payment.Core.getProvider("ECPay");
-        var $ecpayEntry = provider && typeof provider.getEntryRadio === "function"
-            ? provider.getEntryRadio()
-            : $();
-
-        if (S.ECPayAvailable && ecpayPayments.some(function (item) {
-            return String(item.id) === selectedValue;
-        })) {
-            selectedValue = String($ecpayEntry.val() || "");
+        if (selectedEmbeddedState && selectedEmbeddedState.available) {
+            selectedValue = String(selectedEmbeddedState.entry.val() || "");
         }
 
         var $target = selectedValue
@@ -228,8 +247,16 @@
 
         var targetIsEmbedded = $target.length &&
             cart.Payment.Core.isEmbeddedPaymentRadio($target);
+        var targetProvider = targetIsEmbedded
+            ? cart.Payment.Core.getProviderByRadio($target)
+            : null;
+        var targetEmbeddedState = getEmbeddedStateByProvider(
+            embeddedStates,
+            targetProvider
+        );
         var targetIsAvailable = $target.length && (
-            (targetIsEmbedded && S.ECPayAvailable && ecpayPayments.some(function (item) {
+            (targetIsEmbedded && targetEmbeddedState && targetEmbeddedState.available &&
+                targetEmbeddedState.availableItems.some(function (item) {
                 return String(item.id) === String($target.val());
             })) ||
             (!targetIsEmbedded &&
@@ -242,8 +269,14 @@
                 .first();
         }
 
-        if (!$target.length && S.ECPayAvailable) {
-            $target = $ecpayEntry;
+        if (!$target.length) {
+            var firstAvailableEmbedded = embeddedStates.find(function (state) {
+                return state.available && state.entry && state.entry.length;
+            });
+
+            if (firstAvailableEmbedded) {
+                $target = firstAvailableEmbedded.entry;
+            }
         }
 
         if ($target.length) {
@@ -252,7 +285,9 @@
 
         var hasAvailablePayment =
             $('#RadioPayment > .form-check:not(.d-none) input[name="RadioPayment"]:not(:disabled)').length > 0 ||
-            S.ECPayAvailable;
+            embeddedStates.some(function (state) {
+                return state.available === true;
+            });
 
         ensureNoPaymentWarning().toggleClass("d-none", hasAvailablePayment);
 
@@ -290,7 +325,7 @@
             S.PaymentAvailabilityLoaded = true;
             apply(preferredPaymentValue);
 
-            if (!S.isRestoringECPayLogistics) {
+            if (!S.isRestoringLogisticsSelection) {
                 reloadAvailableEmbeddedProviders();
             }
         });
@@ -329,8 +364,10 @@
         refresh: refresh,
         scheduleRefresh: scheduleRefresh,
         isAvailable: isAvailable,
-        getEcpayPayments: function () {
-            return getEcpayPayments(S.AvailablePayments || []);
+        getEmbeddedPayments: function () {
+            return (S.AvailablePayments || []).filter(function (item) {
+                return String(item.renderMode || "").toLowerCase() === "embedded";
+            });
         }
     });
 })(window.ShoppingCart, window.jQuery);

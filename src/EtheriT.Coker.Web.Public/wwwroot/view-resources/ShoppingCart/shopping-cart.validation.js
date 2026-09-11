@@ -154,8 +154,8 @@
         }
 
         $("#RadioPayment > .form-check").addClass("d-none");
-        $(".noPaymentWarning, .ecpay_loading").addClass("d-none");
-        $("#ECPayPayment").empty();
+        $(".noPaymentWarning, .payment_provider_loading").addClass("d-none");
+        cart.Payment.Core.clearProvidersByType("embedded");
         ShowWarning(issues, details.length > 0);
 
         if (S.buy_step_swiper) S.buy_step_swiper.update();

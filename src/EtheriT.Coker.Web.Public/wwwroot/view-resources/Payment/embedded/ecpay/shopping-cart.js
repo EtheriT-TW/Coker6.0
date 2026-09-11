@@ -1,16 +1,41 @@
-// wwwroot/view-resources/ShoppingCart/shopping-cart.payment.ecpay.js
-(function (cart, $) {
+// ECPay implementation for the ShoppingCart payment host.
+(function (w, $) {
     "use strict";
 
+    var Coker = (w.Coker = w.Coker || {});
+
+    Coker.defineModule("payment-embedded-ecpay-shopping-cart", function (C) {
+        C.Payment.Embedded.registerAdapter("ECPay", "ShoppingCart", function (context) {
+    var cart = context.cart;
     var S = cart.State;
+    var stateDefaults = {
+        HasECPay: false,
+        ECPayInit: false,
+        ECPayMonitor: false,
+        ECPayReady: false,
+        ECPayOrderSnapshot: "",
+        ECPayRefreshTimer: null,
+        ECPayChanging: false,
+        ECPayAvailable: false,
+        ECPayOperational: true,
+        SupportApplePay: false
+    };
+
+    Object.keys(stateDefaults).forEach(function (key) {
+        if (typeof S[key] === "undefined") S[key] = stateDefaults[key];
+    });
+
     cart.Payment = cart.Payment || {};
     cart.Payment.ECPay = cart.Payment.ECPay || {};
     var ecpaySelectionObserver = null;
     var isClearingECPaySelection = false;
     var ecpayRequestVersion = 0;
+    var ecpayProvider = Coker.Payment.Core.create("ECPay", {
+        rootSelector: "#ECPayPayment"
+    });
 
     function GetECPayEntryRadio() {
-        return $('#RadioPayment input[name="RadioPayment"][data-third-party-id="' + S.ECPAY_THIRD_PARTY_ID + '"]').first();
+        return $('#RadioPayment input[name="RadioPayment"][data-provider-code="ECPay"]').first();
     }
 
     function GetECPayEntryValue() {
@@ -21,7 +46,7 @@
     function IsPaymentRadioECPay($radio) {
         return $radio &&
             $radio.length > 0 &&
-            Number($radio.attr("data-third-party-id") || 0) === S.ECPAY_THIRD_PARTY_ID;
+            String($radio.attr("data-provider-code") || "") === "ECPay";
     }
 
     function IsECPaySelected() {
@@ -76,7 +101,7 @@
         S.ECPayReady = false;
         S.ECPayOrderSnapshot = "";
 
-        $(".ecpay_loading").addClass("d-none").text("");
+        $(".payment_provider_loading").addClass("d-none").text("");
         $("#ECPayPayment").empty();
         GetECPayEntryRadio().prop("checked", false).closest(".form-check").addClass("d-none");
 
@@ -107,7 +132,7 @@
 
             $("#RadioPayment > .form-check").addClass("d-none");
             $(".noPaymentWarning").addClass("d-none");
-            $(".ecpay_loading").addClass("d-none");
+            $(".payment_provider_loading").addClass("d-none");
             $("#ECPayPayment").empty();
             cart.CheckoutValidation.RefreshDisplay();
 
@@ -123,7 +148,7 @@
         }
 
         if (!S.ECPayInit) {
-            $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
+            $(".payment_provider_loading").removeClass("d-none").text("付款模組載入中...");
             return;
         }
 
@@ -148,7 +173,7 @@
         S.ECPayReady = false;
         var requestVersion = ++ecpayRequestVersion;
 
-        $(".ecpay_loading").removeClass("d-none").text("付款模組載入中...");
+        $(".payment_provider_loading").removeClass("d-none").text("付款模組載入中...");
         $(".checkoutValidationWarning").addClass("d-none");
         $("#ECPayPayment").empty();
 
@@ -173,6 +198,7 @@
             }
 
             clearInterval(checkInterval);
+            S.order_header_data.SupportApplePay = CanUseApplePay();
             Coker.ThirdParty.ECPayGetToken(S.order_header_data)
                 .done(function (result) {
                     if (requestVersion !== ecpayRequestVersion) return;
@@ -189,7 +215,7 @@
                     }
 
                     S.order_header_data.orderId = message[0];
-                    ECPay.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
+                    ecpayProvider.createPayment(message[1], ECPay.Language.zhTW, function (errMsg) {
                         if (requestVersion !== ecpayRequestVersion) return;
 
                         if (errMsg != null) {
@@ -244,7 +270,7 @@
                             S.CvsStoreValidationRequested = false;
                             cart.Shipping.UpdateCvsStoreSelectionDisplay();
 
-                            if ($(".ecpay_loading").hasClass("d-none")) {
+                            if ($(".payment_provider_loading").hasClass("d-none")) {
                                 $ECPayList.removeClass("first last");
 
                                 var $activeLi = $ECPayList.filter(".ecpay-pl-act");
@@ -269,7 +295,7 @@
                             if (typeof window.Pay !== "undefined") {
                                 clearInterval(checkPayExist);
 
-                                $(".ecpay_loading").addClass("d-none");
+                                $(".payment_provider_loading").addClass("d-none");
 
                                 if (S.buy_step_swiper) {
                                     S.buy_step_swiper.update();
@@ -439,42 +465,22 @@
         return payment;
     }
     function GetActiveECPayType() {
-        return $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").attr("id") || "";
+        return ecpayProvider.getActivePaymentType();
     }
     function IsActiveApplePay() {
-        return GetActiveECPayType() === "ApplePay";
+        return ecpayProvider.isApplePaySelected();
     }
     function CanUseApplePay() {
-        var coker = window.Coker || {};
-        var device = coker.util && coker.util.device;
-        var isPhone = false;
-
-        try {
-            isPhone = device && typeof device.isPhone === "function"
-                ? device.isPhone()
-                : /iPhone|iPod|Android.*Mobile|Windows Phone/i.test(navigator.userAgent || "");
-        } catch (ex) {
-            return true;
-        }
-
-        if (!isPhone) {
-            return true;
-        }
-
-        var applePaySession = window.ApplePaySession;
-
-        if (!applePaySession || typeof applePaySession.canMakePayments !== "function") {
-            return false;
-        }
-
-        try {
-            return applePaySession.canMakePayments() === true;
-        } catch (ex) {
-            return false;
-        }
+        return ecpayProvider.canUseApplePay();
     }
 
     function ConfirmApplePayThenValidate(callback) {
+        // OrderHeaderAdd 進入付款驗證前已開啟 loading。
+        // 若不先解除，SweetAlert 會把確認鈕留在轉圈圈狀態。
+        if (typeof Swal.hideLoading === "function") {
+            Swal.hideLoading();
+        }
+
         Swal.fire({
             icon: "info",
             title: "準備開啟 Apple Pay",
@@ -487,6 +493,10 @@
             cancelButtonText: "取消",
             allowOutsideClick: false,
             didOpen: function () {
+                if (typeof Swal.hideLoading === "function") {
+                    Swal.hideLoading();
+                }
+
                 var confirmButton = Swal.getConfirmButton();
                 if (!confirmButton) return;
 
@@ -504,60 +514,7 @@
         });
     }
 
-    function ClearApplePayWatch() {
-        if (S.ECPayApplePayTimer) {
-            clearTimeout(S.ECPayApplePayTimer);
-            S.ECPayApplePayTimer = null;
-        }
-    }
-
-    function IsApplePayResultSuccess(resultData) {
-        if (resultData == null) return false;
-
-        var rtnCode = String(
-            resultData.RtnCode ??
-            resultData.rtnCode ??
-            resultData.RtnValue?.RtnCode ??
-            resultData.rtnValue?.rtnCode ??
-            ""
-        );
-
-        var rtnMsg = String(
-            resultData.RtnMsg ??
-            resultData.rtnMsg ??
-            resultData.RtnValue?.RtnMsg ??
-            resultData.rtnValue?.rtnMsg ??
-            ""
-        );
-
-        var orderInfo = resultData.OrderInfo || resultData.orderInfo || {};
-        var tradeStatus = String(orderInfo.TradeStatus ?? orderInfo.tradeStatus ?? "");
-
-        // 有 TradeStatus 時，兩個都成立最安全
-        if (rtnCode === "1" && tradeStatus === "1") return true;
-
-        // 沒有 TradeStatus 時，只要 RtnCode = 1，先視為 ApplePay 前端流程成功
-        // 最終付款狀態仍以後端 ReturnURL / QueryTrade 為準
-        if (rtnCode === "1" && tradeStatus === "") return true;
-
-        // 保留文字成功的容錯
-        if (rtnMsg.toLowerCase().indexOf("success") >= 0) return true;
-
-        return false;
-    }
-
-    function GetApplePayErrorMessage(resultData, errMsg) {
-        if (errMsg) return errMsg;
-        if (resultData && (resultData.RtnMsg || resultData.rtnMsg)) return resultData.RtnMsg || resultData.rtnMsg;
-        return "Apple Pay 付款未完成，請重新操作。";
-    }
-
     function CompleteApplePayOrder(resultData) {
-        if (S.ECPayApplePayCompleted) return;
-
-        S.ECPayApplePayCompleted = true;
-        S.ECPayApplePayWaitingResult = false;
-        ClearApplePayWatch();
         // ApplePay 成功後一定要保險校正。
         S.order_header_data.payment = 27;
         $("#Step4 .payment_method").text("Apple Pay");
@@ -582,11 +539,6 @@
     }
 
     function FailApplePayOrder(message, rawData) {
-        if (S.ECPayApplePayCompleted) return;
-
-        S.ECPayApplePayCompleted = true;
-        S.ECPayApplePayWaitingResult = false;
-        ClearApplePayWatch();
         Swal.close();
         Coker.sweet.warning("Apple Pay 付款失敗", message || "付款未完成，請重新操作。", null);
     }
@@ -597,18 +549,27 @@
             return;
         }
 
-        var activePayment = GetActiveECPayType();
-        var isApplePay = activePayment === "ApplePay";
+        if (ecpayProvider.isApplePaySelected()) {
+            // 交由綠界 SDK 根據裝置顯示桌機 QR Code 或手機 Apple Pay 確認。
+            // 先關閉庫存檢查開啟的 loading，避免 SweetAlert 覆蓋綠界付款畫面。
+            Coker.sweet.close();
+        }
 
-        if (isApplePay) {
-            S.ECPayApplePayCompleted = false;
-            S.ECPayApplePayWaitingResult = true;
+        Coker.Payment.Flow.prepareCheckout(ecpayProvider, {
+            onApplePaySuccess: function (resultData) {
+                CompleteApplePayOrder(resultData);
+            },
+            onError: function (message, rawData, isApplePay) {
+                if (isApplePay) {
+                    FailApplePayOrder(message, rawData);
+                    callback(false, { handled: true, message: message });
+                    return;
+                }
 
-            ClearApplePayWatch();
-            S.ECPayApplePayTimer = setTimeout(function () {
-                if (!S.ECPayApplePayWaitingResult || S.ECPayApplePayCompleted) return;
-
-                S.ECPayApplePayWaitingResult = false;
+                co.sweet.warning("請確實填寫付款資料", message, null);
+                callback(false, message);
+            },
+            onTimeout: function () {
                 Swal.close();
                 callback(false, {
                     handled: true,
@@ -620,58 +581,9 @@
                     "系統未收到綠界 Apple Pay 付款結果。若裝置已顯示付款成功，請先勿重複付款，請聯絡客服確認交易狀態。",
                     null
                 );
-            }, 60000);
-        }
-
-        try {
-            ECPay.getPayToken(function (paymentInfo, errMsg) {
-                if (errMsg != null) {
-                    if (isApplePay) {
-                        FailApplePayOrder(errMsg, paymentInfo);
-                        callback(false, { handled: true, message: errMsg });
-                        return;
-                    }
-
-                    co.sweet.warning("請確實填寫付款資料", errMsg, null);
-                    callback(false, errMsg);
-                    return;
-                }
-
-                // 綠界文件說 Apple Pay 不會回 PayToken，
-                // 付款結果會從 getApplePayResultData 回來。
-                // 因此 Apple Pay 不在這裡 callback(true)，避免還沒取得 Apple Pay 結果就建單。
-                if (isApplePay) return;
-
-                callback(true, paymentInfo);
-            });
-        } catch (ex) {
-            if (isApplePay) {
-                FailApplePayOrder("Apple Pay 付款流程發生例外，請重新操作。", ex);
-                callback(false, { handled: true, message: ex.message || String(ex) });
-                return;
             }
-
-            callback(false, "綠界付款流程發生例外，請重新操作。");
-        }
+        }, callback);
     }
-
-    function getApplePayResultData(resultData, errMsg) {
-        if (errMsg != null) {
-            FailApplePayOrder(errMsg, resultData);
-            return;
-        }
-
-        if (!IsApplePayResultSuccess(resultData)) {
-            FailApplePayOrder(GetApplePayErrorMessage(resultData, errMsg), resultData);
-            return;
-        }
-
-        CompleteApplePayOrder(resultData);
-    }
-
-    // 綠界 SDK 會呼叫全域 getApplePayResultData；只掛在 cart.Payment.ECPay 可能接不到。
-    window.getApplePayResultData = getApplePayResultData;
-    window.GetApplePayResultData = getApplePayResultData;
 
     function afterOrderCreated(orderResult, context) {
         var paymentInfo = context ? context.paymentInfo : null;
@@ -795,16 +707,54 @@
         GetECPayType: GetECPayType,
         CanUseApplePay: CanUseApplePay,
         ValidateECPayPayment: ValidateECPayPayment,
-        getApplePayResultData: getApplePayResultData,
         afterOrderCreated: afterOrderCreated
     });
 
     cart.Payment.Core.register({
         code: "ECPay",
         type: "embedded",
-        thirdPartyId: S.ECPAY_THIRD_PARTY_ID,
+        paymentProvider: ecpayProvider,
         isAvailable: function () {
             return S.ECPayAvailable === true;
+        },
+        getAvailabilityItems: function (items) {
+            return (items || []).filter(function (item) {
+                return String(item.providerCode || "") === "ECPay" &&
+                    String(item.renderMode || "").toLowerCase() === "embedded";
+            });
+        },
+        applyAvailability: function (items) {
+            var providerItems = this.getAvailabilityItems(items);
+            var availableItems = providerItems.filter(function (item) {
+                return item.isAvailable === true;
+            });
+            var $entry = GetECPayEntryRadio();
+
+            S.ECPayAvailable = availableItems.length > 0 && S.ECPayOperational !== false;
+            S.HasECPay = S.ECPayAvailable && $entry.length > 0;
+
+            if ($entry.length && S.ECPayAvailable) {
+                var first = availableItems[0];
+                $entry
+                    .val(first.id)
+                    .attr("data-availability-id", first.id)
+                    .attr("data-code", first.code)
+                    .attr("data-cvs-store-selection-mode", first.cvsStoreSelectionMode || 0)
+                    .attr("data-minamount", first.minAmount)
+                    .attr("data-maxamount", first.maxAmount == null ? "" : first.maxAmount);
+            } else if ($entry.length) {
+                $entry.prop("checked", false);
+                this.clear();
+                $(".payment_provider_loading").addClass("d-none");
+            }
+
+            return {
+                provider: this,
+                items: providerItems,
+                availableItems: availableItems,
+                available: S.ECPayAvailable,
+                entry: $entry
+            };
         },
         init: function () {
             if ($("#ECPayPayment").length === 0) {
@@ -815,7 +765,7 @@
             S.ECPayOperational = true;
             S.ECPayMonitor = true;
             S.SupportApplePay = CanUseApplePay();
-            ECPay.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
+            ecpayProvider.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
                 if (errMsg != null) {
                     HandleECPayLoadFailure("SDK 初始化失敗", errMsg, null);
                     return;
@@ -945,7 +895,9 @@
                 return;
             }
 
-            if (IsActiveApplePay()) {
+            // 手機的 Apple Pay 需要保留一次明確的使用者點擊來開啟 Wallet。
+            // 桌機則直接交由綠界 SDK 顯示 QR Code。
+            if (IsActiveApplePay() && ecpayProvider.isPhoneDevice()) {
                 ConfirmApplePayThenValidate(callback);
                 return;
             }
@@ -956,4 +908,8 @@
         afterOrderCreated: afterOrderCreated,
         clearSelection: ClearECPaySelection,
     });
-})(window.ShoppingCart, window.jQuery);
+
+            return cart.Payment.Core.getProvider("ECPay");
+        });
+    });
+})(window, window.jQuery);

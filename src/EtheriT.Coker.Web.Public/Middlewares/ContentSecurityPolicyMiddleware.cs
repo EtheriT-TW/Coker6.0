@@ -29,6 +29,13 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 return;
             }
 
+            if (IsCrawlerMetadataRequest(context.Request.Path))
+            {
+                context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                await _next(context);
+                return;
+            }
+
             var nonce = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -47,16 +54,13 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 string selfInline = $"nonce-{nonce}";
                 string connectSrc = $"'self' *";
                 context.Items["CSPNonce"] = nonce;
-                bool isSitemapRequest = context.Request.Path.HasValue && (
-                    context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase) ||
-                    (
-                        (context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
-                        context.Request.Path.Value.EndsWith("/Member", StringComparison.OrdinalIgnoreCase)) &&
-                        otherPayElement != null && !string.IsNullOrEmpty(otherPayElement.Value)
-                    )
-                );
+                bool allowsInlineContent = context.Request.Path.HasValue &&
+                    (context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
+                     context.Request.Path.Value.EndsWith("/Member", StringComparison.OrdinalIgnoreCase)) &&
+                    otherPayElement != null &&
+                    !string.IsNullOrEmpty(otherPayElement.Value);
 
-                if ((item != null && !string.IsNullOrEmpty(item.value)) || isSitemapRequest)
+                if ((item != null && !string.IsNullOrEmpty(item.value)) || allowsInlineContent)
                 {
                     selfInline = $"unsafe-inline";
                 }
@@ -110,13 +114,12 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             var originalBodyStream = context.Response.Body;
             using (var newBodyStream = new MemoryStream())
             {
-                bool isSitemapRequest = context.Request.Path.HasValue &&
+                bool bypassBodyRewrite = context.Request.Path.HasValue &&
                         (
                             context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||
-                            context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase) ||
-                            context.Request.Path.Value.EndsWith("/sitemap", StringComparison.OrdinalIgnoreCase)
+                            context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase)
                         );
-                if (isSitemapRequest) await _next(context); // 執行後續的管道（包括 Razor 渲染）
+                if (bypassBodyRewrite) await _next(context); // 執行後續的管道（包括 Razor 渲染）
                 else
                 {
                     context.Response.Body = newBodyStream;
@@ -138,6 +141,14 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     await context.Response.WriteAsync(modifiedBody);
                 }
             }
+        }
+
+        private static bool IsCrawlerMetadataRequest(PathString path)
+        {
+            var value = path.Value?.TrimEnd('/');
+            return string.Equals(value, "/robots.txt", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "/sitemap.xml", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "/sitemap", StringComparison.OrdinalIgnoreCase);
         }
 
         private string AppendAdditionalSources(string currentSources, string settingName)

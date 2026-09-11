@@ -5,7 +5,7 @@
     var S = cart.State;
     cart.Init = cart.Init || {};
 
-    function PageReady() {
+    function PageReadyCore() {
         // Bootstrap Modal 不應留在 Swiper 的 transform 容器內，否則底部按鈕可能被遮罩攔截。
         var $addOnModal = $('#CartProductAddOnModal');
         if ($addOnModal.length && !$addOnModal.parent().is('body')) {
@@ -552,6 +552,12 @@
             });
         }
 
+    }
+
+    function PageReady() {
+        return Promise.resolve(cart.Payment.Ready).then(function () {
+            return PageReadyCore();
+        });
     }
 
     Object.assign(cart.Init, {

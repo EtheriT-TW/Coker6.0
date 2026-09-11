@@ -22,7 +22,6 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/ShoppingCart.min.css" asp-append-version="true" />
 }
-<script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
 @Html.AntiForgeryToken()
 <!-- Modal -->
 <div id="RecipientModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -891,9 +890,12 @@
                         {
                             @foreach (var payment in Model.paymentModels ?? new List<PaymentTypeItemOutputDto>())
                             {
-                                var isECPay = payment.Code == "ECPay" || payment.FK_ThirdPartyId == 4;
+                                var isEmbedded = string.Equals(
+                                    payment.RenderMode,
+                                    "Embedded",
+                                    StringComparison.OrdinalIgnoreCase);
 
-                                <div class="form-check text-start m-0 p-0 @(isECPay ? "d-none" : "")">
+                                <div class="form-check text-start m-0 p-0 @(isEmbedded ? "d-none" : "")">
                                     <input id="radio_payment_@payment.Code"
                                            class="form-check-input d-none"
                                            type="radio"
@@ -903,6 +905,8 @@
                                            data-availability-id="@payment.Id"
                                            value="@payment.Id"
                                            data-third-party-id="@payment.FK_ThirdPartyId"
+                                           data-provider-code="@payment.ProviderCode"
+                                           data-render-mode="@payment.RenderMode"
                                            data-code="@payment.Code"
                                            data-cvs-store-selection-mode="@((int)payment.CvsStoreSelectionMode)"
                                            required
@@ -930,14 +934,19 @@
                                 </div>
                             }
 
-                            @if (Model.paymentModels.Any(e => e.Code == "ECPay" || e.FK_ThirdPartyId == 4))
+                            @if (Model.paymentModels.Any(e => string.Equals(
+                                e.RenderMode,
+                                "Embedded",
+                                StringComparison.OrdinalIgnoreCase)))
                             {
-                                <div class="ecpay_loading text-start col-12 col-sm-3 my-2 py-2 d-none">
+                                <div class="payment_provider_loading text-start col-12 col-sm-3 my-2 py-2 d-none">
                                     支付方式載入中......
                                 </div>
 
-                                <div id="ECPayPayment"
-                                     data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")"></div>
+                                <div id="EmbeddedPayment">
+                                    <div id="ECPayPayment"
+                                         data-server-type="@(ViewBag.IsProduction ? "Prod" : "Stage")"></div>
+                                </div>
                             }
                         }
                         else
@@ -1275,6 +1284,7 @@
 </div>
 
 
-<script src="@(ViewBag.IsProduction
-                            ? "https://ecpg.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116"
-                            : "https://ecpg-stage.ecpay.com.tw/Scripts/sdk-1.0.0.js?t=20210121100116")"></script>
+@section Scripts {
+    <script src="~/js/Payment/Payment.min.js" asp-append-version="true"></script>
+    <script src="~/js/Page/ShoppingCart.min.js" asp-append-version="true"></script>
+}

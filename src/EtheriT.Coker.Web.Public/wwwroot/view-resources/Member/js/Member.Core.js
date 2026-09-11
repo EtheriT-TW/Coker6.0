@@ -24,7 +24,7 @@
             resetEmailForm: null,
             reOrderAlertModal: null,
             reOrderAlertModalElement: null,
-            ecPayModal: null
+            paymentModal: null
         };
 
         MemberPage.Selectors = MemberPage.Selectors || {
@@ -42,7 +42,7 @@
             resetEmailCaptchaInput: "#InputNewMailVCode",
             resetEmailCaptchaImage: "#NewMailImgCaptcha",
             reOrderAlertModal: "#ReOrderAlertModal",
-            ecPayModal: "#ECPayModal"
+            paymentModal: "#PaymentModal"
         };
 
         MemberPage.Utils = MemberPage.Utils || {

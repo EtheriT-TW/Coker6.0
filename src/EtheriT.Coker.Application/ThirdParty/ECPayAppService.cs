@@ -439,7 +439,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
-                return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?ECPayError");
+                return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?PaymentError=ECPay");
             }
         }
         public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)

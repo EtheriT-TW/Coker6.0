@@ -119,6 +119,52 @@
     color: #555;
 }
 
+#profile-tab-pane .state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+#profile-tab-pane .order-state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem 0.65rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+#profile-tab-pane .order-state-actions:empty {
+    display: none;
+}
+
+#profile-tab-pane .order-state-actions button {
+    padding: 0;
+    line-height: 1.4;
+}
+
+#profile-tab-pane .repay-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid #f1d58a;
+    border-radius: 999px;
+    color: #765a12;
+    background-color: #fff9e8;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+#profile-tab-pane .repay-countdown-time {
+    min-width: 2.75rem;
+    color: #9a6700;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
 #profile-tab-pane .type_list img {
     width: 75px;
 }
@@ -131,8 +177,13 @@
     content: '\00d7';
 }
 
-#profile-tab-pane .state span {
+#profile-tab-pane .order-state-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.25rem 1rem;
+    border-radius: 0.25rem;
+    line-height: 1.2;
 }
 
 #remarkLine {

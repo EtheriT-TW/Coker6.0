@@ -82,7 +82,7 @@
             },
 
             appendActions: function (frame, orderHeader) {
-                frame.find(".state").prepend("<span>" + orderHeader.stateStr + "</span>");
+                frame.find(".state").prepend("<span class='order-state-badge'>" + orderHeader.stateStr + "</span>");
 
                 switch (orderHeader.action) {
                     case "Cancel":
@@ -95,14 +95,15 @@
                         this.appendRepayButton(frame, orderHeader);
                         this.appendCancelButton(frame, orderHeader);
                         break;
-                    default:
-                        this.appendRepayCountdown(frame, orderHeader);
-                        break;
                 }
+
+                // 取消訂單與重新付款等待時間是兩個獨立狀態。
+                // 即使目前可取消，也仍應顯示重新付款倒數。
+                this.appendRepayCountdown(frame, orderHeader);
             },
 
             appendCancelButton: function (frame, orderHeader) {
-                frame.find(".state").append("<button class='btn_cancelOrder bg-transparent border-0 text-decoration-underline ms-1' title='取消此筆訂單'>取消訂單</button>");
+                frame.find(".order-state-actions").append("<button class='btn_cancelOrder bg-transparent border-0 text-decoration-underline' title='取消此筆訂單'>取消訂單</button>");
                 frame.find(".state .btn_cancelOrder").data("ohid", orderHeader.id);
 
                 frame.find(".state .btn_cancelOrder").on("click.memberOrders", function () {
@@ -124,7 +125,9 @@
 
                         C.Order.CancelOrder($this.data("ohid"), orderHeader.thirdParties).done(function (result) {
                             if (result.success) {
-                                $this.parent(".state").addClass("text-danger fw-bold").text("已取消");
+                                $orderFrame.find(".state")
+                                    .empty()
+                                    .append("<span class='order-state-badge bg-danger text-white'>已取消</span>");
                                 if ($orderFrame.find(".btn_buyInfo").length > 0) $orderFrame.find(".btn_buyInfo").addClass("d-none");
                                 C.sweet.success(result.message, null, false);
                             } else {
@@ -136,7 +139,7 @@
             },
 
             appendRepayButton: function (frame, orderHeader) {
-                frame.find(".state").append("<button class='btn_payAgain text-danger bg-transparent border-0 text-decoration-underline ms-1' title='重新付款'>重新付款</button>");
+                frame.find(".order-state-actions").append("<button class='btn_payAgain text-danger bg-transparent border-0 text-decoration-underline' title='重新付款'>重新付款</button>");
 
                 frame.find(".state .btn_payAgain").on("click.memberOrders", function () {
                     C.sweet.confirm("確定要重新付款？", "", "確定", "取消", function () {
@@ -152,8 +155,8 @@
 
                 if (seconds <= 0) return;
 
-                var $countdown = $("<span class='repay-countdown text-muted small ms-1'>重新付款倒數 <span class='repay-countdown-time'></span></span>");
-                frame.find(".state").append($countdown);
+                var $countdown = $("<span class='repay-countdown'><i class='fa-regular fa-clock' aria-hidden='true'></i><span>重新付款倒數</span><span class='repay-countdown-time'></span></span>");
+                frame.find(".order-state-actions").append($countdown);
 
                 var $time = $countdown.find(".repay-countdown-time");
 
@@ -184,13 +187,13 @@
                 switch (orderHeader.state) {
                     case 1:
                     case 6:
-                        frame.find(".state span").addClass("bg-warning text-black");
+                        frame.find(".order-state-badge").addClass("bg-warning text-black");
                         break;
                     case 5:
-                        frame.find(".state span").addClass("bg-danger text-white");
+                        frame.find(".order-state-badge").addClass("bg-danger text-white");
                         break;
                     default:
-                        if (orderHeader.state != 4) frame.find(".state span").addClass("bg-success text-white");
+                        if (orderHeader.state != 4) frame.find(".order-state-badge").addClass("bg-success text-white");
                         break;
                 }
             },
@@ -248,7 +251,7 @@
                     frame.find(".btn_buyInfo").data("ohid", orderHeader.id).removeClass("d-none");
 
                     frame.find(".btn_buyInfo").on("click.memberOrders", function () {
-                        MemberPage.OrderPayment.showECPayPaymentInfo(orderHeader, $(this).data("ohid"));
+                        MemberPage.OrderPayment.showPaymentInfo(orderHeader, $(this).data("ohid"));
                     });
                 }
             },

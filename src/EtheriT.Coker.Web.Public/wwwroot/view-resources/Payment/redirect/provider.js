@@ -49,36 +49,39 @@
             };
         }
 
-        C.Payment.Core.register({
-            code: "Default",
-            mode: "internal",
-            aliases: [0, 1, "Internal"],
-            create: function () {
-                return {
-                    code: "Default",
-                    mode: "internal",
-                    prepareCheckout: function (context, callback) {
-                        callback(true, null);
-                    },
-                    afterOrderCreated: function (context) {
-                        if (typeof context.onComplete === "function") context.onComplete();
-                    }
-                };
+        C.Payment.Catalog.list().forEach(function (definition) {
+            if (definition.mode === "redirect") {
+                // 有獨立模組代表流程不符合共用 PayRequest 契約，交由 Loader 載入。
+                if (definition.moduleUrl) return;
+
+                C.Payment.Core.register({
+                    code: definition.code,
+                    mode: definition.mode,
+                    aliases: definition.aliases,
+                    create: createRedirectProvider(definition.code)
+                });
+                return;
             }
-        });
 
-        C.Payment.Core.register({
-            code: "PCHomePay",
-            mode: "redirect",
-            aliases: [2],
-            create: createRedirectProvider("PCHomePay")
-        });
+            if (definition.mode !== "internal") return;
 
-        C.Payment.Core.register({
-            code: "LinePay",
-            mode: "redirect",
-            aliases: [3],
-            create: createRedirectProvider("LinePay")
+            C.Payment.Core.register({
+                code: definition.code,
+                mode: definition.mode,
+                aliases: definition.aliases,
+                create: function () {
+                    return {
+                        code: definition.code,
+                        mode: definition.mode,
+                        prepareCheckout: function (context, callback) {
+                            callback(true, null);
+                        },
+                        afterOrderCreated: function (context) {
+                            if (typeof context.onComplete === "function") context.onComplete();
+                        }
+                    };
+                }
+            });
         });
     });
 })(window);

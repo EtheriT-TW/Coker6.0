@@ -39,9 +39,18 @@
             });
         }
 
+        function attach(providerCodes, hostCode, context) {
+            return (providerCodes || []).map(function (providerCode) {
+                return createAdapter(providerCode, hostCode, context);
+            }).filter(function (adapter) {
+                return adapter != null;
+            });
+        }
+
         C.Payment.Embedded = {
             registerAdapter: registerAdapter,
             createAdapter: createAdapter,
+            attach: attach,
             attachAll: attachAll
         };
     });

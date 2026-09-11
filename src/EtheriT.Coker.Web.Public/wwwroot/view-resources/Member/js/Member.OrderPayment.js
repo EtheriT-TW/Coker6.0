@@ -25,7 +25,7 @@
                 C.Payment.Flow.repay(datas.orderHeader.thirdParties, {
                     orderId: datas.orderHeader.id,
                     providerOptions: {
-                        rootSelector: "#PaymentContainer"
+                        rootSelector: "#ECPayPayment"
                     },
                     onRedirect: function (url) {
                         localStorage.setItem("lastSaveTime", new Date().toISOString());
@@ -57,25 +57,23 @@
             },
 
             showPaymentInfo: function (orderHeader, ohid) {
-                var provider;
-
-                try {
-                    provider = C.Payment.Core.create(orderHeader.thirdParties, {
-                        rootSelector: "#PaymentContainer"
+                C.Payment.Loader.ensure(orderHeader.thirdParties).then(function () {
+                    var provider = C.Payment.Core.create(orderHeader.thirdParties, {
+                        rootSelector: "#ECPayPayment"
                     });
-                } catch (ex) {
+
+                    var adapter = createMemberAdapter(provider);
+
+                    if (!adapter || typeof adapter.showPaymentInfo !== "function") {
+                        C.sweet.warning("取得付款資訊失敗", "此付款方式沒有可顯示的付款資訊。", null);
+                        return;
+                    }
+
+                    adapter.showPaymentInfo(orderHeader, ohid);
+                }, function (ex) {
+                    console.error("[Payment] Member provider load failed.", ex);
                     C.sweet.warning("取得付款資訊失敗", "此付款方式尚未註冊。", null);
-                    return;
-                }
-
-                var adapter = createMemberAdapter(provider);
-
-                if (!adapter || typeof adapter.showPaymentInfo !== "function") {
-                    C.sweet.warning("取得付款資訊失敗", "此付款方式沒有可顯示的付款資訊。", null);
-                    return;
-                }
-
-                adapter.showPaymentInfo(orderHeader, ohid);
+                });
             }
         };
     }

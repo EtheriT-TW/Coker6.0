@@ -36,7 +36,9 @@
             var normalizedIdentifier = normalizeCode(identifier);
             if (!normalizedIdentifier) return "Default";
 
-            return aliases[normalizedIdentifier.toLowerCase()] || normalizedIdentifier;
+            return aliases[normalizedIdentifier.toLowerCase()] ||
+                (C.Payment.Catalog && C.Payment.Catalog.resolveCode(identifier)) ||
+                normalizedIdentifier;
         }
 
         function get(identifier) {

@@ -1,4 +1,3 @@
-// wwwroot/view-resources/ShoppingCart/shopping-cart.payment.redirect.js
 // Provider-neutral interface between ShoppingCart and Payment Flow.
 (function (cart, $) {
     "use strict";
@@ -30,14 +29,20 @@
 
     function afterOrderCreated(orderResult, context) {
         var parsed = cart.Payment.Core.parseOrderResult(orderResult);
-        var providerCode = Coker.Payment.Core.has(parsed.paymentType)
-            ? parsed.paymentType
-            : "Default";
+        return Coker.Payment.Loader.ensure(parsed.paymentType).then(function (providerCode) {
+            return runAfterOrderCreated(orderResult, context, parsed, providerCode);
+        }, function (error) {
+            console.error("[Payment] Provider load failed.", error);
+            showPaymentError();
+        });
+    }
+
+    function runAfterOrderCreated(orderResult, context, parsed, providerCode) {
         var pageProvider = cart.Payment.Core.getProvider(providerCode);
         var provider = pageProvider && pageProvider.paymentProvider
             ? pageProvider.paymentProvider
             : Coker.Payment.Core.create(providerCode, {
-                rootSelector: "#EmbeddedPayment"
+                rootSelector: "#ECPayPayment"
             });
         var paymentContext = $.extend({}, context || {}, parsed, {
             onStart: function () {
@@ -65,8 +70,32 @@
     // 購物車既有入口保留，但實際生命週期統一交給全站 Payment Flow。
     cart.Payment.Core.afterOrderCreated = afterOrderCreated;
 
-    // 掛載所有已註冊且支援 ShoppingCart Host 的嵌入式付款 Adapter。
-    Coker.Payment.Embedded.attachAll("ShoppingCart", {
-        cart: cart
+    var enabledEmbeddedProviderCodes = [];
+
+    $('#RadioPayment input[data-provider-code]').each(function () {
+        if (String($(this).attr("data-render-mode") || "").toLowerCase() !== "embedded") {
+            return;
+        }
+
+        var providerCode = String($(this).attr("data-provider-code") || "");
+        if (providerCode && enabledEmbeddedProviderCodes.indexOf(providerCode) < 0) {
+            enabledEmbeddedProviderCodes.push(providerCode);
+        }
     });
+
+    // 只載入並掛載後台已啟用、且本頁實際需要的嵌入式 Provider。
+    cart.Payment.Ready = Coker.Payment.Loader
+        .ensureAll(enabledEmbeddedProviderCodes)
+        .then(function (providerCodes) {
+            return Coker.Payment.Embedded.attach(
+                providerCodes,
+                "ShoppingCart",
+                { cart: cart }
+            );
+        })
+        .catch(function (error) {
+            console.error("[Payment] ShoppingCart provider bootstrap failed.", error);
+            cart.Payment.LoadError = error;
+            return [];
+        });
 })(window.ShoppingCart, window.jQuery);

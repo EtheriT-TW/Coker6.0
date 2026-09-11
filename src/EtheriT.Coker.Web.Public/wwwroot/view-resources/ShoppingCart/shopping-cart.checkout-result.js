@@ -79,7 +79,7 @@
             }).fail(function () {
                 window.location.replace(`/${OrgName}/ShoppingCar`);
             });
-        } else if (window.location.search.substring(1).startsWith("ECPayError")) {
+        } else if (window.location.search.substring(1).startsWith("PaymentError")) {
             co.sweet.confirm("訂單付款發生錯誤", "", "確認", "", null);
         }
     }

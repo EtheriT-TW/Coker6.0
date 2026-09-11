@@ -4,6 +4,18 @@ import { registerCokerPlugins } from './plugins/registerCokerPlugins.js';
 import { registerBasePlugins } from './core/registerBasePlugins.js';
 import { createCokerGrapesEditor, grapesjs } from './core/createCokerGrapesEditor.js';
 import { createOfficialPlugins, officialPluginIds } from './plugins/officialPlugins.js';
+import {
+    fileComponentPlugin,
+    openFileAssetManager,
+    fileAssetAccept,
+    fileAssetType,
+    ebookComponentType,
+    fileDownloadComponentType,
+    fileDownloadSelectCommandId,
+    getDownloadFileExtension,
+    getDownloadIconClass,
+    normalizeFileDownloadComponent
+} from './plugins/file/fileComponentPlugin.js';
 import 'grapesjs/dist/css/grapes.min.css';
 import './styles/swiperEditor.css';
 import './styles/componentInsert/Modal.css';
@@ -15,6 +27,18 @@ export { registerCokerPlugins };
 export { registerBasePlugins };
 export { createCokerGrapesEditor };
 export { createOfficialPlugins, officialPluginIds };
+export {
+    fileComponentPlugin,
+    openFileAssetManager,
+    fileAssetAccept,
+    fileAssetType,
+    ebookComponentType,
+    fileDownloadComponentType,
+    fileDownloadSelectCommandId,
+    getDownloadFileExtension,
+    getDownloadIconClass,
+    normalizeFileDownloadComponent
+};
 export { grapesjs };
 
 

@@ -8,7 +8,6 @@ namespace EtheriT.Coker.Application.Payment
 {
     public class PaymentAvailabilityService : IPaymentAvailabilityService
     {
-        private const long EcpayThirdPartyId = 4;
         private readonly CokerDbContext db;
 
         public PaymentAvailabilityService(CokerDbContext db)
@@ -102,7 +101,7 @@ namespace EtheriT.Coker.Application.Payment
                     unavailableReason = $"此付款方式單筆上限為 NT${FormatAmount(maxAmount.Value)}，目前訂單金額為 NT${FormatAmount(amount)}。";
                 }
 
-                var isEcpay = payment.FK_ThirdPartyId == EcpayThirdPartyId;
+                var provider = PaymentProviderRegistry.Resolve(payment.FK_ThirdPartyId);
 
                 output.Add(new PaymentAvailabilityItemDto
                 {
@@ -113,12 +112,8 @@ namespace EtheriT.Coker.Application.Payment
                         ? string.Empty
                         : $"/images/paymenticon/{payment.Icons}",
                     ThirdPartyId = payment.FK_ThirdPartyId,
-                    ProviderCode = isEcpay
-                        ? "ECPay"
-                        : payment.FK_ThirdPartyId > 0
-                            ? $"ThirdParty:{payment.FK_ThirdPartyId}"
-                            : "Default",
-                    RenderMode = isEcpay ? "Embedded" : "Standard",
+                    ProviderCode = provider.ProviderCode,
+                    RenderMode = provider.RenderMode,
                     MinAmount = minAmount,
                     MaxAmount = maxAmount,
                     CvsStoreSelectionMode = payment.CvsStoreSelectionMode,

@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Logistics;
 using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
 using EtheriT.Coker.Application.Shared.Dto.ThirdParty;
+using EtheriT.Coker.Application.Shared.Payment;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -279,47 +280,63 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         CvsStoreSelectionMode = pt.CvsStoreSelectionMode,
                                     }).ToListAsync();
 
+                foreach (var payment in output)
+                {
+                    var provider = PaymentProviderRegistry.Resolve(payment.FK_ThirdPartyId);
+                    payment.ProviderCode = provider.ProviderCode;
+                    payment.RenderMode = provider.RenderMode;
+                }
+
                 if (output.Any())
                 {
-                    const decimal defaultMax = 20000;
-                    const decimal defaultMin = 31;
-
-                    var ecpayItems = output
-                        .Where(x => x.Code?.ToLower().Contains("ecpay") == true)
+                    var embeddedGroups = output
+                        .Where(x => string.Equals(
+                            x.RenderMode,
+                            "Embedded",
+                            StringComparison.OrdinalIgnoreCase))
+                        .GroupBy(x => x.ProviderCode)
                         .ToList();
 
-                    var nonEcpayItems = output
-                        .Where(x => x.Code?.ToLower().Contains("ecpay") != true)
+                    var displayItems = output
+                        .Where(x => !string.Equals(
+                            x.RenderMode,
+                            "Embedded",
+                            StringComparison.OrdinalIgnoreCase))
                         .ToList();
 
-                    if (ecpayItems.Any())
+                    foreach (var embeddedItems in embeddedGroups)
                     {
-                        decimal maxAmount = ecpayItems
+                        var embeddedEntry = embeddedItems.First();
+                        var descriptor = PaymentProviderRegistry.Resolve(
+                            embeddedEntry.FK_ThirdPartyId);
+                        decimal? maxAmount = embeddedItems
                             .Where(x => x.MaxAmount.HasValue)
-                            .Select(x => x.MaxAmount.Value)
-                            .DefaultIfEmpty(defaultMax)
+                            .Select(x => x.MaxAmount)
+                            .DefaultIfEmpty(descriptor.DefaultMaxAmount)
                             .Max();
 
-                        decimal minAmount = ecpayItems
+                        decimal minAmount = embeddedItems
                             .Select(x => x.MinAmount)
-                            .DefaultIfEmpty(defaultMin)
                             .Min();
 
-                        var ecpayEntry = ecpayItems.First();
-                        nonEcpayItems.Add(new PaymentTypeItemOutputDto
+                        displayItems.Add(new PaymentTypeItemOutputDto
                         {
-                            Id = ecpayEntry.Id,
-                            Title = "其他支付方式",
-                            Code = "ECPay",
-                            FK_ThirdPartyId = ecpayEntry.FK_ThirdPartyId,
+                            Id = embeddedEntry.Id,
+                            Title = string.IsNullOrWhiteSpace(descriptor.EntryTitle)
+                                ? embeddedEntry.Title
+                                : descriptor.EntryTitle,
+                            Code = embeddedEntry.ProviderCode,
+                            FK_ThirdPartyId = embeddedEntry.FK_ThirdPartyId,
                             Icon = "",
                             Used = true,
+                            ProviderCode = embeddedEntry.ProviderCode,
+                            RenderMode = embeddedEntry.RenderMode,
                             MaxAmount = maxAmount,
                             MinAmount = minAmount
                         });
                     }
 
-                    output = nonEcpayItems;
+                    output = displayItems;
 
                     return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
                 }

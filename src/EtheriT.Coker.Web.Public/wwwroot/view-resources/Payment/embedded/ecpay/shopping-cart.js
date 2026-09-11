@@ -18,8 +18,7 @@
         ECPayChanging: false,
         ECPayAvailable: false,
         ECPayOperational: true,
-        SupportApplePay: false,
-        ECPAY_THIRD_PARTY_ID: 4
+        SupportApplePay: false
     };
 
     Object.keys(stateDefaults).forEach(function (key) {
@@ -32,11 +31,11 @@
     var isClearingECPaySelection = false;
     var ecpayRequestVersion = 0;
     var ecpayProvider = Coker.Payment.Core.create("ECPay", {
-        rootSelector: "#EmbeddedPayment"
+        rootSelector: "#ECPayPayment"
     });
 
     function GetECPayEntryRadio() {
-        return $('#RadioPayment input[name="RadioPayment"][data-third-party-id="' + S.ECPAY_THIRD_PARTY_ID + '"]').first();
+        return $('#RadioPayment input[name="RadioPayment"][data-provider-code="ECPay"]').first();
     }
 
     function GetECPayEntryValue() {
@@ -47,7 +46,7 @@
     function IsPaymentRadioECPay($radio) {
         return $radio &&
             $radio.length > 0 &&
-            Number($radio.attr("data-third-party-id") || 0) === S.ECPAY_THIRD_PARTY_ID;
+            String($radio.attr("data-provider-code") || "") === "ECPay";
     }
 
     function IsECPaySelected() {
@@ -63,7 +62,7 @@
         // 只有在沒有任何 RadioPayment 被選取時，
         // 才允許用綠界內部 active 狀態判斷。
         return S.HasECPay &&
-            $("#EmbeddedPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0;
+            $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0;
     }
     function BuildECPayOrderSnapshot() {
         var ids = cart.Items.getSelectedCartIds();
@@ -103,7 +102,7 @@
         S.ECPayOrderSnapshot = "";
 
         $(".payment_provider_loading").addClass("d-none").text("");
-        $("#EmbeddedPayment").empty();
+        $("#ECPayPayment").empty();
         GetECPayEntryRadio().prop("checked", false).closest(".form-check").addClass("d-none");
 
         if (S.PaymentAvailabilityLoaded &&
@@ -134,7 +133,7 @@
             $("#RadioPayment > .form-check").addClass("d-none");
             $(".noPaymentWarning").addClass("d-none");
             $(".payment_provider_loading").addClass("d-none");
-            $("#EmbeddedPayment").empty();
+            $("#ECPayPayment").empty();
             cart.CheckoutValidation.RefreshDisplay();
 
             return;
@@ -166,7 +165,7 @@
             return;
         }
 
-        if (S.ECPayReady && S.ECPayOrderSnapshot === nextSnapshot && typeof window.Pay !== "undefined" && $("#EmbeddedPayment").children().length > 0) {
+        if (S.ECPayReady && S.ECPayOrderSnapshot === nextSnapshot && typeof window.Pay !== "undefined" && $("#ECPayPayment").children().length > 0) {
             return;
         }
 
@@ -176,7 +175,7 @@
 
         $(".payment_provider_loading").removeClass("d-none").text("付款模組載入中...");
         $(".checkoutValidationWarning").addClass("d-none");
-        $("#EmbeddedPayment").empty();
+        $("#ECPayPayment").empty();
 
         var timeout = 0;
         var checkInterval = setInterval(function () {
@@ -245,12 +244,12 @@
                         ClearECPaySelectionIfNotActive();
                         WatchECPaySelectionAutoActive();
 
-                        var $ECPayList = $("#EmbeddedPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+                        var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
                         $ECPayList.removeClass("first last");
                         $ECPayList.first().next("li").addClass("first");
                         $ECPayList.last().addClass("last");
 
-                        $("#EmbeddedPayment").off("click.ecpayPayment").on("click.ecpayPayment", function (e) {
+                        $("#ECPayPayment").off("click.ecpayPayment").on("click.ecpayPayment", function (e) {
                             const trusted = e.originalEvent?.isTrusted;
                             if (trusted !== true) return;
 
@@ -344,7 +343,7 @@
 
         // 沒有綠界 active 時，不要重複整理 first / last，
         // 避免 MutationObserver 因為 class 變動被自己反覆觸發。
-        var hasActive = $("#EmbeddedPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0;
+        var hasActive = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li.ecpay-pl-act").length > 0;
         if (!hasActive) return;
 
         ClearECPaySelection();
@@ -355,7 +354,7 @@
         isClearingECPaySelection = true;
 
         try {
-            var $items = $("#EmbeddedPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+            var $items = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
 
             // 沒有 active 時，不需要再改 class。
             if ($items.filter(".ecpay-pl-act").length === 0) {
@@ -400,7 +399,7 @@
         });
     }
     function GetECPayType() {
-        var $ECPayList = $("#EmbeddedPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+        var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
         var $activeLi = $ECPayList.filter(".ecpay-pl-act");
 
         $("#Step4 .payment_method").text($activeLi.find(".ecpay-pl-intro .ecpay-pl-type").text());
@@ -545,7 +544,7 @@
     }
 
     function ValidateECPayPayment(callback) {
-        if (!S.ECPayReady || S.ECPayChanging || typeof window.Pay === "undefined" || $("#EmbeddedPayment").children().length === 0) {
+        if (!S.ECPayReady || S.ECPayChanging || typeof window.Pay === "undefined" || $("#ECPayPayment").children().length === 0) {
             callback(false, "綠界付款模組尚未載入完成，請稍候再試。");
             return;
         }
@@ -714,13 +713,51 @@
     cart.Payment.Core.register({
         code: "ECPay",
         type: "embedded",
-        thirdPartyId: S.ECPAY_THIRD_PARTY_ID,
         paymentProvider: ecpayProvider,
         isAvailable: function () {
             return S.ECPayAvailable === true;
         },
+        getAvailabilityItems: function (items) {
+            return (items || []).filter(function (item) {
+                return String(item.providerCode || "") === "ECPay" &&
+                    String(item.renderMode || "").toLowerCase() === "embedded";
+            });
+        },
+        applyAvailability: function (items) {
+            var providerItems = this.getAvailabilityItems(items);
+            var availableItems = providerItems.filter(function (item) {
+                return item.isAvailable === true;
+            });
+            var $entry = GetECPayEntryRadio();
+
+            S.ECPayAvailable = availableItems.length > 0 && S.ECPayOperational !== false;
+            S.HasECPay = S.ECPayAvailable && $entry.length > 0;
+
+            if ($entry.length && S.ECPayAvailable) {
+                var first = availableItems[0];
+                $entry
+                    .val(first.id)
+                    .attr("data-availability-id", first.id)
+                    .attr("data-code", first.code)
+                    .attr("data-cvs-store-selection-mode", first.cvsStoreSelectionMode || 0)
+                    .attr("data-minamount", first.minAmount)
+                    .attr("data-maxamount", first.maxAmount == null ? "" : first.maxAmount);
+            } else if ($entry.length) {
+                $entry.prop("checked", false);
+                this.clear();
+                $(".payment_provider_loading").addClass("d-none");
+            }
+
+            return {
+                provider: this,
+                items: providerItems,
+                availableItems: availableItems,
+                available: S.ECPayAvailable,
+                entry: $entry
+            };
+        },
         init: function () {
-            if ($("#EmbeddedPayment").length === 0) {
+            if ($("#ECPayPayment").length === 0) {
                 return;
             }
 
@@ -728,7 +765,7 @@
             S.ECPayOperational = true;
             S.ECPayMonitor = true;
             S.SupportApplePay = CanUseApplePay();
-            ecpayProvider.initialize($("#EmbeddedPayment").data("server-type"), 1, function (errMsg) {
+            ecpayProvider.initialize($("#ECPayPayment").data("server-type"), 1, function (errMsg) {
                 if (errMsg != null) {
                     HandleECPayLoadFailure("SDK 初始化失敗", errMsg, null);
                     return;
@@ -754,7 +791,7 @@
                         .first()
                         .find('input[name="RadioPayment"]');
 
-                    var $ECPayList = $("#EmbeddedPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
+                    var $ECPayList = $("#ECPayPayment .ecpay-pay-list-wrap .ecpay-pay-list > li");
 
                     $ECPayList.removeClass("first");
 
@@ -796,7 +833,7 @@
         },
 
         isLoaded: function () {
-            return typeof window.Pay !== "undefined" && $("#EmbeddedPayment").children().length > 0;
+            return typeof window.Pay !== "undefined" && $("#ECPayPayment").children().length > 0;
         },
 
         getPaymentValue: function () {
@@ -820,7 +857,7 @@
         },
 
         clear: function () {
-            $("#EmbeddedPayment").empty();
+            $("#ECPayPayment").empty();
         },
 
         setMonitor: function (enabled) {

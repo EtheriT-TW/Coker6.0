@@ -120,6 +120,7 @@
             cart.Pricing.updateNextStepByBonus();
 
             S.isRestoringECPayLogistics = true;
+            S.isRestoringLogisticsSelection = true;
 
             S.buy_step_swiper.enable();
             S.buy_step_swiper.slideTo(1, 0);
@@ -164,6 +165,7 @@
                     sessionStorage.removeItem("orderForm");
                     restoreScrollPosition(data.ScrollTop ?? data.scrollTop, function () {
                         S.isRestoringECPayLogistics = false;
+                        S.isRestoringLogisticsSelection = false;
                     });
                 };
 

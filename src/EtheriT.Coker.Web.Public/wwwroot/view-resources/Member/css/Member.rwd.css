@@ -134,7 +134,7 @@
         }
 
         /* Orders - state badge */
-        #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span {
+        #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state .order-state-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -147,23 +147,23 @@
         }
 
             /* 沒有狀態色的狀態，例如已取消，給中性 badge */
-            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span:not(.bg-warning):not(.bg-danger):not(.bg-success) {
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state .order-state-badge:not(.bg-warning):not(.bg-danger):not(.bg-success) {
                 background-color: #e9ecef;
                 color: #495057;
             }
 
             /* 保留 JS 原本套上的 Bootstrap 狀態色 */
-            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span.bg-warning {
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state .order-state-badge.bg-warning {
                 background-color: var(--bs-warning) !important;
                 color: #000 !important;
             }
 
-            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span.bg-danger {
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state .order-state-badge.bg-danger {
                 background-color: var(--bs-danger) !important;
                 color: #fff !important;
             }
 
-            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state span.bg-success {
+            #profile-tab-pane > .content > .order_frame > div:nth-child(2) > .state .order-state-badge.bg-success {
                 background-color: var(--bs-success) !important;
                 color: #fff !important;
             }

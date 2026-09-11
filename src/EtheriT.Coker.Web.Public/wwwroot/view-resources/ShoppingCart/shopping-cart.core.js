@@ -95,6 +95,7 @@
         datachange: true,
         HasECPayLogistics: false,
         isRestoringECPayLogistics: false,
+        isRestoringLogisticsSelection: false,
         RecipientsList_dxData: undefined,
         top_position: undefined
     });

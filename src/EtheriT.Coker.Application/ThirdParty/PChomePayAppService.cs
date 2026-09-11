@@ -96,7 +96,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                             }
                             else throw new Exception("PChomePayRequest錯誤");
                         }
-                        else throw new Exception("PChomePayHeader錯誤");
+                        else throw new Exception(
+                            string.IsNullOrWhiteSpace(response.Message)
+                                ? "PChomePayHeader錯誤"
+                                : response.Message);
                     }
                 }
             }
@@ -825,7 +828,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             try
             {
                 var token = await tokenAppService.CheckToken(null);
-                if (token != null)
+                if (token != null && token.Success)
                 {
                     var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
                     var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
@@ -837,12 +840,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                     var PchomePayAppId = "";
                     var PchomePaySecre = "";
 
-                    if (thirdPartyKeypairValues.Any())
-                    {
-                        PchomePayAppId = thirdPartyKeypairValues.Find(e => e.Key == "PchomePayAppId").Value;
-                        PchomePaySecre = thirdPartyKeypairValues.Find(e => e.Key == "PchomePaySecre").Value;
-                    }
-                    if (PchomePayAppId != "")
+                    PchomePayAppId = thirdPartyKeypairValues
+                        .FirstOrDefault(e => e.Key == "PchomePayAppId")?
+                        .Value ?? "";
+                    PchomePaySecre = thirdPartyKeypairValues
+                        .FirstOrDefault(e => e.Key == "PchomePaySecre")?
+                        .Value ?? "";
+
+                    if (!string.IsNullOrWhiteSpace(PchomePayAppId) &&
+                        !string.IsNullOrWhiteSpace(PchomePaySecre))
                     {
                         string credentials = $"{PchomePayAppId}:{PchomePaySecre}";
                         string encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
@@ -850,16 +856,28 @@ namespace EtheriT.Coker.Application.ThirdParty
                         var RequestUri = $"/v1/token";
 
                         ThirdPartyClient_PCHome.DefaultRequestHeaders.Clear();
+                        using var tokenRequest = new HttpRequestMessage(
+                            HttpMethod.Post,
+                            RequestUri);
+                        tokenRequest.Headers.Authorization =
+                            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                                "Basic",
+                                encodedCredentials);
 
-                        ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("Authorization", $"Basic {encodedCredentials}");
-                        ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("Cookie", $"RefreshToken={token.RefreshToken.ToString()}");
-
-                        var PostResponse = await ThirdPartyClient_PCHome.PostAsync(RequestUri, null);
-                        PostResponse.EnsureSuccessStatusCode();
+                        var PostResponse = await ThirdPartyClient_PCHome.SendAsync(tokenRequest);
                         var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+
+                        if (!PostResponse.IsSuccessStatusCode)
+                        {
+                            response.Message =
+                                $"PChomePay Token API 回傳 HTTP {(int)PostResponse.StatusCode} ({PostResponse.ReasonPhrase})";
+                            return response;
+                        }
+
                         var tokenPayResponse = JsonConvert.DeserializeObject<PChomePayTokenDto>(jsonResponse);
 
-                        if (tokenPayResponse != null)
+                        if (tokenPayResponse != null &&
+                            !string.IsNullOrWhiteSpace(tokenPayResponse.token))
                         {
                             ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("pcpay-token", tokenPayResponse.token);
 
@@ -867,11 +885,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response.Success = true;
 
                         }
-                        else throw new Exception("取得PChomeToken發生錯誤");
+                        else throw new Exception("PChomePay Token API 未回傳有效 token");
                     }
-                    else throw new Exception("查無PCHomePay所需參數");
+                    else throw new Exception(
+                        "後台未設定完整的 PchomePayAppId / PchomePaySecre；sandbox 必須使用測試環境憑證");
                 }
-                else throw new Exception("查無Token資訊");
+                else throw new Exception(
+                    $"網站 Token 驗證失敗：{token?.Error ?? "查無 Token 資訊"}");
             }
             catch (HttpRequestException ex)
             {

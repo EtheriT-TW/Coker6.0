@@ -16,6 +16,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty
         public string Code { get; set; } = string.Empty;
         public bool Used { get; set; }
         public long FK_ThirdPartyId { get; set; }
+        public string ProviderCode { get; set; } = string.Empty;
+        public string RenderMode { get; set; } = "Standard";
         public decimal MinAmount { get; set; }
         public decimal? MaxAmount { get; set; }
         public CvsStoreSelectionModeEnum CvsStoreSelectionMode { get; set; }

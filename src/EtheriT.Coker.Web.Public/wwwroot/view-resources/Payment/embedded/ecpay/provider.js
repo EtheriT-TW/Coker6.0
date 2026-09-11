@@ -94,7 +94,8 @@
 
         function create(options) {
             var settings = $.extend({
-                rootSelector: "#EmbeddedPayment",
+                // ECPay SDK 固定以 #ECPayPayment 作為付款畫面掛載點。
+                rootSelector: "#ECPayPayment",
                 timeoutMs: 60000
             }, options || {});
             var timer = null;
@@ -329,10 +330,12 @@
             return provider;
         }
 
+        var definition = C.Payment.Catalog.get("ECPay");
+
         C.Payment.Core.register({
             code: "ECPay",
             mode: "embedded",
-            aliases: [4],
+            aliases: definition ? definition.aliases : [],
             create: create
         });
 

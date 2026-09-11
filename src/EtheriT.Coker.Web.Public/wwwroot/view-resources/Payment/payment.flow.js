@@ -33,16 +33,21 @@
 
         function repay(providerOrCode, context) {
             var paymentContext = context || {};
-            var provider;
-
-            try {
-                provider = resolveProvider(providerOrCode, paymentContext.providerOptions);
-            } catch (ex) {
+            return C.Payment.Loader.ensure(providerOrCode).then(function () {
+                return repayWithRegisteredProvider(providerOrCode, paymentContext);
+            }, function (ex) {
                 if (typeof paymentContext.onError === "function") {
                     paymentContext.onError("此付款方式尚未註冊，無法重新付款。", ex, null);
                 }
                 return null;
-            }
+            });
+        }
+
+        function repayWithRegisteredProvider(providerOrCode, paymentContext) {
+            var provider = resolveProvider(
+                providerOrCode,
+                paymentContext.providerOptions
+            );
 
             return C.Payment.Repay({ ohid: paymentContext.orderId }).done(function (checkResult) {
                 if (!checkResult || !checkResult.success) {

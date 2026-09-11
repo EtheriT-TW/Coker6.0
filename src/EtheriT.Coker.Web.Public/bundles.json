@@ -146,10 +146,19 @@
       "output": "js/Payment/Payment.min.js",
       "input": [
         "wwwroot/view-resources/Payment/payment.core.js",
+        "wwwroot/view-resources/Payment/payment.providers.config.js",
+        "wwwroot/view-resources/Payment/payment.loader.js",
         "wwwroot/view-resources/Payment/redirect/provider.js",
         "wwwroot/view-resources/Payment/embedded/interface.js",
-        "wwwroot/view-resources/Payment/embedded/ecpay/provider.js",
         "wwwroot/view-resources/Payment/payment.flow.js"
+      ]
+    },
+    {
+      "output": "js/Payment/providers/ECPay.min.js",
+      "input": [
+        "wwwroot/view-resources/Payment/embedded/ecpay/provider.js",
+        "wwwroot/view-resources/Payment/embedded/ecpay/member.js",
+        "wwwroot/view-resources/Payment/embedded/ecpay/shopping-cart.js"
       ]
     },
     {
@@ -161,7 +170,6 @@
         "wwwroot/view-resources/Member/js/Member.Profile.js",
         "wwwroot/view-resources/Member/js/Member.Bonus.js",
         "wwwroot/view-resources/Member/js/Member.Products.js",
-        "wwwroot/view-resources/Payment/embedded/ecpay/member.js",
         "wwwroot/view-resources/Member/js/Member.OrderPayment.js",
         "wwwroot/view-resources/Member/js/Member.Orders.js",
         "wwwroot/view-resources/Member/js/Member.Router.js",
@@ -185,7 +193,6 @@
 
         "wwwroot/view-resources/ShoppingCart/shopping-cart.payment.core.js",
         "wwwroot/view-resources/Payment/hosts/shopping-cart/availability.js",
-        "wwwroot/view-resources/Payment/embedded/ecpay/shopping-cart.js",
         "wwwroot/view-resources/Payment/hosts/shopping-cart/interface.js",
 
         "wwwroot/view-resources/ShoppingCart/shopping-cart.order.js",

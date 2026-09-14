@@ -1,0 +1,23 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    ViewData["Title"] = "無權存取";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>無權存取 - Coker Platform</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="access-page">
+    <main class="access-card">
+        <span class="access-code">403</span>
+        <h1>目前帳號無法使用客戶管理平台</h1>
+        <p>此平台目前只開放給系統管理員。</p>
+        <a class="btn btn-primary" href="@($"{Configuration["SystemLinks:MvcUrl"]?.TrimEnd('/')}/Welcome")">返回網站管理後台</a>
+    </main>
+</body>
+</html>

@@ -6,6 +6,8 @@ namespace EtheriT.Coker.Web.MVC.Models.Header
     {
         public UserDto User { get; set; }
         public string DefaultUrl {  get; set; } = string.Empty;
+        public bool CanAccessPlatform { get; set; }
+        public string PlatformUrl { get; set; } = string.Empty;
 
     }
 }

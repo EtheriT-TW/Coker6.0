@@ -7,6 +7,14 @@
         <li class="nav-item" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Switch Application">
             <a data-bs-toggle="modal" href="#" data-bs-target="#switchApp" class="nav-link"><span class="material-symbols-outlined align-middle">apps</span></a>
         </li>
+        @if (Model.CanAccessPlatform && !string.IsNullOrWhiteSpace(Model.PlatformUrl))
+        {
+            <li class="nav-item" data-bs-toggle="tooltip" data-bs-placement="bottom" title="客戶管理平台">
+                <a href="@Model.PlatformUrl" class="nav-link" aria-label="前往客戶管理平台">
+                    <span class="material-symbols-outlined align-middle">admin_panel_settings</span>
+                </a>
+            </li>
+        }
         <li class="nav-item">
             <a href="@Model.DefaultUrl" class="nav-link" target="_blank">
                 <i class="material-symbols-outlined">

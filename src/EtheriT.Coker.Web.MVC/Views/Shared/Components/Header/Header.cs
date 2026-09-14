@@ -9,16 +9,24 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Header
     {
         private readonly IBackstageAccountAppService accountAppService;
         private readonly LoginUserData loginUserData;
-        public Header(IBackstageAccountAppService accountAppService, LoginUserData loginUserData) {
+        private readonly IConfiguration configuration;
+
+        public Header(
+            IBackstageAccountAppService accountAppService,
+            LoginUserData loginUserData,
+            IConfiguration configuration) {
             this.accountAppService = accountAppService;
             this.loginUserData = loginUserData;
+            this.configuration = configuration;
         }
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var user = await accountAppService.GetCurrentUser();
             HeaderModel model = new HeaderModel { 
                 User = user,
-                DefaultUrl = await loginUserData.GetWebsiteUrl()
+                DefaultUrl = await loginUserData.GetWebsiteUrl(),
+                CanAccessPlatform = await loginUserData.isSystemUser(),
+                PlatformUrl = configuration["SystemLinks:PlatformUrl"] ?? string.Empty
             };
             return View(model);
         }

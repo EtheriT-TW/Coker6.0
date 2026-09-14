@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "MVC + Platform",
+    "Projects": [
+      {
+        "Path": "src\\EtheriT.Coker.Web.MVC\\EtheriT.Coker.Web.MVC.csproj",
+        "Action": "Start",
+        "DebugTarget": "EtheriT.Coker.Web.MVC"
+      },
+      {
+        "Path": "src\\EtheriT.Coker.Web.Platform\\EtheriT.Coker.Web.Platform.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]

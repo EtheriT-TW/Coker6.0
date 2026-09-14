@@ -1,4 +1,5 @@
 using EtheriT.Coker.Web.Platform.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -6,16 +7,13 @@ namespace EtheriT.Coker.Web.Platform.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
         {
             return View();
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

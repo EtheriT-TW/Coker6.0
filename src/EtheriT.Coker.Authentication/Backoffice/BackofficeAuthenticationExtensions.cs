@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -13,25 +14,56 @@ public static class BackofficeAuthenticationExtensions
 {
     public static AuthenticationBuilder AddCokerBackofficeAuthentication(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        bool enableJwtBearer = true,
+        Action<CookieAuthenticationOptions>? configureCookie = null)
     {
+        var dataProtection = services
+            .AddDataProtection()
+            .SetApplicationName(BackofficeAuthenticationDefaults.DataProtectionApplicationName);
+
+        var keyPath = configuration.GetValue<string>("BackofficeAuthentication:DataProtectionKeysPath");
+        if (!string.IsNullOrWhiteSpace(keyPath))
+        {
+            dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keyPath));
+        }
+
+        var authentication = services.AddAuthentication(options =>
+        {
+            var defaultScheme = enableJwtBearer
+                ? BackofficeAuthenticationDefaults.PolicyScheme
+                : CookieAuthenticationDefaults.AuthenticationScheme;
+
+            options.DefaultScheme = defaultScheme;
+            options.DefaultAuthenticateScheme = defaultScheme;
+            options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        });
+
+        authentication.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+        {
+            options.LoginPath = "/";
+            options.ExpireTimeSpan = TimeSpan.FromDays(1);
+            options.Cookie.Name = BackofficeAuthenticationDefaults.CookieName;
+
+            var cookieDomain = configuration.GetValue<string>("BackofficeAuthentication:CookieDomain");
+            if (!string.IsNullOrWhiteSpace(cookieDomain))
+            {
+                options.Cookie.Domain = cookieDomain;
+            }
+
+            configureCookie?.Invoke(options);
+        });
+
+        if (!enableJwtBearer)
+        {
+            return authentication;
+        }
+
         var signKey = configuration.GetValue<string>("JwtSettings:SignKey")
             ?? throw new InvalidOperationException("JwtSettings:SignKey 尚未設定");
 
-        return services
-            .AddAuthentication(options =>
-            {
-                options.DefaultScheme = BackofficeAuthenticationDefaults.PolicyScheme;
-                options.DefaultAuthenticateScheme = BackofficeAuthenticationDefaults.PolicyScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-            {
-                options.LoginPath = "/";
-                options.ExpireTimeSpan = TimeSpan.FromDays(1);
-                options.Cookie.Name = BackofficeAuthenticationDefaults.CookieName;
-            })
+        authentication
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 options.IncludeErrorDetails = true;
@@ -74,5 +106,7 @@ public static class BackofficeAuthenticationExtensions
                             : CookieAuthenticationDefaults.AuthenticationScheme;
                     };
                 });
+
+        return authentication;
     }
 }

@@ -223,6 +223,10 @@ a[href="https://translate.google.com"] {
     font-size: 0.6em;
 }
 
+.product-addon__original .money__symbol {
+    font-size: .6rem;
+}
+
 /* 附註列與劃線原價：符號縮小 */
 .price-meta-value .money__symbol,
 .origin-price .money__symbol {

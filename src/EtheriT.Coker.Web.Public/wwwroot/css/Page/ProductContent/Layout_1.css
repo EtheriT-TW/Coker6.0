@@ -139,6 +139,8 @@
 .price-base-meta {
     display: block;
     padding-top: 1rem;
+    /* 電腦版縮排對齊價格卡；992px 以下由下方 RWD 區塊覆寫為 1rem */
+    padding-left: 3.5rem;
 }
 
     .price-base-meta .suggest-price,

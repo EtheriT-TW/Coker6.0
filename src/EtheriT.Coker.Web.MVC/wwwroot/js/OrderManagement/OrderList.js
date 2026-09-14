@@ -148,7 +148,17 @@ function PageReady() {
             OrderId: keyId,
             ThirdParties: payment,
         }).done(function (result) {
-            var state = result.message.split(",")[0];
+            if (!result || !result.success) {
+                co.sweet.error("付款狀態查詢失敗", result?.message || result?.error || "無法取得金流付款狀態", null, false);
+                return;
+            }
+
+            var state = String(result.message || "").split(",")[0];
+            if (!state) {
+                co.sweet.error("付款狀態查詢失敗", "金流回傳的訂單狀態格式不正確", null, false);
+                return;
+            }
+
             if (state != oristate) {
                 $(".btn_recheck").addClass("d-none");
                 $order_status.val(state);
@@ -1145,10 +1155,11 @@ function OrderStateChange(state) {
 
     switch (parseInt(state)) {
         case 1:
-            if (thirdparty == 3) $(".btn_recheck").removeClass("d-none");
+            if (thirdparty == 3 || payment === "綠界支付") $(".btn_recheck").removeClass("d-none");
             break;
         case 5:
-            if (thirdparty != 1 && thirdparty != 4) $(".btn_failReason").removeClass("d-none");
+            if (payment === "綠界支付") $(".btn_recheck").removeClass("d-none");
+            else if (thirdparty != 1 && thirdparty != 4) $(".btn_failReason").removeClass("d-none");
             break;
         case 6:
             switch (payment) {

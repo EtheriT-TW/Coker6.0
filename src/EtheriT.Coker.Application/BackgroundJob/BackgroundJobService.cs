@@ -1,4 +1,6 @@
 ﻿using Hangfire;
+using EtheriT.Coker.Application.Configuration;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +12,13 @@ namespace EtheriT.Coker.Application.BackgroundJob
     public class BackgroundJobService
     {
         private readonly IRecurringJobManager _recurringJobManager;
-        public BackgroundJobService(IRecurringJobManager recurringJobManager)
+        private readonly ECPayPaymentReconciliationOptions ecpayPaymentOptions;
+        public BackgroundJobService(
+            IRecurringJobManager recurringJobManager,
+            IOptions<ECPayPaymentReconciliationOptions> ecpayPaymentOptions)
         {
             _recurringJobManager = recurringJobManager;
+            this.ecpayPaymentOptions = ecpayPaymentOptions.Value;
         }
         public void InitializeJobs()
         {
@@ -58,6 +64,26 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 job => job.SynchronizeAllAsync(),
                 Cron.Daily(1),
                 new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            if (ecpayPaymentOptions.Enabled)
+            {
+                var intervalMinutes = Math.Clamp(
+                    ecpayPaymentOptions.IntervalMinutes,
+                    1,
+                    60);
+                var schedule = intervalMinutes == 60
+                    ? Cron.Hourly()
+                    : Cron.MinuteInterval(intervalMinutes);
+
+                _recurringJobManager.AddOrUpdate<ECPayPaymentReconciliationWorking>(
+                    "ECPayPaymentReconciliation",
+                    job => job.ReconcilePendingApplePayOrders(),
+                    schedule,
+                    new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            }
+            else
+            {
+                _recurringJobManager.RemoveIfExists("ECPayPaymentReconciliation");
+            }
             _recurringJobManager.RemoveIfExists("FlowSizes"); //暫時移除該工作
             //_recurringJobManager.AddOrUpdate<FlowSizesWorking>("FlowSizes", job => job.FlowSizeCollection(), Cron.Daily(17, 00));
         }

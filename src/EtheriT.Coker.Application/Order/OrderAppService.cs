@@ -1392,7 +1392,18 @@ namespace EtheriT.Coker.Application.Order
                 if (oh == null)
                     throw new Exception("找不到對應的暫存訂單。");
 
+                // Apple Pay 的伺服器通知可能早於手機完成暫存單正式化。
+                // 已由金流確認付款的狀態不可被前端送回的待確認狀態覆蓋。
+                var stateBeforeFormalization = oh.State;
+                var completedDateBeforeFormalization = oh.CompletedDate;
+
                 mapper.Map(dto, oh);
+
+                if (!isTemp && stateBeforeFormalization == OrderStatusEnum.已付款)
+                {
+                    oh.State = OrderStatusEnum.已付款;
+                    oh.CompletedDate = completedDateBeforeFormalization;
+                }
 
                 oh.FK_WebsiteId = websiteId;
                 oh.FK_UUID = uuid;

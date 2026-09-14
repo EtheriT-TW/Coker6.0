@@ -264,16 +264,24 @@ a[href="https://translate.google.com"] {
    原本的 text-decoration 已從各自的 CSS 移除：
      .cart-reward-original             → ShoppingCart.css
      .product-addon__original          → ProductAddOnPurchase.css
-     .product-reward-preview__original → ProductRewardPreview.css */
+     .product-reward-preview__original → ProductRewardPreview.css
+     .pro_old_unit                     → ShoppingCar.cshtml 的 class */
 .cart-reward-original,
 .product-addon__original,
-.product-reward-preview__original {
+.product-reward-preview__original,
+.pro_old_unit {
     background-image: linear-gradient(currentColor, currentColor);
     background-size: 100% 1px;
     background-position: 0 50%;
     background-repeat: no-repeat;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+}
+
+/* 購物車舊價是 div，會撐滿整個單價欄，收成內容寬度線才不會拖太長。
+   線是背景不是 text-decoration，所以 inline-block 不影響繪製。 */
+.pro_old_unit {
+    display: inline-block;
 }
 
 /* 購物車：金額欄位一律維持符號與數字同大小 */

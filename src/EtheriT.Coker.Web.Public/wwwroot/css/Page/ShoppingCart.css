@@ -678,10 +678,10 @@ input[type="number"] {
     white-space: nowrap;
 }
 
+/* 劃線改由 Default_Site.css 的背景漸層繪製，線的高度才不受貨幣符號字級影響 */
 .cart-reward-original {
     color: #999;
     font-size: .72rem;
-    text-decoration: line-through;
 }
 
 .cart-reward-quantity {

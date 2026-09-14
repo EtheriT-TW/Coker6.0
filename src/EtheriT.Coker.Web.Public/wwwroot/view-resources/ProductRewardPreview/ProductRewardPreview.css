@@ -48,7 +48,8 @@
 }
 
 .product-reward-preview__offer { color: var(--reward-preview-accent); font-size: 1.2rem; font-weight: 800; }
-.product-reward-preview__original { color: #8a929b; text-decoration: line-through; }
+/* 劃線改由 Default_Site.css 的背景漸層繪製 */
+.product-reward-preview__original { color: #8a929b; }
 .product-reward-preview__hint { margin-top: 1.25rem; color: #68717c; font-size: .9rem; }
 .product-reward-preview__footer { gap: .75rem; }
 

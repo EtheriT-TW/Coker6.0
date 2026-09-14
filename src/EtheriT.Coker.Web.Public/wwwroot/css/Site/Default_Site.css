@@ -255,6 +255,23 @@ a[href="https://translate.google.com"] {
     font-size: .88rem;
 }
 
+/* 「原價 ＋ 金額」型欄位：前綴文字也要一起被劃掉，所以線畫在整個容器上，
+   載體不是 .money（與上面那組的差別只在這裡）。
+   原本的 text-decoration 已從各自的 CSS 移除：
+     .cart-reward-original             → ShoppingCart.css
+     .product-addon__original          → ProductAddOnPurchase.css
+     .product-reward-preview__original → ProductRewardPreview.css */
+.cart-reward-original,
+.product-addon__original,
+.product-reward-preview__original {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 100% 1px;
+    background-position: 0 50%;
+    background-repeat: no-repeat;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
 /* 購物車：金額欄位一律維持符號與數字同大小 */
 .cart-price-block .money__symbol,
 .cart-price-main .money__symbol,

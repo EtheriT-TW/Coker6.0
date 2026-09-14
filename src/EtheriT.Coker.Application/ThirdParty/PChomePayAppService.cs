@@ -58,6 +58,13 @@ namespace EtheriT.Coker.Application.ThirdParty
             var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
             try
             {
+                // 前台發起付款時才驗證網站 Token。退款、查詢與金流回呼可能由
+                // 後台或第三方伺服器觸發，不能在共用的 Header 建立流程中依賴前台 Cookie。
+                var token = await tokenAppService.CheckToken(null);
+                if (token == null || !token.Success)
+                    throw new Exception(
+                        $"網站 Token 驗證失敗：{token?.Error ?? "查無 Token 資訊"}");
+
                 if (ohdata != null)
                 {
                     PChomePayPaymentDto PaymentBody = await PChomeGetPaymentBody(ohdata);
@@ -694,6 +701,12 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
+                // 會員端取消訂單屬於前台操作，仍須在入口驗證網站 Token。
+                var token = await tokenAppService.CheckToken(null);
+                if (token == null || !token.Success)
+                    throw new Exception(
+                        $"網站 Token 驗證失敗：{token?.Error ?? "查無 Token 資訊"}");
+
                 var ohdata = await db.Order_Headers
                     .Where(e => e.Id == ohid)
                     .FirstOrDefaultAsync();
@@ -827,71 +840,65 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var token = await tokenAppService.CheckToken(null);
-                if (token != null && token.Success)
+                var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
+                var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
+                                                     join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
+                                                     join tp in db.ThirdParties on tpk.FK_TPid equals tp.Id
+                                                     where tp.Title == "支付連"
+                                                     where tpkv.FK_WebsiteId == WebsiteId
+                                                     select new KeyValueDto() { Key = tpk.Title, Value = tpkv.Value }).ToListAsync();
+                var PchomePayAppId = "";
+                var PchomePaySecre = "";
+
+                PchomePayAppId = thirdPartyKeypairValues
+                    .FirstOrDefault(e => e.Key == "PchomePayAppId")?
+                    .Value ?? "";
+                PchomePaySecre = thirdPartyKeypairValues
+                    .FirstOrDefault(e => e.Key == "PchomePaySecre")?
+                    .Value ?? "";
+
+                if (!string.IsNullOrWhiteSpace(PchomePayAppId) &&
+                    !string.IsNullOrWhiteSpace(PchomePaySecre))
                 {
-                    var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
-                    var thirdPartyKeypairValues = await (from tpkv in db.ThirdPartyKeypairValues
-                                                         join tpk in db.ThirdPartyKeypairs on tpkv.FK_ThirdPartyKeypairId equals tpk.Id
-                                                         join tp in db.ThirdParties on tpk.FK_TPid equals tp.Id
-                                                         where tp.Title == "支付連"
-                                                         where tpkv.FK_WebsiteId == WebsiteId
-                                                         select new KeyValueDto() { Key = tpk.Title, Value = tpkv.Value }).ToListAsync();
-                    var PchomePayAppId = "";
-                    var PchomePaySecre = "";
+                    string credentials = $"{PchomePayAppId}:{PchomePaySecre}";
+                    string encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
 
-                    PchomePayAppId = thirdPartyKeypairValues
-                        .FirstOrDefault(e => e.Key == "PchomePayAppId")?
-                        .Value ?? "";
-                    PchomePaySecre = thirdPartyKeypairValues
-                        .FirstOrDefault(e => e.Key == "PchomePaySecre")?
-                        .Value ?? "";
+                    var RequestUri = $"/v1/token";
 
-                    if (!string.IsNullOrWhiteSpace(PchomePayAppId) &&
-                        !string.IsNullOrWhiteSpace(PchomePaySecre))
+                    ThirdPartyClient_PCHome.DefaultRequestHeaders.Clear();
+                    using var tokenRequest = new HttpRequestMessage(
+                        HttpMethod.Post,
+                        RequestUri);
+                    tokenRequest.Headers.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue(
+                            "Basic",
+                            encodedCredentials);
+
+                    var PostResponse = await ThirdPartyClient_PCHome.SendAsync(tokenRequest);
+                    var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
+
+                    if (!PostResponse.IsSuccessStatusCode)
                     {
-                        string credentials = $"{PchomePayAppId}:{PchomePaySecre}";
-                        string encodedCredentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
-
-                        var RequestUri = $"/v1/token";
-
-                        ThirdPartyClient_PCHome.DefaultRequestHeaders.Clear();
-                        using var tokenRequest = new HttpRequestMessage(
-                            HttpMethod.Post,
-                            RequestUri);
-                        tokenRequest.Headers.Authorization =
-                            new System.Net.Http.Headers.AuthenticationHeaderValue(
-                                "Basic",
-                                encodedCredentials);
-
-                        var PostResponse = await ThirdPartyClient_PCHome.SendAsync(tokenRequest);
-                        var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-
-                        if (!PostResponse.IsSuccessStatusCode)
-                        {
-                            response.Message =
-                                $"PChomePay Token API 回傳 HTTP {(int)PostResponse.StatusCode} ({PostResponse.ReasonPhrase})";
-                            return response;
-                        }
-
-                        var tokenPayResponse = JsonConvert.DeserializeObject<PChomePayTokenDto>(jsonResponse);
-
-                        if (tokenPayResponse != null &&
-                            !string.IsNullOrWhiteSpace(tokenPayResponse.token))
-                        {
-                            ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("pcpay-token", tokenPayResponse.token);
-
-                            response.Message = $"{tokenPayResponse.token}; {tokenPayResponse.expired_in}; {tokenPayResponse.expired_timestamp}";
-                            response.Success = true;
-
-                        }
-                        else throw new Exception("PChomePay Token API 未回傳有效 token");
+                        response.Message =
+                            $"PChomePay Token API 回傳 HTTP {(int)PostResponse.StatusCode} ({PostResponse.ReasonPhrase})";
+                        return response;
                     }
-                    else throw new Exception(
-                        "後台未設定完整的 PchomePayAppId / PchomePaySecre；sandbox 必須使用測試環境憑證");
+
+                    var tokenPayResponse = JsonConvert.DeserializeObject<PChomePayTokenDto>(jsonResponse);
+
+                    if (tokenPayResponse != null &&
+                        !string.IsNullOrWhiteSpace(tokenPayResponse.token))
+                    {
+                        ThirdPartyClient_PCHome.DefaultRequestHeaders.Add("pcpay-token", tokenPayResponse.token);
+
+                        response.Message = $"{tokenPayResponse.token}; {tokenPayResponse.expired_in}; {tokenPayResponse.expired_timestamp}";
+                        response.Success = true;
+
+                    }
+                    else throw new Exception("PChomePay Token API 未回傳有效 token");
                 }
                 else throw new Exception(
-                    $"網站 Token 驗證失敗：{token?.Error ?? "查無 Token 資訊"}");
+                    "後台未設定完整的 PchomePayAppId / PchomePaySecre；sandbox 必須使用測試環境憑證");
             }
             catch (HttpRequestException ex)
             {

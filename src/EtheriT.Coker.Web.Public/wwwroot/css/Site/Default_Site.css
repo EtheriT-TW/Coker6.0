@@ -209,6 +209,16 @@ a[href="https://translate.google.com"] {
 .spec-suggest-value .money__symbol {
     font-size: 0.7em;
 }
+/* 主售價：把 .money 釘在數字的基準字級，
+   底下的 0.6em / 1em 才是真正「相對數字」的比例 */
+.sale-price .money {
+    font-size: 1.3rem;
+}
+
+.sale-price .money__amount {
+    font-size: 1em;
+}
+
 /* 主售價：符號略小於數字 */
 .sale-price .money__symbol {
     font-size: 0.6em;

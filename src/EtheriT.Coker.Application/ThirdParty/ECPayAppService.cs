@@ -149,50 +149,77 @@ namespace EtheriT.Coker.Application.ThirdParty
                         if (queryTradeResponse.Success)
                         {
                             var message = "交易處理中";
-                            if (ohdata.State == OrderStatusEnum.待付款)
+                            var canReconcile =
+                                ohdata.State == OrderStatusEnum.待確認 ||
+                                ohdata.State == OrderStatusEnum.待付款 ||
+                                ohdata.State == OrderStatusEnum.付款失敗;
+
+                            if (queryTradeResponse.OrderInfo?.TradeStatus == "1")
                             {
-                                if (queryTradeResponse.OrderInfo.TradeStatus == "1")
+                                message = "交易已完成";
+
+                                if (canReconcile)
                                 {
-                                    message = "交易已完成";
-                                    await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已付款);
-                                }
-                                else
-                                {
-                                    DateTime tradeDate = DateTime.ParseExact(queryTradeResponse.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
-                                    switch (queryTradeResponse.OrderInfo.PaymentType)
+                                    var payTime = ResolveECPayPaymentTime(queryTradeResponse.OrderInfo);
+                                    var paidUpdate = await TryMarkECPayPaidAsync(
+                                        ohdata.Id,
+                                        payTime,
+                                        "ECPayOrderState");
+
+                                    if (paidUpdate)
                                     {
-                                        case "Credit":
-                                        case "CreditInstallment":
-                                        case "UnionPay":
-                                        case "ApplePay":
-                                            if (DateTimeNow > tradeDate.AddMinutes(30))
-                                            {
-                                                message = "交易失敗";
-                                                await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.付款失敗);
-                                            }
-                                            break;
-                                        case "ATM":
-                                            if (DateTimeNow > tradeDate.AddDays(double.Parse(ThirdPartyData.ExpireDate)))
-                                            {
-                                                message = "交易失敗";
-                                                await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.付款失敗);
-                                            }
-                                            break;
-                                        case "CVS":
-                                            if (DateTimeNow > tradeDate.AddDays(double.Parse(ThirdPartyData.StoreExpireDate_CVS)))
-                                            {
-                                                message = "交易失敗";
-                                                await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.付款失敗);
-                                            }
-                                            break;
-                                        case "Barcode":
-                                            if (DateTimeNow > tradeDate.AddDays(double.Parse(ThirdPartyData.StoreExpireDate_Barcode)))
-                                            {
-                                                message = "交易失敗";
-                                                await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.付款失敗);
-                                            }
-                                            break;
+                                        ohdata.State = OrderStatusEnum.已付款;
+                                        ohdata.CompletedDate = payTime;
                                     }
+                                    else
+                                    {
+                                        ohdata.State = await db.Order_Headers
+                                            .Where(e => e.Id == ohdata.Id)
+                                            .Select(e => e.State)
+                                            .FirstAsync();
+                                    }
+                                }
+                            }
+                            else if (canReconcile && ohdata.State != OrderStatusEnum.付款失敗)
+                            {
+                                DateTime tradeDate = DateTime.ParseExact(queryTradeResponse.OrderInfo.TradeDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture);
+                                switch (queryTradeResponse.OrderInfo.PaymentType)
+                                {
+                                    case "Credit":
+                                    case "CreditInstallment":
+                                    case "UnionPay":
+                                    case "ApplePay":
+                                        if (DateTimeNow > tradeDate.AddMinutes(30))
+                                        {
+                                            message = "交易失敗";
+                                            if (await TryMarkECPayFailedAsync(ohdata.Id))
+                                                ohdata.State = OrderStatusEnum.付款失敗;
+                                        }
+                                        break;
+                                    case "ATM":
+                                        if (DateTimeNow > tradeDate.AddDays(double.Parse(ThirdPartyData.ExpireDate)))
+                                        {
+                                            message = "交易失敗";
+                                            if (await TryMarkECPayFailedAsync(ohdata.Id))
+                                                ohdata.State = OrderStatusEnum.付款失敗;
+                                        }
+                                        break;
+                                    case "CVS":
+                                        if (DateTimeNow > tradeDate.AddDays(double.Parse(ThirdPartyData.StoreExpireDate_CVS)))
+                                        {
+                                            message = "交易失敗";
+                                            if (await TryMarkECPayFailedAsync(ohdata.Id))
+                                                ohdata.State = OrderStatusEnum.付款失敗;
+                                        }
+                                        break;
+                                    case "Barcode":
+                                        if (DateTimeNow > tradeDate.AddDays(double.Parse(ThirdPartyData.StoreExpireDate_Barcode)))
+                                        {
+                                            message = "交易失敗";
+                                            if (await TryMarkECPayFailedAsync(ohdata.Id))
+                                                ohdata.State = OrderStatusEnum.付款失敗;
+                                        }
+                                        break;
                                 }
                             }
                             response.Success = true;
@@ -210,6 +237,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             return response;
         }
+
         public async Task<ResponseMessageDto> ECPayRefund(long ohid)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -407,6 +435,82 @@ namespace EtheriT.Coker.Application.ThirdParty
             return string.Equals(payment?.Code, "ECPayApplePay", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(payment?.Title, "ApplePay", StringComparison.OrdinalIgnoreCase);
         }
+
+        private static DateTime ResolveECPayPaymentTime(ECPayResponseDataDto.OrderInfoDto orderInfo)
+        {
+            var payTimeText = !string.IsNullOrWhiteSpace(orderInfo.PaymentDate)
+                ? orderInfo.PaymentDate
+                : orderInfo.TradeDate;
+
+            return DateTime.TryParseExact(
+                payTimeText,
+                "yyyy/MM/dd HH:mm:ss",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var payTime)
+                    ? payTime
+                    : DateTime.Now;
+        }
+
+        private async Task<bool> TryMarkECPayPaidAsync(
+            long orderId,
+            DateTime payTime,
+            string source)
+        {
+            // 條件式更新可讓 ReturnURL、人工查單與背景補查同時抵達時，
+            // 只有第一個成功更新的流程寄送付款成功信。
+            var updatedRows = await db.Order_Headers
+                .Where(e =>
+                    e.Id == orderId &&
+                    (e.State == OrderStatusEnum.待確認 ||
+                     e.State == OrderStatusEnum.待付款 ||
+                     e.State == OrderStatusEnum.付款失敗))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(e => e.State, OrderStatusEnum.已付款)
+                    .SetProperty(e => e.CompletedDate, payTime)
+                    .SetProperty(e => e.LastModificationTime, DateTime.Now));
+
+            if (updatedRows == 0)
+                return false;
+
+            var mailResult = await orderAppService.PaySuccessMailSend(orderId, payTime);
+            if (!mailResult.Success)
+            {
+                try
+                {
+                    await loginUserData.SetLogs(
+                        0,
+                        configuration.GetValue<long>("WebConfig:SiteId"),
+                        $"{source}PaySuccessMailFail",
+                        JsonConvert.SerializeObject(new
+                        {
+                            OrderId = orderId,
+                            MailMessage = mailResult.Message,
+                            MailError = mailResult.Error
+                        }));
+                }
+                catch
+                {
+                    // 付款狀態已完成，寄信與記錄失敗不得回滾付款結果。
+                }
+            }
+
+            return true;
+        }
+
+        private async Task<bool> TryMarkECPayFailedAsync(long orderId)
+        {
+            var updatedRows = await db.Order_Headers
+                .Where(e =>
+                    e.Id == orderId &&
+                    (e.State == OrderStatusEnum.待確認 ||
+                     e.State == OrderStatusEnum.待付款))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(e => e.State, OrderStatusEnum.付款失敗)
+                    .SetProperty(e => e.LastModificationTime, DateTime.Now));
+
+            return updatedRows > 0;
+        }
         public async Task<IActionResult> ECPayOrderResult(string ResultData)
         {
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -483,55 +587,22 @@ namespace EtheriT.Coker.Application.ThirdParty
                         return "1|OK";
                     }
 
-                    if (ohdata.State == OrderStatusEnum.待確認 ||
-                        ohdata.State == OrderStatusEnum.待付款 ||
-                        ohdata.State == OrderStatusEnum.付款失敗)
+                    var payTime = ResolveECPayPaymentTime(ResponseData.OrderInfo);
+                    var paidUpdate = await TryMarkECPayPaidAsync(
+                        ohdata.Id,
+                        payTime,
+                        "ECPayReturn");
+
+                    if (!paidUpdate)
                     {
-                        var payTimeText = !string.IsNullOrWhiteSpace(ResponseData.OrderInfo.PaymentDate)
-                            ? ResponseData.OrderInfo.PaymentDate
-                            : ResponseData.OrderInfo.TradeDate;
+                        var latestState = await db.Order_Headers
+                            .Where(e => e.Id == ohdata.Id)
+                            .Select(e => e.State)
+                            .FirstAsync();
 
-                        if (!DateTime.TryParseExact(
-                                payTimeText,
-                                "yyyy/MM/dd HH:mm:ss",
-                                CultureInfo.InvariantCulture,
-                                DateTimeStyles.None,
-                                out var payTime))
-                        {
-                            payTime = DateTime.Now;
-                        }
+                        if (latestState == OrderStatusEnum.已付款)
+                            return "1|OK";
 
-                        ohdata.State = OrderStatusEnum.已付款;
-                        ohdata.CompletedDate = payTime;
-                        ohdata.LastModificationTime = DateTime.Now;
-                        db.SaveChanges();
-
-                        var mailResult = await orderAppService.PaySuccessMailSend(ohdata.Id, payTime);
-                        if (!mailResult.Success)
-                        {
-                            try
-                            {
-                                await loginUserData.SetLogs(
-                                    0,
-                                    configuration.GetValue<long>("WebConfig:SiteId"),
-                                    "ECPayReturnPaySuccessMailFail",
-                                    JsonConvert.SerializeObject(new
-                                    {
-                                        OrderId = ohdata.Id,
-                                        TransactionId = ohdata.TransactionId,
-                                        MailMessage = mailResult.Message,
-                                        MailError = mailResult.Error
-                                    })
-                                );
-                            }
-                            catch
-                            {
-                                // 綠界回呼已完成付款狀態更新，寄信失敗 log 不應影響回傳結果。
-                            }
-                        }
-                    }
-                    else
-                    {
                         await loginUserData.SetLogs(
                             0,
                             configuration.GetValue<long>("WebConfig:SiteId"),
@@ -539,8 +610,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                             JsonConvert.SerializeObject(new
                             {
                                 OrderId = ohdata.Id,
-                                State = ohdata.State,
-                                StateValue = (int)ohdata.State,
+                                State = latestState,
+                                StateValue = (int)latestState,
                                 TransactionId = ohdata.TransactionId,
                                 RtnCode = ResponseData.RtnCode,
                                 TradeStatus = ResponseData.OrderInfo.TradeStatus,
@@ -552,8 +623,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                 }
                 else
                 {
-                    ohdata.LastModificationTime = DateTime.Now;
-
                     await loginUserData.SetLogs(
                         0,
                         configuration.GetValue<long>("WebConfig:SiteId"),
@@ -571,9 +640,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                         })
                     );
 
-                    // 只有綠界沒有回成功付款時才標付款失敗。
-                    ohdata.State = OrderStatusEnum.付款失敗;
-                    db.SaveChanges();
+                    // 失敗通知只允許更新尚未完成的付款；不得把已付款、已出貨等狀態降級。
+                    await TryMarkECPayFailedAsync(ohdata.Id);
                 }
 
                 return "1|OK";

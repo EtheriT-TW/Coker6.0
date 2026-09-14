@@ -403,6 +403,9 @@ builder.Services.Configure<DatabaseRetentionOptions>(
 builder.Services.AddScoped<RemoteDailyStatisticsWorking>();
 builder.Services.Configure<RemoteAnalyticsOptions>(
     builder.Configuration.GetSection("RemoteAnalytics"));
+builder.Services.AddScoped<ECPayPaymentReconciliationWorking>();
+builder.Services.Configure<ECPayPaymentReconciliationOptions>(
+    builder.Configuration.GetSection("PaymentReconciliation:ECPay"));
 builder.Services.AddScoped<IBonusManagementAppService, BonusManagementAppService>();
 builder.Services.AddScoped<IFileManagementAppService, FileManagementAppService>();
 builder.Services.Configure<AuthenticationSettings>(builder.Configuration.GetSection("Authentication"));

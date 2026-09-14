@@ -38,10 +38,48 @@
             .replace(/'/g, "&#039;");
     }
 
+    let currencySymbol = "NT$";
+    let priceDecimalDigits = 0;
+    let currencyResolved = false;
+
+    // 幣別設定由 View 的 hidden input 帶入；此 IIFE 在 DOM 就緒前執行，所以延後到第一次使用時才讀。
+    function resolveCurrency() {
+        if (currencyResolved) return;
+
+        const $symbol = $("#MarketingCurrencySymbol");
+        if (!$symbol.length) return;
+
+        currencySymbol = $symbol.val() || currencySymbol;
+        const digits = parseInt($("#MarketingPriceDecimalDigits").val(), 10);
+        priceDecimalDigits = Number.isFinite(digits) && digits > 0 ? digits : 0;
+        currencyResolved = true;
+    }
+
+    function getCurrencySymbol() {
+        resolveCurrency();
+        return currencySymbol;
+    }
+
+    function getPriceDecimalDigits() {
+        resolveCurrency();
+        return priceDecimalDigits;
+    }
+
+    function roundToCurrency(value) {
+        const factor = Math.pow(10, getPriceDecimalDigits());
+        return Math.round(value * factor) / factor;
+    }
+
     function formatMoney(value) {
+        const digits = getPriceDecimalDigits();
         return parseNumber(value).toLocaleString("zh-TW", {
-            maximumFractionDigits: 2
+            minimumFractionDigits: digits,
+            maximumFractionDigits: Math.max(digits, 2)
         });
+    }
+
+    function formatCurrency(value) {
+        return `${getCurrencySymbol()} ${formatMoney(value)}`;
     }
 
     function parseNumber(value) {
@@ -653,8 +691,9 @@
                         ${self.renderPriceReferences(item)}
                         <label>活動價
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text">NT$</span>
-                                <input class="form-control" type="number" min="0" value="${item.offerPrice}"
+                                <span class="input-group-text">${escapeHtml(getCurrencySymbol())}</span>
+                                <input class="form-control" type="number" min="0" step="any" value="${item.offerPrice}"
+                                    data-decimal-digits="${getPriceDecimalDigits()}"
                                     data-reward-key="${item.clientKey}" data-reward-field="offerPrice">
                             </div>
                         </label>
@@ -759,14 +798,17 @@
 
         updateBatchPriceUI: function () {
             const isFixed = $("#RewardBatchPriceMode").val() === "fixed";
+            const digits = getPriceDecimalDigits();
             const $value = $("#RewardBatchPriceValue");
             $("#RewardBatchPriceValueLabel").text(isFixed ? "活動價" : "折扣折數");
-            $("#RewardBatchPriceUnit").text(isFixed ? "NT$" : "折");
+            $("#RewardBatchPriceUnit").text(isFixed ? getCurrencySymbol() : "折");
             $value.attr({
                 min: isFixed ? "0" : "1",
-                step: isFixed ? "1" : "1",
+                step: isFixed && digits > 0 ? "any" : "1",
                 placeholder: isFixed ? "請輸入金額" : "例如 9 或 90（九折）"
             });
+            // 折數一律整數，切到折數模式時把小數位數收回 0
+            $value.attr("data-decimal-digits", isFixed ? digits : 0);
             if (isFixed) $value.removeAttr("max");
             else $value.attr("max", "99");
             $("#RewardBatchPriceFeedback").text("");
@@ -819,7 +861,7 @@
                         skipped += 1;
                         return;
                     }
-                    offerPrice = Math.round(basePrice * discountPercent / 100);
+                    offerPrice = roundToCurrency(basePrice * discountPercent / 100);
                 }
                 item.offerPrice = Math.max(0, offerPrice);
                 item.offerPriceCustomized = true;
@@ -848,9 +890,9 @@
                 const roleName = price.roleName || (price.roleId === 0 || price.roleId === 1 ? "非會員" : `角色 ${price.roleId}`);
                 const isOriginal = originalIndex >= 0 && index === 0;
                 let valueText = "";
-                if (price.price > 0) valueText += `NT$ ${formatMoney(price.price)}`;
+                if (price.price > 0) valueText += formatCurrency(price.price);
                 if (price.bonus > 0) valueText += `${valueText ? " ＋ " : ""}紅利 ${formatMoney(price.bonus)}`;
-                if (!valueText) valueText = "NT$ 0";
+                if (!valueText) valueText = formatCurrency(0);
 
                 return `<div class="marketing-price-reference-row${isOriginal ? " is-original" : ""}">
                     <span>${escapeHtml(roleName)}${isOriginal ? "（原價）" : ""}</span>
@@ -860,13 +902,13 @@
 
             if (!priceRows.length) {
                 priceRows.push(`<div class="marketing-price-reference-row is-original">
-                    <span>原價</span><strong>NT$ ${formatMoney(item.originalPrice)}</strong>
+                    <span>原價</span><strong>${escapeHtml(formatCurrency(item.originalPrice))}</strong>
                 </div>`);
             }
 
             if (Number(item.suggestPrice) > 0) {
                 priceRows.push(`<div class="marketing-price-reference-row is-suggested">
-                    <span>建議售價</span><strong>NT$ ${formatMoney(item.suggestPrice)}</strong>
+                    <span>建議售價</span><strong>${escapeHtml(formatCurrency(item.suggestPrice))}</strong>
                 </div>`);
             }
 
@@ -951,8 +993,8 @@
                 const quantity = conditionQuantity || 1;
                 conditionText = `${scopeSummary}任選合計 ${quantity} 件，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
             }
-            if (mode === "order-amount-addon") conditionText = `整筆訂單滿 NT$ ${formatMoney(conditionAmount)}，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
-            if (mode === "scope-amount-addon") conditionText = `${scopeSummary}的有效小計滿 NT$ ${formatMoney(conditionAmount)}，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
+            if (mode === "order-amount-addon") conditionText = `整筆訂單滿 ${formatCurrency(conditionAmount)}，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
+            if (mode === "scope-amount-addon") conditionText = `${scopeSummary}的有效小計滿 ${formatCurrency(conditionAmount)}，即取得一次資格；每次可從 ${rewardSummary} 中選擇 ${selection} 件。`;
 
             const repeatText = this.$repeatable.prop("checked") ? "購買達倍數時可重複取得資格" : "每筆訂單僅取得一次資格";
             const hasCompleteCondition = mode === "product-addon"
@@ -968,9 +1010,9 @@
                 const isGift = Number(item.offerPrice) === 0;
                 const priceHtml = isGift
                     ? '<span class="marketing-storefront-price is-gift">免費贈送</span>'
-                    : `<span class="marketing-storefront-price">NT$ ${formatMoney(item.offerPrice)}</span>`;
+                    : `<span class="marketing-storefront-price">${escapeHtml(formatCurrency(item.offerPrice))}</span>`;
                 const originalPriceHtml = !isGift && Number(item.originalPrice) > Number(item.offerPrice)
-                    ? `<del>原價 NT$ ${formatMoney(item.originalPrice)}</del>` : "";
+                    ? `<del>原價 ${escapeHtml(formatCurrency(item.originalPrice))}</del>` : "";
 
                 return `<div class="swiper-slide">
                   <div class="marketing-storefront-item">
@@ -1719,9 +1761,9 @@
         const rewardItemCount = Number(rowData.rewardItemCount ?? rowData.RewardItemCount ?? 0);
         const minOfferPrice = Number(rowData.minOfferPrice ?? rowData.MinOfferPrice ?? 0);
         const maxOfferPrice = Number(rowData.maxOfferPrice ?? rowData.MaxOfferPrice ?? 0);
-        const amountText = Number(minAmount || 0).toLocaleString();
+        const amountText = formatMoney(minAmount);
 
-        if (ruleType === RULE.amountDiscount) return `滿 ${amountText} 折 ${Number(discountAmount || 0).toLocaleString()}`;
+        if (ruleType === RULE.amountDiscount) return `滿 ${amountText} 折 ${formatMoney(discountAmount)}`;
         if (ruleType === RULE.percentDiscount) return `滿 ${amountText} 打 ${formatMarketingDiscountPercent(discountPercent)} 折`;
         if (ruleType === RULE.addOnPurchase) {
             let condition = "訂單滿額加價購／贈品";
@@ -1731,8 +1773,8 @@
             const price = minOfferPrice === 0 && maxOfferPrice === 0
                 ? "贈品"
                 : minOfferPrice === maxOfferPrice
-                    ? `活動價 $${formatMoney(minOfferPrice)}`
-                    : `$${formatMoney(minOfferPrice)}～$${formatMoney(maxOfferPrice)}`;
+                    ? `活動價 ${formatCurrency(minOfferPrice)}`
+                    : `${formatCurrency(minOfferPrice)}～${formatCurrency(maxOfferPrice)}`;
             return `${condition}｜${rewardItemCount} 項優惠商品｜${price}`;
         }
         return "尚未設定";

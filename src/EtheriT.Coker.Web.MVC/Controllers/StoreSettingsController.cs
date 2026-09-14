@@ -1,6 +1,9 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+﻿using EtheriT.Coker.Application.Shared.Currency;
+using EtheriT.Coker.Application.Shared.Dto.enumType.ThirdParty;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Web.MVC.Models.StoreSettings;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
@@ -47,9 +50,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             ViewData["Title"] = "LogisticsSettings";
             return View("LogisticsSettings", response);
         }
-        public IActionResult MarketingSettings()
+        public async Task<IActionResult> MarketingSettings()
         {
-            return View();
+            var priceCurrencySetting = await _storeSetAppService.getValues(new StoreSetGetValueInput { key = "priceCurrency" });
+            var priceCurrency = CurrencyCatalog.Resolve(priceCurrencySetting.detailItem?.value?.FirstOrDefault());
+
+            return View(new MarketingSettingsModel
+            {
+                CurrencySymbol = priceCurrency.Symbol,
+                PriceDecimalDigits = priceCurrency.DecimalDigits
+            });
         }
         public IActionResult LogisticsBox() {
             return View();

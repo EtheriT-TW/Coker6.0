@@ -3,14 +3,20 @@
 @using EtheriT.Coker.Web.MVC.Common
 @using EtheriT.Coker.Web.MVC.Extensions
 @using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
+@model EtheriT.Coker.Web.MVC.Models.StoreSettings.MarketingSettingsModel
 @{
     ViewData["Title"] = "MarketingSettings";
     var canUseProdAddition = Context.HasPermission(CokerContextKeys.ProdAddition);
+    var amountMin = Model.PriceDecimalDigits > 0
+        ? "0." + new string('0', Model.PriceDecimalDigits - 1) + "1"
+        : "1";
 }
 
 <input id="MarketingCanUseProdAddition"
        type="hidden"
        value="@canUseProdAddition.ToString().ToLowerInvariant()" />
+<input id="MarketingCurrencySymbol" type="hidden" value="@Model.CurrencySymbol" />
+<input id="MarketingPriceDecimalDigits" type="hidden" value="@Model.PriceDecimalDigits" />
 <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/StoreSettings/MarketingSettings.min.css" asp-append-version="true" />
 <script src="~/lib/swiper/swiper-bundle.min.js" asp-append-version="true"></script>
@@ -236,16 +242,18 @@
                             <div class="col-12 col-md-4">
                                 <label class="form-label required_sign" for="InputMinAmount">滿額門檻</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">NT$</span>
-                                    <input id="InputMinAmount" class="form-control" name="MinAmount" type="number" min="1" data-form-type="number">
+                                    <span class="input-group-text">@Model.CurrencySymbol</span>
+                                    <input id="InputMinAmount" class="form-control" name="MinAmount" type="number" min="@amountMin" step="any"
+                                           data-decimal-digits="@Model.PriceDecimalDigits" data-form-type="number">
                                 </div>
                             </div>
 
                             <div class="col-12 col-md-4 rewardAmountSection d-none">
                                 <label class="form-label required_sign" for="InputDiscountAmount">折抵金額</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">NT$</span>
-                                    <input id="InputDiscountAmount" class="form-control" name="DiscountAmount" type="number" min="1" data-form-type="number">
+                                    <span class="input-group-text">@Model.CurrencySymbol</span>
+                                    <input id="InputDiscountAmount" class="form-control" name="DiscountAmount" type="number" min="@amountMin" step="any"
+                                           data-decimal-digits="@Model.PriceDecimalDigits" data-form-type="number">
                                 </div>
                             </div>
 
@@ -270,8 +278,9 @@
                             <div class="col-12 col-md-4 rewardPercentSection d-none">
                                 <label class="form-label" for="InputMaxDiscountAmount">最高折抵</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">NT$</span>
-                                    <input id="InputMaxDiscountAmount" class="form-control" name="MaxDiscountAmount" type="number" min="0" data-form-type="number">
+                                    <span class="input-group-text">@Model.CurrencySymbol</span>
+                                    <input id="InputMaxDiscountAmount" class="form-control" name="MaxDiscountAmount" type="number" min="0" step="any"
+                                           data-decimal-digits="@Model.PriceDecimalDigits" data-form-type="number">
                                 </div>
                                 <div class="form-text">可留空，表示不限制。</div>
                             </div>
@@ -313,8 +322,9 @@
                                 <div id="AddOnAmountSection" class="mt-3 d-none">
                                     <label id="AddOnAmountLabel" class="form-label required_sign" for="InputAddOnMinAmount">滿額門檻</label>
                                     <div class="input-group">
-                                        <span class="input-group-text">NT$</span>
-                                        <input id="InputAddOnMinAmount" class="form-control" type="number" min="1" data-form-type="number">
+                                        <span class="input-group-text">@Model.CurrencySymbol</span>
+                                        <input id="InputAddOnMinAmount" class="form-control" type="number" min="@amountMin" step="any"
+                                               data-decimal-digits="@Model.PriceDecimalDigits" data-form-type="number">
                                     </div>
                                     <div id="AddOnAmountHelp" class="form-text"></div>
                                 </div>
@@ -345,8 +355,9 @@
                                         <select id="RewardBatchPriceMode" class="form-select form-select-sm"></select>
                                         <label id="RewardBatchPriceValueLabel" for="RewardBatchPriceValue">活動價</label>
                                         <div class="input-group input-group-sm marketing-batch-price-value">
-                                            <input id="RewardBatchPriceValue" class="form-control" type="number" min="0" step="1" placeholder="請輸入金額">
-                                            <span id="RewardBatchPriceUnit" class="input-group-text">NT$</span>
+                                            <input id="RewardBatchPriceValue" class="form-control" type="number" min="0" step="1"
+                                                   data-decimal-digits="@Model.PriceDecimalDigits" placeholder="請輸入金額">
+                                            <span id="RewardBatchPriceUnit" class="input-group-text">@Model.CurrencySymbol</span>
                                         </div>
                                         <button id="ApplyRewardBatchPrice" type="button" class="btn btn-sm btn-outline-danger">套用到全部</button>
                                     </div>

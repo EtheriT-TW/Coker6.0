@@ -1,6 +1,8 @@
 ﻿using DevExpress.AspNetCore;
 using DevExpress.AspNetCore.Reporting;
 using DevExpress.XtraCharts;
+using EtheriT.Coker.Authentication.Backoffice;
+using EtheriT.Coker.Authentication.ExternalProviders;
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Article;
@@ -88,8 +90,6 @@ using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Razor;
@@ -98,20 +98,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi;
 using MiniExcelLibs;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using System.Security.Claims;
-using System.Text;
 using IODirectory = System.IO.Directory;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = builder.Services.BuildServiceProvider();
 var configuration = provider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-var authenticationConfig = builder.Configuration.GetSection("Authentication");
 
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
@@ -128,178 +122,9 @@ builder.Services.AddMemoryCache()
         builder.UseMemoryStore();
     });
 
-var OAuth = builder.Services
-    .AddAuthentication(options =>
-    {
-        // custom scheme defined in .AddPolicyScheme() below
-        options.DefaultScheme = "JWT_OR_COOKIE";  // 讓 API 可以使用 JWT 或 Cookie
-        options.DefaultAuthenticateScheme = "JWT_OR_COOKIE";
-        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme; // 遇到 401 時優先跳轉登入
-        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    })
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-    {
-        options.LoginPath = "/";
-        options.ExpireTimeSpan = TimeSpan.FromDays(1);
-        options.Cookie.Name = ".Coker6.Back.Auth";
-    }).AddCookie("External", options =>
-    {
-        options.Cookie.Name = ".Coker6.External";
-        options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-    })
-    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-    {
-        // 當驗證失敗時，回應標頭會包含 WWW-Authenticate 標頭，這裡會顯示失敗的詳細錯誤原因
-        options.IncludeErrorDetails = true; // 預設值為 true，有時會特別關閉
-
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            // 透過這項宣告，就可以從 "sub" 取值並設定給 User.Identity.Name
-            NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
-            // 透過這項宣告，就可以從 "roles" 取值，並可讓 [Authorize] 判斷角色
-            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
-
-            // 一般我們都會驗證 Issuer
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration.GetValue<string>("JwtSettings:Issuer"),
-
-            // 通常不太需要驗證 Audience
-            ValidateAudience = false,
-            //ValidAudience = "JwtAuthDemo", // 不驗證就不需要填寫
-
-            // 一般我們都會驗證 Token 的有效期間
-            ValidateLifetime = true,
-
-            // 如果 Token 中包含 key 才需要驗證，一般都只有簽章而已
-            ValidateIssuerSigningKey = true,
-
-            // "1234567890123456" 應該從 IConfiguration 取得
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("JwtSettings:SignKey")))
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine($"JWT 驗證失敗: {context.Exception.Message}");
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                Console.WriteLine($"JWT 驗證成功: {context.Principal?.Identity?.Name}");
-                return Task.CompletedTask;
-            }
-        };
-    })
-    .AddPolicyScheme("JWT_OR_COOKIE", "Select JWT or Cookie dynamically", options =>
-    {
-        // runs on each request
-        options.ForwardDefaultSelector = context =>
-        {
-            // filter by auth type
-            string authorization = context.Request.Headers[HeaderNames.Authorization];
-            if (!string.IsNullOrEmpty(authorization) && authorization.StartsWith("Bearer "))
-                return JwtBearerDefaults.AuthenticationScheme;
-
-            // otherwise always check for cookie auth
-            return CookieAuthenticationDefaults.AuthenticationScheme;
-        };
-    });
-var LineConfig = authenticationConfig.GetSection("Line");
-if (!string.IsNullOrEmpty(LineConfig["ChannelId"]) && !string.IsNullOrEmpty(LineConfig["ChannelSecret"])) {
-    OAuth.AddLine(options =>
-    {
-        options.ClientId = LineConfig["ChannelId"] ?? "";
-        options.ClientSecret = LineConfig["ChannelSecret"] ?? "";
-        options.CallbackPath = "/SigninLine";
-
-        options.Scope.Clear(); // 清掉 LINE 套件預設的 profile
-        options.Scope.Add("openid");
-        options.Scope.Add("profile");
-        options.Scope.Add("email");
-        options.SignInScheme = "External";
-
-        options.SaveTokens = true;
-
-        options.Events.OnCreatingTicket = async ctx =>
-        {
-            var idToken = ctx.TokenResponse.Response?.RootElement.GetProperty("id_token").GetString();
-            if (!string.IsNullOrEmpty(idToken))
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jwt = handler.ReadJwtToken(idToken);
-
-                if (jwt.Payload.TryGetValue("email", out var email))
-                {
-                    ctx.Identity?.AddClaim(new Claim(ClaimTypes.Email, email?.ToString()!));
-                }
-
-                if (jwt.Payload.TryGetValue("name", out var name))
-                {
-                    ctx.Identity?.AddClaim(new Claim(ClaimTypes.Name, name?.ToString()!));
-                }
-            }
-        };
-
-        options.Events.OnRedirectToAuthorizationEndpoint = context =>
-        {
-            var uri = new UriBuilder(context.RedirectUri);
-            var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-            var updated = new Dictionary<string, string>();
-            foreach (var kv in query)
-                updated[kv.Key] = kv.Value.ToString();
-
-            updated["bot_prompt"] = "normal";
-
-            uri.Query = string.Join("&", updated.Select(kv => $"{kv.Key}={kv.Value}"));
-            context.Response.Redirect(uri.ToString());
-            return Task.CompletedTask;
-        };
-
-        options.CorrelationCookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;    // 先設好
-        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
-    });
-}
-var GoogleConfig = authenticationConfig.GetSection("Google");
-if (!string.IsNullOrEmpty(GoogleConfig["ClientId"]) && !string.IsNullOrEmpty(GoogleConfig["ClientSecret"]))
-{
-    OAuth.AddGoogle(options =>
-    {
-        options.ClientId = GoogleConfig["ClientId"] ?? "";
-        options.ClientSecret = GoogleConfig["ClientSecret"] ?? "";
-        options.CallbackPath = "/signin-google";
-        options.SignInScheme = "External";
-    });
-}
-var FacebookConfig = authenticationConfig.GetSection("Facebook");
-if (!string.IsNullOrEmpty(FacebookConfig["AppId"]) && !string.IsNullOrEmpty(FacebookConfig["AppSecret"]))
-{
-    OAuth.AddFacebook(options =>
-    {
-        options.AppId = FacebookConfig["AppId"] ?? "";
-        options.AppSecret = FacebookConfig["AppSecret"] ?? "";
-        options.CallbackPath = "/signin-facebook";
-        options.SignInScheme = "External";
-    });
-}
-var AppleConfig = authenticationConfig.GetSection("Apple");
-var privateKeyPath = AppleConfig["PrivateKeyPath"];
-if (!string.IsNullOrEmpty(AppleConfig["ClientId"]) && !string.IsNullOrEmpty(AppleConfig["KeyId"]) && !string.IsNullOrEmpty(AppleConfig["TeamId"]) && !string.IsNullOrEmpty(privateKeyPath)) {
-    OAuth.AddApple("Apple", options => {
-        options.ClientId = AppleConfig["ClientId"] ?? "";
-        options.KeyId = AppleConfig["KeyId"] ?? "";
-        options.TeamId = AppleConfig["TeamId"] ?? "";
-        options.CallbackPath = "/signin-apple";
-        options.SignInScheme = "External";
-        var fileProvider = new PhysicalFileProvider(IODirectory.GetCurrentDirectory());
-        options.UsePrivateKey(fileName =>
-        {
-            return fileProvider.GetFileInfo(privateKeyPath);
-        });
-    });
-}
+builder.Services
+    .AddCokerBackofficeAuthentication(builder.Configuration)
+    .AddCokerExternalProviders(builder.Configuration, IODirectory.GetCurrentDirectory());
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -558,10 +383,10 @@ app.UseCookiePolicy(
             var isCorrelation = ctx.CookieName.StartsWith(".AspNetCore.Correlation.", StringComparison.Ordinal);
             var isNonce = ctx.CookieName.StartsWith(".AspNetCore.Nonce.", StringComparison.Ordinal);
             var isAuth = 
-                ctx.CookieName == ".Coker6.Back.Auth" ||
+                ctx.CookieName == BackofficeAuthenticationDefaults.CookieName ||
                 ctx.CookieName == ".AspNetCore.Cookies";
 
-            var isExternal = ctx.CookieName == ".Coker6.External";
+            var isExternal = ctx.CookieName == ExternalAuthenticationDefaults.TemporaryCookieName;
 
             if (isCorrelation || isNonce || isAuth || isExternal)
             {

@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Web.ConsoleAp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtheriT.Coker.Web.Platform", "src\EtheriT.Coker.Web.Platform\EtheriT.Coker.Web.Platform.csproj", "{140ED906-4FAD-EF67-BF17-833B58109F07}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtheriT.Coker.Authentication", "src\EtheriT.Coker.Authentication\EtheriT.Coker.Authentication.csproj", "{6039F54A-EBC7-4A83-B0C4-E66B301DFA43}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{140ED906-4FAD-EF67-BF17-833B58109F07}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{140ED906-4FAD-EF67-BF17-833B58109F07}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{140ED906-4FAD-EF67-BF17-833B58109F07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6039F54A-EBC7-4A83-B0C4-E66B301DFA43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6039F54A-EBC7-4A83-B0C4-E66B301DFA43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6039F54A-EBC7-4A83-B0C4-E66B301DFA43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6039F54A-EBC7-4A83-B0C4-E66B301DFA43}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +78,7 @@ Global
 		{D8036602-9658-4AFA-B75A-322121A37006} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
 		{103ED6C9-24AB-4F0D-9910-4CF504F65E01} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
 		{140ED906-4FAD-EF67-BF17-833B58109F07} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
+		{6039F54A-EBC7-4A83-B0C4-E66B301DFA43} = {D830B09F-8058-4728-9DB3-AFDD200E419A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8029B80B-F0C2-4A1D-B6CF-B53520B1D55B}

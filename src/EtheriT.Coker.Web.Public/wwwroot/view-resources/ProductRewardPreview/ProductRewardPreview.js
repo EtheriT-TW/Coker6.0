@@ -7,10 +7,16 @@
     var restoreParent = null;
     var rootSelector = '#ProductRewardPreviewModal';
     var number = function (value) { return Number.parseInt(value, 10) || 0; };
+    // 金額可能含小數（例：USD 385.99），不可走 parseInt，小數會被截斷。
+    // 數量與 id 仍用上面的 number。
+    var money = function (value) {
+        var num = Number(String(value == null ? 0 : value).replace(/,/g, '').trim());
+        return isNaN(num) ? 0 : num;
+    };
     // CokerCurrency 由 _Layout.cshtml 的 head 內嵌 script 無條件定義。
-    var formatMoney = function (value) { return window.CokerCurrency.format(number(value)); };
+    var formatMoney = function (value) { return window.CokerCurrency.format(money(value)); };
     // 拆出貨幣符號的 HTML 版本，注入時必須用 .html()
-    var formatMoneyHtml = function (value) { return window.CokerCurrency.formatHtml(number(value)); };
+    var formatMoneyHtml = function (value) { return window.CokerCurrency.formatHtml(money(value)); };
 
     function $root() { return $(rootSelector); }
 

@@ -511,6 +511,7 @@ app.UseDevExpressControls();
 // 添加 AntiforgeryDebugMiddleware
 app.UseMiddleware<AntiforgeryDebugMiddleware>();
 app.UseMiddleware<AuthenticationMiddleware>();
+app.UseMiddleware<BackofficeNavigationPreferenceMiddleware>();
 
 // 設定 Hangfire 儀表板（可以設置需要權限控制的路徑）
 app.UseHangfireDashboard("/hangfire", new DashboardOptions

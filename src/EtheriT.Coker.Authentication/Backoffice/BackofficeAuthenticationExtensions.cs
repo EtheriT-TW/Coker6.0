@@ -25,6 +25,7 @@ public static class BackofficeAuthenticationExtensions
 
         services.Configure<BackofficeSessionOptions>(
             configuration.GetSection(BackofficeSessionOptions.SectionName));
+        services.AddSingleton<BackofficeNavigationPreferenceCookie>();
 
         var keyPath = configuration.GetValue<string>("BackofficeAuthentication:DataProtectionKeysPath");
         if (!string.IsNullOrWhiteSpace(keyPath))

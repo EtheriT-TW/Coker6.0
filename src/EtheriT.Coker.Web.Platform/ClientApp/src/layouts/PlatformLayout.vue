@@ -6,6 +6,7 @@ import {
   type SessionState
 } from "@/services/http-client";
 import { getPlatformContext } from "@/services/platform-context";
+import { recordPlatformLocation } from "@/services/navigation-preference";
 import { startSessionLifecycle } from "@/services/session-lifecycle";
 import {
   completeReauthentication,
@@ -21,6 +22,7 @@ const checkingSession = ref(false);
 const reauthenticationPassword = ref("");
 const reauthenticationError = ref("");
 let stopSessionLifecycle: (() => void) | undefined;
+let navigationPreferenceReady = false;
 
 const pageTitle = computed(() =>
   typeof route.meta.title === "string" ? route.meta.title : "Platform"
@@ -38,8 +40,11 @@ const operationLinks = [
   { to: "/settings", icon: "settings", label: "系統設定" }
 ];
 
-watch(() => route.fullPath, () => {
+watch(() => route.fullPath, (path) => {
   sidebarOpen.value = false;
+  if (navigationPreferenceReady) {
+    void recordPlatformLocation(path);
+  }
 });
 
 function handleSessionStateChanged(event: Event): void {
@@ -78,6 +83,8 @@ onMounted(async () => {
     const context = await getPlatformContext();
     userName.value = context.UserName;
     mvcUrl.value = `${context.MvcUrl}/Welcome`;
+    navigationPreferenceReady = true;
+    void recordPlatformLocation(route.fullPath);
     stopSessionLifecycle = startSessionLifecycle(
       context.SessionActivityIntervalSeconds
     );

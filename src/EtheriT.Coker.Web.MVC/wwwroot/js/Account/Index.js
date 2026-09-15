@@ -36,6 +36,22 @@
     }
 
     const returnUrl = getSafeReturnUrl();
+    const hasExplicitReturnUrl = new URLSearchParams(window.location.search).has("returnUrl");
+
+    function navigateAfterLogin() {
+        const data = hasExplicitReturnUrl ? { returnUrl: returnUrl } : {};
+        $.ajax({
+            url: "/api/navigation/post-login-destination",
+            method: "GET",
+            data: data,
+            dataType: "json"
+        }).done(function (result) {
+            const destination = result && (result.Url || result.url);
+            location.href = typeof destination === "string" && destination ? destination : returnUrl;
+        }).fail(function () {
+            location.href = returnUrl;
+        });
+    }
 
     function getForgetId() {
         return new URLSearchParams(window.location.search).get("forgetId");
@@ -66,7 +82,7 @@
 
     co.User.Check().done(function (result) {
         if (result.success) {
-            location.href = returnUrl;
+            navigateAfterLogin();
             return;
         }
     });
@@ -87,7 +103,7 @@
             }
 
             // Login API 優先使用 HttpOnly LastWebSite Cookie，沒有有效 Cookie 時才使用第一個置頂網站。
-            location.href = returnUrl;
+            navigateAfterLogin();
         });
     });
 

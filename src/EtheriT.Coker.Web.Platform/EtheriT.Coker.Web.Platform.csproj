@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DevExtreme.AspNet.Core" Version="25.2.8" />
     <PackageReference Include="DevExtreme.AspNet.Data" Version="5.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.10" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.21.0" />
@@ -19,6 +18,12 @@
     <ProjectReference Include="..\EtheriT.Coker.Application.Shared\EtheriT.Coker.Application.Shared.csproj" />
     <ProjectReference Include="..\EtheriT.Coker.Core\EtheriT.Coker.Core.csproj" />
     <ProjectReference Include="..\EtheriT.Coker.EntityFrameworkCore\EtheriT.Coker.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="ClientApp\**" />
+    <None Remove="ClientApp\**" />
+    <None Include="ClientApp\**" Exclude="ClientApp\node_modules\**" />
   </ItemGroup>
 
 </Project>

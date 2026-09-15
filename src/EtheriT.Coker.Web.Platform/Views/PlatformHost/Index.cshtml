@@ -1,0 +1,39 @@
+@model ViteEntryAssets
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Coker Customer Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@@20..48,300,0,0" rel="stylesheet" />
+    <style>
+        body { margin: 0; font-family: "Microsoft JhengHei", system-ui, sans-serif; background: #f5f7fb; color: #172033; }
+        .platform-starting, .frontend-not-built { min-height: 100vh; display: grid; place-content: center; gap: 10px; padding: 24px; text-align: center; }
+        .frontend-not-built strong { font-size: 22px; }
+        .frontend-not-built p { margin: 0; color: #6e7789; }
+        .frontend-not-built code { color: #2957d7; }
+    </style>
+    @foreach (var stylePath in Model.StylePaths)
+    {
+        <link rel="stylesheet" href="@stylePath" />
+    }
+</head>
+<body>
+    @if (Model.IsAvailable)
+    {
+        <div id="app">
+            <div class="platform-starting">Coker Platform 載入中…</div>
+        </div>
+        <script type="module" src="@Model.ScriptPath"></script>
+    }
+    else
+    {
+        <main class="frontend-not-built">
+            <strong>Platform 前端資源尚未建立</strong>
+            <p>請先在 EtheriT.Coker.Web.Platform 執行 <code>npm install</code>，再執行 <code>npm run create-bundles</code>。</p>
+        </main>
+    }
+</body>
+</html>

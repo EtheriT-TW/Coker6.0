@@ -398,6 +398,9 @@ src/**/package-lock.json
 # Keep package-lock.json for frontend workspace packages.
 !packages/**/package-lock.json
 
+# Platform is a Vue/Vite application; keep its resolved npm dependency graph reproducible.
+!src/EtheriT.Coker.Web.Platform/package-lock.json
+
 # Thumbnail image
 **/wwwroot/thumb/**/*.*
 
@@ -412,6 +415,7 @@ launchSettings.json
 # codex
 .codex-*/
 **/devextreme-license.js
+**/devextreme-license.ts
 
 # Frontend package build outputs
 packages/*/dist/

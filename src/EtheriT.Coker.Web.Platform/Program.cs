@@ -1,6 +1,7 @@
 using EtheriT.Coker.Authentication.Backoffice;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Platform.Security;
+using EtheriT.Coker.Web.Platform.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +25,32 @@ builder.Services.AddCokerBackofficeAuthentication(
     {
         options.LoginPath = "/Home/AccessDenied";
         options.AccessDeniedPath = "/Home/AccessDenied";
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddScoped<IAuthorizationHandler, PlatformAccessHandler>();
+builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddAuthorization(options =>
 {
     var platformAccessPolicy = new AuthorizationPolicyBuilder()
@@ -54,11 +78,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Dashboard}/{action=Index}/{id?}")
+    pattern: "{controller=PlatformHost}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.MapFallbackToController("Index", "PlatformHost");
 
 app.Run();

@@ -48,8 +48,6 @@ button, input, select, textarea { font: inherit; }
 .platform-nav-link.router-link-active { color: var(--platform-primary); background: var(--platform-primary-soft); }
 .platform-nav-link.router-link-active .material-symbols-outlined { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
 
-.sidebar-footer { display: flex; align-items: center; gap: 9px; margin-top: auto; padding: 14px 12px 2px; color: var(--platform-muted); border-top: 1px solid var(--platform-line); font-size: 12px; }
-.environment-dot { width: 8px; height: 8px; border-radius: 50%; background: #28b67a; box-shadow: 0 0 0 4px #e8f8f1; }
 .platform-main { min-height: 100vh; margin-left: var(--platform-sidebar); }
 .platform-header { position: sticky; top: 0; z-index: 1020; height: 72px; display: flex; align-items: center; gap: 16px; padding: 0 32px; background: rgba(255, 255, 255, .94); border-bottom: 1px solid var(--platform-line); backdrop-filter: blur(10px); }
 .header-context { display: flex; flex-direction: column; }
@@ -111,7 +109,9 @@ button, input, select, textarea { font: inherit; }
 .session-button { min-height: 42px; padding: 10px 18px; border: 1px solid transparent; border-radius: 9px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
 .session-button-primary { background: #285bd4; color: #fff; }
 .session-button-secondary { border-color: #cbd5e1; background: #fff; color: #334155; }
+.session-button-danger { background: #c2413b; color: #fff; }
 .session-button:disabled { cursor: wait; opacity: .65; }
+.logout-error { margin-top: 14px !important; color: #c2413b !important; font-size: 13px; }
 
 @media (max-width: 1100px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 800px) {

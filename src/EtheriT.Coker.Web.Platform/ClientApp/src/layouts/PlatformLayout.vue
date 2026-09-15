@@ -12,13 +12,18 @@ import {
   completeReauthentication,
   reauthenticate
 } from "@/core/auth/reauthentication";
+import { api } from "@/core/api/api-client";
 
 const route = useRoute();
 const sidebarOpen = ref(false);
 const userName = ref("-");
 const mvcUrl = ref("/");
+const mvcLoginUrl = ref("/");
 const sessionState = ref<SessionState | null>(null);
 const checkingSession = ref(false);
+const logoutConfirmationOpen = ref(false);
+const loggingOut = ref(false);
+const logoutError = ref("");
 const reauthenticationPassword = ref("");
 const reauthenticationError = ref("");
 let stopSessionLifecycle: (() => void) | undefined;
@@ -60,6 +65,22 @@ function returnToMvc(): void {
   window.location.assign(mvcUrl.value);
 }
 
+async function logout(): Promise<void> {
+  if (loggingOut.value) return;
+
+  loggingOut.value = true;
+  logoutError.value = "";
+  try {
+    await api.post<void>("/api/session/logout");
+    window.location.replace(mvcLoginUrl.value);
+  }
+  catch (error) {
+    console.error(error);
+    logoutError.value = "登出失敗，請稍後再試。";
+    loggingOut.value = false;
+  }
+}
+
 async function submitReauthentication(): Promise<void> {
   if (!reauthenticationPassword.value || checkingSession.value) return;
 
@@ -83,6 +104,7 @@ onMounted(async () => {
     const context = await getPlatformContext();
     userName.value = context.UserName;
     mvcUrl.value = `${context.MvcUrl}/Welcome`;
+    mvcLoginUrl.value = `${context.MvcUrl}/Account/Index`;
     navigationPreferenceReady = true;
     void recordPlatformLocation(route.fullPath);
     stopSessionLifecycle = startSessionLifecycle(
@@ -108,8 +130,8 @@ onBeforeUnmount(() => {
       <RouterLink class="platform-brand" to="/">
         <span class="brand-mark">C</span>
         <span>
-          <strong>Coker</strong>
-          <small>Customer Platform</small>
+          <strong>Coker 6</strong>
+          <small>客戶管理平台</small>
         </span>
       </RouterLink>
 
@@ -137,10 +159,6 @@ onBeforeUnmount(() => {
         </RouterLink>
       </nav>
 
-      <div class="sidebar-footer">
-        <span class="environment-dot"></span>
-        <span>Platform 管理系統</span>
-      </div>
     </aside>
 
     <button
@@ -182,12 +200,54 @@ onBeforeUnmount(() => {
               <strong>{{ userName }}</strong>
             </span>
           </div>
+          <button
+            class="icon-button"
+            type="button"
+            title="登出"
+            aria-label="登出"
+            @click="logoutConfirmationOpen = true"
+          >
+            <span class="material-symbols-outlined">logout</span>
+          </button>
         </nav>
       </header>
 
       <main class="platform-content">
         <RouterView />
       </main>
+    </div>
+
+    <div
+      v-if="logoutConfirmationOpen"
+      class="session-shield"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="logout-dialog-title"
+    >
+      <section class="session-card">
+        <span class="session-icon material-symbols-outlined">logout</span>
+        <h2 id="logout-dialog-title">確定要登出嗎？</h2>
+        <p>登出後，您需要重新登入才能繼續使用系統。</p>
+        <p v-if="logoutError" class="logout-error">{{ logoutError }}</p>
+        <div class="session-actions">
+          <button
+            class="session-button session-button-secondary"
+            type="button"
+            :disabled="loggingOut"
+            @click="logoutConfirmationOpen = false"
+          >
+            取消
+          </button>
+          <button
+            class="session-button session-button-danger"
+            type="button"
+            :disabled="loggingOut"
+            @click="logout"
+          >
+            {{ loggingOut ? "登出中…" : "登出" }}
+          </button>
+        </div>
+      </section>
     </div>
 
     <div v-if="sessionState" class="session-shield" role="dialog" aria-modal="true">

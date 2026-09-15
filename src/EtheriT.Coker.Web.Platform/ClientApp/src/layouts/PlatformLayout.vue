@@ -6,18 +6,20 @@ import {
   type SessionState
 } from "@/services/http-client";
 import { getPlatformContext } from "@/services/platform-context";
+import { startSessionLifecycle } from "@/services/session-lifecycle";
 import {
-  reportSessionActivity,
-  startSessionLifecycle
-} from "@/services/session-lifecycle";
+  completeReauthentication,
+  reauthenticate
+} from "@/core/auth/reauthentication";
 
 const route = useRoute();
 const sidebarOpen = ref(false);
 const userName = ref("-");
-const mvcBaseUrl = ref("/");
 const mvcUrl = ref("/");
 const sessionState = ref<SessionState | null>(null);
 const checkingSession = ref(false);
+const reauthenticationPassword = ref("");
+const reauthenticationError = ref("");
 let stopSessionLifecycle: (() => void) | undefined;
 
 const pageTitle = computed(() =>
@@ -41,17 +43,30 @@ watch(() => route.fullPath, () => {
 });
 
 function handleSessionStateChanged(event: Event): void {
-  sessionState.value = (event as CustomEvent<SessionState>).detail;
+  const nextState = (event as CustomEvent<SessionState>).detail;
+  if (sessionState.value !== nextState) {
+    reauthenticationPassword.value = "";
+    reauthenticationError.value = "";
+  }
+  sessionState.value = nextState;
 }
 
-function openLogin(): void {
-  window.open(`${mvcBaseUrl.value}/Account/Index`, "_blank", "noopener,noreferrer");
+function returnToMvc(): void {
+  window.location.assign(mvcUrl.value);
 }
 
-async function verifySession(): Promise<void> {
+async function submitReauthentication(): Promise<void> {
+  if (!reauthenticationPassword.value || checkingSession.value) return;
+
   checkingSession.value = true;
-  if (await reportSessionActivity()) {
+  reauthenticationError.value = "";
+  const result = await reauthenticate(reauthenticationPassword.value);
+  if (result.success) {
     sessionState.value = null;
+    reauthenticationPassword.value = "";
+  }
+  else {
+    reauthenticationError.value = result.error ?? "重新登入失敗。";
   }
   checkingSession.value = false;
 }
@@ -62,7 +77,6 @@ onMounted(async () => {
   try {
     const context = await getPlatformContext();
     userName.value = context.UserName;
-    mvcBaseUrl.value = context.MvcUrl;
     mvcUrl.value = `${context.MvcUrl}/Welcome`;
     stopSessionLifecycle = startSessionLifecycle(
       context.SessionActivityIntervalSeconds
@@ -77,6 +91,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener(sessionStateChangedEvent, handleSessionStateChanged);
   stopSessionLifecycle?.();
+  completeReauthentication(false);
 });
 </script>
 
@@ -175,32 +190,51 @@ onBeforeUnmount(() => {
         </span>
         <h2>{{ sessionState === "expired" ? "登入狀態已過期" : "平台權限已變更" }}</h2>
         <p v-if="sessionState === 'expired'">
-          目前頁面與尚未送出的內容會保留。請另開登入頁完成登入，再回到這裡繼續操作。
+          目前頁面與尚未送出的內容會保留。請使用目前帳號重新驗證，成功後會接續原本的儲存。
         </p>
         <p v-else>
           目前帳號已無法使用客戶管理平台，請聯絡系統管理員確認權限。
         </p>
-        <div class="session-actions">
+        <form
+          v-if="sessionState === 'expired'"
+          class="reauthentication-form"
+          @submit.prevent="submitReauthentication"
+        >
+          <label>
+            <span>帳號</span>
+            <input :value="userName" type="text" autocomplete="username" readonly />
+          </label>
+          <label>
+            <span>密碼</span>
+            <input
+              v-model="reauthenticationPassword"
+              type="password"
+              autocomplete="current-password"
+              required
+              autofocus
+            />
+          </label>
+          <p v-if="reauthenticationError" class="reauthentication-error">
+            {{ reauthenticationError }}
+          </p>
+          <div class="session-actions">
+            <button
+              class="session-button session-button-primary"
+              type="submit"
+              :disabled="checkingSession || !reauthenticationPassword"
+            >
+              {{ checkingSession ? "驗證中…" : "重新登入並繼續儲存" }}
+            </button>
+          </div>
+        </form>
+        <div v-else class="session-actions">
           <button
-            v-if="sessionState === 'expired'"
-            class="session-button session-button-secondary"
-            type="button"
-            @click="openLogin"
-          >
-            另開 MVC 登入
-          </button>
-          <button
-            v-if="sessionState === 'expired'"
             class="session-button session-button-primary"
             type="button"
-            :disabled="checkingSession"
-            @click="verifySession"
+            @click="returnToMvc"
           >
-            {{ checkingSession ? "驗證中…" : "我已登入，繼續操作" }}
-          </button>
-          <a v-else class="session-button session-button-primary" :href="mvcUrl">
             返回網站管理後台
-          </a>
+          </button>
         </div>
       </section>
     </div>

@@ -225,7 +225,9 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 ClaimsPrincipal? principal = httpContextAccessor.HttpContext?.User;
                 var name = principal?.Identity?.Name;
-                var secret = cookieManager.Get("BackstageRefreshToken");
+                var secret = principal?.FindFirstValue(ClaimTypes.Sid);
+                if (string.IsNullOrWhiteSpace(secret))
+                    secret = cookieManager.Get("BackstageRefreshToken");
 
                 if (string.IsNullOrWhiteSpace(name) ||
                     !Guid.TryParse(secret, out var refreshTokenId))

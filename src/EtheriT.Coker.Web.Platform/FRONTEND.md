@@ -61,10 +61,44 @@ Vue Router 的畫面權限只控制使用者體驗；所有資料 API 仍必須�
 
 ## 後台 Session
 
-- 所有 Vue API 呼叫統一使用 `src/services/http-client.ts` 的 `platformFetch`，以便一致處理 `401` 與 `403`。
+- `src/services/http-client.ts` 是底層 Cookie、Anti-forgery 與 `401/403` 控制；功能頁統一由 `@/core/coker` 的 `api` 呼叫，不直接使用原生 `fetch`。
 - `session-lifecycle.ts` 只在偵測到點擊、鍵盤或輸入等操作後回報活動，不會讓閒置頁面無限續期。
 - 預設每 5 分鐘最多回報一次；資料庫 Session 剩餘 15 分鐘時，伺服器延長為 30 分鐘。
-- 登入意外失效時保留目前 Vue 畫面，使用者可另開 MVC 登入後回來繼續。
+- 登入意外失效時保留目前 Vue 畫面，以目前帳號輸入密碼後接續原本操作。
+
+## Coker 前端核心
+
+功能頁由 `@/core/coker` 使用統一入口，不要直接散落原生 `fetch`：
+
+```ts
+import { api, rules, useManagedForm } from "@/core/coker";
+
+const form = useManagedForm({
+  id: "company-editor",
+  initialValue: { Name: "", Email: "" },
+  validation: {
+    Name: [rules.required("請輸入公司名稱。")],
+    Email: [rules.email()]
+  },
+  save: values => api.post("/api/companies", values),
+  afterSave: () => {
+    // 顯示成功訊息或重新載入清單
+  }
+});
+```
+
+`useManagedForm` 統一提供：
+
+- `model`、`errors`、`isDirty`、`isSaving` 與 `lastSavedAt`。
+- 儲存前欄位驗證及登入狀態驗證。
+- 登入過期時等待密碼 Modal 驗證，成功後接續原本儲存。
+- API 回傳 ASP.NET ModelState errors 時同步到欄位錯誤。
+- `Ctrl+S`／`Cmd+S` 觸發目前頁面最後註冊的表單。
+- `registerSavePipelineHooks` 註冊全站 before／after／error 流程。
+
+`api` 提供 `get`、`post`、`put`、`patch`、`delete`，並統一加入 Cookie、Anti-forgery Token、Request ID、逾時與錯誤解析。API 路徑限定為同來源 `/api/*`。
+
+後端所有 Controller 預設套用 Platform 權限及 `AutoValidateAntiforgeryToken`；Data Annotation／ModelState 的欄位錯誤會由 `api` 轉成 `ApiError.fieldErrors`。重新登入端點另外使用限時加密票證固定原帳號，並按來源 IP 限制為每分鐘五次。
 
 ## 新增功能頁
 

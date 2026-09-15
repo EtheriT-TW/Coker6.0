@@ -1,5 +1,6 @@
 import type { PlatformContext } from "@/types/platform-context";
-import { platformFetch } from "@/services/http-client";
+import { platformFetch, setAntiforgeryToken } from "@/services/http-client";
+import { setReauthenticationTicket } from "@/core/auth/reauthentication-ticket";
 
 export async function getPlatformContext(): Promise<PlatformContext> {
   const response = await platformFetch("/api/platform-context", {
@@ -12,5 +13,8 @@ export async function getPlatformContext(): Promise<PlatformContext> {
     throw new Error(`Platform context request failed: ${response.status}`);
   }
 
-  return response.json() as Promise<PlatformContext>;
+  const context = await response.json() as PlatformContext;
+  setAntiforgeryToken(context.AntiforgeryToken);
+  setReauthenticationTicket(context.ReauthenticationTicket);
+  return context;
 }

@@ -2,17 +2,47 @@ using EtheriT.Coker.Authentication.Backoffice;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Platform.Security;
 using EtheriT.Coker.Web.Platform.Services;
+using EtheriT.Coker.Web.Platform.Middleware;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddControllersWithViews(options =>
-        options.Filters.Add(new AuthorizeFilter(BackofficeAuthorizationPolicies.PlatformAccess)))
+    {
+        options.Filters.Add(new AuthorizeFilter(BackofficeAuthorizationPolicies.PlatformAccess));
+        options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    })
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.PropertyNamingPolicy = null);
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+    options.Cookie.Name = ".Coker6.Platform.Antiforgery";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+});
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("backoffice-reauthentication", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
+});
 builder.Services.AddDbContext<CokerDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("Default"),
@@ -50,6 +80,8 @@ builder.Services.AddCokerBackofficeAuthentication(
     });
 
 builder.Services.AddScoped<IBackofficeSessionValidator, PlatformBackofficeSessionValidator>();
+builder.Services.AddSingleton<PlatformReauthenticationTicketService>();
+builder.Services.AddScoped<PlatformReauthenticationService>();
 builder.Services.AddScoped<IAuthorizationHandler, PlatformAccessHandler>();
 builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddAuthorization(options =>
@@ -74,6 +106,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseRateLimiter();
+app.UseMiddleware<PlatformApiControlMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

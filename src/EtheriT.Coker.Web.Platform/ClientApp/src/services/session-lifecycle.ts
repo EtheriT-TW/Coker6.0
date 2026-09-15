@@ -51,10 +51,12 @@ async function flushActivity(): Promise<void> {
   try {
     if (await reportSessionActivity()) {
       activityPending = false;
-      lastReportAt = Date.now();
     }
   }
   finally {
+    // Throttle failed checks too; otherwise typing inside the re-login modal
+    // could generate one unauthorized request for every key press.
+    lastReportAt = Date.now();
     reportInProgress = false;
   }
 }

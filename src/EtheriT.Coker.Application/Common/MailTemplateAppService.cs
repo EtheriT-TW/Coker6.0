@@ -77,9 +77,19 @@ namespace EtheriT.Coker.Application.Common
                     throw new FileNotFoundException($"Mail範本檔不存在: {templateFilePath}");
                 templateContent = await File.ReadAllTextAsync(templateFilePath);
             }
-            // 移除以 "@model" 開頭的所有資料列
-            templateContent = string.Join(Environment.NewLine, templateContent.Split(Environment.NewLine).Where(line => !line.TrimStart().StartsWith("@model")));
-            if (string.IsNullOrEmpty(templateContent))
+            // 範本可能來自 Windows 檔案或內嵌資源，須同時支援 CRLF、LF、CR。
+            // 若僅以 Environment.NewLine 拆分，LF 範本會整份被視為一行，並因開頭
+            // 是 @model 而遭全部移除。
+            var templateLines = templateContent.Split(
+                new[] { "\r\n", "\n", "\r" },
+                StringSplitOptions.None);
+            templateContent = string.Join(
+                Environment.NewLine,
+                templateLines.Where(line =>
+                    !line.TrimStart('\uFEFF').TrimStart().StartsWith(
+                        "@model",
+                        StringComparison.Ordinal)));
+            if (string.IsNullOrWhiteSpace(templateContent))
             {
                 throw new ArgumentException("範本內容不得為空");
             }

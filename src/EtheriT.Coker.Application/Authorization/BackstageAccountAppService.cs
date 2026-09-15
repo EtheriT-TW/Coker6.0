@@ -398,31 +398,6 @@ namespace EtheriT.Coker.Application.Authorization
                 if (user == null)
                     return new ResponseMessageDto { Success = true };
 
-                var website = await (
-                    from mapping in db.MappingUserAndWebsites
-                    join site in db.Websites on mapping.WebsiteId equals site.Id
-                    where mapping.UserId == user.Id && !mapping.IsDeleted && !site.IsDeleted
-                    orderby mapping.Id
-                    select site).FirstOrDefaultAsync();
-                if (website == null)
-                {
-                    var isSystemUser = await db.MappingUserAndRoles.AnyAsync(e =>
-                        e.UserId == user.Id &&
-                        !e.IsDeleted &&
-                        e.Role != null &&
-                        !e.Role.IsDeleted &&
-                        e.Role.Type == RoleTypeEnum.系統維護);
-                    if (isSystemUser)
-                    {
-                        website = await db.Websites
-                            .Where(e => !e.IsDeleted)
-                            .OrderBy(e => e.Id)
-                            .FirstOrDefaultAsync();
-                    }
-                }
-                if (website == null)
-                    throw new Exception("帳號未綁定可用網站");
-
                 user.ForgetID = Guid.NewGuid();
                 user.ForgeIDSendDate = DateTime.Now;
                 user.LastModificationTime = DateTime.Now;
@@ -447,18 +422,18 @@ namespace EtheriT.Coker.Application.Authorization
                     {
                         new() { Key = user.ForgetID.Value.ToString(), Model = model }
                     },
-                    website.Locale);
+                    System.Globalization.CultureInfo.CurrentUICulture.Name);
                 var content = rendered.First();
-                var mailResult = await mailAppService.sendMail(new SenderDto
+                var mailResult = await mailAppService.sendSystemMail(new SenderDto
                 {
                     Recipients = new List<MailUserDataDto>
                     {
                         new() { Name = user.Name, Email = user.Email }
                     },
-                    Subject = $"【{website.Title}】後台密碼重設通知",
+                    Subject = "【Coker】後台密碼重設通知",
                     Body = content.Body,
                     Css = content.Style
-                }, website.Id);
+                });
 
                 response.Success = mailResult.Success;
                 response.Message = mailResult.Message;

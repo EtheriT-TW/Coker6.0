@@ -54,7 +54,7 @@ namespace EtheriT.Coker.Application.Common
         public async Task<ResponseMessageDto> sendMail(SenderDto dto, long siteId)
         {
             var webSiteName = await loginUserData.GetWebsiteOrgName(siteId);
-            return await sendMail(dto, webSiteName);
+            return await SendMailForSiteAsync(dto, webSiteName, siteId);
         }
 
         private async Task<SMTPDto> SetSMTP(long siteId = 0)

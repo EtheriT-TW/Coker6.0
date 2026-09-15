@@ -99,6 +99,32 @@
                 }
             });
             return _dfr.promise();
+        },
+        RequestPasswordReset: function (para) {
+            return $.ajax({
+                url: "/api/User/RequestPasswordReset",
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(para),
+                dataType: "json"
+            });
+        },
+        ValidatePasswordReset: function (forgetId) {
+            return $.ajax({
+                url: "/api/User/ValidatePasswordReset",
+                type: "GET",
+                data: { forgetId: forgetId },
+                dataType: "json"
+            });
+        },
+        ResetPassword: function (para) {
+            return $.ajax({
+                url: "/api/User/ResetPassword",
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(para),
+                dataType: "json"
+            });
         }
     }
 });

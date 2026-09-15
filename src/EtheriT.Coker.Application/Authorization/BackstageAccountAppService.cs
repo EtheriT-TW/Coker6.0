@@ -5,6 +5,8 @@ using EtheriT.Coker.Application.Shared.Authorization;
 using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
+using EtheriT.Coker.Application.Shared.Dto.Mail;
+using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.User;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.OAuth;
@@ -34,6 +36,8 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IConfiguration configuration;
         private readonly IMapper mapper;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly IMailTemplateAppService mailTemplateAppService;
+        private readonly MailAppService mailAppService;
 
         public BackstageAccountAppService(
             AccountAppService core,
@@ -45,7 +49,9 @@ namespace EtheriT.Coker.Application.Authorization
             ICookieManagerAppService cookieManager,
             IConfiguration configuration,
             IMapper mapper,
-            IFileUploadAppService fileUploadAppService)
+            IFileUploadAppService fileUploadAppService,
+            IMailTemplateAppService mailTemplateAppService,
+            MailAppService mailAppService)
         {
             this.core = core;
             this.db = db;
@@ -57,6 +63,8 @@ namespace EtheriT.Coker.Application.Authorization
             this.configuration = configuration;
             this.mapper = mapper;
             this.fileUploadAppService = fileUploadAppService;
+            this.mailTemplateAppService = mailTemplateAppService;
+            this.mailAppService = mailAppService;
         }
 
         public async Task<LoginOutputDto> Login(LoginInputDto dto)
@@ -369,6 +377,159 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<ResponseMessageDto> SendForget(long userId)
         {
             return await core.SendForget(userId);
+        }
+
+        public async Task<ResponseMessageDto> RequestPasswordReset(BackstagePasswordResetRequestDto dto)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(dto.Email))
+                    throw new Exception("請輸入電子信箱");
+                var email = dto.Email.Trim();
+                if (!Uri.TryCreate(dto.WebsiteLink, UriKind.Absolute, out var websiteLink) ||
+                    (websiteLink.Scheme != Uri.UriSchemeHttp && websiteLink.Scheme != Uri.UriSchemeHttps))
+                    throw new Exception("密碼重設網址錯誤");
+
+                var user = await db.Users.FirstOrDefaultAsync(e =>
+                    !e.IsDeleted && e.Email != null && e.Email == email);
+
+                // 不揭露信箱是否存在，避免被用來枚舉後台帳號。
+                if (user == null)
+                    return new ResponseMessageDto { Success = true };
+
+                var website = await (
+                    from mapping in db.MappingUserAndWebsites
+                    join site in db.Websites on mapping.WebsiteId equals site.Id
+                    where mapping.UserId == user.Id && !mapping.IsDeleted && !site.IsDeleted
+                    orderby mapping.Id
+                    select site).FirstOrDefaultAsync();
+                if (website == null)
+                {
+                    var isSystemUser = await db.MappingUserAndRoles.AnyAsync(e =>
+                        e.UserId == user.Id &&
+                        !e.IsDeleted &&
+                        e.Role != null &&
+                        !e.Role.IsDeleted &&
+                        e.Role.Type == RoleTypeEnum.系統維護);
+                    if (isSystemUser)
+                    {
+                        website = await db.Websites
+                            .Where(e => !e.IsDeleted)
+                            .OrderBy(e => e.Id)
+                            .FirstOrDefaultAsync();
+                    }
+                }
+                if (website == null)
+                    throw new Exception("帳號未綁定可用網站");
+
+                user.ForgetID = Guid.NewGuid();
+                user.ForgeIDSendDate = DateTime.Now;
+                user.LastModificationTime = DateTime.Now;
+                await db.SaveChangesAsync();
+
+                var resetUrl = new UriBuilder(websiteLink)
+                {
+                    Path = $"{websiteLink.AbsolutePath.TrimEnd('/')}/Account/NewPassword",
+                    Query = $"forgetId={Uri.EscapeDataString(user.ForgetID.Value.ToString())}"
+                }.Uri.ToString();
+                var expireTime = user.ForgeIDSendDate.Value.AddDays(1);
+                var model = new BackstageForgetTemplateResultDto
+                {
+                    Name = user.Name,
+                    Account = user.Account ?? user.Email ?? string.Empty,
+                    ResetPasswordUrl = resetUrl,
+                    ExpireTime = expireTime
+                };
+                var rendered = await mailTemplateAppService.GetTemplateRenderAsync(
+                    MailTemplateTypeEnum.後台密碼重設通知,
+                    new List<MailTemplateInputDto>
+                    {
+                        new() { Key = user.ForgetID.Value.ToString(), Model = model }
+                    },
+                    website.Locale);
+                var content = rendered.First();
+                var mailResult = await mailAppService.sendMail(new SenderDto
+                {
+                    Recipients = new List<MailUserDataDto>
+                    {
+                        new() { Name = user.Name, Email = user.Email }
+                    },
+                    Subject = $"【{website.Title}】後台密碼重設通知",
+                    Body = content.Body,
+                    Css = content.Style
+                }, website.Id);
+
+                response.Success = mailResult.Success;
+                response.Message = mailResult.Message;
+                response.Error = mailResult.Error;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseMessageDto> ValidatePasswordReset(Guid forgetId)
+        {
+            var isValid = forgetId != Guid.Empty && await db.Users.AnyAsync(e =>
+                !e.IsDeleted &&
+                e.ForgetID == forgetId &&
+                e.ForgeIDSendDate != null &&
+                e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
+            return new ResponseMessageDto
+            {
+                Success = isValid,
+                Error = isValid ? null : "密碼重設連結無效或已逾期，請重新申請。"
+            };
+        }
+
+        public async Task<ResponseMessageDto> ResetPassword(BackstagePasswordResetDto dto)
+        {
+            var response = new ResponseMessageDto();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(dto.Password))
+                    throw new Exception("請輸入新密碼");
+                if (dto.Password != dto.PasswordConfirm)
+                    throw new Exception("輸入的密碼不相符");
+                var passwordError = CheckPassword(dto.Password);
+                if (!string.IsNullOrEmpty(passwordError))
+                    throw new Exception(passwordError);
+
+                var user = await db.Users.FirstOrDefaultAsync(e =>
+                    !e.IsDeleted &&
+                    e.ForgetID == dto.ForgetID &&
+                    e.ForgeIDSendDate != null &&
+                    e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
+                if (user == null)
+                    throw new Exception("密碼重設連結無效或已逾期，請重新申請。");
+
+                user.Password = passwordHasher.HashPassword(dto.Password);
+                user.ForgetID = null;
+                user.ForgeIDSendDate = null;
+                user.ErrorTimes = 0;
+                user.LockTime = null;
+                user.LastModificationTime = DateTime.Now;
+
+                var tokens = await db.Tokens.Where(e => e.UserID == user.Id).ToListAsync();
+                db.Tokens.RemoveRange(tokens);
+                await db.SaveChangesAsync();
+                ClearBackstageCookies();
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+            }
+            finally
+            {
+                dto.Password = "********";
+                dto.PasswordConfirm = "********";
+                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+            }
+            return response;
         }
 
         private void ClearBackstageCookies()

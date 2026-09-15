@@ -10,6 +10,9 @@ namespace EtheriT.Coker.Application.Shared.Common
 {
     public interface IMailTemplateAppService
     {
-        public Task<List<MailTemplateResultDto>> GetTemplateRenderAsync(MailTemplateTypeEnum templateType, List<MailTemplateInputDto> input);
+        public Task<List<MailTemplateResultDto>> GetTemplateRenderAsync(
+            MailTemplateTypeEnum templateType,
+            List<MailTemplateInputDto> input,
+            string? language = null);
     }
 }

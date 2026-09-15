@@ -8,6 +8,14 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Reporting\R001撿貨單.vsrepx" />
+    <EmbeddedResource Include="Resources\MailTemplates\Member\ForgetPasswordMailTemplate.en.cshtml">
+      <LogicalName>EtheriT.Coker.Application.MailTemplates.Member.ForgetPasswordMailTemplate.en.cshtml</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\MailTemplates\Member\ForgetPasswordMailTemplate.zh-tw.cshtml">
+      <LogicalName>EtheriT.Coker.Application.MailTemplates.Member.ForgetPasswordMailTemplate.zh-tw.cshtml</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

@@ -37,6 +37,10 @@
 
     const returnUrl = getSafeReturnUrl();
 
+    function getForgetId() {
+        return new URLSearchParams(window.location.search).get("forgetId");
+    }
+
     function getPreferredWebsiteIds() {
         const storagePrefix = "coker.websiteSwitcher.pinned.";
         const preferredWebsiteIds = {};
@@ -87,21 +91,83 @@
         });
     });
 
-    $("#verification-btn").on("click", function () {
-
-    });
-
-    $("#subnewpsw").on("click", function () {
-        if (lowercase.innerHTML == '' && uppercase.innerHTML == '' &&
-            number.innerHTML == '' && symbol.innerHTML == '' &&
-            length.innerHTML == '' && agnewpassword.value == newpassword.value) {
-            alert("成功");
-        } else {
-            alert("失敗");
+    $("#forgetPasswordBtn").on("click", function (e) {
+        e.preventDefault();
+        const email = $("#email").val().trim();
+        if (!email) {
+            co.sweet.warn("提醒", "請輸入電子信箱。");
+            return;
         }
+
+        co.sweet.loading("寄送中", "正在寄送密碼重設信，請稍候...");
+        co.User.RequestPasswordReset({ Email: email }).done(function (result) {
+            Swal.close();
+            if (!result.success) {
+                co.sweet.error("寄送失敗", result.error || "密碼重設信寄送失敗，請稍後再試。");
+                return;
+            }
+            co.sweet.success("申請完成", function () {
+                location.href = "/Account/Index";
+            }, false);
+        }).fail(function () {
+            Swal.close();
+            co.sweet.error("寄送失敗", "伺服器暫時無法回應，請稍後再試。");
+        });
     });
 
-    $("#newpassword").on("focus", function () {
+    const forgetId = getForgetId();
+    if ($("#resetPasswordForm").length) {
+        if (!forgetId) {
+            co.sweet.error("連結無效", "密碼重設連結無效或已逾期，請重新申請。", function () {
+                location.href = "/Account/Forget";
+            });
+        } else {
+            co.User.ValidatePasswordReset(forgetId).done(function (result) {
+                if (!result.success) {
+                    co.sweet.error("連結無效", result.error || "密碼重設連結無效或已逾期，請重新申請。", function () {
+                        location.href = "/Account/Forget";
+                    });
+                }
+            });
+        }
+    }
+
+    $("#subnewpsw").on("click", function (e) {
+        e.preventDefault();
+        const password = newpassword.value;
+        const passwordConfirm = agnewpassword.value;
+        if (password !== passwordConfirm) {
+            co.sweet.warn("提醒", "輸入的密碼不相符。");
+            return;
+        }
+
+        co.sweet.loading("處理中", "正在重設密碼，請稍候...");
+        co.User.ResetPassword({
+            ForgetID: forgetId,
+            Password: password,
+            PasswordConfirm: passwordConfirm
+        }).done(function (result) {
+            Swal.close();
+            if (!result.success) {
+                co.sweet.error("重設失敗", result.error || "無法重設密碼，請重新確認。");
+                return;
+            }
+            co.sweet.success("密碼重設成功", function () {
+                location.href = "/Account/Index";
+            }, false);
+        }).fail(function () {
+            Swal.close();
+            co.sweet.error("重設失敗", "伺服器暫時無法回應，請稍後再試。");
+        });
+    });
+
+    $("#newpassword").on("input focus", function () {
+        const value = this.value;
+        $(lowercase).toggleClass("invalid", !/[a-z]/.test(value)).toggleClass("valid", /[a-z]/.test(value));
+        $(uppercase).toggleClass("invalid", !/[A-Z]/.test(value)).toggleClass("valid", /[A-Z]/.test(value));
+        $(number).toggleClass("invalid", !/\d/.test(value)).toggleClass("valid", /\d/.test(value));
+        $(symbol).toggleClass("invalid", !/\W/.test(value)).toggleClass("valid", /\W/.test(value));
+        $(length).toggleClass("invalid", value.length < 8 || value.length > 32).toggleClass("valid", value.length >= 8 && value.length <= 32);
         $("#rule").css("display", "block");
         $("#short-rule").css("display", "none");
     });

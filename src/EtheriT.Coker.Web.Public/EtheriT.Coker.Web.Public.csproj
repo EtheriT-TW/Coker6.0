@@ -17,8 +17,6 @@
 		<Content Remove="Views\MailTemplate\Member\AccountActivationMailTemplate.zh-tw.cshtml" />
 		<Content Remove="Views\MailTemplate\Member\ChangeEmailMailTemplate.en.cshtml" />
 		<Content Remove="Views\MailTemplate\Member\ChangeEmailMailTemplate.zh-tw.cshtml" />
-		<Content Remove="Views\MailTemplate\Member\ForgetPasswordMailTemplate.en.cshtml" />
-		<Content Remove="Views\MailTemplate\Member\ForgetPasswordMailTemplate.zh-tw.cshtml" />
 		<Content Remove="Views\Page\OrderManagement.cshtml" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.css" />
 		<Content Remove="wwwroot\css\Page\OrderManagement.min.css" />
@@ -126,12 +124,6 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="Views\MailTemplate\Member\ChangeEmailMailTemplate.zh-tw.cshtml">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Include="Views\MailTemplate\Member\ForgetPasswordMailTemplate.en.cshtml">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Include="Views\MailTemplate\Member\ForgetPasswordMailTemplate.zh-tw.cshtml">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Include="wwwroot\js\Coker\*.js" />

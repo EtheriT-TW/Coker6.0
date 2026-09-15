@@ -22,10 +22,17 @@ namespace EtheriT.Coker.Application.Common
             this.htmlProcessor = htmlProcessor;
         }
 
-        public async Task<List<MailTemplateResultDto>> GetTemplateRenderAsync(MailTemplateTypeEnum templateType, List<MailTemplateInputDto> input)
+        public async Task<List<MailTemplateResultDto>> GetTemplateRenderAsync(
+            MailTemplateTypeEnum templateType,
+            List<MailTemplateInputDto> input,
+            string? language = null)
         {
-            string lang = await loginUserData.GetWebsiteLocal();
+            string lang = string.IsNullOrWhiteSpace(language)
+                ? await loginUserData.GetWebsiteLocal()
+                : language;
+            lang = lang.StartsWith("en", StringComparison.OrdinalIgnoreCase) ? "en" : "zh-tw";
             string templateFilePath = string.Empty;
+            string? embeddedResourceName = null;
 
             switch (templateType)
             {
@@ -36,7 +43,7 @@ namespace EtheriT.Coker.Application.Common
                     templateFilePath = $"Views/MailTemplate/ResetPassword/BackendAddFrontUserMailTemplate.{lang}.cshtml";
                     break;
                 case MailTemplateTypeEnum.密碼重設通知:
-                    templateFilePath = $"Views/MailTemplate/Member/ForgetPasswordMailTemplate.{lang}.cshtml";
+                    embeddedResourceName = $"EtheriT.Coker.Application.MailTemplates.Member.ForgetPasswordMailTemplate.{lang}.cshtml";
                     break;
                 case MailTemplateTypeEnum.變更電子信箱:
                     templateFilePath = $"Views/MailTemplate/Member/ChangeEmailMailTemplate.{lang}.cshtml";
@@ -47,17 +54,29 @@ namespace EtheriT.Coker.Application.Common
                 case MailTemplateTypeEnum.註冊完成通知:
                     templateFilePath = $"Views/MailTemplate/Member/AccountCreatedNoticeMailTemplate.{lang}.cshtml";
                     break;
+                case MailTemplateTypeEnum.後台密碼重設通知:
+                    templateFilePath = $"Views/MailTemplate/ResetPassword/BackstageForgetPasswordMailTemplate.{lang}.cshtml";
+                    break;
                 default:
                     break;
             }
 
-            string templateContent = string.Empty;
-            if (!File.Exists(templateFilePath))
+            string templateContent;
+            if (!string.IsNullOrEmpty(embeddedResourceName))
             {
-                throw new FileNotFoundException($"Mail範本檔不存在: {templateFilePath}");
+                await using var stream = typeof(MailTemplateAppService).Assembly
+                    .GetManifestResourceStream(embeddedResourceName);
+                if (stream == null)
+                    throw new FileNotFoundException($"內嵌 Mail 範本不存在: {embeddedResourceName}");
+                using var reader = new StreamReader(stream);
+                templateContent = await reader.ReadToEndAsync();
             }
-
-            templateContent = System.IO.File.ReadAllText(templateFilePath);
+            else
+            {
+                if (!File.Exists(templateFilePath))
+                    throw new FileNotFoundException($"Mail範本檔不存在: {templateFilePath}");
+                templateContent = await File.ReadAllTextAsync(templateFilePath);
+            }
             // 移除以 "@model" 開頭的所有資料列
             templateContent = string.Join(Environment.NewLine, templateContent.Split(Environment.NewLine).Where(line => !line.TrimStart().StartsWith("@model")));
             if (string.IsNullOrEmpty(templateContent))

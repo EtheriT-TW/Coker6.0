@@ -2,6 +2,7 @@
 using EtheriT.Coker.Application.Authorization;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.User;
+using EtheriT.Coker.Application.Shared.Dto.Authorizaion;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -44,5 +45,27 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
 		{
 			return await accountAppService.UpdatePassword(dto);
 		}
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<ResponseMessageDto> RequestPasswordReset(BackstagePasswordResetRequestDto dto)
+        {
+            dto.WebsiteLink = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            return await accountAppService.RequestPasswordReset(dto);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ResponseMessageDto> ValidatePasswordReset(Guid forgetId)
+        {
+            return await accountAppService.ValidatePasswordReset(forgetId);
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<ResponseMessageDto> ResetPassword(BackstagePasswordResetDto dto)
+        {
+            return await accountAppService.ResetPassword(dto);
+        }
 	}
 }

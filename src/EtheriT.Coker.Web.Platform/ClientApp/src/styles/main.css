@@ -95,6 +95,17 @@ button, input, select, textarea { font: inherit; }
 .data-card { min-height: 360px; padding: 20px; }
 .sidebar-backdrop { display: none; }
 
+.session-shield { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 24px; background: rgb(15 23 42 / 62%); backdrop-filter: blur(3px); }
+.session-card { width: min(480px, 100%); padding: 32px; border-radius: 18px; background: #fff; box-shadow: 0 24px 70px rgb(15 23 42 / 24%); text-align: center; }
+.session-icon { display: inline-grid; width: 58px; height: 58px; place-items: center; border-radius: 50%; background: #eaf0ff; color: #285bd4; font-size: 30px; }
+.session-card h2 { margin: 18px 0 8px; color: #14213d; }
+.session-card p { margin: 0; color: #64748b; line-height: 1.7; }
+.session-actions { display: flex; justify-content: center; gap: 12px; margin-top: 24px; }
+.session-button { min-height: 42px; padding: 10px 18px; border: 1px solid transparent; border-radius: 9px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+.session-button-primary { background: #285bd4; color: #fff; }
+.session-button-secondary { border-color: #cbd5e1; background: #fff; color: #334155; }
+.session-button:disabled { cursor: wait; opacity: .65; }
+
 @media (max-width: 1100px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 800px) {
   .platform-sidebar { transform: translateX(-100%); }
@@ -114,4 +125,5 @@ button, input, select, textarea { font: inherit; }
   .header-context strong { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .metric-grid { grid-template-columns: 1fr; }
   .page-heading h1 { font-size: 24px; }
+  .session-actions { flex-direction: column; }
 }

@@ -1,12 +1,24 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
+import {
+  sessionStateChangedEvent,
+  type SessionState
+} from "@/services/http-client";
 import { getPlatformContext } from "@/services/platform-context";
+import {
+  reportSessionActivity,
+  startSessionLifecycle
+} from "@/services/session-lifecycle";
 
 const route = useRoute();
 const sidebarOpen = ref(false);
 const userName = ref("-");
+const mvcBaseUrl = ref("/");
 const mvcUrl = ref("/");
+const sessionState = ref<SessionState | null>(null);
+const checkingSession = ref(false);
+let stopSessionLifecycle: (() => void) | undefined;
 
 const pageTitle = computed(() =>
   typeof route.meta.title === "string" ? route.meta.title : "Platform"
@@ -28,16 +40,43 @@ watch(() => route.fullPath, () => {
   sidebarOpen.value = false;
 });
 
+function handleSessionStateChanged(event: Event): void {
+  sessionState.value = (event as CustomEvent<SessionState>).detail;
+}
+
+function openLogin(): void {
+  window.open(`${mvcBaseUrl.value}/Account/Index`, "_blank", "noopener,noreferrer");
+}
+
+async function verifySession(): Promise<void> {
+  checkingSession.value = true;
+  if (await reportSessionActivity()) {
+    sessionState.value = null;
+  }
+  checkingSession.value = false;
+}
+
 onMounted(async () => {
+  window.addEventListener(sessionStateChangedEvent, handleSessionStateChanged);
+
   try {
     const context = await getPlatformContext();
     userName.value = context.UserName;
+    mvcBaseUrl.value = context.MvcUrl;
     mvcUrl.value = `${context.MvcUrl}/Welcome`;
+    stopSessionLifecycle = startSessionLifecycle(
+      context.SessionActivityIntervalSeconds
+    );
   }
   catch (error)
   {
     console.error(error);
   }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener(sessionStateChangedEvent, handleSessionStateChanged);
+  stopSessionLifecycle?.();
 });
 </script>
 
@@ -127,6 +166,43 @@ onMounted(async () => {
       <main class="platform-content">
         <RouterView />
       </main>
+    </div>
+
+    <div v-if="sessionState" class="session-shield" role="dialog" aria-modal="true">
+      <section class="session-card">
+        <span class="session-icon material-symbols-outlined">
+          {{ sessionState === "expired" ? "lock_clock" : "lock" }}
+        </span>
+        <h2>{{ sessionState === "expired" ? "登入狀態已過期" : "平台權限已變更" }}</h2>
+        <p v-if="sessionState === 'expired'">
+          目前頁面與尚未送出的內容會保留。請另開登入頁完成登入，再回到這裡繼續操作。
+        </p>
+        <p v-else>
+          目前帳號已無法使用客戶管理平台，請聯絡系統管理員確認權限。
+        </p>
+        <div class="session-actions">
+          <button
+            v-if="sessionState === 'expired'"
+            class="session-button session-button-secondary"
+            type="button"
+            @click="openLogin"
+          >
+            另開 MVC 登入
+          </button>
+          <button
+            v-if="sessionState === 'expired'"
+            class="session-button session-button-primary"
+            type="button"
+            :disabled="checkingSession"
+            @click="verifySession"
+          >
+            {{ checkingSession ? "驗證中…" : "我已登入，繼續操作" }}
+          </button>
+          <a v-else class="session-button session-button-primary" :href="mvcUrl">
+            返回網站管理後台
+          </a>
+        </div>
+      </section>
     </div>
   </div>
 </template>

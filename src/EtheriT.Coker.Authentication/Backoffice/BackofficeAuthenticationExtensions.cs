@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 
 namespace EtheriT.Coker.Authentication.Backoffice;
@@ -21,6 +22,9 @@ public static class BackofficeAuthenticationExtensions
         var dataProtection = services
             .AddDataProtection()
             .SetApplicationName(BackofficeAuthenticationDefaults.DataProtectionApplicationName);
+
+        services.Configure<BackofficeSessionOptions>(
+            configuration.GetSection(BackofficeSessionOptions.SectionName));
 
         var keyPath = configuration.GetValue<string>("BackofficeAuthentication:DataProtectionKeysPath");
         if (!string.IsNullOrWhiteSpace(keyPath))
@@ -44,6 +48,7 @@ public static class BackofficeAuthenticationExtensions
         {
             options.LoginPath = "/";
             options.ExpireTimeSpan = TimeSpan.FromDays(1);
+            options.SlidingExpiration = true;
             options.Cookie.Name = BackofficeAuthenticationDefaults.CookieName;
 
             var cookieDomain = configuration.GetValue<string>("BackofficeAuthentication:CookieDomain");
@@ -53,6 +58,60 @@ public static class BackofficeAuthenticationExtensions
             }
 
             configureCookie?.Invoke(options);
+
+            var configuredValidatePrincipal = options.Events.OnValidatePrincipal;
+            options.Events.OnValidatePrincipal = async context =>
+            {
+                if (configuredValidatePrincipal != null)
+                {
+                    await configuredValidatePrincipal(context);
+                }
+
+                if (context.Principal?.Identity?.IsAuthenticated != true)
+                {
+                    return;
+                }
+
+                var sessionValidator = context.HttpContext.RequestServices
+                    .GetService<IBackofficeSessionValidator>();
+
+                // Hosts that have not registered a persistent backoffice session store
+                // continue to use the shared cookie without database session validation.
+                if (sessionValidator == null)
+                {
+                    return;
+                }
+
+                var account = context.Principal.Identity.Name;
+                var sessionValue = context.Principal.FindFirstValue(ClaimTypes.Sid);
+
+                if (string.IsNullOrWhiteSpace(account) ||
+                    !Guid.TryParse(sessionValue, out var sessionId))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme);
+                    return;
+                }
+
+                var validation = await sessionValidator.ValidateAndRenewAsync(
+                    account,
+                    sessionId,
+                    context.HttpContext.RequestAborted);
+
+                if (!validation.IsValid)
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme);
+                    return;
+                }
+
+                if (validation.WasRenewed)
+                {
+                    context.ShouldRenew = true;
+                }
+            };
         });
 
         if (!enableJwtBearer)

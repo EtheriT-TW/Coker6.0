@@ -59,6 +59,13 @@ npm run build
 
 Vue Router 的畫面權限只控制使用者體驗；所有資料 API 仍必須由 ASP.NET Core 授權。
 
+## 後台 Session
+
+- 所有 Vue API 呼叫統一使用 `src/services/http-client.ts` 的 `platformFetch`，以便一致處理 `401` 與 `403`。
+- `session-lifecycle.ts` 只在偵測到點擊、鍵盤或輸入等操作後回報活動，不會讓閒置頁面無限續期。
+- 預設每 5 分鐘最多回報一次；資料庫 Session 剩餘 15 分鐘時，伺服器延長為 30 分鐘。
+- 登入意外失效時保留目前 Vue 畫面，使用者可另開 MVC 登入後回來繼續。
+
 ## 新增功能頁
 
 1. 在 `ClientApp/src/views` 建立 `.vue` 檔。

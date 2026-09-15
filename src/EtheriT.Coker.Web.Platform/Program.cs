@@ -49,6 +49,7 @@ builder.Services.AddCokerBackofficeAuthentication(
         };
     });
 
+builder.Services.AddScoped<IBackofficeSessionValidator, PlatformBackofficeSessionValidator>();
 builder.Services.AddScoped<IAuthorizationHandler, PlatformAccessHandler>();
 builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddAuthorization(options =>

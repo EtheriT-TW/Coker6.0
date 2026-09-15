@@ -1,8 +1,8 @@
 import type { PlatformContext } from "@/types/platform-context";
+import { platformFetch } from "@/services/http-client";
 
 export async function getPlatformContext(): Promise<PlatformContext> {
-  const response = await fetch("/api/platform-context", {
-    credentials: "same-origin",
+  const response = await platformFetch("/api/platform-context", {
     headers: {
       Accept: "application/json"
     }

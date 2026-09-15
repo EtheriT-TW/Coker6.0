@@ -1,4 +1,4 @@
-(() => {
+export function initializeSidebar() {
   const sidebar = document.getElementById("platformSidebar");
   const toggle = document.getElementById("sidebarToggle");
   const backdrop = document.getElementById("sidebarBackdrop");
@@ -19,4 +19,4 @@
   window.addEventListener("resize", () => {
     if (window.innerWidth > 800) close();
   });
-})();
+}

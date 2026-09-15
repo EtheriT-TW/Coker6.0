@@ -1,0 +1,14 @@
+{
+  "name": "etherit.coker.web.platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "create-bundles": "node ./build/esbuild.mjs",
+    "build": "node ./build/esbuild.mjs --production",
+    "watch": "node ./build/esbuild.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

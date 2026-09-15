@@ -7,8 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews(options =>
-    options.Filters.Add(new AuthorizeFilter(BackofficeAuthorizationPolicies.PlatformAccess)));
+builder.Services
+    .AddControllersWithViews(options =>
+        options.Filters.Add(new AuthorizeFilter(BackofficeAuthorizationPolicies.PlatformAccess)))
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddDbContext<CokerDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("Default"),

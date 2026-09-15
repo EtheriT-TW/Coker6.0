@@ -12,6 +12,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Webs
         public string Title { get; set; }
         public string OrgName { get; set; }
         public string Logo { get; set; }
+        public string? Contact { get; set; }
+        public string? ContactMail { get; set; }
         public bool isSubsite { get; set; }
     }
 }

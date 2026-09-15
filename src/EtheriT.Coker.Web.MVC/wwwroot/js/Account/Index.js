@@ -9,7 +9,8 @@
     var length = document.getElementById("length");
 
     function getSafeReturnUrl() {
-        const defaultUrl = co.Data.DefauleUrl || "/";
+        const configuredDefaultUrl = co.Data.DefauleUrl || "/Welcome";
+        const defaultUrl = configuredDefaultUrl === "/" ? "/Welcome" : configuredDefaultUrl;
         const params = new URLSearchParams(window.location.search);
         let url = params.get("returnUrl");
 

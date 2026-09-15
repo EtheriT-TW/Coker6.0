@@ -10,5 +10,6 @@ namespace EtheriT.Coker.Application.Company
     public class OutputCompanyDto : ResponseMessageDto
     {
         public CompanyDto Company { get; set; }
+        public string MatchStatus { get; set; } = "Invalid";
     }
 }

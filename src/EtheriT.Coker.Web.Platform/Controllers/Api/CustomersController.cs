@@ -32,7 +32,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 customer.CustomerTypeOther,
                 customer.PrimaryContactName
             })
-            .ToListAsync();
+            .ToListAsync(HttpContext.RequestAborted);
 
         return rows.Select(row => new CustomerListItemDto(
                 row.Id,
@@ -43,7 +43,8 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 row.SalesOwner,
                 DescribeCustomerType(row.CustomerType, row.CustomerTypeOther),
                 row.PrimaryContactName
-            ));
+            ))
+            .ToList();
     }
 
     [HttpGet("{id:long}")]
@@ -103,7 +104,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 customer.Phone,
                 customer.Email,
                 customer.PrimaryContactName))
-            .ToListAsync();
+            .ToListAsync(HttpContext.RequestAborted);
     }
 
     [HttpPost]
@@ -122,6 +123,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             .ToList();
 
         db.PlatformCustomers.Add(customer);
+        await auditor.SaveChangesAsync(HttpContext.RequestAborted);
         return Ok(new { customer.Id });
     }
 
@@ -135,7 +137,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             return NotFound();
 
         Apply(request, customer);
-        SyncSubContacts(request, customer);
+        SyncSubContact(request, customer);
 
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
         return NoContent();
@@ -217,7 +219,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
     private static string DescribeCustomerType(PlatformCustomerTypeEnum type, string? other) => type switch
     {
         PlatformCustomerTypeEnum.其他 => string.IsNullOrWhiteSpace(other) ? "其他" : other,
-        PlatformCustomerTypeEnum.未設定 => "-",
+        PlatformCustomerTypeEnum.未設定 => "—",
         _ => type.ToString()
     };
 }

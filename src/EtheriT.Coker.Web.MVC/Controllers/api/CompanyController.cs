@@ -14,6 +14,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public CompanyController(ICompanyAppService companyAppService) { 
             this.companyAppService = companyAppService;
         }
+        [HttpGet]
+        public async Task<OutputCompanyDto> GetByTaxId(string taxId)
+        {
+            return await companyAppService.GetByTaxId(taxId);
+        }
+        [HttpGet]
+        public async Task<OutputCompanyDto> GetByIdentity(string? taxId, string? name)
+        {
+            return await companyAppService.GetByIdentity(taxId, name);
+        }
         [HttpPost]
         public async Task<ResponseMessageDto> Save(CompanyDto dto)
         {

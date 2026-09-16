@@ -365,6 +365,8 @@ namespace EtheriT.Coker.Application
                                   Title = w.Title ?? "",
                                   OrgName = w.OrgName ?? "",
                                   Logo = w.Logo ?? "",
+                                  Contact = w.Contact,
+                                  ContactMail = w.ContactMail,
                                   isSubsite = issubsite == null ? false : true,
                               }).ToListAsync();
             if (date != null) {

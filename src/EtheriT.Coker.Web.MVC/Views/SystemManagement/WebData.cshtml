@@ -29,17 +29,18 @@
                         <button class="btn_company_info_edit bg-transparent border-0 fs-5"><i class="fa-regular fa-pen-to-square"></i></button>
                     </div>
 
-                    <form id="CompnyData" class="needs-validation" novalidate>
-                        <input name="Id" type="hidden" value="@Model.Company.Id" />
+                    <form id="CompnyData" class="needs-validation" data-company-empty="@(Model.Company.Id == 0 ? "true" : "false")" novalidate>
+                        <input id="CompanyID" name="Id" type="hidden" value="@Model.Company.Id" />
+                        <div class="form-floating mb-3">
+                            <input id="TaxID" name="TaxID" class="bill_guinum form-control" type="tel" inputmode="numeric" autocomplete="off" placeholder="選填：8 碼統一編號或 10 碼醫療機構代碼" value="@Model.Company.TaxID" pattern="(?:\d{8}|\d{10})?" maxlength="10" disabled="disabled">
+                            <label for="TaxID">統　　編（選填）</label>
+                            <div class="invalid-feedback">若填寫統編，請輸入 8 碼統一編號或 10 碼醫療機構代碼</div>
+                        </div>
+                        <div id="CompanyLookupFeedback" class="small mb-3 d-none" role="status"></div>
                         <div class="form-floating mb-3">
                             <input id="Name" name="Name" class="customer_info form-control" type="text" placeholder="name" value="@Model.Company.Name" disabled="disabled" required>
-                            <label class="required required_all" for="Name">公司名稱</label>
-                            <div class="invalid-feedback">請輸入公司名稱!</div>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <input id="TaxID" name="TaxID" class="bill_guinum form-control" type="tel" placeholder="請輸入 8 碼統一編號或 10 碼醫療機構代碼" value="@Model.Company.TaxID" pattern="\d{8}|\d{10}" maxlength="10" disabled="disabled" required>
-                            <label class="required required_all" for="TaxID">統　　編</label>
-                            <div class="invalid-feedback">請輸入統編!</div>
+                            <label class="required required_all" for="Name">公司／機構名稱</label>
+                            <div class="invalid-feedback">請輸入公司或機構名稱!</div>
                         </div>
                         <div class="form-floating mb-3">
                             <input id="Contact" name="Contact" class="orderer_name form-control" type="text" placeholder="name" value="@Model.Company.Contact" minlength="2" disabled="disabled" required>
@@ -106,14 +107,18 @@
                         <div class="mb-3 mx-1">
                             <div class="d-flex row-cols-2">
                                 <div class="form-floating me-1">
-                                    <input id="InputWebsiteContact" name="Contact" class="website_contact form-control" type="text" placeholder="寄件人顯示名稱" value="@Model.Website.Contact">
-                                    <label class="required" for="InputWebsiteContact">寄件人顯示名稱</label>
+                                    <input id="InputWebsiteContact" name="Contact" class="website_contact form-control" type="text" placeholder="系統寄件顯示名稱" value="@Model.Website.Contact" title="用於系統寄件時顯示的名稱">
+                                    <label class="required" for="InputWebsiteContact">系統寄件顯示名稱</label>
                                 </div>
                                 <div class="form-floating ms-1">
-                                    <input id="InputWebsiteContactMail" name="ContactMail" class="website_contact_name form-control" type="email" placeholder="系統訂單通知信箱" value="@Model.Website.ContactMail">
-                                    <label class="required" for="InputWebsiteContactMail">系統訂單通知信箱</label>
-                                    <div class="invalid-feedback">請輸入正確的系統訂單通知信箱格式</div>
+                                    <input id="InputWebsiteContactMail" name="ContactMail" class="website_contact_name form-control" type="email" placeholder="系統收發信箱" value="@Model.Website.ContactMail" title="用於系統通知、寄件與接收客戶回覆">
+                                    <label class="required" for="InputWebsiteContactMail">系統收發信箱</label>
+                                    <div class="invalid-feedback">請輸入正確的系統收發信箱格式</div>
                                 </div>
+                            </div>
+                            <div class="form-text mt-1">
+                                <i class="fa-solid fa-circle-info me-1" aria-hidden="true"></i>
+                                此聯絡資訊亦會提供搜尋引擎作為 SEO 結構化資料。
                             </div>
                         </div>
                     </form>

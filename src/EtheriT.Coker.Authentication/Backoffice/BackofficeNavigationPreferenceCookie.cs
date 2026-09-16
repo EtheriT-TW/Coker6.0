@@ -25,6 +25,17 @@ public sealed class BackofficeNavigationPreferenceCookie
     private const string CookieName = ".Coker6.Back.LastLocation";
     private const string ProtectorPurpose = "EtheriT.Coker.Backoffice.LastLocation.v1";
     private static readonly TimeSpan Lifetime = TimeSpan.FromDays(180);
+    private static readonly string[] MvcNonPagePathPrefixes =
+    {
+        "/upload",
+        "/css",
+        "/js",
+        "/images",
+        "/lib",
+        "/shared",
+        "/layout",
+        "/favicon"
+    };
 
     private readonly IDataProtector _protector;
     private readonly string? _cookieDomain;
@@ -120,8 +131,16 @@ public sealed class BackofficeNavigationPreferenceCookie
             return false;
         }
 
+        // MVC 的根路徑實際對應 Account/Index。若把它記成登入後位置，
+        // 登入頁的 session check 會再次導回根路徑，形成無限重新導向。
         if (system == BackofficeSystem.Mvc &&
-            value.StartsWith("/Account", StringComparison.OrdinalIgnoreCase))
+            (string.Equals(value, "/", StringComparison.Ordinal) ||
+             value.StartsWith("/?", StringComparison.Ordinal) ||
+             value.StartsWith("/Account", StringComparison.OrdinalIgnoreCase) ||
+             MvcNonPagePathPrefixes.Any(prefix =>
+                 string.Equals(value, prefix, StringComparison.OrdinalIgnoreCase) ||
+                 value.StartsWith($"{prefix}/", StringComparison.OrdinalIgnoreCase) ||
+                 value.StartsWith($"{prefix}.", StringComparison.OrdinalIgnoreCase))))
         {
             return false;
         }

@@ -767,6 +767,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     seoDescription,
                     model.locale,
                     organizationLogoUrl,
+                    websiteData?.Contact,
+                    websiteData?.ContactMail,
                     companyData);
                 RemoveNullStructuredDataValues(websiteStructuredData);
 
@@ -1172,6 +1174,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             string? description,
             string? locale,
             string? organizationLogoUrl,
+            string? publicContactName,
+            string? publicContactEmail,
             EtheriT.Coker.Application.Company.CompanyDto? company)
         {
             var organizationId = $"{canonicalUrl}#organization";
@@ -1182,8 +1186,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
 
             if (hasCompany)
             {
-                var contactName = NormalizeStructuredDataText(company!.Contact);
-                var email = NormalizeStructuredDataText(company.Email);
+                var contactName = NormalizeStructuredDataText(publicContactName);
+                var email = NormalizeStructuredDataText(publicContactEmail);
                 graph.Add(new Dictionary<string, object?>
                 {
                     ["@type"] = "Organization",

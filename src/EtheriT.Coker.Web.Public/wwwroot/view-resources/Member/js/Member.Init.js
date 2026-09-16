@@ -44,7 +44,9 @@
                 MemberPage.Modals.init(loginData);
                 MemberPage.Profile.init();
                 MemberPage.Router.init();
-                MemberPage.Router.change();
+                MemberPage.Products.initTabVisibility().always(function () {
+                    MemberPage.Router.change();
+                });
             }
         };
 

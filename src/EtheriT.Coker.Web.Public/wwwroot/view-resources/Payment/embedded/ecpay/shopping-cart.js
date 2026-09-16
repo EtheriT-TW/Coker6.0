@@ -686,7 +686,7 @@
 
         if (isApplePay) {
             cart.CheckoutResult.setStatus(
-                "<div>Apple Pay 付款已完成，訂單付款狀態處理中。若畫面尚未更新，請稍後至會員中心查詢訂單狀態。</div>"
+                "<div><span>Apple Pay 付款已完成，</span><span class=\"d-block d-sm-inline fs-5\">訂單付款狀態處理中。若畫面尚未更新，請稍後至會員中心查詢訂單狀態。</span></div>"
             );
         } else {
             cart.CheckoutResult.setStatus(

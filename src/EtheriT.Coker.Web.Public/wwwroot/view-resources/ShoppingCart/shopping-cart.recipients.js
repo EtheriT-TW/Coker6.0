@@ -218,6 +218,7 @@
         $("#RecipientsListLoading").addClass("d-none");
         $("#RecipientsListError").addClass("d-none");
         $("#RecipientsListEmpty").toggleClass("d-none", items.length > 0);
+        $("#RecipientModal .recipient-footer-new").toggleClass("d-none", items.length === 0);
         $("#RecipientsListEmpty .recipient-empty-title").text(
             logisticsType ? "這個配送方式還沒有常用收件資訊" : "目前沒有常用收件資訊"
         );
@@ -240,11 +241,13 @@
         $("#RecipientsListLoading").addClass("d-none");
         $("#RecipientsListError").removeClass("d-none")
             .find(".recipient-list-error-detail").text(message);
+        $("#RecipientModal .recipient-footer-new").removeClass("d-none");
     }
 
     function Load() {
         $("#RecipientsListLoading").removeClass("d-none");
         $("#RecipientsListEmpty, #RecipientsListError").addClass("d-none");
+        $("#RecipientModal .recipient-footer-new").addClass("d-none");
         $("#RecipientsCardList").empty();
 
         return $.ajax({

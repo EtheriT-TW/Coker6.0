@@ -69,7 +69,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
             var website_str = website == null ? "" : website.ToString();
             var defaultData = await websiteApplication.GetDefaultData(siteId, website_str);
             var website_data = await websiteApplication.GetAllData(defaultData.Id);
-            var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id)).Maps.ToList();
+            var webmenus_data = (await webMenuApplication.GetDisplayAll(defaultData.Id, true)).Maps.ToList();
             string orgName = website_data[0].OrgName ?? "";
             var marquee = JsonConvert.DeserializeObject<List<MarqueeDisplayDto>>(JsonConvert.SerializeObject((await marqueeAppService.GetAll(website_data[0].Id, "Top")).Value));
             HeaderViewModel headerViewModel = new HeaderViewModel();

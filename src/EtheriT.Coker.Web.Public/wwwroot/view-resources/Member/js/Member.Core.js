@@ -36,6 +36,8 @@
             orderPane: "#profile-tab-pane",
             favoritePane: "#favorite-tab-pane",
             historyPane: "#history-tab-pane",
+            favoriteTab: "#favorite-tab",
+            historyTab: "#history-tab",
             bonusPane: "#bonus-tab-pane",
             resetEmailModal: "#ResetEmailModal",
             resetEmailForm: "#ResetEmailForm",

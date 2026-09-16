@@ -104,12 +104,7 @@
         const $icon = $("<span>", {
             class: "sort-control-icon material-symbols-outlined me-2",
             "aria-hidden": "true",
-            title: text("SortBy", "排序"),
             text: "sort"
-        });
-        const $hiddenLabel = $("<span>", {
-            class: "visually-hidden",
-            text: text("SortBy", "排序")
         });
         const $group = $("<div>", {
             class: "btn-group btn-group-sm",
@@ -119,11 +114,10 @@
         const $direction = $("<button>", {
             type: "button",
             class: "directory-sort-direction btn btn-outline-secondary",
-            "aria-disabled": "true",
+            "aria-disabled": "false",
             "data-ascending-label": text("SortAscending", "升序"),
-            "data-descending-label": text("SortDescending", "降序"),
-            "data-unavailable-label": text("SortDirectionUnavailable", "請先選擇排序欄位")
-        }).append($("<span>", { class: "directory-sort-label" }));
+            "data-descending-label": text("SortDescending", "降序")
+        }).append($icon, $("<span>", { class: "directory-sort-label" }));
         const $toggle = $("<button>", {
             type: "button",
             class: "btn btn-outline-secondary dropdown-toggle dropdown-toggle-split",
@@ -150,7 +144,20 @@
         });
 
         $group.append($direction, $toggle, $menu);
-        return $control.append($icon, $hiddenLabel, $group);
+        return $control.append($group);
+    }
+
+    function toggleMenu($control) {
+        const toggle = $control.find("[data-bs-toggle='dropdown']")[0];
+        if (toggle && w.bootstrap?.Dropdown) {
+            w.bootstrap.Dropdown.getOrCreateInstance(toggle).toggle();
+            return;
+        }
+
+        const $toggle = $(toggle);
+        const shouldOpen = !$control.find(".directory-sort-menu").hasClass("show");
+        $control.find(".directory-sort-menu").toggleClass("show", shouldOpen);
+        $toggle.toggleClass("show", shouldOpen).attr("aria-expanded", String(shouldOpen));
     }
 
     function closeMenu($control) {
@@ -170,14 +177,14 @@
         const $direction = $control.find(".directory-sort-direction");
         const $selected = $control.find(`[data-sort="${sortBy}"]`).first();
         const label = isDefault
-            ? $direction.data("unavailableLabel")
+            ? text("SortOptions", "選擇排序方式")
             : $direction.data(direction === "desc" ? "descendingLabel" : "ascendingLabel");
 
         $direction
             .toggleClass("is-default", isDefault)
-            .attr("aria-disabled", isDefault ? "true" : "false")
+            .attr("aria-disabled", "false")
             .attr("aria-label", label)
-            .attr("title", isDefault ? "" : label)
+            .attr("title", label)
             .find(".directory-sort-label")
             .text($selected.text().trim());
         $control.find(".btn-group")
@@ -210,9 +217,12 @@
             reload($frame);
         });
         $control.on("click.directorySort", ".directory-sort-direction", function () {
-            closeMenu($control);
-            if (String($frame.data("searchSortBy") || "default").toLowerCase() === "default") return;
+            if (String($frame.data("searchSortBy") || "default").toLowerCase() === "default") {
+                toggleMenu($control);
+                return;
+            }
 
+            closeMenu($control);
             const direction = $frame.data("searchSortDirection") === "desc" ? "asc" : "desc";
             $frame.data("searchSortDirection", direction);
             writePreference($frame, contentType, $frame.data("searchSortBy"), direction);

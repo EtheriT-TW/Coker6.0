@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Application
     public interface IWebMenuApplication
     {
         public Task<MenuEditorTreeDto> GetAll();
-        public Task<SiteMapDto> GetDisplayAll(long WebsiteID);
+        public Task<SiteMapDto> GetDisplayAll(long WebsiteID, bool mainMenuOnly = false);
         public Task<SiteMapDto> GetSiteMap();
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions, long? mid = null);
         public Task<MenuGetAllListDto> GetSelectData(long Mid);

@@ -90,7 +90,7 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
-        public async Task<SiteMapDto> GetDisplayAll(long WebsiteID)
+        public async Task<SiteMapDto> GetDisplayAll(long WebsiteID, bool mainMenuOnly = false)
         {
             SiteMapDto response = new SiteMapDto { Success = false };
             try
@@ -99,6 +99,7 @@ namespace EtheriT.Coker.Application
 
                 response.Message = cacheResult.Json;
                 response.Maps = JsonConvert.DeserializeObject<List<MenuItemDto>>(cacheResult.Json) ?? new List<MenuItemDto>();
+                if (mainMenuOnly) response.Maps = FilterMainMenuItems(response.Maps);
                 response.Success = true;
             }
             catch (Exception ex)
@@ -114,8 +115,7 @@ namespace EtheriT.Coker.Application
             {
                 var siteId = loginUserData.GetFrontWebsiteId();
                 var child = loginUserData.GetFrontChildOrgName();
-                response = await GetDisplayAll(siteId);
-                response.Maps = FilterMainMenuItems(response.Maps);
+                response = await GetDisplayAll(siteId, true);
                 if (child != null && child.Any())
                 {
                     child.ForEach(item =>
@@ -153,6 +153,7 @@ namespace EtheriT.Coker.Application
                     && item.IsFromShelves
                     && item.ShowToMenu
                     && (item.PageType == PageTypeEnum.一般頁面
+                        || item.PageType == PageTypeEnum.首頁
                         || item.PageType == PageTypeEnum.結構頁面))
                 .Select(item =>
                 {
@@ -450,7 +451,10 @@ namespace EtheriT.Coker.Application
                 if (!getDirectoryMenuData) dataQuery = dataQuery.Where(e => e.Visible);
                 if (ShowToMenu)
                 {
-                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e => e.PageType == PageTypeEnum.一般頁面 || e.PageType == PageTypeEnum.結構頁面);
+                    dataQuery = dataQuery.Where(e => e.ShowToMenu).Where(e =>
+                        e.PageType == PageTypeEnum.一般頁面 ||
+                        e.PageType == PageTypeEnum.首頁 ||
+                        e.PageType == PageTypeEnum.結構頁面);
                 }
                 var menus = await dataQuery
                             .OrderBy(m => m.SerNO)
@@ -695,16 +699,95 @@ namespace EtheriT.Coker.Application
                 dto.icon = NormalizeMenuIcon(dto.icon);
                 dto.RouterName = dto.RouterName?.Trim() ?? string.Empty;
 
-                if (!string.IsNullOrEmpty(dto.RouterName))
+                if ((dto.PageType == PageTypeEnum.首頁 && dto.Visible) ||
+                    (dto.PageType == PageTypeEnum.一般頁面 && dto.Visible && !string.IsNullOrEmpty(dto.RouterName)))
                 {
                     var siteId = await loginUserData.GetWebsiteId();
-                    var normalizedRouterName = dto.RouterName.ToUpper();
-                    var routerNameExists = await db.WebMenus.AnyAsync(e =>
-                        !e.IsDeleted &&
-                        e.FK_WebsiteId == siteId &&
-                        e.Id != dto.Id &&
-                        e.RouterName.ToUpper() == normalizedRouterName);
-                    if (routerNameExists) throw new Exception("此路由名稱已被使用，請更換其他名稱");
+                    MenuItemDto? conflictingMenu;
+                    string conflictMessage;
+
+                    if (dto.PageType == PageTypeEnum.首頁)
+                    {
+                        conflictingMenu = await db.WebMenus
+                            .Where(e =>
+                                !e.IsDeleted &&
+                                e.FK_WebsiteId == siteId &&
+                                e.Id != dto.Id &&
+                                e.PageType == PageTypeEnum.首頁 &&
+                                e.Visible)
+                            .OrderBy(e => e.Id)
+                            .Select(e => new MenuItemDto
+                            {
+                                Id = e.Id,
+                                Title = e.Title,
+                                RouterName = e.RouterName,
+                                FK_TopNodeId = e.FK_TopNodeId
+                            })
+                            .FirstOrDefaultAsync();
+                        conflictMessage = "皆為顯示中的首頁，每個網站同一時間只能顯示一個首頁。";
+                    }
+                    else
+                    {
+                        var normalizedRouterName = dto.RouterName.ToUpper();
+                        conflictingMenu = await db.WebMenus
+                            .Where(e =>
+                                !e.IsDeleted &&
+                                e.FK_WebsiteId == siteId &&
+                                e.Id != dto.Id &&
+                                e.PageType == PageTypeEnum.一般頁面 &&
+                                e.Visible &&
+                                e.RouterName.ToUpper() == normalizedRouterName)
+                            .OrderBy(e => e.Id)
+                            .Select(e => new MenuItemDto
+                            {
+                                Id = e.Id,
+                                Title = e.Title,
+                                RouterName = e.RouterName,
+                                FK_TopNodeId = e.FK_TopNodeId
+                            })
+                            .FirstOrDefaultAsync();
+                        conflictMessage = $"皆為顯示中的一般頁面，RouterName「{dto.RouterName}」不可重複。";
+                    }
+
+                    if (conflictingMenu != null)
+                    {
+                        var menuPathRows = await db.WebMenus
+                            .Where(e => !e.IsDeleted && e.FK_WebsiteId == siteId)
+                            .Select(e => new
+                            {
+                                e.Id,
+                                e.Title,
+                                e.FK_TopNodeId
+                            })
+                            .ToListAsync();
+
+                        string BuildMenuPath(string? title, long? parentId)
+                        {
+                            var path = new List<string>
+                            {
+                                string.IsNullOrWhiteSpace(title) ? "(未命名選單)" : title.Trim()
+                            };
+                            var visitedIds = new HashSet<long>();
+
+                            while (parentId.HasValue && visitedIds.Add(parentId.Value))
+                            {
+                                var parent = menuPathRows.FirstOrDefault(e => e.Id == parentId.Value);
+                                if (parent == null) break;
+
+                                path.Add(string.IsNullOrWhiteSpace(parent.Title) ? "(未命名選單)" : parent.Title.Trim());
+                                parentId = parent.FK_TopNodeId;
+                            }
+
+                            path.Reverse();
+                            return string.Join(" > ", path);
+                        }
+
+                        var currentPath = BuildMenuPath(dto.Title, dto.FK_TopNodeId);
+                        var conflictingPath = BuildMenuPath(conflictingMenu.Title, conflictingMenu.FK_TopNodeId);
+                        var currentId = dto.Id == 0 ? "新增" : dto.Id.ToString();
+                        throw new Exception(
+                            $"目前選單「{currentPath}」（ID：{currentId}）與既有選單「{conflictingPath}」（ID：{conflictingMenu.Id}）{conflictMessage}");
+                    }
                 }
 
                 if (dto.Id == 0)

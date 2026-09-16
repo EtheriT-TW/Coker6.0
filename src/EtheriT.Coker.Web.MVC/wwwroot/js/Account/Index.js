@@ -197,8 +197,9 @@
     $(document).on("click", ".toggle-password", function (e) {
         e.preventDefault();
 
-        const $icon = $(this);
-        const targetSelector = $icon.data("target");
+        const $toggle = $(this);
+        const $icon = $toggle.is("button") ? $toggle.find("i") : $toggle;
+        const targetSelector = $toggle.data("target");
         const $input = $(targetSelector);
 
         if (!$input.length) return;
@@ -209,5 +210,6 @@
 
         $icon.toggleClass("fa-eye", isPassword);
         $icon.toggleClass("fa-eye-slash", !isPassword);
+        $toggle.attr({ "aria-pressed": String(isPassword), "aria-label": isPassword ? "隱藏密碼" : "顯示密碼", "title": isPassword ? "隱藏密碼" : "顯示密碼" });
     });
 };

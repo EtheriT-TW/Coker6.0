@@ -7,10 +7,10 @@
 <link rel="stylesheet" href="~/css/OrderManagement/OrderList.min.css" asp-append-version="true" />
 <script src="~/js/OrderManagement/OrderList.min.js" asp-append-version="true"></script>
 
-<div class="py-2 px-4 position-relative">
+<div class="order-management-page py-2 px-4 position-relative">
     <div id="TopLine" class="d-flex justify-content-between mb-4">
         <div class="title fw-bold fs-4">訂單列表</div>
-        <div class="tool">
+        <div id="OrderMoreActions" class="tool">
             <button class="btn_createLogistics btn btn-info px-4 py-1 text-white fw-bold fs-5 btn d-none">產生物流訂單</button>
             <button class="btn_printShippingLabel btn btn-info px-4 py-1 text-white fw-bold fs-5 btn d-none">列印託運單</button>
             <button class="btn_queryLogisticsStatus btn btn-info px-4 py-1 text-white fw-bold fs-5 btn d-none">查看最新物流狀態</button>
@@ -86,18 +86,25 @@
     </div>
 
     <div id="OrderContent" class="d-none">
+        <div class="order-mobile-toolbar">
+            <button type="button" class="btn_back btn btn-outline-secondary btn-sm">← 返回列表</button>
+            <button id="Btn_Side_Collapse" class="d-none btn btn-primary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#OrderData" aria-controls="OrderData">
+                訂單資料<span class="order-dirty-badge d-none ms-1">＊</span>
+            </button>
+            <button type="button" class="btn_order_more btn btn-outline-secondary btn-sm" aria-expanded="false" aria-controls="OrderMoreActions">更多操作</button>
+        </div>
         <div class="row m-0">
             <div id="OrderDetails" class="card border-0 col-9 overflow-auto">
                 <div class="card-header fw-bold fs-5 row gx-0 text-end align-items-center">
                     <div class="col-auto fw-bold fs-5 d-flex align-items-center">
-                        <button class="btn_back d-flex bg-transparent border-0 align-items-center">
+                        <button class="btn_back d-flex bg-transparent border-0 align-items-center" type="button" title="返回列表" aria-label="返回列表">
                             <span class="material-symbols-outlined">
                                 keyboard_backspace
                             </span>
                         </button>
                         <div class="lh-lg">訂單明細</div>
                     </div>
-                    <div class="col">訂單編號</div>
+                    <div class="col order-number-label">訂單編號</div>
                     <div data-key="id" class="col-auto order_number"></div>
                 </div>
 
@@ -182,12 +189,14 @@
                 </div>
             </div>
 
-            <div id="OrderData" class="pe-0" data-bs-scroll="true" tabindex="-1" aria-labelledby="Management Data Offcanvas">
-                <div class="offcanvas-header d-none">
+            <div id="OrderData" class="order-data-panel pe-0" data-bs-scroll="false" tabindex="-1" aria-labelledby="OrderDataPanelTitle">
+                <div class="offcanvas-header order-data-panel-header">
+                    <h5 id="OrderDataPanelTitle" class="mb-0">訂單資料／編輯</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="關閉訂單資料"></button>
                 </div>
 
                 <div class="offcanvas-body p-0">
-                    <div id="OrderData" class="card border-0 mb-3">
+                    <div class="card border-0 mb-3 order-data-summary">
                         <div class="card-body">
                             <div class="fs-5 fw-bold pb-2">訂單資料</div>
                             <div class="row">
@@ -367,13 +376,12 @@
                         </div>
                     </div>
                 </div>
+                <div class="order-data-panel-footer border-top p-3">
+                    <div class="order-edit-status small mb-2" role="status" aria-live="polite">尚無未儲存變更</div>
+                    <button type="button" class="btn_save btn btn-primary w-100">儲存訂單</button>
+                </div>
             </div>
         </div>
 
-        <button id="Btn_Side_Collapse" class="d-none position-fixed end-0 border-0 shadow position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#OrderData" aria-controls="offcanvasWithBothOptions">
-            <div class="above position-absolute end-0"></div>
-            <div>右側收合</div>
-            <div class="under position-absolute end-0"></div>
-        </button>
     </div>
 </div>

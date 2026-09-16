@@ -1,5 +1,14 @@
 ﻿var keyId
 var order_list
+var savedOrderEditState = "";
+function GetOrderEditState() {
+    return JSON.stringify({ status: $(".status_select").val(), memo: $(".memo_block").val(), tracking: $(".tracking_number").val() });
+}
+function SyncOrderEditStatus() {
+    var dirty = savedOrderEditState !== "" && savedOrderEditState !== GetOrderEditState();
+    $(".order-dirty-badge").toggleClass("d-none", !dirty);
+    $(".order-edit-status").text(dirty ? "有未儲存變更，請按「儲存訂單」" : "尚無未儲存變更");
+}
 let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_queryLogisticsStatus, $btn_CVSReturn, $btn_logistics_save, $btn_send_notification, btn_logistics_edit, btn_logistics_update
 var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0, ECPayLogisticsTypeStr = "", ECPayLogisticsSubTypeStr = "";
 function PageReady() {
@@ -7,13 +16,24 @@ function PageReady() {
     $(window).resize(OrderDataCollapse);
 
     ElementInit();
+    $(".btn_order_more").on("click", function () {
+        var expanded = $(this).attr("aria-expanded") !== "true";
+        $(this).attr("aria-expanded", String(expanded));
+        $(".order-management-page").toggleClass("order-more-open", expanded);
+    });
+    $(document).on("input change", ".status_select, .memo_block, .tracking_number", SyncOrderEditStatus);
+    $(document).on("focusin", ".memo_block", function () {
+        if ($(".order-management-page").hasClass("order-editor-compact")) {
+            this.scrollIntoView({ block: "nearest", inline: "nearest" });
+        }
+    });
 
     $(".btn_back").on("click", function () {
         var newstate = parseInt($(".status_select > option:selected").val());
-        if (oristate == newstate) history.back();
+        if (oristate == newstate && savedOrderEditState === GetOrderEditState()) BackToList();
         else {
             Coker.sweet.confirm("返回訂單列表", "資料將不被保存", "確定", "取消", function () {
-                history.back();
+                BackToList();
             });
         }
     })
@@ -436,11 +456,14 @@ function ToggleOrderBonusLines(data) {
     });
 }
 function updateOrder(onSuccess) {
+    var submittedEditState = GetOrderEditState();
     co.sweet.loading("儲存中，請稍後。");
     $btn_save.prop("disabled", true);
 
     co.Order.UpdateStatus({ Id: keyId, Status: $order_status.val(), Memo: $memo_block.val(), TrackingNumber: $tracking_number.val() }).done(function (result) {
         if (result.success) {
+            savedOrderEditState = submittedEditState;
+            SyncOrderEditStatus();
             var msg = "儲存成功";
             if (parseInt($order_status.val()) == 4) {
                 const usedBonus = Number(($(".order_bonus").text() || "0").replaceAll(",", "")) || 0;
@@ -622,8 +645,94 @@ function FormDataClear() {
 
     if ($(".btn_shippingLabel").length > 0) $(".btn_shippingLabel").remove();
 }
+function RenderCompactOrderDetails(container, options) {
+    var data = options.data;
+    var $details = $("<dl>", { "class": "order-mobile-details" });
+    [["會員編號", data.MemberId], ["訂購人", data.Orderer],
+        ["收件者地址", data.RecipientAddress], ["運送方式", data.Shipping],
+        ["付款方式", data.Payment]].forEach(function (item) {
+        $("<dt>").text(item[0]).appendTo($details);
+        $("<dd>").text(item[1] == null || item[1] === "" ? "－" : item[1]).appendTo($details);
+    });
+    $details.appendTo(container);
+}
+
+function ConfigureOrderListResponsiveLayout(e) {
+    var grid = e.component;
+    if (grid._orderLayoutObserver) return;
+    var element = e.element.jquery ? e.element[0] : e.element;
+    var originalColumns = grid.option("columns").map(function (column) {
+        return Object.assign({}, column);
+    });
+    var originalHeight = grid.option("height");
+    var originalScrolling = Object.assign({}, grid.option("scrolling"));
+    var compactMode;
+    function updateLayout() {
+        var width = element.getBoundingClientRect().width;
+        if (!width) return;
+        var compact = width <= 768;
+        if (compact === compactMode) return;
+        compactMode = compact;
+        element.classList.toggle("order-list-compact", compact);
+        var columns = originalColumns.map(function (original) {
+            var column = Object.assign({}, original);
+            if (!compact) return column;
+            delete column.hidingPriority;
+            column.visible = ["Id", "State"].includes(column.dataField) || column.type === "buttons";
+            if (column.dataField === "Id") {
+                column.caption = "編號／日期";
+                column.minWidth = 120;
+                delete column.width;
+                column.cellTemplate = function (container, options) {
+                    $("<div>", { "class": "order-mobile-number" }).text(options.data.Id).appendTo(container);
+                    var date = new Date(options.data.CreationTime);
+                    $("<div>", { "class": "order-mobile-date" })
+                        .text(Number.isNaN(date.getTime()) ? "－" : date.toLocaleString("zh-TW", {
+                            year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
+                        })).appendTo(container);
+                };
+            } else if (column.dataField === "State") {
+                column.caption = "狀態／金額";
+                column.width = 100;
+                column.cellTemplate = function (container, options) {
+                    $("<div>").text(options.data.State).appendTo(container);
+                    $("<div>", { "class": "order-mobile-total" })
+                        .text("$" + Number(options.data.Total || 0).toLocaleString("zh-TW")).appendTo(container);
+                };
+            } else if (column.type === "buttons") {
+                column.width = 40;
+            }
+            return column;
+        });
+        grid.beginUpdate();
+        try {
+            grid.option({
+                columns: columns,
+                height: compact ? "auto" : originalHeight,
+                scrolling: compact ? Object.assign({}, originalScrolling, {
+                    mode: "standard", rowRenderingMode: "standard", useNative: true
+                }) : originalScrolling,
+                columnHidingEnabled: !compact,
+                columnAutoWidth: !compact,
+                showBorders: !compact,
+                "filterRow.visible": !compact,
+                "searchPanel.width": compact ? Math.max(160, Math.min(320, width - 16)) : 480,
+                "pager.showInfo": !compact,
+                masterDetail: { enabled: compact, template: RenderCompactOrderDetails }
+            });
+        } finally {
+            grid.endUpdate();
+        }
+    }
+    grid._orderLayoutObserver = new ResizeObserver(updateLayout);
+    grid._orderLayoutObserver.observe(element);
+    grid.on("disposing", function () { grid._orderLayoutObserver.disconnect(); });
+    updateLayout();
+}
+
 function contentReady(e) {
     order_list = e;
+    ConfigureOrderListResponsiveLayout(e);
     var urlParams = new URLSearchParams(window.location.search);
     var filterValue = urlParams.get("mid");
 
@@ -974,6 +1083,8 @@ function HeaderDataSet(result) {
 
     $memo_block.val(result.memo);
     $tracking_number.val(result.trackingNumber);
+    savedOrderEditState = GetOrderEditState();
+    SyncOrderEditStatus();
 
 
     if (result.trackingNumber) {
@@ -1103,6 +1214,9 @@ function DataInsert(data, frame) {
     return frame;
 }
 function MoveToContent() {
+    $(".order-management-page").addClass("order-is-editing").removeClass("order-more-open");
+    $(".btn_order_more").attr("aria-expanded", "false");
+    $("#TopLine .title").text("訂單管理");
     $("#OrderList").addClass("d-none");
     $("#PrintR001").removeClass("d-none");
     $("#OrderContent").removeClass("d-none");
@@ -1110,6 +1224,8 @@ function MoveToContent() {
     $btn_save.removeClass("d-none");
 }
 function BackToList() {
+    $(".order-management-page").removeClass("order-is-editing order-more-open");
+    $("#TopLine .title").text("訂單列表");
     isCashOnDelivery = false;
     window.currentHash = "";
     $("#OrderList").removeClass("d-none");
@@ -1134,15 +1250,17 @@ function OrderDataCollapse() {
     $OrderData = $("#OrderData");
 
     if ($this_body.width() >= 1024) {
+        $(".order-management-page").removeClass("order-editor-compact");
         $("#Btn_Side_Collapse").addClass("d-none");
         $OrderDetails.removeClass("col-12");
         $OrderData.addClass("col-3");
         $OrderData.removeClass("offcanvas offcanvas-end visible");
         $OrderData.css('visibility', '');
     } else {
+        $(".order-management-page").addClass("order-editor-compact");
         $("#Btn_Side_Collapse").removeClass("d-none");
         $OrderDetails.addClass("col-12");
-        $OrderData.addClass("offcanvas offcanvas-end visible");
+        $OrderData.addClass("offcanvas offcanvas-end");
         $OrderData.removeClass("col-3");
     }
 }

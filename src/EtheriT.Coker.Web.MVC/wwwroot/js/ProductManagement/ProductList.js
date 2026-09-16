@@ -1459,6 +1459,7 @@ async function PageReady() {
 
     $(".btn_to_canvas").on("click", function (event) {
         event.preventDefault()
+        if (!IsProductCanvasEditingAvailable()) return;
 
         Swal.fire({
             icon: 'info',
@@ -1731,6 +1732,7 @@ function ElementInit() {
                 });
                 $self.val(filter.length ? text : "");
             }
+            RefreshCompactSpecSummary($self.closest(".spec_list"));
         })
 
         $(".alert_text").addClass("d-none");
@@ -1781,7 +1783,91 @@ function FormDataClear() {
     spec_media_map = {};
     $("#SpecMedia").data("spec-key", null).data("spec-row", null);
 }
+function IsProductCanvasEditingAvailable() {
+    var pages = document.getElementById("pages");
+    var width = pages ? pages.getBoundingClientRect().width : window.innerWidth;
+    return window.innerWidth > 768 && (!width || width > 768);
+}
+
+function SyncProductCanvasAvailability() {
+    document.body.classList.toggle("product-canvas-disabled", !IsProductCanvasEditingAvailable());
+}
+
+$(SyncProductCanvasAvailability);
+window.addEventListener("resize", SyncProductCanvasAvailability);
+
+function RenderCompactProductDetails(container, options) {
+    var data = options.data;
+    var $details = $('<dl class="product-list-expanded-details"></dl>');
+    function add(label, value) {
+        $details.append($("<dt></dt>").text(label), $("<dd></dd>").text(value === null || value === undefined || value === "" ? "－" : value));
+    }
+    function dateText(value) {
+        if (!value) return "－";
+        var date = new Date(value);
+        return isNaN(date.getTime()) ? "－" : date.toLocaleString("zh-TW");
+    }
+    add("ID", data.Id);
+    add("排序", data.Ser_No);
+    add("產品型號", data.ItemNo);
+    add("商品標籤", data.TagNames);
+    add("是否上架", data.Available ? "是" : "否");
+    add("上架日期", data.Permanent ? "永久顯示" : dateText(data.StartTime) + " ～ " + dateText(data.EndTime));
+    add("最後編輯日期", dateText(data.LastModificationTime));
+    $(container).append($details);
+}
+
+function ConfigureProductListResponsiveLayout(e) {
+    var grid = e.component;
+    if (grid._productLayoutObserver) return;
+    var desktopColumns = grid.option("columns").map(function (column) { return Object.assign({}, column); });
+    var compactMode = null;
+    var element = e.element[0] || e.element;
+    function updateLayout() {
+        var width = element.getBoundingClientRect().width;
+        if (!width) return; // 編輯頁會暫時隱藏列表，重新顯示時再計算。
+        var compact = width <= 768;
+        SyncProductCanvasAvailability();
+        if (compact === compactMode) return;
+        compactMode = compact;
+        var columns = desktopColumns.map(function (original) {
+            var column = Object.assign({}, original);
+            if (compact) {
+                column.visible = column.dataField === "Title" || column.dataField === "Visible" || column.type === "buttons";
+                delete column.hidingPriority;
+                if (column.dataField === "Title") {
+                    delete column.width;
+                    column.minWidth = 120;
+                }
+                if (column.dataField === "Visible") column.width = 60;
+                if (column.type === "buttons") {
+                    column.width = 72;
+                    column.buttons = (column.buttons || []).filter(function (button) { return button.icon !== "palette"; });
+                }
+            }
+            return column;
+        });
+        element.classList.toggle("product-grid-compact", compact);
+        grid.beginUpdate();
+        try {
+            grid.option({
+                columns: columns,
+                columnHidingEnabled: !compact,
+                columnAutoWidth: !compact,
+                masterDetail: { enabled: compact, template: RenderCompactProductDetails },
+                "filterRow.visible": !compact,
+                "headerFilter.visible": !compact
+            });
+        } finally { grid.endUpdate(); }
+    }
+    grid._productLayoutObserver = new ResizeObserver(updateLayout);
+    grid._productLayoutObserver.observe(element);
+    grid.on("disposing", function () { grid._productLayoutObserver.disconnect(); });
+    updateLayout();
+}
+
 function contentReady(e) {
+    ConfigureProductListResponsiveLayout(e);
     product_list = e;
     loadLastProductImportInfo(false);
 
@@ -1806,6 +1892,10 @@ function HashDataEdit() {
         return;
     }
 
+    if (!IsProductCanvasEditingAvailable() && /^#\d+-1$/.test(window.location.hash)) {
+        // 手機的畫布網址改走一般商品編輯，不載入畫布內容。
+        history.replaceState(history.state, "", window.location.pathname + window.location.search + window.location.hash.replace(/-1$/, ""));
+    }
     FormDataClear();
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
@@ -1849,6 +1939,7 @@ function editButtonClicked(e) {
     window.location.hash = keyId
 }
 function paletteButtonClicked(e) {
+    if (!IsProductCanvasEditingAvailable()) return;
     keyId = e.row.key;
     window.location.hash = keyId + "-1";
 }
@@ -2315,6 +2406,8 @@ function SpecAdd(result) {
 
     item_btn_delete.on("click", function (e) {
         e.preventDefault();
+        var compactEditor = item.data("compactEditor");
+        if (compactEditor) compactEditor.hide();
         var $self = $(this);
         var $self_p = $self.parents('.spec_list');
         co.sweet.confirm("移除規格", "確定要移除此項規格嗎?", "　是　", "　否　", function () {
@@ -2323,6 +2416,7 @@ function SpecAdd(result) {
             if (item.data("serno") < $("#Spec_Frame").data("spec_num")) { SortChange($(".spec_list"), "bigger", item.data("serno"), $("#Spec_Frame").data("spec_num")); }
             $self_p.remove();
             $("#Spec_Frame").data("spec_num", spec_num)
+            $("#Spec_Frame .spec_list").each(function () { RefreshCompactSpecSummary($(this)); });
         })
     })
 
@@ -2369,6 +2463,7 @@ function SpecAdd(result) {
     })
 
     $("#Spec_Frame ul .btn_spec_add").before(item);
+    InitCompactSpecEditor(item, _specKey);
 
     $price = $(".input_price");
     $stock_number = $(".input_stock_number");
@@ -2387,6 +2482,87 @@ function SpecAdd(result) {
         if (value !== "" && parseFloat(value) < 0) $self.val("0");
     });
 }
+function RefreshCompactSpecSummary($row) {
+    var names = $row.find(".input_spec").map(function () {
+        return $(this).is(":disabled") ? null : $(this).val();
+    }).get().filter(Boolean);
+    $row.find(".spec-summary-name").text(names.join(" / ") || $row.find(".input_subItemNo").val() || "未設定規格");
+    var priceText = $row.find(".input_price").val() || "未設定價格";
+    var $count = $row.find(".price .count");
+    var priceCount = $count.hasClass("d-none") ? 1 : parseInt($count.text(), 10) || 1;
+    var compactPrice = priceText.split("\n")[0] + (priceCount > 1 ? "（" + priceCount + "筆）" : "");
+    $row.find(".spec-summary-price, .spec-price-compact-button").text(compactPrice);
+    $row.find(".spec-summary-order").text("排序 " + $row.data("serno"));
+    $row.find(".spec-summary-state").text($row.data("visible") ? "顯示" : "隱藏");
+}
+
+function InitCompactSpecEditor($row, key) {
+    var $priceInput = $row.find(".input_price");
+    var $priceButton = $('<button type="button" class="form-control text-start spec-price-compact-button" aria-label="查看及編輯價格"></button>');
+    $row.find(".price").append($priceButton);
+    $priceButton.on("click", function () { $priceInput.trigger("click"); });
+    // 排序留在摘要列表操作；記錄原位置，關閉面板後恢復桌面欄位順序。
+    var $fields = $row.children("[data-label]").not(".upload_list");
+    $fields.each(function () {
+        var $anchor = $('<span class="spec-field-anchor" hidden></span>').insertBefore(this);
+        $(this).data("compactAnchor", $anchor);
+    });
+    var $summary = $('<div class="spec-mobile-summary"><div class="spec-summary-heading"><strong class="spec-summary-name"></strong><span class="spec-summary-state"></span></div><div class="spec-summary-price"></div><div class="spec-summary-actions"><span class="spec-summary-order"></span><button type="button" class="btn btn-outline-secondary spec-move-up" aria-label="規格上移">↑</button><button type="button" class="btn btn-outline-secondary spec-move-down" aria-label="規格下移">↓</button><button type="button" class="btn btn-primary spec-summary-edit">編輯</button></div></div>');
+    var id = "SpecCompactEditor" + key;
+    var $panel = $('<div class="offcanvas offcanvas-end spec-compact-editor" tabindex="-1" aria-labelledby="' + id + 'Title"><div class="offcanvas-header"><h5 class="offcanvas-title" id="' + id + 'Title">編輯規格</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="關閉"></button></div><div class="offcanvas-body"></div><div class="p-3 border-top"><div class="small text-muted mb-2">變更會保留於表單，請回商品頁按「發布」儲存。</div><button type="button" class="btn btn-primary w-100" data-bs-dismiss="offcanvas">完成編輯</button></div></div>').attr("id", id);
+    $row.append($summary, $panel);
+    var editor = new bootstrap.Offcanvas($panel[0], { scroll: false });
+    $panel.on("show.bs.offcanvas", function () {
+        $panel.find(".offcanvas-title").text("編輯規格－" + $summary.find(".spec-summary-name").text());
+        $fields.filter(".price, .alert_number").each(function () {
+            $(this).children().wrapAll('<div class="spec-input-control"></div>');
+        });
+        $panel.find(".offcanvas-body").append($fields);
+    }).on("hidden.bs.offcanvas", function () {
+        $fields.filter(".price, .alert_number").children(".spec-input-control").each(function () {
+            $(this).children().unwrap();
+        });
+        $fields.each(function () { $(this).insertBefore($(this).data("compactAnchor")); });
+        RefreshCompactSpecSummary($row);
+    });
+    $summary.find(".spec-summary-edit").on("click", function () { editor.show(); });
+    $summary.find(".spec-move-up, .spec-move-down").on("click", function () {
+        var $other = $(this).hasClass("spec-move-up") ? $row.prevAll(".spec_list").first() : $row.nextAll(".spec_list").first();
+        if (!$other.length) return;
+        if ($(this).hasClass("spec-move-up")) $other.before($row);
+        else $other.after($row);
+        $("#Spec_Frame .spec_list").each(function (index) {
+            $(this).data("serno", index + 1).find(".ser_no").val(index + 1);
+            RefreshCompactSpecSummary($(this));
+        });
+    });
+    $row.on("input change", function () { RefreshCompactSpecSummary($row); });
+    $row.find(".btn_spec_visible").on("click", function () { RefreshCompactSpecSummary($row); });
+    $("#Spec_Frame > .specList").off("sortstop.compactSpec").on("sortstop.compactSpec", function () {
+        $(this).children(".spec_list").each(function () { RefreshCompactSpecSummary($(this)); });
+    });
+    $row.data("compactEditor", editor);
+    RefreshCompactSpecSummary($row);
+}
+
+window.matchMedia("(max-width: 768px)").addEventListener("change", function (event) {
+    if (!event.matches) $("#Spec_Frame .spec_list").each(function () {
+        var editor = $(this).data("compactEditor");
+        if (editor) editor.hide();
+    });
+});
+
+document.addEventListener("invalid", function (event) {
+    if (!window.matchMedia("(max-width: 768px)").matches) return;
+    var $row = $(event.target).closest("#Spec_Frame .spec_list");
+    if (!$row.length || $(".spec-compact-editor.show, .spec-compact-editor.showing").length) return;
+    var editor = $row.data("compactEditor");
+    if (editor) {
+        $row.find(".spec-compact-editor").one("shown.bs.offcanvas", function () { event.target.focus(); });
+        editor.show();
+    }
+}, true);
+
 function SpecBlurFunction($spec) {
     var $option; var id;
     if ($spec.val() != "") {
@@ -2938,6 +3114,10 @@ function MoveToContent() {
     tagContentRefresh();
 }
 function MoveToCanvas() {
+    if (!IsProductCanvasEditingAvailable()) {
+        window.location.hash = String(keyId);
+        return;
+    }
     $("body").addClass("grapesEdit");
     $("#gjs").data("id", keyId);
     setPage(keyId);

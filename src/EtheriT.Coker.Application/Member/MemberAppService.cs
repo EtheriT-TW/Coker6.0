@@ -44,6 +44,7 @@ namespace EtheriT.Coker.Application.Member
         private readonly MailAppService _mailAppService;
         private readonly StringHandler _stringHandler;
         private readonly IHtmlProcessor htmlProcessor;
+        private readonly FrontMemberEmailValidationService frontMemberEmailValidationService;
 
         public MemberAppService(
             CokerDbContext db,
@@ -54,7 +55,8 @@ namespace EtheriT.Coker.Application.Member
             IMailTemplateAppService mailTemplateAppService,
             IHtmlProcessor htmlProcessor,
             MailAppService mailAppService,
-            StringHandler stringHandler)
+            StringHandler stringHandler,
+            FrontMemberEmailValidationService frontMemberEmailValidationService)
         {
             this.db = db;
             this.loginUserData = loginUserData;
@@ -65,6 +67,7 @@ namespace EtheriT.Coker.Application.Member
             _bonusManagementAppService = bonusManagementAppService;
             _mailTemplateAppService = mailTemplateAppService;
             _mailAppService = mailAppService;
+            this.frontMemberEmailValidationService = frontMemberEmailValidationService;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -333,9 +336,9 @@ namespace EtheriT.Coker.Application.Member
 
             try
             {
-                var exists = await db.FrontUsers
-                    .AnyAsync(e => e.Email == dto.Email && e.Websites.Any(w => w.FK_WebsiteId == websiteId));
-                if (exists) throw new Exception("此電子郵件已被使用");
+                var emailValidation = await frontMemberEmailValidationService.ValidateAsync(websiteId, dto.Email);
+                dto.Email = emailValidation.NormalizedEmail;
+                if (emailValidation.ConflictingUser != null) throw new Exception("此電子郵件已被使用");
 
                 var bUser = await db.Users.FirstOrDefaultAsync(e => e.Email == dto.Email);
 
@@ -425,6 +428,13 @@ namespace EtheriT.Coker.Application.Member
                 if (result == null)
                 {
                     throw new Exception("查無會員資料");
+                }
+
+                var emailValidation = await frontMemberEmailValidationService.ValidateAsync(websiteId, dto.Email, dto.Id);
+                dto.Email = emailValidation.NormalizedEmail;
+                if (emailValidation.ConflictingUser != null)
+                {
+                    throw new Exception("此電子郵件已被同網站的其他會員使用");
                 }
 
                 if (dto.Status == null) dto.Status = result.Status;

@@ -1,4 +1,212 @@
 ﻿
+.order-data-panel-header, .order-data-panel-footer { display: none; }
+.order-editor-compact #OrderContent:not(.d-none) { display: flex; flex-direction: column; gap: 12px; }
+.order-mobile-toolbar { display: none; }
+.order-editor-compact .order-mobile-toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
+.order-editor-compact .order-mobile-toolbar .btn { font-size: 14px; padding: 6px 10px; white-space: nowrap; }
+.order-editor-compact #Btn_Side_Collapse { position: static !important; width: auto; background-color: var(--bs-primary); }
+.order-editor-compact.order-is-editing #TopLine .title { display: none; }
+.order-editor-compact.order-is-editing:not(.order-more-open) #TopLine { display: none !important; }
+.order-editor-compact.order-is-editing #TopLine .tool { width: 100%; }
+.order-editor-compact.order-is-editing #TopLine .tool .btn { font-size: 14px !important; padding: 6px 10px !important; }
+.order-editor-compact .order-data-panel-header { display: flex; flex-shrink: 0; }
+.order-editor-compact .order-data-panel-footer { display: block; flex: 0 0 auto; position: relative; z-index: 1; background: var(--bs-body-bg); padding-bottom: max(16px, env(safe-area-inset-bottom)) !important; }
+.order-editor-compact .order-edit-status { display: block; height: auto !important; min-height: 21px; max-height: none !important; line-height: 1.5; white-space: normal; overflow: visible; }
+.order-editor-compact .order-data-panel { width: min(440px, 100vw); max-width: 100vw !important; }
+.order-editor-compact .order-data-panel > .offcanvas-body { position: static; overflow-y: auto; min-height: 0; height: 0; flex: 1 1 0; }
+.order-editor-compact .order-data-panel > .offcanvas-body {
+    padding-bottom: 24px !important;
+    scroll-padding-bottom: 24px;
+}
+.order-editor-compact #CustomerServiceMemo {
+    height: auto;
+    min-height: 0;
+    flex-shrink: 0;
+    scroll-margin-bottom: 24px;
+}
+.order-editor-compact #CustomerServiceMemo .card-body {
+    height: auto;
+    min-height: 0;
+}
+.order-editor-compact #CustomerServiceMemo .memo_block {
+    flex: 0 0 auto !important;
+    height: 120px;
+    min-height: 120px;
+    scroll-margin-block: 16px;
+}
+.order-editor-compact #TopLine .btn_save { display: none; }
+.order-editor-compact #OrderDetails { position: static; padding: 0; overflow: visible !important; }
+.order-editor-compact #OrderDetails > .card-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; padding: 10px 12px; text-align: left !important; }
+.order-editor-compact #OrderDetails > .card-header > .col-auto:first-child { width: auto; }
+.order-editor-compact #OrderDetails > .card-header .btn_back,
+.order-editor-compact .order-number-label { display: none !important; }
+.order-editor-compact #OrderDetails > .card-header .order_number { font-size: 16px; text-align: right; }
+.order-editor-compact .order_number { overflow-wrap: anywhere; }
+.order-editor-compact #OrderDetails > .card-body { padding: 12px; }
+.order-editor-compact .pro_name { white-space: normal; }
+.order-editor-compact #OrderData .card-body { padding: 16px; }
+.order-editor-compact #OrderData .col { min-width: 0; overflow-wrap: anywhere; }
+.order-editor-compact #Logistics .card-body > .d-flex:last-child { flex-wrap: wrap; gap: 8px; }
+.order-editor-compact #Logistics .tracking_number { width: 100%; margin-right: 0 !important; }
+
+/* Reading groups inside the narrow-screen order editor, without nested borders. */
+.order-editor-compact .order-data-panel > .offcanvas-body > .card {
+    margin: 0 12px 12px !important;
+    border-radius: 8px;
+    background: var(--bs-tertiary-bg, #f8f9fa);
+    box-shadow: none;
+}
+
+.order-editor-compact .order-data-panel > .offcanvas-body > .card:first-child {
+    margin-top: 4px !important;
+}
+
+.order-editor-compact .order-data-panel > .offcanvas-body > .card > .card-body {
+    padding: 14px !important;
+    line-height: 1.65;
+}
+
+.order-editor-compact .order-data-panel > .offcanvas-body > .card > .card-body > .fs-5,
+.order-editor-compact .order-data-panel > .offcanvas-body > .card > .card-body > div:first-child > .fs-5 {
+    font-size: 16px !important;
+    color: var(--bs-body-color, #343a40);
+    margin-bottom: 10px;
+    padding-bottom: 6px !important;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.order-editor-compact #OrdererData .card-body > .row,
+.order-editor-compact #RecipientData .card-body > .row,
+.order-editor-compact #InvoiceType .card-body > .row,
+.order-editor-compact #InvoiceData .card-body > .row {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 8px;
+    margin: 0;
+    padding: 4px 0;
+    color: var(--bs-body-color);
+}
+
+.order-editor-compact #OrdererData .card-body > .row > div,
+.order-editor-compact #RecipientData .card-body > .row > div,
+.order-editor-compact #InvoiceType .card-body > .row > div,
+.order-editor-compact #InvoiceData .card-body > .row > div {
+    width: auto;
+    padding: 0;
+}
+
+.order-editor-compact .order-data-panel .card-body > .row > .col-auto {
+    color: var(--bs-secondary-color);
+    font-size: 13px;
+}
+
+.order-editor-compact .order-data-summary .card-body > .pt-5 {
+    padding-top: 12px !important;
+    margin-top: 12px;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.order-editor-compact .order-data-summary .card-body > p.gray_text {
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.order-editor-compact #SystemMemo {
+    background: transparent;
+    margin-bottom: 0 !important;
+}
+
+.order-editor-compact .order_notes,
+.order-editor-compact .order_systemMemos {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* Let the page own vertical scrolling instead of constraining the grid viewport. */
+#OrderListDx.order-list-compact,
+#OrderListDx.order-list-compact .dx-datagrid-rowsview,
+#OrderListDx.order-list-compact .dx-datagrid-rowsview .dx-scrollable-container {
+    height: auto !important;
+    max-height: none !important;
+}
+
+#OrderListDx.order-list-compact .dx-datagrid-rowsview .dx-scrollable-container {
+    overflow-y: hidden !important;
+}
+
+.order-list-compact .dx-datagrid-rowsview .dx-data-row > td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+/* Header and rows are separate tables: keep their horizontal cell metrics identical. */
+#OrderListDx.order-list-compact .dx-datagrid-headers .dx-header-row > td,
+#OrderListDx.order-list-compact .dx-datagrid-rowsview .dx-data-row > td {
+    box-sizing: border-box;
+    padding-left: 7px;
+    padding-right: 7px;
+}
+
+#OrderListDx.order-list-compact .dx-datagrid-headers .dx-datagrid-table,
+#OrderListDx.order-list-compact .dx-datagrid-rowsview .dx-datagrid-table {
+    table-layout: fixed;
+}
+
+.order-mobile-number, .order-mobile-total {
+    font-weight: 600;
+}
+
+.order-mobile-date {
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.order-mobile-total {
+    margin-top: 6px;
+}
+
+.order-mobile-details {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px 12px;
+    margin: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.order-mobile-details dd { margin: 0; }
+
+@media (max-width: 768px) {
+    .order-management-page {
+        padding: 8px !important;
+    }
+
+    .order-management-page #TopLine {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px !important;
+    }
+
+    .order-management-page #TopLine .tool {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    #OrderList > .card-body {
+        padding: 0 !important;
+    }
+
+    #OrderList {
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
+
 .tool button {
     border-radius: var(--bs-border-radius);
 }

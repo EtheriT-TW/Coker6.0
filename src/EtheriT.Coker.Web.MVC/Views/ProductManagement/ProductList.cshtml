@@ -242,6 +242,7 @@
                     .HeaderFilter(headerFilter => headerFilter.Visible(true))
                     .RemoteOperations(true)
                     .ColumnHidingEnabled(true)
+                    .WordWrapEnabled(true)
                     .ShowBorders(true)
                     .FilterRow(filterRow => filterRow
                         .Visible(true)
@@ -257,8 +258,9 @@
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
-                        c.AddFor(e => e.Id).Caption("id").Width(80);
-                        c.AddFor(e => e.MinsizeImage).Caption("圖片").Width(84).Alignment(HorizontalAlignment.Center)
+                        c.AddFor(e => e.Id).Caption("id").Width(80).HidingPriority(8);
+                        c.AddFor(e => e.MinsizeImage).Caption("圖片").Width(68).Alignment(HorizontalAlignment.Center)
+                            .HidingPriority(1)
                             .AllowSearch(false).AllowFiltering(false).AllowSorting(false)
                             .CellTemplate(
                                 @<text>
@@ -267,13 +269,22 @@
                                          src="<%- data.MinsizeImage || '/images/noImg.jpg' %>"
                                          alt="<%- data.Title || '' %>" />
                                 </text>);
-                        c.AddFor(e => e.Ser_No).Caption("排序").Width(75);
-                        c.AddFor(e => e.Title).Caption("商品名稱");
+                        c.AddFor(e => e.Ser_No).Caption("排序").Width(75).HidingPriority(7);
+                        c.AddFor(e => e.Title).Caption("商品名稱").HidingPriority(0)
+                            .CellTemplate(@<text>
+                                <div class="product-list-title-cell">
+                                    <div class="product-list-title"><%- data.Title || '-' %></div>
+                                    <div class="product-list-mobile-price">
+                                        <span>價格</span>
+                                        <strong><%- data.Price === null || data.Price === undefined || data.Price === '' ? '-' : data.Price %></strong>
+                                    </div>
+                                </div>
+                            </text>);
                         c.Add()
                             .DataField("TagNames")
                             .Caption("商品標籤")
                             .Width(220)
-                            .HidingPriority(3)
+                            .HidingPriority(6)
                             .AllowSearch(false)
                             .AllowFiltering(false)
                             .AllowSorting(false)
@@ -297,13 +308,13 @@
                             <% } %>
                         </text>);
                         if(Model.HasAnyItemNo){
-                            c.AddFor(e => e.ItemNo).Caption("產品型號").Width(150).HidingPriority(3);
+                            c.AddFor(e => e.ItemNo).Caption("產品型號").Width(150).HidingPriority(5);
                         }
-                        c.AddFor(e => e.Price).Caption("價格").AllowSearch(false).AllowFiltering(false).AllowSorting(false);
+                        c.AddFor(e => e.Price).Caption("價格").HidingPriority(9).AllowSearch(false).AllowFiltering(false).AllowSorting(false);
                         c.AddFor(e => e.EndTime) // 用 EndTime 當基底即可
                             .Caption("結束日期")
                             .AllowSearch(false)
-                            .HidingPriority(2)
+                            .HidingPriority(4)
                             .Width(150)
                             .CellTemplate(@<text>
                                 <% 
@@ -319,9 +330,9 @@
                                 );
 
                                         c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc).HidingPriority(1);
-                                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(4) ;
-                                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(4);
-                        c.Add().Type(GridCommandColumnType.Buttons).Width(100)
+                                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(3) ;
+                                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(2);
+                        c.Add().Type(GridCommandColumnType.Buttons).Width(96)
                         .Buttons(b =>
                         {
                             b.Add().Name("edit").OnClick("editButtonClicked");
@@ -378,7 +389,7 @@
 
             <form id="ProductForm" class="card-body needs-validation">
                 <div class="row m-0">
-                    <div class="col-9 card p-2 me-3">
+                    <div class="col-12 col-xl-9 card p-2 me-xl-3 product-main-column">
                         <div class="row g-2 align-items-start">
                             <div class="col-12 col-lg-4 col-xl-3">
                                 <div class="form-check px-1 d-flex align-items-baseline">
@@ -460,7 +471,7 @@
                             </div>
                         </div>
                         <div class="row product_media_editor_row">
-                            <div class="col product_media_column">
+                            <div class="col-12 col-xl product_media_column">
                                 <div id="ProdMedia" class="data_upload row mx-0 border rounded mb-3 p-3 position-relative">
                                     <ul class="col-12 border p-2 overflow-auto mb-0">
                                         <li class="btn_upload_add border mb-1 p-1 shadow-sm">
@@ -555,7 +566,7 @@
                                     <div class="position-absolute upload_title bg-white">輪播</div>
                                 </div>
                             </div>
-                            <div class="col product_info_column">
+                            <div class="col-12 col-xl product_info_column">
                                 <div class="name border mb-3 p-2 field-gropu rounded">
                                     <div class="d-flex justify-content-between field-header">
                                         <span class="input-group-text border-0 required_all">商品名稱</span>
@@ -585,7 +596,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col card px-2 py-3">
+                    <div class="col-12 col-xl card px-2 py-3 mt-3 mt-xl-0 product-side-column">
                         <div class="itemNo border mb-3 p-2 field-gropu rounded">
                             <div class="d-flex field-header justify-content-between">
                                 <span class="input-group-text border-0">產品型號</span>
@@ -653,29 +664,29 @@
 
                 <template id="TemplateSpecification">
                     <li class="spec_list p-1 py-3 mb-3 rounded @(((bool)ViewBag.IsLayout2) ? "" : "spec-optional")">
-                        <div class="specVisible">
+                        <div class="specVisible" data-label="顯示">
                             <button type="button" class="btn_spec_visible form-control border-0 px-1 bg-transparent" title="顯示" aria-pressed="true">
                                 <span class="material-symbols-outlined">visibility</span>
                             </button>
                         </div>
-                        <div class="upload_list">
+                        <div class="upload_list" data-label="排序">
                             <div>
                                 <span class="chang_ser bg-transparent border-0 form-control fs-4 material-symbols-outlined px-1 py-0" title="變更順序">open_with</span>
                                 <input class="ser_no me-1 form-control rounded text-center" type="number" aria-label="Upload data sort number" title="排序號碼" value="">
                             </div>
                         </div>
-                        <div class="specImg ">
+                        <div class="specImg" data-label="規格圖片">
                             <button type="button" class="btn_spec_img_edit form-control border-0 px-1 bg-transparent" title="編輯規格圖片">
                                 <img class="spec_thumb d-none" src="/images/noImg.jpg" />
                                 <i class="fa-regular fa-image spec_img_icon"></i>
                             </button>
                         </div>
-                        <div class="specDesc  @(((bool)ViewBag.IsLayout2) ? "" : "d-none")">
+                        <div class="specDesc @(((bool)ViewBag.IsLayout2) ? "" : "d-none")" data-label="規格說明">
                             <button type="button" class="btn_spec_desc_edit form-control border-0 px-1 bg-transparent" title="編輯規格描述">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </button>
                         </div>
-                        <div class="specs">
+                        <div class="specs" data-label="規格">
                             <div>
                                 <div class="spec input-group">
                                     <input class="input_spec form-control rounded-right" list="" placeholder="規格選項" disabled required>
@@ -688,36 +699,36 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="price input-group">
+                        <div class="price input-group" data-label="金額">
                             <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                 <span class="material-symbols-outlined me-1 @(Model.PriceOptional ? "" : "required_sign")">attach_money</span>
                             </div>
                             <textarea class="input_price form-control rounded text-start" type="button" aria-label="Input Price of Product" @(Model.PriceOptional ? "" : "required")></textarea>
                             <span class="count"></span>
                         </div>
-                        <div class="SubItemNo input-group">
+                        <div class="SubItemNo input-group" data-label="子料號">
                             <input class="input_subItemNo form-control rounded text-start" type="text" aria-label="Input SubItemNo of Product">
                         </div>
 
-                        <div class="number input-group packingPoint">
+                        <div class="number input-group packingPoint" data-label="容積點數">
                             <input class="input_packingPoint_number form-control rounded" type="number" aria-label="Input Number of Product" step="1">
                         </div>
 
-                        <div class="number input-group">
+                        <div class="number input-group" data-label="可銷售量">
                             <input class="input_stock_number form-control rounded" type="number" aria-label="Input Number of Product" step="1">
                         </div>
 
-                        <div class="min_number input-group">
+                        <div class="min_number input-group" data-label="最低購買量">
                             <input class="input_min_number form-control rounded" type="number" aria-label="Input MinNumber of Product" step="1">
                         </div>
 
-                        <div class="alert_number input-group">
+                        <div class="alert_number input-group" data-label="銷售警示量">
                             <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                 <span class="material-symbols-outlined me-1">warning</span>
                             </div>
                             <input class="input_alert_number form-control rounded" type="number" aria-label="Input AlertNumber of Product" step="1">
                         </div>
-                        <div class="del">
+                        <div class="del" data-label="操作">
                             <button class="btn_remove form-control border-0 px-1 bg-transparent" title="移除規格">
                                 <span class="material-symbols-outlined">delete</span>
                             </button>
@@ -732,6 +743,7 @@
         </div>
 
         <div id="ProductCanvas" class="card border-0 d-none">
+            <div class="product-canvas-unavailable alert alert-info m-3" role="status">畫布編輯需要較寬的螢幕，請使用電腦或放大視窗。現有畫布編輯狀態會保留。</div>
             <div id="gjs"></div>
         </div>
     </div>

@@ -301,7 +301,11 @@ function Update(success_text, error_text) {
         TelPhone: $telphone_area.val() == "" ? "" : $telphone_area.val() + "-" + $telphone.val() + ($telphone_ext.val() == "" ? "" : "#" + $telphone_ext.val()),
         Address: addressParts.length ? addressParts.join(" ") : null,
         RoleId: $("#MemberLevel ").val(),
-    }).done(function () {
+    }).done(function (result) {
+        if (!result.success) {
+            Coker.sweet.error("儲存失敗", result.error || error_text, null, false);
+            return;
+        }
         Coker.sweet.success(success_text, null, true);
         setTimeout(function () {
             BackToList();

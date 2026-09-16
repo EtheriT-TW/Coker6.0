@@ -1,6 +1,7 @@
 using AutoMapper;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Member;
 using EtheriT.Coker.Application.Shared.BonusManagement;
 using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto;
@@ -32,6 +33,7 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly MailAppService mailAppService;
         private readonly IMailTemplateAppService mailTemplateAppService;
         private readonly IBonusManagementAppService bonusManagementAppService;
+        private readonly FrontMemberEmailValidationService frontMemberEmailValidationService;
 
         public FrontRegistrationService(
             CokerDbContext db,
@@ -41,7 +43,8 @@ namespace EtheriT.Coker.Application.Authorization
             IMapper mapper,
             MailAppService mailAppService,
             IMailTemplateAppService mailTemplateAppService,
-            IBonusManagementAppService bonusManagementAppService)
+            IBonusManagementAppService bonusManagementAppService,
+            FrontMemberEmailValidationService frontMemberEmailValidationService)
         {
             this.db = db;
             this.passwordHasher = passwordHasher;
@@ -51,6 +54,7 @@ namespace EtheriT.Coker.Application.Authorization
             this.mailAppService = mailAppService;
             this.mailTemplateAppService = mailTemplateAppService;
             this.bonusManagementAppService = bonusManagementAppService;
+            this.frontMemberEmailValidationService = frontMemberEmailValidationService;
         }
 
         public async Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto)
@@ -62,11 +66,9 @@ namespace EtheriT.Coker.Application.Authorization
                 var websiteId = dto.WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.WebsiteId;
                 long userId = 0;
 
-                var frontUser = await (
-                    from user in db.FrontUsers
-                    join map in db.MappingFrontUserAndWebsite on user.Id equals map.FK_UserId
-                    where user.Email == dto.Email && map.FK_WebsiteId == websiteId
-                    select user).FirstOrDefaultAsync();
+                var emailValidation = await frontMemberEmailValidationService.ValidateAsync(websiteId, dto.Email);
+                dto.Email = emailValidation.NormalizedEmail;
+                var frontUser = emailValidation.ConflictingUser;
                 var role = await db.Roles
                     .Where(e =>
                         e.FK_WebsiteId == websiteId &&

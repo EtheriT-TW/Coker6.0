@@ -1,6 +1,9 @@
-﻿public enum PlatformWebsiteStatusEnum
+﻿namespace EtheriT.Coker.Application.Shared.Dto.enumType
 {
-    正常 = 0,
-    暫停 = 1,
-    註銷 = 2
+    public enum PlatformWebsiteStatusEnum
+    {
+        正常 = 0,
+        暫停 = 1,
+        註銷 = 2
+    }
 }

@@ -1,7 +1,10 @@
-﻿public enum PlatformCustomerTypeEnum
+﻿namespace EtheriT.Coker.Application.Shared.Dto.enumType
 {
-    未設定 = 0,
-    經銷商 = 1,
-    一般客戶 = 2,
-    其他 = 9
+    public enum PlatformCustomerTypeEnum
+    {
+        未設定 = 0,
+        經銷商 = 1,
+        一般客戶 = 2,
+        其他 = 9
+    }
 }

@@ -16,6 +16,8 @@ using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -271,12 +273,18 @@ namespace EtheriT.Coker.Application.Authorization
 
         public async Task<ResponseMessageDto> Logout()
         {
-            var secret = cookieManager.Get("BackstageRefreshToken");
+            var context = httpContextAccessor.HttpContext;
+            var secret = context?.User.FindFirstValue(ClaimTypes.Sid);
+            // Older MVC sessions stored the session ID only in this cookie.
+            if (!Guid.TryParse(secret, out var sessionId))
+            {
+                Guid.TryParse(cookieManager.Get("BackstageRefreshToken"), out sessionId);
+            }
             try
             {
-                if (Guid.TryParse(secret, out var refreshTokenId))
+                if (sessionId != Guid.Empty)
                 {
-                    var token = await db.Tokens.FirstOrDefaultAsync(e => e.id == refreshTokenId);
+                    var token = await db.Tokens.FirstOrDefaultAsync(e => e.id == sessionId);
                     if (token != null)
                     {
                         if (token.UserID != null)
@@ -299,6 +307,10 @@ namespace EtheriT.Coker.Application.Authorization
             catch { }
 
             try { await tokenAppService.DelToken(); } catch { }
+            if (context != null)
+            {
+                await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
             ClearBackstageCookies();
             return new ResponseMessageDto { Success = true };
         }
@@ -511,9 +523,25 @@ namespace EtheriT.Coker.Application.Authorization
 
         private void ClearBackstageCookies()
         {
-            cookieManager.Delete("BackstageToken");
-            cookieManager.Delete("BackstageRefreshToken");
-            cookieManager.Delete(".Coker6.Back.Auth");
+            var response = httpContextAccessor.HttpContext?.Response;
+            if (response == null) return;
+
+            var domain = configuration["BackofficeAuthentication:CookieDomain"];
+            foreach (var name in new[] { "BackstageToken", "BackstageRefreshToken", ".Coker6.Back.Auth" })
+            {
+                // Clear both pre-migration host-only cookies and shared-domain cookies.
+                response.Cookies.Delete(name, new CookieOptions { Path = "/", Secure = true });
+                if (!string.IsNullOrWhiteSpace(domain))
+                {
+                    response.Cookies.Delete(name, new CookieOptions
+                    {
+                        Path = "/",
+                        Domain = domain,
+                        Secure = true,
+                        SameSite = SameSiteMode.Lax
+                    });
+                }
+            }
         }
 
         private static string CheckPassword(string password)

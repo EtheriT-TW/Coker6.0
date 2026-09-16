@@ -49,7 +49,9 @@ npm run build
 
 `create-bundles` 與 `build` 也會在 Vite啟動前執行 `scripts/ensure-devextreme-license.mjs`。MVC 使用 non-modular license；Vue Platform 使用 modular TypeScript license，兩者不可直接交換載入方式。
 
-輸出位於 `wwwroot/dist`，`.NET Build` 不會自動執行前端建置。未產生前端資源時，SPA Host 會顯示操作提示。
+公開資源輸出位於 `wwwroot/dist`；建置完成後，Vite plugin 將 manifest 移至 `FrontendResources/manifest.json`，只供後端讀取，不對外提供。`.NET Build` 不會自動執行前端建置。未產生前端資源時，SPA Host 會顯示操作提示。
+
+正式發布前執行 `npm run build`，再發布 .NET 專案。發布輸出須包含 `FrontendResources/manifest.json` 與 `wwwroot/dist/assets`。從舊版本升級時，清除發布目錄及伺服器上舊的 `wwwroot/dist/.vite/manifest.json`（含其壓縮副本）；非清空式發布不會自動刪除舊檔。
 
 ## 路由
 

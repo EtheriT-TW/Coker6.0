@@ -10,9 +10,8 @@ public sealed class ViteManifestService(IWebHostEnvironment environment)
     public ViteEntryAssets GetEntryAssets()
     {
         var manifestPath = Path.Combine(
-            environment.WebRootPath,
-            "dist",
-            ".vite",
+            environment.ContentRootPath,
+            "FrontendResources",
             "manifest.json");
 
         if (!File.Exists(manifestPath))

@@ -26,4 +26,13 @@
     <None Include="ClientApp\**" Exclude="ClientApp\node_modules\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Remove="wwwroot\dist\.vite\**" />
+    <None Remove="FrontendResources\manifest.json" />
+    <Content Remove="FrontendResources\manifest.json" />
+    <Content Include="FrontendResources\manifest.json"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

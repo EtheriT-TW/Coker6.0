@@ -57,17 +57,15 @@ public sealed class CustomerSaveRequest : IValidatableObject
     [Required(ErrorMessage = "請輸入公司名稱。")]
     [StringLength(200, ErrorMessage = "公司名稱不可超過 200 個字元。")]
     public string Name { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "請輸入統一編號。")]
     [StringLength(20)]
     [RegularExpression(@"^\d{8}$", ErrorMessage = "統一編號需為 8 碼數字。")]
-    public string TaxId { get; set; } = string.Empty;
+    public string? TaxId { get; set; }
 
     [StringLength(50)] 
     public string? Phone { get; set; }
 
     [StringLength(150)]
-    [EmailAddress(ErrorMessage = "公司 Email 格式不正確。")]
+    [OptionalEmail(ErrorMessage = "公司 Email 格式不正確。")]
     public string? Email { get; set; }
 
     [StringLength(250)] 
@@ -81,15 +79,17 @@ public sealed class CustomerSaveRequest : IValidatableObject
     [StringLength(50)] 
     public string? CustomerTypeOther { get; set; }
 
-    [StringLength(100)] 
-    public string? PrimaryContactName { get; set; }
+    [Required(ErrorMessage = "請輸入主要聯絡人姓名。")]
+    [StringLength(100)]
+    public string PrimaryContactName { get; set; } = string.Empty;
+
     [StringLength(100)] 
     public string? PrimaryContactJobTitle { get; set; }
     [StringLength(50)] 
     public string? PrimaryContactPhone { get; set; }
 
     [StringLength(150)]
-    [EmailAddress(ErrorMessage = "主要聯絡人 Email 格式不正確。")]
+    [OptionalEmail(ErrorMessage = "聯絡人 Email 格式不正確。")]
     public string? PrimaryContactEmail { get; set; }
 
     public List<CustomerContactSaveRequest> SubContacts { get; set; } = [];
@@ -126,6 +126,6 @@ public sealed class CustomerContactSaveRequest
     public string? Phone { get; set; }
 
     [StringLength(150)]
-    [EmailAddress(ErrorMessage = "聯絡人 Email 格式不正確。")]
+    [OptionalEmail(ErrorMessage = "聯絡人 Email 格式不正確。")]
     public string? Email { get; set; }
 }

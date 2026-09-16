@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed, onMounted, ref } from "vue";
+    import { computed, onMounted, ref, watch } from "vue";
     import { useRoute, useRouter } from "vue-router";
     import { ApiError, FormFieldErrors, rules, useManagedForm } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
@@ -14,6 +14,11 @@
         customerTypeOptions,
         type CustomerForm
     } from "@/types/customer";
+
+    /** 「其他」要跟填空框綁在一起單獨渲染，不走迴圈。 */
+    const plainTypeOptions = customerTypeOptions.filter(
+        option => option.Value !== CustomerType.其他
+    );
 
     const route = useRoute();
     const router = useRouter();
@@ -62,12 +67,16 @@
         duplicateResolver?.(false);
         duplicateResolver = null;
 
+        // 統編選填，沒填就不用檢查重複
+        const taxId = values.TaxId.trim();
+        if (!taxId) return true;
+
         // beforeSave 是在 useManagedForm 的 try/catch 之外被呼叫的，
         // 這裡不自己接住例外的話，整個儲存會靜默失敗、畫面完全沒反應。
         let matches;
         try {
             matches = await lookupByTaxId(
-                values.TaxId.trim(),
+                taxId,
                 isEdit.value ? customerId.value : undefined
             );
         }
@@ -92,19 +101,20 @@
         resolve?.(confirmed);
     }
 
+    const subContactEmailRule = rules.email<CustomerForm>("聯絡人 Email 格式不正確。");
+
     const form = useManagedForm<CustomerForm, { Id: number } | void>({
         id: "platform-customer-editor",
         initialValue: emptyForm,
         validation: {
             Name: [rules.required("請輸入公司名稱。"), rules.maxLength(200)],
-            TaxId: [
-                rules.required("請輸入統一編號。"),
-                rules.pattern(/^\d{8}$/, "統一編號需為 8 碼數字。")
-            ],
+            // 統編選填；rules.pattern 遇到空值會直接放行，有填才檢查 8 碼
+            TaxId: [rules.pattern(/^\d{8}$/, "統一編號需為 8 碼數字。")],
             Email: [rules.email("公司 Email 格式不正確。")],
+            PrimaryContactName: [rules.required("請輸入主要聯絡人姓名。")],
             PrimaryContactEmail: [rules.email("主要聯絡人 Email 格式不正確。")]
         },
-        validate: values => {
+        validate: async values => {
             const errors: Record<string, string[]> = {};
 
             if (values.CustomerType === CustomerType.其他 &&
@@ -112,11 +122,17 @@
                 errors.CustomerTypeOther = ["選擇「其他」時請輸入客戶屬性內容。"];
             }
 
-            values.SubContacts.forEach((contact, index) => {
+            for (const [index, contact] of values.SubContacts.entries()) {
                 if (!contact.Name.trim()) {
                     errors[`SubContacts[${index}].Name`] = ["請輸入聯絡人姓名。"];
                 }
-            });
+
+                const emailError = await subContactEmailRule(contact.Email, values);
+                if (emailError) {
+                    errors[`SubContacts[${index}].Email`] = [emailError];
+                }
+            }
+
 
             return errors;
         },
@@ -132,6 +148,16 @@
             console.error(error);
             pageError.value = "儲存失敗，請確認欄位內容後再試。";
         }
+    });
+
+    const isOtherType = computed(
+        () => form.model.value.CustomerType === CustomerType.其他
+    );
+
+    // 保留使用者打過的字，但把殘留的錯誤訊息清掉，
+    // 免得紅字掛在已經切走的欄位下面。
+    watch(isOtherType, (isOther) => {
+        if (!isOther) form.clearErrors("CustomerTypeOther");
     });
 
     function addSubContact(): void {
@@ -214,10 +240,51 @@
 
     <p v-if="pageError" class="alert alert-error" role="alert">{{ pageError }}</p>
 
-    <form class="form-card" @submit.prevent="form.save('button')">
-        <fieldset class="form-section" :disabled="loading || form.isSaving.value">
-            <legend class="form-section-heading">客戶資料</legend>
+    <form class="form-stack" @submit.prevent="form.save('button')">
+        <fieldset class="form-card form-section"
+                  aria-labelledby="section-customer-title"
+                  :disabled="loading || form.isSaving.value">
+            <div class="form-section-heading">
+                <span id="section-customer-title">公司基本資料</span>
+            </div>
             <div class="form-grid">
+
+                <div class="form-field form-field-wide form-field-right">
+                    <span id="customer-type-label" class="form-label">
+                        客戶屬性 <i class="form-required">*</i>
+                    </span>
+                    <div class="choice-group" role="radiogroup" aria-labelledby="customer-type-label">
+                        <label v-for="option in plainTypeOptions" :key="option.Value" class="choice">
+                            <input type="radio"
+                                   name="customer-type"
+                                   :value="option.Value"
+                                   v-model="form.model.value.CustomerType" />
+                            <span class="choice-box" aria-hidden="true"></span>
+                            <span>{{ option.Text }}</span>
+                        </label>
+
+                        <!-- 其他 ＋ 填空線綁在同一個容器，換行時不會被拆開 -->
+                        <span class="choice-fill">
+                            <label class="choice">
+                                <input type="radio"
+                                       name="customer-type"
+                                       :value="CustomerType.其他"
+                                       v-model="form.model.value.CustomerType" />
+                                <span class="choice-box" aria-hidden="true"></span>
+                                <span>其他</span>
+                            </label>
+                            <input v-model="form.model.value.CustomerTypeOther"
+                                   class="choice-blank"
+                                   type="text"
+                                   maxlength="50"
+                                   aria-label="其他屬性內容"
+                                   :disabled="!isOtherType" />
+                        </span>
+                    </div>
+                    <FormFieldErrors :errors="form.getErrors('CustomerType')" />
+                    <FormFieldErrors :errors="form.getErrors('CustomerTypeOther')" />
+                </div>
+
                 <div class="form-field">
                     <label>
                         <span>公司名稱 <i class="form-required">*</i></span>
@@ -228,7 +295,7 @@
 
                 <div class="form-field">
                     <label>
-                        <span>統一編號 <i class="form-required">*</i></span>
+                        <span>統一編號</span>
                         <input v-model="form.model.value.TaxId"
                                type="text"
                                inputmode="numeric"
@@ -276,38 +343,19 @@
                     </label>
                     <FormFieldErrors :errors="form.getErrors('SalesOwner')" />
                 </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>客戶屬性 <i class="form-required">*</i></span>
-                        <select v-model.number="form.model.value.CustomerType">
-                            <option v-for="option in customerTypeOptions"
-                                    :key="option.Value"
-                                    :value="option.Value">
-                                {{ option.Text }}
-                            </option>
-                        </select>
-                    </label>
-                    <FormFieldErrors :errors="form.getErrors('CustomerType')" />
-                </div>
-
-                <div v-if="form.model.value.CustomerType === CustomerType.其他"
-                     class="form-field form-field-wide">
-                    <label>
-                        <span>其他屬性內容 <i class="form-required">*</i></span>
-                        <input v-model="form.model.value.CustomerTypeOther" type="text" maxlength="50" />
-                    </label>
-                    <FormFieldErrors :errors="form.getErrors('CustomerTypeOther')" />
-                </div>
             </div>
         </fieldset>
 
-        <fieldset class="form-section" :disabled="loading || form.isSaving.value">
-            <legend class="form-section-heading">主要聯絡人資料</legend>
-            <div class="form-grid">
+        <fieldset class="form-card form-section"
+                  aria-labelledby="section-primary-title"
+                  :disabled="loading || form.isSaving.value">
+            <div class="form-section-heading">
+                <span id="section-primary-title">主要聯絡人資料</span>
+            </div>
+            <div class="form-grid form-grid-4">
                 <div class="form-field">
                     <label>
-                        <span>姓名</span>
+                        <span>姓名 <i class="form-required">*</i></span>
                         <input v-model="form.model.value.PrimaryContactName" type="text" maxlength="100" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('PrimaryContactName')" />
@@ -339,14 +387,16 @@
             </div>
         </fieldset>
 
-        <fieldset class="form-section" :disabled="loading || form.isSaving.value">
-            <legend class="form-section-heading">
-                <span>次要聯絡人資料</span>
+        <fieldset class="form-card form-section"
+                  aria-labelledby="section-sub-title"
+                  :disabled="loading || form.isSaving.value">
+            <div class="form-section-heading">
+                <span id="section-sub-title">次要聯絡人資料</span>
                 <button class="ui-button ui-button-ghost" type="button" @click="addSubContact">
                     <span class="material-symbols-outlined">add</span>
                     <span>新增一筆</span>
                 </button>
-            </legend>
+            </div>
 
             <p v-if="!form.model.value.SubContacts.length" class="repeater-empty">
                 尚未新增次要聯絡人。
@@ -358,42 +408,51 @@
                          class="repeater-item">
                     <header class="repeater-item-heading">
                         <strong>聯絡人 {{ index + 1 }}</strong>
-                        <button class="text-button text-button-danger"
-                                type="button"
-                                title="移除這筆"
-                                @click="removeSubContact(index)">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
                     </header>
 
-                    <div class="form-grid">
-                        <div class="form-field">
-                            <label>
-                                <span>姓名 <i class="form-required">*</i></span>
-                                <input v-model="contact.Name" type="text" maxlength="100" />
-                            </label>
-                            <FormFieldErrors :errors="form.getErrors(`SubContacts[${index}].Name`)" />
+                    <div class="repeater-row">
+                        <div class="form-grid form-grid-4">
+                            <div class="form-field">
+                                <label>
+                                    <span>姓名 <i class="form-required">*</i></span>
+                                    <input v-model="contact.Name" type="text" maxlength="100" />
+                                </label>
+                                <FormFieldErrors :errors="form.getErrors(`SubContacts[${index}].Name`)" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>
+                                    <span>職稱</span>
+                                    <input v-model="contact.JobTitle" type="text" maxlength="100" />
+                                </label>
+                            </div>
+
+                            <div class="form-field">
+                                <label>
+                                    <span>連絡電話</span>
+                                    <input v-model="contact.Phone" type="tel" maxlength="50" />
+                                </label>
+                            </div>
+
+                            <div class="form-field">
+                                <label>
+                                    <span>Email</span>
+                                    <input v-model="contact.Email" type="email" maxlength="150" />
+                                </label>
+                                <FormFieldErrors :errors="form.getErrors(`SubContacts[${index}].Email`)" />
+                            </div>
                         </div>
 
-                        <div class="form-field">
-                            <label>
-                                <span>職稱</span>
-                                <input v-model="contact.JobTitle" type="text" maxlength="100" />
-                            </label>
-                        </div>
-
-                        <div class="form-field">
-                            <label>
-                                <span>連絡電話</span>
-                                <input v-model="contact.Phone" type="tel" maxlength="50" />
-                            </label>
-                        </div>
-
-                        <div class="form-field">
-                            <label>
-                                <span>Email</span>
-                                <input v-model="contact.Email" type="email" maxlength="150" />
-                            </label>
+                        <!-- 空白標題佔位，讓按鈕與輸入框對齊在同一條線上 -->
+                        <div class="repeater-action">
+                            <span aria-hidden="true">&nbsp;</span>
+                            <button class="outline-icon-button outline-icon-button-danger"
+                                    type="button"
+                                    title="移除這筆"
+                                    aria-label="移除這筆聯絡人"
+                                    @click="removeSubContact(index)">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
                         </div>
                     </div>
                 </article>

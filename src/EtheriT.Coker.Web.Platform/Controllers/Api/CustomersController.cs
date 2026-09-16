@@ -168,7 +168,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
     private static void Apply(CustomerSaveRequest request, PlatformCustomer customer)
     {
         customer.Name = request.Name.Trim();
-        customer.TaxId = request.TaxId.Trim();
+        customer.TaxId = request.TaxId?.Trim() ?? string.Empty;
         customer.Phone = Clean(request.Phone);
         customer.Email = Clean(request.Email);
         customer.Address = Clean(request.Address);

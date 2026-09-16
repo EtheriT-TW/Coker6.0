@@ -664,6 +664,43 @@ button, input, select, textarea {
     background: #fdecec;
 }
 
+/* 有邊框的圖示按鈕，尺寸與圓角跟輸入框一致 */
+.outline-icon-button {
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    color: #64748b;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: color .15s, background .15s, border-color .15s;
+}
+
+    .outline-icon-button:hover {
+        color: var(--platform-primary);
+        background: var(--platform-primary-soft);
+        border-color: var(--platform-primary);
+    }
+
+    .outline-icon-button:focus-visible {
+        outline: 2px solid var(--platform-primary);
+        outline-offset: 2px;
+    }
+
+    .outline-icon-button:disabled {
+        cursor: not-allowed;
+        opacity: .6;
+    }
+
+.outline-icon-button-danger:hover {
+    color: #c2413b;
+    background: #fdecec;
+    border-color: #c2413b;
+}
+
 .grid-actions {
     display: flex;
     align-items: center;
@@ -686,8 +723,15 @@ button, input, select, textarea {
 }
 
 /* ── 表單 ── */
+/* 三個區塊各自成卡，用間距分隔 */
+.form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
 .form-card {
-    padding: 4px 26px 26px;
+    padding: 22px 26px 26px;
     background: #fff;
     border: 1px solid var(--platform-line);
     border-radius: 15px;
@@ -696,14 +740,9 @@ button, input, select, textarea {
 
 .form-section {
     margin: 0;
-    padding: 22px 0 0;
+    padding: 1rem;
     border: 0;
-    border-top: 1px solid var(--platform-line);
 }
-
-    .form-section:first-of-type {
-        border-top: 0;
-    }
 
     .form-section[disabled] {
         opacity: .6;
@@ -712,19 +751,40 @@ button, input, select, textarea {
 .form-section-heading {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
-    padding: 1rem 0 0;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--platform-line);
     color: var(--platform-ink);
     font-size: 15px;
     font-weight: 700;
 }
 
+    /* 標題左側色條，讓每張卡片有明確起點 */
+    .form-section-heading::before {
+        content: "";
+        flex: none;
+        width: 4px;
+        height: 16px;
+        border-radius: 2px;
+        background: var(--platform-primary);
+    }
+
+    /* 色條加入後不能再用 space-between，改由按鈕自己推到右側 */
+    .form-section-heading .ui-button {
+        margin-left: auto;
+    }
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px 20px;
+}
+
+/* 聯絡人四個欄位排成一列 */
+.form-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .form-field {
@@ -745,6 +805,30 @@ button, input, select, textarea {
 .form-field-wide {
     grid-column: 1 / -1;
 }
+
+/* 標題與選項整組靠右、同一行；寬度不足時選項換行，兩行都靠右 */
+.form-field-right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px 12px;
+}
+
+    .form-field-right .form-label {
+        margin-bottom: 0;
+    }
+
+    .form-field-right .choice-group {
+        justify-content: flex-end;
+    }
+
+    /* 錯誤訊息強制獨佔下一行，靠右對齊在填空線下方；間距改由 gap 提供 */
+    .form-field-right .form-field-errors {
+        flex-basis: 100%;
+        margin-top: 0;
+        text-align: right;
+    }
 
 .form-required {
     color: #c2413b;
@@ -785,9 +869,97 @@ button, input, select, textarea {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 26px;
-    padding-top: 20px;
-    border-top: 1px solid var(--platform-line);
+}
+
+/* ── 欄位標題（非 label 包覆時使用）── */
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ── 選項群組：radio 語意 + checkbox 外觀 ── */
+.choice-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 20px;
+    min-height: 42px;
+}
+
+.choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--platform-ink);
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+/* 原生輸入框視覺上隱藏但保留可聚焦與螢幕閱讀器可讀 */
+.form-field .choice input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+}
+
+.choice-box {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    transition: background .15s, border-color .15s;
+}
+
+    .choice-box::after {
+        content: "";
+        width: 10px;
+        height: 5px;
+        border-left: 2px solid #fff;
+        border-bottom: 2px solid #fff;
+        transform: rotate(-45deg) translate(1px, -1px);
+        opacity: 0;
+        transition: opacity .12s;
+    }
+
+.choice:hover .choice-box {
+    border-color: #94a3b8;
+}
+
+.choice input:checked + .choice-box {
+    background: var(--platform-primary);
+    border-color: var(--platform-primary);
+}
+
+    .choice input:checked + .choice-box::after {
+        opacity: 1;
+    }
+
+.choice input:focus-visible + .choice-box {
+    outline: 2px solid var(--platform-primary);
+    outline-offset: 2px;
+}
+
+.choice input:disabled + .choice-box {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.choice input:disabled ~ span {
+    color: #94a3b8;
 }
 
 /* ── 次要聯絡人重複區塊 ── */
@@ -811,6 +983,27 @@ button, input, select, textarea {
     margin-bottom: 13px;
     color: #526078;
     font-size: 13px;
+}
+
+/* 四個欄位 + 右側移除按鈕同一排 */
+.repeater-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+    .repeater-row > .form-grid {
+        flex: 1;
+        min-width: 0;
+    }
+
+/* 結構與 .form-field > label 相同（13px 標題 + 6px 間距），讓按鈕與輸入框對齊 */
+.repeater-action {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .repeater-empty {
@@ -887,8 +1080,41 @@ button, input, select, textarea {
     margin-top: 24px;
 }
 
+/* 「其他 ＿＿＿」：選項與填空線綁在一起，不因換行被拆散 */
+.choice-fill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-field .choice-blank {
+    width: 180px;
+    height: 30px;
+    padding: 0 4px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid #cbd5e1;
+    border-radius: 0;
+}
+
+    .form-field .choice-blank:focus {
+        border-bottom-color: var(--platform-primary);
+        box-shadow: none;
+    }
+
+    .form-field .choice-blank:disabled {
+        background: transparent;
+        border-bottom-color: #e2e8f0;
+        color: #94a3b8;
+    }
+
 @media (max-width: 1100px) {
     .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* 四欄在此寬度下每欄不到 170px，Email 會被截斷，退成兩欄 */
+    .form-grid-4 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -942,12 +1168,13 @@ button, input, select, textarea {
         grid-template-columns: 1fr;
     }
 
-    .form-grid {
+    .form-grid,
+    .form-grid-4 {
         grid-template-columns: 1fr;
     }
 
     .form-card {
-        padding: 4px 18px 20px;
+        padding: 18px 18px 20px;
     }
 }
 
@@ -999,4 +1226,35 @@ button, input, select, textarea {
         .app-dialog-actions .ui-button {
             width: 100%;
         }
+
+    /* 單欄版面改回上下排列、全部靠左 */
+    .form-field-right {
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+
+        .form-field-right .choice-group {
+            justify-content: flex-start;
+        }
+
+        .form-field-right .form-field-errors {
+            text-align: left;
+        }
+
+    .choice-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .choice-fill {
+        width: 100%;
+    }
+
+
+    .form-field .choice-blank {
+        flex: 1;
+        width: auto;
+    }
 }

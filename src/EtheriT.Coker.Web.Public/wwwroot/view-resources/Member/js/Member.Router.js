@@ -99,6 +99,11 @@
             },
 
             showBrowsing: function (hash) {
+                if ($(MemberPage.Selectors.historyTab).closest(".nav-item").hasClass("d-none")) {
+                    w.location.hash = "";
+                    return;
+                }
+
                 MemberPage.Utils.activateTab(MemberPage.Selectors.historyPane, "#history-tab");
 
                 var page = MemberPage.Utils.getHashPage(hash);
@@ -111,6 +116,11 @@
             },
 
             showFavorites: function (hash) {
+                if ($(MemberPage.Selectors.favoriteTab).closest(".nav-item").hasClass("d-none")) {
+                    w.location.hash = "";
+                    return;
+                }
+
                 MemberPage.Utils.activateTab(MemberPage.Selectors.favoritePane, "#favorite-tab");
 
                 var page = MemberPage.Utils.getHashPage(hash);

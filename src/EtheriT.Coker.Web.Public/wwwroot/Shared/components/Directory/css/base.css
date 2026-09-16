@@ -58,10 +58,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-}
-
-.directory-sort-direction.is-default {
-    cursor: default;
+    cursor: pointer;
 }
 
 .directory-sort-control .dropdown-menu {

@@ -693,12 +693,18 @@ namespace EtheriT.Coker.Application
             try
             {
                 dto.icon = NormalizeMenuIcon(dto.icon);
+                dto.RouterName = dto.RouterName?.Trim() ?? string.Empty;
 
                 if (!string.IsNullOrEmpty(dto.RouterName))
                 {
                     var siteId = await loginUserData.GetWebsiteId();
-                    var menu = await db.WebMenus.Where(e => e.RouterName == dto.RouterName && e.FK_WebsiteId == siteId).FirstOrDefaultAsync();
-                    if (menu != null && menu.Id != dto.Id) throw new Exception("此路由名稱已被使用，請更換其他名稱");
+                    var normalizedRouterName = dto.RouterName.ToUpper();
+                    var routerNameExists = await db.WebMenus.AnyAsync(e =>
+                        !e.IsDeleted &&
+                        e.FK_WebsiteId == siteId &&
+                        e.Id != dto.Id &&
+                        e.RouterName.ToUpper() == normalizedRouterName);
+                    if (routerNameExists) throw new Exception("此路由名稱已被使用，請更換其他名稱");
                 }
 
                 if (dto.Id == 0)

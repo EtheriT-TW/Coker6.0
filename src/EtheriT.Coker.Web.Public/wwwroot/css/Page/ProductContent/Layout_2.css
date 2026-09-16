@@ -251,6 +251,7 @@
 #ProDisplayModal.has-spec-info .spec-swiper {
     display: block;
     width: 100%;
+    flex-shrink: 0; /* swiper 自帶 overflow:hidden，不鎖住會被壓扁而裁切文字 */
 }
 
 #ProDisplayModal.has-spec-info .modal-dialog {
@@ -264,6 +265,10 @@
     background-color: #fff;
     border-radius: .5rem;
     padding: 1rem;
+    max-height: 85vh;
+    max-height: 85dvh; /* 手機扣掉網址列；舊瀏覽器不認得就沿用上一行 */
+    overflow-y: auto;
+    overscroll-behavior: contain; /* 捲到底不會帶動背後頁面 */
 }
 
 /* 一張 slide：手機上圖下文 */

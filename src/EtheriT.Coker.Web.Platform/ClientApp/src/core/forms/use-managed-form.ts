@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, toRaw, watch, type Ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { ApiError, type ApiFieldErrors } from "@/core/api/api-error";
 import { ensureAuthenticatedForSave } from "@/core/auth/reauthentication";
@@ -29,7 +29,7 @@ export interface ManagedFormOptions<TModel extends object, TResult> {
 }
 
 function clone<T>(value: T): T {
-  return structuredClone(value);
+    return structuredClone(toRaw(value));
 }
 
 function createInitialValue<TModel extends object>(
@@ -160,7 +160,7 @@ export function useManagedForm<TModel extends object, TResult = unknown>(
 
   onMounted(() => {
     if (options.enableSaveShortcut !== false) {
-      unregisterShortcut = registerSaveShortcut(() => save("shortcut"));
+        unregisterShortcut = registerSaveShortcut(() => { void save("shortcut"); });
     }
     window.addEventListener("beforeunload", handleBeforeUnload);
   });

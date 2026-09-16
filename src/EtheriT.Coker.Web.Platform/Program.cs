@@ -83,6 +83,7 @@ builder.Services.AddScoped<IBackofficeSessionValidator, PlatformBackofficeSessio
 builder.Services.AddSingleton<PlatformReauthenticationTicketService>();
 builder.Services.AddScoped<PlatformReauthenticationService>();
 builder.Services.AddScoped<IAuthorizationHandler, PlatformAccessHandler>();
+builder.Services.AddScoped<PlatformAuditor>();
 builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddAuthorization(options =>
 {

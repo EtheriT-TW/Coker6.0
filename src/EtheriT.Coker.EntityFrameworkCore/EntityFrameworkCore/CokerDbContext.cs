@@ -121,6 +121,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<PageTextBackfillState> PageTextBackfillStates { get; set; }
         public DbSet<CdnProviderIpRange> CdnProviderIpRanges { get; set; }
         public DbSet<CdnProviderSyncState> CdnProviderSyncStates { get; set; }
+        public DbSet<PlatformCustomer> PlatformCustomers { get; set; }
+        public DbSet<PlatformCustomerContact> PlatformCustomerContacts { get; set; }
+        public DbSet<PlatformWebsite> PlatformWebsites { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -888,6 +891,30 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     x.TargetId
                 });
 
+            });
+
+            modelBuilder.Entity<PlatformCustomer>(o =>
+            {
+                o.HasIndex(x => new { x.TaxId, x.IsDeleted });   // 非唯一：允許重複，由前端跳警告
+                o.HasIndex(x => x.Name);
+            });
+
+            modelBuilder.Entity<PlatformCustomerContact>(o =>
+            {
+                o.HasOne(f => f.Customer).WithMany(c => c.SubContacts)
+                 .HasForeignKey(f => f.FK_PlatformCustomerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+                o.HasIndex(x => new { x.FK_PlatformCustomerId, x.Sort });
+            });
+
+            modelBuilder.Entity<PlatformWebsite>(o =>
+            {
+                o.HasOne(f => f.Customer).WithMany()
+                 .HasForeignKey(f => f.FK_PlatformCustomerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+                o.HasIndex(x => x.FK_PlatformCustomerId);
+                o.HasIndex(x => x.ServiceEndDate);   // 總覽頁「即將到期」用
+                o.HasIndex(x => x.Status);
             });
 
             new SeedHelper(modelBuilder).SeedHost();

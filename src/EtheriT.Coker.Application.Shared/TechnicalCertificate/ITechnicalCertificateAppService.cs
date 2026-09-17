@@ -21,6 +21,7 @@ namespace EtheriT.Coker.Application.Shared.TechnicalCertificate
         public Task<TechCertDto> GetOne(int id);
         public Task<GetTechnicalCertificateContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> SaveConten(TechnicalCertificateSaveContenDto dto);
+        public Task<ResponseMessageDto> ImportConten(TechnicalCertificateSaveContenDto dto);
         public Task<ResponseMessageDto> Delete(long Id);
         public Task<ResponseMessageDto> TechCertAssociateDelete(long Id);
         public Task<GetFrontContenOutputDto> GetFrontConten(TechCertGetFrontContenInputDto dto);

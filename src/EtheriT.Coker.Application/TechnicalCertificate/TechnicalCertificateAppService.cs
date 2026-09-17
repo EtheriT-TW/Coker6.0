@@ -432,10 +432,11 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                     results.Title = tecCer.Title;
                     results.Conten = new TechnicalCertificateSaveContenDto
                     {
-                        SaveHtml = tecCer.Html,
-                        SaveCss = tecCer.Css
+                        // 舊資料尚無儲存稿時沿用發布內容；空字串代表使用者已清空儲存稿。
+                        SaveHtml = tecCer.SaveHtml ?? tecCer.Html,
+                        SaveCss = tecCer.SaveHtml != null ? tecCer.SaveCss : tecCer.Css
                     };
-                    results.Conten.SaveHtml = stringHandler.HtmlEncode(results.Conten.SaveHtml);
+                    results.Conten.SaveHtml = stringHandler.HtmlEncode(stringHandler.HtmlDecode(results.Conten.SaveHtml ?? ""));
                     results.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -447,17 +448,34 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             }
             return results;
         }
-		public async Task<ResponseMessageDto> SaveConten(TechnicalCertificateSaveContenDto dto) {
+        public Task<ResponseMessageDto> SaveConten(TechnicalCertificateSaveContenDto dto)
+        {
+            return SaveContentInternal(dto, publish: false);
+        }
+
+        public Task<ResponseMessageDto> ImportConten(TechnicalCertificateSaveContenDto dto)
+        {
+            return SaveContentInternal(dto, publish: true);
+        }
+
+        private async Task<ResponseMessageDto> SaveContentInternal(TechnicalCertificateSaveContenDto dto, bool publish) {
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
-                var tecCer = await db.TechnicalCertificates.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                var encodedHtml = stringHandler.HtmlEncode(dto.SaveHtml ?? "");
+                var websiteId = await loginUserData.GetWebsiteId();
+                var tecCer = await db.TechnicalCertificates.FirstOrDefaultAsync(e => e.Id == dto.Id &&
+                    e.FK_WebsiteId == websiteId && !e.IsDeleted);
 
                 if (tecCer != null)
                 {
-                    tecCer.Html = dto.SaveHtml;
-                    tecCer.Css = dto.SaveCss;
+                    tecCer.SaveHtml = encodedHtml;
+                    tecCer.SaveCss = dto.SaveCss ?? "";
+                    if (publish)
+                    {
+                        tecCer.Html = encodedHtml;
+                        tecCer.Css = dto.SaveCss ?? "";
+                    }
                     await loginUserData.SaveChanges(tecCer);
                     response.Success = true;
                 }

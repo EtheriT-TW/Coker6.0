@@ -10,6 +10,16 @@
                 dataType: "json"
             });
         },
+        ImportConten: function (data) {
+            return $.ajax({
+                url: "/api/TechnicalCertificate/ImportConten",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                headers: _c.Data.Header,
+                data: JSON.stringify(data),
+                dataType: "json"
+            });
+        },
         Get: function (id) {
             return $.ajax({
                 url: "/api/TechnicalCertificate/GetOne/",

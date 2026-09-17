@@ -5,17 +5,34 @@ var technicalCertificate_list
 function PageReady() {
     const editor = grapesInit({
         restoreHistory: { source: "TechnicalCertificate" },
-        save:null,
+        save: function (html, css) {
+            var deferred = $.Deferred();
+            co.TechnicalCertificate.SaveConten({
+                Id: $("#gjs").data("id"),
+                SaveHtml: html,
+                SaveCss: css
+            }).done(function (result) {
+                if (result.success) deferred.resolve();
+                else {
+                    co.sweet.error(result.error);
+                    deferred.reject(result);
+                }
+            }).fail(function (error) { deferred.reject(error); });
+            return deferred.promise();
+        },
         import: function (html, css) {
             var _dfr = $.Deferred();
-            co.TechnicalCertificate.SaveConten({
+            co.TechnicalCertificate.ImportConten({
                 Id: $("#gjs").data("id"),
                 SaveHtml: html,
                 SaveCss: css
             }).done(function (resutlt) {
                 if (resutlt.success) _dfr.resolve();
-                else co.sweet.error(resutlt.error);
-            });
+                else {
+                    co.sweet.error(resutlt.error);
+                    _dfr.reject(resutlt);
+                }
+            }).fail(function (error) { _dfr.reject(error); });
             return _dfr.promise();
         },
         getComponer: function () {

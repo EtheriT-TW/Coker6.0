@@ -81,7 +81,22 @@ function ready() {
     $(".editTime,.popular").appendTo($conten);
     $(".backstageType").remove();
     CokerI18n.apply(document);
-    if (typeof AOS !== 'undefined' && AOS && typeof AOS.init === 'function') AOS.init();
+    if (typeof AOS !== 'undefined' && AOS && typeof AOS.init === 'function') {
+        AOS.init();
+        const content = $conten.get(0);
+        if (content && !content.cokerLazyAosBound) {
+            content.cokerLazyAosBound = true;
+            let refreshTimer;
+            // Lazy 圖片載入後可能改變下方動畫區的位置；合併更新避免連續量測。
+            content.addEventListener('load', function (event) {
+                if (!event.target.matches?.('img[loading="lazy"]')) return;
+                window.clearTimeout(refreshTimer);
+                refreshTimer = window.setTimeout(function () {
+                    if (typeof AOS.refresh === 'function') AOS.refresh();
+                }, 100);
+            }, true);
+        }
+    }
     if ($(".search-input").val() != "") {
         const encodedString = decodeSearchText($(".search-input").val());
         const textArea = document.createElement('textarea');

@@ -11,9 +11,8 @@ function SwiperInit(obj) {
         keyboard: {
             enabled: true,
         },
-        lazy: {
-            loadPrevNext: true,
-        },
+        // Swiper 11 使用原生 loading="lazy"，預載相鄰 slide 避免切換時空白。
+        lazyPreloadPrevNext: 1,
         on: {
             init: function () {
                 const swiper = this;

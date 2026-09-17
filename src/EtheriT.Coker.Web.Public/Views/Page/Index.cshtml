@@ -81,6 +81,7 @@
         <div class="container">
             <partial name="_Breadcrumb" model="Model" />
             <coker-safe-html content="@Model.SafeHtml"
+                             lazy-load-images="true"
                              css="@Model.SafeCss"
                              website-id="@Model.HtmlSanitizeWebsiteId"
                              source-type="@Model.HtmlSanitizeSourceType"
@@ -104,6 +105,7 @@
             <partial name="_Breadcrumb" model="Model" />
         }
         <coker-safe-html content="@Model.SafeHtml"
+                         lazy-load-images="true"
                          css="@Model.SafeCss"
                          website-id="@Model.HtmlSanitizeWebsiteId"
                          source-type="@Model.HtmlSanitizeSourceType"

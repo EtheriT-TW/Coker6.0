@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260917065107_AddTechnicalCertificateDraftContent")]
+    partial class AddTechnicalCertificateDraftContent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -805,18 +808,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("ContactEmail")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("ContactJobTitle")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("ContactPhone")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<DateTime>("CreationTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -824,13 +815,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<long>("CreatorUserId")
                         .HasColumnType("bigint");
-
-                    b.Property<int>("CustomerType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CustomerTypeOther")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<long?>("DeleterUserId")
                         .HasColumnType("bigint");
@@ -842,10 +826,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("InvoiceInfo")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -860,16 +840,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("SalesOwner")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TaxID")
                         .IsRequired()
@@ -877,14 +848,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("nvarchar(10)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
-
-                    b.HasIndex("TaxID")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0 AND [TaxID] <> ''");
 
                     b.ToTable("Companies");
                 });
@@ -4988,7 +4951,102 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("Permissions");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformDomain", b =>
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformCustomer", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("CustomerType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CustomerTypeOther")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("InvoiceInfo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PrimaryContactEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("PrimaryContactJobTitle")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PrimaryContactName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PrimaryContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SalesOwner")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TaxId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("TaxId", "IsDeleted");
+
+                    b.ToTable("PlatformCustomers");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformCustomerContact", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -5010,18 +5068,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DomainName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<long>("FK_PlatformCustomerId")
+                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
+
+                    b.Property<string>("JobTitle")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
@@ -5029,30 +5090,23 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("PasswordCipher")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Registrar")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Remark")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("Sort")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DomainName")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                    b.HasIndex("FK_PlatformCustomerId", "Sort");
 
-                    b.HasIndex("EndDate");
-
-                    b.ToTable("PlatformDomains");
+                    b.ToTable("PlatformCustomerContacts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformWebsite", b =>
@@ -5077,10 +5131,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("FK_CompanyId")
-                        .HasColumnType("bigint");
+                    b.Property<DateTime?>("DomainEndDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<long?>("FK_PlatformDomainId")
+                    b.Property<string>("DomainName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("DomainPasswordCipher")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("DomainRegistrar")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("DomainStartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_PlatformCustomerId")
                         .HasColumnType("bigint");
 
                     b.Property<long?>("FK_WebsiteId")
@@ -5128,15 +5197,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("TerminatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Url")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_CompanyId");
-
-                    b.HasIndex("FK_PlatformDomainId");
+                    b.HasIndex("FK_PlatformCustomerId");
 
                     b.HasIndex("ServiceEndDate");
 
@@ -6389,69 +6452,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("FK_WebsiteId");
 
                     b.ToTable("SearchLogs");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.SecondaryContact", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<long>("FK_CompanyId")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("JobTitle")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("Sort")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FK_CompanyId", "Sort");
-
-                    b.ToTable("SecondaryContacts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
@@ -10018,22 +10018,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformWebsite", b =>
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformCustomerContact", b =>
                 {
-                    b.HasOne("EtheriT.Coker.Core.Models.Company", "Company")
-                        .WithMany()
-                        .HasForeignKey("FK_CompanyId")
+                    b.HasOne("EtheriT.Coker.Core.Models.PlatformCustomer", "Customer")
+                        .WithMany("SubContacts")
+                        .HasForeignKey("FK_PlatformCustomerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("EtheriT.Coker.Core.Models.PlatformDomain", "Domain")
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformWebsite", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.PlatformCustomer", "Customer")
                         .WithMany()
-                        .HasForeignKey("FK_PlatformDomainId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("FK_PlatformCustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("Company");
-
-                    b.Navigation("Domain");
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
@@ -10184,17 +10188,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired();
 
                     b.Navigation("Website");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.SecondaryContact", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.Company", "Company")
-                        .WithMany("SecondaryContacts")
-                        .HasForeignKey("FK_CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ShoppingCart", b =>
@@ -10471,8 +10464,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Company", b =>
                 {
-                    b.Navigation("SecondaryContacts");
-
                     b.Navigation("Websites");
                 });
 
@@ -10564,6 +10555,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Order_Headers");
 
                     b.Navigation("paymentTypesValues");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformCustomer", b =>
+                {
+                    b.Navigation("SubContacts");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>

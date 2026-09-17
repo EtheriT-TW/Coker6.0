@@ -36,7 +36,7 @@
     function emptyForm(): CustomerForm {
         return {
             Name: "",
-            // 從「網站與站台」頁跳過來時會帶 ?taxId=
+            // 從「網站管理」頁跳過來時會帶 ?taxId=
             TaxId: typeof route.query.taxId === "string" ? route.query.taxId : "",
             Phone: "",
             Email: "",

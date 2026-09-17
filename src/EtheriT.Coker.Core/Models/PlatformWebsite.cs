@@ -21,16 +21,11 @@ namespace EtheriT.Coker.Core.Models
         public PlatformWebsiteStatusEnum Status { get; set; }           // 正常／暫停／註銷
         public DateTime? TerminatedDate { get; set; }                   // 註銷日期
 
-        // ── 網址／網域 ──
+        // ── 網址 ──
         public bool IsDomainPending { get; set; }                       // 網域待申請
-        [StringLength(255)]
-        public string? DomainName { get; set; }                         // 網址／網域
-        [StringLength(200)]
-        public string? DomainRegistrar { get; set; }                    // 網域公司
-        public DateTime? DomainStartDate { get; set; }                  // 網域起始日期
-        public DateTime? DomainEndDate { get; set; }                    // 網域到期日期
-        [StringLength(1000)]
-        public string? DomainPasswordCipher { get; set; }               // 網域密碼（密文）
+        [StringLength(500)]
+        public string? Url { get; set; }                                // 網址（使用者輸入原文）
+        public long? FK_PlatformDomainId { get; set; }                  // 後端比對出的網域；待申請或未填網址時為 null
 
         // ── 備註 ──
         [StringLength(2000)]
@@ -40,5 +35,6 @@ namespace EtheriT.Coker.Core.Models
         public long? FK_WebsiteId { get; set; }                         // nullable，不建外鍵約束，預設 null
 
         public Company? Company { get; set; }
+        public PlatformDomain? Domain { get; set; }
     }
 }

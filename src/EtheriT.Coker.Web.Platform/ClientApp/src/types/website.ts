@@ -1,3 +1,5 @@
+import type { DomainSummary } from "@/types/domain";
+
 /** 對應 C# 的 PlatformWebsiteStatusEnum。 */
 export const WebsiteStatus = {
     正常: 0,
@@ -40,7 +42,7 @@ export interface WebsiteListItem {
     LevelText: string;
     Status: WebsiteStatusValue;
     StatusText: string;
-    DomainName: string | null;
+    Url: string | null;
     ServiceEndDate: string | null;
     DomainEndDate: string | null;
 }
@@ -70,11 +72,8 @@ export interface WebsiteDetail {
     Status: WebsiteStatusValue;
     TerminatedDate: string | null;
     IsDomainPending: boolean;
-    DomainName: string | null;
-    DomainRegistrar: string | null;
-    DomainStartDate: string | null;
-    DomainEndDate: string | null;
-    HasDomainPassword: boolean;
+    Url: string | null;
+    Domain: DomainSummary | null;
     Remark: string | null;
     Customer: WebsiteCustomer | null;
 }
@@ -90,16 +89,6 @@ export interface WebsiteForm {
     Status: number;
     TerminatedDate: string;
     IsDomainPending: boolean;
-    DomainName: string;
-    DomainRegistrar: string;
-    DomainStartDate: string;
-    DomainEndDate: string;
-    DomainPassword: string;
-    ClearDomainPassword: boolean;
+    Url: string;
     Remark: string;
-}
-
-export interface DomainPasswordResult {
-    State: "Ok" | "Empty" | "Unreadable";
-    Password: string | null;
 }

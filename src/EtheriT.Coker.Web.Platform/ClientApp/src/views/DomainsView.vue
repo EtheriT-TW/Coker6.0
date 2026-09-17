@@ -7,12 +7,12 @@
         DxPaging,
         DxSearchPanel
     } from "devextreme-vue/data-grid";
-    import { fetchWebsites } from "@/services/website-api";
-    import type { WebsiteListItem } from "@/types/website";
+    import { fetchDomains } from "@/services/domain-api";
+    import type { DomainListItem } from "@/types/domain";
 
     const router = useRouter();
 
-    const websites = ref<WebsiteListItem[]>([]);
+    const domains = ref<DomainListItem[]>([]);
     const isTruncated = ref(false);
     const loading = ref(false);
     const pageError = ref("");
@@ -21,13 +21,13 @@
         loading.value = true;
         pageError.value = "";
         try {
-            const result = await fetchWebsites();
-            websites.value = result.Items;
+            const result = await fetchDomains();
+            domains.value = result.Items;
             isTruncated.value = result.IsTruncated;
         }
         catch (error) {
             console.error(error);
-            pageError.value = "網站資料載入失敗，請重新整理再試。";
+            pageError.value = "網域資料載入失敗，請重新整理再試。";
         }
         finally {
             loading.value = false;
@@ -35,11 +35,11 @@
     }
 
     function goCreate(): void {
-        void router.push("/websites/new");
+        void router.push("/domains/new");
     }
 
     function goEdit(id: number): void {
-        void router.push(`/websites/${id}`);
+        void router.push(`/domains/${id}`);
     }
 
     onMounted(load);
@@ -48,12 +48,12 @@
 <template>
     <section class="page-heading">
         <div>
-            <h1>網站管理</h1>
-            <p>查看各客戶擁有的網站、期限與目前運作狀態。</p>
+            <h1>網域管理</h1>
+            <p>管理網域的申請公司、期限與密碼，網站會依網址自動對應到這裡的網域。</p>
         </div>
         <button class="ui-button ui-button-primary" type="button" @click="goCreate">
             <span class="material-symbols-outlined">add</span>
-            <span>新增網站</span>
+            <span>新增網域</span>
         </button>
     </section>
 
@@ -63,37 +63,36 @@
     </p>
 
     <section class="data-card">
-        <DxDataGrid :data-source="websites"
+        <DxDataGrid :data-source="domains"
                     key-expr="Id"
                     :show-borders="true"
                     :column-auto-width="true"
                     :column-hiding-enabled="true"
                     :hover-state-enabled="true"
                     :allow-column-resizing="true"
-                    no-data-text="目前沒有網站資料">
-            <DxSearchPanel :visible="true" :width="260" placeholder="搜尋網站、客戶、統編、網址" />
+                    no-data-text="目前沒有網域資料">
+            <DxSearchPanel :visible="true" :width="260" placeholder="搜尋網域、網域公司" />
             <DxPaging :page-size="20" />
 
-            <DxColumn data-field="Name" caption="網站名稱" :min-width="200" :hiding-priority="6" />
-            <DxColumn data-field="CustomerName"
-                      caption="客戶"
-                      :min-width="180"
-                      cell-template="customerCell"
-                      :hiding-priority="5" />
-            <DxColumn data-field="CustomerTaxId" caption="統一編號" :min-width="110" :hiding-priority="1" />
-            <DxColumn data-field="LevelText" caption="版本" :min-width="80" :hiding-priority="0" />
-            <DxColumn data-field="Url" caption="網址" :min-width="160" :hiding-priority="2" />
-            <DxColumn data-field="ServiceEndDate"
+            <DxColumn data-field="DomainName" caption="網域" :min-width="200" :hiding-priority="5" />
+            <DxColumn data-field="Registrar" caption="網域公司" :min-width="140" :hiding-priority="2" />
+            <DxColumn data-field="StartDate"
+                      caption="起始日"
+                      data-type="date"
+                      format="yyyy/MM/dd"
+                      :min-width="110"
+                      :hiding-priority="0" />
+            <DxColumn data-field="EndDate"
                       caption="到期日"
                       data-type="date"
                       format="yyyy/MM/dd"
                       :min-width="110"
-                      :hiding-priority="3" />
-            <DxColumn data-field="StatusText"
-                      caption="狀態"
-                      :min-width="80"
-                      cell-template="statusCell"
                       :hiding-priority="4" />
+            <DxColumn data-field="WebsiteCount"
+                      caption="使用網站數"
+                      data-type="number"
+                      :min-width="90"
+                      :hiding-priority="1" />
             <DxColumn caption="操作"
                       :width="80"
                       :fixed="true"
@@ -101,17 +100,6 @@
                       :allow-sorting="false"
                       :allow-hiding="false"
                       cell-template="rowActions" />
-
-            <template #customerCell="{ data }">
-                <span v-if="data.data.CustomerName">{{ data.data.CustomerName }}</span>
-                <span v-else class="grid-muted">（客戶已刪除）</span>
-            </template>
-
-            <template #statusCell="{ data }">
-                <span class="status-pill" :class="`status-pill-${data.data.Status}`">
-                    {{ data.data.StatusText }}
-                </span>
-            </template>
 
             <template #rowActions="{ data }">
                 <div class="grid-actions">

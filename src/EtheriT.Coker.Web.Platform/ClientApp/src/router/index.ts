@@ -31,7 +31,7 @@ export const router = createRouter({
             path: "/websites",
             name: "websites",
             component: () => import("@/views/WebsitesView.vue"),
-            meta: { title: "網站與站台" }
+            meta: { title: "網站管理" }
         }, {
             path: "/websites/new",
             name: "website-create",
@@ -43,6 +43,24 @@ export const router = createRouter({
             name: "website-edit",
             component: () => import("@/views/WebsiteEditView.vue"),
             meta: { title: "編輯網站" }
+        },
+        {
+            path: "/domains",
+            name: "domains",
+            component: () => import("@/views/DomainsView.vue"),
+            meta: { title: "網域管理" }
+        },
+        {
+            path: "/domains/new",
+            name: "domain-create",
+            component: () => import("@/views/DomainEditView.vue"),
+            meta: { title: "新增網域" }
+        },
+        {
+            path: "/domains/:id(\\d+)",
+            name: "domain-edit",
+            component: () => import("@/views/DomainEditView.vue"),
+            meta: { title: "編輯網域" }
         },
         {
             path: "/licenses",

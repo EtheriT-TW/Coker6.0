@@ -1,7 +1,6 @@
 import { api } from "@/core/coker";
 import { fromDateInput, toDateInput } from "@/utils/date-input";
 import type {
-    DomainPasswordResult,
     WebsiteDetail,
     WebsiteForm,
     WebsiteListResult
@@ -25,12 +24,7 @@ function toSaveRequest(form: WebsiteForm) {
         Status: form.Status,
         TerminatedDate: fromDateInput(form.TerminatedDate),
         IsDomainPending: form.IsDomainPending,
-        DomainName: blankToNull(form.DomainName),
-        DomainRegistrar: blankToNull(form.DomainRegistrar),
-        DomainStartDate: fromDateInput(form.DomainStartDate),
-        DomainEndDate: fromDateInput(form.DomainEndDate),
-        DomainPassword: form.ClearDomainPassword ? null : blankToNull(form.DomainPassword),
-        ClearDomainPassword: form.ClearDomainPassword,
+        Url: form.IsDomainPending ? null : blankToNull(form.Url),
         Remark: blankToNull(form.Remark)
     };
 }
@@ -47,12 +41,7 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         Status: detail.Status,
         TerminatedDate: toDateInput(detail.TerminatedDate),
         IsDomainPending: detail.IsDomainPending,
-        DomainName: detail.DomainName ?? "",
-        DomainRegistrar: detail.DomainRegistrar ?? "",
-        DomainStartDate: toDateInput(detail.DomainStartDate),
-        DomainEndDate: toDateInput(detail.DomainEndDate),
-        DomainPassword: "",
-        ClearDomainPassword: false,
+        Url: detail.Url ?? "",
         Remark: detail.Remark ?? ""
     };
 }
@@ -71,8 +60,4 @@ export function createWebsite(form: WebsiteForm): Promise<WebsiteDetail> {
 
 export function updateWebsite(id: number, form: WebsiteForm): Promise<WebsiteDetail> {
     return api.put<WebsiteDetail>(`${baseUrl}/${id}`, toSaveRequest(form));
-}
-
-export function fetchDomainPassword(id: number): Promise<DomainPasswordResult> {
-    return api.get<DomainPasswordResult>(`${baseUrl}/${id}/domain-password`);
 }

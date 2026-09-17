@@ -36,7 +36,8 @@ const pageTitle = computed(() =>
 const platformLinks = [
   { to: "/", icon: "space_dashboard", label: "總覽" },
   { to: "/companies", icon: "domain", label: "客戶資料" },
-  { to: "/websites", icon: "language", label: "網站與站台" },
+  { to: "/websites", icon: "language", label: "網站管理" },
+  { to: "/domains", icon: "dns", label: "網域管理" },
   { to: "/licenses", icon: "verified_user", label: "版本與授權" }
 ];
 

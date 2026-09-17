@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Web.Platform.Models.Domains;
 using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Web.Platform.Models.Websites;
@@ -16,7 +17,7 @@ public sealed record WebsiteListItemDto(
     string LevelText,
     PlatformWebsiteStatusEnum Status,
     string StatusText,
-    string? DomainName,
+    string? Url,
     DateTime? ServiceEndDate,
     DateTime? DomainEndDate);
 
@@ -32,7 +33,6 @@ public sealed record WebsiteCustomerDto(
     string? Email,
     string? PrimaryContactName);
 
-/// <summary>刻意不含 DomainPasswordCipher，只回 HasDomainPassword。</summary>
 public sealed record WebsiteDetailDto
 {
     public long Id { get; init; }
@@ -45,18 +45,15 @@ public sealed record WebsiteDetailDto
     public PlatformWebsiteStatusEnum Status { get; init; }
     public DateTime? TerminatedDate { get; init; }
     public bool IsDomainPending { get; init; }
-    public string? DomainName { get; init; }
-    public string? DomainRegistrar { get; init; }
-    public DateTime? DomainStartDate { get; init; }
-    public DateTime? DomainEndDate { get; init; }
-    public bool HasDomainPassword { get; init; }
-    public string? Remark { get; init; }
+    public string? Url { get; init; }
 
+    /// <summary>null＝網域待申請或未填網址。</summary>
+    public DomainSummaryDto? Domain { get; init; }
+    public string? Remark { get; init; }
     /// <summary>null＝原客戶已被刪除。</summary>
     public WebsiteCustomerDto? Customer { get; init; }
 }
 
-public sealed record DomainPasswordDto(string State, string? Password);
 
 // ───────────────────────── 送出 ─────────────────────────
 
@@ -80,19 +77,10 @@ public sealed class WebsiteSaveRequest
     public DateTime? TerminatedDate { get; set; }
 
     public bool IsDomainPending { get; set; }
-    [StringLength(255)]
-    public string? DomainName { get; set; }
-    [StringLength(200)]
-    public string? DomainRegistrar { get; set; }
-    public DateTime? DomainStartDate { get; set; }
-    public DateTime? DomainEndDate { get; set; }
 
-    /// <summary>明文。null＝不動既有密碼。</summary>
-    [StringLength(200, ErrorMessage = "網域密碼不可超過 200 個字元。")]
-    public string? DomainPassword { get; set; }
-
-    /// <summary>true＝清空既有密碼。與 DomainPassword 互斥。</summary>
-    public bool ClearDomainPassword { get; set; }
+    /// <summary>後端依網址比對網域，前端不送 FK。</summary>
+    [StringLength(500, ErrorMessage = "網址不可超過 500 個字元。")]
+    public string? Url { get; set; }
 
     [StringLength(2000)]
     public string? Remark { get; set; }

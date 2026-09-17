@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Platform.Models.Domains;
 using EtheriT.Coker.Web.Platform.Models.Websites;
 using EtheriT.Coker.Web.Platform.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -13,8 +14,7 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 [Route("api/websites")]
 public sealed class WebsitesController(
     CokerDbContext db,
-    PlatformAuditor auditor,
-    PlatformDomainPasswordProtector domainPasswordProtector) : ControllerBase
+    PlatformAuditor auditor) : ControllerBase
 {
     private const int ListLimit = 1000;
 
@@ -39,9 +39,9 @@ public sealed class WebsitesController(
                 CustomerTaxId = customer == null ? null : customer.TaxID,
                 site.Level,
                 site.Status,
-                site.DomainName,
+                site.Url,
                 site.ServiceEndDate,
-                site.DomainEndDate
+                DomainEndDate = site.Domain == null ? (DateTime?)null : site.Domain.EndDate
             })
             .Take(ListLimit + 1)   // 多拿一筆，用來判斷是否被截斷
             .ToListAsync(HttpContext.RequestAborted);
@@ -58,7 +58,7 @@ public sealed class WebsitesController(
                 row.Level?.ToString() ?? string.Empty,
                 row.Status,
                 row.Status.ToString(),
-                row.DomainName,
+                row.Url,
                 row.ServiceEndDate,
                 row.DomainEndDate))
             .ToList();
@@ -79,12 +79,12 @@ public sealed class WebsitesController(
     [HttpPost]
     public async Task<ActionResult<WebsiteDetailDto>> Create(WebsiteSaveRequest request)
     {
-        await ValidateRequestAsync(request);
+        var domainId = await ValidateRequestAsync(request);
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
         var site = new PlatformWebsite();
-        Apply(request, site);
+        Apply(request, domainId, site);
 
         db.PlatformWebsites.Add(site);
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
@@ -104,11 +104,11 @@ public sealed class WebsitesController(
         if (site is null)
             return NotFound();
 
-        await ValidateRequestAsync(request);
+        var domainId = await ValidateRequestAsync(request);
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
-        Apply(request, site);
+        Apply(request, domainId, site);
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
 
         var detail = await LoadDetailAsync(site.Id);
@@ -116,27 +116,6 @@ public sealed class WebsitesController(
             return NotFound();
 
         return detail;
-    }
-
-    /// <summary>
-    /// 「眼睛」按鈕專用。目前是純讀取（暫不寫稽核），所以用 GET。
-    /// ⚠ 日後若要補「誰看過」的稽核寫入，必須改成 POST 走防偽 token。
-    /// </summary>
-    [HttpGet("{id:long}/domain-password")]
-    public async Task<ActionResult<DomainPasswordDto>> GetDomainPassword(long id)
-    {
-        var site = await db.PlatformWebsites
-            .AsNoTracking()
-            .Where(item => item.Id == id)
-            .Select(item => new { item.DomainPasswordCipher })
-            .FirstOrDefaultAsync(HttpContext.RequestAborted);
-
-        if (site is null)
-            return NotFound();
-
-        // 解不開也回 200 + State=Unreadable，前端顯示提示而不是整頁失敗
-        var result = domainPasswordProtector.Unprotect(site.DomainPasswordCipher);
-        return new DomainPasswordDto(result.State, result.Password);
     }
 
     private Task<WebsiteDetailDto?> LoadDetailAsync(long id)
@@ -159,11 +138,14 @@ public sealed class WebsitesController(
                 Status = site.Status,
                 TerminatedDate = site.TerminatedDate,
                 IsDomainPending = site.IsDomainPending,
-                DomainName = site.DomainName,
-                DomainRegistrar = site.DomainRegistrar,
-                DomainStartDate = site.DomainStartDate,
-                DomainEndDate = site.DomainEndDate,
-                HasDomainPassword = site.DomainPasswordCipher != null,
+                Url = site.Url,
+                Domain = site.Domain == null
+                    ? null
+                    : new DomainSummaryDto(
+                        site.Domain.Id,
+                        site.Domain.DomainName,
+                        site.Domain.Registrar,
+                        site.Domain.EndDate),
                 Remark = site.Remark,
                 Customer = customer == null
                     ? null
@@ -178,7 +160,8 @@ public sealed class WebsitesController(
             .FirstOrDefaultAsync(HttpContext.RequestAborted);
     }
 
-    private async Task ValidateRequestAsync(WebsiteSaveRequest request)
+    /// <summary>回傳依網址比對出的網域 Id（待申請或未填網址時為 null）。</summary>
+    private async Task<long?> ValidateRequestAsync(WebsiteSaveRequest request)
     {
         // ASP.NET 預設不驗 enum 範圍，Status: 99 會原樣寫進資料庫
         if (!Enum.IsDefined(request.Status))
@@ -198,21 +181,41 @@ public sealed class WebsitesController(
             request.ServiceEndDate < request.ServiceStartDate)
             ModelState.AddModelError(nameof(request.ServiceEndDate), "網站到期日期不可早於開通日期。");
 
-        if (request.DomainStartDate is not null && request.DomainEndDate is not null &&
-            request.DomainEndDate < request.DomainStartDate)
-            ModelState.AddModelError(nameof(request.DomainEndDate), "網域到期日期不可早於起始日期。");
-
-        if (request.ClearDomainPassword && !string.IsNullOrWhiteSpace(request.DomainPassword))
-            ModelState.AddModelError(nameof(request.DomainPassword), "已勾選清除網域密碼，不可同時輸入新密碼。");
-
         if (request.FK_CompanyId > 0 &&
             !await db.Companies.AnyAsync(
                 company => company.Id == request.FK_CompanyId,
                 HttpContext.RequestAborted))
             ModelState.AddModelError(nameof(request.FK_CompanyId), "找不到對應的客戶資料，請重新帶出客戶。");
+
+        var hasUrl = !string.IsNullOrWhiteSpace(request.Url);
+        if (request.IsDomainPending)
+        {
+            if (hasUrl)
+                ModelState.AddModelError(nameof(request.Url), "網域待申請時不可填寫網址。");
+            return null;
+        }
+
+        if (!hasUrl)
+            return null;
+
+        // 網址 → 網域由後端比對，不相信前端
+        var host = PlatformDomainName.ToHost(request.Url);
+        if (host is null)
+        {
+            ModelState.AddModelError(nameof(request.Url), "網址格式不正確，例：https://www.example.com.tw");
+            return null;
+        }
+
+        var domain = await db.PlatformDomains
+            .AsNoTracking()
+            .FindBestMatchAsync(host, HttpContext.RequestAborted);
+        if (domain is null)
+            ModelState.AddModelError(nameof(request.Url), $"網域管理中沒有「{host}」對應的網域，請先建立網域資料。");
+
+        return domain?.Id;
     }
 
-    private void Apply(WebsiteSaveRequest request, PlatformWebsite site)
+    private static void Apply(WebsiteSaveRequest request, long? domainId, PlatformWebsite site)
     {
         site.FK_CompanyId = request.FK_CompanyId;
         site.Name = request.Name.Trim();
@@ -223,17 +226,9 @@ public sealed class WebsitesController(
         site.Status = request.Status;
         site.TerminatedDate = request.TerminatedDate?.Date;
         site.IsDomainPending = request.IsDomainPending;
-        site.DomainName = Clean(request.DomainName);
-        site.DomainRegistrar = Clean(request.DomainRegistrar);
-        site.DomainStartDate = request.DomainStartDate?.Date;
-        site.DomainEndDate = request.DomainEndDate?.Date;
+        site.Url = request.IsDomainPending ? null : Clean(request.Url);
+        site.FK_PlatformDomainId = domainId;
         site.Remark = Clean(request.Remark);
-
-        if (request.ClearDomainPassword)
-            site.DomainPasswordCipher = null;
-        else if (!string.IsNullOrWhiteSpace(request.DomainPassword))
-            site.DomainPasswordCipher = domainPasswordProtector.Protect(request.DomainPassword);
-        // 兩者皆無 → 保留原密文
     }
 
     private static string? Clean(string? value) =>

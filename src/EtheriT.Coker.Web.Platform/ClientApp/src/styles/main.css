@@ -1108,7 +1108,7 @@ button, input, select, textarea {
         color: #94a3b8;
     }
 
-/* ── 網站與站台 ── */
+/* ── 網站管理 ── */
 .alert-warning {
     color: #7b5a12;
     background: #fff7e0;
@@ -1130,11 +1130,33 @@ button, input, select, textarea {
     color: #c2413b;
 }
 
-.field-note-reveal {
-    color: #1f7a54;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    overflow-wrap: anywhere;
+.field-note-with-action {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
 }
+
+.field-note-action {
+    padding: 0;
+    color: var(--platform-primary);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+    .field-note-action:hover {
+        text-decoration-thickness: 2px;
+    }
+
+    .field-note-action:focus-visible {
+        outline: 2px solid var(--platform-primary);
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
 
 .visually-hidden {
     position: absolute;

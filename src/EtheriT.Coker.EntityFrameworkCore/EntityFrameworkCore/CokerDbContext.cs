@@ -123,6 +123,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<CdnProviderSyncState> CdnProviderSyncStates { get; set; }
         public DbSet<SecondaryContact> SecondaryContacts { get; set; }
         public DbSet<PlatformWebsite> PlatformWebsites { get; set; }
+        public DbSet<PlatformDomain> PlatformDomains { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -913,9 +914,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasOne(f => f.Company).WithMany()
                  .HasForeignKey(f => f.FK_CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
+                o.HasOne(f => f.Domain).WithMany()
+                 .HasForeignKey(f => f.FK_PlatformDomainId)
+                 .OnDelete(DeleteBehavior.Restrict);
                 o.HasIndex(x => x.FK_CompanyId);
+                o.HasIndex(x => x.FK_PlatformDomainId);
                 o.HasIndex(x => x.ServiceEndDate);   // 總覽頁「即將到期」用
                 o.HasIndex(x => x.Status);
+            });
+
+            modelBuilder.Entity<PlatformDomain>(o =>
+            {
+                // 軟刪除的不算重複
+                o.HasIndex(x => x.DomainName)
+                 .IsUnique()
+                 .HasFilter("[IsDeleted] = 0");
+                o.HasIndex(x => x.EndDate);
             });
 
             new SeedHelper(modelBuilder).SeedHost();

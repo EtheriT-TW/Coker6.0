@@ -5,6 +5,7 @@ using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Search;
+using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Shared.Article;
 using EtheriT.Coker.Application.Shared.Directory;
 using EtheriT.Coker.Application.Shared.Dto;
@@ -63,6 +64,8 @@ namespace EtheriT.Coker.Application.Directory
         private readonly IJsonObjectAppService jsonObjectAppService;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         private readonly IFrontRoleContextService frontRoleContextService;
+        private readonly IProductDisplayPriceService productDisplayPriceService;
+        private readonly IStoreSetAppService storeSetAppService;
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryMenuCacheLocks = new();
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> DirectoryContentCacheLocks = new();
         public DirectoryAppService(
@@ -82,7 +85,9 @@ namespace EtheriT.Coker.Application.Directory
             IHtmlProcessor htmlProcessor,
             IJsonObjectAppService jsonObjectAppService,
             IWebsiteCacheStateAppService websiteCacheStateAppService,
-            IFrontRoleContextService frontRoleContextService
+            IFrontRoleContextService frontRoleContextService,
+            IProductDisplayPriceService productDisplayPriceService,
+            IStoreSetAppService storeSetAppService
         )
         {
             this.db = db;
@@ -102,6 +107,8 @@ namespace EtheriT.Coker.Application.Directory
             this.jsonObjectAppService = jsonObjectAppService;
             this.websiteCacheStateAppService = websiteCacheStateAppService;
             this.frontRoleContextService = frontRoleContextService;
+            this.productDisplayPriceService = productDisplayPriceService;
+            this.storeSetAppService = storeSetAppService;
         }
         public async Task<ResponseMessageDto> AddUp(DirectoryAddUpDto dto)
         {
@@ -411,14 +418,18 @@ namespace EtheriT.Coker.Application.Directory
 
         private async Task<DirectoryReleInfoGetDto> TechCertReleInfo(DirectoryReleInfoInputDto dto)
         {
-            var output = new DirectoryReleInfoGetDto { ReleInfos = new List<DirectoryReleInfoDto>() };
+            var output = new DirectoryReleInfoGetDto
+            {
+                ReleInfos = new List<DirectoryReleInfoDto>(),
+                ContentType = DirectoryTypeEnum.商品
+            };
             long SearchId = dto.Ids.Count > 0 ? dto.Ids[0] : 0;
             Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
-            int page = dto.Page ?? 0;
+            int page = dto.Page.HasValue && dto.Page.Value > 0 ? dto.Page.Value : 1;
             if (SearchId == 0) return output;
             int shownum = dto.ShowNum ?? 0;
             if (shownum <= 0) shownum = 12;
-            int skip = shownum == -500 ? 0 : (page - 1) * shownum - 1;
+            int skip = (page - 1) * shownum;
             if (skip < 0) skip = 0;
             long WebsiteID = dto.SiteId == 0 ? await loginUserData.GetWebsiteId() : (long)dto.SiteId;
             var dataQuery = db.Prod_TechCerts.Include(e => e.Prod).Include(e => e.TechnicalCertificate)
@@ -436,13 +447,49 @@ namespace EtheriT.Coker.Application.Directory
             prods = ApplyFrontProductViewPermission(prods, WebsiteID, currentFrontRoleId);
             output.TotalCount = prods.Count();
             output.TotalPage = (int)Math.Ceiling(output.TotalCount / (double)shownum);
-            var dataMargin = prods
-                       .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品).ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
-                       .ThenByDescending(e => e.Id)
-                       .Skip(skip).Take(shownum);
-            var pageProdIds = await dataMargin
-                .Select(p => p.Id)
-                .ToListAsync();
+            var sortBy = (dto.SearchSortBy ?? "default").Trim().ToLowerInvariant();
+            List<long> pageProdIds;
+            if (sortBy == "price")
+            {
+                // 使用卡片相同的角色／規格價格選取規則，先排序完整候選商品再分頁。
+                var candidates = await prods.Select(p => new { p.Id, p.Status, p.Ser_No, p.ItemNo }).ToListAsync();
+                var orgName = await loginUserData.GetWebsiteOrgName(WebsiteID);
+                var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
+                var priceOrder = await storeSetAppService.getValues(new StoreSetGetValueInput
+                {
+                    key = "priceOrder",
+                    SiteId = WebsiteID
+                });
+                var orderLowToHigh = priceOrder.Success && priceOrder.detailItem != null
+                    && priceOrder.detailItem.key == "priceOrder"
+                    && priceOrder.detailItem.value != null && priceOrder.detailItem.value.Contains("LtoH");
+                var prices = await productDisplayPriceService.GetDirectoryPriceMapAsync(
+                    candidates.Select(p => p.Id).ToList(), roleContext, orderLowToHigh);
+                var pricedCandidates = candidates.Select(p => new
+                {
+                    Product = p,
+                    Price = prices.TryGetValue(p.Id, out var price) ? price.PriceValue : null
+                });
+                var ordered = pricedCandidates.OrderBy(p => p.Product.Status == ProdStatusEnum.售完)
+                    .ThenBy(p => p.Product.Status == ProdStatusEnum.停產)
+                    .ThenBy(p => !p.Price.HasValue);
+                var descending = string.Equals(dto.SearchSortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+                var priceSorted = descending ? ordered.ThenByDescending(p => p.Price) : ordered.ThenBy(p => p.Price);
+                pageProdIds = priceSorted.ThenBy(p => p.Product.Ser_No).ThenBy(p => p.Product.ItemNo)
+                    .ThenByDescending(p => p.Product.Id).Select(p => p.Product.Id).Skip(skip).Take(shownum).ToList();
+            }
+            else if (new[] { "name", "model" }.Contains(sortBy))
+            {
+                pageProdIds = await BuildUnionQuery(null, null, prods, WebsiteID, null, new List<long> { 0, 1 }, dto)
+                    .Select(x => x.Id).Skip(skip).Take(shownum).ToListAsync();
+            }
+            else
+            {
+                pageProdIds = await prods
+                    .OrderBy(e => e.Ser_No).ThenByDescending(e => e.Status == ProdStatusEnum.新品)
+                    .ThenBy(e => e.ItemNo).ThenBy(e => e.Title).ThenByDescending(e => e.Id)
+                    .Select(p => p.Id).Skip(skip).Take(shownum).ToListAsync();
+            }
 
             var list = await productAppService.GetDirectoryReleInfo(new DirectoryReleInfoInputDto
             {

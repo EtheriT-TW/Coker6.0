@@ -155,6 +155,7 @@ namespace EtheriT.Coker.Application.Product
                         {
                             ProductId = productId,
                             Price = priceValue > 0 ? priceValue.ToString(priceFormat) : null,
+                            PriceValue = priceValue > 0 ? priceValue : null,
                             // 紅利是點數（int），不跟著幣別帶小數。
                             Bonus = bonusValue > 0 ? bonusValue.ToString("N0") : null,
                             OriPrice = chosen.OriPrice.HasValue && chosen.OriPrice.Value > 0

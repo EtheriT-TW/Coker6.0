@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
     {
         public long ProductId { get; set; }
         public string? Price { get; set; }
+        public decimal? PriceValue { get; set; }
         public string? OriPrice { get; set; }
         public string? Bonus { get; set; }
         public string? SuggestPrice { get; set; }

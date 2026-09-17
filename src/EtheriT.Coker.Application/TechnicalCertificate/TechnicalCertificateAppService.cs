@@ -18,6 +18,10 @@ using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Product;
 using EtheriT.Coker.Application.Shared.Dto.WebMenu;
+using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Shared.Dto.Processor;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
+using System.Text.Encodings.Web;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -30,6 +34,9 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 		private readonly IConfiguration configuration;
 		private readonly IMapper mapper;
 		private readonly string ServiceName;
+        private readonly IHtmlProcessor htmlProcessor;
+        private readonly IHtmlSanitizeService htmlSanitizeService;
+        private readonly IHtmlSanitizer htmlSanitizer;
 
         public TechnicalCertificateAppService(
 			CokerDbContext db,
@@ -37,7 +44,10 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             StringHandler stringHandler,
             IFileUploadAppService fileUploadAppService,
 			IConfiguration configuration,
-			IMapper mapper
+			IMapper mapper,
+            IHtmlProcessor htmlProcessor,
+            IHtmlSanitizeService htmlSanitizeService,
+            IHtmlSanitizer htmlSanitizer
 		)
 		{
 			this.db = db;
@@ -47,6 +57,9 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 			this.configuration = configuration;
 			this.mapper = mapper;
 			ServiceName = "TechnicalCertificate";
+            this.htmlProcessor = htmlProcessor;
+            this.htmlSanitizeService = htmlSanitizeService;
+            this.htmlSanitizer = htmlSanitizer;
 
         }
 		public async Task<ResponseMessageDto> AddUp(TechCertDto dto)
@@ -473,8 +486,14 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                     tecCer.SaveCss = dto.SaveCss ?? "";
                     if (publish)
                     {
-                        tecCer.Html = encodedHtml;
-                        tecCer.Css = dto.SaveCss ?? "";
+                        var orgName = await loginUserData.GetWebsiteOrgName();
+                        var publishedHtml = htmlProcessor.RemoveNode(dto.SaveHtml ?? "", ".backstageType");
+                        publishedHtml = htmlProcessor.SetAttr(publishedHtml, "[target='_blank']", "rel", "noopener noreferrer");
+                        publishedHtml = stringHandler.ResolveFrontUploadPath(publishedHtml, orgName);
+                        var publishedCss = stringHandler.ResolveFrontUploadPath(dto.SaveCss ?? "", orgName);
+                        var sanitized = await SanitizePublishedContentAsync(tecCer, publishedHtml, publishedCss, force: true);
+                        tecCer.Html = stringHandler.HtmlEncode(sanitized.Html);
+                        tecCer.Css = sanitized.Css;
                     }
                     await loginUserData.SaveChanges(tecCer);
                     response.Success = true;
@@ -490,6 +509,43 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
+        }
+
+        private Task<HtmlSanitizeResult> SanitizePublishedContentAsync(
+            Core.Models.TechnicalCertificate certificate, string html, string css, bool force = false)
+        {
+            return htmlSanitizeService.EnsurePublicContentAsync(new HtmlSanitizeInput
+            {
+                WebsiteId = certificate.FK_WebsiteId,
+                SourceType = HtmlSanitizeSourceType.技術證照,
+                SourceId = certificate.Id,
+                ContentKey = "Published",
+                SanitizePolicy = "PublicHtml",
+                Html = html,
+                Css = css,
+                Force = force
+            });
+        }
+
+        private async Task<(string Html, string Css)> EnsureDisplayContentSanitizedAsync(
+            Core.Models.TechnicalCertificate certificate, string orgName)
+        {
+            var publishedHtml = stringHandler.HtmlDecode(certificate.Html ?? "");
+            var repairedHtml = htmlSanitizeService.RepairLegacyPublishedHtml(
+                publishedHtml, stringHandler.HtmlDecode(certificate.SaveHtml ?? ""));
+            repairedHtml = stringHandler.ResolveFrontUploadPath(repairedHtml, orgName);
+            var publishedCss = stringHandler.ResolveFrontUploadPath(certificate.Css ?? "", orgName);
+            var changed = !string.Equals(publishedHtml, repairedHtml, StringComparison.Ordinal) ||
+                !string.Equals(certificate.Css ?? "", publishedCss, StringComparison.Ordinal);
+            var sanitized = await SanitizePublishedContentAsync(certificate, repairedHtml, publishedCss, changed);
+            if (sanitized.WasSanitized)
+            {
+                certificate.Html = stringHandler.HtmlEncode(sanitized.Html);
+                certificate.Css = sanitized.Css;
+                await loginUserData.SaveChanges(certificate);
+            }
+
+            return (sanitized.Html, sanitized.Css);
         }
 
         public async Task<ResponseMessageDto> Delete(long Id)
@@ -583,15 +639,15 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                         result.Id = (int)TechCert.Id;
                         result.Title = TechCert.Title;
                         result.Description = TechCert.Description;
-                        result.Html = TechCert.Html;
-                        result.Css = TechCert.Css;
-						result.Html.Replace($"upload/{side.OrgName}/", "upload/");
-                        result.Html = $@"{result.Html}
+                        var sanitized = await EnsureDisplayContentSanitizedAsync(TechCert, side.OrgName);
+                        result.Html = stringHandler.HtmlEncode(sanitized.Html);
+                        result.Css = sanitized.Css;
+                        result.GeneratedHtmlSuffix = $@"
 							<div class='container'>
 								{(img.Count > 0? $@"
 								<div class=""row imageTitle"">
-									<img src=""{img[0].Link}"" alt="" "" />
-									{result.Description}
+									<img src=""{HtmlEncoder.Default.Encode(img[0].Link ?? "")}"" alt="" "" />
+									{HtmlEncoder.Default.Encode(result.Description ?? "")}
 								</div>
 								":"")}
 								<div class=""catalog_frame type_change_frame mt-3"" data-dirid=""{result.Id}"" data-type=""TechCert"" data-ShowNum=""24"" data-search-text="""">
@@ -702,8 +758,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 								</div>
 							</div>
 						";
-                        result.Html = result.Html == null ? "" : result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "");
-                        result.Html = stringHandler.HtmlEncode(stringHandler.HtmlDecode(result.Html));
+                        // 系統列表另行清洗，不參與發布原稿的 hash。
+                        result.GeneratedHtmlSuffix = htmlSanitizer.SanitizePublicHtml(result.GeneratedHtmlSuffix);
                     }
                 }
             }

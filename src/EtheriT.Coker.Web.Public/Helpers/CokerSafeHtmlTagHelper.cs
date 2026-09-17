@@ -68,11 +68,15 @@ namespace EtheriT.Coker.Web.Public.Helpers
         [HtmlAttributeName("lazy-load-images")]
         public bool LazyLoadImages { get; set; }
 
+        // 只接收後端產生並清洗的 markup，不得直接傳入編輯器或 request 內容。
+        [HtmlAttributeName("generated-html-suffix")]
+        public string GeneratedHtmlSuffix { get; set; } = string.Empty;
+
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             output.TagName = null;
 
-            if (string.IsNullOrWhiteSpace(Content))
+            if (string.IsNullOrWhiteSpace(Content) && string.IsNullOrWhiteSpace(GeneratedHtmlSuffix))
             {
                 output.Content.Clear();
                 return;
@@ -112,6 +116,10 @@ namespace EtheriT.Coker.Web.Public.Helpers
             }
 
             var renderedHtml = verifiedContent;
+            if (!string.IsNullOrWhiteSpace(GeneratedHtmlSuffix))
+            {
+                renderedHtml = htmlProcessor.ExtractBodyInnerHtml(renderedHtml ?? "") + GeneratedHtmlSuffix;
+            }
             if (!string.IsNullOrWhiteSpace(ContentWrapperClass))
             {
                 renderedHtml = $"<div class=\"{HtmlEncoder.Default.Encode(ContentWrapperClass)}\">{renderedHtml}</div>";

@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType.Processor
         選單 = 3,
         廣告 = 4,
         頁面 = 5,
-        頁尾 = 6
+        頁尾 = 6,
+        技術證照 = 7
     }
 }

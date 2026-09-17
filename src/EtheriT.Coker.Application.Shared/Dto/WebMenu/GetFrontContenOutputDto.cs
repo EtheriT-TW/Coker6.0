@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.WebMenu
         public string CurrentUrl { get; set; }
         public string Html { get; set; }
         public string Css { get; set; }
+        public string GeneratedHtmlSuffix { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public int LayoutType { get; set; }
         public int? Popular { get; set; }

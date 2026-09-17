@@ -426,7 +426,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else view = "../Error/NotFound";
                         break;
                     case "techcert":
-                        htmlSanitizeSourceType = HtmlSanitizeSourceType.頁面;
+                        htmlSanitizeSourceType = HtmlSanitizeSourceType.技術證照;
                         remoteInputDto.FK_WebmenuId = PageData.Id;
                         model.MenuBread = await webMenuApplication.GetMenuBread(PageData.Id);
                         model.PageData = await technicalCertificateAppService.GetFrontConten(new TechCertGetFrontContenInputDto { siteId = defaultData.Id, TechCertId = id });
@@ -448,7 +448,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
                             model.PageData.VisibleTitle = PageData.VisibleTitle;
                         }
 
-                        if (string.IsNullOrEmpty(model.PageData.Html))
+                        if (model.PageData.Id <= 0 ||
+                            (string.IsNullOrEmpty(model.PageData.Html) && string.IsNullOrEmpty(model.PageData.GeneratedHtmlSuffix)))
                         {
                             Response.StatusCode = 404;
                             view = "../Error/NotFound";
@@ -554,6 +555,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 {
                     model.SafeHtml = stringHandler.HtmlDecode(model.PageData?.Html ?? "");
                     model.SafeCss = model.PageData?.Css ?? "";
+                    model.GeneratedHtmlSuffix = model.PageData?.GeneratedHtmlSuffix ?? "";
                     model.ParentSafeHtml = stringHandler.HtmlDecode(model.ParentData?.Html ?? "");
                     model.ParentSafeCss = model.ParentData?.Css ?? "";
                     model.HtmlSanitizeWebsiteId = defaultData.Id;

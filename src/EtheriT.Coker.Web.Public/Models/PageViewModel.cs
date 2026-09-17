@@ -29,6 +29,7 @@ namespace EtheriT.Coker.Web.Public.Models
         public GetFrontContenOutputDto? PageData { get; set; }
         public string SafeHtml { get; set; } = string.Empty;
         public string SafeCss { get; set; } = string.Empty;
+        public string GeneratedHtmlSuffix { get; set; } = string.Empty;
         public string ParentSafeHtml { get; set; } = string.Empty;
         public string ParentSafeCss { get; set; } = string.Empty;
         public long HtmlSanitizeWebsiteId { get; set; }

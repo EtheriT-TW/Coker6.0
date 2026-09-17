@@ -30,7 +30,7 @@
     function normalizeContentType(value) {
         const normalized = String(value == null ? "" : value).trim().toLowerCase();
 
-        if (normalized === "1" || normalized === "product" || normalized === "商品") {
+        if (normalized === "1" || normalized === "product" || normalized === "商品" || normalized === "techcert") {
             return contentTypes.product;
         }
         if (normalized === "2" || normalized === "article" || normalized === "文章") {
@@ -238,9 +238,6 @@
 
     DirectorySortControl.init = function ($frame, result) {
         if (!$frame || !$frame.length) return null;
-
-        const requestType = String($frame.attr("data-type") || "").trim().toLowerCase();
-        if (requestType === "techcert") return null;
 
         const $switchControl = $frame.find(".switch_control").first();
         if (!$switchControl.length) return null;

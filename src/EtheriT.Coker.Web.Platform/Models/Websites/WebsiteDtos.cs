@@ -9,7 +9,7 @@ namespace EtheriT.Coker.Web.Platform.Models.Websites;
 public sealed record WebsiteListItemDto(
     long Id,
     string Name,
-    long FK_PlatformCustomerId,
+    long FK_CompanyId,
     string? CustomerName,
     string? CustomerTaxId,
     WebsiteLevelEnum? Level,
@@ -36,7 +36,7 @@ public sealed record WebsiteCustomerDto(
 public sealed record WebsiteDetailDto
 {
     public long Id { get; init; }
-    public long FK_PlatformCustomerId { get; init; }
+    public long FK_CompanyId { get; init; }
     public string Name { get; init; } = string.Empty;
     public WebsiteLevelEnum? Level { get; init; }
     public string? HostLocation { get; init; }
@@ -62,8 +62,8 @@ public sealed record DomainPasswordDto(string State, string? Password);
 
 public sealed class WebsiteSaveRequest
 {
-    [Range(1, long.MaxValue, ErrorMessage = "請先以統一編號帶出客戶。")]
-    public long FK_PlatformCustomerId { get; set; }
+    [Range(1, long.MaxValue, ErrorMessage = "請先以統一編號或公司名稱帶出客戶。")]
+    public long FK_CompanyId { get; set; }
 
     [Required(ErrorMessage = "請輸入網站名稱。")]
     [StringLength(250, ErrorMessage = "網站名稱不可超過 250 個字元。")]

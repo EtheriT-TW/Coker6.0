@@ -8,7 +8,7 @@ namespace EtheriT.Coker.Core.Models
     public class PlatformWebsite : FullAuditedEntity
     {
         // ── 客戶與網站資料 ──
-        public long FK_PlatformCustomerId { get; set; }                 // 由統編查出的客戶
+        public long FK_CompanyId { get; set; }                          // 客戶（Companies）
         [StringLength(250)]
         public string Name { get; set; } = string.Empty;                // 網站名稱（必填）
 
@@ -39,6 +39,6 @@ namespace EtheriT.Coker.Core.Models
         // ── 預留：對應實際站台 ──
         public long? FK_WebsiteId { get; set; }                         // nullable，不建外鍵約束，預設 null
 
-        public PlatformCustomer? Customer { get; set; }
+        public Company? Company { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+    import { ApiError } from "@/core/coker";
     import { onMounted, ref } from "vue";
     import { useRouter } from "vue-router";
     import {

@@ -57,8 +57,8 @@ public sealed class CustomerSaveRequest : IValidatableObject
     [Required(ErrorMessage = "請輸入公司名稱。")]
     [StringLength(200, ErrorMessage = "公司名稱不可超過 200 個字元。")]
     public string Name { get; set; } = string.Empty;
-    [StringLength(20)]
-    [RegularExpression(@"^\d{8}$", ErrorMessage = "統一編號需為 8 碼數字。")]
+    // 選填；Companies.TaxID 欄位長度 10
+    [RegularExpression(@"^\d{8,10}$", ErrorMessage = "統一編號需為 8～10 碼數字。")]
     public string? TaxId { get; set; }
 
     [StringLength(50)] 
@@ -68,7 +68,7 @@ public sealed class CustomerSaveRequest : IValidatableObject
     [OptionalEmail(ErrorMessage = "公司 Email 格式不正確。")]
     public string? Email { get; set; }
 
-    [StringLength(250)] 
+    [StringLength(150, ErrorMessage = "公司地址不可超過 150 個字元。")]
     public string? Address { get; set; }
     [StringLength(500)] 
     public string? InvoiceInfo { get; set; }

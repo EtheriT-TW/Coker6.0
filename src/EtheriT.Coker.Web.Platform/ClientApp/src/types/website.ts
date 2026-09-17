@@ -33,7 +33,7 @@ export const websiteLevelOptions: Array<{ Value: WebsiteLevelValue; Text: string
 export interface WebsiteListItem {
     Id: number;
     Name: string;
-    FK_PlatformCustomerId: number;
+    FK_CompanyId: number;
     CustomerName: string | null;
     CustomerTaxId: string | null;
     Level: WebsiteLevelValue | null;
@@ -61,7 +61,7 @@ export interface WebsiteCustomer {
 
 export interface WebsiteDetail {
     Id: number;
-    FK_PlatformCustomerId: number;
+    FK_CompanyId: number;
     Name: string;
     Level: WebsiteLevelValue | null;
     HostLocation: string | null;
@@ -81,7 +81,7 @@ export interface WebsiteDetail {
 
 /** 表單模型：字串與日期一律用 ""；Status／Level 用 number，避免 v-model 在 vue-tsc 報型別錯。 */
 export interface WebsiteForm {
-    FK_PlatformCustomerId: number;
+    FK_CompanyId: number;
     Name: string;
     Level: number | null;
     HostLocation: string;

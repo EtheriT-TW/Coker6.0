@@ -24,8 +24,8 @@ public sealed class WebsitesController(
         // 左外接：客戶被軟刪除時，網站仍要留在清單上，不能無聲消失。
         var rows = await (
             from site in db.PlatformWebsites.AsNoTracking()
-            join customer in db.PlatformCustomers.AsNoTracking()
-                on site.FK_PlatformCustomerId equals customer.Id into customers
+            join customer in db.Companies.AsNoTracking()
+                on site.FK_CompanyId equals customer.Id into customers
             from customer in customers.DefaultIfEmpty()
             orderby site.Status,
                     site.ServiceEndDate == null,
@@ -34,9 +34,9 @@ public sealed class WebsitesController(
             {
                 site.Id,
                 site.Name,
-                site.FK_PlatformCustomerId,
+                site.FK_CompanyId,
                 CustomerName = customer == null ? null : customer.Name,
-                CustomerTaxId = customer == null ? null : customer.TaxId,
+                CustomerTaxId = customer == null ? null : customer.TaxID,
                 site.Level,
                 site.Status,
                 site.DomainName,
@@ -51,7 +51,7 @@ public sealed class WebsitesController(
             .Select(row => new WebsiteListItemDto(
                 row.Id,
                 row.Name,
-                row.FK_PlatformCustomerId,
+                row.FK_CompanyId,
                 row.CustomerName,
                 row.CustomerTaxId,
                 row.Level,
@@ -143,14 +143,14 @@ public sealed class WebsitesController(
     {
         return (
             from site in db.PlatformWebsites.AsNoTracking()
-            join customer in db.PlatformCustomers.AsNoTracking()
-                on site.FK_PlatformCustomerId equals customer.Id into customers
+            join customer in db.Companies.AsNoTracking()
+                on site.FK_CompanyId equals customer.Id into customers
             from customer in customers.DefaultIfEmpty()
             where site.Id == id
             select new WebsiteDetailDto
             {
                 Id = site.Id,
-                FK_PlatformCustomerId = site.FK_PlatformCustomerId,
+                FK_CompanyId = site.FK_CompanyId,
                 Name = site.Name,
                 Level = site.Level,
                 HostLocation = site.HostLocation,
@@ -170,10 +170,10 @@ public sealed class WebsitesController(
                     : new WebsiteCustomerDto(
                         customer.Id,
                         customer.Name,
-                        customer.TaxId,
+                        customer.TaxID,
                         customer.Phone,
                         customer.Email,
-                        customer.PrimaryContactName)
+                        customer.Contact)
             })
             .FirstOrDefaultAsync(HttpContext.RequestAborted);
     }
@@ -205,16 +205,16 @@ public sealed class WebsitesController(
         if (request.ClearDomainPassword && !string.IsNullOrWhiteSpace(request.DomainPassword))
             ModelState.AddModelError(nameof(request.DomainPassword), "已勾選清除網域密碼，不可同時輸入新密碼。");
 
-        if (request.FK_PlatformCustomerId > 0 &&
-            !await db.PlatformCustomers.AnyAsync(
-                customer => customer.Id == request.FK_PlatformCustomerId,
+        if (request.FK_CompanyId > 0 &&
+            !await db.Companies.AnyAsync(
+                company => company.Id == request.FK_CompanyId,
                 HttpContext.RequestAborted))
-            ModelState.AddModelError(nameof(request.FK_PlatformCustomerId), "找不到對應的客戶資料，請重新以統一編號查詢。");
+            ModelState.AddModelError(nameof(request.FK_CompanyId), "找不到對應的客戶資料，請重新帶出客戶。");
     }
 
     private void Apply(WebsiteSaveRequest request, PlatformWebsite site)
     {
-        site.FK_PlatformCustomerId = request.FK_PlatformCustomerId;
+        site.FK_CompanyId = request.FK_CompanyId;
         site.Name = request.Name.Trim();
         site.Level = request.Level;
         site.HostLocation = Clean(request.HostLocation);

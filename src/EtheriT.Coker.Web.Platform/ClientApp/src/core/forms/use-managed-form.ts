@@ -11,6 +11,7 @@ import {
 } from "@/core/forms/save-pipeline";
 import { registerSaveShortcut } from "@/core/forms/save-shortcut";
 import { validateSchema, type ValidationSchema } from "@/core/forms/validation";
+import { requestConfirm } from "@/core/dialogs/confirm-request";
 
 export type SaveStatus = "saved" | "invalid" | "cancelled" | "unauthorized" | "failed";
 
@@ -172,9 +173,14 @@ export function useManagedForm<TModel extends object, TResult = unknown>(
 
   onBeforeRouteLeave(() => {
     if (!isDirty.value || isSaving.value || options.protectUnsavedChanges === false) return true;
-    return window.confirm(
-      options.unsavedChangesMessage ?? "尚有未儲存的變更，確定要離開此頁面嗎？"
-    );
+    return requestConfirm({
+      icon: "warning",
+      tone: "danger",
+      title: "尚有未儲存的變更",
+      message: options.unsavedChangesMessage ?? "確定要離開此頁面嗎？未儲存的內容會遺失。",
+      confirmText: "離開",
+      cancelText: "留在此頁"
+    });
   });
 
   onBeforeUnmount(() => {

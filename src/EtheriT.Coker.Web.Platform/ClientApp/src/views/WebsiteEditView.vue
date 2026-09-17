@@ -4,7 +4,7 @@
     import { ApiError, FormFieldErrors, rules, useManagedForm } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
-    import { lookupByTaxId } from "@/services/customer-api";
+    import { lookupCustomer } from "@/services/customer-api";
     import {
         createWebsite,
         fetchDomainPassword,
@@ -21,7 +21,7 @@
         type WebsiteForm
     } from "@/types/website";
 
-    const TAX_ID_PATTERN = /^\d{8}$/;
+    const TAX_ID_PATTERN = /^\d{8,10}$/;
 
     const route = useRoute();
     const router = useRouter();
@@ -35,8 +35,8 @@
     const loading = ref(false);
     const pageError = ref("");
 
-    // ── 統編帶出客戶 ──
-    const taxIdInput = ref("");
+    // ── 以統編或公司名稱帶出客戶（兩者都不可重複，最多一筆） ──
+    const lookupKeyword = ref("");
     const customer = ref<CustomerLookup | null>(null);
     const isCustomerDeleted = ref(false);
     const lookingUp = ref(false);
@@ -44,11 +44,13 @@
     const isNotFoundDialogOpen = ref(false);
     const isQuickCustomerOpen = ref(false);
 
-    // ── 同統編多筆客戶：跳彈窗讓使用者選 ──
-    const customerCandidates = ref<CustomerLookup[]>([]);
-    const selectedCandidateId = ref<number | null>(null);
-    const isPickCustomerOpen = computed(() => customerCandidates.value.length > 0);
-
+    // 查無資料時開快速建立：輸入的是 8～10 碼數字就帶進統編，否則當公司名稱
+    const quickCustomerTaxId = computed(() => {
+        const keyword = lookupKeyword.value.trim();
+        return TAX_ID_PATTERN.test(keyword) ? keyword : "";
+    });
+    const quickCustomerName = computed(() =>
+        quickCustomerTaxId.value ? "" : lookupKeyword.value.trim());
     // ── 網域密碼 ──
     const hasStoredPassword = ref(false);
     const revealedPassword = ref<string | null>(null);
@@ -57,7 +59,7 @@
 
     function emptyForm(): WebsiteForm {
         return {
-            FK_PlatformCustomerId: 0,
+            FK_CompanyId: 0,
             Name: "",
             Level: null,
             HostLocation: "",
@@ -80,9 +82,9 @@
         id: "platform-website-editor",
         initialValue: emptyForm,
         validation: {
-            FK_PlatformCustomerId: [
+            FK_CompanyId: [
                 rules.custom<WebsiteForm>(value =>
-                    Number(value) > 0 ? null : "請先輸入統一編號並帶出客戶。")
+                    Number(value) > 0 ? null : "請先輸入統一編號或公司名稱並帶出客戶。")
             ],
             Name: [rules.required("請輸入網站名稱。"), rules.maxLength(250)],
             TerminatedDate: [
@@ -110,9 +112,7 @@
         beforeSave: () => {
             pageError.value = "";
             // 任一彈窗開著時，Ctrl+S 不能偷偷送出底下的網站表單
-            return !isNotFoundDialogOpen.value &&
-                !isQuickCustomerOpen.value &&
-                !isPickCustomerOpen.value;
+            return !isNotFoundDialogOpen.value && !isQuickCustomerOpen.value;
         },
         save: values => isEdit.value
             ? updateWebsite(websiteId.value, values)
@@ -150,8 +150,8 @@
     function setCustomer(value: CustomerLookup | null): void {
         customer.value = value;
         isCustomerDeleted.value = false;
-        form.model.value.FK_PlatformCustomerId = value?.Id ?? 0;
-        form.clearErrors("FK_PlatformCustomerId");
+        form.model.value.FK_CompanyId = value?.Id ?? 0;
+        form.clearErrors("FK_CompanyId");
     }
 
     function applyDetail(detail: WebsiteDetail): void {
@@ -159,65 +159,36 @@
         form.reset(toWebsiteForm(detail));
         customer.value = detail.Customer;
         isCustomerDeleted.value = detail.Customer === null;
-        taxIdInput.value = detail.Customer?.TaxId ?? "";
+        // 統編選填，沒統編的客戶改顯示公司名稱
+        lookupKeyword.value = detail.Customer?.TaxId || detail.Customer?.Name || "";
         hasStoredPassword.value = detail.HasDomainPassword;
         revealedPassword.value = null;
         passwordNotice.value = "";
     }
 
-    async function lookupTaxId(): Promise<void> {
+    async function lookupByKeyword(): Promise<void> {
         if (lookingUp.value) return;
 
-        const taxId = taxIdInput.value.trim();
+        const keyword = lookupKeyword.value.trim();
         lookupError.value = "";
-        if (!TAX_ID_PATTERN.test(taxId)) {
-            lookupError.value = "統一編號需為 8 碼數字。";
+        if (!keyword) {
+            lookupError.value = "請輸入統一編號或公司名稱。";
             return;
         }
 
         lookingUp.value = true;
         try {
-            const matches = await lookupByTaxId(taxId);
-
-            if (matches.length === 0) {
-                setCustomer(null);
-                isNotFoundDialogOpen.value = true;
-                return;
-            }
-
-            if (matches.length === 1) {
-                setCustomer(matches[0]);
-                return;
-            }
-
-            // 多筆：不替使用者猜。選定前保留目前的客戶；若目前的客戶也在清單中就先勾好
-            const currentId = customer.value?.Id;
-            selectedCandidateId.value = matches.some(item => item.Id === currentId)
-                ? currentId ?? null
-                : null;
-            customerCandidates.value = matches;
+            const match = await lookupCustomer(keyword);
+            setCustomer(match);
+            if (!match) isNotFoundDialogOpen.value = true;
         }
         catch (error) {
             console.error(error);
-            lookupError.value = "查詢統一編號失敗，請稍後再試。";
+            lookupError.value = "查詢客戶失敗，請稍後再試。";
         }
         finally {
             lookingUp.value = false;
         }
-    }
-
-    function confirmPickCustomer(): void {
-        const picked = customerCandidates.value.find(item => item.Id === selectedCandidateId.value);
-        if (!picked) return;   // 沒選就按「帶入」：不關窗
-        customerCandidates.value = [];
-        setCustomer(picked);
-    }
-
-    function cancelPickCustomer(): void {
-        customerCandidates.value = [];
-        selectedCandidateId.value = null;
-        // 取消時把輸入框還原成目前客戶的統編，避免畫面上統編與客戶對不起來
-        if (customer.value) taxIdInput.value = customer.value.TaxId;
     }
 
     function openQuickCustomer(): void {
@@ -228,10 +199,9 @@
     function onCustomerCreated(created: CustomerLookup): void {
         isQuickCustomerOpen.value = false;
         lookupError.value = "";
-        taxIdInput.value = created.TaxId;
+        lookupKeyword.value = created.TaxId || created.Name;
         setCustomer(created);
     }
-
     async function toggleDomainPassword(): Promise<void> {
         if (revealedPassword.value !== null) {
             revealedPassword.value = null;
@@ -285,7 +255,7 @@
     <section class="page-heading">
         <div>
             <h1>{{ isEdit ? "編輯網站" : "新增網站" }}</h1>
-            <p>輸入統一編號帶出客戶，再填寫網站、期限與網域資訊。</p>
+            <p>輸入統一編號或公司名稱帶出客戶，再填寫網站、期限與網域資訊。</p>
         </div>
     </section>
 
@@ -301,30 +271,30 @@
             </div>
 
             <p v-if="isCustomerDeleted" class="alert alert-warning" role="status">
-                原本的客戶資料已被刪除，請重新以統一編號帶出客戶後再儲存。
+                原本的客戶資料已被刪除，請重新以統一編號或公司名稱帶出客戶後再儲存。
             </p>
 
             <div class="form-grid">
                 <div class="form-field form-field-wide">
-                    <label for="website-tax-id" class="form-label">
-                        統一編號 <i class="form-required">*</i>
+                    <label for="website-customer-keyword" class="form-label">
+                        統一編號／公司名稱 <i class="form-required">*</i>
                     </label>
                     <div class="input-with-action">
-                        <input id="website-tax-id"
-                               v-model="taxIdInput"
+                        <input id="website-customer-keyword"
+                               v-model="lookupKeyword"
                                type="text"
-                               inputmode="numeric"
-                               maxlength="8"
-                               @keydown.enter.prevent="lookupTaxId" />
+                               maxlength="200"
+                               placeholder="輸入統編或完整公司名稱"
+                               @keydown.enter.prevent="lookupByKeyword" />
                         <button class="ui-button ui-button-secondary"
                                 type="button"
                                 :disabled="lookingUp"
-                                @click="lookupTaxId">
+                                @click="lookupByKeyword">
                             <span class="material-symbols-outlined">search</span>
                             <span>帶出客戶</span>
                         </button>
                     </div>
-                    <FormFieldErrors :errors="form.getErrors('FK_PlatformCustomerId')" />
+                    <FormFieldErrors :errors="form.getErrors('FK_CompanyId')" />
                     <p v-if="lookupError" class="field-note field-note-error" role="alert">{{ lookupError }}</p>
                 </div>
 
@@ -555,48 +525,18 @@
             </button>
         </div>
     </form>
-
     <ConfirmDialog :open="isNotFoundDialogOpen"
                    icon="search_off"
-                   title="找不到該編號"
-                   :message="`系統內沒有統一編號「${taxIdInput.trim()}」的客戶資料。`"
+                   title="找不到客戶"
+                   :message="`系統內沒有統一編號或公司名稱為「${lookupKeyword.trim()}」的客戶資料。`"
                    cancel-text="關閉"
                    confirm-text="填寫資料"
                    @cancel="isNotFoundDialogOpen = false"
                    @confirm="openQuickCustomer" />
 
-    <ConfirmDialog class="app-dialog-form"
-                   :open="isPickCustomerOpen"
-                   icon="group"
-                   title="這組統編有多筆客戶"
-                   :message="`統一編號「${taxIdInput.trim()}」對應到 ${customerCandidates.length} 筆客戶，請選擇要帶入哪一筆。`"
-                   cancel-text="取消"
-                   confirm-text="帶入"
-                   @cancel="cancelPickCustomer"
-                   @confirm="confirmPickCustomer">
-        <ul class="candidate-list" role="radiogroup" aria-label="選擇客戶">
-            <li v-for="item in customerCandidates" :key="item.Id">
-                <label class="candidate-option">
-                    <input v-model="selectedCandidateId"
-                           type="radio"
-                           name="customer-candidate"
-                           :value="item.Id" />
-                    <span class="candidate-body">
-                        <strong>{{ item.Name }}</strong>
-                        <small>
-                            {{ item.PrimaryContactName || "未填主要聯絡人" }}
-                            ・{{ item.Phone || "未填電話" }}
-                            ・{{ item.Email || "未填 Email" }}
-                        </small>
-                    </span>
-                </label>
-            </li>
-        </ul>
-        <div v-if="selectedCandidateId === null" class="candidate-hint">請先選擇一筆再按「帶入」。</div>
-    </ConfirmDialog>
-
     <QuickCustomerDialog :open="isQuickCustomerOpen"
-                         :initial-tax-id="taxIdInput.trim()"
+                         :initial-tax-id="quickCustomerTaxId"
+                         :initial-name="quickCustomerName"
                          @cancel="isQuickCustomerOpen = false"
                          @created="onCustomerCreated" />
 </template>

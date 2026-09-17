@@ -121,8 +121,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<PageTextBackfillState> PageTextBackfillStates { get; set; }
         public DbSet<CdnProviderIpRange> CdnProviderIpRanges { get; set; }
         public DbSet<CdnProviderSyncState> CdnProviderSyncStates { get; set; }
-        public DbSet<PlatformCustomer> PlatformCustomers { get; set; }
-        public DbSet<PlatformCustomerContact> PlatformCustomerContacts { get; set; }
+        public DbSet<SecondaryContact> SecondaryContacts { get; set; }
         public DbSet<PlatformWebsite> PlatformWebsites { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
@@ -893,26 +892,28 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 
             });
 
-            modelBuilder.Entity<PlatformCustomer>(o =>
+            modelBuilder.Entity<Company>(o =>
             {
-                o.HasIndex(x => new { x.TaxId, x.IsDeleted });   // 非唯一：允許重複，由前端跳警告
-                o.HasIndex(x => x.Name);
+                // 統編、名稱不可重複（後台 CompanyAppService 以統編／名稱比對，找到兩筆會丟例外）
+                // 已軟刪除的不算；統編選填，空字串不納入唯一檢查
+                o.HasIndex(x => x.Name).IsUnique().HasFilter("[IsDeleted] = 0");
+                o.HasIndex(x => x.TaxID).IsUnique().HasFilter("[IsDeleted] = 0 AND [TaxID] <> ''");
             });
 
-            modelBuilder.Entity<PlatformCustomerContact>(o =>
+            modelBuilder.Entity<SecondaryContact>(o =>
             {
-                o.HasOne(f => f.Customer).WithMany(c => c.SubContacts)
-                 .HasForeignKey(f => f.FK_PlatformCustomerId)
+                o.HasOne(f => f.Company).WithMany(c => c.SecondaryContacts)
+                 .HasForeignKey(f => f.FK_CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
-                o.HasIndex(x => new { x.FK_PlatformCustomerId, x.Sort });
+                o.HasIndex(x => new { x.FK_CompanyId, x.Sort });
             });
 
             modelBuilder.Entity<PlatformWebsite>(o =>
             {
-                o.HasOne(f => f.Customer).WithMany()
-                 .HasForeignKey(f => f.FK_PlatformCustomerId)
+                o.HasOne(f => f.Company).WithMany()
+                 .HasForeignKey(f => f.FK_CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
-                o.HasIndex(x => x.FK_PlatformCustomerId);
+                o.HasIndex(x => x.FK_CompanyId);
                 o.HasIndex(x => x.ServiceEndDate);   // 總覽頁「即將到期」用
                 o.HasIndex(x => x.Status);
             });

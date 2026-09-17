@@ -1187,68 +1187,6 @@ button, input, select, textarea {
     text-align: left;
 }
 
-/* ── 同統編多筆客戶選擇 ── */
-.candidate-list {
-    display: grid;
-    gap: 8px;
-    margin: 20px 0 0;
-    padding: 0;
-    list-style: none;
-    text-align: left;
-}
-
-.candidate-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 11px;
-    padding: 12px 14px;
-    background: #fff;
-    border: 1px solid var(--platform-line);
-    border-radius: 11px;
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
-}
-
-    .candidate-option:hover {
-        border-color: #94a3b8;
-    }
-
-    .candidate-option:has(input:checked) {
-        background: var(--platform-primary-soft);
-        border-color: var(--platform-primary);
-    }
-
-    .candidate-option input {
-        flex: none;
-        width: 16px;
-        height: 16px;
-        margin: 2px 0 0;
-        accent-color: var(--platform-primary);
-    }
-
-.candidate-body {
-    display: grid;
-    gap: 3px;
-    min-width: 0;
-}
-
-    .candidate-body strong {
-        color: var(--platform-ink);
-        font-size: 14px;
-    }
-
-    .candidate-body small {
-        color: var(--platform-muted);
-        font-size: 12px;
-        overflow-wrap: anywhere;
-    }
-
-.candidate-hint {
-    margin-top: 10px;
-    color: var(--platform-muted);
-    font-size: 12px;
-}
-
 /* ── 清單 ── */
 .grid-muted {
     color: var(--platform-muted);

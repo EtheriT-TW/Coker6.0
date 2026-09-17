@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
 {
-    public class PlatformCustomerContact : FullAuditedEntity
+    public class SecondaryContact : FullAuditedEntity
     {
-        public long FK_PlatformCustomerId { get; set; }
+        public long FK_CompanyId { get; set; }
 
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;   // 姓名（必填）
@@ -17,6 +17,6 @@ namespace EtheriT.Coker.Core.Models
         public string? Email { get; set; }                 // Email
         public int Sort { get; set; }                      // 排序
 
-        public PlatformCustomer? Customer { get; set; }
+        public Company? Company { get; set; }
     }
 }

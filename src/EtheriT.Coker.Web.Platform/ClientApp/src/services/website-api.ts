@@ -16,7 +16,7 @@ function blankToNull(value: string): string | null {
 
 function toSaveRequest(form: WebsiteForm) {
     return {
-        FK_PlatformCustomerId: form.FK_PlatformCustomerId,
+        FK_CompanyId: form.FK_CompanyId,
         Name: form.Name.trim(),
         Level: form.Level,
         HostLocation: blankToNull(form.HostLocation),
@@ -38,7 +38,7 @@ function toSaveRequest(form: WebsiteForm) {
 /** API 回應轉成表單模型，六個日期欄位都要經過 toDateInput。 */
 export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
     return {
-        FK_PlatformCustomerId: detail.FK_PlatformCustomerId,
+        FK_CompanyId: detail.FK_CompanyId,
         Name: detail.Name,
         Level: detail.Level,
         HostLocation: detail.HostLocation ?? "",

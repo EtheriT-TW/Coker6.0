@@ -20,6 +20,7 @@
     const props = defineProps<{
         open: boolean;
         initialTaxId: string;
+        initialName: string;
     }>();
 
     const emit = defineEmits<{
@@ -27,9 +28,9 @@
         cancel: [];
     }>();
 
-    function emptyForm(taxId: string): CustomerForm {
+    function emptyForm(taxId: string, name: string): CustomerForm {
         return {
-            Name: "",
+            Name: name,
             TaxId: taxId,
             Phone: "",
             Email: "",
@@ -49,7 +50,7 @@
     // 與 CompanyEditView 相同的規則子集；後端 CustomerSaveRequest 仍會再驗一次
     const validation: ValidationSchema<CustomerForm> = {
         Name: [rules.required("請輸入公司名稱。"), rules.maxLength(200)],
-        TaxId: [rules.pattern(/^\d{8}$/, "統一編號需為 8 碼數字。")],
+        TaxId: [rules.pattern(/^\d{8,10}$/, "統一編號需為 8～10 碼數字。")],
         PrimaryContactName: [rules.required("請輸入主要聯絡人姓名。"), rules.maxLength(100)],
         Email: [rules.email("公司 Email 格式不正確。")],
         CustomerTypeOther: [
@@ -60,7 +61,7 @@
         ]
     };
 
-    const model = ref<CustomerForm>(emptyForm(props.initialTaxId));
+    const model = ref<CustomerForm>(emptyForm(props.initialTaxId, props.initialName));
     const errors = ref<ApiFieldErrors>({});
     const busy = ref(false);
     const submitError = ref("");
@@ -70,7 +71,7 @@
     // 每次打開都重置，帶入最新的統編
     watch(() => props.open, isOpen => {
         if (!isOpen) return;
-        model.value = emptyForm(props.initialTaxId);
+        model.value = emptyForm(props.initialTaxId, props.initialName);
         errors.value = {};
         submitError.value = "";
     });
@@ -146,7 +147,7 @@
                     <div class="form-field">
                         <label>
                             <span>統一編號</span>
-                            <input v-model="model.TaxId" type="text" inputmode="numeric" maxlength="8" />
+                            <input v-model="model.TaxId" type="text" inputmode="numeric" maxlength="10" />
                         </label>
                         <FormFieldErrors :errors="fieldErrors('TaxId')" />
                     </div>

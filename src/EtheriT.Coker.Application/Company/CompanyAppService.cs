@@ -158,10 +158,14 @@ namespace EtheriT.Coker.Application.Company
 				var siteId = await loginUserData.GetWebsiteId();
 				if (siteId <= 0) throw new Exception("登入狀態異常");
 
+				// 將整個交易交由 SQL Server 重試策略執行，而不是逐次重試交易內的查詢。
+				await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+				{
 				await using var transaction = await db.Database.BeginTransactionAsync(
 					System.Data.IsolationLevel.Serializable);
 				var websiteAlreadyHasCompany = await db.MappingCompanyAndWebsites.AnyAsync(e =>
-					!e.IsDeleted && e.FK_WebsiteId == siteId);
+					!e.IsDeleted && e.FK_WebsiteId == siteId &&
+					e.Company != null && !e.Company.IsDeleted);
 				if (websiteAlreadyHasCompany)
 					throw new Exception("目前網站已綁定公司資料，請重新整理後再編輯");
 
@@ -191,7 +195,6 @@ namespace EtheriT.Coker.Application.Company
 				if (existingCompany != null)
 				{
 					await WebsiteMapping(existingCompany.Id, siteId);
-					responseMessageDto.Success = true;
 					responseMessageDto.Message = existingCompany.Id.ToString();
 				}
 				else
@@ -209,11 +212,12 @@ namespace EtheriT.Coker.Application.Company
 					db.Companies.Add(company);
 					await loginUserData.SaveChanges(company);
 					await WebsiteMapping(company.Id, siteId);
-					responseMessageDto.Success = true;
 					responseMessageDto.Message = company.Id.ToString();
 				}
 
 				await transaction.CommitAsync();
+				});
+				responseMessageDto.Success = true;
 			}
 			catch (Exception ex)
 			{

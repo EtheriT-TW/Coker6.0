@@ -494,7 +494,7 @@ namespace EtheriT.Coker.Application
                 var data = await db.Websites.Include(e => e.Company).Where(e => e.Id == siteId).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                 if (data != null)
                 {
-                    var cid = data.Company.Select(e => e.FK_CompanyId).ToList();
+                    var cid = data.Company.Where(e => !e.IsDeleted).Select(e => e.FK_CompanyId).ToList();
                     var com = await db.Companies.Where(e => cid.Contains(e.Id)).Where(e => !e.IsDeleted).FirstOrDefaultAsync();
                     mapper.Map(data, result.Website);
                     mapper.Map(com, result.Company);

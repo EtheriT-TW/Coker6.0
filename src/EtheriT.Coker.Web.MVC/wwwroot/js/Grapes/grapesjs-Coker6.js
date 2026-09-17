@@ -967,8 +967,8 @@
                         <button type="button" class="btn btn-primary" data-role="search">搜尋</button>
                     </div>
                 </div>
-                <div class="small text-white mb-2">
-                    今天最多顯示 20 筆；其他日期每天顯示最後一筆，合計最多 30 筆。
+                <div class="small text-white mb-2" data-role="history-hint">
+                    首次載入：今天最多 20 筆；今天以前不限日期範圍，每天取最後一筆，往前最多取 10 筆。日期欄位用於手動搜尋。
                 </div>
                 <div class="alert alert-light border py-2 d-none" data-role="message"></div>
                 <div class="table-responsive" style="max-height: 55vh; overflow-y: auto;">
@@ -993,6 +993,7 @@
         const $search = $content.find('[data-role="search"]');
         const $startDate = $content.find('[data-role="start-date"]');
         const $endDate = $content.find('[data-role="end-date"]');
+        const $historyHint = $content.find('[data-role="history-hint"]');
         const modal = currentEditor.Modal;
 
         const todayText = formatHistoryDate(new Date(), false);
@@ -1131,6 +1132,9 @@
                         $endDate.val(formatHistoryDate(result.endDate, false));
                     }
                     $endDate.attr("min", $startDate.val());
+                    $historyHint.text(startDate || endDate
+                        ? "搜尋結果：依指定日期範圍，今天最多 20 筆；其他日期每天取最後一筆，合計最多 30 筆。"
+                        : "首次載入：今天最多 20 筆；今天以前不限日期範圍，每天取最後一筆，往前最多取 10 筆。日期欄位用於手動搜尋。");
                     renderRows(result.items || []);
                 })
                 .fail(function (xhr) {

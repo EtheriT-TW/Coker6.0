@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Application.AuditLog
 		private const int DefaultHistoryDays = 30;
 		private const int MaxHistoryDays = 90;
 		private const int TodayHistoryLimit = 20;
+		private const int PreviousHistoryLimit = 10;
 		private const int TotalHistoryLimit = 30;
 		private const int HistoryCommandTimeoutSeconds = 120;
 
@@ -60,6 +61,7 @@ namespace EtheriT.Coker.Application.AuditLog
 
 				var source = GetCanvasAuditLogSource(input.Source);
 				var today = DateTime.Today;
+				var isInitialLoad = !input.StartDate.HasValue && !input.EndDate.HasValue;
 				var endDate = (input.EndDate ?? today).Date;
 				var startDate = (input.StartDate ?? endDate.AddDays(-(DefaultHistoryDays - 1))).Date;
 
@@ -80,6 +82,7 @@ namespace EtheriT.Coker.Application.AuditLog
 
 				var siteId = await loginUserData.GetWebsiteId();
 				var endExclusive = endDate.AddDays(1);
+				var previousHistoryLimit = isInitialLoad ? PreviousHistoryLimit : TotalHistoryLimit;
 				var firstMethod = source.SaveMethod ?? source.PublishMethod;
 				var secondMethod = source.PublishMethod ?? source.SaveMethod;
 				var publishMethod = source.PublishMethod ?? string.Empty;
@@ -135,7 +138,7 @@ namespace EtheriT.Coker.Application.AuditLog
 						    WHERE [log].[FK_WebsiteId] = {siteId}
 						      AND [log].[ServiceName] = {source.ServiceName}
 						      AND [log].[MethodName] IN ({firstMethod}, {secondMethod})
-						      AND [log].[ExecutionTime] >= {startDate}
+						      AND ({isInitialLoad} = CAST(1 AS bit) OR [log].[ExecutionTime] >= {startDate})
 						      AND [log].[ExecutionTime] < {endExclusive}
 						      AND LEFT([log].[Parameters], LEN({parameterPrefix})) = {parameterPrefix}
 						      AND TRY_CONVERT
@@ -164,10 +167,12 @@ namespace EtheriT.Coker.Application.AuditLog
 						),
 						[PreviousDailyRows] AS
 						(
-						    SELECT [Id], [ExecutionTime], [ClientName], [RoleName], [MethodName], [Operation]
+						    SELECT TOP ({previousHistoryLimit})
+						        [Id], [ExecutionTime], [ClientName], [RoleName], [MethodName], [Operation]
 						    FROM [Filtered]
 						    WHERE [ExecutionTime] < {today}
 						      AND [DailyRowNumber] = 1
+						    ORDER BY [ExecutionTime] DESC, [Id] DESC
 						),
 						[Combined] AS
 						(

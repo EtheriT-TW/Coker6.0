@@ -219,7 +219,11 @@ function CompanyInfoSave(event) {
         event.preventDefault()
         event.stopPropagation()
     } else {
-        co.Company.Save(co.Form.getJson("CompnyData")).done(function (resut) {
+        const companyData = co.Form.getJson("CompnyData");
+        // 查詢帶入後停用的欄位不會包含在 FormData 中，儲存時仍需送出完整資料。
+        companyData.Contact = $("#Contact").val() || "";
+        companyData.Email = $("#Email").val() || "";
+        co.Company.Save(companyData).done(function (resut) {
             if (resut.success) {
                 $("#CompanyID").val(resut.message || resut.Message || 0);
                 companyInfoIsEmpty = false;

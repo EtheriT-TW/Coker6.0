@@ -260,7 +260,7 @@
     }
 
     function initMenuDirectories($root) {
-        $root.find(".menu_directory").each(function () {
+        $root.filter(".menu_directory").add($root.find(".menu_directory")).each(function () {
             const $self = $(this);
             const dirid = getDirIds($self);
             if (!dirid.length) return;
@@ -269,22 +269,38 @@
                 ? $self.attr("data-show-unvisible").toLowerCase() === "true"
                 : false;
 
-            if (typeof $self.data("prevdirid") !== "undefined" && dirid == $self.data("prevdirid")) {
+            const websiteId = typeof w.SiteId !== "undefined" ? w.SiteId : 0;
+            const requestKey = JSON.stringify([dirid, websiteId, showUnvisible]);
+            // 同一元素在請求中或載入後重新初始化，不重複請求。
+            if ($self.data("menuRequestKey") === requestKey) {
                 return;
             }
 
-            $self.data("prevdirid", dirid);
-            $self.find(".title").text("");
-            $self.find(".accordion").empty();
-
             if (w.DirectoryService && typeof w.DirectoryService.getMenuData === "function") {
+                const requestId = Number($self.data("menuRequestId") || 0) + 1;
+                $self.data("menuRequestId", requestId);
+                $self.data("menuRequestKey", requestKey);
                 w.DirectoryService.getMenuData({
                     Ids: dirid,
-                    WebsiteId: typeof w.SiteId !== "undefined" ? w.SiteId : 0,
+                    WebsiteId: websiteId,
                     showUnvisible: showUnvisible
                 }).done(function (result) {
+                    if ($self.data("menuRequestId") !== requestId) return;
+                    const currentShowUnvisible = String($self.attr("data-show-unvisible") || "false").toLowerCase() === "true";
+                    const currentWebsiteId = typeof w.SiteId !== "undefined" ? w.SiteId : 0;
+                    if (JSON.stringify([getDirIds($self), currentWebsiteId, currentShowUnvisible]) !== requestKey) {
+                        $self.removeData("menuRequestKey");
+                        return;
+                    }
                     if (w.DirectoryBlocks && typeof w.DirectoryBlocks.renderMenu === "function") {
+                        $self.find(".title").text("");
+                        $self.find(".accordion").empty();
                         w.DirectoryBlocks.renderMenu($self, result);
+                    }
+                }).fail(function () {
+                    // 失敗後允許下一次初始化重試，不清除較新請求的狀態。
+                    if ($self.data("menuRequestId") === requestId) {
+                        $self.removeData("menuRequestKey");
                     }
                 });
             }

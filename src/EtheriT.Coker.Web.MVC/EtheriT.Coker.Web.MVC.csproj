@@ -26,7 +26,6 @@
 		<Content Remove="wwwroot\css\AdvertisementManagement\CustomAd.css" />
 		<Content Remove="wwwroot\css\AdvertisementManagement\EnterAd.css" />
 		<Content Remove="wwwroot\css\AdvertisementManagement\RightSideAd.css" />
-		<Content Remove="wwwroot\js\Account\Index.js" />
 		<Content Remove="wwwroot\js\AdvertisementManagement\CustomAd.js" />
 		<Content Remove="wwwroot\js\Components\ImageUploadModal.js" />
 		<Content Remove="wwwroot\js\Components\PermissionDetailsModal.js" />
@@ -114,7 +113,6 @@
 		<None Include="wwwroot\css\AdvertisementManagement\CustomAd.css" />
 		<None Include="wwwroot\css\AdvertisementManagement\EnterAd.css" />
 		<None Include="wwwroot\css\AdvertisementManagement\RightSideAd.css" />
-		<None Include="wwwroot\js\Account\Index.js" />
 		<None Include="wwwroot\js\AdvertisementManagement\CustomAd.js" />
 		<None Include="wwwroot\js\Components\ImageUploadModal.js" />
 		<None Include="wwwroot\js\Components\PermissionDetailsModal.js" />

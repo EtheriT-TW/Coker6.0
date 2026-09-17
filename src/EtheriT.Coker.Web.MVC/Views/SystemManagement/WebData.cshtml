@@ -3,9 +3,6 @@
 @{
     ViewData["Title"] = "WebData";
 }
-@{
-    await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
-}
 @Html.AntiForgeryToken()
 <link rel="stylesheet" href="~/css/SystemManagement/WebData.min.css" asp-append-version="true" />
 
@@ -15,7 +12,6 @@
 
 <div id="TopLine" class="d-flex justify-content-between mb-3 px-4">
     <div class="title fw-bold fs-3">網站資料</div>
-    <a class="btn btn-primary text-decoration-none align-self-center d-none" href="#" role="button">返回網站資料</a>
 </div>
 
 <div id="WebDataMain">
@@ -162,7 +158,6 @@
             <div id="PrivacyStatement" class="card-body" data-id="">
                 <div class="d-flex align-items-center pb-2">
                     <div class="title fs-5 fw-bold">隱私權聲明</div>
-                    <button class="btn_privacy bg-transparent border-0 fs-5" type="button"><i class="fa-regular fa-pen-to-square"></i></button>
                 </div>
             </div>
         </div>
@@ -174,14 +169,8 @@
             <div id="MembershipTerms" class="card-body" data-id="">
                 <div class="d-flex align-items-center pb-2">
                     <div class="title fs-5 fw-bold">會員條款說明</div>
-                    <button class="btn_terms bg-transparent border-0 fs-5" type="button"><i class="fa-regular fa-pen-to-square"></i></button>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- footer_privacy -->
-<div id="WebDataCanvas" class="card border-0 d-none">
-    <div id="gjs"></div>
 </div>

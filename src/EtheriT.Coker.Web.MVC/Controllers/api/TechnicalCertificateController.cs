@@ -53,6 +53,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await technicalCertificateAppService.Delete(Id);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> ImportConten(TechnicalCertificateSaveContenDto dto)
+        {
+            return await technicalCertificateAppService.ImportConten(dto);
+        }
     }
 }
 

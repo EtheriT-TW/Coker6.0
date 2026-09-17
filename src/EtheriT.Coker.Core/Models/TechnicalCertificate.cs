@@ -13,6 +13,8 @@ namespace EtheriT.Coker.Core.Models
         public int Ser_no { get; set; }
         public string Html {  get; set; }
         public string Css { get; set; }
+        public string? SaveHtml { get; set; }
+        public string? SaveCss { get; set; }
         public virtual DateTime? StartDate { get; set; }
         public virtual DateTime? EndDate { get; set; }
         public bool Permanent { get; set; }

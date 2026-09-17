@@ -65,6 +65,9 @@ namespace EtheriT.Coker.Web.Public.Helpers
         [HtmlAttributeName("breadcrumb-html")]
         public string? BreadcrumbHtml { get; set; }
 
+        [HtmlAttributeName("lazy-load-images")]
+        public bool LazyLoadImages { get; set; }
+
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             output.TagName = null;
@@ -171,6 +174,12 @@ namespace EtheriT.Coker.Web.Public.Helpers
                 htmlProcessor,
                 renderedHtml,
                 BreadcrumbHtml);
+
+            // 僅調整驗證後的輸出，不回寫內容或改變 hash 驗證來源。
+            if (LazyLoadImages)
+            {
+                renderedHtml = ContentImageLoadingHtml.Prepare(htmlProcessor, renderedHtml);
+            }
 
             // 子內容與父選單都在後端完成 hash 驗證後，才組合並輸出 HTML。
             output.Content.SetHtmlContent(renderedHtml);

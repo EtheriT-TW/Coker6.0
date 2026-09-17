@@ -149,8 +149,15 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             .Include(item => item.SubContacts)
             .FirstOrDefaultAsync(item => item.Id == id, HttpContext.RequestAborted);
 
-        if (customer is null)
-            return NotFound();
+        // 網站不提供刪除，只要客戶底下有任何網站（含已註銷）就不能刪，
+        // 否則網站會失去對應客戶。
+        var websiteCount = await db.PlatformWebsites
+            .CountAsync(site => site.FK_PlatformCustomerId == id, HttpContext.RequestAborted);
+        if (websiteCount > 0)
+            return Conflict(new
+            {
+                Error = $"此客戶底下還有 {websiteCount} 個網站，無法刪除。網站不提供刪除，請改為註銷網站並保留客戶資料。"
+            });
 
         foreach (var contact in customer.SubContacts) {
             db.PlatformCustomerContacts.Remove(contact);

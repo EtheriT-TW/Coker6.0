@@ -53,7 +53,9 @@
         }
         catch (error) {
             console.error(error);
-            pageError.value = "刪除失敗，請稍後再試。";
+            pageError.value = error instanceof ApiError && error.status === 409
+                ? error.message
+                : "刪除失敗，請稍後再試。";
         }
         finally {
             // 不論成功失敗都要關掉對話框，否則錯誤訊息會被遮罩蓋住看不到。

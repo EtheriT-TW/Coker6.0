@@ -1108,6 +1108,226 @@ button, input, select, textarea {
         color: #94a3b8;
     }
 
+/* ── 網站與站台 ── */
+.alert-warning {
+    color: #7b5a12;
+    background: #fff7e0;
+    border-color: #f1dfa6;
+}
+
+.form-field input[readonly] {
+    color: #64748b;
+    background: #f8fafc;
+}
+
+.field-note {
+    margin: 6px 0 0;
+    color: var(--platform-muted);
+    font-size: 12px;
+}
+
+.field-note-error {
+    color: #c2413b;
+}
+
+.field-note-reveal {
+    color: #1f7a54;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* 輸入框右側接按鈕（統編查詢、顯示密碼） */
+.input-with-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .input-with-action input {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .input-with-action .ui-button {
+        flex: none;
+        min-height: 42px;
+    }
+
+.choice-group-compact {
+    min-height: 0;
+    margin-top: 10px;
+}
+
+/* ── 表單型對話框：class 套在 ConfirmDialog 根節點 ── */
+.app-dialog-form .app-dialog-card {
+    width: min(620px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+}
+
+.dialog-fieldset {
+    min-width: 0;
+    margin: 20px 0 0;
+    padding: 0;
+    border: 0;
+    text-align: left;
+}
+
+.app-dialog-card .dialog-alert {
+    margin: 16px 0 0;
+    text-align: left;
+}
+
+/* ── 同統編多筆客戶選擇 ── */
+.candidate-list {
+    display: grid;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.candidate-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 12px 14px;
+    background: #fff;
+    border: 1px solid var(--platform-line);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+
+    .candidate-option:hover {
+        border-color: #94a3b8;
+    }
+
+    .candidate-option:has(input:checked) {
+        background: var(--platform-primary-soft);
+        border-color: var(--platform-primary);
+    }
+
+    .candidate-option input {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        margin: 2px 0 0;
+        accent-color: var(--platform-primary);
+    }
+
+.candidate-body {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+    .candidate-body strong {
+        color: var(--platform-ink);
+        font-size: 14px;
+    }
+
+    .candidate-body small {
+        color: var(--platform-muted);
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+.candidate-hint {
+    margin-top: 10px;
+    color: var(--platform-muted);
+    font-size: 12px;
+}
+
+/* ── 清單 ── */
+.grid-muted {
+    color: var(--platform-muted);
+    font-style: italic;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-pill-0 {
+    color: #28785c;
+    background: #e9f8f2;
+}
+
+.status-pill-1 {
+    color: #8a6116;
+    background: #fff4d6;
+}
+
+.status-pill-2 {
+    color: #7a8394;
+    background: #eef1f5;
+}
+
+/* ── 總覽：即將到期清單 ── */
+.expiring-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .expiring-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--platform-line);
+        font-size: 13px;
+    }
+
+        .expiring-list li:last-child {
+            border-bottom: 0;
+        }
+
+    .expiring-list a {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+        color: var(--platform-ink);
+    }
+
+        .expiring-list a:hover strong {
+            color: var(--platform-primary);
+        }
+
+    .expiring-list strong,
+    .expiring-list small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .expiring-list small {
+        color: var(--platform-muted);
+        font-size: 11px;
+    }
+
+.expiring-date {
+    flex: none;
+    color: #8a6116;
+    font-weight: 600;
+}
+
 @media (max-width: 1100px) {
     .metric-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -19,7 +19,7 @@ export const router = createRouter({
             path: "/companies/new",
             name: "company-create",
             component: () => import("@/views/CompanyEditView.vue"),
-            meta: {title: "新增客戶"}
+            meta: { title: "新增客戶" }
         },
         {
             path: "/companies/:id(\\d+)",
@@ -32,6 +32,17 @@ export const router = createRouter({
             name: "websites",
             component: () => import("@/views/WebsitesView.vue"),
             meta: { title: "網站與站台" }
+        }, {
+            path: "/websites/new",
+            name: "website-create",
+            component: () => import("@/views/WebsiteEditView.vue"),
+            meta: { title: "新增網站" }
+        },
+        {
+            path: "/websites/:id(\\d+)",
+            name: "website-edit",
+            component: () => import("@/views/WebsiteEditView.vue"),
+            meta: { title: "編輯網站" }
         },
         {
             path: "/licenses",

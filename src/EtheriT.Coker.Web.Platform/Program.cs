@@ -84,6 +84,7 @@ builder.Services.AddSingleton<PlatformReauthenticationTicketService>();
 builder.Services.AddScoped<PlatformReauthenticationService>();
 builder.Services.AddScoped<IAuthorizationHandler, PlatformAccessHandler>();
 builder.Services.AddScoped<PlatformAuditor>();
+builder.Services.AddSingleton<PlatformDomainPasswordProtector>();
 builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddAuthorization(options =>
 {
@@ -120,6 +121,13 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=PlatformHost}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+// 不存在的 /api 路徑回 404；落到 SPA Host 會回 200 + HTML，前端會把 HTML 當成 API 資料
+app.MapFallback("/api/{**path}", context =>
+{
+    context.Response.StatusCode = StatusCodes.Status404NotFound;
+    return Task.CompletedTask;
+});
 
 app.MapFallbackToController("Index", "PlatformHost");
 

@@ -30,9 +30,11 @@
     <Content Remove="wwwroot\dist\.vite\**" />
     <None Remove="FrontendResources\manifest.json" />
     <Content Remove="FrontendResources\manifest.json" />
-    <Content Include="FrontendResources\manifest.json"
-             CopyToOutputDirectory="PreserveNewest"
-             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="FrontendResources\manifest.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ClientApp\src\core\dialogs\" />
   </ItemGroup>
 
 </Project>

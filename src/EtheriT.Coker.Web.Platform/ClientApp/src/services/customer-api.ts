@@ -1,4 +1,4 @@
-import { api } from "@/core/coker";
+import { api, ApiError } from "@/core/coker";
 import type {
     CustomerDetail,
     CustomerForm,
@@ -28,12 +28,13 @@ export function deleteCustomer(id: number): Promise<void> {
     return api.delete<void>(`${baseUrl}/${id}`);
 }
 
-/** 統編查詢。查無資料回空陣列。 */
-export function lookupByTaxId(
-    taxId: string,
-    excludeId?: number
-): Promise<CustomerLookup[]> {
-    return api.get<CustomerLookup[]>(`${baseUrl}/by-tax-id`, {
-        query: { taxId, excludeId }
-    });
+/** 以統編或完整公司名稱帶出客戶；兩者都不可重複，最多一筆。查無回 null。 */
+export async function lookupCustomer(keyword: string): Promise<CustomerLookup | null> {
+    try {
+        return await api.get<CustomerLookup>(`${baseUrl}/lookup`, { query: { keyword } });
+    }
+    catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+    }
 }

@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260917053703_AddPlatformDomains")]
+    partial class AddPlatformDomains
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -7631,12 +7634,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<bool>("Permanent")
                         .HasColumnType("bit");
-
-                    b.Property<string>("SaveCss")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SaveHtml")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Ser_no")
                         .HasColumnType("int");

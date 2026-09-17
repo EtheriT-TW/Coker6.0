@@ -2,11 +2,9 @@
     import { computed, onMounted, ref, watch } from "vue";
     import { useRoute, useRouter } from "vue-router";
     import { ApiError, FormFieldErrors, rules, useManagedForm } from "@/core/coker";
-    import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import {
         createCustomer,
         fetchCustomer,
-        lookupByTaxId,
         updateCustomer
     } from "@/services/customer-api";
     import {
@@ -32,17 +30,13 @@
     const loading = ref(false);
     const pageError = ref("");
 
-    // 統編重複確認：beforeSave 會卡在這個 Promise，等使用者回答。
-    const duplicateNames = ref<string[]>([]);
-    let duplicateResolver: ((confirmed: boolean) => void) | null = null;
-
     // 新增的次要聯絡人用遞減負數當暫時 key，v-for 的 key 才會穩定。
     let nextTempContactId = -1;
 
     function emptyForm(): CustomerForm {
         return {
             Name: "",
-            // 從「網站與站台」頁跳過來時會帶 ?taxId=
+            // 從「網站管理」頁跳過來時會帶 ?taxId=
             TaxId: typeof route.query.taxId === "string" ? route.query.taxId : "",
             Phone: "",
             Email: "",
@@ -59,48 +53,6 @@
         };
     }
 
-    async function checkDuplicateTaxId(values: CustomerForm): Promise<boolean> {
-        pageError.value = "";
-
-        // 防重入：beforeSave 跑在 isSaving 變 true 之前，儲存鍵與 Ctrl+S 都還活著。
-        // 連按兩次會蓋掉 resolver，讓前一個 Promise 永遠不 resolve、畫面卡死。
-        duplicateResolver?.(false);
-        duplicateResolver = null;
-
-        // 統編選填，沒填就不用檢查重複
-        const taxId = values.TaxId.trim();
-        if (!taxId) return true;
-
-        // beforeSave 是在 useManagedForm 的 try/catch 之外被呼叫的，
-        // 這裡不自己接住例外的話，整個儲存會靜默失敗、畫面完全沒反應。
-        let matches;
-        try {
-            matches = await lookupByTaxId(
-                taxId,
-                isEdit.value ? customerId.value : undefined
-            );
-        }
-        catch (error) {
-            console.error(error);
-            pageError.value = "無法檢查統一編號是否重複，請稍後再試。";
-            return false;
-        }
-
-        if (matches.length === 0) return true;
-
-        duplicateNames.value = matches.map(item => item.Name);
-        return await new Promise<boolean>(resolve => {
-            duplicateResolver = resolve;
-        });
-    }
-
-    function resolveDuplicate(confirmed: boolean): void {
-        duplicateNames.value = [];
-        const resolve = duplicateResolver;
-        duplicateResolver = null;
-        resolve?.(confirmed);
-    }
-
     const subContactEmailRule = rules.email<CustomerForm>("聯絡人 Email 格式不正確。");
 
     const form = useManagedForm<CustomerForm, { Id: number } | void>({
@@ -108,8 +60,9 @@
         initialValue: emptyForm,
         validation: {
             Name: [rules.required("請輸入公司名稱。"), rules.maxLength(200)],
-            // 統編選填；rules.pattern 遇到空值會直接放行，有填才檢查 8 碼
-            TaxId: [rules.pattern(/^\d{8}$/, "統一編號需為 8 碼數字。")],
+            // 統編選填；rules.pattern 遇到空值會直接放行，有填才檢查 8～10 碼
+            TaxId: [rules.pattern(/^\d{8,10}$/, "統一編號需為 8～10 碼數字。")],
+            Address: [rules.maxLength(150)],
             Email: [rules.email("公司 Email 格式不正確。")],
             PrimaryContactName: [rules.required("請輸入主要聯絡人姓名。")],
             PrimaryContactEmail: [rules.email("主要聯絡人 Email 格式不正確。")]
@@ -136,7 +89,6 @@
 
             return errors;
         },
-        beforeSave: checkDuplicateTaxId,
         save: values => isEdit.value
             ? updateCustomer(customerId.value, values)
             : createCustomer(values),
@@ -146,7 +98,13 @@
         },
         onError: error => {
             console.error(error);
-            pageError.value = "儲存失敗，請確認欄位內容後再試。";
+            if (error instanceof ApiError && error.status === 409) {
+                pageError.value = error.message;
+                return;
+            }
+            pageError.value = error instanceof ApiError && Object.keys(error.fieldErrors).length > 0
+                ? "部分欄位有誤，請依紅字提示修正。"
+                : "儲存失敗，請稍後再試。";
         }
     });
 
@@ -299,7 +257,7 @@
                         <input v-model="form.model.value.TaxId"
                                type="text"
                                inputmode="numeric"
-                               maxlength="8" />
+                               maxlength="10" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('TaxId')" />
                 </div>
@@ -323,7 +281,7 @@
                 <div class="form-field form-field-wide">
                     <label>
                         <span>公司地址</span>
-                        <input v-model="form.model.value.Address" type="text" maxlength="250" />
+                        <input v-model="form.model.value.Address" type="text" maxlength="150" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('Address')" />
                 </div>
@@ -473,13 +431,4 @@
             </button>
         </div>
     </form>
-
-    <ConfirmDialog :open="duplicateNames.length > 0"
-                   icon="warning"
-                   title="這組統一編號已被使用"
-                   :message="`已被「${duplicateNames.join('」、「')}」使用，是否確認繼續？`"
-                   confirm-text="確認新增"
-                   cancel-text="返回修改"
-                   @confirm="resolveDuplicate(true)"
-                   @cancel="resolveDuplicate(false)" />
 </template>

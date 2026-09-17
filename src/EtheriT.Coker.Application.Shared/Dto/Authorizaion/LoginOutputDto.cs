@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Application.Authorizaion.Dto
     public class LoginOutputDto: ResponseMessageDto
     {
         public string? Token { get; set; }
+        public bool RequiresAccountSetup { get; set; }
         public Guid? Secret { get; set; }
         public DateTime EndDateTime { get; set; }
     }

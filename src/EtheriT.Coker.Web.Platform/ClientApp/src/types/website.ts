@@ -45,6 +45,9 @@ export interface WebsiteListItem {
     Url: string | null;
     ServiceEndDate: string | null;
     DomainEndDate: string | null;
+    ServiceStartDate: string | null;
+    /** 到期日 − 今天；未填到期日為 null */
+    RemainingDays: number | null;
 }
 
 export interface WebsiteListResult {

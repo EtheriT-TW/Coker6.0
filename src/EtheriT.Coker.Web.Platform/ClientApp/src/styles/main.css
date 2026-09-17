@@ -1217,10 +1217,14 @@ button, input, select, textarea {
 
 .status-pill {
     display: inline-block;
+    box-sizing: border-box;
+    width: 6em;
     padding: 3px 9px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .status-pill-0 {
@@ -1236,6 +1240,86 @@ button, input, select, textarea {
 .status-pill-2 {
     color: #7a8394;
     background: #eef1f5;
+}
+
+.status-pill-expiring {
+    color: #b25e09;
+    background: #fff0e0;
+}
+
+.status-pill-expired {
+    color: #b3261e;
+    background: #fdecea;
+}
+
+/* ── 網站管理：摘要卡與剩餘天數 ── */
+.website-metrics {
+    margin-bottom: 18px;
+}
+
+/* 圖示在左、文字（標題／數字／說明）在右 */
+.metric-card-inline {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+    .metric-card-inline .metric-icon {
+        flex-shrink: 0;
+        margin-bottom: 0;
+    }
+
+    .metric-card-inline strong {
+        margin-top: 2px;
+        line-height: 1.2;
+    }
+
+.metric-body {
+    min-width: 0;
+}
+
+.metric-note {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--platform-muted);
+}
+
+.metric-card-normal .metric-icon {
+    color: #28785c;
+    background: #e9f8f2;
+}
+
+.metric-card-expiring .metric-icon {
+    color: #8a6116;
+    background: #fff4d6;
+}
+
+.metric-card-expired .metric-icon {
+    color: #b3261e;
+    background: #fdecea;
+}
+
+.grid-link {
+    color: var(--platform-primary);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+    .grid-link:hover,
+    .grid-link:focus-visible {
+        text-decoration: underline;
+    }
+
+.days-value {
+    font-weight: 700;
+}
+
+.days-normal {
+    color: #28785c;
+}
+
+.days-expiring {
+    color: #8a6116;
 }
 
 /* ── 總覽：即將到期清單 ── */

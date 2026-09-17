@@ -18,7 +18,9 @@ public sealed record WebsiteListItemDto(
     PlatformWebsiteStatusEnum Status,
     string StatusText,
     string? Url,
+    DateTime? ServiceStartDate,
     DateTime? ServiceEndDate,
+    int? RemainingDays,
     DateTime? DomainEndDate);
 
 public sealed record WebsiteListResult(

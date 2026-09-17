@@ -40,11 +40,15 @@ public sealed class WebsitesController(
                 site.Level,
                 site.Status,
                 site.Url,
+                site.ServiceStartDate,
                 site.ServiceEndDate,
                 DomainEndDate = site.Domain == null ? (DateTime?)null : site.Domain.EndDate
             })
             .Take(ListLimit + 1)   // 多拿一筆，用來判斷是否被截斷
             .ToListAsync(HttpContext.RequestAborted);
+
+        // 用伺服器日期計算，與總覽頁「即將到期」一致
+        var today = DateTime.Today;
 
         var items = rows
             .Take(ListLimit)
@@ -59,7 +63,9 @@ public sealed class WebsitesController(
                 row.Status,
                 row.Status.ToString(),
                 row.Url,
+                row.ServiceStartDate,
                 row.ServiceEndDate,
+                row.ServiceEndDate is null ? null : (row.ServiceEndDate.Value.Date - today).Days,
                 row.DomainEndDate))
             .ToList();
 

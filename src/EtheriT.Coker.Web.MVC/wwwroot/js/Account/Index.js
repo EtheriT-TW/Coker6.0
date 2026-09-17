@@ -82,7 +82,7 @@
     }
 
     co.User.Check().done(function (result) {
-        if (result.success) {
+        if (result.success && $("#loginBtn").length) {
             navigateAfterLogin();
             return;
         }
@@ -98,6 +98,12 @@
             Password: $("#password").val(),
             PreferredWebsiteIds: getPreferredWebsiteIds()
         }).done(function (result) {
+            if (result.requiresAccountSetup) {
+                co.sweet.error("首次啟用後台", result.error, function () {
+                    location.href = "/Account/Forget";
+                });
+                return;
+            }
             if (!result.success) {
                 co.sweet.error("登入失敗", result.error || "帳號或密碼不正確，請重新確認。");
                 return;
@@ -133,13 +139,76 @@
     });
 
     const forgetId = getForgetId();
+    let requiresAccountSetup = false;
+    let checkedAccount = null;
+    let accountCheckTimer;
+    let accountCheckRequest;
+    let accountCheckVersion = 0;
+
+    function showAccountStatus(message, available) {
+        $("#accountAvailability").text(message)
+            .toggleClass("text-success", available)
+            .toggleClass("text-danger", !available);
+    }
+
+    function checkSetupAccount() {
+        clearTimeout(accountCheckTimer);
+        if (!requiresAccountSetup) return;
+        const input = document.getElementById("setupAccount");
+        const account = input.value.trim();
+        const version = ++accountCheckVersion;
+        if (accountCheckRequest) accountCheckRequest.abort();
+        checkedAccount = null;
+        $("#subnewpsw").prop("disabled", true);
+        if (!/^[A-Za-z][A-Za-z0-9._-]{3,49}$/.test(account)) {
+            showAccountStatus(account ? "帳號格式不符，請確認帳號規則。" : "請輸入登入帳號。", false);
+            return;
+        }
+        showAccountStatus("檢查中…", false);
+        accountCheckRequest = $.ajax({
+            url: "/api/User/CheckAccountAvailability",
+            method: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify({ ForgetID: forgetId, Account: account })
+        }).done(function (result) {
+            if (version !== accountCheckVersion || input.value.trim() !== account) return;
+            checkedAccount = result.success ? account : null;
+            showAccountStatus(result.success ? "✓ 帳號可使用" :
+                (result.error || "此帳號不可使用。"), !!result.success);
+            $("#subnewpsw").prop("disabled", !result.success);
+        }).fail(function (_, status) {
+            if (version !== accountCheckVersion || status === "abort") return;
+            showAccountStatus("無法確認帳號，請離開欄位重試。", false);
+        });
+    }
+
+    $("#setupAccount").on("input", function () {
+        if (!requiresAccountSetup) return;
+        ++accountCheckVersion;
+        checkedAccount = null;
+        clearTimeout(accountCheckTimer);
+        if (accountCheckRequest) accountCheckRequest.abort();
+        $("#subnewpsw").prop("disabled", true);
+        showAccountStatus("等待檢查…", false);
+        accountCheckTimer = setTimeout(checkSetupAccount, 500);
+    }).on("blur", checkSetupAccount);
     if ($("#resetPasswordForm").length) {
+        $("#subnewpsw").prop("disabled", true);
         if (!forgetId) {
             co.sweet.error("連結無效", "密碼重設連結無效或已逾期，請重新申請。", function () {
                 location.href = "/Account/Forget";
             });
         } else {
             co.User.ValidatePasswordReset(forgetId).done(function (result) {
+                if (result.success) {
+                    requiresAccountSetup = result.message === "RequiresAccountSetup";
+                    $("#accountSetupFields").prop("hidden", !requiresAccountSetup);
+                    $("#setupAccount").prop("required", requiresAccountSetup);
+                    if (requiresAccountSetup) $(".form-block h3").text("完成後台帳號設定");
+                    $("#subnewpsw").prop("disabled", requiresAccountSetup);
+                    if (requiresAccountSetup) checkSetupAccount();
+                }
                 if (!result.success) {
                     co.sweet.error("連結無效", result.error || "密碼重設連結無效或已逾期，請重新申請。", function () {
                         location.href = "/Account/Forget";
@@ -153,6 +222,11 @@
         e.preventDefault();
         const password = newpassword.value;
         const passwordConfirm = agnewpassword.value;
+        if (requiresAccountSetup && !document.getElementById("setupAccount").reportValidity()) return;
+        if (requiresAccountSetup && checkedAccount !== $("#setupAccount").val().trim()) {
+            checkSetupAccount();
+            return;
+        }
         if (password !== passwordConfirm) {
             co.sweet.warn("提醒", "輸入的密碼不相符。");
             return;
@@ -161,11 +235,17 @@
         co.sweet.loading("處理中", "正在重設密碼，請稍候...");
         co.User.ResetPassword({
             ForgetID: forgetId,
+            Account: requiresAccountSetup ? $("#setupAccount").val().trim() : null,
             Password: password,
             PasswordConfirm: passwordConfirm
         }).done(function (result) {
             Swal.close();
             if (!result.success) {
+                if (requiresAccountSetup) {
+                    checkedAccount = null;
+                    $("#subnewpsw").prop("disabled", true);
+                    showAccountStatus("提交未完成，請離開帳號欄位重新檢查。", false);
+                }
                 co.sweet.error("重設失敗", result.error || "無法重設密碼，請重新確認。");
                 return;
             }
@@ -178,21 +258,53 @@
         });
     });
 
-    $("#newpassword").on("input focus", function () {
-        const value = this.value;
-        $(lowercase).toggleClass("invalid", !/[a-z]/.test(value)).toggleClass("valid", /[a-z]/.test(value));
-        $(uppercase).toggleClass("invalid", !/[A-Z]/.test(value)).toggleClass("valid", /[A-Z]/.test(value));
-        $(number).toggleClass("invalid", !/\d/.test(value)).toggleClass("valid", /\d/.test(value));
-        $(symbol).toggleClass("invalid", !/\W/.test(value)).toggleClass("valid", /\W/.test(value));
-        $(length).toggleClass("invalid", value.length < 8 || value.length > 32).toggleClass("valid", value.length >= 8 && value.length <= 32);
-        $("#rule").css("display", "block");
-        $("#short-rule").css("display", "none");
-    });
+    function updatePasswordRules() {
+        const input = document.getElementById("newpassword");
+        if (!input) return;
+        const value = input.value;
+        const categories = {
+            lowercase: /[a-z]/.test(value),
+            uppercase: /[A-Z]/.test(value),
+            number: /\p{Nd}/u.test(value),
+            // Match .NET's Unicode-aware \W; underscore is not a symbol.
+            symbol: /[^\p{L}\p{Mn}\p{Nd}\p{Pc}]/u.test(value)
+        };
+        Object.keys(categories).forEach(function (id) {
+            $("#" + id).toggleClass("invalid", !categories[id]).toggleClass("valid", categories[id]);
+        });
+        const count = Object.values(categories).filter(Boolean).length;
+        $("#length").toggleClass("invalid", value.length < 8 || value.length > 32)
+            .toggleClass("valid", value.length >= 8 && value.length <= 32);
+        $("#composition").text("四類中至少符合三類（目前 " + count + "／4）")
+            .toggleClass("invalid", count < 3).toggleClass("valid", count >= 3);
+        $("#rule").css("display", value.length ? "block" : "none");
+        $("#short-rule").css("display", value.length ? "none" : "block");
+    }
 
-    $("#newpassword").on("blur", function () {
-        $("#short-rule").css("display", "block");
-        $("#rule").css("display", "none");
+    function updatePasswordMatch() {
+        const password = document.getElementById("newpassword");
+        const confirmation = document.getElementById("agnewpassword");
+        if (!password || !confirmation) return;
+        const hasConfirmation = confirmation.value.length > 0;
+        const matches = password.value.length > 0 && password.value === confirmation.value;
+        $("#passwordMatchStatus").prop("hidden", !hasConfirmation)
+            .text(matches ? "✓ 兩次密碼一致" : "兩次密碼不一致")
+            .toggleClass("text-success", hasConfirmation && matches)
+            .toggleClass("text-danger", hasConfirmation && !matches);
+        if (hasConfirmation && !matches) confirmation.setAttribute("aria-invalid", "true");
+        else confirmation.removeAttribute("aria-invalid");
+    }
+
+    $("#newpassword").on("input change", updatePasswordRules);
+    $("#newpassword, #agnewpassword").on("input change", updatePasswordMatch);
+    updatePasswordRules();
+    updatePasswordMatch();
+    // Re-evaluate restored/autofilled values without using focus as a visibility switch.
+    $(window).on("pageshow", function () {
+        updatePasswordRules();
+        updatePasswordMatch();
     });
+    $(document).on("change", "#agnewpassword", updatePasswordRules);
 
     $(document).on("click", ".toggle-password", function (e) {
         e.preventDefault();

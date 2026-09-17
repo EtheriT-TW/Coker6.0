@@ -82,13 +82,22 @@ namespace EtheriT.Coker.Application.Authorization
                     throw new Exception("密碼不可為空");
 
                 var user = await db.Users.FirstOrDefaultAsync(e =>
-                    e.Account == dto.UserName ||
+                    !e.IsDeleted && (e.Account == dto.UserName ||
                     e.CellPhone == dto.UserName ||
-                    e.Email == dto.UserName);
+                    e.Email == dto.UserName));
                 if (user == null || !passwordHasher.VerifyHashedPassword(user.Password, dto.Password))
                     throw new Exception("帳號或密碼錯誤");
 
                 userId = user.Id;
+                if (!await HasBackofficeAccess(user.Id))
+                    throw new Exception("此帳號沒有後台管理權限");
+                if (string.IsNullOrWhiteSpace(user.Account))
+                {
+                    // Do not issue a normal session using an empty account or a copied front password.
+                    output.RequiresAccountSetup = true;
+                    output.Error = "請先透過電子信箱驗證，完成後台帳號及獨立密碼設定。";
+                    return output;
+                }
                 long bindId = 0;
                 if (httpContextAccessor.HttpContext != null)
                 {
@@ -133,7 +142,11 @@ namespace EtheriT.Coker.Application.Authorization
                         else
                         {
                             var defaultWeb = await db.MappingUserAndWebsites
-                                .Where(e => !e.IsDeleted && e.UserId == user.Id)
+                                .Where(e => !e.IsDeleted && e.UserId == user.Id &&
+                                    e.Website != null && !e.Website.IsDeleted &&
+                                    db.MappingUserAndRoles.Any(m => !m.IsDeleted && m.UserId == user.Id &&
+                                        m.Role != null && !m.Role.IsDeleted && m.Role.Type == RoleTypeEnum.後台 &&
+                                        m.Role.FK_WebsiteId == e.WebsiteId))
                                 .OrderByDescending(e => e.WebsiteId)
                                 .FirstOrDefaultAsync();
                             if (defaultWeb == null)
@@ -144,6 +157,8 @@ namespace EtheriT.Coker.Application.Authorization
                     }
                 }
                 websiteId = bindId;
+                if (!await HasBackofficeAccess(user.Id, bindId))
+                    throw new Exception("此帳號沒有該網站的後台管理權限");
 
                 var endDateTime = DateTime.Now.AddMinutes(30);
                 var token = new Core.Models.Token
@@ -409,7 +424,7 @@ namespace EtheriT.Coker.Application.Authorization
                     !e.IsDeleted && e.Email != null && e.Email == email);
 
                 // 不揭露信箱是否存在，避免被用來枚舉後台帳號。
-                if (user == null)
+                if (user == null || !await HasBackofficeAccess(user.Id))
                     return new ResponseMessageDto { Success = true };
 
                 user.ForgetID = Guid.NewGuid();
@@ -444,7 +459,9 @@ namespace EtheriT.Coker.Application.Authorization
                     {
                         new() { Name = user.Name, Email = user.Email }
                     },
-                    Subject = "【Coker】後台密碼重設通知",
+                    Subject = string.IsNullOrWhiteSpace(user.Account)
+                        ? "【Coker】後台帳號啟用通知"
+                        : "【Coker】後台密碼重設通知",
                     Body = content.Body,
                     Css = content.Style
                 });
@@ -462,16 +479,46 @@ namespace EtheriT.Coker.Application.Authorization
 
         public async Task<ResponseMessageDto> ValidatePasswordReset(Guid forgetId)
         {
-            var isValid = forgetId != Guid.Empty && await db.Users.AnyAsync(e =>
+            var user = forgetId == Guid.Empty ? null : await db.Users.FirstOrDefaultAsync(e =>
                 !e.IsDeleted &&
                 e.ForgetID == forgetId &&
                 e.ForgeIDSendDate != null &&
                 e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
+            var isValid = user != null && await HasBackofficeAccess(user.Id);
             return new ResponseMessageDto
             {
                 Success = isValid,
+                Message = isValid && string.IsNullOrWhiteSpace(user!.Account) ? "RequiresAccountSetup" : null,
                 Error = isValid ? null : "密碼重設連結無效或已逾期，請重新申請。"
             };
+        }
+
+        public async Task<ResponseMessageDto> CheckAccountAvailability(BackstageAccountAvailabilityDto dto)
+        {
+            var user = dto.ForgetID == Guid.Empty ? null : await db.Users.AsNoTracking().FirstOrDefaultAsync(e =>
+                !e.IsDeleted && e.ForgetID == dto.ForgetID && e.ForgeIDSendDate != null &&
+                e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
+            if (user == null || !await HasBackofficeAccess(user.Id) || !string.IsNullOrWhiteSpace(user.Account))
+                return new ResponseMessageDto { Error = "帳號設定連結無效或已逾期，請重新申請。" };
+
+            var account = dto.Account?.Trim();
+            if (account == null || !Regex.IsMatch(account, @"\A[A-Za-z][A-Za-z0-9._-]{3,49}\z"))
+                return new ResponseMessageDto { Error = "帳號格式不符，請使用4至50碼，以英文字母開頭。" };
+            var taken = await IsAccountTaken(user.Id, account);
+            return new ResponseMessageDto
+            {
+                Success = !taken,
+                Message = taken ? null : "此帳號可使用",
+                Error = taken ? "此登入帳號已被使用，請設定其他帳號。" : null
+            };
+        }
+
+        private Task<bool> IsAccountTaken(long userId, string account)
+        {
+            var normalized = account.ToUpperInvariant();
+            return db.Users.AnyAsync(e => e.Id != userId &&
+                ((e.Account != null && e.Account.ToUpper() == normalized) ||
+                 (e.Email != null && e.Email.ToUpper() == normalized) || e.CellPhone == account));
         }
 
         public async Task<ResponseMessageDto> ResetPassword(BackstagePasswordResetDto dto)
@@ -487,6 +534,10 @@ namespace EtheriT.Coker.Application.Authorization
                 if (!string.IsNullOrEmpty(passwordError))
                     throw new Exception(passwordError);
 
+                // Serialize one-time account assignment and duplicate checks across these requests.
+                await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+                {
+                await using var transaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
                 var user = await db.Users.FirstOrDefaultAsync(e =>
                     !e.IsDeleted &&
                     e.ForgetID == dto.ForgetID &&
@@ -494,6 +545,20 @@ namespace EtheriT.Coker.Application.Authorization
                     e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
                 if (user == null)
                     throw new Exception("密碼重設連結無效或已逾期，請重新申請。");
+                if (!await HasBackofficeAccess(user.Id))
+                    throw new Exception("密碼重設連結無效或已逾期，請重新申請。");
+
+                if (string.IsNullOrWhiteSpace(user.Account))
+                {
+                    var account = dto.Account?.Trim();
+                    if (account == null || !Regex.IsMatch(account, @"\A[A-Za-z][A-Za-z0-9._-]{3,49}\z"))
+                        throw new Exception("請設定4至50碼帳號，以英文字母開頭，可包含英文、數字、點、底線及連字號。");
+                    if (await IsAccountTaken(user.Id, account))
+                        throw new Exception("此登入帳號已被使用，請設定其他帳號。");
+                    user.Account = account;
+                }
+                else if (!string.IsNullOrWhiteSpace(dto.Account) && dto.Account.Trim() != user.Account)
+                    throw new Exception("登入帳號已設定，不可變更。");
 
                 user.Password = passwordHasher.HashPassword(dto.Password);
                 user.ForgetID = null;
@@ -505,6 +570,8 @@ namespace EtheriT.Coker.Application.Authorization
                 var tokens = await db.Tokens.Where(e => e.UserID == user.Id).ToListAsync();
                 db.Tokens.RemoveRange(tokens);
                 await db.SaveChangesAsync();
+                await transaction.CommitAsync();
+                });
                 ClearBackstageCookies();
                 response.Success = true;
             }
@@ -519,6 +586,20 @@ namespace EtheriT.Coker.Application.Authorization
                 await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
             }
             return response;
+        }
+
+        private Task<bool> HasBackofficeAccess(long userId, long? websiteId = null)
+        {
+            return db.MappingUserAndRoles.AnyAsync(mapping =>
+                !mapping.IsDeleted && mapping.UserId == userId &&
+                mapping.Role != null && !mapping.Role.IsDeleted &&
+                (mapping.Role.Type == RoleTypeEnum.系統維護 ||
+                 (mapping.Role.Type == RoleTypeEnum.後台 &&
+                  db.MappingUserAndWebsites.Any(binding =>
+                      !binding.IsDeleted && binding.UserId == userId &&
+                      binding.Website != null && !binding.Website.IsDeleted &&
+                      (!websiteId.HasValue || binding.WebsiteId == websiteId.Value) &&
+                      binding.WebsiteId == mapping.Role.FK_WebsiteId))));
         }
 
         private void ClearBackstageCookies()

@@ -529,9 +529,21 @@ export function componentInsertPlugin(
         const children =
             component.components?.();
 
+        // 匯入 HTML 時，空容器仍可能保留空白文字或註解子元件。
+        // 與 cokerCorePlugin 的空版面判斷一致，不將這些節點視為內容。
         return Boolean(
             children &&
-            children.length === 0
+            children.every(child => {
+                const type = child.get('type');
+
+                return (
+                    type === 'comment' ||
+                    (
+                        type === 'textnode' &&
+                        !String(child.get('content') || '').trim()
+                    )
+                );
+            })
         );
     }
 
@@ -2110,6 +2122,81 @@ export function componentInsertPlugin(
     }
 
 
+    function getCompactTriggerPosition(rect, trigger, canvasWindow) {
+        const gap = 8;
+        const triggerRect = trigger.getBoundingClientRect();
+        const width = triggerRect.width;
+        const height = triggerRect.height;
+        const maxLeft = Math.max(gap, canvasWindow.innerWidth - width - gap);
+        const maxTop = Math.max(gap, canvasWindow.innerHeight - height - gap);
+        const clampLeft = value => Math.max(gap, Math.min(value, maxLeft));
+        const clampTop = value => Math.max(gap, Math.min(value, maxTop));
+        const centerLeft = rect.left + (rect.width - width) / 2;
+        const below = rect.bottom + gap;
+        const above = rect.top - height - gap;
+        const candidates = [{ left: centerLeft, top: below }];
+
+        const toolbar = editor.Canvas.getToolbarEl?.();
+        const frame = editor.Canvas.getFrameEl?.();
+        let obstacle = null;
+
+        // 工具列在外層文件，插入按鈕在 iframe；先換算成同一座標系。
+        if (toolbar && frame && toolbar.getClientRects().length) {
+            const toolbarRect = toolbar.getBoundingClientRect();
+            const frameRect = frame.getBoundingClientRect();
+            const scaleX = frame.offsetWidth ? frameRect.width / frame.offsetWidth : 0;
+            const scaleY = frame.offsetHeight ? frameRect.height / frame.offsetHeight : 0;
+
+            if (toolbarRect.width > 0 && toolbarRect.height > 0 && scaleX > 0 && scaleY > 0) {
+                const originLeft = frameRect.left + frame.clientLeft * scaleX;
+                const originTop = frameRect.top + frame.clientTop * scaleY;
+                obstacle = {
+                    left: (toolbarRect.left - originLeft) / scaleX - gap,
+                    right: (toolbarRect.right - originLeft) / scaleX + gap,
+                    top: (toolbarRect.top - originTop) / scaleY - gap,
+                    bottom: (toolbarRect.bottom - originTop) / scaleY + gap
+                };
+
+                candidates.push(
+                    { left: obstacle.left - width, top: below },
+                    { left: obstacle.right, top: below }
+                );
+            }
+        }
+
+        candidates.push({ left: centerLeft, top: above });
+        if (obstacle) {
+            candidates.push(
+                { left: centerLeft, top: obstacle.bottom },
+                { left: centerLeft, top: obstacle.top - height }
+            );
+        }
+
+        let best = null;
+        let bestScore = Infinity;
+        for (const candidate of candidates) {
+            const left = clampLeft(candidate.left);
+            const top = clampTop(candidate.top);
+            const overlap = obstacle
+                ? Math.max(0, Math.min(left + width, obstacle.right) - Math.max(left, obstacle.left)) *
+                  Math.max(0, Math.min(top + height, obstacle.bottom) - Math.max(top, obstacle.top))
+                : 0;
+            const displacement = Math.abs(left - candidate.left) + Math.abs(top - candidate.top);
+            // 優先完全留在畫面內且不重疊；空間不足時選擇遮擋最少的位置。
+            const score = overlap > 0 ? 1e9 + overlap + displacement : displacement;
+            if (score < bestScore) {
+                bestScore = score;
+                best = { left: left + width / 2, top: top + height / 2 };
+            }
+            if (score === 0) {
+                break;
+            }
+        }
+
+        return best;
+    }
+
+
     function updateSelectedUiPosition() {
         /*
          * RAF 已經執行，
@@ -2253,61 +2340,11 @@ export function componentInsertPlugin(
             trigger.hidden =
                 false;
 
-            /*
-             * Compact Trigger 尺寸。
-             *
-             * 要跟 CSS 大致一致，
-             * 這裡主要用於 viewport clamp。
-             */
-            const triggerWidth =
-                76;
-
-            const triggerHeight =
-                30;
-
-            const gap =
-                8;
-
-            /*
-             * 預設放在元件下方外側中央。
-             */
-            let left =
-                rect.left +
-                rect.width / 2;
-
-            let top =
-                rect.bottom +
-                gap +
-                triggerHeight / 2;
-
-            /*
-             * 如果下方空間不足，
-             * 改放到元件上方外側。
-             */
-            if (
-                top +
-                triggerHeight / 2 >
-                canvasWindow.innerHeight - 8
-            ) {
-                top =
-                    rect.top -
-                    gap -
-                    triggerHeight / 2;
-            }
-
-            /*
-             * 避免左右超出 Canvas viewport。
-             */
-            left =
-                Math.max(
-                    triggerWidth / 2 + 8,
-                    Math.min(
-                        left,
-                        canvasWindow.innerWidth -
-                        triggerWidth / 2 -
-                        8
-                    )
-                );
+            const { left, top } = getCompactTriggerPosition(
+                rect,
+                trigger,
+                canvasWindow
+            );
 
             trigger.style.left =
                 `${left}px`;
@@ -3306,6 +3343,11 @@ export function componentInsertPlugin(
             );
         }
     );
+
+
+    // 工具列重新定位或畫布縮放後，再以最新的座標避開工具列。
+    editor.on('canvas:refresh', requestSelectedUiPosition);
+    editor.on('canvas:zoom', handleCanvasResize);
 
 
     /*

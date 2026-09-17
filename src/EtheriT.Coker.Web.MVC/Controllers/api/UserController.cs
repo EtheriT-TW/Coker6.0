@@ -67,5 +67,13 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await accountAppService.ResetPassword(dto);
         }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public Task<ResponseMessageDto> CheckAccountAvailability(BackstageAccountAvailabilityDto dto)
+        {
+            return accountAppService.CheckAccountAvailability(dto);
+        }
 	}
 }

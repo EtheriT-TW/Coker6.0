@@ -19,5 +19,6 @@ namespace EtheriT.Coker.Application.Authorization
         Task<ResponseMessageDto> RequestPasswordReset(BackstagePasswordResetRequestDto dto);
         Task<ResponseMessageDto> ValidatePasswordReset(Guid forgetId);
         Task<ResponseMessageDto> ResetPassword(BackstagePasswordResetDto dto);
+        Task<ResponseMessageDto> CheckAccountAvailability(BackstageAccountAvailabilityDto dto);
     }
 }

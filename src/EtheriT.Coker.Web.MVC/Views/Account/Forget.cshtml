@@ -2,7 +2,7 @@
     ViewData["Title"] = "忘記密碼";
 }
 <link rel="stylesheet" href="~/css/Account/login.min.css" asp-append-version="true" />
-<script src="~/js/Account/Index.min.js" asp-append-version="true"></script>
+<script src="~/js/Account/Index.js" asp-append-version="true"></script>
 <div class="row align-items-center justify-content-center align-items-center">
     <div class="col-md-12">
         <div class="form-block mx-auto">
@@ -10,6 +10,7 @@
                 <h3 class="text-uppercase">@ViewData["Title"]</h3>
             </div>
             <form id="forgetPasswordForm">
+                <p>首次使用後台且尚未設定帳號者，請透過此流程驗證信箱，設定登入帳號及獨立後台密碼。需先由管理員授予後台管理權限。</p>
                 <div class="form-floating form-group first">
                     <input type="email" class="form-control" placeholder="請輸入 Email" id="email" autocomplete="email" required>
                     <label for="email">電子信箱</label>

@@ -659,9 +659,65 @@ function SwiperInit(obj) {
             items.push(item);
             return true;
         }
-        if (!!!$(this).data("isinit")) {
+        if (!$("#SwiperModal").data("pictureSwiperInitialized")) {
             const $header_text = $("#SwiperModal .modal-header .imgalt");
+            const pictureLoadingIcon = 'data:image/svg+xml,' + encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="none" stroke="#555" stroke-width="4"/><path d="M24 6a18 18 0 0 1 18 18" fill="none" stroke="#ddd" stroke-width="4" stroke-linecap="round"/></svg>'
+            );
+            const pictureLoadingStyle = `background-image: url(${pictureLoadingIcon}); background-position: center; background-repeat: no-repeat; background-size: 36px 36px;`;
+            function setPictureImageSource(image, src) {
+                if (image.getAttribute('src') === src) return;
+                image.style.opacity = '0';
+                image.parentElement.style.backgroundImage = `url(${pictureLoadingIcon})`;
+                if (src) image.setAttribute('src', src);
+                else image.removeAttribute('src');
+            }
+            // Hide the empty/broken image until the real image has loaded; its parent shows the loading icon.
+            document.getElementById('SwiperModal').addEventListener('load', function (event) {
+                const image = event.target;
+                if (image.matches('img[data-src]') && image.hasAttribute('src') && image.naturalWidth > 0) {
+                    image.style.opacity = '1';
+                    image.parentElement.style.backgroundImage = 'none';
+                }
+            }, true);
+            let buildingPictureSlides = false;
+            function loadPictureImages(swiper) {
+                if (buildingPictureSlides || !$('#SwiperModal').hasClass('show')) return;
+                $(swiper.slides).each(function (index) {
+                    $(this).find('img[data-src]').each(function () {
+                        if (Math.abs(index - swiper.activeIndex) <= 1) {
+                            setPictureImageSource(this, this.getAttribute('data-src'));
+                        } else {
+                            setPictureImageSource(this, null);
+                        }
+                    });
+                });
+            }
+            // Only visible thumbnails request images; fixed image width keeps slide measurements stable.
+            const thumbnailObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    const image = entry.target;
+                    if (entry.isIntersecting && $('#SwiperModal').hasClass('show')) {
+                        setPictureImageSource(image, image.getAttribute('data-src'));
+                    } else {
+                        setPictureImageSource(image, null);
+                    }
+                });
+            }, { root: document.getElementById('pictureSwiperThumbs'), rootMargin: '0px 200px' });
             $header_text.text("");
+            function sizePictureThumbnails(swiper) {
+                const height = swiper.wrapperEl.clientHeight;
+                if (!height) return;
+                $(swiper.wrapperEl).children('.swiper-slide').each(function () {
+                    const ratio = Number(this.getAttribute('data-thumbnail-ratio')) || 1.5;
+                    this.style.setProperty('width', (height * ratio) + 'px', 'important');
+                });
+            }
+            // Geometry is reserved before loading. Swiper's auto-width load update would
+            // unnecessarily reposition the strip and retrigger the visibility observer.
+            document.getElementById('pictureSwiperThumbs').addEventListener('load', function (event) {
+                if (event.target.matches('img[data-src]')) event.stopImmediatePropagation();
+            }, true);
             let pictureSwiperThumbsOptions = {
                 spaceBetween: 10,
                 slidesPerView: 'auto',
@@ -669,9 +725,27 @@ function SwiperInit(obj) {
                 centeredSlides: false,
                 centeredSlidesBounds: false,
                 watchSlidesProgress: true,
-                watchOverflow: true
+                watchOverflow: true,
+                on: {
+                    beforeResize: function () { sizePictureThumbnails(this); }
+                }
             };
             let pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", pictureSwiperThumbsOptions);
+            function revealPictureThumbnails(swiper, speed) {
+                if (buildingPictureSlides || !$('#SwiperModal').hasClass('show')) return;
+                const thumbs = pictureSwiperThumbs;
+                const index = swiper.activeIndex;
+                const width = thumbs.size;
+                if (!width || !thumbs.slides[index]) return;
+                // Center the selected thumbnail using its actual width; clamp at either end.
+                const target = thumbs.slidesGrid[index] + thumbs.slidesSizesGrid[index] / 2 - width / 2;
+                const translate = Math.max(thumbs.maxTranslate(), Math.min(thumbs.minTranslate(), -target));
+                const currentTranslate = thumbs.rtlTranslate ? -thumbs.translate : thumbs.translate;
+                if (Math.abs(translate - currentTranslate) < 1) return;
+                thumbs.translateTo(translate, speed, true, true);
+                thumbs.updateActiveIndex();
+                thumbs.updateSlidesClasses();
+            }
             let pictureSwiperOptions = {
                 centeredSlides: true,
                 spaceBetween: 10,
@@ -693,18 +767,22 @@ function SwiperInit(obj) {
                     disableOnInteraction: false,
                 }, on: {
                     slideChange: function () {
-                        var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                        if (buildingPictureSlides) return;
+                        loadPictureImages(this);
+                        var activeSlide = $(this.slides[this.activeIndex]);
                         $header_text.text(activeSlide.find("img").attr("alt"));
                     },
                     slideChangeTransitionStart: function () {
+                        if (buildingPictureSlides) return;
+                        revealPictureThumbnails(this, this.params.speed);
                         // 暫停所有 video
-                        var videos = $(pictureSwiper.wrapperEl).find('video');
+                        var videos = $(this.wrapperEl).find('video');
                         videos.each(function () {
                             this.pause();
                         });
 
                         // 暫停所有 iframe
-                        var iframes = $(pictureSwiper.wrapperEl).find('iframe');
+                        var iframes = $(this.wrapperEl).find('iframe');
                         iframes.each(function () {
                             var $iframe = $(this);
                             if ($iframe.attr('src')) {
@@ -714,8 +792,9 @@ function SwiperInit(obj) {
                         });
                     },
                     slideChangeTransitionEnd: function () {
+                        if (buildingPictureSlides || !$('#SwiperModal').hasClass('show')) return;
                         // 恢復當前 slide iframe
-                        var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(pictureSwiper.activeIndex);
+                        var activeSlide = $(this.slides[this.activeIndex]);
                         var $video = $(activeSlide).find('video');
                         var $iframe = activeSlide.find('iframe');
 
@@ -730,6 +809,7 @@ function SwiperInit(obj) {
                 }
             };
             let pictureSwiper = new Swiper("#pictureSwiper", pictureSwiperOptions);
+            pictureSwiper.autoplay.stop();
             function restoreActivePictureSwiperMedia(index) {
                 var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(index);
                 var $video = activeSlide.find('video');
@@ -742,17 +822,19 @@ function SwiperInit(obj) {
                     $iframe.attr('src', $iframe.data('src'));
                 }
             }
-            $(".picture-category a").attr("href", "#SwiperModal").on("click", function () {
+            $(".picture-category a").attr("href", "#SwiperModal").off("click.pictureSwiper").on("click.pictureSwiper", function () {
+                buildingPictureSlides = true;
+                stopSwiperModalMedia(pictureSwiper);
+                thumbnailObserver.disconnect();
                 pictureSwiper.removeAllSlides();
                 pictureSwiperThumbs.removeAllSlides();
-                pictureSwiper.update();
-                pictureSwiperThumbs.update();
                 const self = this;
                 var $self = $(this).parents(".picture-category");
                 var index = $self.find("a").index(this);
                 var $items = [];
                 var $images = [];
                 var seenItems = new Set();
+                var clickedIndex = -1;
                 $self.find(".templatecontent img,.swiper-slide img").filter(function () {
                     return $(this).closest('.swiper-thumbs').length === 0;
                 }).each(function () {
@@ -765,16 +847,32 @@ function SwiperInit(obj) {
                     keep_time = keep_time * 1000;
                     obj['src'] = $(this).attr("src");
                     obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
+                    const imageWidth = this.naturalWidth || Number($(this).attr('width'));
+                    const imageHeight = this.naturalHeight || Number($(this).attr('height'));
+                    obj['thumbnailRatio'] = imageWidth > 0 && imageHeight > 0 ? imageWidth / imageHeight : 1.5;
 
                     let item = null;
                     if (link.startsWith("https://www.youtube.com") || link.startsWith("https://www.facebook.com")) item = { type: "iframe", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time };
                     else if (isVideoFile(link)) item = { type: "video", src: link, ratio: ratio, startTime: start_time, keepTime: keep_time };
                     else item = { type: "image", src: obj['src'], keepTime: keep_time, alt: obj['alt'] };
-                    if (pushUniqueItem($items, seenItems, item)) {
+                    const isNewItem = pushUniqueItem($items, seenItems, item);
+                    if ($a.get(0) === self) {
+                        clickedIndex = $items.findIndex(function (candidate) {
+                            return candidate.type === item.type && candidate.src === item.src && candidate.ratio === item.ratio;
+                        });
+                    }
+                    if (isNewItem) {
                         $images.push(obj);
                     }
                 });
+                if (!$items.length) {
+                    buildingPictureSlides = false;
+                    return false;
+                }
+                index = clickedIndex >= 0 ? clickedIndex : Math.min(Math.max(index, 0), $items.length - 1);
                 $header_text.text($images[index]['alt']);
+                const slides = [];
+                const thumbnailSlides = [];
 
                 for (let i = 0; i < $items.length; i++) {
                     var item = $items[i];
@@ -782,14 +880,14 @@ function SwiperInit(obj) {
                     var newSlideThumbs = "";
                     if (item.type === "image") {
                         newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
-                            <div class="swiper-zoom-container">
-                                <img src="${item.src}" alt="${item.alt}" loading="lazy" />
+                            <div class="swiper-zoom-container" style="${pictureLoadingStyle}">
+                                <img data-src="${item.src}" style="opacity: 0;" alt="${item.alt}" decoding="async" />
                             </div>
                         </div>`;
                     } else if (item.type === "video") {
                         newSlide = `<div class="swiper-slide" data-swiper-autoplay="${item.keepTime}">
                             <div class="video-content video-${item.ratio}">
-                                <video controls preload="metadata" poster="${$images[i].src}" data-startTime="${item.startTime}">
+                                <video controls preload="none" poster="${$images[i].src}" data-startTime="${item.startTime}">
                                     <source src="${item.src}" type="video/mp4">
                                     Your browser does not support the video tag.
                                 </video>
@@ -802,64 +900,53 @@ function SwiperInit(obj) {
                             </div>
                         </div>`;
                     }
-                    newSlideThumbs = `<div class="swiper-slide align-content-center ms-1 me-2"><img src="${$images[i].src}" data-keepTime="${item.keepTime}" alt="${$images[i].alt}" /></div>`;
-                    pictureSwiper.appendSlide(newSlide);
-                    pictureSwiperThumbs.appendSlide(newSlideThumbs);
+                    newSlideThumbs = `<div class="swiper-slide align-content-center" data-thumbnail-ratio="${$images[i].thumbnailRatio}" style="width: 100px !important; flex-shrink: 0; ${pictureLoadingStyle}"><img data-src="${$images[i].src}" style="opacity: 0; display: block; width: 100%; height: 100%; object-fit: contain;" decoding="async" data-keepTime="${item.keepTime}" alt="${$images[i].alt}" /></div>`;
+                    slides.push(newSlide);
+                    thumbnailSlides.push(newSlideThumbs);
                 }
+                pictureSwiperThumbs.appendSlide(thumbnailSlides);
+                pictureSwiper.appendSlide(slides);
+                buildingPictureSlides = false;
                 pictureSwiper.autoplay.stop();
 
-                if ($items.length > 1) {
-                    PauseOnMouseEnter(pictureSwiper, $("#pictureSwiper"));
-                    pictureSwiper.autoplay.start();
-                }
-
-                const images = document.querySelectorAll('#SwiperModal .swiper-slide-active img');
-                $('#SwiperModal').modal('show');
-                //let loadedCount = 0;
-                //images.forEach(img => {
-                //    img.onload = () => {
-                //        loadedCount++;
-                //        if (loadedCount === images.length) {
-                //            // 確保全部圖片都載入後再測量
-                //            $('#SwiperModal').modal('show');
-                //        }
-                //    };
-                //});
-                $('#SwiperModal').off("shown.bs.modal").on("shown.bs.modal", function () {
-                    const wrapper = document.querySelector('#pictureSwiperThumbs .swiper-wrapper');
-                    const container = document.querySelector('#pictureSwiperThumbs');
-                    const wrapperWidth = wrapper.scrollWidth;
-                    const containerWidth = container.clientWidth;
-                    if (wrapperWidth > containerWidth) {
-                        pictureSwiperThumbs.destroy(false, false);
-                        pictureSwiperThumbsOptions.centeredSlides = true;
-                        pictureSwiperThumbsOptions.centeredSlidesBounds = true;
-                        pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", pictureSwiperThumbsOptions);
-                        pictureSwiperThumbs.update();
-                        pictureSwiperOptions.thumbs.swiper = pictureSwiperThumbs;
-                        pictureSwiper.destroy(false, false);
-                        pictureSwiper = new Swiper("#pictureSwiper", pictureSwiperOptions);
-                        pictureSwiper.update();
-                        pictureSwiper.on('slideChange', function () {
-                            const index = pictureSwiper.realIndex;
-                            pictureSwiperThumbs.slideTo(index - 1); // 預留一格避免卡邊
-                        });
-                        $('#pictureSwiper').swiperBindEven(pictureSwiper);
-                    }
-                    pictureSwiper.slideToLoop(index, 0, false);
+                $('#SwiperModal').off("shown.bs.modal.pictureSwiper").on("shown.bs.modal.pictureSwiper", function () {
+                    sizePictureThumbnails(pictureSwiperThumbs);
+                    pictureSwiperThumbs.update();
+                    pictureSwiper.update();
+                    pictureSwiper.slideTo(index, 0, false);
                     pictureSwiperThumbs.slideTo(index, 0, false);
+                    pictureSwiper.thumbs.update();
+                    revealPictureThumbnails(pictureSwiper, 0);
+                    loadPictureImages(pictureSwiper);
+                    $(pictureSwiperThumbs.wrapperEl).find('img[data-src]').each(function () {
+                        thumbnailObserver.observe(this);
+                    });
                     restoreActivePictureSwiperMedia(index);
+                    if ($items.length > 1) pictureSwiper.autoplay.start();
                 });
-                $('#SwiperModal').off("hide.bs.modal").on("hide.bs.modal", function () {
+                $('#SwiperModal').off("hide.bs.modal.pictureSwiper").on("hide.bs.modal.pictureSwiper", function () {
+                    stopSwiperModalMedia(pictureSwiper);
                     document.activeElement.blur();
                 });
-                $('#SwiperModal').off("hidden.bs.modal").on("hidden.bs.modal", function () {
+                $('#SwiperModal').off("hidden.bs.modal.pictureSwiper").on("hidden.bs.modal.pictureSwiper", function () {
                     stopSwiperModalMedia(pictureSwiper);
+                    thumbnailObserver.disconnect();
+                    buildingPictureSlides = true;
+                    pictureSwiper.removeAllSlides();
+                    pictureSwiperThumbs.removeAllSlides();
+                    buildingPictureSlides = false;
+                    $header_text.text('');
                     self.focus();
                 });
+                $('#SwiperModal').modal('show');
                 return false;
             });
-            $(this).data("isinit", true);
+            $('#pictureSwiper').off('mouseenter.pictureSwiper mouseleave.pictureSwiper')
+                .on('mouseenter.pictureSwiper', function () { pictureSwiper.autoplay.stop(); })
+                .on('mouseleave.pictureSwiper', function () {
+                    if ($('#SwiperModal').hasClass('show') && pictureSwiper.slides.length > 1) pictureSwiper.autoplay.start();
+                });
+            $("#SwiperModal").data("pictureSwiperInitialized", true);
         }
     }
     $(".three_two_grid_swiper").each(function () {

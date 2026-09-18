@@ -86,15 +86,20 @@
 
     /** 給 DataGrid 排序／搜尋用，讓「即將到期」「已過期」也搜得到 */
     function statusText(site: WebsiteListItem): string {
-        return statusView(site).Text;
+        return site.Status === null ? "" : statusView(site).Text;
     }
 
     function goCreate(): void {
         void router.push("/websites/new");
     }
 
-    function goEdit(id: number): void {
-        void router.push(`/websites/${id}`);
+    /** 已有合約就編輯該筆；只有後台站台時，開新增頁並預先綁定那個站台。 */
+    function goEdit(site: WebsiteListItem): void {
+        if (site.PlatformWebsiteId !== null) {
+            void router.push(`/websites/${site.PlatformWebsiteId}`);
+            return;
+        }
+        void router.push({ path: "/websites/new", query: { siteId: String(site.WebsiteId) } });
     }
 
     onMounted(load);
@@ -104,7 +109,7 @@
     <section class="page-heading">
         <div>
             <h1>網站管理</h1>
-            <p>查看各客戶擁有的網站、期限與目前運作狀態。</p>
+            <p>後台所有站台，加上尚未架站的合約資料。查看各網站的客戶、期限與目前運作狀態。</p>
         </div>
         <button class="ui-button ui-button-primary" type="button" @click="goCreate">
             <span class="material-symbols-outlined">add</span>
@@ -154,7 +159,7 @@
 
     <section class="data-card">
         <DxDataGrid :data-source="websites"
-                    key-expr="Id"
+                    key-expr="RowKey"
                     :show-borders="true"
                     :column-auto-width="true"
                     :column-hiding-enabled="true"
@@ -213,6 +218,7 @@
 
             <template #customerCell="{ data }">
                 <span v-if="data.data.CustomerName">{{ data.data.CustomerName }}</span>
+                <span v-else-if="data.data.IsPending" class="grid-muted">—</span>
                 <span v-else class="grid-muted">（客戶已刪除）</span>
             </template>
 
@@ -238,7 +244,8 @@
             </template>
 
             <template #statusCell="{ data }">
-                <span class="status-pill" :class="statusView(data.data).CssClass">
+                <span v-if="data.data.Status === null" class="grid-muted">—</span>
+                <span v-else class="status-pill" :class="statusView(data.data).CssClass">
                     {{ statusView(data.data).Text }}
                 </span>
             </template>
@@ -248,7 +255,7 @@
                     <button class="text-button"
                             type="button"
                             title="編輯"
-                            @click="goEdit(data.data.Id)">
+                            @click="goEdit(data.data)">
                         <span class="material-symbols-outlined">edit</span>
                     </button>
                 </div>

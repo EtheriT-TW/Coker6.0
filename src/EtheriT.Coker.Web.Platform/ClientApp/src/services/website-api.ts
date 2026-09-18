@@ -3,7 +3,9 @@ import { fromDateInput, toDateInput } from "@/utils/date-input";
 import type {
     WebsiteDetail,
     WebsiteForm,
-    WebsiteListResult
+    WebsiteListResult,
+    WebsiteSiteOption,
+    WebsiteSiteOptionResult
 } from "@/types/website";
 
 const baseUrl = "/api/websites";
@@ -16,6 +18,7 @@ function blankToNull(value: string): string | null {
 function toSaveRequest(form: WebsiteForm) {
     return {
         FK_CompanyId: form.FK_CompanyId,
+        FK_WebsiteId: form.FK_WebsiteId,
         Name: form.Name.trim(),
         Level: form.Level,
         HostLocation: blankToNull(form.HostLocation),
@@ -33,6 +36,7 @@ function toSaveRequest(form: WebsiteForm) {
 export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
     return {
         FK_CompanyId: detail.FK_CompanyId,
+        FK_WebsiteId: detail.FK_WebsiteId,
         Name: detail.Name,
         Level: detail.Level,
         HostLocation: detail.HostLocation ?? "",
@@ -60,4 +64,14 @@ export function createWebsite(form: WebsiteForm): Promise<WebsiteDetail> {
 
 export function updateWebsite(id: number, form: WebsiteForm): Promise<WebsiteDetail> {
     return api.put<WebsiteDetail>(`${baseUrl}/${id}`, toSaveRequest(form));
+}
+
+/** 搜尋可綁定的實際站台；keyword 留空時回傳前 20 筆。 */
+export function fetchSiteOptions(keyword: string): Promise<WebsiteSiteOptionResult> {
+    return api.get<WebsiteSiteOptionResult>(`${baseUrl}/site-options`, { query: { keyword } });
+}
+
+/** 依 Id 取單筆站台；清單上尚未建合約的列會直接指定站台，不受搜尋筆數上限影響。 */
+export function fetchSiteOption(id: number): Promise<WebsiteSiteOption> {
+    return api.get<WebsiteSiteOption>(`${baseUrl}/site-options/${id}`);
 }

@@ -9,6 +9,8 @@
     import { matchDomain } from "@/services/domain-api";
     import {
         createWebsite,
+        fetchSiteOption,
+        fetchSiteOptions,
         fetchWebsite,
         toWebsiteForm,
         updateWebsite
@@ -21,7 +23,8 @@
         websiteStatusOptions,
         hostLocationOptions,
         type WebsiteDetail,
-        type WebsiteForm
+        type WebsiteForm,
+        type WebsiteSiteOption
     } from "@/types/website";
     import { toDateInput } from "@/utils/date-input";
 
@@ -36,8 +39,24 @@
     });
     const isEdit = computed(() => websiteId.value > 0);
 
+    // 清單上尚未建合約的列會帶 ?siteId=，代表這筆合約對應的就是那個後台站台
+    const presetSiteId = computed(() => {
+        const value = Number(route.query.siteId);
+        return !isEdit.value && Number.isInteger(value) && value > 0 ? value : 0;
+    });
+    // 站台由清單指定時不讓改，避免補錯對象
+    const isSiteLocked = computed(() => presetSiteId.value > 0);
+
     const loading = ref(false);
     const pageError = ref("");
+
+    // ── 對應實際站台 ──
+    const siteKeyword = ref("");
+    const siteOptions = ref<WebsiteSiteOption[]>([]);
+    const searchingSite = ref(false);
+    const siteSearchError = ref("");
+    const siteSearchTruncated = ref(false);
+    const hasSearchedSite = ref(false);
 
     // ── 以統編或公司名稱帶出客戶（兩者都不可重複，最多一筆） ──
     const lookupKeyword = ref("");
@@ -72,6 +91,7 @@
     function emptyForm(): WebsiteForm {
         return {
             FK_CompanyId: 0,
+            FK_WebsiteId: null,
             Name: "",
             Level: null,
             HostLocation: "",
@@ -140,6 +160,23 @@
     const isTerminated = computed(() => form.model.value.Status === WebsiteStatus.註銷);
     const isFormLocked = computed(() => loading.value || form.isSaving.value);
 
+    // 顯示用：siteOptions 同時裝著搜尋結果與載入時帶回來的 LinkedSite
+    const linkedSite = computed(() =>
+        siteOptions.value.find(item => item.Id === form.model.value.FK_WebsiteId) ?? null);
+
+    // Website.Level 是 enum，後端不附文字，這裡用既有對照表轉
+    const linkedSiteLevelText = computed(() => {
+        const site = linkedSite.value;
+        if (!site) return "";
+        return websiteLevelOptions.find(option => option.Value === site.Level)?.Text ?? "";
+    });
+
+    // 本頁的合約版本與站台實際版本不一致時提醒，不阻擋存檔
+    const isLevelMismatch = computed(() =>
+        linkedSite.value !== null
+        && form.model.value.Level !== null
+        && form.model.value.Level !== linkedSite.value.Level);
+
     // 狀態切離「註銷」時清空註銷日期，前後端規則一致
     watch(() => form.model.value.Status, status => {
         if (status === WebsiteStatus.註銷) return;
@@ -171,6 +208,8 @@
         lookupKeyword.value = detail.Customer?.TaxId || detail.Customer?.Name || "";
         matchedDomain.value = detail.Domain;
         matchedUrl.value = detail.Url ?? "";
+        siteOptions.value = detail.LinkedSite ? [detail.LinkedSite] : [];
+        hasSearchedSite.value = false;
     }
 
     async function lookupByKeyword(): Promise<void> {
@@ -217,6 +256,35 @@
         unmatchedHost.value = "";
         domainMatchError.value = "";
         matchingDomain.value = false;
+    }
+
+    async function searchSites(): Promise<void> {
+        if (searchingSite.value) return;
+
+        searchingSite.value = true;
+        siteSearchError.value = "";
+        try {
+            const result = await fetchSiteOptions(siteKeyword.value.trim());
+            hasSearchedSite.value = true;
+            siteSearchTruncated.value = result.IsTruncated;
+            // 目前綁定的站台若不在搜尋結果裡要保留，否則下拉會突然變成「未綁定」
+            const current = linkedSite.value;
+            siteOptions.value = current && !result.Items.some(item => item.Id === current.Id)
+                ? [current, ...result.Items]
+                : result.Items;
+        }
+        catch (error) {
+            console.error(error);
+            siteSearchError.value = "搜尋站台失敗，請稍後再試。";
+        }
+        finally {
+            searchingSite.value = false;
+        }
+    }
+
+    function clearLinkedSite(): void {
+        form.model.value.FK_WebsiteId = null;
+        form.clearErrors("FK_WebsiteId");
     }
 
     /**
@@ -276,8 +344,49 @@
         void router.push("/websites");
     }
 
+    /** 依 ?siteId= 預先綁定後台站台，並用站台資料補上預設的網站名稱與網址。 */
+    async function applyPresetSite(): Promise<void> {
+        let site: WebsiteSiteOption;
+        try {
+            site = await fetchSiteOption(presetSiteId.value);
+        }
+        catch (error) {
+            if (error instanceof ApiError && error.status === 404) {
+                pageError.value = "找不到指定的後台站台，請回清單重新選擇。";
+                return;
+            }
+            throw error;
+        }
+
+        siteOptions.value = [site];
+        form.model.value.FK_WebsiteId = site.Id;
+        form.model.value.Name = site.Title || site.OrgName;
+        form.model.value.Level = site.Level;
+        if (site.DefaultUrl) {
+            form.model.value.Url = site.DefaultUrl;
+            await checkDomain({ force: true, promptWhenMissing: false });
+        }
+        // 預填不算使用者的修改，離開時不該跳「尚未儲存」
+        form.reset({ ...form.model.value });
+    }
+
     onMounted(async () => {
-        if (!isEdit.value) return;
+        if (!isEdit.value) {
+            if (presetSiteId.value > 0) {
+                loading.value = true;
+                try {
+                    await applyPresetSite();
+                }
+                catch (error) {
+                    console.error(error);
+                    pageError.value = "後台站台資料載入失敗，請重新整理再試。";
+                }
+                finally {
+                    loading.value = false;
+                }
+            }
+            return;
+        }
 
         loading.value = true;
         try {
@@ -302,7 +411,11 @@
     <section class="page-heading">
         <div>
             <h1>{{ isEdit ? "編輯網站" : "新增網站" }}</h1>
-            <p>輸入統一編號或公司名稱帶出客戶，再填寫網站、期限與網址。</p>
+            <p v-if="isSiteLocked">
+                對應後台站台「{{ linkedSite?.OrgName ?? "—" }}」。
+                輸入統一編號或公司名稱帶出客戶，再填寫期限與狀態。
+            </p>
+            <p v-else>輸入統一編號或公司名稱帶出客戶，再填寫網站、期限與網址。</p>
         </div>
     </section>
 
@@ -521,6 +634,120 @@
                     <label>
                         <span>網域到期日期</span>
                         <input :value="toDateInput(matchedDomain?.EndDate)" type="date" readonly />
+                    </label>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ── 對應站台 ── -->
+        <fieldset class="form-card form-section"
+                  aria-labelledby="section-website-linked-title"
+                  :disabled="isFormLocked">
+            <div class="form-section-heading">
+                <span id="section-website-linked-title">對應站台</span>
+                <button v-if="form.model.value.FK_WebsiteId && !isSiteLocked"
+                        class="ui-button ui-button-secondary"
+                        type="button"
+                        @click="clearLinkedSite">
+                    解除綁定
+                </button>
+            </div>
+
+            <div class="form-grid">
+                <div v-if="!isSiteLocked" class="form-field form-field-wide">
+                    <label for="website-site-keyword" class="form-label">站台搜尋</label>
+                    <div class="input-with-action">
+                        <input id="website-site-keyword"
+                               v-model="siteKeyword"
+                               type="text"
+                               maxlength="200"
+                               placeholder="輸入 OrgName、站名或網址；留空列出前 20 筆"
+                               @keydown.enter.prevent="searchSites" />
+                        <button class="ui-button ui-button-secondary"
+                                type="button"
+                                :disabled="searchingSite"
+                                @click="searchSites">
+                            <span class="material-symbols-outlined">search</span>
+                            <span>搜尋站台</span>
+                        </button>
+                    </div>
+                    <p v-if="siteSearchError" class="field-note field-note-error" role="alert">
+                        {{ siteSearchError }}
+                    </p>
+                    <p v-else-if="siteSearchTruncated" class="field-note">
+                        符合的站台超過 20 筆，請輸入更精確的關鍵字。
+                    </p>
+                    <p v-else-if="hasSearchedSite && siteOptions.length === 0" class="field-note">
+                        找不到符合的站台。
+                    </p>
+                </div>
+
+                <div class="form-field form-field-wide">
+                    <label>
+                        <span>對應站台</span>
+                        <select v-model="form.model.value.FK_WebsiteId" :disabled="isSiteLocked">
+                            <option :value="null">未綁定</option>
+                            <option v-for="option in siteOptions" :key="option.Id" :value="option.Id">
+                                {{ option.OrgName }}（{{ option.Title || "未命名" }}）
+                            </option>
+                        </select>
+                    </label>
+                    <FormFieldErrors :errors="form.getErrors('FK_WebsiteId')" />
+                    <p v-if="isSiteLocked" class="field-note">
+                        由清單指定，不可變更。要改綁其他站台請先存檔，再從編輯頁調整。
+                    </p>
+                    <p v-else class="field-note">綁定後，架站／搬站流程才能對應到這筆網站資料。</p>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>站台代碼（OrgName）</span>
+                        <input :value="linkedSite?.OrgName ?? ''" type="text" readonly />
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>站台名稱</span>
+                        <input :value="linkedSite?.Title ?? ''" type="text" readonly />
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>站台預設網址</span>
+                        <input :value="linkedSite?.DefaultUrl ?? ''" type="text" readonly />
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>站台實際版本</span>
+                        <input :value="linkedSiteLevelText" type="text" readonly />
+                    </label>
+                    <p v-if="isLevelMismatch" class="field-note field-note-error" role="status">
+                        與本頁「網站版本」不一致，請確認哪一邊才是對的。
+                    </p>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>站台語系</span>
+                        <input :value="linkedSite?.Locale ?? ''" type="text" readonly />
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>站台開站日期</span>
+                        <input :value="toDateInput(linkedSite?.StartDate)" type="date" readonly />
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>站台實際到期日</span>
+                        <input :value="toDateInput(linkedSite?.EndDate)" type="date" readonly />
                     </label>
                 </div>
             </div>

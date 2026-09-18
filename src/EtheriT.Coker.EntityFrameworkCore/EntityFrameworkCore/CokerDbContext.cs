@@ -103,7 +103,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<UserTagStatistic> UserTagStatistics { get; set; }
         public DbSet<UserActivityTags> UserActivityTags { get; set; }
         public DbSet<UserGroupingDetail> UserGroupingDetails { get; set; }
-		public DbSet<FlowSize> FlowSizes { get; set; }
+        public DbSet<FlowSize> FlowSizes { get; set; }
         public DbSet<Bonus> Bonus { get; set; }
         public DbSet<BonusLog> BonusLog { get; set; }
         public DbSet<BonusLiability> BonusLiabilities { get; set; }
@@ -300,14 +300,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(l => l.FreightStatusType).HasDefaultValue(FreightStatusTypeEnum.一般);
                 o.Property(l => l.DiscountFreightType).HasDefaultValue(DiscountFreightType.指定折抵後運費);
             });
-            modelBuilder.Entity<LogisticsBox>(o => {
+            modelBuilder.Entity<LogisticsBox>(o =>
+            {
                 o.HasOne(u => u.Website).WithMany(u => u.logisticsBoxes).HasForeignKey(f => f.FK_WebsiteId);
                 o.Property(l => l.IsActive).HasDefaultValue(true);
                 o.HasIndex(x => new { x.FK_WebsiteId, x.CapacityPoint })
                     .IsUnique()
                     .HasFilter("[IsDeleted] = 0");
             });
-            modelBuilder.Entity<LogisticsBoxFee>(o => {
+            modelBuilder.Entity<LogisticsBoxFee>(o =>
+            {
                 o.HasOne(u => u.LogisticsSetting).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsSettingId).OnDelete(DeleteBehavior.NoAction);
                 o.HasOne(u => u.logisticsBox).WithMany(u => u.logisticsBoxFees).HasForeignKey(f => f.FK_LogisticsBoxId);
                 o.HasIndex(x => new { x.FK_LogisticsBoxId, x.FK_LogisticsSettingId })
@@ -569,7 +571,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(e => e.CalendarType).HasDefaultValue(DirectoryCalendarTypeEnum.None);
                 o.HasIndex(e => e.FacetType);
             });
-            modelBuilder.Entity<DirectoryFacetRange>(o => {
+            modelBuilder.Entity<DirectoryFacetRange>(o =>
+            {
                 o.HasOne(f => f.Directory).WithMany(u => u.DirectoryFacetRanges).HasForeignKey(f => f.FK_DirectoryId);
             });
             modelBuilder.Entity<StoreSetDetail>(o =>
@@ -921,6 +924,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(x => x.FK_PlatformDomainId);
                 o.HasIndex(x => x.ServiceEndDate);   // 總覽頁「即將到期」用
                 o.HasIndex(x => x.Status);
+                // 一個實際站台只能被一筆網站資料綁定；未綁定（null）與已軟刪除的不納入
+                o.HasIndex(x => x.FK_WebsiteId)
+                    .IsUnique()
+                    .HasFilter("[FK_WebsiteId] IS NOT NULL AND [IsDeleted] = 0");
             });
 
             modelBuilder.Entity<PlatformDomain>(o =>

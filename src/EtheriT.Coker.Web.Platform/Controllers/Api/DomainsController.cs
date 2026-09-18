@@ -141,8 +141,8 @@ public sealed class DomainsController(
     /// <summary>回傳正規化後的網域；格式錯誤回 null 並寫入 ModelState。</summary>
     private async Task<string?> ValidateRequestAsync(DomainSaveRequest request, PlatformDomain? current)
     {
-        // 使用者可能貼整串網址，一律轉成小寫主機名稱再存，比對時才對得上
-        var domainName = PlatformDomainName.ToHost(request.DomainName);
+        // 使用者可能貼整串網址，一律轉成小寫主機名稱、去掉 www. 再存，比對時才對得上
+        var domainName = PlatformDomainName.ToDomainName(request.DomainName);
         var currentId = current?.Id ?? 0;
 
         if (domainName is null)

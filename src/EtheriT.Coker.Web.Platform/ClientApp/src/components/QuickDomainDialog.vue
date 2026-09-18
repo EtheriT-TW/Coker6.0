@@ -3,12 +3,14 @@
     import {
         ApiError,
         FormFieldErrors,
+        requestAlert,
         validateSchema,
         type ApiFieldErrors
     } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import { createDomain, domainValidation, emptyDomainForm } from "@/services/domain-api";
     import type { DomainDetail, DomainForm } from "@/types/domain";
+    import { toDomainName } from "@/utils/domain-name";
 
     const props = defineProps<{
         open: boolean;
@@ -23,15 +25,30 @@
     const model = ref<DomainForm>(emptyDomainForm(props.initialDomainName));
     const errors = ref<ApiFieldErrors>({});
     const busy = ref(false);
-    const submitError = ref("");
 
     // 每次打開都重置，帶入最新的建議網域
     watch(() => props.open, isOpen => {
         if (!isOpen) return;
         model.value = emptyDomainForm(props.initialDomainName);
         errors.value = {};
-        submitError.value = "";
     });
+
+    function normalizeDomainName(): void {
+        const cleaned = toDomainName(model.value.DomainName);
+        if (cleaned !== model.value.DomainName) model.value.DomainName = cleaned;
+    }
+
+    function onDomainPaste(event: ClipboardEvent): void {
+        const pasted = event.clipboardData?.getData("text") ?? "";
+        if (pasted.trim() === "") return;
+
+        event.preventDefault();
+        const input = event.target as HTMLInputElement;
+        const merged = input.value.slice(0, input.selectionStart ?? 0) +
+            pasted +
+            input.value.slice(input.selectionEnd ?? 0);
+        model.value.DomainName = toDomainName(merged);
+    }
 
     function fieldErrors(field: string): string[] {
         const wanted = field.toLowerCase();
@@ -43,10 +60,16 @@
         if (busy.value) return;
 
         errors.value = await validateSchema(model.value, domainValidation);
-        if (Object.keys(errors.value).length > 0) return;
+        if (Object.keys(errors.value).length > 0) {
+            await requestAlert({
+                title: "表單尚未填寫完整",
+                message: "請修正以下項目後再建立：",
+                details: [...new Set(Object.values(errors.value).flat())]
+            });
+            return;
+        }
 
         busy.value = true;
-        submitError.value = "";
         try {
             emit("created", await createDomain(model.value));
         }
@@ -54,9 +77,14 @@
             console.error(error);
             if (error instanceof ApiError && Object.keys(error.fieldErrors).length > 0) {
                 errors.value = error.fieldErrors;
+                await requestAlert({
+                    title: "部分欄位有誤",
+                    message: "請修正以下項目後再建立：",
+                    details: [...new Set(Object.values(error.fieldErrors).flat())]
+                });
                 return;
             }
-            submitError.value = "網域建立失敗，請稍後再試。";
+            await requestAlert({ title: "建立失敗", message: "網域建立失敗，請稍後再試。" });
         }
         finally {
             busy.value = false;
@@ -75,15 +103,18 @@
                    :busy="busy"
                    @cancel="emit('cancel')"
                    @confirm="submit">
-        <div v-if="submitError" class="alert alert-error dialog-alert" role="alert">{{ submitError }}</div>
-
         <form novalidate @submit.prevent="submit">
             <fieldset class="dialog-fieldset" :disabled="busy">
                 <div class="form-grid">
                     <div class="form-field form-field-wide">
                         <label>
                             <span>網域 <i class="form-required">*</i></span>
-                            <input v-model="model.DomainName" type="text" inputmode="url" maxlength="255" />
+                            <input v-model="model.DomainName"
+                                   type="text"
+                                   inputmode="url"
+                                   maxlength="255"
+                                   @paste="onDomainPaste"
+                                   @change="normalizeDomainName" />
                         </label>
                         <FormFieldErrors :errors="fieldErrors('DomainName')" />
                     </div>

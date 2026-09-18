@@ -29,14 +29,14 @@ export function emptyDomainForm(domainName = ""): DomainForm {
 
 /** 編輯頁與快速建立彈窗共用。網域格式由後端正規化後再驗，前端只擋必填與長度。 */
 export const domainValidation: ValidationSchema<DomainForm> = {
-    DomainName: [rules.required("請輸入網域。"), rules.maxLength(255)],
+    DomainName: [rules.required("請輸入網域。"), rules.maxLength(255, "網域不可超過 255 個字元。")],
     EndDate: [
         rules.custom<DomainForm>((value, model) =>
             value && model.StartDate && String(value) < model.StartDate
                 ? "網域到期日期不可早於起始日期。"
                 : null)
     ],
-    Password: [rules.maxLength(200)]
+    Password: [rules.maxLength(200, "密碼不可超過 200 個字元。")]
 };
 
 function toSaveRequest(form: DomainForm) {

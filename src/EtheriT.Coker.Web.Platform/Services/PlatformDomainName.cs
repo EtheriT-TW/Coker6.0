@@ -12,6 +12,18 @@ public static partial class PlatformDomainName
     [GeneratedRegex(@"^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,63}$")]
     private static partial Regex HostPattern();
 
+    /// <summary>網域存檔用：轉成主機名稱後再去掉 www.（網域本身不該帶 www）。</summary>
+    public static string? ToDomainName(string? input)
+    {
+        var host = ToHost(input);
+        if (host is null)
+            return null;
+
+        // 去掉後必須還有兩段以上，否則 www.tw 會變成無效的 tw
+        var stripped = Suggest(host);
+        return stripped.Contains('.') ? stripped : host;
+    }
+
     /// <summary>接受 example.com、https://www.example.com/path 等寫法；取不出合法主機名稱回 null（IP、localhost 也回 null）。</summary>
     public static string? ToHost(string? input)
     {

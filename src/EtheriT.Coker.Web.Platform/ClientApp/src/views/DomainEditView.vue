@@ -1,7 +1,7 @@
 <script setup lang="ts">
     import { computed, onMounted, ref, watch } from "vue";
     import { useRoute, useRouter } from "vue-router";
-    import { ApiError, FormFieldErrors, useManagedForm } from "@/core/coker";
+    import { ApiError, FormFieldErrors, requestAlert, useManagedForm } from "@/core/coker";
     import {
         createDomain,
         domainValidation,
@@ -12,6 +12,7 @@
         updateDomain
     } from "@/services/domain-api";
     import type { DomainDetail, DomainForm } from "@/types/domain";
+    import { toDomainName } from "@/utils/domain-name";
 
     const route = useRoute();
     const router = useRouter();
@@ -49,11 +50,17 @@
         afterSave: () => {
             void router.push("/domains");
         },
-        onError: error => {
+        onError: async error => {
             console.error(error);
-            pageError.value = error instanceof ApiError && Object.keys(error.fieldErrors).length > 0
-                ? "部分欄位有誤，請依紅字提示修正。"
-                : "儲存失敗，請稍後再試。";
+            const hasFieldErrors = error instanceof ApiError &&
+                Object.keys(error.fieldErrors).length > 0;
+            await requestAlert(hasFieldErrors
+                ? {
+                    title: "部分欄位有誤",
+                    message: "請修正以下項目後再儲存：",
+                    details: [...new Set(Object.values((error as ApiError).fieldErrors).flat())]
+                  }
+                : { title: "儲存失敗", message: "儲存失敗，請稍後再試。" });
         }
     });
 
@@ -84,6 +91,27 @@
         isPasswordVisible.value = false;
         form.clearErrors("Password");
     });
+
+        function normalizeDomainName(): void {
+        const cleaned = toDomainName(form.model.value.DomainName);
+        if (cleaned !== form.model.value.DomainName)
+            form.model.value.DomainName = cleaned;
+    }
+
+    /** paste 比 input 早觸發，所以自己算出貼上後的完整字串再整理 */
+    function onDomainPaste(event: ClipboardEvent): void {
+        if (isNameLocked.value) return;
+
+        const pasted = event.clipboardData?.getData("text") ?? "";
+        if (pasted.trim() === "") return;
+
+        event.preventDefault();
+        const input = event.target as HTMLInputElement;
+        const merged = input.value.slice(0, input.selectionStart ?? 0) +
+            pasted +
+            input.value.slice(input.selectionEnd ?? 0);
+        form.model.value.DomainName = toDomainName(merged);
+    }
 
     function applyDetail(detail: DomainDetail): void {
         // 用 reset 載入，才不會一進頁面就被標成「尚未儲存」
@@ -187,7 +215,9 @@
                                inputmode="url"
                                maxlength="255"
                                placeholder="例：example.com.tw"
-                               :readonly="isNameLocked" />
+                               :readonly="isNameLocked"
+                               @paste="onDomainPaste"
+                               @change="normalizeDomainName" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('DomainName')" />
                     <p v-if="isNameLocked" class="field-note">

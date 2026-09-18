@@ -509,6 +509,35 @@ button, input, select, textarea {
             color: #64748b;
         }
 
+    .reauthentication-password {
+        position: relative;
+    }
+
+    .reauthentication-password input {
+        padding-right: 48px;
+    }
+
+    .reauthentication-password-toggle {
+        position: absolute;
+        top: 1px;
+        right: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 40px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: #64748b;
+        cursor: pointer;
+    }
+
+    .reauthentication-password-toggle:focus-visible {
+        outline: 2px solid #285bd4;
+        outline-offset: -3px;
+    }
+
     .reauthentication-form .reauthentication-error {
         margin-top: 10px;
         color: #c2413b;

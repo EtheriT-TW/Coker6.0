@@ -7,7 +7,12 @@ import {
 } from "@/services/http-client";
 import { getPlatformContext } from "@/services/platform-context";
 import { recordPlatformLocation } from "@/services/navigation-preference";
-import { startSessionLifecycle } from "@/services/session-lifecycle";
+import {
+  startSessionLifecycle,
+  sessionExpiryWarning,
+  sessionRemainingSeconds,
+  reportSessionActivity
+} from "@/services/session-lifecycle";
 import {
   completeReauthentication,
   reauthenticate
@@ -25,7 +30,29 @@ const logoutConfirmationOpen = ref(false);
 const loggingOut = ref(false);
 const logoutError = ref("");
 const reauthenticationPassword = ref("");
+const reauthenticationPasswordVisible = ref(false);
 const reauthenticationError = ref("");
+const extendingSession = ref(false);
+const extendSessionError = ref("");
+const sessionCountdown = computed(() => {
+  const seconds = sessionRemainingSeconds.value ?? 0;
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+});
+watch(sessionExpiryWarning, () => { extendSessionError.value = ""; });
+
+async function extendSession(): Promise<void> {
+  if (extendingSession.value) return;
+  extendingSession.value = true;
+  extendSessionError.value = "";
+  try {
+    if (!await reportSessionActivity()) {
+      extendSessionError.value = "無法延長登入，請檢查連線後再試。";
+    }
+  }
+  finally {
+    extendingSession.value = false;
+  }
+}
 let stopSessionLifecycle: (() => void) | undefined;
 let navigationPreferenceReady = false;
 
@@ -57,6 +84,7 @@ function handleSessionStateChanged(event: Event): void {
   const nextState = (event as CustomEvent<SessionState>).detail;
   if (sessionState.value !== nextState) {
     reauthenticationPassword.value = "";
+    reauthenticationPasswordVisible.value = false;
     reauthenticationError.value = "";
   }
   sessionState.value = nextState;
@@ -91,6 +119,7 @@ async function submitReauthentication(): Promise<void> {
   if (result.success) {
     sessionState.value = null;
     reauthenticationPassword.value = "";
+    reauthenticationPasswordVisible.value = false;
   }
   else {
     reauthenticationError.value = result.error ?? "重新登入失敗。";
@@ -251,6 +280,32 @@ onBeforeUnmount(() => {
       </section>
     </div>
 
+    <div
+      v-if="sessionExpiryWarning && !sessionState"
+      class="session-shield"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="session-warning-title"
+    >
+      <section class="session-card">
+        <span class="session-icon material-symbols-outlined">timer</span>
+        <h2 id="session-warning-title">登入即將逾時</h2>
+        <p>登入將於 {{ sessionCountdown }} 後到期。請點擊「延長登入」繼續操作，否則到期後需重新驗證密碼。未儲存的內容會保留。</p>
+        <p v-if="sessionRemainingSeconds === 0">正在確認登入狀態；若連線中斷，請檢查連線後再試。</p>
+        <p v-if="extendSessionError" class="logout-error">{{ extendSessionError }}</p>
+        <div class="session-actions">
+          <button
+            class="session-button session-button-primary"
+            type="button"
+            :disabled="extendingSession"
+            @click="extendSession"
+          >
+            {{ extendingSession ? '延長中…' : '延長登入' }}
+          </button>
+        </div>
+      </section>
+    </div>
+
     <div v-if="sessionState" class="session-shield" role="dialog" aria-modal="true">
       <section class="session-card">
         <span class="session-icon material-symbols-outlined">
@@ -258,7 +313,7 @@ onBeforeUnmount(() => {
         </span>
         <h2>{{ sessionState === "expired" ? "登入狀態已過期" : "平台權限已變更" }}</h2>
         <p v-if="sessionState === 'expired'">
-          目前頁面與尚未送出的內容會保留。請使用目前帳號重新驗證，成功後會接續原本的儲存。
+          目前頁面與尚未送出的內容會保留。請使用目前帳號重新驗證，成功後可繼續操作；若有等待中的儲存，將會接續執行。
         </p>
         <p v-else>
           目前帳號已無法使用客戶管理平台，請聯絡系統管理員確認權限。
@@ -274,13 +329,29 @@ onBeforeUnmount(() => {
           </label>
           <label>
             <span>密碼</span>
-            <input
-              v-model="reauthenticationPassword"
-              type="password"
-              autocomplete="current-password"
-              required
-              autofocus
-            />
+            <div class="reauthentication-password">
+              <input
+                id="reauthentication-password"
+                v-model="reauthenticationPassword"
+                :type="reauthenticationPasswordVisible ? 'text' : 'password'"
+                autocomplete="current-password"
+                required
+                autofocus
+              />
+              <button
+                class="reauthentication-password-toggle"
+                type="button"
+                :aria-label="reauthenticationPasswordVisible ? '隱藏密碼' : '顯示密碼'"
+                :title="reauthenticationPasswordVisible ? '隱藏密碼' : '顯示密碼'"
+                :aria-pressed="reauthenticationPasswordVisible"
+                aria-controls="reauthentication-password"
+                @click="reauthenticationPasswordVisible = !reauthenticationPasswordVisible"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">
+                  {{ reauthenticationPasswordVisible ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
           </label>
           <p v-if="reauthenticationError" class="reauthentication-error">
             {{ reauthenticationError }}
@@ -291,7 +362,7 @@ onBeforeUnmount(() => {
               type="submit"
               :disabled="checkingSession || !reauthenticationPassword"
             >
-              {{ checkingSession ? "驗證中…" : "重新登入並繼續儲存" }}
+              {{ checkingSession ? "驗證中…" : "重新登入並繼續操作" }}
             </button>
           </div>
         </form>

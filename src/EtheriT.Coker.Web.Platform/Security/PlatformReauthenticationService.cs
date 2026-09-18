@@ -37,11 +37,17 @@ public sealed class PlatformReauthenticationService(
 
         var user = await db.Users.FirstOrDefaultAsync(candidate =>
             !candidate.IsDeleted &&
-            candidate.Status == (int)UserStatusEnum.開通 &&
             candidate.Account == account,
             cancellationToken);
 
-        if (user == null || !VerifyPassword(user, request.Password))
+        if (user == null)
+        {
+            return new ReauthenticateResponse(false, "目前帳號已不存在或已刪除，請返回 MVC 重新登入。");
+        }
+
+        // Match MVC login and Platform access/session validation: backoffice
+        // access is determined by the non-deleted user and assigned roles.
+        if (!VerifyPassword(user, request.Password))
         {
             return new ReauthenticateResponse(false, "密碼不正確，請重新輸入。");
         }

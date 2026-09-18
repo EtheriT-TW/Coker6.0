@@ -6,6 +6,13 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 [Route("api/backoffice-session")]
 public sealed class BackofficeSessionController : ControllerBase
 {
+    [HttpGet("status")]
+    public IActionResult GetStatus()
+    {
+        Response.Headers.CacheControl = "no-store";
+        return NoContent();
+    }
+
     [HttpPost("activity")]
     public IActionResult ReportActivity()
     {

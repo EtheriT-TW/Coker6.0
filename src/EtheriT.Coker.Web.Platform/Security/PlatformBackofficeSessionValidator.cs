@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Web.Platform.Security;
 
 public sealed class PlatformBackofficeSessionValidator(
     CokerDbContext db,
+    IHttpContextAccessor httpContextAccessor,
     IOptions<BackofficeSessionOptions> sessionOptions)
     : IBackofficeSessionValidator
 {
@@ -39,11 +40,26 @@ public sealed class PlatformBackofficeSessionValidator(
             : TimeSpan.FromTicks(idleTimeout.Ticks / 2);
 
         var wasRenewed = false;
-        if (session.EndTime <= now.Add(renewalThreshold))
+        var context = httpContextAccessor.HttpContext;
+        var requestPath = context?.Request.Path.Value?.TrimEnd('/');
+        var isStatusCheck = string.Equals(requestPath, "/api/backoffice-session/status", StringComparison.OrdinalIgnoreCase);
+        var isActivityReport = string.Equals(requestPath, "/api/backoffice-session/activity", StringComparison.OrdinalIgnoreCase);
+        if (!isStatusCheck && (isActivityReport || session.EndTime <= now.Add(renewalThreshold)))
         {
             session.EndTime = now.Add(idleTimeout);
             await db.SaveChangesAsync(cancellationToken);
             wasRenewed = true;
+        }
+
+        if (context != null)
+        {
+            var expiresAt = new DateTimeOffset(session.EndTime.Value).ToUnixTimeMilliseconds();
+            context.Response.OnStarting(() =>
+            {
+                context.Response.Headers["X-Session-Expires-At"] = expiresAt.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                context.Response.Headers["X-Session-Server-Time"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return Task.CompletedTask;
+            });
         }
 
         return new BackofficeSessionValidationResult(

@@ -1,4 +1,5 @@
 export const sessionStateChangedEvent = "coker:backoffice-session-state";
+export const sessionExpiryChangedEvent = "coker:backoffice-session-expiry";
 
 export type SessionState = "expired" | "forbidden";
 
@@ -39,5 +40,12 @@ export async function platformFetch(
   });
 
   reportAuthenticationFailure(response.status);
+  const expiresAt = Number(response.headers.get("X-Session-Expires-At"));
+  const serverTime = Number(response.headers.get("X-Session-Server-Time"));
+  if (response.ok && expiresAt > 0 && serverTime > 0) {
+    window.dispatchEvent(new CustomEvent<number>(sessionExpiryChangedEvent, {
+      detail: Date.now() + expiresAt - serverTime
+    }));
+  }
   return response;
 }

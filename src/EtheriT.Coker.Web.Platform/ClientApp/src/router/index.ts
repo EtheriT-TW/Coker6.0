@@ -19,13 +19,13 @@ export const router = createRouter({
             path: "/companies/new",
             name: "company-create",
             component: () => import("@/views/CompanyEditView.vue"),
-            meta: { title: "新增客戶" }
+            meta: { title: "新增客戶", nav: "/companies" }
         },
         {
             path: "/companies/:id(\\d+)",
             name: "company-edit",
             component: () => import("@/views/CompanyEditView.vue"),
-            meta: { title: "編輯客戶" }
+            meta: { title: "編輯客戶", nav: "/companies" }
         },
         {
             path: "/websites",
@@ -36,13 +36,13 @@ export const router = createRouter({
             path: "/websites/new",
             name: "website-create",
             component: () => import("@/views/WebsiteEditView.vue"),
-            meta: { title: "新增網站" }
+            meta: { title: "新增網站", nav: "/websites" }
         },
         {
             path: "/websites/:id(\\d+)",
             name: "website-edit",
             component: () => import("@/views/WebsiteEditView.vue"),
-            meta: { title: "編輯網站" }
+            meta: { title: "編輯網站", nav: "/websites" }
         },
         {
             path: "/domains",
@@ -54,13 +54,13 @@ export const router = createRouter({
             path: "/domains/new",
             name: "domain-create",
             component: () => import("@/views/DomainEditView.vue"),
-            meta: { title: "新增網域" }
+            meta: { title: "新增網域", nav: "/domains" }
         },
         {
             path: "/domains/:id(\\d+)",
             name: "domain-edit",
             component: () => import("@/views/DomainEditView.vue"),
-            meta: { title: "編輯網域" }
+            meta: { title: "編輯網域", nav: "/domains" }
         },
         {
             path: "/licenses",

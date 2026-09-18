@@ -1233,9 +1233,21 @@ button, input, select, textarea {
     text-align: left;
 }
 
-.app-dialog-card .dialog-alert {
+/* ── 錯誤彈窗：疊在表單型彈窗之上，但低於 session-shield(3000) ── */
+.app-dialog-alert {
+    z-index: 2900;
+}
+
+.app-dialog-details {
     margin: 16px 0 0;
+    padding: 12px 16px;
+    color: #c2413b;
+    font-size: 13px;
+    line-height: 1.7;
     text-align: left;
+    list-style: disc inside;
+    background: #fdf2f1;
+    border-radius: 10px;
 }
 
 /* ── 清單 ── */

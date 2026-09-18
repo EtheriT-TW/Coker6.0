@@ -1,3 +1,5 @@
+import { hasOpenDialog } from "@/core/dialogs/dialog-stack";
+
 type SaveShortcutHandler = () => void | Promise<void>;
 
 const handlers: SaveShortcutHandler[] = [];
@@ -12,6 +14,9 @@ function handleKeydown(event: KeyboardEvent): void {
   if (!handler) return;
 
   event.preventDefault();
+  // 任何彈窗開著時（含錯誤彈窗）都不能偷偷送出底下的表單，
+  // 否則錯誤彈窗會一直被自己重新蓋掉，或跳在快速建立彈窗上面。
+  if (hasOpenDialog()) return;
   void handler();
 }
 

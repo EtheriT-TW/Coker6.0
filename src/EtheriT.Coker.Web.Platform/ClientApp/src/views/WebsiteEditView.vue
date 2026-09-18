@@ -1,7 +1,7 @@
 <script setup lang="ts">
     import { computed, onMounted, ref, watch } from "vue";
     import { useRoute, useRouter } from "vue-router";
-    import { ApiError, FormFieldErrors, rules, useManagedForm } from "@/core/coker";
+    import { ApiError, FormFieldErrors, requestAlert, rules, useManagedForm } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
     import QuickDomainDialog from "@/components/QuickDomainDialog.vue";
@@ -107,7 +107,7 @@
                         ? "網站到期日期不可早於開通日期。"
                         : null)
             ],
-            Url: [rules.maxLength(500)]
+            Url: [rules.maxLength(500, "網站網址不可超過 500 個字元。")]
         },
         beforeSave: () => {
             pageError.value = "";
@@ -121,11 +121,17 @@
             // 與客戶頁一致：存檔後返回清單
             void router.push("/websites");
         },
-        onError: error => {
+        onError: async error => {
             console.error(error);
-            pageError.value = error instanceof ApiError && Object.keys(error.fieldErrors).length > 0
-                ? "部分欄位有誤，請依紅字提示修正。"
-                : "儲存失敗，請稍後再試。";
+            const hasFieldErrors = error instanceof ApiError &&
+                Object.keys(error.fieldErrors).length > 0;
+            await requestAlert(hasFieldErrors
+                ? {
+                    title: "部分欄位有誤",
+                    message: "請修正以下項目後再儲存：",
+                    details: [...new Set(Object.values((error as ApiError).fieldErrors).flat())]
+                  }
+                : { title: "儲存失敗", message: "儲存失敗，請稍後再試。" });
         }
     });
 

@@ -1,5 +1,7 @@
 <script setup lang="ts">
     import { nextTick, onBeforeUnmount, ref, watch } from "vue"
+    import { isTopDialog, popDialog, pushDialog } from "@/core/dialogs/dialog-stack";
+
     const props = withDefaults(defineProps<{
         open: boolean;
         title: string;
@@ -9,35 +11,43 @@
         cancelText?: string;
         tone?: "primary" | "danger";
         busy?: boolean;
+        hideCancel?: boolean;
     }>(), {
         icon: "help",
         confirmText: "確認",
         cancelText: "取消",
         tone: "primary",
-        busy: false
+        busy: false,
+        hideCancel: false
     });
 
     const emit = defineEmits<{ confirm: []; cancel: [] }>();
 
     const confirmButton = ref<HTMLButtonElement | null>(null);
     let lastFocused: HTMLElement | null = null;
+    // 錯誤彈窗會疊在表單型彈窗之上，捲動鎖與 Escape 都交給堆疊管
+    let token: symbol | null = null;
 
     function handleKeydown(event: KeyboardEvent): void {
-        if (event.key === "Escape" && !props.busy) {
+        // 疊了兩層時，Escape 只關最上面那層
+        if (event.key === "Escape" && !props.busy && token !== null && isTopDialog(token)) {
             event.preventDefault();
             emit("cancel");
         }
     }
 
     function release(): void {
-        document.body.classList.remove("dialog-open");
+        if (token !== null) {
+            popDialog(token);
+            token = null;
+        }
         window.removeEventListener("keydown", handleKeydown);
     }
 
     watch(() => props.open, async (open) => {
         if (open) {
             lastFocused = document.activeElement as HTMLElement | null;
-            document.body.classList.add("dialog-open");
+            token = pushDialog();
             window.addEventListener("keydown", handleKeydown);
             await nextTick();
             confirmButton.value?.focus();
@@ -66,7 +76,8 @@
             <p v-if="message">{{ message }}</p>
             <slot />
             <div class="app-dialog-actions">
-                <button class="ui-button ui-button-secondary"
+                <button v-if="!hideCancel"
+                        class="ui-button ui-button-secondary"
                         type="button"
                         :disabled="busy"
                         @click="emit('cancel')">

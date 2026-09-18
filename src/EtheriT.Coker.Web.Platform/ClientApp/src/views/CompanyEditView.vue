@@ -1,7 +1,7 @@
 <script setup lang="ts">
     import { computed, onMounted, ref, watch } from "vue";
     import { useRoute, useRouter } from "vue-router";
-    import { ApiError, FormFieldErrors, rules, useManagedForm } from "@/core/coker";
+    import { ApiError, FormFieldErrors, requestAlert, rules, useManagedForm } from "@/core/coker";
     import {
         createCustomer,
         fetchCustomer,
@@ -62,7 +62,7 @@
             Name: [rules.required("請輸入公司名稱。"), rules.maxLength(200)],
             // 統編選填；rules.pattern 遇到空值會直接放行，有填才檢查 8～10 碼
             TaxId: [rules.pattern(/^\d{8,10}$/, "統一編號需為 8～10 碼數字。")],
-            Address: [rules.maxLength(150)],
+            Address: [rules.maxLength(150, "公司地址不可超過 150 個字元。")],
             Email: [rules.email("公司 Email 格式不正確。")],
             PrimaryContactName: [rules.required("請輸入主要聯絡人姓名。")],
             PrimaryContactEmail: [rules.email("主要聯絡人 Email 格式不正確。")]
@@ -96,15 +96,21 @@
             // 需求：新增完後返回客戶管理目錄
             void router.push("/companies");
         },
-        onError: error => {
+        onError: async error => {
             console.error(error);
             if (error instanceof ApiError && error.status === 409) {
-                pageError.value = error.message;
+                await requestAlert({ title: "無法儲存", message: error.message });
                 return;
             }
-            pageError.value = error instanceof ApiError && Object.keys(error.fieldErrors).length > 0
-                ? "部分欄位有誤，請依紅字提示修正。"
-                : "儲存失敗，請稍後再試。";
+            const hasFieldErrors = error instanceof ApiError &&
+                Object.keys(error.fieldErrors).length > 0;
+            await requestAlert(hasFieldErrors
+                ? {
+                    title: "部分欄位有誤",
+                    message: "請修正以下項目後再儲存：",
+                    details: [...new Set(Object.values((error as ApiError).fieldErrors).flat())]
+                  }
+                : { title: "儲存失敗", message: "儲存失敗，請稍後再試。" });
         }
     });
 

@@ -12,6 +12,7 @@ import {
 import { registerSaveShortcut } from "@/core/forms/save-shortcut";
 import { validateSchema, type ValidationSchema } from "@/core/forms/validation";
 import { requestConfirm } from "@/core/dialogs/confirm-request";
+import { requestAlert } from "@/core/dialogs/alert-request";
 
 export type SaveStatus = "saved" | "invalid" | "cancelled" | "unauthorized" | "failed";
 
@@ -91,9 +92,22 @@ export function useManagedForm<TModel extends object, TResult = unknown>(
     return Object.keys(errors.value).length === 0;
   }
 
+  /** 把 errors 攤平成不重複的訊息清單，給彈窗列出來。 */
+  function collectErrorMessages(): string[] {
+    return [...new Set(Object.values(errors.value).flat())];
+  }
+
   async function save(trigger: SaveTrigger = "programmatic"): Promise<SaveStatus> {
     if (isSaving.value) return "cancelled";
-    if (!await validate()) return "invalid";
+    if (!await validate()) {
+      await requestAlert({
+        icon: "error",
+        title: "表單尚未填寫完整",
+        message: "請修正以下項目後再儲存：",
+        details: collectErrorMessages()
+      });
+      return "invalid";
+    }
 
     const values = clone(model.value);
     const context: SavePipelineContext<TModel, TResult> = {

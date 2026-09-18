@@ -3,6 +3,7 @@
     import {
         ApiError,
         FormFieldErrors,
+        requestAlert,
         rules,
         validateSchema,
         type ApiFieldErrors,
@@ -64,7 +65,6 @@
     const model = ref<CustomerForm>(emptyForm(props.initialTaxId, props.initialName));
     const errors = ref<ApiFieldErrors>({});
     const busy = ref(false);
-    const submitError = ref("");
 
     const isOtherType = computed(() => model.value.CustomerType === CustomerType.其他);
 
@@ -73,7 +73,6 @@
         if (!isOpen) return;
         model.value = emptyForm(props.initialTaxId, props.initialName);
         errors.value = {};
-        submitError.value = "";
     });
 
     function fieldErrors(field: string): string[] {
@@ -91,10 +90,16 @@
         if (busy.value) return;
 
         errors.value = await validateSchema(model.value, validation);
-        if (Object.keys(errors.value).length > 0) return;
+        if (Object.keys(errors.value).length > 0) {
+            await requestAlert({
+                title: "表單尚未填寫完整",
+                message: "請修正以下項目後再建立：",
+                details: [...new Set(Object.values(errors.value).flat())]
+            });
+            return;
+        }
 
         busy.value = true;
-        submitError.value = "";
         try {
             const { Id } = await createCustomer(model.value);
             emit("created", {
@@ -110,9 +115,14 @@
             console.error(error);
             if (error instanceof ApiError && Object.keys(error.fieldErrors).length > 0) {
                 errors.value = error.fieldErrors;
+                await requestAlert({
+                    title: "部分欄位有誤",
+                    message: "請修正以下項目後再建立：",
+                    details: [...new Set(Object.values(error.fieldErrors).flat())]
+                });
                 return;
             }
-            submitError.value = "客戶建立失敗，請稍後再試。";
+            await requestAlert({ title: "建立失敗", message: "客戶建立失敗，請稍後再試。" });
         }
         finally {
             busy.value = false;
@@ -131,8 +141,6 @@
                    :busy="busy"
                    @cancel="emit('cancel')"
                    @confirm="submit">
-        <div v-if="submitError" class="alert alert-error dialog-alert" role="alert">{{ submitError }}</div>
-
         <form novalidate @submit.prevent="submit">
             <fieldset class="dialog-fieldset" :disabled="busy">
                 <div class="form-grid">

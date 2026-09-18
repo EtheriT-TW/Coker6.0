@@ -831,9 +831,13 @@ button, input, select, textarea {
         font-weight: 600;
     }
 
-.form-field-wide {
-    grid-column: 1 / -1;
-}
+        .form-field > label > input{
+            font-size:1rem;
+        }
+
+        .form-field-wide {
+            grid-column: 1 / -1;
+        }
 
 /* 標題與選項整組靠右、同一行；寬度不足時選項換行，兩行都靠右 */
 .form-field-right {
@@ -1419,6 +1423,80 @@ button, input, select, textarea {
     color: #8a6116;
     font-weight: 600;
 }
+
+/* ── 客戶編輯頁：所屬站台（唯讀） ── */
+.site-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .site-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--platform-line);
+        font-size: 13px;
+    }
+
+        .site-list li:last-child {
+            border-bottom: 0;
+        }
+
+.site-list-main {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+    .site-list-main a,
+    .site-list-main > strong {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--platform-ink);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+        .site-list-main a:hover strong,
+        .site-list-main a:focus-visible strong {
+            color: var(--platform-primary);
+            text-decoration: underline;
+        }
+
+.site-list-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 10px;
+    min-width: 0;
+    color: var(--platform-muted);
+    font-size: 11px;
+}
+
+.site-flag {
+    color: #8a6116;
+    font-weight: 600;
+}
+
+.site-list-side {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 12px;
+}
+
+.site-list-date {
+    min-width: 92px;
+    text-align: right;
+}
+
+    .site-list-date small {
+        display: block;
+        font-size: 11px;
+    }
 
 @media (max-width: 1100px) {
     .metric-grid {

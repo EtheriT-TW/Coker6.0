@@ -3,7 +3,8 @@ import type {
     CustomerDetail,
     CustomerForm,
     CustomerListItem,
-    CustomerLookup
+    CustomerLookup,
+    CustomerWebsite
 } from "@/types/customer";
 
 const baseUrl = "/api/companies";
@@ -14,6 +15,11 @@ export function fetchCustomers(): Promise<CustomerListItem[]> {
 
 export function fetchCustomer(id: number): Promise<CustomerDetail> {
     return api.get<CustomerDetail>(`${baseUrl}/${id}`);
+}
+
+/** 客戶底下的站台（唯讀）：Platform 網站資料 ∪ 後台公司綁定。 */
+export function fetchCustomerWebsites(id: number): Promise<CustomerWebsite[]> {
+    return api.get<CustomerWebsite[]>(`${baseUrl}/${id}/websites`);
 }
 
 export function createCustomer(form: CustomerForm): Promise<{ Id: number }> {

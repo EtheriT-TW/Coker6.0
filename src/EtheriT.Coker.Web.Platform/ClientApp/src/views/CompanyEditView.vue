@@ -5,13 +5,19 @@
     import {
         createCustomer,
         fetchCustomer,
+        fetchCustomerWebsites,
         updateCustomer
     } from "@/services/customer-api";
     import {
         CustomerType,
         customerTypeOptions,
-        type CustomerForm
+        type CustomerForm,
+        type CustomerWebsite
+
     } from "@/types/customer";
+
+    import { remainingDaysClass, statusView, toHref } from "@/utils/website-display";
+
 
     /** 「其他」要跟填空框綁在一起單獨渲染，不走迴圈。 */
     const plainTypeOptions = customerTypeOptions.filter(
@@ -29,6 +35,11 @@
 
     const loading = ref(false);
     const pageError = ref("");
+
+    // 唯讀區塊，跟表單完全分開：塞進 form.model 會被離開攔截與 CtrlS 存檔誤收。
+    const websites = ref<CustomerWebsite[]>([]);
+    const websitesLoading = ref(false);
+    const websitesError = ref("");
 
     // 新增的次要聯絡人用遞減負數當暫時 key，v-for 的 key 才會穩定。
     let nextTempContactId = -1;
@@ -109,7 +120,7 @@
                     title: "部分欄位有誤",
                     message: "請修正以下項目後再儲存：",
                     details: [...new Set(Object.values((error as ApiError).fieldErrors).flat())]
-                  }
+                }
                 : { title: "儲存失敗", message: "儲存失敗，請稍後再試。" });
         }
     });
@@ -150,9 +161,23 @@
         void router.push("/companies");
     }
 
-    onMounted(async () => {
-        if (!isEdit.value) return;
+    /** 已建網站資料就開該筆；只有後台綁定時，開新增頁並預先帶入站台（與網站管理清單一致）。 */
+    function siteLink(site: CustomerWebsite) {
+        if (site.PlatformWebsiteId !== null)
+            return `/websites/${site.PlatformWebsiteId}`;
+        if (site.WebsiteId !== null)
+            return { path: "/websites/new", query: { siteId: String(site.WebsiteId) } };
+        return null;
+    }
 
+    /** 後台與 Platform 兩邊對不起來時要標出來，否則使用者會以為資料漏了。 */
+    function siteFlag(site: CustomerWebsite): string {
+        if (site.PlatformWebsiteId === null) return "尚未建立網站資料";
+        if (site.IsLinkedToOtherCustomer) return "網站資料掛在其他客戶";
+        return "";
+    }
+
+    async function loadCustomer(): Promise<void> {
         loading.value = true;
         try {
             const detail = await fetchCustomer(customerId.value);
@@ -191,6 +216,29 @@
         finally {
             loading.value = false;
         }
+    }
+
+    /** 唯讀區塊自己處理錯誤：站台載不出來不該把整張表單鎖死。 */
+    async function loadWebsites(): Promise<void> {
+        websitesLoading.value = true;
+        websitesError.value = "";
+        try {
+            websites.value = await fetchCustomerWebsites(customerId.value);
+        }
+        catch (error) {
+            console.error(error);
+            websitesError.value = "站台資料載入失敗。";
+        }
+        finally {
+            websitesLoading.value = false;
+        }
+    }
+
+    // 同一個 tick 內發出，兩支請求平行跑；不用 Promise.all 是為了讓錯誤各自獨立。
+    onMounted(() => {
+        if (!isEdit.value) return;
+        void loadCustomer();
+        void loadWebsites();
     });
 </script>
 
@@ -309,6 +357,69 @@
                 </div>
             </div>
         </fieldset>
+
+        <!-- 唯讀區塊：用 section 不用 fieldset，才不會被表單的 disabled 一起關掉 -->
+        <section v-if="isEdit"
+                 class="form-card form-section"
+                 aria-labelledby="section-websites-title">
+            <div class="form-section-heading">
+                <span id="section-websites-title">
+                    所屬站台
+                    <template v-if="!websitesLoading && !websitesError">
+                        （{{ websites.length }}）
+                    </template>
+                </span>
+                <RouterLink class="ui-button ui-button-ghost" to="/websites">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span>網站管理</span>
+                </RouterLink>
+            </div>
+
+            <p v-if="websitesLoading" class="repeater-empty">載入中…</p>
+            <p v-else-if="websitesError" class="alert alert-error" role="alert">{{ websitesError }}</p>
+            <p v-else-if="!websites.length" class="repeater-empty">這個客戶底下還沒有站台。</p>
+
+            <ul v-else class="site-list">
+                <li v-for="site in websites" :key="site.RowKey">
+                    <div class="site-list-main">
+                        <RouterLink v-if="siteLink(site)" :to="siteLink(site)!">
+                            <strong>{{ site.Name }}</strong>
+                        </RouterLink>
+                        <strong v-else>{{ site.Name }}</strong>
+
+                        <div class="site-list-meta">
+                            <span v-if="site.OrgName">{{ site.OrgName }}</span>
+                            <span v-if="site.LevelText">{{ site.LevelText }}版</span>
+                            <a v-if="toHref(site.Url)"
+                               class="grid-link"
+                               :href="toHref(site.Url)!"
+                               target="_blank"
+                               rel="noopener noreferrer">{{ site.Url }}</a>
+                            <span v-if="siteFlag(site)" class="site-flag">{{ siteFlag(site) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="site-list-side">
+                        <span v-if="site.Status === null" class="grid-muted">—</span>
+                        <span v-else class="status-pill" :class="statusView(site).CssClass">
+                            {{ statusView(site).Text }}
+                        </span>
+
+                        <div class="site-list-date">
+                            <template v-if="site.ServiceEndDate">
+                                {{ site.ServiceEndDate.slice(0, 10).replaceAll("-", "/") }}
+                                <small v-if="site.RemainingDays !== null && site.RemainingDays >= 0"
+                                       class="days-value"
+                                       :class="remainingDaysClass(site.RemainingDays)">
+                                    剩 {{ site.RemainingDays }} 天
+                                </small>
+                            </template>
+                            <span v-else class="grid-muted">—</span>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </section>
 
         <fieldset class="form-card form-section"
                   aria-labelledby="section-primary-title"

@@ -8,11 +8,13 @@
         DxSearchPanel
     } from "devextreme-vue/data-grid";
     import { fetchWebsites } from "@/services/website-api";
-    import { WebsiteStatus, type WebsiteListItem } from "@/types/website";
-
-
-    /** 剩餘天數在 0～此值之間視為「即將到期」 */
-    const EXPIRING_WITHIN_DAYS = 60;
+    import type { WebsiteListItem } from "@/types/website";
+    import {
+        EXPIRING_WITHIN_DAYS,
+        remainingDaysClass,
+        statusView,
+        toHref
+    } from "@/utils/website-display";
 
     const router = useRouter();
 
@@ -52,37 +54,37 @@
         }
     }
 
-    /** 只放行 http/https；沒寫協定的補 https://，其他協定（如 javascript:）不產生連結 */
-    function toHref(url: string | null): string | null {
-        const value = url?.trim();
-        if (!value)
-            return null;
-        if (/^https?:\/\//i.test(value))
-            return value;
-        if (/^[a-z][a-z0-9+.-]*:/i.test(value))
-            return null;
-        return `https://${value}`;
-    }
+    // /** 只放行 http/https；沒寫協定的補 https://，其他協定（如 javascript:）不產生連結 */
+    // function toHref(url: string | null): string | null {
+    //     const value = url?.trim();
+    //     if (!value)
+    //         return null;
+    //     if (/^https?:\/\//i.test(value))
+    //         return value;
+    //     if (/^[a-z][a-z0-9+.-]*:/i.test(value))
+    //         return null;
+    //     return `https://${value}`;
+    // }
 
-    function remainingDaysClass(days: number): string {
-        return days <= EXPIRING_WITHIN_DAYS ? "days-expiring" : "days-normal";
-    }
+    // function remainingDaysClass(days: number): string {
+    //     return days <= EXPIRING_WITHIN_DAYS ? "days-expiring" : "days-normal";
+    // }
 
-        interface StatusView {
-        Text: string;
-        CssClass: string;
-    }
+    // interface StatusView {
+    //     Text: string;
+    //     CssClass: string;
+    // }
 
-    /** 狀態為「正常」時依剩餘天數改顯示；暫停／註銷維持原狀態 */
-    function statusView(site: WebsiteListItem): StatusView {
-        if (site.Status === WebsiteStatus.正常 && site.RemainingDays !== null) {
-            if (site.RemainingDays < 0)
-                return { Text: "已過期", CssClass: "status-pill-expired" };
-            if (site.RemainingDays <= EXPIRING_WITHIN_DAYS)
-                return { Text: "即將到期", CssClass: "status-pill-expiring" };
-        }
-        return { Text: site.StatusText, CssClass: `status-pill-${site.Status}` };
-    }
+    // /** 狀態為「正常」時依剩餘天數改顯示；暫停／註銷維持原狀態 */
+    // function statusView(site: WebsiteListItem): StatusView {
+    //     if (site.Status === WebsiteStatus.正常 && site.RemainingDays !== null) {
+    //         if (site.RemainingDays < 0)
+    //             return { Text: "已過期", CssClass: "status-pill-expired" };
+    //         if (site.RemainingDays <= EXPIRING_WITHIN_DAYS)
+    //             return { Text: "即將到期", CssClass: "status-pill-expiring" };
+    //     }
+    //     return { Text: site.StatusText, CssClass: `status-pill-${site.Status}` };
+    // }
 
     /** 給 DataGrid 排序／搜尋用，讓「即將到期」「已過期」也搜得到 */
     function statusText(site: WebsiteListItem): string {

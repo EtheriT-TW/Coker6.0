@@ -31,6 +31,32 @@ public sealed record CustomerLookupDto(
     string? Email,
     string? PrimaryContactName);
 
+/// <summary>
+/// 客戶編輯頁「所屬站台」的一列，是「Platform 網站資料」與「後台公司綁定」的聯集，
+/// 所以兩個 Id 都可能為 null：
+/// <list type="bullet">
+/// <item>兩個都有值＝網站資料已建，且對應到有效的後台站台</item>
+/// <item>只有 <c>PlatformWebsiteId</c>＝網站資料已建，但還沒對應到有效站台</item>
+/// <item>只有 <c>WebsiteId</c>＝後台已把公司綁到這個站台，Platform 還沒建網站資料</item>
+/// </list>
+/// </summary>
+public sealed record CustomerWebsiteDto(
+    string RowKey,
+    long? PlatformWebsiteId,
+    long? WebsiteId,
+    string Name,
+    string? OrgName,
+    WebsiteLevelEnum? Level,
+    string LevelText,
+    PlatformWebsiteStatusEnum? Status,
+    string StatusText,
+    string? Url,
+    DateTime? ServiceStartDate,
+    DateTime? ServiceEndDate,
+    int? RemainingDays,
+    /// <summary>後台把這個客戶綁到該站台，但站台的網站資料掛在別的客戶——兩邊對不起來，要看得到。</summary>
+    bool IsLinkedToOtherCustomer);
+
 public sealed record CustomerDetailDto
 {
     public long Id { get; init; }

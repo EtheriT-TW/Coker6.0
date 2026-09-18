@@ -91,6 +91,123 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
         };
     }
 
+    /// <summary>未被軟刪除的後台站台。本專案沒有全域查詢過濾器，每個查詢都得自己排除。</summary>
+    private IQueryable<Website> ActiveSites =>
+        db.Websites.AsNoTracking().Where(site => !site.IsDeleted);
+
+    /// <summary>未被軟刪除的網站資料（Platform 自己維護的 PlatformWebsites）。</summary>
+    private IQueryable<PlatformWebsite> ActiveRecords =>
+        db.PlatformWebsites.AsNoTracking().Where(record => !record.IsDeleted);
+
+    /// <summary>
+    /// 客戶編輯頁的「所屬站台」。與網站管理清單同樣取聯集，兩邊數量才對得上：
+    /// ① 掛在這個客戶底下的網站資料；② 後台綁到這個客戶、但①沒涵蓋到的站台。
+    /// 客戶不存在時回空陣列即可，編輯頁本身的 GetDetail 已經負責導回清單。
+    /// </summary>
+    [HttpGet("{id:long}/websites")]
+    public async Task<IReadOnlyList<CustomerWebsiteDto>> GetWebsites(long id)
+    {
+        // ① 客戶底下的網站資料，左外接後台站台（還沒對應站台時站台欄位為 null）
+        var recordRows = await (
+            from record in ActiveRecords
+            where record.FK_CompanyId == id
+            join site in ActiveSites on record.FK_WebsiteId equals site.Id into siteGroup
+            from site in siteGroup.DefaultIfEmpty()
+            select new
+            {
+                record.Id,
+                RecordName = record.Name,
+                RecordLevel = record.Level,
+                RecordUrl = record.Url,
+                record.Status,
+                record.ServiceStartDate,
+                record.ServiceEndDate,
+                WebsiteId = site == null ? (long?)null : site.Id,
+                OrgName = site == null ? null : site.OrgName,
+                SiteTitle = site == null ? null : site.Title,
+                SiteUrl = site == null ? null : site.DefaultUrl,
+                SiteLevel = site == null ? (WebsiteLevelEnum?)null : site.Level
+            })
+            .ToListAsync(HttpContext.RequestAborted);
+
+        var listedSiteIds = recordRows
+            .Where(row => row.WebsiteId is not null)
+            .Select(row => row.WebsiteId!.Value)
+            .ToList();
+
+        // ② 後台綁定的站台，排除①已列出的。
+        //    再左外接一次網站資料：接得到代表這個站台的網站資料掛在別的客戶身上。
+        var mappedRows = await (
+            from mapping in db.MappingCompanyAndWebsites.AsNoTracking()
+            where !mapping.IsDeleted && mapping.FK_CompanyId == id
+            join site in ActiveSites on mapping.FK_WebsiteId equals site.Id
+            where !listedSiteIds.Contains(site.Id)
+            join record in ActiveRecords on (long?)site.Id equals record.FK_WebsiteId into recordGroup
+            from record in recordGroup.DefaultIfEmpty()
+            select new
+            {
+                site.Id,
+                site.OrgName,
+                site.Title,
+                site.DefaultUrl,
+                site.Level,
+                OtherRecordId = record == null ? (long?)null : record.Id
+            })
+            .ToListAsync(HttpContext.RequestAborted);
+
+        // 用伺服器日期計算，與網站管理清單的剩餘天數一致
+        var today = DateTime.Today;
+
+        return recordRows
+            .Select(row =>
+            {
+                // 版本以站台實際設定為準，網站資料可能填錯（與網站管理清單同一原則）
+                var level = row.SiteLevel ?? row.RecordLevel;
+                return new CustomerWebsiteDto(
+                    RowKey: $"P{row.Id}",
+                    PlatformWebsiteId: row.Id,
+                    WebsiteId: row.WebsiteId,
+                    Name: FirstNonBlank(row.RecordName, row.SiteTitle, row.OrgName),
+                    OrgName: row.OrgName,
+                    Level: level,
+                    LevelText: level?.ToString() ?? string.Empty,
+                    Status: row.Status,
+                    StatusText: row.Status.ToString(),
+                    Url: FirstNonBlank(row.SiteUrl, row.RecordUrl),
+                    ServiceStartDate: row.ServiceStartDate,
+                    ServiceEndDate: row.ServiceEndDate,
+                    RemainingDays: ToRemainingDays(row.ServiceEndDate, today),
+                    IsLinkedToOtherCustomer: false);
+            })
+            .Concat(mappedRows.Select(row => new CustomerWebsiteDto(
+                RowKey: $"W{row.Id}",
+                // 網站資料掛在別的客戶時仍給 Id，讓使用者點得過去看是誰
+                PlatformWebsiteId: row.OtherRecordId,
+                WebsiteId: row.Id,
+                Name: FirstNonBlank(row.Title, row.OrgName),
+                OrgName: row.OrgName,
+                Level: row.Level,
+                LevelText: row.Level.ToString(),
+                Status: null,
+                StatusText: string.Empty,
+                Url: row.DefaultUrl,
+                ServiceStartDate: null,
+                ServiceEndDate: null,
+                RemainingDays: null,
+                IsLinkedToOtherCustomer: row.OtherRecordId is not null)))
+            // 還沒建網站資料（Status 為 null）排最前，其餘依狀態、到期日
+            .OrderBy(item => item.Status)
+            .ThenBy(item => item.ServiceEndDate is null)
+            .ThenBy(item => item.ServiceEndDate)
+            .ToList();
+    }
+
+    private static int? ToRemainingDays(DateTime? endDate, DateTime today) =>
+        endDate is null ? null : (endDate.Value.Date - today).Days;
+
+    private static string FirstNonBlank(params string?[] values) =>
+        Array.Find(values, value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? string.Empty;
+
     /// <summary>網站編輯頁「帶出客戶」：統編或完整公司名稱，兩者皆唯一所以最多一筆。查無回 404。</summary>
     [HttpGet("lookup")]
     public async Task<ActionResult<CustomerLookupDto>> Lookup([FromQuery] string? keyword)

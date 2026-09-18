@@ -1,4 +1,6 @@
-﻿export const CustomerType = {
+﻿import type { WebsiteLevelValue, WebsiteStatusValue } from "@/types/website";
+
+export const CustomerType = {
     未設定: 0,
     經銷商: 1,
     一般客戶: 2,
@@ -84,4 +86,30 @@ export interface CustomerForm {
     PrimaryContactPhone: string;
     PrimaryContactEmail: string;
     SubContacts: CustomerContactForm[];
+}
+
+/**
+* 客戶底下的站台（唯讀）。是「Platform 網站資料」與「後台公司綁定」的聯集：
+* - 兩個 Id 都有值＝網站資料已建，且對應到有效站台
+* - 只有 PlatformWebsiteId＝網站資料已建，還沒對應到站台
+* - 只有 WebsiteId＝後台已綁定，Platform 還沒建網站資料
+*/
+export interface CustomerWebsite {
+    /** v-for 的 key；聯集後單一 Id 不再唯一，改用 "P{id}"／"W{id}" */
+    RowKey: string;
+    PlatformWebsiteId: number | null;
+    WebsiteId: number | null;
+    Name: string;
+    OrgName: string | null;
+    Level: WebsiteLevelValue | null;
+    LevelText: string;
+    /** null＝尚未建立網站資料 */
+    Status: WebsiteStatusValue | null;
+    StatusText: string;
+    Url: string | null;
+    ServiceStartDate: string | null;
+    ServiceEndDate: string | null;
+    RemainingDays: number | null;
+    /** 後台綁到這個客戶，但網站資料掛在別的客戶 */
+    IsLinkedToOtherCustomer: boolean;
 }

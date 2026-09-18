@@ -7,6 +7,27 @@
 /** 與後端 HostPattern() 同一份規則 */
 const HOST_PATTERN = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9-]{2,63}$/;
 
+/**
+ * 常見的「兩段式公共後綴」。列在這裡的，註冊網域要保留三段（example.com.tw），
+ * 其餘一律保留兩段（example.com）。清單外的冷門後綴會判斷錯，需要時再補。
+ */
+const TWO_LABEL_SUFFIXES = new Set([
+    "com.tw", "net.tw", "org.tw", "gov.tw", "edu.tw", "idv.tw", "game.tw", "ebiz.tw", "club.tw",
+    "com.cn", "net.cn", "org.cn",
+    "com.hk", "com.sg", "com.my", "com.au", "com.br",
+    "co.jp", "ne.jp", "or.jp",
+    "co.kr", "co.uk", "org.uk", "co.nz", "co.th", "co.id", "co.in"
+]);
+
+/** shop.example.com.tw → example.com.tw；blog.example.com → example.com */
+function stripSubdomain(host: string): string {
+    const labels = host.split(".");
+    if (labels.length <= 2) return host;
+
+    const keep = TWO_LABEL_SUFFIXES.has(labels.slice(-2).join(".")) ? 3 : 2;
+    return labels.length <= keep ? host : labels.slice(-keep).join(".");
+}
+
 export function toDomainName(input: string): string {
     const text = input.trim();
     if (text === "") return "";
@@ -26,7 +47,7 @@ export function toDomainName(input: string): string {
     // 不是合法主機名稱（IP、localhost、打字打一半）就原樣保留
     if (!HOST_PATTERN.test(host)) return text;
 
-    // 去掉後必須還有兩段以上，否則 www.tw 會變成無效的 tw
-    const stripped = host.startsWith("www.") ? host.slice(4) : host;
+    // 去掉子網域後必須還有兩段以上，否則 www.tw 會變成無效的 tw
+    const stripped = stripSubdomain(host.startsWith("www.") ? host.slice(4) : host);
     return stripped.includes(".") ? stripped : host;
 }

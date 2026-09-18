@@ -51,9 +51,35 @@ public static partial class PlatformDomainName
             .ToList();
     }
 
-    /// <summary>彈窗預填用。無法可靠判斷 .com.tw 這類後綴，只去掉 www.，由使用者自行修正。</summary>
+    /// <summary>
+    /// 常見的「兩段式公共後綴」。列在這裡的，註冊網域要保留三段（example.com.tw），
+    /// 其餘一律保留兩段（example.com）。清單外的冷門後綴會判斷錯，需要時再補。
+    /// 與前端 ClientApp/src/utils/domain-name.ts 同一份清單，改了要兩邊一起改。
+    /// </summary>
+    private static readonly HashSet<string> TwoLabelSuffixes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "com.tw", "net.tw", "org.tw", "gov.tw", "edu.tw", "idv.tw", "game.tw", "ebiz.tw", "club.tw",
+        "com.cn", "net.cn", "org.cn",
+        "com.hk", "com.sg", "com.my", "com.au", "com.br",
+        "co.jp", "ne.jp", "or.jp",
+        "co.kr", "co.uk", "org.uk", "co.nz", "co.th", "co.id", "co.in"
+    };
+
+    /// <summary>shop.example.com.tw → example.com.tw；blog.example.com → example.com。比對用的 Candidates() 不走這裡。</summary>
+    public static string StripSubdomain(string host)
+    {
+        var labels = host.Split('.');
+        if (labels.Length <= 2)
+            return host;
+
+        var keep = TwoLabelSuffixes.Contains(string.Join('.', labels[^2..])) ? 3 : 2;
+        return labels.Length <= keep ? host : string.Join('.', labels[^keep..]);
+    }
+
+    /// <summary>彈窗預填用：去掉 www. 與子網域，取出註冊網域。</summary>
     public static string Suggest(string host) =>
-        host.StartsWith("www.", StringComparison.Ordinal) ? host[4..] : host;
+        StripSubdomain(host.StartsWith("www.", StringComparison.Ordinal) ? host[4..] : host);
+
 
     /// <summary>候選一次查完，取名稱最長（最精確）的那筆。</summary>
     public static async Task<PlatformDomain?> FindBestMatchAsync(

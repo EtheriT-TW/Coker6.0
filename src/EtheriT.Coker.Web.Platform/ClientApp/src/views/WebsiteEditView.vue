@@ -19,6 +19,7 @@
         WebsiteStatus,
         websiteLevelOptions,
         websiteStatusOptions,
+        hostLocationOptions,
         type WebsiteDetail,
         type WebsiteForm
     } from "@/types/website";
@@ -407,7 +408,12 @@
                 <div class="form-field">
                     <label>
                         <span>主機位置</span>
-                        <input v-model="form.model.value.HostLocation" type="text" maxlength="200" />
+                        <select v-model="form.model.value.HostLocation">
+                            <option value="">未選擇</option>
+                            <option v-for="option in hostLocationOptions" :key="option.Value" :value="option.Value">
+                                {{option.Text}}
+                            </option>
+                        </select>
                     </label>
                 </div>
 

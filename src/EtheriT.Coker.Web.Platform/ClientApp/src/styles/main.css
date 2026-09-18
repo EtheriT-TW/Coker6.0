@@ -1298,6 +1298,10 @@ button, input, select, textarea {
     margin-bottom: 18px;
 }
 
+#website-customer-keyword {
+    font-weight:700;
+}
+
 /* 圖示在左、文字（標題／數字／說明）在右 */
 .metric-card-inline {
     display: flex;

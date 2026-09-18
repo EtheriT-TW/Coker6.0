@@ -19,6 +19,15 @@ export const WebsiteLevel = {
 
 export type WebsiteLevelValue = (typeof WebsiteLevel)[keyof typeof WebsiteLevel];
 
+export const HostLocation = {
+    主機28: "210.65.132.28",
+    主機30: "210.65.132.30",
+    主機31: "210.65.132.31",
+    NAS: "NAS封存"
+} as const;
+
+export type HostLocationValue = (typeof HostLocation)[keyof typeof HostLocation];
+
 export const websiteStatusOptions: Array<{ Value: WebsiteStatusValue; Text: string }> = [
     { Value: WebsiteStatus.正常, Text: "正常" },
     { Value: WebsiteStatus.暫停, Text: "暫停" },
@@ -30,6 +39,13 @@ export const websiteLevelOptions: Array<{ Value: WebsiteLevelValue; Text: string
     { Value: WebsiteLevel.形象, Text: "形象" },
     { Value: WebsiteLevel.會員, Text: "會員" },
     { Value: WebsiteLevel.購物, Text: "購物" }
+];
+
+export const hostLocationOptions: Array<{ Value: HostLocationValue; Text: string }> = [
+    { Value: HostLocation.主機28, Text: "210.65.132.28" },
+    { Value: HostLocation.主機30, Text: "210.65.132.30" },
+    { Value: HostLocation.主機31, Text: "210.65.132.31" },
+    { Value: HostLocation.NAS, Text: "NAS封存" }
 ];
 
 export interface WebsiteListItem {

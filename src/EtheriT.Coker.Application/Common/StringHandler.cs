@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using MimeKit;
@@ -91,10 +92,27 @@ namespace EtheriT.Coker.Application.Common
         public string MaskAddress(string? address)
         {
             if (string.IsNullOrWhiteSpace(address)) return "";
-            var a = address.Replace(" ", "");
+            var trimmed = address.Trim();
+            var normalized = Regex.Replace(trimmed, @"\s+", "");
 
-            // 最簡規則：保留前面、尾端遮蔽
-            return a.Length <= 3 ? "***" : a.Substring(0, a.Length - 3) + "***";
+            // 台灣地址只保留縣市與行政區，其餘路、街、巷、弄、號與樓層全部遮蔽。
+            var administrativeArea = Regex.Match(
+                normalized,
+                @"^(.{2,3}[縣市].{1,4}(?:區|鄉|鎮|市))");
+            if (administrativeArea.Success)
+                return administrativeArea.Groups[1].Value + "***";
+
+            // 非台灣地址若能以空白辨識單字，只保留第一個單字。
+            var words = Regex.Split(trimmed, @"[\s　]+")
+                .Where(word => !string.IsNullOrWhiteSpace(word))
+                .ToArray();
+            if (words.Length > 1)
+                return words[0] + "***";
+
+            // 無法區分單字時只保留前六個文字元素，並避免切斷 emoji 或組合字元。
+            var textElementIndexes = StringInfo.ParseCombiningCharacters(normalized);
+            if (textElementIndexes.Length <= 6) return "***";
+            return normalized.Substring(0, textElementIndexes[6]) + "***";
         }
 
         public string NormalizeKeyword(string? keyword)

@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Member
         public DateTime? Birthday { get; set; }
         public int bonus { get; set; } = 0;
         public List<string> Tags { get; set; } = new List<string>();
+        public bool IsCustomerPrivacyMasked { get; set; }
 
     }
 }

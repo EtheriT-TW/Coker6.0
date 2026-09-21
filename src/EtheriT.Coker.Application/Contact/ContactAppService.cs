@@ -6,6 +6,7 @@ using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Contact.Export;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Contact;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.Contact;
@@ -20,6 +21,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MiniExcelLibs;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -51,6 +53,8 @@ namespace EtheriT.Coker.Application.Contact
         private readonly IMapper mapper;
         private readonly ILogger<ContactAppService> logger;
         private readonly ExportTemplateResolver exportTemplateResolver;
+        private readonly IPermissionsAppService permissionsAppService;
+        private readonly StringHandler stringHandler;
         public ContactAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -59,7 +63,9 @@ namespace EtheriT.Coker.Application.Contact
             AppConfiguration configuration,
             IMapper mapper,
             ILogger<ContactAppService> logger,
-            ExportTemplateResolver exportTemplateResolver
+            ExportTemplateResolver exportTemplateResolver,
+            IPermissionsAppService permissionsAppService,
+            StringHandler stringHandler
         )
         {
             this.db = db;
@@ -70,6 +76,8 @@ namespace EtheriT.Coker.Application.Contact
             this.loginUserData = loginUserData;
             this.logger = logger;
             this.exportTemplateResolver = exportTemplateResolver;
+            this.permissionsAppService = permissionsAppService;
+            this.stringHandler = stringHandler;
 
         }
         public async Task<ResponseMessageDto> submit(FormSubmitDto dto)
@@ -231,6 +239,18 @@ namespace EtheriT.Coker.Application.Contact
             if (dataQuery.Any())
             {
                 var output = DataSourceLoader.Load(dataQuery, loadOptions);
+                if (!await permissionsAppService.CanViewCustomerPrivacy() &&
+                    output.data is IEnumerable<ContactListDto> contacts)
+                {
+                    var page = contacts.ToList();
+                    foreach (var contact in page)
+                    {
+                        contact.UserName = stringHandler.MaskName(contact.UserName);
+                        contact.Email = stringHandler.MaskEmail(contact.Email);
+                    }
+
+                    output.data = page;
+                }
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }
             else
@@ -319,6 +339,18 @@ namespace EtheriT.Coker.Application.Contact
                         validation.MaxRows
                     };
                     return validation;
+                }
+
+                if (!await permissionsAppService.CanViewCustomerPrivacy())
+                {
+                    response = CreateExportFailure(
+                        HttpStatusCode.Forbidden,
+                        "E005",
+                        "此角色未開啟查看客戶隱私資訊權限",
+                        ErrorCodeEnum.Forbidden,
+                        exportMaxRows);
+                    auditResult = new { response.HttpStatusCode, response.ErrorCodeKey, response.Error };
+                    return response;
                 }
 
                 var websiteId = await loginUserData.GetWebsiteId();
@@ -498,7 +530,15 @@ namespace EtheriT.Coker.Application.Contact
             {
                 var websiteId = await loginUserData.GetWebsiteId();
                 var dataQuery = await db.Contacts.Include(e => e.WebMenu).Where(e => e.WebMenu != null && e.WebMenu.FK_WebsiteId == websiteId && e.Id == id).FirstOrDefaultAsync();
-                response.Object = mapper.Map<AsrFormDataDto>(dataQuery);
+                var contact = mapper.Map<AsrFormDataDto>(dataQuery);
+                if (contact != null && !await permissionsAppService.CanViewCustomerPrivacy())
+                {
+                    contact.Email = stringHandler.MaskEmail(contact.Email);
+                    contact.FromDate = MaskContactFormData(contact.FromDate);
+                    contact.Html = "<p>客戶隱私資訊已隱藏</p>";
+                }
+
+                response.Object = contact;
                 response.Success = true;
             }
             catch (Exception ex)
@@ -507,6 +547,35 @@ namespace EtheriT.Coker.Application.Contact
             }
             return response;
         }
+
+        private static string MaskContactFormData(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return json ?? string.Empty;
+            }
+
+            try
+            {
+                var form = JObject.Parse(json);
+                foreach (var field in form.Properties())
+                {
+                    if (field.Value is JObject item && item["value"] is JToken value &&
+                        value.Type != JTokenType.Null &&
+                        !string.IsNullOrWhiteSpace(value.ToString()))
+                    {
+                        item["value"] = "******";
+                    }
+                }
+
+                return form.ToString(Formatting.None);
+            }
+            catch (Newtonsoft.Json.JsonException)
+            {
+                return "{}";
+            }
+        }
+
         public async Task<ResponseMessageDto> ReplyContact(ContactReplyDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();

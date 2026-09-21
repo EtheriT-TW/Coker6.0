@@ -16,7 +16,16 @@ import {
     getDownloadIconClass,
     normalizeFileDownloadComponent
 } from './plugins/file/fileComponentPlugin.js';
+import {
+    imageListPlugin,
+    imageListComponentType,
+    imageListEditorCommandId,
+    imageListUploadCommandId,
+    openImageListEditor,
+    openImageListBatchUpload
+} from './plugins/imageList/imageListPlugin.js';
 import 'grapesjs/dist/css/grapes.min.css';
+import './styles/imageListEditor.css';
 import './styles/swiperEditor.css';
 import './styles/componentInsert/Modal.css';
 import './styles/richText/Index.css';
@@ -38,6 +47,14 @@ export {
     getDownloadFileExtension,
     getDownloadIconClass,
     normalizeFileDownloadComponent
+};
+export {
+    imageListPlugin,
+    imageListComponentType,
+    imageListEditorCommandId,
+    imageListUploadCommandId,
+    openImageListEditor,
+    openImageListBatchUpload
 };
 export { grapesjs };
 

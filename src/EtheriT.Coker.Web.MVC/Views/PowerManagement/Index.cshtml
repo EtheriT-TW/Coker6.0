@@ -62,13 +62,32 @@
                     <input id="edit-role-name" name="name" class="form-control " type="text" placeholder="角色名稱">
                     <label for="edit-role-name" class="form-label">角色名稱</label>
                 </div>
-                <div class="mb-3">
-                    <input id="edit-role-IsSuperUser" name="isSuperUser" class="form-control selectedItem" type="checkbox" value="true">
-                    <label for="edit-role-IsSuperUser" class="form-label">
-                        <i class="material-symbols-outlined">check</i>
-                        <i class="material-symbols-outlined">block</i>
-                        總管理者
-                    </label>
+                <div class="row g-3 mb-3 w-100">
+                    <div class="col-6 d-flex align-items-center">
+                        <input id="edit-role-IsSuperUser" name="isSuperUser" class="form-control selectedItem" type="checkbox" value="true">
+                        <label for="edit-role-IsSuperUser" class="form-label mb-0">
+                            <i class="material-symbols-outlined">check</i>
+                            <i class="material-symbols-outlined">block</i>
+                            總管理者
+                        </label>
+                    </div>
+                    <div class="col-6 d-flex align-items-center">
+                        <input id="edit-role-CanViewCustomerPrivacy" name="canViewCustomerPrivacy" class="form-control selectedItem" type="checkbox" value="true">
+                        <label for="edit-role-CanViewCustomerPrivacy" class="form-label mb-0">
+                            <i class="material-symbols-outlined">check</i>
+                            <i class="material-symbols-outlined">block</i>
+                            查看客戶隱私資訊
+                        </label>
+                        <button type="button"
+                                class="border-0 bg-transparent text-secondary p-0 ms-1 d-inline-flex"
+                                aria-label="查看客戶隱私資訊權限說明"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-container="body"
+                                data-bs-title="受此權限控制的頁面：訂單、會員、聯絡我們">
+                            <span class="material-symbols-outlined fs-5">info</span>
+                        </button>
+                    </div>
                 </div>
                 <button class="btn submit" type="button">儲存</button>
             </form>

@@ -664,12 +664,97 @@ function SwiperInit(obj) {
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="none" stroke="#555" stroke-width="4"/><path d="M24 6a18 18 0 0 1 18 18" fill="none" stroke="#ddd" stroke-width="4" stroke-linecap="round"/></svg>'
             );
             const pictureLoadingStyle = `background-image: url(${pictureLoadingIcon}); background-position: center; background-repeat: no-repeat; background-size: 36px 36px;`;
-            function setPictureImageSource(image, src) {
-                if (image.getAttribute('src') === src) return;
+            const maxConcurrentPictureImageLoads = 1;
+            const pictureImageRequests = new WeakMap();
+            const pictureImageQueue = [];
+            let activePictureImageLoads = 0;
+            let pictureImageRequestOrder = 0;
+            let pictureImageQueuePaused = false;
+            function drainPictureImageQueue() {
+                if (pictureImageQueuePaused) return;
+                pictureImageQueue.sort(function (a, b) {
+                    return b.priority - a.priority || a.order - b.order;
+                });
+                while (activePictureImageLoads < maxConcurrentPictureImageLoads && pictureImageQueue.length > 0) {
+                    const request = pictureImageQueue.shift();
+                    if (request.state !== 'queued' || pictureImageRequests.get(request.image) !== request) continue;
+
+                    request.state = 'active';
+                    activePictureImageLoads++;
+                    request.image.addEventListener('load', request.onLoad);
+                    request.image.addEventListener('error', request.onError);
+                    request.image.setAttribute('src', request.src);
+                }
+            }
+            function finishPictureImageRequest(request) {
+                if (request.state !== 'active') return;
+                request.image.removeEventListener('load', request.onLoad);
+                request.image.removeEventListener('error', request.onError);
+                request.state = 'done';
+                activePictureImageLoads--;
+                if (pictureImageRequests.get(request.image) === request) pictureImageRequests.delete(request.image);
+                drainPictureImageQueue();
+            }
+            function cancelPictureImageRequest(image) {
+                const request = pictureImageRequests.get(image);
+                if (!request) return;
+
+                pictureImageRequests.delete(image);
+                if (request.state === 'active') {
+                    image.removeEventListener('load', request.onLoad);
+                    image.removeEventListener('error', request.onError);
+                    request.state = 'cancelled';
+                    activePictureImageLoads--;
+                } else {
+                    request.state = 'cancelled';
+                }
+                if (!pictureImageQueuePaused) drainPictureImageQueue();
+            }
+            function setPictureImageSource(image, src, priority) {
+                const currentRequest = pictureImageRequests.get(image);
+                if (src && currentRequest && currentRequest.src === src) return;
+                if (src && !currentRequest && image.getAttribute('src') === src && image.naturalWidth > 0) return;
+
+                cancelPictureImageRequest(image);
                 image.style.opacity = '0';
                 image.parentElement.style.backgroundImage = `url(${pictureLoadingIcon})`;
-                if (src) image.setAttribute('src', src);
-                else image.removeAttribute('src');
+                image.removeAttribute('src');
+                if (!src) return;
+
+                const request = {
+                    image: image,
+                    src: src,
+                    priority: priority || 0,
+                    order: pictureImageRequestOrder++,
+                    state: 'queued'
+                };
+                request.onLoad = function () {
+                    // Wait for decode as well as download so iOS never decodes several originals together.
+                    if (typeof image.decode === 'function') {
+                        image.decode().catch(function () { }).then(function () {
+                            finishPictureImageRequest(request);
+                        });
+                    } else {
+                        finishPictureImageRequest(request);
+                    }
+                };
+                request.onError = function () {
+                    finishPictureImageRequest(request);
+                };
+                pictureImageRequests.set(image, request);
+                pictureImageQueue.push(request);
+                drainPictureImageQueue();
+            }
+            function clearPictureImageQueue() {
+                pictureImageQueuePaused = true;
+                $('#SwiperModal img[data-src]').each(function () {
+                    cancelPictureImageRequest(this);
+                    this.removeAttribute('src');
+                    this.style.opacity = '0';
+                });
+                pictureImageQueue.length = 0;
+                pictureImageQueuePaused = false;
+                drainPictureImageQueue();
             }
             // Hide the empty/broken image until the real image has loaded; its parent shows the loading icon.
             document.getElementById('SwiperModal').addEventListener('load', function (event) {
@@ -680,24 +765,61 @@ function SwiperInit(obj) {
                 }
             }, true);
             let buildingPictureSlides = false;
+            function isIosDevice() {
+                return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            }
+            const $sourcePictureImages = $('.picture-category img').filter(function () {
+                return $(this).closest('.swiper-thumbs').length === 0;
+            });
+            const $sourcePictureContainers = $sourcePictureImages.closest('.picture-category');
+            const sourcePictureLazyImages = window.Coker.LazyImage.create($sourcePictureImages, {
+                rootMargin: '100px 0px',
+                unloadOnExit: true,
+                unloadOnPause: true,
+                fadeDuration: 250
+            });
+            function resumeSourcePictureImages() {
+                $sourcePictureContainers.css('visibility', '');
+                sourcePictureLazyImages.resume();
+            }
+            function pauseSourcePictureImages() {
+                sourcePictureLazyImages.pause();
+                $sourcePictureContainers.css('visibility', 'hidden');
+            }
+            resumeSourcePictureImages();
             function loadPictureImages(swiper) {
                 if (buildingPictureSlides || !$('#SwiperModal').hasClass('show')) return;
+                // Only the active original is decoded. The next slide is requested as soon as Swiper changes index.
                 $(swiper.slides).each(function (index) {
                     $(this).find('img[data-src]').each(function () {
-                        if (Math.abs(index - swiper.activeIndex) <= 1) {
-                            setPictureImageSource(this, this.getAttribute('data-src'));
+                        const distance = Math.abs(index - swiper.activeIndex);
+                        if (distance === 0) {
+                            setPictureImageSource(this, this.getAttribute('data-src'), 100);
                         } else {
                             setPictureImageSource(this, null);
                         }
                     });
                 });
+                if (isIosDevice()) {
+                    $(pictureSwiperThumbs.slides).each(function (index) {
+                        $(this).find('img[data-src]').each(function () {
+                            if (Math.abs(index - swiper.activeIndex) <= 1) {
+                                setPictureImageSource(this, this.getAttribute('data-src'), 10);
+                            } else {
+                                setPictureImageSource(this, null);
+                            }
+                        });
+                    });
+                }
             }
             // Only visible thumbnails request images; fixed image width keeps slide measurements stable.
             const thumbnailObserver = new IntersectionObserver(function (entries) {
                 entries.forEach(function (entry) {
                     const image = entry.target;
+                    if (isIosDevice()) return;
                     if (entry.isIntersecting && $('#SwiperModal').hasClass('show')) {
-                        setPictureImageSource(image, image.getAttribute('data-src'));
+                        setPictureImageSource(image, image.getAttribute('data-src'), 10);
                     } else {
                         setPictureImageSource(image, null);
                     }
@@ -716,7 +838,7 @@ function SwiperInit(obj) {
             // unnecessarily reposition the strip and retrigger the visibility observer.
             document.getElementById('pictureSwiperThumbs').addEventListener('load', function (event) {
                 if (event.target.matches('img[data-src]')) event.stopImmediatePropagation();
-            }, true);
+            }, false);
             let pictureSwiperThumbsOptions = {
                 spaceBetween: 10,
                 slidesPerView: 'auto',
@@ -808,6 +930,7 @@ function SwiperInit(obj) {
                 }
             };
             let pictureSwiper = new Swiper("#pictureSwiper", pictureSwiperOptions);
+            let pictureModalOpening = false;
             pictureSwiper.autoplay.stop();
             function restoreActivePictureSwiperMedia(index) {
                 var activeSlide = $(pictureSwiper.wrapperEl).find('.swiper-slide').eq(index);
@@ -821,10 +944,16 @@ function SwiperInit(obj) {
                     $iframe.attr('src', $iframe.data('src'));
                 }
             }
-            $(".picture-category a").attr("href", "#SwiperModal").off("click.pictureSwiper").on("click.pictureSwiper", function () {
+            $(".picture-category a").attr("href", "#SwiperModal").off("click.pictureSwiper").on("click.pictureSwiper", function (event) {
+                // Cancel navigation even if slide construction fails before returning false.
+                event.preventDefault();
+                event.stopPropagation();
+                if (buildingPictureSlides || pictureModalOpening || $('#SwiperModal').hasClass('show')) return false;
+                pictureModalOpening = true;
                 buildingPictureSlides = true;
                 stopSwiperModalMedia(pictureSwiper);
                 thumbnailObserver.disconnect();
+                clearPictureImageQueue();
                 pictureSwiper.removeAllSlides();
                 pictureSwiperThumbs.removeAllSlides();
                 const self = this;
@@ -844,7 +973,7 @@ function SwiperInit(obj) {
                     var start_time = $a.data("start_time") || 0;
                     var keep_time = $(this).data("keep_time") || 5;
                     keep_time = keep_time * 1000;
-                    obj['src'] = $(this).attr("src");
+                    obj['src'] = sourcePictureLazyImages.getSource(this) || $(this).attr("src");
                     obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
                     const imageWidth = this.naturalWidth || Number($(this).attr('width'));
                     const imageHeight = this.naturalHeight || Number($(this).attr('height'));
@@ -865,6 +994,7 @@ function SwiperInit(obj) {
                     }
                 });
                 if (!$items.length) {
+                    pictureModalOpening = false;
                     buildingPictureSlides = false;
                     return false;
                 }
@@ -903,18 +1033,25 @@ function SwiperInit(obj) {
                     slides.push(newSlide);
                     thumbnailSlides.push(newSlideThumbs);
                 }
+                $('#pictureSwiper').css('height', '');
+                $('#pictureSwiperThumbs').show();
                 pictureSwiperThumbs.appendSlide(thumbnailSlides);
                 pictureSwiper.appendSlide(slides);
                 buildingPictureSlides = false;
                 pictureSwiper.autoplay.stop();
 
                 $('#SwiperModal').off("shown.bs.modal.pictureSwiper").on("shown.bs.modal.pictureSwiper", function () {
+                    pictureModalOpening = false;
+                    // Updates can emit slideChange before the clicked slide is selected.
+                    // Do not request images for that temporary active index.
+                    buildingPictureSlides = true;
                     sizePictureThumbnails(pictureSwiperThumbs);
                     pictureSwiperThumbs.update();
                     pictureSwiper.update();
                     pictureSwiper.slideTo(index, 0, false);
                     pictureSwiperThumbs.slideTo(index, 0, false);
                     pictureSwiper.thumbs.update();
+                    buildingPictureSlides = false;
                     revealPictureThumbnails(pictureSwiper, 0);
                     loadPictureImages(pictureSwiper);
                     $(pictureSwiperThumbs.wrapperEl).find('img[data-src]').each(function () {
@@ -925,19 +1062,37 @@ function SwiperInit(obj) {
                 });
                 $('#SwiperModal').off("hide.bs.modal.pictureSwiper").on("hide.bs.modal.pictureSwiper", function () {
                     stopSwiperModalMedia(pictureSwiper);
+                    clearPictureImageQueue();
                     document.activeElement.blur();
                 });
                 $('#SwiperModal').off("hidden.bs.modal.pictureSwiper").on("hidden.bs.modal.pictureSwiper", function () {
+                    pictureModalOpening = false;
                     stopSwiperModalMedia(pictureSwiper);
                     thumbnailObserver.disconnect();
+                    clearPictureImageQueue();
                     buildingPictureSlides = true;
                     pictureSwiper.removeAllSlides();
                     pictureSwiperThumbs.removeAllSlides();
                     buildingPictureSlides = false;
                     $header_text.text('');
+                    $('#SwiperModal').addClass('fade');
+                    resumeSourcePictureImages();
                     self.focus();
                 });
-                $('#SwiperModal').modal('show');
+                pauseSourcePictureImages();
+                if (isIosDevice()) {
+                    // Avoid compositing the already image-heavy page and the fading modal in the same frame.
+                    $('#SwiperModal').removeClass('fade');
+                    requestAnimationFrame(function () {
+                        requestAnimationFrame(function () {
+                            setTimeout(function () {
+                                $('#SwiperModal').modal('show');
+                            }, 50);
+                        });
+                    });
+                } else {
+                    $('#SwiperModal').modal('show');
+                }
                 return false;
             });
             $('#pictureSwiper').off('mouseenter.pictureSwiper mouseleave.pictureSwiper')

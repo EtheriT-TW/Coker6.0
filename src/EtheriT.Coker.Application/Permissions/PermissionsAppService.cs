@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Application.Permissions
 {
     public class PermissionsAppService : IPermissionsAppService
     {
+        private const string CustomerPrivacyPermissionName = "CustomerPrivacy.View";
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
         private readonly StringHandler stringHandler;
@@ -52,6 +53,11 @@ namespace EtheriT.Coker.Application.Permissions
                         Id = o.Id,
                         Name = o.Name,
                         IsSuperUser = o.IsSuperUser,
+                        CanViewCustomerPrivacy = db.Permissions.Any(p =>
+                            p.FK_WebsiteId == websideId &&
+                            p.FK_RoleId == o.Id &&
+                            p.Name == CustomerPrivacyPermissionName &&
+                            p.IsGranted),
                         Members = (
                             from u in db.Users.Where(e => !e.IsDeleted)
                             join m in db.MappingUserAndRoles.Where(e => !e.IsDeleted) on u.Id equals m.UserId
@@ -178,6 +184,28 @@ namespace EtheriT.Coker.Application.Permissions
                     .FirstOrDefaultAsync();
             return p != null;
 		}
+
+        public async Task<bool> CanViewCustomerPrivacy()
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+            var userId = await loginUserData.GetUserId();
+
+            return await (
+                from mapping in db.MappingUserAndRoles
+                join role in db.Roles on mapping.RoleId equals role.Id
+                where !mapping.IsDeleted &&
+                      !role.IsDeleted &&
+                      mapping.UserId == userId &&
+                      role.FK_WebsiteId == websiteId &&
+                      role.Type == RoleTypeEnum.後台 &&
+                      db.Permissions.Any(permission =>
+                          permission.FK_WebsiteId == websiteId &&
+                          permission.FK_RoleId == role.Id &&
+                          permission.Name == CustomerPrivacyPermissionName &&
+                          permission.IsGranted)
+                select role.Id
+            ).AnyAsync();
+        }
 
         public async Task<ResponseMessageDto> SavePermissions(SavePermissionsDto dto)
         {
@@ -487,11 +515,41 @@ namespace EtheriT.Coker.Application.Permissions
                 var role = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.Id == dto.Id).FirstOrDefaultAsync();
                 var powerRole = await db.Roles.Where(e => e.FK_WebsiteId == websiteId).Where(e => !e.IsDeleted).Where(e => e.IsSuperUser).FirstOrDefaultAsync();
                 if (role == null) throw new Exception("該角色不存在!");
-                else if(powerRole != null && powerRole.Id != dto.Id) throw new Exception("總管理者角色僅能唯一!");
+                else if(dto.IsSuperUser && powerRole != null && powerRole.Id != dto.Id) throw new Exception("總管理者角色僅能唯一!");
                 else
                 {
                     role.Name = dto.Name;
                     role.IsSuperUser = dto.IsSuperUser;
+
+                    var privacyPermissions = await db.Permissions
+                        .Where(e => e.FK_WebsiteId == websiteId)
+                        .Where(e => e.FK_RoleId == role.Id)
+                        .Where(e => e.FK_UserId == null)
+                        .Where(e => e.Name == CustomerPrivacyPermissionName)
+                        .ToListAsync();
+
+                    var grantCustomerPrivacy = dto.CanViewCustomerPrivacy;
+                    if (grantCustomerPrivacy && !privacyPermissions.Any())
+                    {
+                        db.Permissions.Add(new Core.Models.Permissions
+                        {
+                            Name = CustomerPrivacyPermissionName,
+                            IsGranted = true,
+                            FK_RoleId = role.Id,
+                            FK_WebsiteId = websiteId,
+                            CreationTime = DateTime.Now,
+                            CreatorUserId = await loginUserData.GetUserId()
+                        });
+                    }
+                    else if (grantCustomerPrivacy)
+                    {
+                        privacyPermissions.ForEach(permission => permission.IsGranted = true);
+                    }
+                    else if (privacyPermissions.Any())
+                    {
+                        db.Permissions.RemoveRange(privacyPermissions);
+                    }
+
                     await loginUserData.SaveChanges(role);
                     response.Success = true;
                 }

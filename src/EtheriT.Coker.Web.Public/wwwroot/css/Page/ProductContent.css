@@ -31,7 +31,7 @@ i.fa-chevron-right {
 
 .pro_title {
     font-size: 1.8rem !important;
-    line-height:1.2;
+    line-height: 1.2;
 }
 /* Product Display Modal */
 #ProDisplayModal.show {
@@ -154,34 +154,34 @@ i.fa-chevron-right {
             filter: brightness(0) invert(1);
         }
 
-    #Pro_Image .cloudimage-360-inner-box .cloudimage-360-icons-container {
-        left: 50%;
-        transform: translateX(-50%);
-    }
+#Pro_Image .cloudimage-360-inner-box .cloudimage-360-icons-container {
+    left: 50%;
+    transform: translateX(-50%);
+}
 
-    #Pro_Image .cloudimage-360-inner-box canvas {
-        opacity: 1;
-        transition: opacity .18s ease;
-    }
+#Pro_Image .cloudimage-360-inner-box canvas {
+    opacity: 1;
+    transition: opacity .18s ease;
+}
 
-    #Pro_Image.loading .cloudimage-360-inner-box canvas {
-        opacity: 0;
-        pointer-events: none;
-    }
+#Pro_Image.loading .cloudimage-360-inner-box canvas {
+    opacity: 0;
+    pointer-events: none;
+}
 
-    #Pro_Image.loading::after {
-        content: "\f110";
-        font-family: "Font Awesome 6 Free";
-        font-weight: 900;
-        font-size: 2rem;
-        color: rgba(0,0,0,0.6);
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        animation: fa-spin 1s linear infinite;
-        z-index: 10;
-    }
+#Pro_Image.loading::after {
+    content: "\f110";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 2rem;
+    color: rgba(0,0,0,0.6);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: fa-spin 1s linear infinite;
+    z-index: 10;
+}
 
 #Pro_Youtube {
     height: 100%;
@@ -398,6 +398,7 @@ i.fa-chevron-right {
         pointer-events: none;
         transform: scale(0.1);
     }
+
         .ProductSwiper > .swiper-wrapper > .swiper-slide > .schematic_image > img {
             pointer-events: none;
         }
@@ -459,26 +460,26 @@ i.fa-chevron-right {
             transform: translate(-50%, -50%);
         }
 
-        .ProductSwiper .schematic_youtube > i {
-            color: #fff !important;
-            line-height: 1;
-        }
+.ProductSwiper .schematic_youtube > i {
+    color: #fff !important;
+    line-height: 1;
+}
 
-        .ProductSwiper .schematic_youtube.provider-facebook {
-            background: #1877f2;
-        }
+.ProductSwiper .schematic_youtube.provider-facebook {
+    background: #1877f2;
+}
 
-        .ProductSwiper .schematic_youtube.provider-instagram {
-            background: linear-gradient(135deg, #833ab4, #c13584 45%, #fd1d1d 75%, #fcb045);
-        }
+.ProductSwiper .schematic_youtube.provider-instagram {
+    background: linear-gradient(135deg, #833ab4, #c13584 45%, #fd1d1d 75%, #fcb045);
+}
 
-        .ProductSwiper .schematic_youtube.provider-threads {
-            background: #000;
-        }
+.ProductSwiper .schematic_youtube.provider-threads {
+    background: #000;
+}
 
-        .ProductSwiper .schematic_youtube.provider-x {
-            background: #000;
-        }
+.ProductSwiper .schematic_youtube.provider-x {
+    background: #000;
+}
 
 .pro_external_video {
     align-items: center;
@@ -556,10 +557,10 @@ i.fa-chevron-right {
     overflow: hidden;
 }
 
-    .external-video-facebook__loading > i {
-        animation: external-video-facebook-pulse 1s ease-in-out infinite alternate;
-        font-size: 2.75rem;
-    }
+.external-video-facebook__loading > i {
+    animation: external-video-facebook-pulse 1s ease-in-out infinite alternate;
+    font-size: 2.75rem;
+}
 
 .external-video-facebook.is-ready .external-video-facebook__loading {
     opacity: 0;
@@ -567,13 +568,20 @@ i.fa-chevron-right {
 }
 
 @keyframes external-video-facebook-pulse {
-    from { opacity: .4; transform: scale(.94); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: .4;
+        transform: scale(.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
-    .pro_external_video:not(.d-none) {
-        display: flex;
-    }
+.pro_external_video:not(.d-none) {
+    display: flex;
+}
 
 /* PreviewSwiper */
 .PreviewSwiper > .swiper-wrapper > .swiper-slide {
@@ -631,11 +639,22 @@ i.fa-chevron-right {
     z-index: 2;
 }
 
-.external-video-preview__provider.provider-youtube { background: #f00; }
-.external-video-preview__provider.provider-facebook { background: #1877f2; }
-.external-video-preview__provider.provider-instagram { background: #c13584; }
-.external-video-preview__provider.provider-threads,
-.external-video-preview__provider.provider-x { background: #000; }
+    .external-video-preview__provider.provider-youtube {
+        background: #f00;
+    }
+
+    .external-video-preview__provider.provider-facebook {
+        background: #1877f2;
+    }
+
+    .external-video-preview__provider.provider-instagram {
+        background: #c13584;
+    }
+
+    .external-video-preview__provider.provider-threads,
+    .external-video-preview__provider.provider-x {
+        background: #000;
+    }
 
 /* 電腦板不顯示 ProductSwiper 分頁，手機板由下方 media query 覆蓋顯示 */
 .ProductSwiperPagination.swiper-pagination-fraction {
@@ -657,12 +676,12 @@ i.fa-chevron-right {
     overflow: hidden; /* 新增：防止圖片溢出 */
 }
 
-.PreviewSwiper .swiper-slide img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 填滿並裁切，保持比例不變形 */
-    display: block;
-}
+    .PreviewSwiper .swiper-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* 填滿並裁切，保持比例不變形 */
+        display: block;
+    }
 
 [class*=btn_swiper_] {
     z-index: 10;
@@ -725,16 +744,46 @@ i.fa-chevron-right {
 
     #Product > .image > .pro_tag {
         width: calc(100% - 30px);
-        height: 2rem;
+        height: auto;
         margin: 0;
-        overflow: hidden;
+        padding: 0 0 .35rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
         list-style: none;
     }
+
+        /* 不要加 scrollbar-width，一加 Chrome 就改用疊加式捲軸，常駐細條會消失 */
+        #Product > .image > .pro_tag::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        #Product > .image > .pro_tag::-webkit-scrollbar-track {
+            background: var(--gray-light);
+            border-radius: 999px;
+        }
+
+        #Product > .image > .pro_tag::-webkit-scrollbar-thumb {
+            background: var(--gray-text);
+            border-radius: 999px;
+        }
+
+            #Product > .image > .pro_tag::-webkit-scrollbar-thumb:hover {
+                background: var(--black-text);
+            }
+
+        #Product > .image > .pro_tag > li {
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+        }
 
         #Product > .image > .pro_tag .round_tag {
             padding: 0.25rem 0.8rem;
             margin-right: 0.5rem;
-            float: left;
+            display: inline-block;
             font-size: 0.8rem;
             line-height: 1.5rem;
             white-space: nowrap;
@@ -822,7 +871,7 @@ i.fa-chevron-right {
 /* CenterLine */
 #CenterLine {
     background-color: var(--gray-light);
-    min-height:56px;
+    min-height: 56px;
 }
 
     #CenterLine > div > div {
@@ -1041,8 +1090,9 @@ i.fa-chevron-right {
     #SwitchPage.container {
         padding: 1rem 0;
     }
+
     #Product > .content > .btn_learnMore {
-        margin-right:auto;
+        margin-right: auto;
     }
 
     #Product > .content > .specification > .collapse:not(.show) {
@@ -1051,6 +1101,38 @@ i.fa-chevron-right {
 }
 
 @media only screen and (max-width: 768px) {
+    /* 手機版：標籤改成左右滑動，並顯示捲軸讓使用者知道可以滑 */
+    #Product > .image > .pro_tag {
+        height: auto;
+        padding-bottom: .35rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+    }
+
+        /* 注意：不要加 scrollbar-width，一加 Chrome 就改用疊加式捲軸，常駐細條會消失 */
+        #Product > .image > .pro_tag::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        #Product > .image > .pro_tag::-webkit-scrollbar-track {
+            background: var(--gray-light);
+            border-radius: 999px;
+        }
+
+        #Product > .image > .pro_tag::-webkit-scrollbar-thumb {
+            background: var(--gray-text);
+            border-radius: 999px;
+        }
+
+        #Product > .image > .pro_tag > li {
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+        }
+
     #CenterLine {
         justify-content: start !important;
     }
@@ -1140,16 +1222,16 @@ i.fa-chevron-right {
         padding-left: 12px;
     }
 
-    #Product > .image,
-    #Product > .content {
-        padding-right: 0;
-        padding-left: 0;
-    }
+        #Product > .image,
+        #Product > .content {
+            padding-right: 0;
+            padding-left: 0;
+        }
 
-    #Product > .image > .container-fluid {
-        padding-right: 0;
-        padding-left: 0;
-    }
+            #Product > .image > .container-fluid {
+                padding-right: 0;
+                padding-left: 0;
+            }
 
     .btn_swiper_prev_product {
         left: .35rem !important;

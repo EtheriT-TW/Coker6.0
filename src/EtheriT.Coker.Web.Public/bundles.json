@@ -93,6 +93,7 @@
         "wwwroot/Shared/js/LinkWithIcon.js",
         "wwwroot/Shared/js/MapMessage.js",
         "wwwroot/Shared/js/MarqueeSwiper.js",
+        "wwwroot/Shared/js/LazyImage.js",
         "wwwroot/Shared/js/ShareBlock.js",
         "wwwroot/Shared/js/Sitemap.js",
         "wwwroot/Shared/js/Swiper.js",

@@ -4,6 +4,7 @@ var $btn_mail_lock, $btn_newpass_lock, $btn_checkpass_lock, $newpass, $passcheck
 var $member_number, $name, $sex, $status, $level, $email_basic, $birthday, $cellphone, $telphone_area, $telphone, $telphone_ext, $address_city, $address_town, $address, $email_login, $newpass, $passcheck, $memberPoint
 var member_list, keyId
 let isInit = false;
+let isCustomerPrivacyMasked = false;
 function PageReady() {
     ManagementDataCollapse();
 
@@ -117,6 +118,7 @@ function ElementInit() {
 }
 function FormDataClear() {
     ElementInit();
+    setCustomerPrivacyReadOnly(false);
     $name.val("");
     $sex.each(function () {
         if ($(this).val() == 3) {
@@ -239,6 +241,7 @@ function FormDataSet(result) {
         });
     } else $Tags.addClass("d-none");
     $email_login.val(result.email);
+    setCustomerPrivacyReadOnly(result.isCustomerPrivacyMasked === true);
     Coker.Member.GetHistoryOrder(result.uuid).done(function (result) {
         if (result.length > 0) {
             $.each(result, function (index, data) {
@@ -316,6 +319,11 @@ function Update(success_text, error_text) {
     });
 }
 function DataSave() {
+    if (isCustomerPrivacyMasked) {
+        Coker.sweet.error("無法儲存", "目前為客戶隱私資訊遮蔽狀態", null, false);
+        return;
+    }
+
     BasicInfoFilled = FormCheck(BasicInfoForm);
     if (BasicInfoFilled) {
         Coker.sweet.confirm("即將儲存", "確認儲存會員資料?", "儲存", "取消", function () {
@@ -465,4 +473,14 @@ function OrderDetailsPosition() {
 
 function addMemberClicked() {
     window.location.hash = 0;
+}
+
+function setCustomerPrivacyReadOnly(masked) {
+    isCustomerPrivacyMasked = masked === true;
+    $("#MemberForm").find("input, select, textarea").prop("disabled", isCustomerPrivacyMasked);
+    $("#MemberLevel").prop("disabled", isCustomerPrivacyMasked);
+    $("#CustomerPrivacyReadOnlyNotice").toggleClass("d-none", !isCustomerPrivacyMasked);
+    $(".btn_save")
+        .prop("disabled", isCustomerPrivacyMasked)
+        .toggleClass("d-none", isCustomerPrivacyMasked);
 }

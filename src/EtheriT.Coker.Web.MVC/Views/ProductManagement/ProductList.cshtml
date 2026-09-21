@@ -332,7 +332,7 @@
                                         c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc).HidingPriority(1);
                                         c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(3) ;
                                         c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(2);
-                        c.Add().Type(GridCommandColumnType.Buttons).Width(96)
+                        c.Add().Type(GridCommandColumnType.Buttons).Width(120)
                         .Buttons(b =>
                         {
                             b.Add().Name("edit").OnClick("editButtonClicked");

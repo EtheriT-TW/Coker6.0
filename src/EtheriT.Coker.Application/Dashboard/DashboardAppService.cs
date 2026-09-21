@@ -7,6 +7,7 @@ using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.FlowSize;
 using EtheriT.Coker.Application.BackgroundJob;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
@@ -20,19 +21,22 @@ namespace EtheriT.Coker.Application.Dashboard
         private readonly IFlowSizeAppService flowSizeAppService;
         private readonly IUploadPathResolver uploadPathResolver;
         private readonly StringHandler stringHandler;
+        private readonly IPermissionsAppService permissionsAppService;
 
         public DashboardAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IFlowSizeAppService flowSizeAppService,
             IUploadPathResolver uploadPathResolver,
-            StringHandler stringHandler)
+            StringHandler stringHandler,
+            IPermissionsAppService permissionsAppService)
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.flowSizeAppService = flowSizeAppService;
             this.uploadPathResolver = uploadPathResolver;
             this.stringHandler = stringHandler;
+            this.permissionsAppService = permissionsAppService;
         }
 
         public async Task<DashboardSystemOverviewDto> GetSystemOverview()
@@ -363,6 +367,7 @@ namespace EtheriT.Coker.Application.Dashboard
 
         public async Task<DashboardContactsOutputDto> GetContacts(int take = 5)
         {
+            var canViewCustomerPrivacy = await permissionsAppService.CanViewCustomerPrivacy();
             take = Math.Clamp(take, 1, 10);
             var siteId = await loginUserData.GetWebsiteId();
             var contacts = db.Contacts
@@ -436,7 +441,9 @@ namespace EtheriT.Coker.Application.Dashboard
                             : contact.Name,
                         UserName = string.IsNullOrWhiteSpace(contact.UserName)
                             ? "未填寫姓名"
-                            : stringHandler.MaskName(contact.UserName),
+                            : canViewCustomerPrivacy
+                                ? contact.UserName
+                                : stringHandler.MaskName(contact.UserName),
                         Status = contact.Status.ToString().Replace("_", "/"),
                         CreationTime = contact.CreationTime
                     })
@@ -448,6 +455,7 @@ namespace EtheriT.Coker.Application.Dashboard
         public async Task<DashboardCommerceOverviewDto> GetCommerceOverview()
         {
             var siteId = await loginUserData.GetWebsiteId();
+            var canViewCustomerPrivacy = await permissionsAppService.CanViewCustomerPrivacy();
             var level = await loginUserData.GetWebsiteLevel(siteId);
             if (!await IsCommerceEnabled(siteId, level))
             {
@@ -600,7 +608,9 @@ namespace EtheriT.Coker.Application.Dashboard
                         Id = order.Id,
                         Orderer = string.IsNullOrWhiteSpace(order.Orderer)
                             ? "未填寫訂購人"
-                            : stringHandler.MaskName(order.Orderer),
+                            : canViewCustomerPrivacy
+                                ? order.Orderer
+                                : stringHandler.MaskName(order.Orderer),
                         Status = order.State.ToString(),
                         Total = order.Total,
                         CreationTime = order.CreationTime

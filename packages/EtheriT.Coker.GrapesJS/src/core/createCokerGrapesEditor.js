@@ -7,6 +7,7 @@ import { componentInsertPlugin } from '../plugins/componentInsert/Index.js';
 import { faqComponentPlugin } from '../plugins/faq/faqComponentPlugin.js';
 import { linkComponentPlugin } from '../plugins/link/linkComponentPlugin.js';
 import { fileComponentPlugin } from '../plugins/file/fileComponentPlugin.js';
+import { imageListPlugin } from '../plugins/imageList/imageListPlugin.js';
 import { richTextProviderPlugin } from '../plugins/richText/Index.js';
 import { createOfficialPlugins } from '../plugins/officialPlugins.js';
 import { grapesZhTw } from '../locales/zhTw.js';
@@ -81,6 +82,7 @@ export function createCokerGrapesEditor(options = {}) {
             // so Vite owns the generic file components even with an old Coker6
             // bundle still present on the page.
             grapesjs.usePlugin(fileComponentPlugin),
+            grapesjs.usePlugin(imageListPlugin),
             grapesjs.usePlugin(swiperPlugin, {
                 adapter
             }),

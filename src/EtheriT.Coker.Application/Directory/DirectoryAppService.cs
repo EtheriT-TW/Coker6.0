@@ -997,7 +997,7 @@ namespace EtheriT.Coker.Application.Directory
                 e.Title.Contains(kw) ||
                 e.Introduction.Contains(kw) ||
                 e.Description.Contains(kw) ||
-                (e.Html ?? "").Contains(kw) ||
+                (e.PageText ?? "").Contains(kw) ||
                 (e.ItemNo != null && e.ItemNo.Contains(kw)) ||
                 db.Tag_Associates.AsNoTracking()
                     .Include(t => t.Tag)
@@ -1752,7 +1752,7 @@ namespace EtheriT.Coker.Application.Directory
                     e.Title.Contains(dto.SearchText ?? "") ||
                     e.Introduction.Contains(dto.SearchText ?? "") ||
                     e.Description.Contains(dto.SearchText ?? "") ||
-                    (e.Html ?? "").Contains(dto.SearchText ?? "") ||
+                    (e.PageText ?? "").Contains(dto.SearchText ?? "") ||
                     (e.ItemNo != null && e.ItemNo.Contains(dto.SearchText ?? "")) ||
                     db.Tag_Associates.Include(t => t.Tag)
                         .Where(t => t.Tag != null && t.Tag.FK_WebsiteId == WebsiteID && t.Type == TagAssociateTypeEnum.商品 && !t.Tag.IsDeleted && !t.IsDeleted)

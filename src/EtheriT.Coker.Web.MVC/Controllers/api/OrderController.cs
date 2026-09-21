@@ -1,5 +1,7 @@
 ﻿using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Order;
@@ -16,11 +18,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
     public class OrderController : Controller
     {
         private readonly IOrderAppService orderAppService;
+        private readonly IPermissionsAppService permissionsAppService;
+        private readonly StringHandler stringHandler;
         public OrderController(
-            IOrderAppService orderAppService
+            IOrderAppService orderAppService,
+            IPermissionsAppService permissionsAppService,
+            StringHandler stringHandler
             )
         {
             this.orderAppService = orderAppService;
+            this.permissionsAppService = permissionsAppService;
+            this.stringHandler = stringHandler;
         }
 
         [HttpGet]
@@ -31,7 +39,27 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         [HttpGet]
         public async Task<OrderHeaderGetOneDto> GetHeaderOne(long id)
         {
-            return await orderAppService.GetHeaderOne(id);
+            var order = await orderAppService.GetHeaderOne(id);
+            if (order != null && !await permissionsAppService.CanViewCustomerPrivacy())
+            {
+                order.Orderer = stringHandler.MaskName(order.Orderer);
+                order.OrdererTelePhone = stringHandler.MaskTelPhone(order.OrdererTelePhone);
+                order.OrdererCellPhone = stringHandler.MaskCellPhone(order.OrdererCellPhone);
+                order.OrdererEmail = stringHandler.MaskEmail(order.OrdererEmail);
+                order.Recipient = stringHandler.MaskName(order.Recipient);
+                order.RecipientTelePhone = stringHandler.MaskTelPhone(order.RecipientTelePhone);
+                order.RecipientCellPhone = stringHandler.MaskCellPhone(order.RecipientCellPhone);
+                order.RecipientAddress = stringHandler.MaskAddress(order.RecipientAddress);
+                order.RecipientEmail = stringHandler.MaskEmail(order.RecipientEmail);
+                order.InvoiceTitle = stringHandler.MaskName(order.InvoiceTitle);
+                order.InvoiceAddress = stringHandler.MaskAddress(order.InvoiceAddress);
+                order.UniformId = string.IsNullOrWhiteSpace(order.UniformId)
+                    ? order.UniformId
+                    : $"***{order.UniformId.Substring(Math.Max(0, order.UniformId.Length - 3))}";
+                order.Carrier = string.IsNullOrWhiteSpace(order.Carrier) ? order.Carrier : "***";
+            }
+
+            return order;
         }
         [HttpGet]
         public async Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id)

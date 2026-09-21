@@ -3,6 +3,8 @@ using EtheriT.Coker.Application.Shared.Dto.ReportingModels;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Application.Marketing;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Permissions;
 using Microsoft.EntityFrameworkCore;
 
 namespace EtheriT.Coker.Application.Report
@@ -11,10 +13,18 @@ namespace EtheriT.Coker.Application.Report
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
-        public ReportingAppService(CokerDbContext db, LoginUserData loginUserData)
+        private readonly IPermissionsAppService permissionsAppService;
+        private readonly StringHandler stringHandler;
+        public ReportingAppService(
+            CokerDbContext db,
+            LoginUserData loginUserData,
+            IPermissionsAppService permissionsAppService,
+            StringHandler stringHandler)
         {
             this.db = db;
             this.loginUserData = loginUserData;
+            this.permissionsAppService = permissionsAppService;
+            this.stringHandler = stringHandler;
         }
         public async Task<R001撿貨單Model?> GetR001ModelAsync(long id)
         {
@@ -27,6 +37,7 @@ namespace EtheriT.Coker.Application.Report
                     .Where(x => x.Id == id && x.FK_WebsiteId == siteId).FirstOrDefault();
                 if (order != null)
                 {
+                    var canViewCustomerPrivacy = await permissionsAppService.CanViewCustomerPrivacy();
                     var detailItems = order.Order_Details
                         .Where(x => x.ShoppingCart != null)
                         .Select(x => new R001撿貨單Model.訂單明細Item
@@ -150,10 +161,10 @@ namespace EtheriT.Coker.Application.Report
                         列印時間 = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
                         訂單日期 = order.CreationTime.ToString("yyyy/MM/dd HH:mm"),
                         訂單編號 = ("000000000" + order.Id.ToString()).Substring(order.Id.ToString().Length, 9),
-                        客戶名稱 = order.Orderer,
-                        收件人 = order.Recipient,
-                        收件人地址 = order.RecipientAddress,
-                        收件人電話 = order.RecipientCellPhone,
+                        客戶名稱 = canViewCustomerPrivacy ? order.Orderer : stringHandler.MaskName(order.Orderer),
+                        收件人 = canViewCustomerPrivacy ? order.Recipient : stringHandler.MaskName(order.Recipient),
+                        收件人地址 = canViewCustomerPrivacy ? order.RecipientAddress : stringHandler.MaskAddress(order.RecipientAddress),
+                        收件人電話 = canViewCustomerPrivacy ? order.RecipientCellPhone : stringHandler.MaskCellPhone(order.RecipientCellPhone),
                         支付方式 = order.PaymentType.Title ?? "",
                         運費 = order.Freight,
                         用戶備註 = order.Remark ?? "",
@@ -164,11 +175,7 @@ namespace EtheriT.Coker.Application.Report
                         // 列印明細應與訂單明細、付款及退款流程一致，直接使用訂單保存的金額，
                         // 不可再次扣除 Discount，否則行銷活動折抵會被重複計算。
                         訂單總金額 = order.Subtotal + order.Freight,
-                        發票資訊 = $"{(
-                            string.IsNullOrEmpty(order.Carrier) ?
-                                string.IsNullOrEmpty(order.UniformId) ? "" : $"統一編號：{order.UniformId}\n公司抬頭：{order.InvoiceTitle}\n公司地址：{order.InvoiceAddress}" :
-                                $"手機條碼：{order.Carrier}"
-                        )}",
+                        發票資訊 = BuildInvoiceInformation(order, canViewCustomerPrivacy),
                         優惠券折抵 = 0,
                         送貨方式 = order.LogisticsSetting.Title,
                         訂單明細 = detailItems
@@ -189,6 +196,21 @@ namespace EtheriT.Coker.Application.Report
                 string msg = ex.Message;
             }
             return r001;
+        }
+
+        private string BuildInvoiceInformation(Core.Models.Order_Header order, bool canViewCustomerPrivacy)
+        {
+            if (!string.IsNullOrEmpty(order.Carrier))
+                return canViewCustomerPrivacy ? $"手機條碼：{order.Carrier}" : "手機條碼：***";
+
+            if (string.IsNullOrEmpty(order.UniformId))
+                return "";
+
+            if (canViewCustomerPrivacy)
+                return $"統一編號：{order.UniformId}\n公司抬頭：{order.InvoiceTitle}\n公司地址：{order.InvoiceAddress}";
+
+            var uniformId = $"***{order.UniformId.Substring(Math.Max(0, order.UniformId.Length - 3))}";
+            return $"統一編號：{uniformId}\n公司抬頭：{stringHandler.MaskName(order.InvoiceTitle)}\n公司地址：{stringHandler.MaskAddress(order.InvoiceAddress)}";
         }
     }
 }

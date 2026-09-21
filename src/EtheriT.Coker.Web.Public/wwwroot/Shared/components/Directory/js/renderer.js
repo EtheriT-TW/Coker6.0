@@ -574,7 +574,9 @@
 
     function resetType4CaptionHeights($item) {
         $item.removeClass("caption-equalized");
-        $item.find(".type4-caption").css("min-height", "");
+        $item.find(".type4-caption, [data-directory-caption-equalized='true']")
+            .css("min-height", "")
+            .removeAttr("data-directory-caption-equalized");
     }
 
     function getRowTop($el) {
@@ -626,7 +628,9 @@
             });
 
             rowItems.forEach(function ($caption) {
-                $caption.css("min-height", `${maxHeight}px`);
+                $caption
+                    .attr("data-directory-caption-equalized", "true")
+                    .css("min-height", `${maxHeight}px`);
             });
         });
 

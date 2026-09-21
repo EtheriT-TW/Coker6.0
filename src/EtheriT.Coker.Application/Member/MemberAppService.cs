@@ -17,6 +17,7 @@ using EtheriT.Coker.Application.Shared.Dto.Role;
 using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Shared.Processor;
+using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
@@ -45,6 +46,7 @@ namespace EtheriT.Coker.Application.Member
         private readonly StringHandler _stringHandler;
         private readonly IHtmlProcessor htmlProcessor;
         private readonly FrontMemberEmailValidationService frontMemberEmailValidationService;
+        private readonly IPermissionsAppService permissionsAppService;
 
         public MemberAppService(
             CokerDbContext db,
@@ -56,7 +58,8 @@ namespace EtheriT.Coker.Application.Member
             IHtmlProcessor htmlProcessor,
             MailAppService mailAppService,
             StringHandler stringHandler,
-            FrontMemberEmailValidationService frontMemberEmailValidationService)
+            FrontMemberEmailValidationService frontMemberEmailValidationService,
+            IPermissionsAppService permissionsAppService)
         {
             this.db = db;
             this.loginUserData = loginUserData;
@@ -68,6 +71,7 @@ namespace EtheriT.Coker.Application.Member
             _mailTemplateAppService = mailTemplateAppService;
             _mailAppService = mailAppService;
             this.frontMemberEmailValidationService = frontMemberEmailValidationService;
+            this.permissionsAppService = permissionsAppService;
         }
         public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
         {
@@ -155,6 +159,7 @@ namespace EtheriT.Coker.Application.Member
                 // 3) 只對「當頁資料」做遮蔽（DI 在這裡用，安全）
                 if (output?.data is IEnumerable<MemberGetAllListDto> list)
                 {
+                    var canViewCustomerPrivacy = await permissionsAppService.CanViewCustomerPrivacy();
                     var page = list.ToList();
 
                     var uuids = page.Select(x => x.UUID).ToList();
@@ -165,11 +170,10 @@ namespace EtheriT.Coker.Application.Member
                     {
                         item.Bonus = bonusByUuid.GetValueOrDefault(item.UUID);
 
-                        item.Name = _stringHandler.MaskName(item.Name);
-                        item.CellPhone = _stringHandler.MaskCellPhone(item.CellPhone);
-                        item.TelPhone = _stringHandler.MaskTelPhone(item.TelPhone);
-                        item.Address = _stringHandler.MaskAddress(item.Address);
-                        item.Email = _stringHandler.MaskEmail(item.Email);
+                        if (!canViewCustomerPrivacy)
+                        {
+                            MaskCustomerPrivacy(item);
+                        }
                     }
 
                     output.data = page;
@@ -275,6 +279,11 @@ namespace EtheriT.Coker.Application.Member
                         .Select(e => e.RoleId)
                         .FirstOrDefaultAsync();
                     output.Id = ("000000000" + result.Id).Substring(result.Id.ToString().Length);
+                    if (!await permissionsAppService.CanViewCustomerPrivacy())
+                    {
+                        MaskCustomerPrivacy(output);
+                        output.IsCustomerPrivacyMasked = true;
+                    }
                     return output;
                 }
                 else throw new Exception("查無會員資料");
@@ -285,6 +294,27 @@ namespace EtheriT.Coker.Application.Member
             }
 
             return null;
+        }
+
+        private void MaskCustomerPrivacy(MemberGetAllListDto item)
+        {
+            item.Name = _stringHandler.MaskName(item.Name);
+            item.CellPhone = _stringHandler.MaskCellPhone(item.CellPhone);
+            item.TelPhone = _stringHandler.MaskTelPhone(item.TelPhone);
+            item.Address = _stringHandler.MaskAddress(item.Address);
+            item.Email = _stringHandler.MaskEmail(item.Email);
+        }
+
+        private void MaskCustomerPrivacy(MemberGetAllDataDto item)
+        {
+            item.Name = _stringHandler.MaskName(item.Name);
+            item.NickName = _stringHandler.MaskName(item.NickName);
+            item.Sex = null;
+            item.CellPhone = _stringHandler.MaskCellPhone(item.CellPhone);
+            item.TelPhone = _stringHandler.MaskTelPhone(item.TelPhone);
+            item.Address = _stringHandler.MaskAddress(item.Address);
+            item.Email = _stringHandler.MaskEmail(item.Email);
+            item.Birthday = null;
         }
         public async Task<MemberGetAllDataDto> GetSelfData()
         {
@@ -428,6 +458,11 @@ namespace EtheriT.Coker.Application.Member
                 if (result == null)
                 {
                     throw new Exception("查無會員資料");
+                }
+
+                if (!await permissionsAppService.CanViewCustomerPrivacy())
+                {
+                    throw new Exception("目前為客戶隱私資訊遮蔽狀態，無法儲存會員資料");
                 }
 
                 var emailValidation = await frontMemberEmailValidationService.ValidateAsync(websiteId, dto.Email, dto.Id);

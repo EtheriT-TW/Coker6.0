@@ -224,6 +224,10 @@ builder.Services.AddScoped<UserHabitsWorking>();
 builder.Services.AddScoped<LogCleanupWorking>();
 builder.Services.AddScoped<DatabaseRetentionWorking>();
 builder.Services.AddScoped<RemoteRetentionWorking>();
+builder.Services.AddScoped<FileCleanupWorking>();
+builder.Services.AddScoped<IFileReferenceScanner, FileReferenceScanner>();
+builder.Services.Configure<FileCleanupOptions>(
+    builder.Configuration.GetSection("FileCleanup"));
 builder.Services.Configure<DatabaseRetentionOptions>(
     builder.Configuration.GetSection("DatabaseRetention"));
 builder.Services.AddScoped<RemoteDailyStatisticsWorking>();
@@ -428,6 +432,22 @@ var uploadRoots = builder.Configuration
     .Get<Dictionary<string, string>>() ?? new Dictionary<string, string>();
 
 var registeredUploadSites = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+// Upload 底下以底線開頭的目錄為保留區，只能由有權限的後台 API 存取。
+app.Use(async (context, next) =>
+{
+    var pathSegments = context.Request.Path.Value?
+        .Split('/', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+    var isPrivateUploadPath = pathSegments.Length > 1
+        && string.Equals(pathSegments[0], "upload", StringComparison.OrdinalIgnoreCase)
+        && pathSegments.Skip(1).Any(segment => segment.StartsWith("_", StringComparison.Ordinal));
+    if (isPrivateUploadPath)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+    await next();
+});
 
 foreach (var uploadRoot in uploadRoots)
 {

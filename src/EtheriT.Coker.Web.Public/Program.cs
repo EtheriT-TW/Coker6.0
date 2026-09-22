@@ -419,6 +419,21 @@ fileProvider.Mappings[".dwg"] = "image/vnd.dwg";
 fileProvider.Mappings[".avif"] = "image/avif";
 
 //app.UseVirtualDirectory("upload", builder.Configuration.GetValue<string>("VirtualDirectory:upload"));
+// Upload 底下以底線開頭的目錄為後台保留區（例如 _Remove），不得由前台公開。
+app.Use(async (context, next) =>
+{
+    var pathSegments = context.Request.Path.Value?
+        .Split('/', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+    var isPrivateUploadPath = pathSegments.Length > 1
+        && string.Equals(pathSegments[0], "upload", StringComparison.OrdinalIgnoreCase)
+        && pathSegments.Skip(1).Any(segment => segment.StartsWith("_", StringComparison.Ordinal));
+    if (isPrivateUploadPath)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+    await next();
+});
 app.UseStaticFiles(new StaticFileOptions()
 {
     FileProvider = new PhysicalFileProvider(builder.Configuration.GetValue<string>("VirtualDirectory:upload")),

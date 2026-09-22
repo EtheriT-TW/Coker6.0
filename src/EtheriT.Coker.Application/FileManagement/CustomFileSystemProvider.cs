@@ -1,4 +1,5 @@
 using DevExtreme.AspNet.Mvc.FileManagement;
+using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
@@ -22,6 +23,8 @@ namespace EtheriT.Coker.Application.FileManagement
         private readonly string _downloadFilePath;
         private readonly IConfiguration _configuration;
         private Microsoft.AspNetCore.Http.HttpRequest? _httpRequest;
+        private readonly IFileReferenceScanner? _fileReferenceScanner;
+        private readonly IUploadPathResolver _uploadPathResolver;
 
         private readonly int _maxFileSizeMB = 0;
 
@@ -30,7 +33,9 @@ namespace EtheriT.Coker.Application.FileManagement
                                         string orgName,
                                         long userId,
                                         IConfiguration configuration,
-                                        HttpRequest httpRequest)
+                                        HttpRequest httpRequest,
+                                        IFileReferenceScanner fileReferenceScanner,
+                                        IUploadPathResolver uploadPathResolver)
             : base(rootDirectoryPath)
         {
             _dbContext = dbContext;
@@ -40,6 +45,8 @@ namespace EtheriT.Coker.Application.FileManagement
             _downloadFilePath = $"/upload";
             _configuration = configuration;
             _httpRequest = httpRequest;
+            _fileReferenceScanner = fileReferenceScanner;
+            _uploadPathResolver = uploadPathResolver;
 
             // 讀取最大檔案大小的設定，預設為 0，表示不限制
             int.TryParse(_configuration.GetValue<string>("VirtualDirectory:FileAllow:MaxSize"), out _maxFileSizeMB);
@@ -51,7 +58,9 @@ namespace EtheriT.Coker.Application.FileManagement
                                         string orgName,
                                         long userId,
                                         IConfiguration configuration,
-                                        HttpRequest httpRequest)
+                                        HttpRequest httpRequest,
+                                        IFileReferenceScanner fileReferenceScanner,
+                                        IUploadPathResolver uploadPathResolver)
             : base(rootDirectoryPath, prepareFileSystemItemCallback)
         {
             _dbContext = dbContext;
@@ -61,6 +70,8 @@ namespace EtheriT.Coker.Application.FileManagement
             _downloadFilePath = $"/upload";
             _configuration = configuration;
             _httpRequest = httpRequest;
+            _fileReferenceScanner = fileReferenceScanner;
+            _uploadPathResolver = uploadPathResolver;
         }
 
         /// <summary>
@@ -70,12 +81,17 @@ namespace EtheriT.Coker.Application.FileManagement
         /// <returns></returns>
         public override IEnumerable<FileSystemItem> GetItems(FileSystemLoadItemOptions options)
         {
-            var items = base.GetItems(options).ToList();
+            var currentDirectory = options.Directory?.Path ?? string.Empty;
+            if (HasReservedPathSegment(currentDirectory))
+                return Array.Empty<FileSystemItem>();
+
+            var items = base.GetItems(options)
+                .Where(item => !item.IsDirectory || !item.Name.StartsWith("_", StringComparison.Ordinal))
+                .ToList();
 
             // 從 FileSystemConfiguration.Request 中取得搜尋值
             string searchValue = GetSearchValue();
 
-            string currentDirectory = options.Directory?.Path ?? string.Empty;
             var fileItems = items.Where(item => !item.IsDirectory).ToList();
             var fileGuids = fileItems
                 .Select(item => Guid.TryParse(Path.GetFileNameWithoutExtension(item.Name), out var guid)
@@ -106,8 +122,9 @@ namespace EtheriT.Coker.Application.FileManagement
                 foreach (var guidBatch in fileGuids.Chunk(500))
                 {
                     dbFileUploads.AddRange(_dbContext.FileUploads
+                        .IgnoreQueryFilters()
                         .AsNoTracking()
-                        .Where(f => f.FK_WebsiteId == websiteId && !f.IsDeleted)
+                        .Where(f => f.FK_WebsiteId == websiteId)
                         .Where(f => f.FileGuid.HasValue && guidBatch.Contains(f.FileGuid.Value))
                         .ToList());
                 }
@@ -115,8 +132,9 @@ namespace EtheriT.Coker.Application.FileManagement
                 foreach (var pathBatch in expectedDownloadPaths.Chunk(500))
                 {
                     dbFileUploads.AddRange(_dbContext.FileUploads
+                        .IgnoreQueryFilters()
                         .AsNoTracking()
-                        .Where(f => f.FK_WebsiteId == websiteId && !f.IsDeleted)
+                        .Where(f => f.FK_WebsiteId == websiteId)
                         .Where(f => f.DownloadFileName != null && pathBatch.Contains(f.DownloadFileName))
                         .ToList());
                 }
@@ -135,7 +153,7 @@ namespace EtheriT.Coker.Application.FileManagement
                 .GroupBy(file => NormalizeDownloadPath(file.DownloadFileName!))
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
-            foreach (var item in items)
+            foreach (var item in items.ToList())
             {
                 if (!item.IsDirectory)
                 {
@@ -160,6 +178,11 @@ namespace EtheriT.Coker.Application.FileManagement
                     }
                     if (matchingFileUpload != null)
                     {
+                        if (matchingFileUpload.IsDeleted)
+                        {
+                            items.Remove(item);
+                            continue;
+                        }
                         item.CustomFields[nameof(matchingFileUpload.OriginalFileName)] = matchingFileUpload.OriginalFileName;
                         item.CustomFields[nameof(matchingFileUpload.DownloadFileName)] = matchingFileUpload.DownloadFileName;
                     }
@@ -178,8 +201,13 @@ namespace EtheriT.Coker.Application.FileManagement
         private static string NormalizeDownloadPath(string path)
             => path.Replace('\\', '/').Trim().TrimEnd('/');
 
+        private static bool HasReservedPathSegment(string path)
+            => path.Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Any(segment => segment.StartsWith("_", StringComparison.Ordinal));
+
         /// <summary>
-        /// 覆寫刪除檔案的方法，將檔案從檔案系統中刪除，並在資料庫中標記為已刪除。
+        /// 覆寫刪除檔案的方法：檔案搬入 _Remove 隔離區，資料庫標記為已刪除並加入資源回收桶。
         /// </summary>
         /// <param name="options"></param>
         public override void DeleteItem(FileSystemDeleteItemOptions options)
@@ -196,53 +224,132 @@ namespace EtheriT.Coker.Application.FileManagement
             {
                 if (System.IO.Directory.Exists(fullPath))
                 {
-                    var files = System.IO.Directory.GetFiles(fullPath, "*", SearchOption.AllDirectories);
-                    if (files.Length > 0)
+                    var directoryFiles = System.IO.Directory.GetFiles(
+                        fullPath,
+                        "*",
+                        SearchOption.AllDirectories);
+                    if (directoryFiles.Length > 0)
                     {
                         throw new FileSystemException(FileSystemErrorCode.NoAccess, "不允許刪除，因為該資料夾內還有檔案");
                     }
                 }
+                base.DeleteItem(options);
+                return;
             }
 
-            // 擷取檔名，GuidKey 通常是檔名的一部分
+            var websiteId = GetWebsiteId();
             string fileName = Path.GetFileNameWithoutExtension(path);
-
-            if (!string.IsNullOrEmpty(fileName))
+            Guid.TryParse(fileName, out var fileGuid);
+            var normalizedPath = NormalizeDownloadPath($"/upload/{path}");
+            var normalizedOrgPath = NormalizeDownloadPath($"/upload/{_orgName}/{path}");
+            var fileUpload = _dbContext.FileUploads
+                .FirstOrDefault(file => file.FK_WebsiteId == websiteId
+                    && ((fileGuid != Guid.Empty && file.FileGuid == fileGuid)
+                        || file.DownloadFileName == normalizedPath
+                        || file.DownloadFileName == normalizedOrgPath));
+            if (fileUpload == null)
             {
-                // 嘗試解析檔名中的 Guid
-                if (Guid.TryParse(fileName, out Guid guidKey))
+                throw new FileSystemException(
+                    FileSystemErrorCode.NoAccess,
+                    "找不到檔案資料庫紀錄，無法安全移至資源回收桶");
+            }
+
+            var relations = _dbContext.FileBindMores
+                .Where(item => !item.IsDeleted && item.FK_FileUploadId.HasValue)
+                .Select(item => new { item.FK_FileBindGuid, FileId = item.FK_FileUploadId!.Value })
+                .ToList();
+            var parentGuids = relations
+                .Where(item => item.FileId == fileUpload.Id)
+                .Select(item => item.FK_FileBindGuid)
+                .Append(fileUpload.GuidKey)
+                .Distinct()
+                .ToList();
+            var familyIds = relations
+                .Where(item => parentGuids.Contains(item.FK_FileBindGuid))
+                .Select(item => item.FileId)
+                .Append(fileUpload.Id)
+                .ToHashSet();
+            var parentIds = _dbContext.FileUploads
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && parentGuids.Contains(item.GuidKey))
+                .Select(item => item.Id)
+                .ToList();
+            familyIds.UnionWith(parentIds);
+
+            var referencedIds = _fileReferenceScanner?
+                .GetReferencedFileIdsAsync(websiteId)
+                .GetAwaiter()
+                .GetResult() ?? new HashSet<long>();
+            if (familyIds.Any(referencedIds.Contains))
+            {
+                throw new FileSystemException(
+                    FileSystemErrorCode.NoAccess,
+                    "此檔案或其圖片組仍被系統使用中，無法移至資源回收桶");
+            }
+
+            var now = DateTime.Now;
+            var files = _dbContext.FileUploads
+                .Where(item => familyIds.Contains(item.Id))
+                .ToList();
+            var movedFiles = FileRecycleStorage.MoveToRecycleBin(
+                _uploadPathResolver,
+                _orgName,
+                files);
+            foreach (var file in files)
+            {
+                file.IsDeleted = true;
+                file.DeletionTime = now;
+                file.DeleterUserId = _userId;
+            }
+            var recycleEntries = _dbContext.FileRecycleBinItems.IgnoreQueryFilters()
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && familyIds.Contains(item.FK_FileUploadId))
+                .ToList();
+            foreach (var file in files)
+            {
+                var entry = recycleEntries.FirstOrDefault(item => item.FK_FileUploadId == file.Id);
+                if (entry == null)
                 {
-                    // 更新資料庫中的紀錄
-                    var fileUpload = _dbContext.FileUploads.Include(x => x.fileBinds)
-                                                           .FirstOrDefault(f => f.FileGuid == guidKey);
-                    if (fileUpload != null)
+                    _dbContext.FileRecycleBinItems.Add(new FileRecycleBinItem
                     {
-                        fileUpload.fileBinds?.ForEach(fb =>
-                        {
-                            fb.IsDeleted = true;
-                            fb.DeleterUserId = _userId;
-                            fb.DeletionTime = DateTime.Now;
-                        });
-                        fileUpload.IsDeleted = true;
-                        fileUpload.DeletionTime = DateTime.Now;
-                        fileUpload.DeleterUserId = _userId;
-
-                        var fileBindMores = _dbContext.FileBindMores
-                       .Where(f => f.FK_FileUploadId == fileUpload.Id && !f.IsDeleted);
-                        foreach (var fileBindMore in fileBindMores)
-                        {
-                            fileBindMore.IsDeleted = true;
-                            fileBindMore.DeleterUserId = _userId;
-                            fileBindMore.DeletionTime = DateTime.Now;
-                        }
-
-                        _dbContext.SaveChanges();
-                    }
+                        FK_WebsiteId = websiteId,
+                        FK_FileUploadId = file.Id,
+                        RecycledTime = now,
+                        OriginalPath = file.DownloadFileName ?? string.Empty,
+                        Reason = "由檔案管理移入",
+                        CreatorUserId = _userId
+                    });
+                }
+                else
+                {
+                    entry.IsDeleted = false;
+                    entry.DeletionTime = null;
+                    entry.DeleterUserId = null;
+                    entry.RecycledTime = now;
+                    entry.OriginalPath = file.DownloadFileName ?? entry.OriginalPath;
+                    entry.Reason = "由檔案管理移入";
+                    entry.LastModificationTime = now;
+                    entry.LastModifierUserId = _userId;
                 }
             }
-
-            // 如果找不到對應的資料庫記錄，則執行原始的刪除方法
-            base.DeleteItem(options);
+            var candidates = _dbContext.FileCleanupCandidates
+                .Where(item => familyIds.Contains(item.FK_FileUploadId))
+                .ToList();
+            foreach (var candidate in candidates)
+            {
+                candidate.IsDeleted = true;
+                candidate.DeletionTime = now;
+                candidate.DeleterUserId = _userId;
+            }
+            try
+            {
+                _dbContext.SaveChanges();
+            }
+            catch
+            {
+                FileRecycleStorage.RestoreMovedFiles(movedFiles);
+                throw;
+            }
         }
 
         /// <summary>

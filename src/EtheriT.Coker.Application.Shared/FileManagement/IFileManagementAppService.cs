@@ -13,5 +13,11 @@ namespace EtheriT.Coker.Application.Shared.FileManagement
         object FileSystem(FileSystemCommand command, string arguments, HttpRequest request);
         Task<bool> CheckFileHasBindingsAsync(string filePath);
         Task<bool> CheckFileExistsAsync(string directoryPath, string fileName);
+        Task<IReadOnlyList<FileCleanupItemDto>> GetUnreferencedFilesAsync();
+        Task<IReadOnlyList<FileCleanupItemDto>> GetRecycleBinFilesAsync();
+        Task MoveToRecycleBinAsync(long fileUploadId);
+        Task<FileCleanupBatchResultDto> MoveAllUnreferencedToRecycleBinAsync();
+        Task RestoreFromRecycleBinAsync(long fileUploadId);
+        Task PermanentlyDeleteAsync(long fileUploadId);
     }
 }

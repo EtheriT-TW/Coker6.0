@@ -41,6 +41,16 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 job => job.CleanupExpiredTokens(),
                 Cron.Hourly(15),
                 new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            _recurringJobManager.AddOrUpdate<FileCleanupWorking>(
+                "FileReferenceScan",
+                job => job.ScanAllWebsitesAsync(),
+                Cron.Daily(3, 30),
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
+            _recurringJobManager.AddOrUpdate<FileCleanupWorking>(
+                "FileRecycleBinCleanup",
+                job => job.PurgeExpiredRecycleBinAsync(),
+                Cron.Daily(4, 15),
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
             _recurringJobManager.AddOrUpdate<RemoteDailyStatisticsWorking>(
                 "RemoteDailyStatistics",
                 job => job.AggregateNextDay(),

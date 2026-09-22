@@ -70,6 +70,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<FileUpload> FileUploads { get; set; }
         public DbSet<FileBind> FileBinds { get; set; }
         public DbSet<FileBindMore> FileBindMores { get; set; }
+        public DbSet<FileCleanupCandidate> FileCleanupCandidates { get; set; }
+        public DbSet<FileRecycleBinItem> FileRecycleBinItems { get; set; }
         public DbSet<ObjectType> ObjectTypes { get; set; }
         public DbSet<ComponentPurpose> ComponentPurposes { get; set; }
         public DbSet<HtmlContentPurpose> HtmlContentPurposes { get; set; }
@@ -170,6 +172,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(x => x.StorageKey).IsUnique();
                 o.HasIndex(x => new { x.FK_WebsiteId, x.FK_UserId, x.Status });
                 o.HasIndex(x => x.ExpireTime);
+            });
+            modelBuilder.Entity<FileCleanupCandidate>(o =>
+            {
+                o.ToTable("FileCleanupCandidates");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.FK_FileUploadId })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.LastConfirmedTime });
+            });
+            modelBuilder.Entity<FileRecycleBinItem>(o =>
+            {
+                o.ToTable("FileRecycleBinItems");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.FK_FileUploadId })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.RecycledTime });
             });
             modelBuilder.Entity<UserNotification>(o =>
             {

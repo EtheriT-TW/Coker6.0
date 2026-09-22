@@ -5,6 +5,12 @@
     ViewData["Title"] = "FileManagement";
 }
 
+<div class="file-management-modebar" role="navigation" aria-label="檔案管理檢視">
+    <button type="button" class="active" data-file-mode="files">所有檔案</button>
+    <button type="button" data-file-mode="unreferenced">查無引用</button>
+    <button type="button" data-file-mode="recycle">資源回收桶</button>
+</div>
+
 <div id="filemanager-container">
     @(Html.DevExtreme().FileManager()
         .ID("file-manager")
@@ -77,6 +83,71 @@
         .ShowCloseButton(true))
 </div>
 
+<section id="file-cleanup-panel" class="file-cleanup-panel" hidden>
+    <div class="file-cleanup-toolbar">
+        <div>
+            <h2 id="file-cleanup-title">查無引用</h2>
+            <p id="file-cleanup-description"></p>
+        </div>
+        <div class="file-cleanup-actions">
+            <button type="button" id="file-cleanup-scan">立即背景掃描</button>
+            <button type="button" id="file-cleanup-recycle-all" class="danger" hidden>全部移至資源回收桶</button>
+            <button type="button" id="file-cleanup-refresh">重新整理</button>
+        </div>
+    </div>
+    <div id="file-cleanup-loading" class="file-cleanup-message">資料載入中…</div>
+    <div id="file-cleanup-empty" class="file-cleanup-message" hidden></div>
+    <div class="file-cleanup-table-wrap">
+        <table class="file-cleanup-table" aria-live="polite">
+            <thead>
+                <tr>
+                    <th>預覽</th>
+                    <th>檔案</th>
+                    <th>大小</th>
+                    <th>檔案建立時間</th>
+                    <th id="file-cleanup-date-heading">發現時間</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="file-cleanup-items"></tbody>
+        </table>
+    </div>
+</section>
+
+<style>
+    .file-management-modebar { display: flex; gap: .5rem; margin-bottom: 1rem; }
+    .file-management-modebar button, .file-cleanup-actions button, .file-cleanup-row-actions button {
+        border: 1px solid #adb5bd; border-radius: .35rem; background: #fff; padding: .45rem .8rem;
+    }
+    .file-management-modebar button.active { color: #fff; background: #0d6efd; border-color: #0d6efd; }
+    .file-cleanup-panel { width: min(100%, 1440px); min-height: 70vh; margin: 0 auto; padding: 0 .75rem 2rem; }
+    .file-cleanup-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 1rem; padding: .25rem 0; }
+    .file-cleanup-toolbar h2 { margin: 0 0 .35rem; font-size: 1.35rem; }
+    .file-cleanup-toolbar p { margin: 0; color: #6c757d; }
+    .file-cleanup-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; white-space: nowrap; }
+    .file-cleanup-actions .danger { color: #fff; background: #dc3545; border-color: #dc3545; }
+    .file-cleanup-table-wrap { overflow-x: auto; border: 1px solid #dee2e6; border-radius: .45rem; background: #fff; }
+    .file-cleanup-table { width: 100%; min-width: 1120px; border-collapse: collapse; table-layout: fixed; }
+    .file-cleanup-table th:nth-child(1) { width: 105px; }
+    .file-cleanup-table th:nth-child(2) { width: auto; }
+    .file-cleanup-table th:nth-child(3) { width: 105px; }
+    .file-cleanup-table th:nth-child(4), .file-cleanup-table th:nth-child(5) { width: 185px; }
+    .file-cleanup-table th:nth-child(6) { width: 175px; }
+    .file-cleanup-table th, .file-cleanup-table td { padding: .65rem; border-bottom: 1px solid #dee2e6; text-align: left; vertical-align: middle; }
+    .file-cleanup-table th { background: #f8f9fa; font-weight: 600; }
+    .file-cleanup-table tbody tr:last-child td { border-bottom: 0; }
+    .file-cleanup-preview { width: 72px; height: 54px; object-fit: cover; border-radius: .25rem; background: #eee; }
+    .file-cleanup-path { max-width: 550px; overflow-wrap: anywhere; color: #6c757d; font-size: .85rem; }
+    .file-cleanup-reason { margin-top: .25rem; font-size: .85rem; }
+    .file-cleanup-message { padding: 2rem; text-align: center; color: #6c757d; }
+    .file-cleanup-row-actions { display: flex; gap: .4rem; }
+    .file-cleanup-row-actions .danger { color: #fff; background: #dc3545; border-color: #dc3545; }
+    @@media (max-width: 900px) {
+        .file-cleanup-toolbar { align-items: stretch; flex-direction: column; }
+        .file-cleanup-actions { justify-content: flex-start; }
+    }
+</style>
+
 <script>
     function onBeforeAjaxSendFileSystemRequest({ headers, formData, xhrFields }) {
         var searchBox = $("#fileManagerSearchBox").dxTextBox("instance");
@@ -139,16 +210,15 @@
 
             // 如果檢查成功且檔案有關聯，則詢問使用者確認
             if (checkSuccess && hasBindings) {
-                // 使用內建的 confirm 對話框（這是同步的）
-                var confirmed = confirm(e.item.name + " 此檔案正被系統使用中，確定要刪除嗎？刪除後不可復原！");
-                if (!confirmed) {
-                    // 使用者取消刪除
-                    e.cancel = true;
-                    e.errorText = "取消刪除";
-                    return;
-                }
+                alert(e.item.name + " 此檔案正被系統使用中，無法移至資源回收桶。");
+                e.cancel = true;
+                e.errorText = "檔案仍被引用";
+                return;
             }
-            // 如果使用者確認或檔案沒有關聯，讓預設刪除行為繼續執行
+            if (!confirm(`確定將「${e.item.name}」移至資源回收桶嗎？`)) {
+                e.cancel = true;
+                e.errorText = "取消刪除";
+            }
         }
     }
 
@@ -260,5 +330,196 @@
                 }
             });
         });
+    }
+
+    let fileCleanupMode = "unreferenced";
+
+    document.querySelectorAll("[data-file-mode]").forEach(button => {
+        button.addEventListener("click", () => switchFileManagementMode(button.dataset.fileMode));
+    });
+    document.getElementById("file-cleanup-refresh").addEventListener("click", () => loadCleanupItems());
+    document.getElementById("file-cleanup-scan").addEventListener("click", startFileReferenceScan);
+    document.getElementById("file-cleanup-recycle-all").addEventListener("click", recycleAllUnreferencedFiles);
+
+    function switchFileManagementMode(mode) {
+        document.querySelectorAll("[data-file-mode]").forEach(button => {
+            button.classList.toggle("active", button.dataset.fileMode === mode);
+        });
+        const isFiles = mode === "files";
+        document.getElementById("filemanager-container").hidden = !isFiles;
+        document.getElementById("file-cleanup-panel").hidden = isFiles;
+        if (isFiles) {
+            $("#file-manager").dxFileManager("instance")?.refresh();
+            return;
+        }
+        fileCleanupMode = mode;
+        const isRecycle = mode === "recycle";
+        document.getElementById("file-cleanup-title").textContent = isRecycle ? "資源回收桶" : "查無引用";
+        document.getElementById("file-cleanup-description").textContent = isRecycle
+            ? "檔案已移至前台無法讀取的隔離區，可還原；超過保留期限後才會永久清除。"
+            : "背景掃描確認未出現在檔案綁定、草稿、發布內容、CSS 或版型中的檔案。";
+        document.getElementById("file-cleanup-date-heading").textContent = isRecycle ? "刪除時間" : "發現時間";
+        document.getElementById("file-cleanup-scan").hidden = isRecycle;
+        document.getElementById("file-cleanup-recycle-all").hidden = isRecycle;
+        loadCleanupItems();
+    }
+
+    function loadCleanupItems() {
+        const isRecycle = fileCleanupMode === "recycle";
+        const loading = document.getElementById("file-cleanup-loading");
+        const empty = document.getElementById("file-cleanup-empty");
+        const tbody = document.getElementById("file-cleanup-items");
+        const recycleAllButton = document.getElementById("file-cleanup-recycle-all");
+        loading.hidden = false;
+        empty.hidden = true;
+        recycleAllButton.hidden = true;
+        tbody.replaceChildren();
+        $.ajax({
+            url: isRecycle
+                ? "/api/FileManagement/RecycleBinFiles"
+                : "/api/FileManagement/UnreferencedFiles",
+            type: "GET",
+            headers: co.Data.Header
+        }).done(items => {
+            loading.hidden = true;
+            if (!items.length) {
+                empty.textContent = isRecycle ? "資源回收桶目前沒有檔案。" : "目前沒有查無引用的候選檔案。";
+                empty.hidden = false;
+                return;
+            }
+            recycleAllButton.hidden = isRecycle;
+            recycleAllButton.dataset.itemCount = String(items.length);
+            items.forEach(item => tbody.appendChild(createCleanupRow(item, isRecycle)));
+        }).fail(xhr => {
+            loading.hidden = true;
+            empty.textContent = getFileActionError(xhr, "讀取檔案清單失敗。");
+            empty.hidden = false;
+        });
+    }
+
+    function createCleanupRow(item, isRecycle) {
+        const row = document.createElement("tr");
+        const isImage = String(item.contentType || "").toLowerCase().startsWith("image/");
+        const dateValue = isRecycle ? item.deletionTime : item.detectedTime;
+        row.innerHTML = `
+            <td>${isImage && item.physicalFileExists
+                ? `<img class="file-cleanup-preview" loading="lazy" src="${escapeFileHtml(item.url)}" alt="${escapeFileHtml(item.name)}">`
+                : "—"}</td>
+            <td>
+                <div>${escapeFileHtml(item.name)}</div>
+                <div class="file-cleanup-path">${escapeFileHtml(item.path)}</div>
+                ${!isRecycle && item.reason ? `<div class="file-cleanup-reason">${escapeFileHtml(item.reason)}</div>` : ""}
+            </td>
+            <td>${formatFileSize(item.size)}</td>
+            <td>${formatFileDate(item.creationTime)}</td>
+            <td>${formatFileDate(dateValue)}</td>
+            <td><div class="file-cleanup-row-actions"></div></td>`;
+        const actions = row.querySelector(".file-cleanup-row-actions");
+        if (isRecycle) {
+            actions.append(
+                createFileActionButton("還原", () => restoreRecycleFile(item)),
+                createFileActionButton("永久刪除", () => permanentlyDeleteFile(item), "danger")
+            );
+        } else {
+            actions.append(createFileActionButton("移至回收桶", () => recycleUnreferencedFile(item)));
+        }
+        return row;
+    }
+
+    function createFileActionButton(text, action, className) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = text;
+        if (className) button.className = className;
+        button.addEventListener("click", action);
+        return button;
+    }
+
+    function startFileReferenceScan() {
+        const button = document.getElementById("file-cleanup-scan");
+        button.disabled = true;
+        $.ajax({
+            url: "/api/FileManagement/StartReferenceScan",
+            type: "POST",
+            headers: co.Data.Header
+        }).done(() => {
+            DevExpress.ui.notify("背景掃描已排程，完成後請按重新整理。", "success", 3500);
+        }).fail(xhr => {
+            DevExpress.ui.notify(getFileActionError(xhr, "無法啟動背景掃描。"), "error", 4000);
+        }).always(() => { button.disabled = false; });
+    }
+
+    function recycleUnreferencedFile(item) {
+        if (!confirm(`確定將「${item.name}」及其大／中／縮圖移至資源回收桶嗎？`)) return;
+        postFileAction("MoveToRecycleBin", item.id, "已移至資源回收桶。");
+    }
+
+    function recycleAllUnreferencedFiles() {
+        const button = document.getElementById("file-cleanup-recycle-all");
+        const itemCount = Number(button.dataset.itemCount || 0);
+        if (!itemCount || !confirm(`確定將目前 ${itemCount} 筆查無引用檔案及其大／中／縮圖全部移至資源回收桶嗎？系統會在移動前再次檢查引用。`)) return;
+
+        button.disabled = true;
+        $.ajax({
+            url: "/api/FileManagement/MoveAllUnreferencedToRecycleBin",
+            type: "POST",
+            headers: co.Data.Header
+        }).done(result => {
+            const skippedMessage = result.skippedCount
+                ? `；另有 ${result.skippedCount} 筆因重新檢查到引用而略過。`
+                : "。";
+            DevExpress.ui.notify(
+                `已將 ${result.movedCount} 筆移至資源回收桶${skippedMessage}`,
+                "success",
+                4500);
+            loadCleanupItems();
+        }).fail(xhr => {
+            DevExpress.ui.notify(getFileActionError(xhr, "批次移動失敗。"), "error", 4000);
+        }).always(() => { button.disabled = false; });
+    }
+
+    function restoreRecycleFile(item) {
+        postFileAction("RestoreFromRecycleBin", item.id, "檔案已還原。");
+    }
+
+    function permanentlyDeleteFile(item) {
+        if (!confirm(`永久刪除「${item.name}」及其圖片組後無法復原，確定繼續嗎？`)) return;
+        postFileAction("PermanentlyDelete", item.id, "檔案已永久刪除。");
+    }
+
+    function postFileAction(action, id, successMessage) {
+        $.ajax({
+            url: `/api/FileManagement/${action}`,
+            type: "POST",
+            contentType: "application/json",
+            headers: co.Data.Header,
+            data: JSON.stringify(id)
+        }).done(() => {
+            DevExpress.ui.notify(successMessage, "success", 2500);
+            loadCleanupItems();
+        }).fail(xhr => {
+            DevExpress.ui.notify(getFileActionError(xhr, "檔案操作失敗。"), "error", 4000);
+        });
+    }
+
+    function getFileActionError(xhr, fallback) {
+        return xhr?.responseJSON?.message || xhr?.responseText || fallback;
+    }
+
+    function escapeFileHtml(value) {
+        return String(value || "").replace(/[&<>"']/g, character => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+        })[character]);
+    }
+
+    function formatFileSize(size) {
+        const bytes = Number(size || 0);
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    function formatFileDate(value) {
+        return value ? new Date(value).toLocaleString("zh-TW") : "—";
     }
 </script>

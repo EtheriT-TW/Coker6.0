@@ -37,8 +37,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] string? areakey, [FromForm] string? filename, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno, [FromForm] bool isVisible, [FromForm] bool convert = true, [FromForm] bool isEncryption = false)
+        public async Task<ResponseMessageDto> uploadFiles(IList<IFormFile> files, [FromForm] string? areakey, [FromForm] string? filename, [FromForm] int type, [FromForm] long? id, [FromForm] long? sid, [FromForm] int serno, [FromForm] bool isVisible, [FromForm] bool convert = true, [FromForm] bool isEncryption = false, [FromForm] bool gallery = false)
         {
+            if (gallery)
+                return await fileUploadAppService.uploadGalleryFiles(files);
+
             FileBindTypeEnum s = (FileBindTypeEnum)type;
             switch (s)
             {
@@ -100,6 +103,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                 default:
                     return await fileUploadAppService.uploadHtmlContentFiles(files);
             }
+        }
+        [HttpPost]
+        public async Task<UploadFileOutputDto> EnsureGalleryImages(GalleryImagesEnsureDto dto)
+        {
+            return await fileUploadAppService.ensureGalleryImages(dto.Paths);
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]

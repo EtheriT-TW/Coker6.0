@@ -117,6 +117,8 @@ var grapesInit = function (options) {
                     const maxFileSize = 10 * 1024 * 1024;
                     const assetOpenOptions = editor.AssetManager.__getBehaviour?.().options || {};
                     const isFileAssetUpload = assetOpenOptions.cokerFileAsset === true;
+                    const isGalleryUpload = Array.isArray(assetOpenOptions.types) &&
+                        assetOpenOptions.types.includes('coker-image-list-batch-upload');
                     const extensionByMimeType = {
                         'image/gif': 'gif',
                         'image/jpeg': 'jpg',
@@ -189,6 +191,11 @@ var grapesInit = function (options) {
                                 !supportedFilePattern.test(fileName);
                         }
 
+                        if (isGalleryUpload) {
+                            return !contentType.startsWith('image/') &&
+                                !/\.(avif|bmp|gif|jpe?g|png|webp)$/i.test(fileName);
+                        }
+
                         return !/^(image|video)\//i.test(contentType) &&
                             !supportedMediaPattern.test(fileName);
                     });
@@ -230,6 +237,7 @@ var grapesInit = function (options) {
                     });
 
                     formData.append("type", 0);
+                    if (isGalleryUpload) formData.append("gallery", "true");
 
                     co.File.Upload(formData).done(function (result) {
                         if (result.success) {
@@ -239,9 +247,16 @@ var grapesInit = function (options) {
                                 const submittedFile = submittedFiles.find(file => file.name === this.name) ||
                                     submittedFiles[index];
                                 myJSON.push({
-                                    src: this.path,
+                                    src: this.thumbnailPath || this.path,
+                                    fullSrc: this.path,
+                                    mediumSrc: this.mediumPath || '',
+                                    thumbnailSrc: this.thumbnailPath || this.path,
                                     name: this.name,
                                     guid: this.guid,
+                                    mediumGuid: this.mediumGuid,
+                                    thumbnailGuid: this.thumbnailGuid,
+                                    width: this.width,
+                                    height: this.height,
                                     type: submittedFile?.type?.startsWith('image/')
                                         ? 'image'
                                         : submittedFile?.type?.startsWith('video/')

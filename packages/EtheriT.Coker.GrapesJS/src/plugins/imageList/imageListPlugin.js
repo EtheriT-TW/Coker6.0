@@ -12,7 +12,17 @@ function normalizeAsset(asset) {
         type: asset?.get?.('type') || asset?.type || asset?.attributes?.type || '',
         mimeType: asset?.get?.('mimeType') || asset?.get?.('contentType') ||
             asset?.mimeType || asset?.contentType || asset?.attributes?.mimeType ||
-            asset?.attributes?.contentType || ''
+            asset?.attributes?.contentType || '',
+        fullSrc: asset?.get?.('fullSrc') || asset?.fullSrc || asset?.attributes?.fullSrc || '',
+        mediumSrc: asset?.get?.('mediumSrc') || asset?.mediumSrc ||
+            asset?.attributes?.mediumSrc || '',
+        thumbnailSrc: asset?.get?.('thumbnailSrc') || asset?.thumbnailSrc ||
+            asset?.attributes?.thumbnailSrc || '',
+        guid: asset?.get?.('guid') || asset?.guid || asset?.attributes?.guid || '',
+        mediumGuid: asset?.get?.('mediumGuid') || asset?.mediumGuid ||
+            asset?.attributes?.mediumGuid || '',
+        thumbnailGuid: asset?.get?.('thumbnailGuid') || asset?.thumbnailGuid ||
+            asset?.attributes?.thumbnailGuid || ''
     };
 }
 
@@ -35,6 +45,23 @@ function fileNameWithoutExtension(value) {
     }
 
     return fileName.replace(/\.[^.]+$/, '');
+}
+
+function resolveBackendUploadPath(editor, value) {
+    const path = String(value || '').trim();
+    const orgName = String(
+        editor?.Canvas?.getWindow?.()?.OrgName || globalThis.OrgName || ''
+    ).trim().replace(/^\/+|\/+$/g, '');
+    if (!orgName || !path.toLowerCase().startsWith('/upload/')) {
+        return path;
+    }
+
+    const afterUpload = path.substring('/upload/'.length);
+    if (afterUpload.toLowerCase().startsWith(`${orgName.toLowerCase()}/`)) {
+        return path;
+    }
+
+    return `/upload/${orgName}/${afterUpload}`;
 }
 
 function findComponentById(component, id) {
@@ -93,8 +120,10 @@ function revealTemplateClone(component, templateId) {
 
     component.removeAttributes?.(['hidden', 'aria-hidden']);
     const classes = component.getClasses?.() || [];
-    if (classes.includes('d-none')) {
-        component.setClass(classes.filter(className => className !== 'd-none'));
+    if (classes.includes('d-none') || classes.includes('backstageType')) {
+        component.setClass(classes.filter(className => (
+            className !== 'd-none' && className !== 'backstageType'
+        )));
     }
 }
 
@@ -106,7 +135,21 @@ function findImage(component) {
     return component?.find?.('img')?.[0] || null;
 }
 
-function getDirectImageItems(imageList) {
+function findAnchor(component) {
+    if (String(component?.get?.('tagName') || '').toLowerCase() === 'a') {
+        return component;
+    }
+
+    return component?.find?.('a')?.[0] || null;
+}
+
+function setOptionalAttribute(component, name, value) {
+    if (!component) return;
+    if (value) component.addAttributes?.({ [name]: value });
+    else component.removeAttributes?.([name]);
+}
+
+function getDirectImageItems(editor, imageList) {
     const templateId = String(
         imageList.getAttributes?.()['data-edit-template'] || ''
     ).trim().replace(/^#/, '');
@@ -121,11 +164,33 @@ function getDirectImageItems(imageList) {
         }
 
         const attributes = image.getAttributes?.() || {};
+        const anchor = findAnchor(component);
+        const anchorAttributes = anchor?.getAttributes?.() || {};
+        const imageSrc = resolveBackendUploadPath(editor,
+            attributes['data-src'] || image.get?.('src') ||
+            attributes.src || '/images/noImg.jpg');
+        const fullSrc = resolveBackendUploadPath(editor,
+            anchorAttributes['data-full-src'] || imageSrc);
+        const mediumSrc = resolveBackendUploadPath(editor,
+            anchorAttributes['data-medium-src'] || '');
         return {
             component,
             image,
+            anchor,
             name: String(attributes.alt || ''),
-            src: image.get?.('src') || attributes.src || '/images/noImg.jpg'
+            src: imageSrc,
+            fullSrc,
+            mediumSrc,
+            guid: anchorAttributes['data-image-guid'] || '',
+            mediumGuid: anchorAttributes['data-medium-guid'] || '',
+            thumbnailGuid: anchorAttributes['data-thumbnail-guid'] || '',
+            visible: !(component.getClasses?.() || []).some(className => (
+                className === 'backstageType' || className === 'd-none'
+            )),
+            needsProcessing: !anchorAttributes['data-full-src'] ||
+                !attributes['data-src'] ||
+                !anchorAttributes['data-image-guid'] ||
+                !anchorAttributes['data-thumbnail-guid']
         };
     }).filter(Boolean);
 }
@@ -138,7 +203,24 @@ function applyImageListChanges(editor, imageList, items, originalItemComponents)
 
     items.forEach(item => {
         item.image.set({ src: item.src });
-        item.image.addAttributes?.({ alt: item.name.trim() });
+        item.image.addAttributes?.({
+            alt: item.name.trim(),
+            'data-src': item.src
+        });
+        item.anchor?.addAttributes?.({
+            'data-full-src': item.fullSrc,
+            'data-image-guid': item.guid,
+            'data-thumbnail-guid': item.thumbnailGuid
+        });
+        setOptionalAttribute(item.anchor, 'data-medium-src', item.mediumSrc);
+        setOptionalAttribute(item.anchor, 'data-medium-guid', item.mediumGuid);
+        const classes = item.component.getClasses?.() || [];
+        const normalizedClasses = classes.filter(className => (
+            className !== 'd-none' && className !== 'backstageType'
+        ));
+        item.component.setClass(item.visible
+            ? normalizedClasses
+            : [...normalizedClasses, 'backstageType']);
     });
 
     const orderedComponents = items.map(item => item.component);
@@ -160,6 +242,61 @@ function applyImageListChanges(editor, imageList, items, originalItemComponents)
     editor.refresh?.();
 }
 
+async function ensureGalleryItems(items, onProgress) {
+    const pendingGroups = new Map();
+    items.filter(item => (
+        item.needsProcessing && String(item.fullSrc || '').includes('/upload/')
+    )).forEach(item => {
+        const group = pendingGroups.get(item.fullSrc) || [];
+        group.push(item);
+        pendingGroups.set(item.fullSrc, group);
+    });
+    const pendingEntries = Array.from(pendingGroups.entries());
+    if (!pendingEntries.length) {
+        onProgress?.(0, 0);
+        return;
+    }
+
+    onProgress?.(0, pendingEntries.length,
+        `發現 ${pendingEntries.length} 組相簿圖片，準備檢查大圖、中圖與縮圖規格。`);
+    for (let index = 0; index < pendingEntries.length; index += 1) {
+        const [sourcePath, matchingItems] = pendingEntries[index];
+        const itemName = matchingItems[0].name || `圖片 ${index + 1}`;
+        onProgress?.(index, pendingEntries.length,
+            `相簿圖片處理中：${index + 1} / ${pendingEntries.length}（${itemName}）`);
+        const response = await fetch('/api/FileUpload/EnsureGalleryImages', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paths: [sourcePath] })
+        });
+        if (!response.ok) {
+            throw new Error(`圖片處理失敗（HTTP ${response.status}）`);
+        }
+
+        const result = await response.json();
+        if (result.errorFiles?.length) {
+            throw new Error(result.errorFiles.join('\n'));
+        }
+        const file = result.files?.[0];
+        if (!file) {
+            throw new Error(`圖片「${matchingItems[0].name || index + 1}」沒有處理結果。`);
+        }
+
+        matchingItems.forEach(item => {
+            item.fullSrc = file.path;
+            item.mediumSrc = file.mediumPath || '';
+            item.src = file.thumbnailPath || file.path;
+            item.guid = file.guid || '';
+            item.mediumGuid = file.mediumGuid || '';
+            item.thumbnailGuid = file.thumbnailGuid || '';
+            item.needsProcessing = false;
+        });
+        onProgress?.(index + 1, pendingEntries.length,
+            `已完成大圖、中圖與縮圖處理：${index + 1} / ${pendingEntries.length}`);
+    }
+}
+
 export function openImageListEditor(editor, imageList) {
     if (!imageList) {
         editor.AlertManager?.alert?.('請先選擇相簿元件。');
@@ -171,20 +308,30 @@ export function openImageListEditor(editor, imageList) {
         return;
     }
 
-    const items = getDirectImageItems(imageList);
+    const items = getDirectImageItems(editor, imageList);
     const originalItemComponents = new Set(items.map(item => item.component));
     const root = document.createElement('div');
     root.className = 'coker-image-list-editor';
     root.innerHTML = `
         <div class="coker-image-list-toolbar">
-            <button type="button" data-action="upload">
-                <span class="material-symbols-outlined" aria-hidden="true">upload</span>
-                <span>批次上傳圖片</span>
-            </button>
+            <div class="coker-image-list-toolbar-actions">
+                <button type="button" data-action="upload">
+                    <span class="material-symbols-outlined" aria-hidden="true">upload</span>
+                    <span>批次上傳圖片</span>
+                </button>
+                <button type="button" data-action="sort-name" aria-label="依名稱順序排序">
+                    <span>依名稱排序</span>
+                    <span class="material-symbols-outlined" data-role="sort-name-icon" aria-hidden="true">swap_vert</span>
+                </button>
+            </div>
             <span>可拖曳或輸入排序號碼；點擊圖片可更換。</span>
         </div>
         <div class="coker-image-list-grid" data-role="grid"></div>
         <div class="coker-image-list-empty" data-role="empty" hidden>相簿目前沒有圖片，請先批次上傳。</div>
+        <div class="coker-image-list-progress" data-role="progress" hidden>
+            <div class="coker-image-list-progress-label" data-role="progress-label"></div>
+            <progress data-role="progress-bar" value="0" max="1"></progress>
+        </div>
         <div class="coker-image-list-actions">
             <button type="button" data-action="cancel">取消</button>
             <button type="button" data-action="save" class="coker-image-list-primary">完成</button>
@@ -193,7 +340,11 @@ export function openImageListEditor(editor, imageList) {
 
     const grid = root.querySelector('[data-role="grid"]');
     const empty = root.querySelector('[data-role="empty"]');
+    const progress = root.querySelector('[data-role="progress"]');
+    const progressLabel = root.querySelector('[data-role="progress-label"]');
+    const progressBar = root.querySelector('[data-role="progress-bar"]');
     let draggedItem = null;
+    let nameSortDirection = 'asc';
 
     const render = () => {
         grid.replaceChildren();
@@ -209,6 +360,7 @@ export function openImageListEditor(editor, imageList) {
             const orderLabel = document.createElement('span');
             const orderInput = document.createElement('input');
             const deleteButton = document.createElement('button');
+            const visibilityButton = document.createElement('button');
             const field = document.createElement('label');
             const label = document.createElement('span');
             const input = document.createElement('input');
@@ -249,6 +401,15 @@ export function openImageListEditor(editor, imageList) {
             deleteButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">delete</span>';
             deleteButton.addEventListener('click', () => {
                 items.splice(index, 1);
+                render();
+            });
+            visibilityButton.type = 'button';
+            visibilityButton.className = 'coker-image-list-visibility';
+            visibilityButton.title = item.visible ? '設定為隱藏' : '設定為顯示';
+            visibilityButton.setAttribute('aria-pressed', String(!item.visible));
+            visibilityButton.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">${item.visible ? 'visibility' : 'visibility_off'}</span>`;
+            visibilityButton.addEventListener('click', () => {
+                item.visible = !item.visible;
                 render();
             });
             preview.src = item.src;
@@ -293,7 +454,16 @@ export function openImageListEditor(editor, imageList) {
                     select(asset) {
                         const replacement = normalizeAsset(asset);
                         if (replacement.src) {
-                            item.src = replacement.src;
+                            item.fullSrc = replacement.fullSrc || replacement.src;
+                            item.mediumSrc = replacement.mediumSrc || '';
+                            item.src = replacement.thumbnailSrc || replacement.src;
+                            item.guid = replacement.guid;
+                            item.mediumGuid = replacement.mediumGuid;
+                            item.thumbnailGuid = replacement.thumbnailGuid;
+                            item.needsProcessing = !replacement.fullSrc ||
+                                !replacement.thumbnailSrc ||
+                                !replacement.guid ||
+                                !replacement.thumbnailGuid;
                             if (!item.name.trim()) {
                                 item.name = fileNameWithoutExtension(
                                     replacement.name || replacement.src
@@ -313,7 +483,7 @@ export function openImageListEditor(editor, imageList) {
             });
 
             orderField.append(orderLabel, orderInput);
-            cardHeader.append(orderField, handle, deleteButton);
+            cardHeader.append(orderField, visibilityButton, handle, deleteButton);
             field.append(label, input);
             card.append(cardHeader, preview, field);
             handle.addEventListener('dragstart', event => {
@@ -356,6 +526,32 @@ export function openImageListEditor(editor, imageList) {
         });
     };
 
+    const nameSortButton = root.querySelector('[data-action="sort-name"]');
+    const nameSortIcon = root.querySelector('[data-role="sort-name-icon"]');
+    nameSortButton.addEventListener('click', () => {
+        const direction = nameSortDirection;
+        const collator = new Intl.Collator('zh-Hant', {
+            numeric: true,
+            sensitivity: 'base'
+        });
+        items.sort((left, right) => {
+            const leftName = String(left.name || '').trim();
+            const rightName = String(right.name || '').trim();
+            if (!leftName && !rightName) return 0;
+            if (!leftName) return 1;
+            if (!rightName) return -1;
+            const result = collator.compare(leftName, rightName);
+            return direction === 'asc' ? result : -result;
+        });
+        const isAscending = direction === 'asc';
+        nameSortIcon.textContent = isAscending ? 'arrow_upward' : 'arrow_downward';
+        nameSortButton.title = isAscending
+            ? '目前為名稱順序；再次點擊改為逆序'
+            : '目前為名稱逆序；再次點擊改為順序';
+        nameSortButton.setAttribute('aria-label', nameSortButton.title);
+        nameSortDirection = isAscending ? 'desc' : 'asc';
+        render();
+    });
     root.querySelector('[data-action="upload"]').addEventListener('click', () => {
         applyImageListChanges(editor, imageList, items, originalItemComponents);
         editor.Modal.close();
@@ -368,9 +564,36 @@ export function openImageListEditor(editor, imageList) {
     root.querySelector('[data-action="cancel"]').addEventListener('click', () => {
         editor.Modal.close();
     });
-    root.querySelector('[data-action="save"]').addEventListener('click', () => {
-        applyImageListChanges(editor, imageList, items, originalItemComponents);
-        editor.Modal.close();
+    root.querySelector('[data-action="save"]').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const originalText = button.textContent;
+        const hasPendingImages = items.some(item => (
+            item.needsProcessing && String(item.fullSrc || '').includes('/upload/')
+        ));
+        if (!hasPendingImages) {
+            applyImageListChanges(editor, imageList, items, originalItemComponents);
+            editor.Modal.close();
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = '圖片規格檢查／縮圖處理中…';
+        progress.hidden = false;
+        try {
+            await ensureGalleryItems(items, (completed, total, message) => {
+                progressBar.max = Math.max(total, 1);
+                progressBar.value = completed;
+                progressLabel.textContent = message || (total
+                    ? `正在檢查並補齊相簿圖片：${completed} / ${total}`
+                    : '圖片路徑與縮圖參數完整，不需要重新處理。');
+            });
+            applyImageListChanges(editor, imageList, items, originalItemComponents);
+            editor.Modal.close();
+        } catch (error) {
+            editor.AlertManager?.error?.(error?.message || '圖片批次處理失敗。');
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     });
 
     editor.Modal.open({
@@ -397,10 +620,21 @@ function appendImageItem(imageList, template, asset) {
         return false;
     }
 
-    image.set({ src: asset.src });
     image.addAttributes?.({
-        alt: fileNameWithoutExtension(asset.name || asset.src)
+        alt: fileNameWithoutExtension(asset.name || asset.src),
+        'data-src': asset.thumbnailSrc || asset.src
     });
+    const anchor = findAnchor(item);
+    const fullSrc = asset.fullSrc || asset.src;
+    const thumbnailSrc = asset.thumbnailSrc || asset.src;
+    image.set({ src: thumbnailSrc });
+    anchor?.addAttributes?.({
+        'data-full-src': fullSrc,
+        'data-image-guid': asset.guid,
+        'data-thumbnail-guid': asset.thumbnailGuid
+    });
+    setOptionalAttribute(anchor, 'data-medium-src', asset.mediumSrc);
+    setOptionalAttribute(anchor, 'data-medium-guid', asset.mediumGuid);
     return true;
 }
 

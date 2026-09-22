@@ -521,6 +521,8 @@ namespace EtheriT.Coker.Application.Processor.Option
         {
             "data-href",
             "data-src",
+            "data-full-src",
+            "data-medium-src",
             "data-url",
             "data-link",
             "data-file",

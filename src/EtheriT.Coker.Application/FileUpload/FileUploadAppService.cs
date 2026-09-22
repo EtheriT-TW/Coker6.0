@@ -71,6 +71,323 @@ namespace EtheriT.Coker.Application
             await loginUserData.SetLogs("FileBinary...", JsonConvert.SerializeObject(response));
             return response;
         }
+        // Every supported raster upload is constrained before it is stored. A 4096px
+        // maximum edge also caps the resulting image below 16.8 megapixels.
+        private const int UploadedRasterImageMaxEdge = 4096;
+        private const int GalleryLargeMaxEdge = 2048;
+        private const int GalleryMediumMaxEdge = 1600;
+        private const int GalleryThumbnailMaxEdge = 640;
+
+        public async Task<UploadFileOutputDto> uploadGalleryFiles(IList<IFormFile> files)
+        {
+            var response = new UploadFileOutputDto
+            {
+                Files = new List<FileItemDto>(),
+                ErrorFiles = new List<string>()
+            };
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    if (!IsAllowedFileType(file.ContentType))
+                        throw new InvalidOperationException("不支援的圖片格式");
+
+                    await using var stream = file.OpenReadStream();
+                    response.Files.Add(await SaveGalleryImageAsync(stream, file.FileName, null));
+                }
+                catch (Exception ex)
+                {
+                    response.ErrorFiles.Add($"{file.FileName}: {ex.Message}");
+                }
+            }
+
+            response.Success = response.Files.Count > 0;
+            return response;
+        }
+
+        public async Task<UploadFileOutputDto> ensureGalleryImages(IReadOnlyCollection<string> paths)
+        {
+            var response = new UploadFileOutputDto
+            {
+                Files = new List<FileItemDto>(),
+                ErrorFiles = new List<string>()
+            };
+            var websiteId = await loginUserData.GetWebsiteId();
+            var orgName = await loginUserData.GetWebsiteOrgName();
+
+            foreach (var sourcePath in paths.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct())
+            {
+                try
+                {
+                    var storedPath = NormalizeGalleryStoredPath(sourcePath, orgName);
+                    var source = await db.FileUploads
+                        .Where(file => file.FK_WebsiteId == websiteId && !file.IsDeleted)
+                        .Where(file => file.DownloadFileName == storedPath)
+                        .FirstOrDefaultAsync()
+                        ?? throw new InvalidOperationException("找不到可處理的圖片檔案");
+                    var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                        orgName,
+                        NormalizeStoredUploadPath(source.DownloadFileName)
+                    );
+                    if (!File.Exists(physicalPath))
+                        throw new FileNotFoundException("圖片實體檔不存在");
+
+                    var relations = await db.FileBindMores
+                        .Where(item => !item.IsDeleted
+                            && (item.type == (int)FileBindMoreEnum.相簿縮圖
+                                || item.type == (int)FileBindMoreEnum.相簿中圖)
+                            && item.FK_FileBindGuid == source.GuidKey
+                            && item.FK_FileUploadId.HasValue)
+                        .ToListAsync();
+                    var thumbnailRelation = relations
+                        .FirstOrDefault(item => item.type == (int)FileBindMoreEnum.相簿縮圖);
+                    var mediumRelation = relations
+                        .FirstOrDefault(item => item.type == (int)FileBindMoreEnum.相簿中圖);
+                    var thumbnail = thumbnailRelation == null
+                        ? null
+                        : await db.FileUploads
+                            .Where(file => file.Id == thumbnailRelation.FK_FileUploadId
+                                && file.FK_WebsiteId == websiteId
+                                && !file.IsDeleted)
+                            .FirstOrDefaultAsync();
+                    var medium = mediumRelation == null
+                        ? null
+                        : await db.FileUploads
+                            .Where(file => file.Id == mediumRelation.FK_FileUploadId
+                                && file.FK_WebsiteId == websiteId
+                                && !file.IsDeleted)
+                            .FirstOrDefaultAsync();
+
+                    using var inspection = new MagickImage(physicalPath);
+                    var mediumRequired = inspection.Width > GalleryMediumMaxEdge
+                        || inspection.Height > GalleryMediumMaxEdge;
+                    var thumbnailPhysicalPath = thumbnail == null
+                        ? null
+                        : uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                            orgName,
+                            NormalizeStoredUploadPath(thumbnail.DownloadFileName)
+                        );
+                    var thumbnailIsCompliant = false;
+                    if (thumbnailPhysicalPath != null && File.Exists(thumbnailPhysicalPath))
+                    {
+                        using var thumbnailInspection = new MagickImage(thumbnailPhysicalPath);
+                        thumbnailIsCompliant = thumbnailInspection.Width <= GalleryThumbnailMaxEdge
+                            && thumbnailInspection.Height <= GalleryThumbnailMaxEdge;
+                    }
+                    var mediumPhysicalPath = medium == null
+                        ? null
+                        : uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                            orgName,
+                            NormalizeStoredUploadPath(medium.DownloadFileName)
+                        );
+                    var mediumIsCompliant = false;
+                    if (mediumPhysicalPath != null && File.Exists(mediumPhysicalPath))
+                    {
+                        using var mediumInspection = new MagickImage(mediumPhysicalPath);
+                        mediumIsCompliant = mediumInspection.Width <= GalleryMediumMaxEdge
+                            && mediumInspection.Height <= GalleryMediumMaxEdge;
+                    }
+                    var isCompliant = inspection.Width <= GalleryLargeMaxEdge
+                        && inspection.Height <= GalleryLargeMaxEdge
+                        && thumbnailIsCompliant
+                        && (!mediumRequired || mediumIsCompliant);
+                    if (isCompliant)
+                    {
+                        response.Files.Add(new FileItemDto
+                        {
+                            Id = source.Id,
+                            Guid = source.GuidKey,
+                            ThumbnailGuid = thumbnail!.GuidKey,
+                            Name = source.OriginalFileName,
+                            SourcePath = sourcePath,
+                            Path = ApplyOrgToUploadPath(source.DownloadFileName, orgName),
+                            ThumbnailPath = ApplyOrgToUploadPath(thumbnail.DownloadFileName, orgName),
+                            MediumGuid = mediumRequired && mediumIsCompliant
+                                ? medium!.GuidKey
+                                : null,
+                            MediumPath = mediumRequired && mediumIsCompliant
+                                ? ApplyOrgToUploadPath(medium!.DownloadFileName, orgName)
+                                : null,
+                            Width = (int)inspection.Width,
+                            Height = (int)inspection.Height
+                        });
+                        continue;
+                    }
+
+                    await using var stream = File.OpenRead(physicalPath);
+                    response.Files.Add(await SaveGalleryImageAsync(
+                        stream,
+                        source.OriginalFileName,
+                        sourcePath
+                    ));
+                }
+                catch (Exception ex)
+                {
+                    response.ErrorFiles.Add($"{sourcePath}: {ex.Message}");
+                }
+            }
+
+            response.Success = response.ErrorFiles.Count == 0;
+            return response;
+        }
+
+        private async Task<FileItemDto> SaveGalleryImageAsync(
+            Stream input,
+            string originalFileName,
+            string? sourcePath)
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            var userId = await loginUserData.GetUserId();
+            var directory = "htmlConten";
+            var directoryPath = uploadPathResolver.GetDirectoryPath(orgName, directory);
+            System.IO.Directory.CreateDirectory(directoryPath);
+
+            using var original = new MagickImage(input);
+            original.AutoOrient();
+            using var large = original.Clone();
+            using var medium = (original.Width > GalleryMediumMaxEdge
+                || original.Height > GalleryMediumMaxEdge)
+                ? original.Clone()
+                : null;
+            using var thumbnail = original.Clone();
+            var wasResized = ResizeImageToMaxEdge(large, GalleryLargeMaxEdge);
+            if (medium != null)
+                ResizeImageToMaxEdge(medium, GalleryMediumMaxEdge);
+            ResizeImageToMaxEdge(thumbnail, GalleryThumbnailMaxEdge);
+            ConfigureGalleryOutput(large);
+            if (medium != null)
+                ConfigureGalleryOutput(medium);
+            ConfigureGalleryOutput(thumbnail);
+
+            var largeKey = Guid.NewGuid();
+            var mediumKey = medium == null ? (Guid?)null : Guid.NewGuid();
+            var thumbnailKey = Guid.NewGuid();
+            var largePath = Path.Combine(directoryPath, $"{largeKey}.webp");
+            var mediumPath = mediumKey.HasValue
+                ? Path.Combine(directoryPath, $"{mediumKey.Value}.webp")
+                : null;
+            var thumbnailPath = Path.Combine(directoryPath, $"{thumbnailKey}.webp");
+            await large.WriteAsync(largePath);
+            if (medium != null && mediumPath != null)
+                await medium.WriteAsync(mediumPath);
+            await thumbnail.WriteAsync(thumbnailPath);
+
+            var largeUpload = new FileUpload
+            {
+                FK_WebsiteId = websiteId,
+                FileGuid = largeKey,
+                GuidKey = Guid.NewGuid(),
+                DownloadFileName = $"/upload/{directory}/{largeKey}.webp",
+                OriginalFileName = originalFileName,
+                ContentType = "image/webp",
+                Size = new FileInfo(largePath).Length,
+                CreatorUserId = userId
+            };
+            var mediumUpload = mediumKey.HasValue && mediumPath != null
+                ? new FileUpload
+                {
+                    FK_WebsiteId = websiteId,
+                    FileGuid = mediumKey.Value,
+                    GuidKey = Guid.NewGuid(),
+                    DownloadFileName = $"/upload/{directory}/{mediumKey.Value}.webp",
+                    OriginalFileName = originalFileName,
+                    ContentType = "image/webp",
+                    Size = new FileInfo(mediumPath).Length,
+                    CreatorUserId = userId
+                }
+                : null;
+            var thumbnailUpload = new FileUpload
+            {
+                FK_WebsiteId = websiteId,
+                FileGuid = thumbnailKey,
+                GuidKey = Guid.NewGuid(),
+                DownloadFileName = $"/upload/{directory}/{thumbnailKey}.webp",
+                OriginalFileName = originalFileName,
+                ContentType = "image/webp",
+                Size = new FileInfo(thumbnailPath).Length,
+                CreatorUserId = userId
+            };
+            db.FileUploads.Add(largeUpload);
+            if (mediumUpload != null)
+                db.FileUploads.Add(mediumUpload);
+            db.FileUploads.Add(thumbnailUpload);
+            await db.SaveChangesAsync();
+            var relatedImages = new List<FileBindMore>
+            {
+                new FileBindMore
+                {
+                    type = (int)FileBindMoreEnum.相簿縮圖,
+                    FK_FileBindGuid = largeUpload.GuidKey,
+                    FK_FileUploadId = thumbnailUpload.Id,
+                    CreatorUserId = userId
+                }
+            };
+            if (mediumUpload != null)
+            {
+                relatedImages.Add(new FileBindMore
+                {
+                    type = (int)FileBindMoreEnum.相簿中圖,
+                    FK_FileBindGuid = largeUpload.GuidKey,
+                    FK_FileUploadId = mediumUpload.Id,
+                    CreatorUserId = userId
+                });
+            }
+            db.FileBindMores.AddRange(relatedImages);
+            await db.SaveChangesAsync();
+
+            return new FileItemDto
+            {
+                Id = largeUpload.Id,
+                Guid = largeUpload.GuidKey,
+                ThumbnailGuid = thumbnailUpload.GuidKey,
+                MediumGuid = mediumUpload?.GuidKey,
+                Name = originalFileName,
+                SourcePath = sourcePath,
+                Path = ApplyOrgToUploadPath(largeUpload.DownloadFileName, orgName),
+                ThumbnailPath = ApplyOrgToUploadPath(thumbnailUpload.DownloadFileName, orgName),
+                MediumPath = mediumUpload == null
+                    ? null
+                    : ApplyOrgToUploadPath(mediumUpload.DownloadFileName, orgName),
+                Width = (int)large.Width,
+                Height = (int)large.Height,
+                WasResized = wasResized
+            };
+        }
+
+        private static bool ResizeImageToMaxEdge(IMagickImage<byte> image, int maxEdge)
+        {
+            if (image.Width <= maxEdge && image.Height <= maxEdge)
+                return false;
+
+            var scale = Math.Min((double)maxEdge / image.Width, (double)maxEdge / image.Height);
+            image.FilterType = FilterType.Lanczos;
+            image.Resize(
+                Math.Max(1u, (uint)Math.Round(image.Width * scale)),
+                Math.Max(1u, (uint)Math.Round(image.Height * scale))
+            );
+            return true;
+        }
+
+        private static void ConfigureGalleryOutput(IMagickImage<byte> image)
+        {
+            image.Strip();
+            image.Format = MagickFormat.WebP;
+            image.Quality = 82;
+        }
+
+        private static string NormalizeGalleryStoredPath(string path, string orgName)
+        {
+            var value = path.Trim();
+            if (Uri.TryCreate(value, UriKind.Absolute, out var uri))
+                value = uri.AbsolutePath;
+            value = value.Split('?', '#')[0].Replace('\\', '/');
+            var orgPrefix = $"/upload/{orgName}/";
+            return value.StartsWith(orgPrefix, StringComparison.OrdinalIgnoreCase)
+                ? "/upload/" + value.Substring(orgPrefix.Length)
+                : value;
+        }
         private async Task<UploadFileOutputDto> uploadFiles(IList<IFormFile> files, string type, bool isTemp = false)
         {
             UploadFileOutputDto response = new UploadFileOutputDto
@@ -1590,6 +1907,7 @@ namespace EtheriT.Coker.Application
 
                 if (files != null)
                 {
+                    var userId = await loginUserData.GetUserId();
                     var invalidatesMenuCache = await db.FileBinds
                         .AsNoTracking()
                         .AnyAsync(bind => bind.FK_FileUploadId == files.Id
@@ -1597,6 +1915,44 @@ namespace EtheriT.Coker.Application
                             && (bind.type == (int)FileBindTypeEnum.選單圖
                                 || bind.type == (int)FileBindTypeEnum.選單覆蓋
                                 || bind.type == (int)FileBindTypeEnum.選單Icon));
+                    var relatedImages = await db.FileBindMores
+                        .Where(item => item.FK_FileBindGuid == files.GuidKey
+                            && (item.type == (int)FileBindMoreEnum.相簿縮圖
+                                || item.type == (int)FileBindMoreEnum.相簿中圖)
+                            && !item.IsDeleted
+                            && item.FK_FileUploadId.HasValue)
+                        .ToListAsync();
+                    if (relatedImages.Count > 0)
+                    {
+                        var relatedIds = relatedImages
+                            .Select(item => item.FK_FileUploadId!.Value)
+                            .Distinct()
+                            .ToList();
+                        var relatedUploads = await db.FileUploads
+                            .Where(file => relatedIds.Contains(file.Id)
+                                && file.FK_WebsiteId == websiteId
+                                && !file.IsDeleted)
+                            .ToListAsync();
+                        foreach (var relatedUpload in relatedUploads)
+                        {
+                            var relatedPhysicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                                orgName,
+                                NormalizeStoredUploadPath(relatedUpload.DownloadFileName)
+                            );
+                            if (File.Exists(relatedPhysicalPath))
+                                File.Delete(relatedPhysicalPath);
+
+                            relatedUpload.IsDeleted = true;
+                            relatedUpload.DeletionTime = DateTime.Now;
+                            relatedUpload.DeleterUserId = userId;
+                        }
+                        foreach (var relation in relatedImages)
+                        {
+                            relation.IsDeleted = true;
+                            relation.DeletionTime = DateTime.Now;
+                            relation.DeleterUserId = userId;
+                        }
+                    }
                     var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
                         orgName,
                         NormalizeStoredUploadPath(files.DownloadFileName)
@@ -1608,6 +1964,8 @@ namespace EtheriT.Coker.Application
                     }
 
                     files.IsDeleted = true;
+                    files.DeletionTime = DateTime.Now;
+                    files.DeleterUserId = userId;
                     response.Success = true;
                     await loginUserData.SaveChanges(files);
                     if (invalidatesMenuCache)
@@ -2098,10 +2456,19 @@ namespace EtheriT.Coker.Application
                         else
                         {
                             var physicalPath = uploadPathResolver.GetPhysicalPath(orgName, path);
-                            using (var fileStream = new FileStream(physicalPath, FileMode.Create))
+                            if (IsAllowedFileType(file.ContentType))
                             {
+                                await using var limitedImageStream = await ResizeUploadedRasterImageAsync(stream);
+                                using var fileStream = new FileStream(physicalPath, FileMode.Create);
+                                if (isEncryption) await EncryptAndSaveAsync(fileStream, limitedImageStream);
+                                else await limitedImageStream.CopyToAsync(fileStream);
+                                fileLength = limitedImageStream.Length;
+                            }
+                            else
+                            {
+                                using var fileStream = new FileStream(physicalPath, FileMode.Create);
                                 if (isEncryption) await EncryptAndSaveAsync(fileStream, stream);
-                                else await file.CopyToAsync(fileStream);
+                                else await stream.CopyToAsync(fileStream);
                             }
                         }
                         if (isTemp)
@@ -2265,14 +2632,28 @@ namespace EtheriT.Coker.Application
                             else
                             {
                                 var physicalPath = uploadPathResolver.GetPhysicalPath(orgName, path);
-                                if (asotype == (int)FileBindTypeEnum.網站圖示)
+                                if (IsAllowedFileType(file.ContentType))
                                 {
-                                    await WriteFileAtomicallyAsync(file, physicalPath);
+                                    await using var limitedImageStream = await ResizeUploadedRasterImageAsync(stream);
+                                    if (asotype == (int)FileBindTypeEnum.網站圖示)
+                                    {
+                                        await WriteFileAtomicallyAsync(limitedImageStream, physicalPath);
+                                    }
+                                    else
+                                    {
+                                        using var fileStream = new FileStream(physicalPath, FileMode.Create);
+                                        await limitedImageStream.CopyToAsync(fileStream);
+                                    }
+                                    fileLength = limitedImageStream.Length;
+                                }
+                                else if (asotype == (int)FileBindTypeEnum.網站圖示)
+                                {
+                                    await WriteFileAtomicallyAsync(stream, physicalPath);
                                 }
                                 else
                                 {
                                     using var fileStream = new FileStream(physicalPath, FileMode.Create);
-                                    await file.CopyToAsync(fileStream);
+                                    await stream.CopyToAsync(fileStream);
                                 }
                             }
 
@@ -2337,7 +2718,7 @@ namespace EtheriT.Coker.Application
             else throw new Exception("上傳失敗");
         }
 
-        private static async Task WriteFileAtomicallyAsync(IFormFile file, string targetPath)
+        private static async Task WriteFileAtomicallyAsync(Stream source, string targetPath)
         {
             var directory = Path.GetDirectoryName(targetPath)
                 ?? throw new Exception("無法取得網站圖示目錄");
@@ -2358,7 +2739,7 @@ namespace EtheriT.Coker.Application
                     81920,
                     FileOptions.Asynchronous | FileOptions.WriteThrough))
                 {
-                    await file.CopyToAsync(fileStream);
+                    await source.CopyToAsync(fileStream);
                     await fileStream.FlushAsync();
                 }
 
@@ -2395,6 +2776,27 @@ namespace EtheriT.Coker.Application
                 fileLock.Release();
             }
         }
+
+        private static async Task<MemoryStream> ResizeUploadedRasterImageAsync(Stream input)
+        {
+            var buffered = new MemoryStream();
+            await input.CopyToAsync(buffered);
+            buffered.Position = 0;
+
+            using var image = new MagickImage(buffered);
+            if (!ResizeImageToMaxEdge(image, UploadedRasterImageMaxEdge))
+            {
+                buffered.Position = 0;
+                return buffered;
+            }
+
+            var resized = new MemoryStream();
+            await image.WriteAsync(resized);
+            resized.Position = 0;
+            buffered.Dispose();
+            return resized;
+        }
+
         private bool IsAllowedFileType(string contentType)
         {
             string[] allowedTypes = {
@@ -2421,6 +2823,7 @@ namespace EtheriT.Coker.Application
             memoryStream.Position = 0;
             using var original = new MagickImage(memoryStream);
             var originalFormat = original.Format;
+            var wasResized = ResizeImageToMaxEdge(original, UploadedRasterImageMaxEdge);
             var extension = GetExtension(originalFormat);
             var contentType = GetMimeType(originalFormat);
             var fallbackPath = Path.Combine(directoryPath, $"{key}{extension}");
@@ -2439,7 +2842,7 @@ namespace EtheriT.Coker.Application
             }
 
             // 若檔案小於40KB，直接存原始
-            if (originalSize < 40 * 1024)
+            if (!wasResized && originalSize < 40 * 1024)
             {
                 memoryStream.Position = 0;
                 using (var fs = File.Create(fallbackPath))
@@ -2485,6 +2888,20 @@ namespace EtheriT.Coker.Application
 
             // AVIF未壓縮成功，刪除
             File.Delete(avifPathTry);
+
+            if (wasResized)
+            {
+                // AVIF 沒有比原始上傳檔小時，仍需保存已套用解析度上限的版本，
+                // 不能退回未縮小的原始位元組。
+                original.Format = originalFormat;
+                await original.WriteAsync(fallbackPath);
+                return new ImageConversionResultDto
+                {
+                    Path = $"/{baseUrlPath}/{key}{extension}",
+                    ContentType = contentType,
+                    FileLength = new FileInfo(fallbackPath).Length
+                };
+            }
 
             // 儲存原始格式
             memoryStream.Position = 0;

@@ -99,12 +99,12 @@
 
 @media (max-width: 576px) {
     .directory-sort-control {
-        flex-basis: 100%;
-        width: 100%;
+        flex: 0 1 auto;
+        width: auto;
     }
 
         .directory-sort-control .btn-group {
-            max-width: calc(100% - 3.5rem);
+            max-width: calc(100vw - 11rem);
         }
 
     .catalog_frame .switch_control .directory-sort-control button {
@@ -114,12 +114,14 @@
     /* 排序器加入後空間不足，小螢幕只留圖示，文字以 font-size:0 收起 */
     /* 文字是裸文字節點無法選取，故用字級歸零；圖示的 .fs-5 為 !important 不受影響 */
     .catalog_frame .switch_control .btn_prod_grid,
-    .catalog_frame .switch_control .btn_prod_list {
+    .catalog_frame .switch_control .btn_prod_list,
+    .catalog_frame .switch_control .btn_text {
         font-size: 0;
     }
 
         .catalog_frame .switch_control .btn_prod_grid .material-symbols-outlined,
-        .catalog_frame .switch_control .btn_prod_list .material-symbols-outlined {
+        .catalog_frame .switch_control .btn_prod_list .material-symbols-outlined,
+        .catalog_frame .switch_control .btn_text .material-symbols-outlined {
             margin-right: 0 !important;
             font-size:1.5rem !important;
         }
@@ -1047,6 +1049,30 @@
         column-gap: 0.75rem;
         align-items: start;
     }
+
+    /* 純文字模式沒有圖片，不保留手機圖文卡的 100px 圖片欄。 */
+    .type_change_frame .catalog.type3 .type1 figure {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "title"
+            "desc"
+            "labels"
+            "price"
+            "tags";
+    }
+
+    .type_change_frame .catalog.type3 .type1 .item-title {
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding: 0.5rem 1rem !important;
+    }
+
+        .type_change_frame .catalog.type3 .type1 .item-title .title {
+            height: auto !important;
+            min-height: 0 !important;
+        }
 
     .type_change_frame .type1 figcaption,
     .type_change_frame .type1 .bottom-row {

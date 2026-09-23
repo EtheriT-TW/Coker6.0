@@ -1,8 +1,10 @@
 using EtheriT.Coker.Application.Shared;
+using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -63,7 +65,18 @@ namespace EtheriT.Coker.Application.FileManagement
 
             var website = await db.Websites.AsNoTracking()
                 .Where(x => x.Id == websiteId && !x.IsDeleted)
-                .Select(x => new { x.Id, x.DefaultUrl, x.Icon, x.Logo, x.Css, x.Description, x.Statement })
+                .Select(x => new
+                {
+                    x.Id,
+                    x.OrgName,
+                    x.LayoutType,
+                    x.DefaultUrl,
+                    x.Icon,
+                    x.Logo,
+                    x.Css,
+                    x.Description,
+                    x.Statement
+                })
                 .FirstOrDefaultAsync(cancellationToken);
             if (website == null)
                 return;
@@ -170,7 +183,112 @@ namespace EtheriT.Coker.Application.FileManagement
                 sources.Add(Source("Footer", x.Id, "Published", Fields(("Html", x.html), ("Css", x.css))));
             }
 
+            var legacyHeaderSource = await CreateLegacyHeaderSourceAsync(
+                website.Id,
+                website.OrgName,
+                website.LayoutType,
+                website.Logo,
+                cancellationToken);
+            if (legacyHeaderSource != null)
+                sources.Add(legacyHeaderSource);
+
             await ReplaceSourcesAsync(websiteId, sources, true, userId, cancellationToken);
+        }
+
+        private async Task<FileReferenceSource?> CreateLegacyHeaderSourceAsync(
+            long websiteId,
+            string orgName,
+            int? layoutType,
+            string? configuredLogo,
+            CancellationToken cancellationToken)
+        {
+            // Header.cs 的 Layout_Type = 2 會走入口網站專用流程，不會讀取這些舊版檔名。
+            if (layoutType == 2)
+                return null;
+
+            string root;
+            try
+            {
+                root = uploadPathResolver.GetRootPath(orgName);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                return null;
+            }
+
+            var paths = new List<string>();
+            void AddIfExists(string physicalPath)
+            {
+                if (!File.Exists(physicalPath))
+                    return;
+                var relativePath = Path.GetRelativePath(root, physicalPath).Replace('\\', '/');
+                paths.Add("/upload/" + relativePath);
+            }
+
+            AddIfExists(Path.Combine(root, "marqueeblockbig.png"));
+            AddIfExists(Path.Combine(root, "marqueeblocksmall.png"));
+            if (string.IsNullOrWhiteSpace(configuredLogo))
+                AddIfExists(Path.Combine(root, "logo.png"));
+
+            var hasEnabledConfiguredBanner = false;
+            if (layoutType is 7 or 8)
+            {
+                var activeTemplateId = await db.Templates.AsNoTracking()
+                    .Where(x => x.FK_WebsiteID == websiteId && x.Enable && !x.IsDeleted)
+                    .OrderByDescending(x => x.LastModificationTime ?? x.CreationTime)
+                    .Select(x => (long?)x.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (activeTemplateId.HasValue)
+                {
+                    var headerContentConfig = await db.TemplateSections.AsNoTracking()
+                        .Where(x => x.FK_TemplateID == activeTemplateId.Value
+                            && (int)x.sectionType == 1
+                            && !x.IsDeleted)
+                        .Select(x => x.ContentConfig)
+                        .FirstOrDefaultAsync(cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(headerContentConfig))
+                    {
+                        try
+                        {
+                            var config = JsonConvert.DeserializeObject<HeaderContentConfigDto>(headerContentConfig);
+                            hasEnabledConfiguredBanner = config?.Sliders?.Any(x => x.Enabled) == true;
+                        }
+                        catch (JsonException)
+                        {
+                            // 舊資料無法解析時，與前台一樣使用舊版檔名備援。
+                        }
+                    }
+                }
+            }
+
+            if (!hasEnabledConfiguredBanner)
+            {
+                var supportedExtensions = new HashSet<string>(
+                    new[] { ".jpg", ".jpeg", ".png", ".avif", ".gif" },
+                    StringComparer.OrdinalIgnoreCase);
+                paths.AddRange(System.IO.Directory
+                    .EnumerateFiles(root, "headertitile*.*", SearchOption.TopDirectoryOnly)
+                    .Where(path => supportedExtensions.Contains(Path.GetExtension(path)))
+                    .Select(path => "/upload/" + Path.GetFileName(path)));
+
+                var bannerDirectory = Path.Combine(root, "banner");
+                if (System.IO.Directory.Exists(bannerDirectory))
+                {
+                    paths.AddRange(System.IO.Directory
+                        .EnumerateFiles(bannerDirectory, "banner*.*", SearchOption.TopDirectoryOnly)
+                        .Where(path => supportedExtensions.Contains(Path.GetExtension(path)))
+                        .Select(path => "/upload/banner/" + Path.GetFileName(path)));
+                }
+            }
+
+            var distinctPaths = paths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            return distinctPaths.Length == 0
+                ? null
+                : Source(
+                    "Header",
+                    websiteId,
+                    "LegacyFileConvention",
+                    Fields(("LegacyHeaderFiles", string.Join("\n", distinctPaths))));
         }
 
         public async Task<int> RegisterUntrackedPhysicalFilesAsync(

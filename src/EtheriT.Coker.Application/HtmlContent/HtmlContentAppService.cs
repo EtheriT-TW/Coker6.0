@@ -20,6 +20,7 @@ using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Templates;
 using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.FileManagement;
 
 namespace EtheriT.Coker.Application.HtmlContent
 {
@@ -30,12 +31,14 @@ namespace EtheriT.Coker.Application.HtmlContent
         private readonly IMapper mapper;
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly ITemplatesApplicationService templatesApplicationService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         public HtmlContentAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
             IFileUploadAppService fileUploadAppService,
-            ITemplatesApplicationService templatesApplicationService
+            ITemplatesApplicationService templatesApplicationService,
+            IFileReferenceWriter fileReferenceWriter
         )
         {
             this.db = db;
@@ -43,6 +46,7 @@ namespace EtheriT.Coker.Application.HtmlContent
             this.mapper = mapper;
             this.fileUploadAppService = fileUploadAppService;
             this.templatesApplicationService = templatesApplicationService;
+            this.fileReferenceWriter = fileReferenceWriter;
         }
         public async Task<ResponseMessageDto> AddUp(HtmlContentDto dto)
         {
@@ -51,6 +55,7 @@ namespace EtheriT.Coker.Application.HtmlContent
             {
                 long userid = await loginUserData.GetUserId();
                 var ascoid = dto.Id;
+                Html_Content? savedContent = null;
                 dto.Html = HttpUtility.HtmlEncode(dto.Html);
                 if (dto.Id == 0)
                 {
@@ -62,6 +67,7 @@ namespace EtheriT.Coker.Application.HtmlContent
                         db.Html_Contents.Add(newItem);
                         await loginUserData.SaveChanges(newItem);
                         ascoid = newItem.Id;
+                        savedContent = newItem;
                     }
                     else throw new Exception("查無資料");
                 }
@@ -72,8 +78,24 @@ namespace EtheriT.Coker.Application.HtmlContent
                     {
                         mapper.Map(dto, db_hc);
                         await loginUserData.SaveChanges(db_hc);
+                        savedContent = db_hc;
                     }
                     else throw new Exception("查無資料");
+                }
+                if (savedContent != null)
+                {
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        savedContent.FK_WebsiteId,
+                        new FileReferenceSource("HtmlContent", savedContent.Id, "Current",
+                            new Dictionary<string, string?>
+                            {
+                                ["Html"] = savedContent.Html,
+                                ["Css"] = savedContent.Css,
+                                ["Img"] = savedContent.Img,
+                                ["Icon"] = savedContent.Icon,
+                                ["Link"] = savedContent.Link
+                            }),
+                        userid);
                 }
                 output.Success = true;
                 output.Message = ascoid.ToString();

@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Application.Configuration
         public int RemoteRetentionDays { get; set; } = 90;
         public int RemoteBatchSize { get; set; } = 2_000;
         public int RemoteMaxRowsPerRun { get; set; } = 50_000;
+        public int HangfireFailedJobRetentionDays { get; set; } = 180;
         public int CommandTimeoutSeconds { get; set; } = 120;
     }
 }

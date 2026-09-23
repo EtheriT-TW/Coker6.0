@@ -152,6 +152,69 @@ namespace EtheriT.Coker.Application.FileManagement
                 .Where(file => !string.IsNullOrWhiteSpace(file.DownloadFileName))
                 .GroupBy(file => NormalizeDownloadPath(file.DownloadFileName!))
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            var uploadIds = dbFileUploads.Select(file => file.Id).Distinct().ToArray();
+            var referenceCounts = uploadIds.Length == 0
+                ? new Dictionary<long, int>()
+                : _dbContext.FileReferences.AsNoTracking()
+                    .Where(reference => reference.FK_FileUploadId.HasValue
+                        && uploadIds.Contains(reference.FK_FileUploadId.Value)
+                        && !reference.IsDeleted)
+                    .GroupBy(reference => reference.FK_FileUploadId!.Value)
+                    .ToDictionary(group => group.Key, group => group.Sum(reference => reference.OccurrenceCount));
+            if (uploadIds.Length > 0)
+            {
+                var bindingCounts = _dbContext.FileBinds.AsNoTracking()
+                    .Where(binding => binding.FK_FileUploadId.HasValue
+                        && uploadIds.Contains(binding.FK_FileUploadId.Value)
+                        && !binding.IsDeleted)
+                    .GroupBy(binding => binding.FK_FileUploadId!.Value)
+                    .ToDictionary(group => group.Key, group => group.Count());
+                var moreBindingCounts = (
+                    from more in _dbContext.FileBindMores.AsNoTracking()
+                    join binding in _dbContext.FileBinds.AsNoTracking()
+                        on more.FK_FileBindGuid equals binding.Guid
+                    where more.FK_FileUploadId.HasValue
+                        && uploadIds.Contains(more.FK_FileUploadId.Value)
+                        && !more.IsDeleted
+                        && !binding.IsDeleted
+                    group more by more.FK_FileUploadId!.Value into grouped
+                    select new { FileUploadId = grouped.Key, Count = grouped.Count() }
+                ).ToDictionary(item => item.FileUploadId, item => item.Count);
+                foreach (var count in bindingCounts.Concat(moreBindingCounts))
+                    referenceCounts[count.Key] = referenceCounts.GetValueOrDefault(count.Key) + count.Value;
+
+                // 相簿中圖與縮圖是由大圖衍生，FileBindMore.FK_FileBindGuid
+                // 指向的是大圖 FileUpload.GuidKey，而不是 FileBind.Guid。
+                // 若大圖已被引用，衍生圖應顯示相同的有效引用次數。
+                var uploadIdByGuid = dbFileUploads
+                    .GroupBy(file => file.GuidKey)
+                    .ToDictionary(group => group.Key, group => group.First().Id);
+                var familyRelations = _dbContext.FileBindMores.AsNoTracking()
+                    .Where(relation => relation.FK_FileUploadId.HasValue
+                        && uploadIds.Contains(relation.FK_FileUploadId.Value)
+                        && !relation.IsDeleted)
+                    .Select(relation => new
+                    {
+                        relation.FK_FileBindGuid,
+                        ChildFileUploadId = relation.FK_FileUploadId!.Value
+                    })
+                    .ToList();
+                var changed = true;
+                while (changed)
+                {
+                    changed = false;
+                    foreach (var relation in familyRelations)
+                    {
+                        if (!uploadIdByGuid.TryGetValue(relation.FK_FileBindGuid, out var parentId))
+                            continue;
+                        var parentCount = referenceCounts.GetValueOrDefault(parentId);
+                        if (parentCount <= referenceCounts.GetValueOrDefault(relation.ChildFileUploadId))
+                            continue;
+                        referenceCounts[relation.ChildFileUploadId] = parentCount;
+                        changed = true;
+                    }
+                }
+            }
 
             foreach (var item in items.ToList())
             {
@@ -185,6 +248,8 @@ namespace EtheriT.Coker.Application.FileManagement
                         }
                         item.CustomFields[nameof(matchingFileUpload.OriginalFileName)] = matchingFileUpload.OriginalFileName;
                         item.CustomFields[nameof(matchingFileUpload.DownloadFileName)] = matchingFileUpload.DownloadFileName;
+                        item.CustomFields["FileUploadId"] = matchingFileUpload.Id;
+                        item.CustomFields["ReferenceCount"] = referenceCounts.GetValueOrDefault(matchingFileUpload.Id);
                     }
                 }
             }

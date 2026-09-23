@@ -29,6 +29,7 @@ using Newtonsoft.Json.Serialization;
 using System.Net;
 using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Permissions;
+using EtheriT.Coker.Application.FileManagement;
 
 namespace EtheriT.Coker.Application.Article
 {
@@ -45,6 +46,7 @@ namespace EtheriT.Coker.Application.Article
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IHtmlSanitizeService htmlSanitizeService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -56,7 +58,8 @@ namespace EtheriT.Coker.Application.Article
             ITokenAppService tokenAppService,
             IHtmlProcessor htmlProcessor,
             IPermissionsAppService permissionsAppService,
-            IHtmlSanitizeService htmlSanitizeService
+            IHtmlSanitizeService htmlSanitizeService,
+            IFileReferenceWriter fileReferenceWriter
         )
         {
             this.db = db;
@@ -68,6 +71,7 @@ namespace EtheriT.Coker.Application.Article
             this.tokenAppService = tokenAppService;
             this.stringHandler = stringHandler;
             this.htmlProcessor = htmlProcessor;
+            this.fileReferenceWriter = fileReferenceWriter;
             this.permissionsAppService = permissionsAppService;
             this.htmlSanitizeService = htmlSanitizeService;
         }
@@ -694,6 +698,17 @@ namespace EtheriT.Coker.Application.Article
                     article.LastModifierUserId = userId;
 
                     await loginUserData.SaveChanges(article);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        article.FK_WebsiteId,
+                        new FileReferenceSource("Article", article.Id, "Published",
+                            new Dictionary<string, string?>
+                            {
+                                ["Html"] = article.Html,
+                                ["Css"] = article.Css,
+                                ["Description"] = article.Description,
+                                ["Subtitle"] = article.Subtitle
+                            }),
+                        userId);
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -801,6 +816,16 @@ namespace EtheriT.Coker.Application.Article
                     article.SaveHtml = dto.SaveHtml;
                     article.SaveCss = dto.SaveCss;
                     await loginUserData.SaveChanges(article);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        article.FK_WebsiteId,
+                        new FileReferenceSource("Article", article.Id, "Draft",
+                            new Dictionary<string, string?>
+                            {
+                                ["SaveHtml"] = article.SaveHtml,
+                                ["SaveCss"] = article.SaveCss,
+                                ["DataJson"] = article.DataJson
+                            }),
+                        await loginUserData.GetUserId());
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");

@@ -22,6 +22,7 @@ using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Processor;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using System.Text.Encodings.Web;
+using EtheriT.Coker.Application.FileManagement;
 
 namespace EtheriT.Coker.Application.TechnicalCertificate
 {
@@ -37,6 +38,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IHtmlSanitizeService htmlSanitizeService;
         private readonly IHtmlSanitizer htmlSanitizer;
+        private readonly IFileReferenceWriter fileReferenceWriter;
 
         public TechnicalCertificateAppService(
 			CokerDbContext db,
@@ -47,7 +49,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 			IMapper mapper,
             IHtmlProcessor htmlProcessor,
             IHtmlSanitizeService htmlSanitizeService,
-            IHtmlSanitizer htmlSanitizer
+            IHtmlSanitizer htmlSanitizer,
+            IFileReferenceWriter fileReferenceWriter
 		)
 		{
 			this.db = db;
@@ -60,6 +63,7 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
             this.htmlProcessor = htmlProcessor;
             this.htmlSanitizeService = htmlSanitizeService;
             this.htmlSanitizer = htmlSanitizer;
+            this.fileReferenceWriter = fileReferenceWriter;
 
         }
 		public async Task<ResponseMessageDto> AddUp(TechCertDto dto)
@@ -496,6 +500,30 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
                         tecCer.Css = sanitized.Css;
                     }
                     await loginUserData.SaveChanges(tecCer);
+                    var userId = await loginUserData.GetUserId();
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        tecCer.FK_WebsiteId,
+                        new FileReferenceSource("TechnicalCertificate", tecCer.Id, "Draft",
+                            new Dictionary<string, string?>
+                            {
+                                ["SaveHtml"] = tecCer.SaveHtml,
+                                ["SaveCss"] = tecCer.SaveCss
+                            }),
+                        userId);
+                    if (publish)
+                    {
+                        await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                            tecCer.FK_WebsiteId,
+                            new FileReferenceSource("TechnicalCertificate", tecCer.Id, "Published",
+                                new Dictionary<string, string?>
+                                {
+                                    ["Html"] = tecCer.Html,
+                                    ["Css"] = tecCer.Css,
+                                    ["Img"] = tecCer.Img,
+                                    ["Description"] = tecCer.Description
+                                }),
+                            userId);
+                    }
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");

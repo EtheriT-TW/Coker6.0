@@ -226,6 +226,9 @@ builder.Services.AddScoped<DatabaseRetentionWorking>();
 builder.Services.AddScoped<RemoteRetentionWorking>();
 builder.Services.AddScoped<FileCleanupWorking>();
 builder.Services.AddScoped<IFileReferenceScanner, FileReferenceScanner>();
+builder.Services.AddScoped<FileReferenceIndexingService>();
+builder.Services.AddScoped<IFileReferenceWriter>(serviceProvider =>
+    serviceProvider.GetRequiredService<FileReferenceIndexingService>());
 builder.Services.Configure<FileCleanupOptions>(
     builder.Configuration.GetSection("FileCleanup"));
 builder.Services.Configure<DatabaseRetentionOptions>(

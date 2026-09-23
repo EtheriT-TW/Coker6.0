@@ -239,6 +239,14 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             return Ok(await _fileManagementAppService.GetRecycleBinFilesAsync());
         }
 
+        [HttpGet]
+        public async Task<IActionResult> FileReferences([FromQuery] long fileUploadId)
+        {
+            if (fileUploadId <= 0)
+                return BadRequest(new { message = "請指定檔案。" });
+            return Ok(await _fileManagementAppService.GetFileReferencesAsync(fileUploadId));
+        }
+
         [HttpPost]
         public async Task<IActionResult> StartReferenceScan()
         {

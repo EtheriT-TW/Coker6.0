@@ -40,12 +40,17 @@
                 {
                     columns.Add().DataField("name").Caption("實體檔名");
                     columns.Add().DataField("OriginalFileName").Caption("上傳檔名");
+                    columns.Add()
+                        .DataField("ReferenceCount")
+                        .Caption("引用次數")
+                        .Width(110);
                     columns.Add().DataField("size");
                     columns.Add().DataField("dateModified").DataType(GridColumnDataType.DateTime).Width(200);
                 });
             })
             .ShowParentFolder(false);
         })
+        .CustomizeDetailColumns("fileManager_customizeDetailColumns")
         .Toolbar(toolbar => {
             toolbar.Items(items => {
                 items.Add().Name("create").Text("新增資料夾");
@@ -111,6 +116,11 @@
     .HideOnOutsideClick(true)
     .ShowCloseButton(true))
 
+<div id="file-reference-popup">
+    <div id="file-reference-summary" class="file-reference-summary"></div>
+    <div id="file-reference-grid"></div>
+</div>
+
 <style>
     .file-management-modebar { display: flex; gap: .5rem; margin-bottom: 1rem; }
     .file-management-modebar button {
@@ -139,6 +149,15 @@
     .file-cleanup-row-actions .dx-button { min-width: 32px; }
     .photo-popup-content { display: flex; align-items: center; justify-content: center; overflow: auto; }
     .photo-popup-image { display: block; max-width: 100%; max-height: 520px; object-fit: contain; }
+    .file-reference-summary { margin-bottom: .75rem; color: #495057; }
+    #file-reference-grid .dx-datagrid-headers .dx-header-row > td { font-weight: 600; }
+    .file-reference-count-button {
+        min-width: 32px; padding: .15rem .45rem; border: 0; border-radius: .25rem;
+        color: #0d6efd; background: transparent; text-decoration: underline; cursor: pointer;
+    }
+    .file-reference-count-button:hover, .file-reference-count-button:focus {
+        color: #fff; background: #0d6efd; text-decoration: none; outline: none;
+    }
     @@media (max-width: 900px) {
         .file-cleanup-toolbar { align-items: stretch; flex-direction: column; }
         .file-cleanup-actions { justify-content: flex-start; }
@@ -333,6 +352,108 @@
                 }
             });
         });
+    }
+
+    function fileManager_customizeDetailColumns(columns) {
+        if (!Array.isArray(columns)) {
+            return columns || [];
+        }
+        const referenceColumn = columns.find(column => column.dataField === "ReferenceCount");
+        if (referenceColumn) {
+            referenceColumn.cellTemplate = fileManager_referenceCellTemplate;
+        }
+        return columns;
+    }
+
+    function fileManager_referenceCellTemplate(container, options) {
+        const fileItem = options.data?.fileItem || {};
+        const row = fileItem.dataItem || {};
+        const count = Number(row.ReferenceCount ?? options.value ?? 0);
+        const fileUploadId = Number(row.FileUploadId || 0);
+        const fileName = row.OriginalFileName || fileItem.name || "檔案";
+        $("<button>", {
+            type: "button",
+            class: "file-reference-count-button",
+            text: count,
+            title: "點擊查看引用位置",
+            "aria-label": `查看 ${fileName} 的引用位置`
+        }).on("click", event => {
+            event.preventDefault();
+            event.stopPropagation();
+            fileManager_openReferences(fileUploadId, fileName);
+        }).appendTo(container);
+    }
+
+    function fileManager_openReferences(fileUploadId, fileName) {
+        if (!fileUploadId) {
+            co.sweet.warn("查看引用", "這個實體檔案尚未建立 FileUpload 紀錄，請先執行背景掃描。");
+            return;
+        }
+
+        $.get("/api/FileManagement/FileReferences", { fileUploadId })
+            .done(result => {
+                const references = result.references || [];
+                $("#file-reference-summary").text(
+                    `總引用次數：${result.totalOccurrenceCount || 0}；引用位置：${references.length} 處。`);
+                const grid = getFileReferenceGrid();
+                grid.option("dataSource", references);
+                const popup = getFileReferencePopup();
+                popup.option("title", `引用資訊：${fileName}`);
+                popup.show();
+            })
+            .fail(xhr => co.sweet.warn(
+                "無法讀取引用資訊",
+                xhr?.responseJSON?.message || xhr?.responseText || "請稍後再試。"));
+    }
+
+    let fileReferencePopupInstance = null;
+    let fileReferenceGridInstance = null;
+
+    function getFileReferencePopup() {
+        if (!fileReferencePopupInstance) {
+            fileReferencePopupInstance = $("#file-reference-popup").dxPopup({
+                width: "min(1100px, 94vw)",
+                height: "min(680px, 88vh)",
+                showCloseButton: true,
+                hideOnOutsideClick: true,
+                dragEnabled: true
+            }).dxPopup("instance");
+        }
+        return fileReferencePopupInstance;
+    }
+
+    function getFileReferenceGrid() {
+        if (!fileReferenceGridInstance) {
+            fileReferenceGridInstance = $("#file-reference-grid").dxDataGrid({
+                dataSource: [],
+                showBorders: true,
+                rowAlternationEnabled: true,
+                hoverStateEnabled: true,
+                wordWrapEnabled: true,
+                columnAutoWidth: true,
+                columnHidingEnabled: true,
+                noDataText: "目前沒有已記錄的引用。",
+                paging: { enabled: false },
+                scrolling: { mode: "virtual" },
+                columns: [
+                    { dataField: "sourceName", caption: "引用來源", minWidth: 180 },
+                    { dataField: "sourceType", caption: "類型", width: 150 },
+                    {
+                        dataField: "sourceState",
+                        caption: "狀態",
+                        width: 95,
+                        customizeText: cell => ({
+                            Draft: "草稿", Published: "已發布", Newsletter: "電子報",
+                            Current: "目前設定", Binding: "檔案綁定"
+                        })[cell.value] || cell.value
+                    },
+                    { dataField: "sourceField", caption: "欄位", width: 140 },
+                    { dataField: "occurrenceCount", caption: "次數", width: 75, alignment: "right" },
+                    { dataField: "path", caption: "路徑", minWidth: 260 }
+                ]
+            }).dxDataGrid("instance");
+        }
+        return fileReferenceGridInstance;
     }
 
     let fileCleanupMode = "unreferenced";

@@ -22,4 +22,22 @@ namespace EtheriT.Coker.Application.Shared.FileManagement
         public int MovedCount { get; set; }
         public int SkippedCount { get; set; }
     }
+
+    public class FileReferenceResultDto
+    {
+        public long FileUploadId { get; set; }
+        public int TotalOccurrenceCount { get; set; }
+        public List<FileReferenceDetailDto> References { get; set; } = new();
+    }
+
+    public class FileReferenceDetailDto
+    {
+        public string SourceType { get; set; } = string.Empty;
+        public string SourceName { get; set; } = string.Empty;
+        public long SourceId { get; set; }
+        public string SourceState { get; set; } = string.Empty;
+        public string SourceField { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public int OccurrenceCount { get; set; }
+    }
 }

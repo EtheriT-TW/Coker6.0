@@ -4,6 +4,7 @@ using DevExtreme.AspNet.Mvc;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Permissions;
+using EtheriT.Coker.Application.FileManagement;
 using EtheriT.Coker.Application.Processor;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Article;
@@ -46,6 +47,7 @@ namespace EtheriT.Coker.Application
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IHtmlSanitizeService htmlSanitizeService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         public WebMenuApplication(
             CokerDbContext db,
             IHttpContextAccessor httpContextAccessor,
@@ -58,7 +60,8 @@ namespace EtheriT.Coker.Application
             IWebsiteCacheStateAppService websiteCacheStateAppService,
             IHtmlProcessor htmlProcessor,
             StringHandler stringHandler,
-            IHtmlSanitizeService htmlSanitizeService
+            IHtmlSanitizeService htmlSanitizeService,
+            IFileReferenceWriter fileReferenceWriter
         )
         {
             this.db = db;
@@ -74,6 +77,7 @@ namespace EtheriT.Coker.Application
             this.htmlProcessor = htmlProcessor;
             this.stringHandler = stringHandler;
             this.htmlSanitizeService = htmlSanitizeService;
+            this.fileReferenceWriter = fileReferenceWriter;
 
         }
         public async Task<MenuEditorTreeDto> GetAll()
@@ -972,6 +976,18 @@ namespace EtheriT.Coker.Application
                     importDto.Css = sanitized.Css;
                     mapper.Map(importDto, menu);
                     await loginUserData.SaveChanges(menu);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        menu.FK_WebsiteId,
+                        new FileReferenceSource("WebMenu", menu.Id, "Published",
+                            new Dictionary<string, string?>
+                            {
+                                ["Html"] = menu.Html,
+                                ["Css"] = menu.Css,
+                                ["Icon"] = menu.icon,
+                                ["LinkUrl"] = menu.LinkUrl,
+                                ["Description"] = menu.Description
+                            }),
+                        user.Id);
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -1050,6 +1066,15 @@ namespace EtheriT.Coker.Application
                 var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 mapper.Map(dto, menu);
                 db.SaveChanges();
+                await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                    menu.FK_WebsiteId,
+                    new FileReferenceSource("WebMenu", menu.Id, "Draft",
+                        new Dictionary<string, string?>
+                        {
+                            ["SaveHtml"] = menu.SaveHtml,
+                            ["SaveCss"] = menu.SaveCss
+                        }),
+                    user.Id);
                 menu.LastModificationTime = DateTime.Now;
                 menu.LastModifierUserId = user.Id;
                 response.Success = true;

@@ -16,6 +16,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
         private readonly CokerDbContext db;
         private readonly IFileReferenceScanner referenceScanner;
         private readonly IUploadPathResolver uploadPathResolver;
+        private readonly FileReferenceIndexingService referenceIndexingService;
         private readonly BackgroundTaskService backgroundTaskService;
         private readonly FileCleanupOptions options;
         private readonly ILogger<FileCleanupWorking> logger;
@@ -24,6 +25,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
             CokerDbContext db,
             IFileReferenceScanner referenceScanner,
             IUploadPathResolver uploadPathResolver,
+            FileReferenceIndexingService referenceIndexingService,
             BackgroundTaskService backgroundTaskService,
             IOptions<FileCleanupOptions> options,
             ILogger<FileCleanupWorking> logger)
@@ -31,6 +33,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
             this.db = db;
             this.referenceScanner = referenceScanner;
             this.uploadPathResolver = uploadPathResolver;
+            this.referenceIndexingService = referenceIndexingService;
             this.backgroundTaskService = backgroundTaskService;
             this.options = options.Value;
             this.logger = logger;
@@ -55,6 +58,25 @@ namespace EtheriT.Coker.Application.BackgroundJob
             var now = DateTime.Now;
             var cutoff = now.AddDays(-Math.Max(1, options.MinimumAgeDays));
             var maxFiles = Math.Clamp(options.MaxFilesPerScan, 100, 100_000);
+            int registeredPhysicalFiles;
+            try
+            {
+                // 先補登錄實體檔案，讓同一輪引用重建就能建立 FileUpload 關聯。
+                registeredPhysicalFiles = await referenceIndexingService
+                    .RegisterUntrackedPhysicalFilesAsync(websiteId);
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                // 本機或測試環境可能沒有複製所有網站的 Upload 目錄。
+                // 當該網站實體檔案不完整時不進行掃描，避免產生錯誤的無引用判斷。
+                logger.LogWarning(
+                    ex,
+                    "File reference scan skipped because the upload directory is unavailable. WebsiteId={WebsiteId}",
+                    websiteId);
+                return;
+            }
+
+            await referenceIndexingService.RebuildWebsiteAsync(websiteId);
             var referencedIds = await referenceScanner.GetReferencedFileIdsAsync(websiteId);
             var uploads = await db.FileUploads.AsNoTracking()
                 .Where(item => item.FK_WebsiteId == websiteId
@@ -107,8 +129,9 @@ namespace EtheriT.Coker.Application.BackgroundJob
 
             await db.SaveChangesAsync();
             logger.LogInformation(
-                "File reference scan completed. WebsiteId={WebsiteId}, Scanned={Scanned}, Unreferenced={Unreferenced}",
+                "File reference scan completed. WebsiteId={WebsiteId}, Registered={Registered}, Scanned={Scanned}, Unreferenced={Unreferenced}",
                 websiteId,
+                registeredPhysicalFiles,
                 uploads.Count,
                 unreferencedIds.Count);
         }

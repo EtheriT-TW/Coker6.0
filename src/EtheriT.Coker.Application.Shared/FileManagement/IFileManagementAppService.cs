@@ -15,6 +15,7 @@ namespace EtheriT.Coker.Application.Shared.FileManagement
         Task<bool> CheckFileExistsAsync(string directoryPath, string fileName);
         Task<IReadOnlyList<FileCleanupItemDto>> GetUnreferencedFilesAsync();
         Task<IReadOnlyList<FileCleanupItemDto>> GetRecycleBinFilesAsync();
+        Task<FileReferenceResultDto> GetFileReferencesAsync(long fileUploadId);
         Task MoveToRecycleBinAsync(long fileUploadId);
         Task<FileCleanupBatchResultDto> MoveAllUnreferencedToRecycleBinAsync();
         Task RestoreFromRecycleBinAsync(long fileUploadId);

@@ -241,6 +241,110 @@ namespace EtheriT.Coker.Application.FileManagement
                 .ToList();
         }
 
+        public async Task<FileReferenceResultDto> GetFileReferencesAsync(long fileUploadId)
+        {
+            var websiteId = await _loginUserData.GetWebsiteId();
+            var file = await _dbContext.FileUploads.IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(item => item.Id == fileUploadId && item.FK_WebsiteId == websiteId)
+                .Select(item => new { item.Id, item.DownloadFileName })
+                .FirstOrDefaultAsync();
+            if (file == null)
+                throw new Exception("找不到檔案資料。");
+
+            var details = await _dbContext.FileReferences.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && item.FK_FileUploadId == fileUploadId
+                    && !item.IsDeleted)
+                .OrderBy(item => item.SourceType)
+                .ThenBy(item => item.SourceId)
+                .ThenBy(item => item.SourceState)
+                .ThenBy(item => item.SourceField)
+                .Select(item => new FileReferenceDetailDto
+                {
+                    SourceType = item.SourceType,
+                    SourceId = item.SourceId,
+                    SourceState = item.SourceState,
+                    SourceField = item.SourceField,
+                    Path = item.NormalizedPath,
+                    OccurrenceCount = item.OccurrenceCount
+                })
+                .ToListAsync();
+
+            var bindings = await _dbContext.FileBinds.AsNoTracking()
+                .Where(item => item.FK_FileUploadId == fileUploadId && !item.IsDeleted)
+                .Select(item => new { item.Sid, item.type, item.AreaKey, item.num, item.MediaLink })
+                .ToListAsync();
+            details.AddRange(bindings.Select(item => new FileReferenceDetailDto
+            {
+                SourceType = GetFileBindSourceType(item.type),
+                SourceId = item.Sid,
+                SourceState = "Binding",
+                SourceField = !string.IsNullOrWhiteSpace(item.AreaKey) ? item.AreaKey : $"FileBind:{item.num}",
+                Path = item.MediaLink ?? file.DownloadFileName ?? string.Empty,
+                OccurrenceCount = 1
+            }));
+
+            var moreBindings = await (
+                from more in _dbContext.FileBindMores.AsNoTracking()
+                join binding in _dbContext.FileBinds.AsNoTracking()
+                    on more.FK_FileBindGuid equals binding.Guid
+                where more.FK_FileUploadId == fileUploadId
+                    && !more.IsDeleted
+                    && !binding.IsDeleted
+                select new { binding.Sid, binding.type, binding.AreaKey, binding.num }
+            ).ToListAsync();
+            details.AddRange(moreBindings.Select(item => new FileReferenceDetailDto
+            {
+                SourceType = GetFileBindSourceType(item.type),
+                SourceId = item.Sid,
+                SourceState = "Binding",
+                SourceField = !string.IsNullOrWhiteSpace(item.AreaKey) ? item.AreaKey : $"FileBindMore:{item.num}",
+                Path = file.DownloadFileName ?? string.Empty,
+                OccurrenceCount = 1
+            }));
+
+            if (details.Count == 0)
+            {
+                var familyParents = await (
+                    from relation in _dbContext.FileBindMores.AsNoTracking()
+                    join parent in _dbContext.FileUploads.IgnoreQueryFilters().AsNoTracking()
+                        on relation.FK_FileBindGuid equals parent.GuidKey
+                    where relation.FK_FileUploadId == fileUploadId
+                        && !relation.IsDeleted
+                        && parent.FK_WebsiteId == websiteId
+                        && !parent.IsDeleted
+                    select new { parent.Id, relation.type }
+                ).Distinct().ToListAsync();
+
+                foreach (var familyParent in familyParents)
+                {
+                    var parentReferences = await GetFileReferencesAsync(familyParent.Id);
+                    var relationName = Enum.IsDefined(typeof(FileBindMoreEnum), familyParent.type)
+                        ? ((FileBindMoreEnum)familyParent.type).ToString()
+                        : $"衍生圖類型 {familyParent.type}";
+                    details.AddRange(parentReferences.References.Select(reference => new FileReferenceDetailDto
+                    {
+                        SourceType = reference.SourceType,
+                        SourceName = reference.SourceName,
+                        SourceId = reference.SourceId,
+                        SourceState = reference.SourceState,
+                        SourceField = $"{reference.SourceField} → {relationName}",
+                        Path = file.DownloadFileName ?? string.Empty,
+                        OccurrenceCount = reference.OccurrenceCount
+                    }));
+                }
+            }
+
+            await PopulateReferenceSourceNamesAsync(websiteId, details);
+            return new FileReferenceResultDto
+            {
+                FileUploadId = fileUploadId,
+                TotalOccurrenceCount = details.Sum(item => item.OccurrenceCount),
+                References = details
+            };
+        }
+
         public async Task MoveToRecycleBinAsync(long fileUploadId)
         {
             var websiteId = await _loginUserData.GetWebsiteId();
@@ -1002,6 +1106,94 @@ namespace EtheriT.Coker.Application.FileManagement
             => Enum.IsDefined(typeof(FileBindTypeEnum), type)
                 ? ((FileBindTypeEnum)type).ToString()
                 : $"檔案類型 {type}";
+
+        private static string GetFileBindSourceType(int type)
+        {
+            if (type == (int)FileBindTypeEnum.產品
+                || type == (int)FileBindTypeEnum.產品檔案
+                || type == (int)FileBindTypeEnum.產品規格圖)
+                return "Product";
+            if (type == (int)FileBindTypeEnum.選單圖
+                || type == (int)FileBindTypeEnum.選單覆蓋
+                || type == (int)FileBindTypeEnum.選單Icon)
+                return "WebMenu";
+            if (type == (int)FileBindTypeEnum.技術證照)
+                return "TechnicalCertificate";
+            if (type == (int)FileBindTypeEnum.文章管理
+                || type == (int)FileBindTypeEnum.文章檔案)
+                return "Article";
+            if (type == (int)FileBindTypeEnum.元件圖片)
+                return "HtmlContent";
+            if (type == (int)FileBindTypeEnum.網站圖示
+                || type == (int)FileBindTypeEnum.網站Logo
+                || type == (int)FileBindTypeEnum.分享圖示)
+                return "Website";
+            if (type == (int)FileBindTypeEnum.右側浮動廣告
+                || type == (int)FileBindTypeEnum.進入廣告
+                || type == (int)FileBindTypeEnum.自訂廣告)
+                return "Advertise";
+            return GetFileBindTypeName(type);
+        }
+
+        private async Task PopulateReferenceSourceNamesAsync(
+            long websiteId,
+            List<FileReferenceDetailDto> details)
+        {
+            async Task ApplyNamesAsync(
+                string sourceType,
+                Func<long[], Task<Dictionary<long, string>>> loader)
+            {
+                var ids = details.Where(item => item.SourceType == sourceType)
+                    .Select(item => item.SourceId)
+                    .Distinct()
+                    .ToArray();
+                if (ids.Length == 0)
+                    return;
+                var names = await loader(ids);
+                foreach (var item in details.Where(item => item.SourceType == sourceType))
+                    item.SourceName = names.TryGetValue(item.SourceId, out var name)
+                        ? name
+                        : $"{sourceType} #{item.SourceId}";
+            }
+
+            await ApplyNamesAsync("Article", ids => _dbContext.Article.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId && ids.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.Title ?? $"文章 #{item.Id}"));
+            await ApplyNamesAsync("WebMenu", ids => _dbContext.WebMenus.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId && ids.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.Title ?? $"選單 #{item.Id}"));
+            await ApplyNamesAsync("Product", ids => _dbContext.Prods.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId && ids.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.Title ?? $"商品 #{item.Id}"));
+            await ApplyNamesAsync("Advertise", ids => _dbContext.Advertise.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId && ids.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.Title ?? $"廣告 #{item.Id}"));
+            await ApplyNamesAsync("TechnicalCertificate", ids => _dbContext.TechnicalCertificates.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId && ids.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.Title ?? $"技術證照 #{item.Id}"));
+            await ApplyNamesAsync("HtmlContent", ids => _dbContext.Html_Contents.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId && ids.Contains(item.Id))
+                .ToDictionaryAsync(item => item.Id, item => item.Title ?? $"元件 #{item.Id}"));
+
+            var websiteName = await _dbContext.Websites.AsNoTracking()
+                .Where(item => item.Id == websiteId)
+                .Select(item => item.Title)
+                .FirstOrDefaultAsync() ?? $"網站 #{websiteId}";
+            foreach (var item in details.Where(item => string.IsNullOrWhiteSpace(item.SourceName)))
+            {
+                item.SourceName = item.SourceType switch
+                {
+                    "Website" => websiteName,
+                    "Header" => "頁首",
+                    "Footer" => "頁尾",
+                    "Template" => $"版型 #{item.SourceId}",
+                    "TemplateSection" => $"版型區塊 #{item.SourceId}",
+                    "Contact" => $"聯絡表單 #{item.SourceId}",
+                    "JsonObject" => $"JSON 資料 #{item.SourceId}",
+                    _ => $"{item.SourceType} #{item.SourceId}"
+                };
+            }
+        }
 
         private FileCleanupItemDto CreateCleanupItem(
             FileUpload file,

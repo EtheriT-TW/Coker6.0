@@ -75,6 +75,15 @@ namespace EtheriT.Coker.Application.FileManagement
                 select upload.Id
             ).Distinct().ToListAsync(cancellationToken)).ToHashSet();
 
+            var indexedReferenceIds = await db.FileReferences.AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && !item.IsDeleted
+                    && item.FK_FileUploadId.HasValue)
+                .Select(item => item.FK_FileUploadId!.Value)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+            referenced.UnionWith(indexedReferenceIds);
+
             var texts = new List<string?>
             {
                 website.DefaultUrl,

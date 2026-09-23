@@ -236,6 +236,52 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 totalDeletedOrphanCarts);
         }
 
+        [AutomaticRetry(Attempts = 1)]
+        [DisableConcurrentExecution(3600)]
+        public Task CleanupExpiredHangfireFailedJobs()
+        {
+            var retentionDays = Math.Max(1, options.HangfireFailedJobRetentionDays);
+            var cutoffUtc = DateTime.UtcNow.AddDays(-retentionDays);
+            var monitoringApi = JobStorage.Current.GetMonitoringApi();
+            const int pageSize = 1_000;
+            var offset = 0;
+            var deletedCount = 0;
+
+            while (true)
+            {
+                var failedJobs = monitoringApi.FailedJobs(offset, pageSize);
+                if (failedJobs.Count == 0)
+                    break;
+
+                var deletedFromPage = 0;
+                foreach (var failedJob in failedJobs)
+                {
+                    var failedAt = failedJob.Value.FailedAt;
+                    if (!failedAt.HasValue
+                        || failedAt.Value.ToUniversalTime() > cutoffUtc
+                        || !Hangfire.BackgroundJob.Delete(failedJob.Key))
+                        continue;
+
+                    deletedFromPage++;
+                    deletedCount++;
+                }
+
+                if (failedJobs.Count < pageSize)
+                    break;
+
+                // 已轉為 Deleted 的工作會從 Failed 清單移除，偏移量只計算仍留在清單的資料。
+                offset += failedJobs.Count - deletedFromPage;
+            }
+
+            logger.LogInformation(
+                "Hangfire failed-job retention cleanup completed. RetentionDays={RetentionDays}, CutoffUtc={CutoffUtc}, DeletedJobs={DeletedJobs}",
+                retentionDays,
+                cutoffUtc,
+                deletedCount);
+
+            return Task.CompletedTask;
+        }
+
         private async Task<int> ExecuteScalarAsync(
             string commandText,
             params (string Name, object Value)[] parameters)

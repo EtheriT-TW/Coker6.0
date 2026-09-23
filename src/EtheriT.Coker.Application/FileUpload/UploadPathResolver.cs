@@ -44,7 +44,7 @@ namespace EtheriT.Coker.Application
                     return siteUploadPath;
             }
 
-            throw new Exception($"找不到網站 Upload 目錄：{orgName}");
+            throw new DirectoryNotFoundException($"找不到網站 Upload 目錄：{orgName}");
         }
 
         public string GetDirectoryPath(string orgName, string directory)

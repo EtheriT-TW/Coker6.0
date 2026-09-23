@@ -23,6 +23,7 @@ using EtheriT.Coker.Application.Shared.Dto.Newsletter;
 using System.Security.Cryptography;
 using EtheriT.Coker.Application.Shared.Dto.HtmlContent;
 using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.FileManagement;
 
 namespace EtheriT.Coker.Application.Newsletter
 {
@@ -33,17 +34,20 @@ namespace EtheriT.Coker.Application.Newsletter
         private readonly IMapper mapper;
         private readonly string controllerName;
         private readonly MailAppService mailAppService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         public NewsletterAppService(
             CokerDbContext db, 
             LoginUserData loginUserData,
             IMapper mapper,
-            MailAppService mailAppService
+            MailAppService mailAppService,
+            IFileReferenceWriter fileReferenceWriter
         ) { 
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             controllerName = "Newsletter";
             this.mailAppService = mailAppService;
+            this.fileReferenceWriter = fileReferenceWriter;
         }
         public async Task<JsonResult> GetRecipients(DataSourceLoadOptions loadOptions)
         {
@@ -176,6 +180,16 @@ namespace EtheriT.Coker.Application.Newsletter
                     data.DataJson = JsonConvert.SerializeObject(dto);
                     data.DataJson = data.DataJson = Regex.Replace(data.DataJson, $@"/upload/(?:{orgName}/)?", $"/upload/{orgName}/"); ;
                     await loginUserData.SaveChanges(data);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        data.FK_WebsiteId,
+                        new FileReferenceSource("Article", data.Id, "Draft",
+                            new Dictionary<string, string?>
+                            {
+                                ["SaveHtml"] = data.SaveHtml,
+                                ["SaveCss"] = data.SaveCss,
+                                ["DataJson"] = data.DataJson
+                            }),
+                        await loginUserData.GetUserId());
                     output.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -197,6 +211,15 @@ namespace EtheriT.Coker.Application.Newsletter
                     data.NewsletterCss = (dto.Css??"").Replace($"/upload/{Orgname}/", "/upload/");
                     data.NewsletterHtml = (dto.Html??"").Replace($"/upload/{Orgname}/", "/upload/");
                     await loginUserData.SaveChanges(data);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        data.FK_WebsiteId,
+                        new FileReferenceSource("Article", data.Id, "Newsletter",
+                            new Dictionary<string, string?>
+                            {
+                                ["NewsletterHtml"] = data.NewsletterHtml,
+                                ["NewsletterCss"] = data.NewsletterCss
+                            }),
+                        await loginUserData.GetUserId());
                     output.Success = true;
                 }
                 else throw new Exception("資料不存在");

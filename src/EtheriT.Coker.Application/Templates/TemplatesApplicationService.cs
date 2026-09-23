@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Processor;
+using EtheriT.Coker.Application.FileManagement;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,10 +37,12 @@ namespace EtheriT.Coker.Application.Templates
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IHtmlSanitizeService htmlSanitizeService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         public TemplatesApplicationService(
             CokerDbContext db, LoginUserData loginUserData, StringHandler stringHandler,
             IMapper mapper, IHttpContextAccessor httpContextAccessor, IHtmlProcessor htmlProcessor,
-            IFileUploadAppService fileUploadAppService, IHtmlSanitizeService htmlSanitizeService
+            IFileUploadAppService fileUploadAppService, IHtmlSanitizeService htmlSanitizeService,
+            IFileReferenceWriter fileReferenceWriter
         )
         {
             this.db = db;
@@ -50,6 +53,7 @@ namespace EtheriT.Coker.Application.Templates
             this.htmlProcessor = htmlProcessor;
             this.fileUploadAppService = fileUploadAppService;
             this.htmlSanitizeService = htmlSanitizeService;
+            this.fileReferenceWriter = fileReferenceWriter;
         }
         public async Task<TemplatesDto?> GetDefaultTemplatesAsync(long? websiteId = null)
         {
@@ -325,6 +329,15 @@ namespace EtheriT.Coker.Application.Templates
                     foot.html = stringHandler.HtmlEncode(sanitizeResult.Html);
 
                     await loginUserData.SaveChanges(foot);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        websiteId,
+                        new FileReferenceSource("Footer", foot.Id, "Published",
+                            new Dictionary<string, string?>
+                            {
+                                ["Html"] = foot.html,
+                                ["Css"] = foot.css
+                            }),
+                        await loginUserData.GetUserId());
                     response.Success = true;
                 }
                 else throw new Exception("找不到頁尾資料");
@@ -360,6 +373,15 @@ namespace EtheriT.Coker.Application.Templates
                     foot.saveHtml = dto.SaveHtml;
                     foot.saveCss = dto.SaveCss;
                     await loginUserData.SaveChanges(foot);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        websiteId,
+                        new FileReferenceSource("Footer", foot.Id, "Draft",
+                            new Dictionary<string, string?>
+                            {
+                                ["SaveHtml"] = foot.saveHtml,
+                                ["SaveCss"] = foot.saveCss
+                            }),
+                        await loginUserData.GetUserId());
                     response.Success = true;
                 }
                 else throw new Exception("找不到頁尾資料");
@@ -431,6 +453,14 @@ namespace EtheriT.Coker.Application.Templates
 
                     header.ContentConfig = JsonConvert.SerializeObject(dto.ContentConfig);
                     await loginUserData.SaveChanges(header);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        await loginUserData.GetCommonWebsiteId(),
+                        new FileReferenceSource("Header", header.Id, "Current",
+                            new Dictionary<string, string?>
+                            {
+                                ["ContentConfig"] = header.ContentConfig
+                            }),
+                        await loginUserData.GetUserId());
                     response.Success = true;
                 }
                 else throw new Exception("找不到頁首資料");

@@ -18,6 +18,7 @@ using EtheriT.Coker.Application.Shared.Dto.Tag;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Tag;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.FileManagement;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,7 @@ namespace EtheriT.Coker.Application.Advertise
         private readonly StringHandler stringHandler;
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IHtmlSanitizeService htmlSanitizeService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         public AdvertiseAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -46,7 +48,8 @@ namespace EtheriT.Coker.Application.Advertise
             ITokenAppService tokenAppService,
             IHtmlProcessor htmlProcessor,
             IHtmlSanitizeService htmlSanitizeService,
-            StringHandler stringHandler
+            StringHandler stringHandler,
+            IFileReferenceWriter fileReferenceWriter
         )
         {
             this.db = db;
@@ -58,6 +61,7 @@ namespace EtheriT.Coker.Application.Advertise
             this.stringHandler = stringHandler;
             this.htmlProcessor = htmlProcessor;
             this.htmlSanitizeService = htmlSanitizeService;
+            this.fileReferenceWriter = fileReferenceWriter;
         }
         public async Task<ResponseMessageDto> AddUp(AdvertiseDto dto)
         {
@@ -596,6 +600,18 @@ namespace EtheriT.Coker.Application.Advertise
                 advertise.Html = stringHandler.HtmlEncode(sanitizeResult.Html);
 
                 await loginUserData.SaveChanges(advertise);
+                await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                    advertise.FK_WebsiteId,
+                    new FileReferenceSource("Advertise", advertise.Id, "Published",
+                        new Dictionary<string, string?>
+                        {
+                            ["Html"] = advertise.Html,
+                            ["Css"] = advertise.Css,
+                            ["Img"] = advertise.Img,
+                            ["Link"] = advertise.Link,
+                            ["Describe"] = advertise.Describe
+                        }),
+                    await loginUserData.GetUserId());
                 response.Success = true;
             }
             catch (Exception ex)
@@ -625,6 +641,15 @@ namespace EtheriT.Coker.Application.Advertise
                     advertise.SaveHtml = dto.SaveHtml;
                     advertise.SaveCss = dto.SaveCss;
                     await loginUserData.SaveChanges(advertise);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        advertise.FK_WebsiteId,
+                        new FileReferenceSource("Advertise", advertise.Id, "Draft",
+                            new Dictionary<string, string?>
+                            {
+                                ["SaveHtml"] = advertise.SaveHtml,
+                                ["SaveCss"] = advertise.SaveCss
+                            }),
+                        await loginUserData.GetUserId());
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");

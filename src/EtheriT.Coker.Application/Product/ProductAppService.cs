@@ -32,6 +32,7 @@ using EtheriT.Coker.Core.Product;
 using EtheriT.Coker.Application.Shared.TechnicalCertificate;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.FileManagement;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.EntityFrameworkCore.Migrations;
@@ -74,6 +75,7 @@ namespace EtheriT.Coker.Application.Product
         private readonly IFrontRoleContextService frontRoleContextService;
         private readonly IProductDisplayPriceService productDisplayPriceService;
         private readonly IHtmlSanitizeService htmlSanitizeService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         public ProductAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -90,7 +92,8 @@ namespace EtheriT.Coker.Application.Product
             StringHandler stringHandler,
             IFrontRoleContextService frontRoleContextService,
             IProductDisplayPriceService productDisplayPriceService,
-            IHtmlSanitizeService htmlSanitizeService
+            IHtmlSanitizeService htmlSanitizeService,
+            IFileReferenceWriter fileReferenceWriter
         )
         {
             this.db = db;
@@ -108,6 +111,7 @@ namespace EtheriT.Coker.Application.Product
             this.frontRoleContextService = frontRoleContextService;
             this.productDisplayPriceService = productDisplayPriceService;
             this.htmlSanitizeService = htmlSanitizeService;
+            this.fileReferenceWriter = fileReferenceWriter;
             this.mapper = mapper;
         }
         /* Add & Update */
@@ -2407,6 +2411,17 @@ namespace EtheriT.Coker.Application.Product
                     prod.LastModifierUserId = userId;
 
                     await loginUserData.SaveChanges(prod);
+                    await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                        prod.FK_WebsiteId,
+                        new FileReferenceSource("Product", prod.Id, "Published",
+                            new Dictionary<string, string?>
+                            {
+                                ["Html"] = prod.Html,
+                                ["Css"] = prod.Css,
+                                ["Introduction"] = prod.Introduction,
+                                ["Description"] = prod.Description
+                            }),
+                        userId);
                     response.Success = true;
                 }
                 else throw new Exception("資料不存在");
@@ -2447,6 +2462,15 @@ namespace EtheriT.Coker.Application.Product
                 prod.LastModifierUserId = user.Id;
 
                 db.SaveChanges();
+                await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                    prod.FK_WebsiteId,
+                    new FileReferenceSource("Product", prod.Id, "Draft",
+                        new Dictionary<string, string?>
+                        {
+                            ["SaveHtml"] = prod.SaveHtml,
+                            ["SaveCss"] = prod.SaveCss
+                        }),
+                    user.Id);
                 response.Success = true;
             }
             catch (Exception ex)

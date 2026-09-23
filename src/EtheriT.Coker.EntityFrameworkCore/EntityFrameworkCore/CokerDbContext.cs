@@ -73,6 +73,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<FileCleanupCandidate> FileCleanupCandidates { get; set; }
         public DbSet<FileRecycleBinItem> FileRecycleBinItems { get; set; }
         public DbSet<FileRecycleBinBinding> FileRecycleBinBindings { get; set; }
+        public DbSet<FileReference> FileReferences { get; set; }
         public DbSet<ObjectType> ObjectTypes { get; set; }
         public DbSet<ComponentPurpose> ComponentPurposes { get; set; }
         public DbSet<HtmlContentPurpose> HtmlContentPurposes { get; set; }
@@ -189,6 +190,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                     .IsUnique()
                     .HasFilter("[IsDeleted] = 0");
                 o.HasIndex(x => new { x.FK_WebsiteId, x.RecycledTime });
+            });
+            modelBuilder.Entity<FileReference>(o =>
+            {
+                o.ToTable("FileReferences");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.FK_FileUploadId });
+                o.HasIndex(x => new { x.FK_WebsiteId, x.SourceType, x.SourceId, x.SourceState });
+                o.HasIndex(x => new { x.FK_WebsiteId, x.LastConfirmedTime });
             });
             modelBuilder.Entity<FileRecycleBinBinding>(o =>
             {

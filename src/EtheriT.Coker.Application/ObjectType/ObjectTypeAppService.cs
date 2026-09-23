@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using EtheriT.Coker.Application.FileManagement;
 
 namespace EtheriT.Coker.Application
 {
@@ -25,19 +26,22 @@ namespace EtheriT.Coker.Application
         private readonly LoginUserData loginUserData;
         private readonly IMapper mapper;
         private readonly IFileUploadAppService fileUploadAppService;
+        private readonly IFileReferenceWriter fileReferenceWriter;
         private readonly string ApplicationName;
         private long websiteId;
         public ObjectTypeAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IMapper mapper,
-            IFileUploadAppService fileUploadAppService
+            IFileUploadAppService fileUploadAppService,
+            IFileReferenceWriter fileReferenceWriter
         )
         {
             this.db = db;
             this.loginUserData = loginUserData;
             this.mapper = mapper;
             this.fileUploadAppService = fileUploadAppService;
+            this.fileReferenceWriter = fileReferenceWriter;
             ApplicationName = "ObjectType";
         }
         public async Task<ObjectTypeGetAlldto> GetAll()
@@ -398,6 +402,19 @@ namespace EtheriT.Coker.Application
                 if (data == null) throw new Exception("查無資料");
                 dto.Html = HttpUtility.HtmlEncode(dto.Html);
                 mapper.Map(dto, data);
+                await loginUserData.SaveChanges(data);
+                await fileReferenceWriter.ReplaceSourceReferencesAsync(
+                    data.FK_WebsiteId,
+                    new FileReferenceSource("HtmlContent", data.Id, "Current",
+                        new Dictionary<string, string?>
+                        {
+                            ["Html"] = data.Html,
+                            ["Css"] = data.Css,
+                            ["Img"] = data.Img,
+                            ["Icon"] = data.Icon,
+                            ["Link"] = data.Link
+                        }),
+                    await loginUserData.GetUserId());
                 response.Success=true;
             }
             catch (Exception e) {

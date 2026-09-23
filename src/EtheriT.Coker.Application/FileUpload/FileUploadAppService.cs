@@ -43,7 +43,7 @@ namespace EtheriT.Coker.Application
         private readonly ITokenAppService tokenAppService;
         private readonly IUploadPathResolver uploadPathResolver;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
-        private readonly IFileReferenceScanner fileReferenceScanner;
+        private readonly IFileReferenceScanner? fileReferenceScanner;
         public FileUploadAppService(
             IOptions<VirtualDirectory> fileAllow,
             LoginUserData loginUserData,
@@ -52,7 +52,7 @@ namespace EtheriT.Coker.Application
             ITokenAppService tokenAppService,
             IUploadPathResolver uploadPathResolver,
             IWebsiteCacheStateAppService websiteCacheStateAppService,
-            IFileReferenceScanner fileReferenceScanner
+            IFileReferenceScanner? fileReferenceScanner = null
         )
         {
             this.fileAllow = fileAllow.Value.FileAllow;
@@ -1869,6 +1869,12 @@ namespace EtheriT.Coker.Application
         public async Task<ResponseMessageDto> deleteFile(string path)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+            if (fileReferenceScanner == null)
+            {
+                response.Success = false;
+                response.Error = "目前執行環境未啟用檔案回收權限";
+                return response;
+            }
             try
             {
                 if (File.Exists(path))
@@ -1887,6 +1893,12 @@ namespace EtheriT.Coker.Application
         public async Task<ResponseMessageDto> deleteFile(Guid key)
         {
             var response = new ResponseMessageDto();
+            if (fileReferenceScanner == null)
+            {
+                response.Success = false;
+                response.Error = "目前執行環境未啟用檔案回收權限";
+                return response;
+            }
             try
             {
                 var websiteId = await loginUserData.GetWebsiteId();
@@ -1954,6 +1966,13 @@ namespace EtheriT.Coker.Application
         private async Task<ResponseMessageDto> RecycleBoundFilesAsync(FileDeleteDto dto)
         {
             var response = new ResponseMessageDto();
+            var referenceScanner = fileReferenceScanner;
+            if (referenceScanner == null)
+            {
+                response.Success = false;
+                response.Error = "目前執行環境未啟用檔案引用掃描與回收權限";
+                return response;
+            }
             var movedFiles = new List<FileRecycleMove>();
             try
             {
@@ -2016,7 +2035,7 @@ namespace EtheriT.Coker.Application
 
                 // 先儲存解除關聯，引用掃描才能依最新狀態判斷是否可隔離實體檔案。
                 await db.SaveChangesAsync();
-                var referencedIds = await fileReferenceScanner.GetReferencedFileIdsAsync(websiteId);
+                var referencedIds = await referenceScanner.GetReferencedFileIdsAsync(websiteId);
                 var familyGraph = await GetRecycleFamilyGraphAsync(websiteId);
                 var quarantineIds = new HashSet<long>();
                 foreach (var fileId in fileIds)

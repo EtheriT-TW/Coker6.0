@@ -91,6 +91,14 @@
             <div id="file-cleanup-refresh"></div>
         </div>
     </div>
+    <div id="file-cleanup-task" class="file-cleanup-task" hidden>
+        <div class="file-cleanup-task-header">
+            <span id="file-cleanup-task-message">背景作業準備中…</span>
+            <span id="file-cleanup-task-percent">0%</span>
+        </div>
+        <div id="file-cleanup-task-progress"></div>
+        <div class="file-cleanup-task-hint">作業由伺服器背景執行，可離開此頁面；返回時會自動接續顯示進度。</div>
+    </div>
     <div id="file-cleanup-loading" class="file-cleanup-message">資料載入中…</div>
     <div id="file-cleanup-empty" class="file-cleanup-message" hidden></div>
     <div id="file-cleanup-grid" aria-live="polite" hidden></div>
@@ -115,6 +123,9 @@
     .file-cleanup-toolbar p { margin: 0; color: #6c757d; }
     .file-cleanup-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; white-space: nowrap; }
     .file-cleanup-actions .dx-button { min-width: 38px; }
+    .file-cleanup-task { margin: 0 0 1rem; padding: .85rem 1rem; border: 1px solid #d8dee6; border-radius: .4rem; background: #fff; }
+    .file-cleanup-task-header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .55rem; }
+    .file-cleanup-task-hint { margin-top: .45rem; color: #6c757d; font-size: .85rem; }
     #file-cleanup-grid { background: #fff; }
     #file-cleanup-grid .dx-datagrid-headers .dx-header-row > td { font-weight: 600; }
     #file-cleanup-grid .dx-command-select { width: 54px !important; min-width: 54px !important; }
@@ -326,6 +337,15 @@
 
     let fileCleanupMode = "unreferenced";
     let fileCleanupItems = [];
+    let fileCleanupTaskRunning = false;
+    let fileCleanupTaskTimer = null;
+
+    const fileCleanupTaskProgress = $("#file-cleanup-task-progress").dxProgressBar({
+        min: 0,
+        max: 100,
+        value: 0,
+        showStatus: false
+    }).dxProgressBar("instance");
 
     const fileCleanupGrid = $("#file-cleanup-grid").dxDataGrid({
         dataSource: [],
@@ -338,6 +358,21 @@
         columnHidingEnabled: true,
         wordWrapEnabled: true,
         noDataText: "目前沒有資料。",
+        searchPanel: {
+            visible: true,
+            width: 320,
+            placeholder: "搜尋檔名、路徑或原因…",
+            highlightCaseSensitive: false,
+            highlightSearchText: true,
+            searchVisibleColumnsOnly: false
+        },
+        filterRow: {
+            visible: true,
+            applyFilter: "auto"
+        },
+        headerFilter: {
+            visible: true
+        },
         selection: {
             mode: "multiple",
             showCheckBoxesMode: "always",
@@ -386,6 +421,7 @@
                 caption: "檔案",
                 minWidth: 320,
                 hidingPriority: 0,
+                allowSearch: true,
                 calculateCellValue: item => `${item.name || ""} ${item.path || ""} ${item.reason || ""}`,
                 cellTemplate(container, options) {
                     const item = options.data;
@@ -441,6 +477,7 @@
     createCleanupToolbarButton("file-cleanup-restore-selected", "revert", "還原選取檔案", restoreSelectedRecycleFiles);
     createCleanupToolbarButton("file-cleanup-delete-selected", "remove", "永久刪除／清除選取項目", deleteSelectedRecycleFiles, "danger");
     createCleanupToolbarButton("file-cleanup-refresh", "refresh", "重新整理", loadCleanupItems);
+    resumeFileCleanupTask();
 
     document.querySelectorAll("[data-file-mode]").forEach(button => {
         button.addEventListener("click", () => switchFileManagementMode(button.dataset.fileMode));
@@ -479,6 +516,7 @@
             ? "檔案已移至前台無法讀取的隔離區，可還原；超過保留期限後才會永久清除。"
             : "背景掃描確認未出現在檔案綁定、草稿、發布內容、CSS 或版型中的檔案。";
         fileCleanupGrid.columnOption("cleanupDate", "caption", isRecycle ? "刪除時間" : "發現時間");
+        fileCleanupGrid.clearFilter();
         fileCleanupGrid.clearSelection();
         $("#file-cleanup-scan").toggle(!isRecycle);
         $("#file-cleanup-recycle-selected").toggle(!isRecycle);
@@ -486,6 +524,8 @@
         $("#file-cleanup-delete-selected").toggle(isRecycle);
         updateCleanupSelectionActions();
         loadCleanupItems();
+        if (!document.getElementById("file-cleanup-task").hidden)
+            fileCleanupTaskProgress.repaint();
     }
 
     function loadCleanupItems() {
@@ -570,9 +610,9 @@
 
     function updateCleanupSelectionActions() {
         const hasSelection = fileCleanupGrid.getSelectedRowKeys().length > 0;
-        cleanupButton("file-cleanup-recycle-selected").option("disabled", !hasSelection);
-        cleanupButton("file-cleanup-restore-selected").option("disabled", !hasSelection);
-        cleanupButton("file-cleanup-delete-selected").option("disabled", !hasSelection);
+        cleanupButton("file-cleanup-recycle-selected").option("disabled", !hasSelection || fileCleanupTaskRunning);
+        cleanupButton("file-cleanup-restore-selected").option("disabled", !hasSelection || fileCleanupTaskRunning);
+        cleanupButton("file-cleanup-delete-selected").option("disabled", !hasSelection || fileCleanupTaskRunning);
     }
 
     function startFileReferenceScan() {
@@ -604,11 +644,81 @@
         if (!items.length) return;
         const confirmed = await co.sweet.confirmAsync(
             "批次移至資源回收桶",
-            `確定將選取的 ${items.length} 筆檔案及其大／中／縮圖移至資源回收桶嗎？系統會逐筆重新檢查引用。`,
+            `確定將選取的 ${items.length} 筆檔案及其大／中／縮圖交由背景處理嗎？系統會先重新檢查引用。`,
             "確定移動",
             "取消");
         if (!confirmed) return;
-        postSelectedFileActions("MoveToRecycleBin", items, "選取檔案已移至資源回收桶。");
+        startRecycleBackgroundTask(items);
+    }
+
+    function startRecycleBackgroundTask(items) {
+        setCleanupActionButtonsDisabled(true);
+        $.ajax({
+            url: "/api/FileManagement/StartMoveSelectedToRecycleBin",
+            type: "POST",
+            contentType: "application/json",
+            headers: co.Data.Header,
+            data: JSON.stringify(items.map(item => item.id))
+        }).done(result => {
+            DevExpress.ui.notify("背景清理已排程，可離開此頁面。", "success", 3500);
+            monitorFileCleanupTask(result.taskId);
+        }).fail(xhr => {
+            setCleanupActionButtonsDisabled(false);
+            updateCleanupSelectionActions();
+            DevExpress.ui.notify(getFileActionError(xhr, "無法啟動背景清理。"), "error", 4500);
+        });
+    }
+
+    function resumeFileCleanupTask() {
+        $.ajax({
+            url: "/api/FileManagement/FileCleanupTask",
+            type: "GET",
+            headers: co.Data.Header
+        }).done(task => monitorFileCleanupTask(task.taskId, task));
+    }
+
+    function monitorFileCleanupTask(taskId, initialTask) {
+        if (fileCleanupTaskTimer) {
+            clearTimeout(fileCleanupTaskTimer);
+            fileCleanupTaskTimer = null;
+        }
+        fileCleanupTaskRunning = true;
+        setCleanupActionButtonsDisabled(true);
+        document.getElementById("file-cleanup-task").hidden = false;
+
+        const poll = task => {
+            if (task) {
+                const progress = Math.max(0, Math.min(100, Number(task.progress || 0)));
+                fileCleanupTaskProgress.option("value", progress);
+                document.getElementById("file-cleanup-task-percent").textContent = `${progress}%`;
+                document.getElementById("file-cleanup-task-message").textContent =
+                    task.error || task.message || "背景作業處理中…";
+
+                if (task.status === "Succeeded" || task.status === "Failed") {
+                    fileCleanupTaskRunning = false;
+                    setCleanupActionButtonsDisabled(false);
+                    updateCleanupSelectionActions();
+                    DevExpress.ui.notify(
+                        task.error || task.message || (task.status === "Succeeded" ? "背景清理完成。" : "背景清理失敗。"),
+                        task.status === "Succeeded" ? "success" : "error",
+                        5000);
+                    if (!document.getElementById("file-cleanup-panel").hidden)
+                        loadCleanupItems();
+                    return;
+                }
+            }
+
+            fileCleanupTaskTimer = setTimeout(() => {
+                $.ajax({
+                    url: `/api/FileManagement/FileCleanupTask?taskId=${encodeURIComponent(taskId)}`,
+                    type: "GET",
+                    headers: co.Data.Header
+                }).done(poll).fail(() => {
+                    fileCleanupTaskTimer = setTimeout(() => poll(), 3000);
+                });
+            }, task ? 1500 : 0);
+        };
+        poll(initialTask);
     }
 
     function restoreRecycleFile(item) {
@@ -636,7 +746,25 @@
             "確定處理",
             "取消");
         if (!confirmed) return;
-        postSelectedFileActions("PermanentlyDelete", items, "選取項目已處理完成。");
+        startPermanentlyDeleteBackgroundTask(items);
+    }
+
+    function startPermanentlyDeleteBackgroundTask(items) {
+        setCleanupActionButtonsDisabled(true);
+        $.ajax({
+            url: "/api/FileManagement/StartPermanentlyDeleteSelected",
+            type: "POST",
+            contentType: "application/json",
+            headers: co.Data.Header,
+            data: JSON.stringify(items.map(item => item.id))
+        }).done(result => {
+            DevExpress.ui.notify("資源回收桶清理已排程，可離開此頁面。", "success", 3500);
+            monitorFileCleanupTask(result.taskId);
+        }).fail(xhr => {
+            setCleanupActionButtonsDisabled(false);
+            updateCleanupSelectionActions();
+            DevExpress.ui.notify(getFileActionError(xhr, "無法啟動資源回收桶清理。"), "error", 4500);
+        });
     }
 
     async function permanentlyDeleteFile(item) {
@@ -684,6 +812,7 @@
 
     function setCleanupActionButtonsDisabled(disabled) {
         [
+            "file-cleanup-scan",
             "file-cleanup-recycle-selected",
             "file-cleanup-restore-selected",
             "file-cleanup-delete-selected",

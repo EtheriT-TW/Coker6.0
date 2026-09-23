@@ -263,10 +263,19 @@ namespace EtheriT.Coker.Application.FileManagement
             var files = await _dbContext.FileUploads
                 .Where(item => familyIds.Contains(item.Id))
                 .ToListAsync();
+            var existingFiles = files
+                .Where(item => !string.IsNullOrWhiteSpace(item.DownloadFileName)
+                    && File.Exists(FileRecycleStorage.GetStoredRecyclePath(
+                        _uploadPathResolver,
+                        orgName,
+                        item.DownloadFileName!)))
+                .ToList();
+            var existingIds = existingFiles.Select(item => item.Id).ToHashSet();
+            var missingFiles = files.Where(item => !existingIds.Contains(item.Id)).ToList();
             var movedFiles = FileRecycleStorage.MoveToRecycleBin(
                 _uploadPathResolver,
                 orgName,
-                files);
+                existingFiles);
             foreach (var file in files)
             {
                 file.IsDeleted = true;
@@ -274,11 +283,12 @@ namespace EtheriT.Coker.Application.FileManagement
                 file.DeleterUserId = userId;
             }
             await UpsertRecycleBinEntriesAsync(
-                files,
+                existingFiles,
                 websiteId,
                 now,
                 userId,
                 "由查無引用清單移入");
+            await RemoveMissingFileRecordsAsync(missingFiles, websiteId, now, userId);
             await HideCleanupCandidatesAsync(familyIds, now, userId);
             try
             {
@@ -384,6 +394,12 @@ namespace EtheriT.Coker.Application.FileManagement
             if (files.Count == 0)
                 throw new InvalidOperationException("找不到可還原的檔案。");
 
+            var restoreToUnreferenced = await _dbContext.FileRecycleBinItems
+                .AsNoTracking()
+                .AnyAsync(item => item.FK_WebsiteId == websiteId
+                    && familyIds.Contains(item.FK_FileUploadId)
+                    && item.Reason.StartsWith("由查無引用清單"));
+
             var recycleBindings = await _dbContext.FileRecycleBinBindings
                 .Where(item => item.FK_WebsiteId == websiteId
                     && familyIds.Contains(item.FK_FileUploadId))
@@ -439,7 +455,18 @@ namespace EtheriT.Coker.Application.FileManagement
                 recycleBinding.DeleterUserId = userId;
             }
             await CloseRecycleBinEntriesAsync(familyIds, DateTime.Now, userId);
-            await HideCleanupCandidatesAsync(familyIds, DateTime.Now, userId);
+            if (restoreToUnreferenced)
+            {
+                await RestoreCleanupCandidatesAsync(
+                    familyIds,
+                    websiteId,
+                    DateTime.Now,
+                    userId);
+            }
+            else
+            {
+                await HideCleanupCandidatesAsync(familyIds, DateTime.Now, userId);
+            }
             try
             {
                 await _dbContext.SaveChangesAsync();
@@ -618,6 +645,47 @@ namespace EtheriT.Coker.Application.FileManagement
             }
         }
 
+        private async Task RestoreCleanupCandidatesAsync(
+            HashSet<long> fileIds,
+            long websiteId,
+            DateTime now,
+            long userId)
+        {
+            var candidates = await _dbContext.FileCleanupCandidates
+                .IgnoreQueryFilters()
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && fileIds.Contains(item.FK_FileUploadId))
+                .OrderByDescending(item => item.Id)
+                .ToListAsync();
+
+            foreach (var fileId in fileIds)
+            {
+                var candidate = candidates.FirstOrDefault(item => item.FK_FileUploadId == fileId);
+                if (candidate == null)
+                {
+                    _dbContext.FileCleanupCandidates.Add(new FileCleanupCandidate
+                    {
+                        FK_WebsiteId = websiteId,
+                        FK_FileUploadId = fileId,
+                        FirstDetectedTime = now,
+                        LastConfirmedTime = now,
+                        Reason = "由資源回收桶還原，尚未找到引用",
+                        CreationTime = now,
+                        CreatorUserId = userId
+                    });
+                    continue;
+                }
+
+                candidate.IsDeleted = false;
+                candidate.DeletionTime = null;
+                candidate.DeleterUserId = null;
+                candidate.LastConfirmedTime = now;
+                candidate.Reason = "由資源回收桶還原，尚未找到引用";
+                candidate.LastModificationTime = now;
+                candidate.LastModifierUserId = userId;
+            }
+        }
+
         private async Task UpsertRecycleBinEntriesAsync(
             IReadOnlyCollection<FileUpload> files,
             long websiteId,
@@ -655,6 +723,53 @@ namespace EtheriT.Coker.Application.FileManagement
                 entry.Reason = reason;
                 entry.LastModificationTime = now;
                 entry.LastModifierUserId = userId;
+            }
+        }
+
+        private async Task RemoveMissingFileRecordsAsync(
+            IReadOnlyCollection<FileUpload> missingFiles,
+            long websiteId,
+            DateTime now,
+            long userId)
+        {
+            if (missingFiles.Count == 0)
+                return;
+
+            var missingIds = missingFiles.Select(item => item.Id).ToHashSet();
+            var missingGuids = missingFiles.Select(item => item.GuidKey).ToHashSet();
+            var relations = await _dbContext.FileBindMores.IgnoreQueryFilters()
+                .Where(item => !item.IsDeleted
+                    && ((item.FK_FileUploadId.HasValue
+                            && missingIds.Contains(item.FK_FileUploadId.Value))
+                        || missingGuids.Contains(item.FK_FileBindGuid)))
+                .ToListAsync();
+            foreach (var relation in relations)
+            {
+                relation.IsDeleted = true;
+                relation.DeletionTime = now;
+                relation.DeleterUserId = userId;
+            }
+
+            var staleRecycleEntries = await _dbContext.FileRecycleBinItems
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && missingIds.Contains(item.FK_FileUploadId))
+                .ToListAsync();
+            foreach (var entry in staleRecycleEntries)
+            {
+                entry.IsDeleted = true;
+                entry.DeletionTime = now;
+                entry.DeleterUserId = userId;
+            }
+
+            var staleRecycleBindings = await _dbContext.FileRecycleBinBindings
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && missingIds.Contains(item.FK_FileUploadId))
+                .ToListAsync();
+            foreach (var binding in staleRecycleBindings)
+            {
+                binding.IsDeleted = true;
+                binding.DeletionTime = now;
+                binding.DeleterUserId = userId;
             }
         }
 

@@ -62,6 +62,44 @@ namespace EtheriT.Coker.Application.BackgroundJob
             }
         }
 
+        public async Task<BackgroundTaskRecord> CreateFileCleanupTaskAsync(
+            long websiteId,
+            long userId,
+            int totalCount)
+        {
+            await using var db = CreateDb();
+            var task = new BackgroundTaskRecord
+            {
+                FK_WebsiteId = websiteId,
+                FK_UserId = userId,
+                Type = BackgroundTaskTypeEnum.FileCleanup,
+                Status = BackgroundTaskStatusEnum.Queued,
+                Progress = 0,
+                ActiveKey = $"file-cleanup:{websiteId}",
+                Message = $"等待處理 {totalCount} 筆檔案",
+                CreationTime = DateTime.Now,
+                CreatorUserId = userId,
+                ExpireTime = DateTime.Now.AddDays(7)
+            };
+
+            db.BackgroundTasks.Add(task);
+            try
+            {
+                await db.SaveChangesAsync();
+                return task;
+            }
+            catch (DbUpdateException)
+            {
+                await using var checkDb = CreateDb();
+                var hasActiveTask = await checkDb.BackgroundTasks
+                    .AsNoTracking()
+                    .AnyAsync(x => x.ActiveKey == task.ActiveKey);
+                if (hasActiveTask)
+                    throw new BackgroundTaskConflictException("目前已有檔案清理任務正在執行，請等待完成後再試。");
+                throw;
+            }
+        }
+
         public async Task<(DateTime? CompletionTime, string? Message)> GetLatestSuccessfulProductImportAsync(long websiteId)
         {
             await using var db = CreateDb();
@@ -151,6 +189,23 @@ namespace EtheriT.Coker.Application.BackgroundJob
                     x.Id == taskId
                     && x.FK_WebsiteId == websiteId
                     && x.FK_UserId == userId);
+        }
+
+        public async Task<BackgroundTaskRecord?> GetActiveFileCleanupTaskForUserAsync(
+            long websiteId,
+            long userId)
+        {
+            await using var db = CreateDb();
+            return await db.BackgroundTasks
+                .AsNoTracking()
+                .Where(x => x.FK_WebsiteId == websiteId
+                    && x.FK_UserId == userId
+                    && x.Type == BackgroundTaskTypeEnum.FileCleanup
+                    && x.ActiveKey != null
+                    && (x.Status == BackgroundTaskStatusEnum.Queued
+                        || x.Status == BackgroundTaskStatusEnum.Running))
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
         }
 
         public async Task UpdateProgressAsync(long taskId, int progress, string message)
@@ -257,11 +312,18 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 FK_UserId = task.FK_UserId,
                 FK_BackgroundTaskId = task.Id,
                 Type = NotificationTypeEnum.BackgroundTask,
-                Title = task.Type == BackgroundTaskTypeEnum.ProductImport ? "商品匯入成功" : "商品匯出完成",
+                Title = task.Type switch
+                {
+                    BackgroundTaskTypeEnum.ProductImport => "商品匯入成功",
+                    BackgroundTaskTypeEnum.FileCleanup => "檔案清理完成",
+                    _ => "商品匯出完成"
+                },
                 Message = message,
                 ActionUrl = task.Type == BackgroundTaskTypeEnum.ProductExport
                     ? $"/api/Product/DownloadProductTask?taskId={task.Id}"
-                    : null,
+                    : task.Type == BackgroundTaskTypeEnum.FileCleanup
+                        ? $"/FileManagement?_site={task.FK_WebsiteId}"
+                        : null,
                 IsRead = false,
                 CreationTime = DateTime.Now,
                 CreatorUserId = task.FK_UserId
@@ -275,7 +337,12 @@ namespace EtheriT.Coker.Application.BackgroundJob
             var task = await db.BackgroundTasks.FirstAsync(x => x.Id == taskId);
             task.Status = BackgroundTaskStatusEnum.Failed;
             task.Progress = 100;
-            task.Message = task.Type == BackgroundTaskTypeEnum.ProductImport ? "商品匯入失敗" : "商品匯出失敗";
+            task.Message = task.Type switch
+            {
+                BackgroundTaskTypeEnum.ProductImport => "商品匯入失敗",
+                BackgroundTaskTypeEnum.FileCleanup => "檔案清理失敗",
+                _ => "商品匯出失敗"
+            };
             task.Error = error.Length > 4000 ? error[..4000] : error;
             task.ResultJson = resultJson;
             task.ActiveKey = null;
@@ -288,7 +355,12 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 FK_UserId = task.FK_UserId,
                 FK_BackgroundTaskId = task.Id,
                 Type = NotificationTypeEnum.BackgroundTask,
-                Title = task.Type == BackgroundTaskTypeEnum.ProductImport ? "商品匯入失敗" : "商品匯出失敗",
+                Title = task.Type switch
+                {
+                    BackgroundTaskTypeEnum.ProductImport => "商品匯入失敗",
+                    BackgroundTaskTypeEnum.FileCleanup => "檔案清理失敗",
+                    _ => "商品匯出失敗"
+                },
                 Message = task.Error,
                 IsRead = false,
                 CreationTime = DateTime.Now,

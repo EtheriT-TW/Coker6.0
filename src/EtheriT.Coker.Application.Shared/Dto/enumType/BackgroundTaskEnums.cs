@@ -3,7 +3,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     public enum BackgroundTaskTypeEnum
     {
         ProductImport = 1,
-        ProductExport = 2
+        ProductExport = 2,
+        FileCleanup = 3
     }
 
     public enum BackgroundTaskStatusEnum

@@ -11,6 +11,8 @@ using EtheriT.Coker.Application.Shared.FileManagement;
 using EtheriT.Coker.Application.FileManagement;
 using Microsoft.AspNetCore.StaticFiles;
 using EtheriT.Coker.Application.BackgroundJob;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +29,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         private readonly IUploadPathResolver _uploadPathResolver;
         private readonly ILogger<FileManagementController> _logger;
         private readonly IBackgroundJobClient _backgroundJobs;
+        private readonly BackgroundTaskService _backgroundTaskService;
         private readonly CokerDbContext _dbContext;
 
         public FileManagementController(
@@ -35,6 +38,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             LoginUserData loginUserData,
             IUploadPathResolver uploadPathResolver,
             IBackgroundJobClient backgroundJobs,
+            BackgroundTaskService backgroundTaskService,
             CokerDbContext dbContext,
             ILogger<FileManagementController> logger)
         {
@@ -43,6 +47,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             _loginUserData = loginUserData;
             _uploadPathResolver = uploadPathResolver;
             _backgroundJobs = backgroundJobs;
+            _backgroundTaskService = backgroundTaskService;
             _dbContext = dbContext;
             _logger = logger;
         }
@@ -241,6 +246,110 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             var jobId = _backgroundJobs.Enqueue<FileCleanupWorking>(
                 job => job.ScanWebsiteAsync(websiteId));
             return Ok(new { jobId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StartMoveSelectedToRecycleBin(
+            [FromBody] long[] fileUploadIds)
+        {
+            var ids = (fileUploadIds ?? Array.Empty<long>())
+                .Where(id => id > 0)
+                .Distinct()
+                .ToArray();
+            if (ids.Length == 0)
+                return BadRequest(new { message = "請先選擇要移至資源回收桶的檔案。" });
+            if (ids.Length > 10_000)
+                return BadRequest(new { message = "單次最多處理 10,000 筆檔案。" });
+
+            var websiteId = await _loginUserData.GetWebsiteId();
+            var userId = await _loginUserData.GetUserId();
+            BackgroundTaskRecord? task = null;
+            try
+            {
+                task = await _backgroundTaskService.CreateFileCleanupTaskAsync(
+                    websiteId,
+                    userId,
+                    ids.Length);
+                var jobId = _backgroundJobs.Enqueue<FileCleanupWorking>(job =>
+                    job.MoveSelectedToRecycleBinAsync(task.Id, websiteId, userId, ids));
+                await _backgroundTaskService.SetHangfireJobIdAsync(task.Id, jobId);
+                return Accepted(new { taskId = task.Id });
+            }
+            catch (BackgroundTaskConflictException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                if (task != null)
+                    await _backgroundTaskService.FailAsync(task.Id, ex.Message);
+                throw;
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StartPermanentlyDeleteSelected(
+            [FromBody] long[] fileUploadIds)
+        {
+            var ids = (fileUploadIds ?? Array.Empty<long>())
+                .Where(id => id > 0)
+                .Distinct()
+                .ToArray();
+            if (ids.Length == 0)
+                return BadRequest(new { message = "請先選擇要永久刪除的回收桶項目。" });
+            if (ids.Length > 10_000)
+                return BadRequest(new { message = "單次最多處理 10,000 筆檔案。" });
+
+            var websiteId = await _loginUserData.GetWebsiteId();
+            var userId = await _loginUserData.GetUserId();
+            BackgroundTaskRecord? task = null;
+            try
+            {
+                task = await _backgroundTaskService.CreateFileCleanupTaskAsync(
+                    websiteId,
+                    userId,
+                    ids.Length);
+                var jobId = _backgroundJobs.Enqueue<FileCleanupWorking>(job =>
+                    job.PermanentlyDeleteSelectedAsync(task.Id, websiteId, userId, ids));
+                await _backgroundTaskService.SetHangfireJobIdAsync(task.Id, jobId);
+                return Accepted(new { taskId = task.Id });
+            }
+            catch (BackgroundTaskConflictException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                if (task != null)
+                    await _backgroundTaskService.FailAsync(task.Id, ex.Message);
+                throw;
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> FileCleanupTask([FromQuery] long? taskId = null)
+        {
+            var websiteId = await _loginUserData.GetWebsiteId();
+            var userId = await _loginUserData.GetUserId();
+            var task = taskId.HasValue
+                ? await _backgroundTaskService.GetForUserAsync(taskId.Value, websiteId, userId)
+                : await _backgroundTaskService.GetActiveFileCleanupTaskForUserAsync(websiteId, userId);
+            if (task == null
+                || task.Type != BackgroundTaskTypeEnum.FileCleanup)
+            {
+                return NotFound();
+            }
+
+            return Ok(new
+            {
+                taskId = task.Id,
+                status = task.Status.ToString(),
+                task.Progress,
+                task.Message,
+                task.Error,
+                task.ResultJson,
+                task.CompletionTime
+            });
         }
 
         [HttpPost]

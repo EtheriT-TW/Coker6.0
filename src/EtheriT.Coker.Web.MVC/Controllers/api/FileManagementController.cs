@@ -99,7 +99,6 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                         && recycle.FK_FileUploadId == fileUploadId
                         && !recycle.IsDeleted
                         && upload.FK_WebsiteId == websiteId
-                        && upload.IsDeleted
                     select new { upload.DownloadFileName }
                 ).FirstOrDefaultAsync(cancellationToken);
                 if (file == null || string.IsNullOrWhiteSpace(file.DownloadFileName))
@@ -118,6 +117,63 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "產生資源回收桶縮圖失敗：{FileUploadId}", fileUploadId);
+                return NotFound();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RecyclePreview(
+            [FromQuery] long fileUploadId,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var websiteId = await _loginUserData.GetWebsiteId();
+                var orgName = await _loginUserData.GetWebsiteOrgName();
+                var file = await (
+                    from recycle in _dbContext.FileRecycleBinItems.AsNoTracking()
+                    join upload in _dbContext.FileUploads.IgnoreQueryFilters().AsNoTracking()
+                        on recycle.FK_FileUploadId equals upload.Id
+                    where recycle.FK_WebsiteId == websiteId
+                        && recycle.FK_FileUploadId == fileUploadId
+                        && !recycle.IsDeleted
+                        && upload.FK_WebsiteId == websiteId
+                    select new
+                    {
+                        upload.DownloadFileName,
+                        upload.ContentType
+                    }
+                ).FirstOrDefaultAsync(cancellationToken);
+                if (file == null || string.IsNullOrWhiteSpace(file.DownloadFileName))
+                    return NotFound();
+
+                var physicalPath = FileRecycleStorage.GetStoredRecyclePath(
+                    _uploadPathResolver,
+                    orgName,
+                    file.DownloadFileName);
+                if (!System.IO.File.Exists(physicalPath))
+                    return NotFound();
+
+                var contentType = file.ContentType;
+                if (string.IsNullOrWhiteSpace(contentType))
+                {
+                    var contentTypeProvider = new FileExtensionContentTypeProvider();
+                    if (!contentTypeProvider.TryGetContentType(physicalPath, out contentType))
+                        contentType = "application/octet-stream";
+                }
+
+                return PhysicalFile(
+                    physicalPath,
+                    contentType,
+                    enableRangeProcessing: true);
+            }
+            catch (OperationCanceledException)
+            {
+                return new EmptyResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "讀取資源回收桶預覽失敗：{FileUploadId}", fileUploadId);
                 return NotFound();
             }
         }

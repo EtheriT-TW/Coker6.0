@@ -1,5 +1,6 @@
 using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Core.Models;
+using IODirectory = System.IO.Directory;
 
 namespace EtheriT.Coker.Application.FileManagement
 {
@@ -39,7 +40,7 @@ namespace EtheriT.Coker.Application.FileManagement
                     if (File.Exists(recyclePath))
                         throw new IOException($"資源回收桶已存在同路徑檔案：{recyclePath}");
 
-                    Directory.CreateDirectory(Path.GetDirectoryName(recyclePath)!);
+                    IODirectory.CreateDirectory(Path.GetDirectoryName(recyclePath)!);
                     File.Move(originalPath, recyclePath);
                     moved.Add(new FileRecycleMove(originalPath, recyclePath));
                 }
@@ -82,7 +83,7 @@ namespace EtheriT.Coker.Application.FileManagement
                     if (File.Exists(originalPath))
                         throw new IOException($"原路徑已有檔案，無法還原：{originalPath}");
 
-                    Directory.CreateDirectory(Path.GetDirectoryName(originalPath)!);
+                    IODirectory.CreateDirectory(Path.GetDirectoryName(originalPath)!);
                     File.Move(recyclePath, originalPath);
                     restored.Add(new FileRecycleMove(originalPath, recyclePath));
                     DeleteEmptyRecycleDirectories(uploadPathResolver, orgName, recyclePath);
@@ -135,7 +136,7 @@ namespace EtheriT.Coker.Application.FileManagement
             {
                 if (!File.Exists(moved.RecyclePath) || File.Exists(moved.OriginalPath))
                     continue;
-                Directory.CreateDirectory(Path.GetDirectoryName(moved.OriginalPath)!);
+                IODirectory.CreateDirectory(Path.GetDirectoryName(moved.OriginalPath)!);
                 File.Move(moved.RecyclePath, moved.OriginalPath);
             }
         }
@@ -146,7 +147,7 @@ namespace EtheriT.Coker.Application.FileManagement
             {
                 if (!File.Exists(restored.OriginalPath) || File.Exists(restored.RecyclePath))
                     continue;
-                Directory.CreateDirectory(Path.GetDirectoryName(restored.RecyclePath)!);
+                IODirectory.CreateDirectory(Path.GetDirectoryName(restored.RecyclePath)!);
                 File.Move(restored.OriginalPath, restored.RecyclePath);
             }
         }
@@ -190,9 +191,9 @@ namespace EtheriT.Coker.Application.FileManagement
                 && directory.StartsWith(recycleRoot, StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(directory, recycleRoot, StringComparison.OrdinalIgnoreCase))
             {
-                if (Directory.EnumerateFileSystemEntries(directory).Any())
+                if (IODirectory.EnumerateFileSystemEntries(directory).Any())
                     break;
-                Directory.Delete(directory);
+                IODirectory.Delete(directory);
                 directory = Path.GetDirectoryName(directory);
             }
         }

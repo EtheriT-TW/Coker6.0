@@ -1,5 +1,6 @@
 ﻿using DevExpress.CodeParser;
 using EtheriT.Coker.Application.Configuration;
+using EtheriT.Coker.Application.FileManagement;
 using EtheriT.Coker.Application.Shared;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Dto.Files;
@@ -42,6 +43,7 @@ namespace EtheriT.Coker.Application
         private readonly ITokenAppService tokenAppService;
         private readonly IUploadPathResolver uploadPathResolver;
         private readonly IWebsiteCacheStateAppService websiteCacheStateAppService;
+        private readonly IFileReferenceScanner fileReferenceScanner;
         public FileUploadAppService(
             IOptions<VirtualDirectory> fileAllow,
             LoginUserData loginUserData,
@@ -49,7 +51,8 @@ namespace EtheriT.Coker.Application
             IConfiguration configuration,
             ITokenAppService tokenAppService,
             IUploadPathResolver uploadPathResolver,
-            IWebsiteCacheStateAppService websiteCacheStateAppService
+            IWebsiteCacheStateAppService websiteCacheStateAppService,
+            IFileReferenceScanner fileReferenceScanner
         )
         {
             this.fileAllow = fileAllow.Value.FileAllow;
@@ -59,6 +62,7 @@ namespace EtheriT.Coker.Application
             this.tokenAppService = tokenAppService;
             this.uploadPathResolver = uploadPathResolver;
             this.websiteCacheStateAppService = websiteCacheStateAppService;
+            this.fileReferenceScanner = fileReferenceScanner;
         }
         public async Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files)
         {
@@ -467,15 +471,10 @@ namespace EtheriT.Coker.Application
                         if (db_fu != null)
                         {
                             DeleResponse = await this.deleteFile(db_fu.GuidKey);
-                            db_fu.IsDeleted = true;
-                            db_fu.DeletionTime = DateTime.Now;
-                            db_fu.DeleterUserId = usetId;
-                            db.SaveChanges();
+                            if (!DeleResponse.Success)
+                                throw new InvalidOperationException(
+                                    DeleResponse.Error ?? "舊檔案移至資源回收桶失敗");
                         }
-                        db_fb.IsDeleted = true;
-                        db_fb.DeletionTime = DateTime.Now;
-                        db_fb.DeleterUserId = usetId;
-                        db.SaveChanges();
                     }
                 }
                 List<FileItemDto> items = await SaveImage(files, type, (int)FileBindMoreEnum.壓縮圖片, serno, page, sid, convert);
@@ -724,12 +723,6 @@ namespace EtheriT.Coker.Application
                         removedFiles = await db.FileUploads
                             .Where(e => !e.IsDeleted && e.FK_WebsiteId == websiteId && removedIds.Contains(e.Id))
                             .ToListAsync();
-                        foreach (var removed in removedFiles)
-                        {
-                            removed.IsDeleted = true;
-                            removed.DeletionTime = now;
-                            removed.DeleterUserId = userId;
-                        }
                     }
 
                     await db.SaveChangesAsync();
@@ -757,10 +750,10 @@ namespace EtheriT.Coker.Application
 
                 foreach (var removed in removedFiles)
                 {
-                    var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
-                        orgName,
-                        NormalizeStoredUploadPath(removed.DownloadFileName));
-                    await deleteFile(physicalPath);
+                    var deleteResponse = await deleteFile(removed.GuidKey);
+                    if (!deleteResponse.Success)
+                        throw new InvalidOperationException(
+                            deleteResponse.Error ?? "360 圖片移至資源回收桶失敗");
                 }
             }
             catch (Exception ex)
@@ -1893,89 +1886,48 @@ namespace EtheriT.Coker.Application
         }
         public async Task<ResponseMessageDto> deleteFile(Guid key)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
+            var response = new ResponseMessageDto();
             try
             {
-                string orgName = await loginUserData.GetWebsiteOrgName();
-                long websiteId = await loginUserData.GetWebsiteId();
-
-                var files = await db.FileUploads
+                var websiteId = await loginUserData.GetWebsiteId();
+                var file = await db.FileUploads
                     .Where(e => e.GuidKey == key)
                     .Where(e => e.FK_WebsiteId == websiteId)
                     .Where(e => !e.IsDeleted)
                     .FirstOrDefaultAsync();
+                if (file == null)
+                    throw new Exception("檔案不存在");
 
-                if (files != null)
+                var bindings = await db.FileBinds
+                    .Where(item => item.FK_FileUploadId == file.Id && !item.IsDeleted)
+                    .Select(item => new { item.Sid, item.type })
+                    .Distinct()
+                    .ToListAsync();
+                if (bindings.Count == 0)
                 {
-                    var userId = await loginUserData.GetUserId();
-                    var invalidatesMenuCache = await db.FileBinds
-                        .AsNoTracking()
-                        .AnyAsync(bind => bind.FK_FileUploadId == files.Id
-                            && !bind.IsDeleted
-                            && (bind.type == (int)FileBindTypeEnum.選單圖
-                                || bind.type == (int)FileBindTypeEnum.選單覆蓋
-                                || bind.type == (int)FileBindTypeEnum.選單Icon));
-                    var relatedImages = await db.FileBindMores
-                        .Where(item => item.FK_FileBindGuid == files.GuidKey
-                            && (item.type == (int)FileBindMoreEnum.相簿縮圖
-                                || item.type == (int)FileBindMoreEnum.相簿中圖)
-                            && !item.IsDeleted
-                            && item.FK_FileUploadId.HasValue)
-                        .ToListAsync();
-                    if (relatedImages.Count > 0)
+                    await RecycleUnboundFileAsync(file, websiteId);
+                }
+                else
+                {
+                    foreach (var binding in bindings)
                     {
-                        var relatedIds = relatedImages
-                            .Select(item => item.FK_FileUploadId!.Value)
-                            .Distinct()
-                            .ToList();
-                        var relatedUploads = await db.FileUploads
-                            .Where(file => relatedIds.Contains(file.Id)
-                                && file.FK_WebsiteId == websiteId
-                                && !file.IsDeleted)
-                            .ToListAsync();
-                        foreach (var relatedUpload in relatedUploads)
+                        var result = await RecycleBoundFilesAsync(new FileDeleteDto
                         {
-                            var relatedPhysicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
-                                orgName,
-                                NormalizeStoredUploadPath(relatedUpload.DownloadFileName)
-                            );
-                            if (File.Exists(relatedPhysicalPath))
-                                File.Delete(relatedPhysicalPath);
-
-                            relatedUpload.IsDeleted = true;
-                            relatedUpload.DeletionTime = DateTime.Now;
-                            relatedUpload.DeleterUserId = userId;
-                        }
-                        foreach (var relation in relatedImages)
+                            Sid = binding.Sid,
+                            Type = binding.type,
+                            Fid = new List<long> { file.Id }
+                        });
+                        if (!result.Success)
+                            throw new InvalidOperationException(result.Error ?? "檔案移至資源回收桶失敗");
+                        if (IsMenuFileType(binding.type))
                         {
-                            relation.IsDeleted = true;
-                            relation.DeletionTime = DateTime.Now;
-                            relation.DeleterUserId = userId;
+                            await websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                                websiteId,
+                                WebsiteCacheKeys.Menu);
                         }
-                    }
-                    var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
-                        orgName,
-                        NormalizeStoredUploadPath(files.DownloadFileName)
-                    );
-
-                    if (File.Exists(physicalPath))
-                    {
-                        File.Delete(physicalPath);
-                    }
-
-                    files.IsDeleted = true;
-                    files.DeletionTime = DateTime.Now;
-                    files.DeleterUserId = userId;
-                    response.Success = true;
-                    await loginUserData.SaveChanges(files);
-                    if (invalidatesMenuCache)
-                    {
-                        await websiteCacheStateAppService.TouchByWebsiteIdAsync(
-                            files.FK_WebsiteId,
-                            WebsiteCacheKeys.Menu);
                     }
                 }
-                else throw new Exception("檔案不存在");
+                response.Success = true;
             }
             catch (Exception ex)
             {
@@ -1986,191 +1938,359 @@ namespace EtheriT.Coker.Application
         }
         public async Task<ResponseMessageDto> deleteFileById(FileDeleteDto dto)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
-            response.Success = true;
+            var response = await RecycleBoundFilesAsync(dto);
+            await loginUserData.SetLogs(
+                dto.Fid == null ? dto.Sid.ToString() : string.Join(",", dto.Fid),
+                JsonConvert.SerializeObject(response));
+            if (response.Success && IsMenuFileType(dto.Type))
+            {
+                await websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                    await loginUserData.GetWebsiteId(),
+                    WebsiteCacheKeys.Menu);
+            }
+            return response;
+        }
 
+        private async Task<ResponseMessageDto> RecycleBoundFilesAsync(FileDeleteDto dto)
+        {
+            var response = new ResponseMessageDto();
+            var movedFiles = new List<FileRecycleMove>();
             try
             {
-                long websiteId = await loginUserData.GetWebsiteId();
-                long usetId = await loginUserData.GetUserId();
+                var websiteId = await loginUserData.GetWebsiteId();
+                var orgName = await loginUserData.GetWebsiteOrgName();
+                var userId = await loginUserData.GetUserId();
                 if (IsWebsiteOwnedFileType(dto.Type) && dto.Sid != websiteId)
                     throw new UnauthorizedAccessException("不可刪除其他網站的檔案");
 
+                var bindingsQuery = db.FileBinds
+                    .Where(item => item.Sid == dto.Sid && !item.IsDeleted);
                 if (dto.Fid != null && dto.Fid.Count > 0)
                 {
-                    List<FileBind> fafile_other;
-                    FileBind? fafile_binds;
-                    for (var i = 0; i < dto.Fid.Count; i++)
-                    {
-                        var ownedFile = await db.FileUploads
-                            .Where(e => e.Id == dto.Fid[i])
-                            .Where(e => e.FK_WebsiteId == websiteId)
-                            .Where(e => !e.IsDeleted)
-                            .FirstOrDefaultAsync();
-                        if (ownedFile == null)
-                            throw new UnauthorizedAccessException("檔案不屬於目前網站或已不存在");
-
-                        fafile_other = await (db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid[i] && e.type == dto.Type && e.Sid != dto.Sid)).ToListAsync();
-                        fafile_binds = await db.FileBinds.Where(e => e.FK_FileUploadId == dto.Fid[i] && e.type == dto.Type && e.Sid == dto.Sid).FirstOrDefaultAsync();
-
-                        if (fafile_other.Count > 0 && fafile_binds != null)
-                        {
-                            fafile_binds.IsDeleted = true;
-                            fafile_binds.DeletionTime = DateTime.Now;
-                            fafile_binds.DeleterUserId = usetId;
-                            db.SaveChanges();
-                        }
-                        else
-                        {
-                            var fafile = ownedFile;
-                            if (fafile != null)
-                            {
-                                if (fafile_binds != null)
-                                {
-                                    var chfile_binds = await db.FileBindMores
-                                        .Where(e => e.FK_FileBindGuid == fafile.GuidKey && !e.IsDeleted)
-                                        .ToListAsync();
-                                    if (chfile_binds != null)
-                                    {
-                                        foreach (var chfile_bind in chfile_binds)
-                                        {
-                                            var chfile = await (db.FileUploads.Where(e => e.FK_WebsiteId == websiteId).Where(e => e.Id == chfile_bind.FK_FileUploadId).Where(e => !e.IsDeleted).FirstOrDefaultAsync());
-                                            if (chfile != null && response.Success)
-                                            {
-                                                response = await this.deleteFile(chfile.GuidKey);
-                                                if (response.Success)
-                                                {
-                                                    chfile.IsDeleted = true;
-                                                    chfile.DeletionTime = DateTime.Now;
-                                                    chfile.DeleterUserId = usetId;
-
-                                                    chfile_bind.IsDeleted = true;
-                                                    chfile_bind.DeletionTime = DateTime.Now;
-                                                    chfile_bind.DeleterUserId = usetId;
-
-                                                    db.SaveChanges();
-                                                }
-                                            }
-                                        }
-                                    }
-                                    fafile_binds.IsDeleted = true;
-                                    fafile_binds.DeletionTime = DateTime.Now;
-                                    fafile_binds.DeleterUserId = usetId;
-                                    db.SaveChanges();
-                                }
-                                response = await this.deleteFile(fafile.GuidKey);
-                                if (response.Success)
-                                {
-                                    fafile.IsDeleted = true;
-                                    fafile.DeletionTime = DateTime.Now;
-                                    fafile.DeleterUserId = usetId;
-                                    db.SaveChanges();
-                                }
-                            }
-                            else if (fafile_binds != null)
-                            {
-                                fafile_binds.IsDeleted = true;
-                                fafile_binds.DeletionTime = DateTime.Now;
-                                fafile_binds.DeleterUserId = usetId;
-                                db.SaveChanges();
-                            }
-                        }
-                        await loginUserData.SetLogs(dto.Fid.ToString(), JsonConvert.SerializeObject(response));
-
-                        var websiteid = await loginUserData.GetWebsiteId();
-                        switch (dto.Type)
-                        {
-                            case (int)FileBindTypeEnum.網站圖示:
-                                var website_icon = await db.Websites
-                                    .Where(e => e.Id == dto.Sid && e.Id == websiteid)
-                                    .FirstOrDefaultAsync();
-                                if (website_icon != null) website_icon.Icon = null;
-                                break;
-                            case (int)FileBindTypeEnum.網站Logo:
-                                var website_logo = await db.Websites
-                                    .Where(e => e.Id == dto.Sid && e.Id == websiteid)
-                                    .FirstOrDefaultAsync();
-                                if (website_logo != null) website_logo.Logo = null;
-                                break;
-                            case (int)FileBindTypeEnum.選單圖:
-                                var db_bind = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                                if (db_bind != null) db_bind.ImgId = null;
-                                break;
-                            case (int)FileBindTypeEnum.選單覆蓋:
-                                var db_bind_over = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                                if (db_bind_over != null) db_bind_over.OverImgId = null;
-                                break;
-                            case (int)FileBindTypeEnum.右側浮動廣告:
-                            case (int)FileBindTypeEnum.進入廣告:
-                                var db_html = await db.Html_Contents.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                                if (db_html != null) db_html.Img = null;
-                                break;
-                            case (int)FileBindTypeEnum.選單Icon:
-                                var db_menuicon = await db.WebMenus.Where(e => e.Id == dto.Sid && !e.IsDeleted && e.FK_WebsiteId == websiteid).FirstOrDefaultAsync();
-                                if (db_menuicon != null) db_menuicon.icon = "empty";
-                                break;
-                        }
-                    }
-                    db.SaveChanges();
-                    return response;
+                    bindingsQuery = bindingsQuery.Where(item => item.type == dto.Type
+                        && item.FK_FileUploadId.HasValue
+                        && dto.Fid.Contains(item.FK_FileUploadId.Value));
                 }
                 else
                 {
-                    var result = new List<long?>();
-                    if (dto.Type == (int)FileBindTypeEnum.自訂廣告)
-                    {
-                        result = await (from fb in db.FileBinds
-                                        where fb.Sid == dto.Sid && !fb.IsDeleted
-                                        where fb.type == dto.Type
-                                        select fb.FK_FileUploadId).ToListAsync();
-                    }
-                    else
-                    {
-                        result = await (from fb in db.FileBinds
-                                        where fb.Sid == dto.Sid && !fb.IsDeleted
-                                        select fb.FK_FileUploadId).ToListAsync();
-                    }
-
-                    if (result.Count > 0)
-                    {
-                        var fid_list = new List<long>();
-                        result.ForEach(fid =>
-                        {
-                            fid_list.Add((long)fid);
-                        });
-
-                        response = await this.deleteFileById(new FileDeleteDto
-                        {
-                            Sid = dto.Sid,
-                            Fid = fid_list,
-                            Type = dto.Type
-                        });
-                        return response;
-                    }
-                    else
-                    {
-                        response.Error = "Fid為0";
-                        response.Success = true;
-                        return response;
-                    }
+                    var relatedTypes = GetRelatedFileBindTypes(dto.Type);
+                    bindingsQuery = bindingsQuery.Where(item => relatedTypes.Contains(item.type));
                 }
-            }
-            catch (Exception e)
-            {
-                response.Error = e.Message;
-                response.Success = false;
-                return response;
-            }
-            finally
-            {
-                if (response.Success && IsMenuFileType(dto.Type))
+
+                var bindings = await bindingsQuery.ToListAsync();
+                if (bindings.Count == 0)
                 {
-                    await websiteCacheStateAppService.TouchByWebsiteIdAsync(
-                        await loginUserData.GetWebsiteId(),
-                        WebsiteCacheKeys.Menu);
+                    response.Success = true;
+                    response.Error = "找不到需要移除的檔案關聯";
+                    return response;
+                }
+
+                var fileIds = bindings
+                    .Where(item => item.FK_FileUploadId.HasValue)
+                    .Select(item => item.FK_FileUploadId!.Value)
+                    .Distinct()
+                    .ToList();
+                var files = await db.FileUploads
+                    .Where(item => item.FK_WebsiteId == websiteId
+                        && fileIds.Contains(item.Id))
+                    .ToListAsync();
+                if (files.Count != fileIds.Count)
+                    throw new UnauthorizedAccessException("檔案不屬於目前網站或已不存在");
+
+                var now = DateTime.Now;
+                await UpsertRecycleBindingsAsync(bindings, websiteId, now, userId);
+                await UpsertRecycleEntriesAsync(
+                    files,
+                    websiteId,
+                    now,
+                    userId,
+                    "由編輯頁移除關聯");
+                foreach (var binding in bindings)
+                {
+                    binding.IsDeleted = true;
+                    binding.DeletionTime = now;
+                    binding.DeleterUserId = userId;
+                }
+                foreach (var slot in bindings.Select(item => new { item.type, item.Sid }).Distinct())
+                    await ClearBoundFileSlotAsync(slot.type, slot.Sid, websiteId);
+
+                // 先儲存解除關聯，引用掃描才能依最新狀態判斷是否可隔離實體檔案。
+                await db.SaveChangesAsync();
+                var referencedIds = await fileReferenceScanner.GetReferencedFileIdsAsync(websiteId);
+                var familyGraph = await GetRecycleFamilyGraphAsync(websiteId);
+                var quarantineIds = new HashSet<long>();
+                foreach (var fileId in fileIds)
+                {
+                    var familyIds = ExpandRecycleFamily(fileId, familyGraph);
+                    if (!familyIds.Any(referencedIds.Contains))
+                        quarantineIds.UnionWith(familyIds);
+                }
+
+                if (quarantineIds.Count > 0)
+                {
+                    var quarantineFiles = await db.FileUploads
+                        .Where(item => item.FK_WebsiteId == websiteId
+                            && quarantineIds.Contains(item.Id))
+                        .ToListAsync();
+                    movedFiles.AddRange(FileRecycleStorage.MoveToRecycleBin(
+                        uploadPathResolver,
+                        orgName,
+                        quarantineFiles));
+                    foreach (var file in quarantineFiles)
+                    {
+                        file.IsDeleted = true;
+                        file.DeletionTime = now;
+                        file.DeleterUserId = userId;
+                    }
+                    await UpsertRecycleEntriesAsync(
+                        quarantineFiles,
+                        websiteId,
+                        now,
+                        userId,
+                        "由編輯頁移除最後一個引用");
+                }
+
+                await db.SaveChangesAsync();
+                response.Success = true;
+            }
+            catch (Exception ex)
+            {
+                FileRecycleStorage.RestoreMovedFiles(movedFiles);
+                response.Success = false;
+                response.Error = ex.Message;
+            }
+            return response;
+        }
+
+        private async Task RecycleUnboundFileAsync(FileUpload file, long websiteId)
+        {
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            var userId = await loginUserData.GetUserId();
+            var now = DateTime.Now;
+            var familyGraph = await GetRecycleFamilyGraphAsync(websiteId);
+            var familyIds = ExpandRecycleFamily(file.Id, familyGraph);
+            var files = await db.FileUploads
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && familyIds.Contains(item.Id))
+                .ToListAsync();
+            var movedFiles = FileRecycleStorage.MoveToRecycleBin(
+                uploadPathResolver,
+                orgName,
+                files);
+            try
+            {
+                foreach (var item in files)
+                {
+                    item.IsDeleted = true;
+                    item.DeletionTime = now;
+                    item.DeleterUserId = userId;
+                }
+                await UpsertRecycleEntriesAsync(
+                    files,
+                    websiteId,
+                    now,
+                    userId,
+                    "由編輯頁移除未綁定檔案");
+                await db.SaveChangesAsync();
+            }
+            catch
+            {
+                FileRecycleStorage.RestoreMovedFiles(movedFiles);
+                throw;
+            }
+        }
+
+        private async Task UpsertRecycleBindingsAsync(
+            IReadOnlyCollection<FileBind> bindings,
+            long websiteId,
+            DateTime now,
+            long userId)
+        {
+            var bindingGuids = bindings.Select(item => item.Guid).ToHashSet();
+            var entries = await db.FileRecycleBinBindings.IgnoreQueryFilters()
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && bindingGuids.Contains(item.FK_FileBindGuid))
+                .ToListAsync();
+            foreach (var binding in bindings.Where(item => item.FK_FileUploadId.HasValue))
+            {
+                var entry = entries.FirstOrDefault(item => item.FK_FileBindGuid == binding.Guid);
+                if (entry == null)
+                {
+                    db.FileRecycleBinBindings.Add(new FileRecycleBinBinding
+                    {
+                        FK_WebsiteId = websiteId,
+                        FK_FileUploadId = binding.FK_FileUploadId!.Value,
+                        FK_FileBindGuid = binding.Guid,
+                        CreatorUserId = userId,
+                        CreationTime = now
+                    });
+                    continue;
+                }
+                entry.IsDeleted = false;
+                entry.DeletionTime = null;
+                entry.DeleterUserId = null;
+                entry.FK_FileUploadId = binding.FK_FileUploadId!.Value;
+                entry.LastModificationTime = now;
+                entry.LastModifierUserId = userId;
+            }
+        }
+
+        private async Task UpsertRecycleEntriesAsync(
+            IReadOnlyCollection<FileUpload> files,
+            long websiteId,
+            DateTime now,
+            long userId,
+            string reason)
+        {
+            var fileIds = files.Select(item => item.Id).ToHashSet();
+            var entries = await db.FileRecycleBinItems.IgnoreQueryFilters()
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && fileIds.Contains(item.FK_FileUploadId))
+                .ToListAsync();
+            foreach (var file in files)
+            {
+                var entry = entries.FirstOrDefault(item => item.FK_FileUploadId == file.Id);
+                if (entry == null)
+                {
+                    db.FileRecycleBinItems.Add(new FileRecycleBinItem
+                    {
+                        FK_WebsiteId = websiteId,
+                        FK_FileUploadId = file.Id,
+                        RecycledTime = now,
+                        OriginalPath = file.DownloadFileName ?? string.Empty,
+                        Reason = reason,
+                        CreatorUserId = userId,
+                        CreationTime = now
+                    });
+                    continue;
+                }
+                entry.IsDeleted = false;
+                entry.DeletionTime = null;
+                entry.DeleterUserId = null;
+                entry.RecycledTime = now;
+                entry.OriginalPath = file.DownloadFileName ?? entry.OriginalPath;
+                entry.Reason = reason;
+                entry.LastModificationTime = now;
+                entry.LastModifierUserId = userId;
+            }
+        }
+
+        private async Task<Dictionary<long, HashSet<long>>> GetRecycleFamilyGraphAsync(
+            long websiteId)
+        {
+            var uploads = await db.FileUploads.IgnoreQueryFilters().AsNoTracking()
+                .Where(item => item.FK_WebsiteId == websiteId)
+                .Select(item => new { item.Id, item.GuidKey })
+                .ToListAsync();
+            var uploadByGuid = uploads.ToDictionary(item => item.GuidKey, item => item.Id);
+            var uploadIds = uploads.Select(item => item.Id).ToHashSet();
+            var relations = await db.FileBindMores.IgnoreQueryFilters().AsNoTracking()
+                .Where(item => !item.IsDeleted && item.FK_FileUploadId.HasValue)
+                .Select(item => new { item.FK_FileBindGuid, FileId = item.FK_FileUploadId!.Value })
+                .ToListAsync();
+            var graph = new Dictionary<long, HashSet<long>>();
+            foreach (var relation in relations)
+            {
+                if (!uploadByGuid.TryGetValue(relation.FK_FileBindGuid, out var parentId)
+                    || !uploadIds.Contains(relation.FileId))
+                    continue;
+                AddRecycleFamilyEdge(graph, parentId, relation.FileId);
+                AddRecycleFamilyEdge(graph, relation.FileId, parentId);
+            }
+            return graph;
+        }
+
+        private static HashSet<long> ExpandRecycleFamily(
+            long rootId,
+            Dictionary<long, HashSet<long>> graph)
+        {
+            var result = new HashSet<long> { rootId };
+            var pending = new Queue<long>();
+            pending.Enqueue(rootId);
+            while (pending.Count > 0)
+            {
+                var current = pending.Dequeue();
+                if (!graph.TryGetValue(current, out var related))
+                    continue;
+                foreach (var id in related)
+                {
+                    if (result.Add(id))
+                        pending.Enqueue(id);
                 }
             }
+            return result;
+        }
 
+        private static void AddRecycleFamilyEdge(
+            Dictionary<long, HashSet<long>> graph,
+            long source,
+            long target)
+        {
+            if (!graph.TryGetValue(source, out var related))
+            {
+                related = new HashSet<long>();
+                graph[source] = related;
+            }
+            related.Add(target);
+        }
+
+        private async Task ClearBoundFileSlotAsync(int type, long sid, long websiteId)
+        {
+            switch (type)
+            {
+                case (int)FileBindTypeEnum.網站圖示:
+                    var websiteIcon = await db.Websites
+                        .FirstOrDefaultAsync(item => item.Id == sid && item.Id == websiteId);
+                    if (websiteIcon != null) websiteIcon.Icon = null;
+                    break;
+                case (int)FileBindTypeEnum.網站Logo:
+                    var websiteLogo = await db.Websites
+                        .FirstOrDefaultAsync(item => item.Id == sid && item.Id == websiteId);
+                    if (websiteLogo != null) websiteLogo.Logo = null;
+                    break;
+                case (int)FileBindTypeEnum.選單圖:
+                    var menuImage = await db.WebMenus.FirstOrDefaultAsync(item =>
+                        item.Id == sid && !item.IsDeleted && item.FK_WebsiteId == websiteId);
+                    if (menuImage != null) menuImage.ImgId = null;
+                    break;
+                case (int)FileBindTypeEnum.選單覆蓋:
+                    var menuOverImage = await db.WebMenus.FirstOrDefaultAsync(item =>
+                        item.Id == sid && !item.IsDeleted && item.FK_WebsiteId == websiteId);
+                    if (menuOverImage != null) menuOverImage.OverImgId = null;
+                    break;
+                case (int)FileBindTypeEnum.選單Icon:
+                    var menuIcon = await db.WebMenus.FirstOrDefaultAsync(item =>
+                        item.Id == sid && !item.IsDeleted && item.FK_WebsiteId == websiteId);
+                    if (menuIcon != null) menuIcon.icon = "empty";
+                    break;
+                case (int)FileBindTypeEnum.右側浮動廣告:
+                case (int)FileBindTypeEnum.進入廣告:
+                    var html = await db.Html_Contents.FirstOrDefaultAsync(item =>
+                        item.Id == sid && !item.IsDeleted && item.FK_WebsiteId == websiteId);
+                    if (html != null) html.Img = null;
+                    break;
+            }
+        }
+
+        private static int[] GetRelatedFileBindTypes(int type)
+        {
+            if (type == (int)FileBindTypeEnum.產品)
+            {
+                return new[]
+                {
+                    (int)FileBindTypeEnum.產品,
+                    (int)FileBindTypeEnum.產品檔案
+                };
+            }
+            if (type == (int)FileBindTypeEnum.文章管理)
+            {
+                return new[]
+                {
+                    (int)FileBindTypeEnum.文章管理,
+                    (int)FileBindTypeEnum.文章檔案
+                };
+            }
+            return new[] { type };
         }
         public async Task<ResponseMessageDto> insertNotFondFile(InsertNotFoundFileDto dto)
         {

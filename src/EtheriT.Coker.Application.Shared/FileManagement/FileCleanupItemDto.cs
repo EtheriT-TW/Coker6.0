@@ -6,6 +6,7 @@ namespace EtheriT.Coker.Application.Shared.FileManagement
         public string Name { get; set; } = string.Empty;
         public string Path { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+        public string PreviewUrl { get; set; } = string.Empty;
         public string ContentType { get; set; } = string.Empty;
         public long Size { get; set; }
         public DateTime CreationTime { get; set; }
@@ -13,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.FileManagement
         public DateTime? DeletionTime { get; set; }
         public string Reason { get; set; } = string.Empty;
         public bool PhysicalFileExists { get; set; }
+        public bool IsQuarantined { get; set; }
     }
 
     public class FileCleanupBatchResultDto

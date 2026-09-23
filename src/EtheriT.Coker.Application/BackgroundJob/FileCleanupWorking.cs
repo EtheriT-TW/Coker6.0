@@ -141,7 +141,6 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 where recycle.FK_WebsiteId == websiteId
                     && !recycle.IsDeleted
                     && recycle.RecycledTime < cutoff
-                    && file.IsDeleted
                 orderby recycle.Id
                 select new { recycle, file }
             )
@@ -149,9 +148,21 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 .ToListAsync();
 
             var purgedIds = new HashSet<long>();
-            foreach (var item in expired.Where(item => !referencedIds.Contains(item.file.Id)))
+            var closedIds = new HashSet<long>();
+            foreach (var item in expired)
             {
                 var file = item.file;
+                if (!file.IsDeleted)
+                {
+                    // 檔案仍被其他內容使用，只清除已過期的「關聯還原」紀錄。
+                    closedIds.Add(file.Id);
+                    item.recycle.IsDeleted = true;
+                    item.recycle.DeletionTime = DateTime.Now;
+                    continue;
+                }
+                if (referencedIds.Contains(file.Id))
+                    continue;
+
                 if (!string.IsNullOrWhiteSpace(file.DownloadFileName))
                 {
                     FileRecycleStorage.PermanentlyDelete(
@@ -160,6 +171,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
                         file.DownloadFileName);
                 }
                 purgedIds.Add(file.Id);
+                closedIds.Add(file.Id);
                 item.recycle.IsDeleted = true;
                 item.recycle.DeletionTime = DateTime.Now;
             }
@@ -176,8 +188,20 @@ namespace EtheriT.Coker.Application.BackgroundJob
                     relation.IsDeleted = true;
                     relation.DeletionTime = DateTime.Now;
                 }
-                await db.SaveChangesAsync();
             }
+            if (closedIds.Count > 0)
+            {
+                var bindingEntries = await db.FileRecycleBinBindings
+                    .Where(item => !item.IsDeleted
+                        && closedIds.Contains(item.FK_FileUploadId))
+                    .ToListAsync();
+                foreach (var entry in bindingEntries)
+                {
+                    entry.IsDeleted = true;
+                    entry.DeletionTime = DateTime.Now;
+                }
+            }
+            await db.SaveChangesAsync();
 
             logger.LogInformation(
                 "Expired recycle-bin files checked. WebsiteId={WebsiteId}, Count={Count}",

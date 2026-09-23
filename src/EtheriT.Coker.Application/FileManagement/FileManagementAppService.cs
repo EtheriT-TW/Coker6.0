@@ -1,7 +1,10 @@
 ﻿using DevExtreme.AspNet.Mvc.FileManagement;
 using EtheriT.Coker.Application.Configuration;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.FileManagement;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using Microsoft.Extensions.Options;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Core.Models;
@@ -25,6 +28,7 @@ namespace EtheriT.Coker.Application.FileManagement
         private readonly CokerDbContext _dbContext;
         private readonly IUploadPathResolver _uploadPathResolver;
         private readonly IFileReferenceScanner _fileReferenceScanner;
+        private readonly IWebsiteCacheStateAppService _websiteCacheStateAppService;
         private readonly FileAllow _fileAllow;
         private IThumbnailGeneratorService _thumbnailGenerator { get; }
 
@@ -35,6 +39,7 @@ namespace EtheriT.Coker.Application.FileManagement
             IThumbnailGeneratorService thumbnailGenerator,
             IUploadPathResolver uploadPathResolver,
             IFileReferenceScanner fileReferenceScanner,
+            IWebsiteCacheStateAppService websiteCacheStateAppService,
             IOptions<VirtualDirectory> virtualDirectory)
         {
             _configuration = configuration;
@@ -43,6 +48,7 @@ namespace EtheriT.Coker.Application.FileManagement
             _thumbnailGenerator = thumbnailGenerator;
             _uploadPathResolver = uploadPathResolver;
             _fileReferenceScanner = fileReferenceScanner;
+            _websiteCacheStateAppService = websiteCacheStateAppService;
             _fileAllow = virtualDirectory.Value.FileAllow;
         }
 
@@ -210,21 +216,27 @@ namespace EtheriT.Coker.Application.FileManagement
         {
             var websiteId = await _loginUserData.GetWebsiteId();
             var orgName = await _loginUserData.GetWebsiteOrgName();
-            var files = await (
+            var rows = await (
                 from recycle in _dbContext.FileRecycleBinItems.AsNoTracking()
                 join file in _dbContext.FileUploads.IgnoreQueryFilters().AsNoTracking()
                     on recycle.FK_FileUploadId equals file.Id
                 where recycle.FK_WebsiteId == websiteId
                     && !recycle.IsDeleted
                     && file.FK_WebsiteId == websiteId
-                    && file.IsDeleted
                 orderby recycle.RecycledTime descending
-                select file
+                select new { recycle, file }
             )
                 .Take(2_000)
                 .ToListAsync();
 
-            return files.Select(file => CreateCleanupItem(file, orgName, isRecycle: true))
+            return rows.Select(row => CreateCleanupItem(
+                    row.file,
+                    orgName,
+                    reason: row.file.IsDeleted
+                        ? row.recycle.Reason
+                        : $"{row.recycle.Reason}；原檔仍被其他內容使用，本項只會還原關聯",
+                    isRecycle: true,
+                    recycleTime: row.recycle.RecycledTime))
                 .Where(item => item.PhysicalFileExists)
                 .ToList();
         }
@@ -372,6 +384,21 @@ namespace EtheriT.Coker.Application.FileManagement
             if (files.Count == 0)
                 throw new InvalidOperationException("找不到可還原的檔案。");
 
+            var recycleBindings = await _dbContext.FileRecycleBinBindings
+                .Where(item => item.FK_WebsiteId == websiteId
+                    && familyIds.Contains(item.FK_FileUploadId))
+                .ToListAsync();
+            var bindingGuids = recycleBindings
+                .Select(item => item.FK_FileBindGuid)
+                .ToHashSet();
+            var bindings = await _dbContext.FileBinds.IgnoreQueryFilters()
+                .Where(item => bindingGuids.Contains(item.Guid))
+                .ToListAsync();
+            await ValidateRestoreBindingsAsync(
+                websiteId,
+                bindings,
+                bindingGuids);
+
             var restorePaths = files
                 .Where(item => !string.IsNullOrWhiteSpace(item.DownloadFileName))
                 .Select(item => item.DownloadFileName!)
@@ -396,6 +423,21 @@ namespace EtheriT.Coker.Application.FileManagement
                 file.LastModificationTime = DateTime.Now;
                 file.LastModifierUserId = userId;
             }
+            foreach (var binding in bindings)
+            {
+                binding.IsDeleted = false;
+                binding.DeletionTime = null;
+                binding.DeleterUserId = null;
+                binding.LastModificationTime = DateTime.Now;
+                binding.LastModifierUserId = userId;
+            }
+            await RestoreBoundFileSlotsAsync(websiteId, bindings, files);
+            foreach (var recycleBinding in recycleBindings)
+            {
+                recycleBinding.IsDeleted = true;
+                recycleBinding.DeletionTime = DateTime.Now;
+                recycleBinding.DeleterUserId = userId;
+            }
             await CloseRecycleBinEntriesAsync(familyIds, DateTime.Now, userId);
             await HideCleanupCandidatesAsync(familyIds, DateTime.Now, userId);
             try
@@ -407,6 +449,14 @@ namespace EtheriT.Coker.Application.FileManagement
                 FileRecycleStorage.MoveRestoredFilesBack(restoredFiles);
                 throw;
             }
+            if (bindings.Any(item => item.type == (int)FileBindTypeEnum.選單圖
+                || item.type == (int)FileBindTypeEnum.選單覆蓋
+                || item.type == (int)FileBindTypeEnum.選單Icon))
+            {
+                await _websiteCacheStateAppService.TouchByWebsiteIdAsync(
+                    websiteId,
+                    WebsiteCacheKeys.Menu);
+            }
         }
 
         public async Task PermanentlyDeleteAsync(long fileUploadId)
@@ -416,41 +466,48 @@ namespace EtheriT.Coker.Application.FileManagement
             var userId = await _loginUserData.GetUserId();
             await EnsureRecycleBinEntryAsync(websiteId, fileUploadId);
             var familyIds = await GetFileFamilyIdsAsync(websiteId, fileUploadId);
-            var referencedIds = await _fileReferenceScanner
-                .GetReferencedFileIdsAsync(websiteId);
-            if (familyIds.Any(referencedIds.Contains))
-                throw new InvalidOperationException("檔案目前已有引用，無法永久刪除。");
-
             var files = await _dbContext.FileUploads.IgnoreQueryFilters()
                 .Where(item => item.FK_WebsiteId == websiteId
-                    && item.IsDeleted
                     && familyIds.Contains(item.Id))
                 .ToListAsync();
             if (files.Count == 0)
                 throw new InvalidOperationException("找不到資源回收桶中的檔案。");
 
-            foreach (var file in files)
+            var quarantinedFiles = files.Where(item => item.IsDeleted).ToList();
+            if (quarantinedFiles.Count > 0)
             {
-                if (string.IsNullOrWhiteSpace(file.DownloadFileName))
-                    continue;
-                FileRecycleStorage.PermanentlyDelete(
-                    _uploadPathResolver,
-                    orgName,
-                    file.DownloadFileName);
+                var referencedIds = await _fileReferenceScanner
+                    .GetReferencedFileIdsAsync(websiteId);
+                if (familyIds.Any(referencedIds.Contains))
+                    throw new InvalidOperationException("檔案目前已有引用，無法永久刪除。");
+
+                foreach (var file in quarantinedFiles)
+                {
+                    if (string.IsNullOrWhiteSpace(file.DownloadFileName))
+                        continue;
+                    FileRecycleStorage.PermanentlyDelete(
+                        _uploadPathResolver,
+                        orgName,
+                        file.DownloadFileName);
+                }
             }
 
-            var relations = await _dbContext.FileBindMores.IgnoreQueryFilters()
-                .Where(item => !item.IsDeleted
-                    && item.FK_FileUploadId.HasValue
-                    && familyIds.Contains(item.FK_FileUploadId.Value))
-                .ToListAsync();
-            foreach (var relation in relations)
+            if (quarantinedFiles.Count > 0)
             {
-                relation.IsDeleted = true;
-                relation.DeletionTime = DateTime.Now;
-                relation.DeleterUserId = userId;
+                var relations = await _dbContext.FileBindMores.IgnoreQueryFilters()
+                    .Where(item => !item.IsDeleted
+                        && item.FK_FileUploadId.HasValue
+                        && familyIds.Contains(item.FK_FileUploadId.Value))
+                    .ToListAsync();
+                foreach (var relation in relations)
+                {
+                    relation.IsDeleted = true;
+                    relation.DeletionTime = DateTime.Now;
+                    relation.DeleterUserId = userId;
+                }
             }
             await CloseRecycleBinEntriesAsync(familyIds, DateTime.Now, userId);
+            await CloseRecycleBinBindingsAsync(familyIds, DateTime.Now, userId);
             await HideCleanupCandidatesAsync(familyIds, DateTime.Now, userId);
             await _dbContext.SaveChangesAsync();
         }
@@ -617,12 +674,227 @@ namespace EtheriT.Coker.Application.FileManagement
             }
         }
 
+        private async Task CloseRecycleBinBindingsAsync(
+            HashSet<long> fileIds,
+            DateTime now,
+            long userId)
+        {
+            var entries = await _dbContext.FileRecycleBinBindings
+                .Where(item => fileIds.Contains(item.FK_FileUploadId))
+                .ToListAsync();
+            foreach (var entry in entries)
+            {
+                entry.IsDeleted = true;
+                entry.DeletionTime = now;
+                entry.DeleterUserId = userId;
+            }
+        }
+
+        private async Task ValidateRestoreBindingsAsync(
+            long websiteId,
+            IReadOnlyCollection<FileBind> bindings,
+            HashSet<Guid> expectedBindingGuids)
+        {
+            if (bindings.Count != expectedBindingGuids.Count)
+                throw new InvalidOperationException("部分原始檔案關聯已不存在，無法完整還原。");
+            var duplicateExclusiveSlot = bindings
+                .Where(item => IsExclusiveFileBindType(item.type))
+                .GroupBy(item => new { item.type, item.Sid })
+                .Any(group => group.Count() > 1);
+            if (duplicateExclusiveSlot)
+                throw new InvalidOperationException("回收紀錄包含重複的單一圖片欄位，無法安全還原。");
+
+            foreach (var binding in bindings)
+            {
+                if (!binding.FK_FileUploadId.HasValue)
+                    throw new InvalidOperationException("原始檔案關聯不完整，無法還原。");
+                if (!await RestoreTargetExistsAsync(websiteId, binding))
+                    throw new InvalidOperationException(
+                        $"原關聯目標已不存在，無法還原「{binding.Name}」。");
+
+                var conflictQuery = _dbContext.FileBinds.AsNoTracking()
+                    .Where(item => item.Guid != binding.Guid
+                        && item.Sid == binding.Sid
+                        && item.type == binding.type
+                        && !item.IsDeleted);
+                var hasConflict = IsExclusiveFileBindType(binding.type)
+                    ? await conflictQuery.AnyAsync()
+                    : await conflictQuery.AnyAsync(item =>
+                        item.FK_FileUploadId == binding.FK_FileUploadId);
+                if (hasConflict || await HasBoundSlotValueAsync(websiteId, binding))
+                {
+                    throw new InvalidOperationException(
+                        $"「{GetFileBindTypeName(binding.type)}」目前已有其他檔案，無法還原舊關聯。");
+                }
+            }
+        }
+
+        private async Task<bool> RestoreTargetExistsAsync(long websiteId, FileBind binding)
+        {
+            switch ((FileBindTypeEnum)binding.type)
+            {
+                case FileBindTypeEnum.網站圖示:
+                case FileBindTypeEnum.網站Logo:
+                    return binding.Sid == websiteId
+                        && await _dbContext.Websites.AnyAsync(item => item.Id == websiteId);
+                case FileBindTypeEnum.選單圖:
+                case FileBindTypeEnum.選單覆蓋:
+                case FileBindTypeEnum.選單Icon:
+                    return await _dbContext.WebMenus.AnyAsync(item =>
+                        item.Id == binding.Sid
+                        && item.FK_WebsiteId == websiteId
+                        && !item.IsDeleted);
+                case FileBindTypeEnum.產品:
+                case FileBindTypeEnum.產品檔案:
+                    return await _dbContext.Prods.AnyAsync(item =>
+                        item.Id == binding.Sid
+                        && item.FK_WebsiteId == websiteId
+                        && !item.IsDeleted);
+                case FileBindTypeEnum.產品規格圖:
+                    return await (
+                        from stock in _dbContext.Prod_Stocks
+                        join product in _dbContext.Prods on stock.FK_Pid equals product.Id
+                        where stock.Id == binding.Sid
+                            && !stock.IsDeleted
+                            && !product.IsDeleted
+                            && product.FK_WebsiteId == websiteId
+                        select stock.Id
+                    ).AnyAsync();
+                case FileBindTypeEnum.文章管理:
+                case FileBindTypeEnum.文章檔案:
+                    return await _dbContext.Article.AnyAsync(item =>
+                        item.Id == binding.Sid
+                        && item.FK_WebsiteId == websiteId
+                        && !item.IsDeleted);
+                case FileBindTypeEnum.技術證照:
+                    return await _dbContext.TechnicalCertificates.AnyAsync(item =>
+                        item.Id == binding.Sid
+                        && item.FK_WebsiteId == websiteId
+                        && !item.IsDeleted);
+                case FileBindTypeEnum.右側浮動廣告:
+                case FileBindTypeEnum.進入廣告:
+                case FileBindTypeEnum.Html:
+                    return await _dbContext.Html_Contents.AnyAsync(item =>
+                        item.Id == binding.Sid
+                        && item.FK_WebsiteId == websiteId
+                        && !item.IsDeleted);
+                case FileBindTypeEnum.自訂廣告:
+                    return await _dbContext.Advertise.AnyAsync(item =>
+                        item.Id == binding.Sid
+                        && item.FK_WebsiteId == websiteId
+                        && !item.IsDeleted);
+                default:
+                    return true;
+            }
+        }
+
+        private async Task<bool> HasBoundSlotValueAsync(long websiteId, FileBind binding)
+        {
+            if (!IsExclusiveFileBindType(binding.type))
+                return false;
+
+            switch ((FileBindTypeEnum)binding.type)
+            {
+                case FileBindTypeEnum.網站圖示:
+                    return await _dbContext.Websites.AnyAsync(item =>
+                        item.Id == websiteId && !string.IsNullOrEmpty(item.Icon));
+                case FileBindTypeEnum.網站Logo:
+                    return await _dbContext.Websites.AnyAsync(item =>
+                        item.Id == websiteId && !string.IsNullOrEmpty(item.Logo));
+                case FileBindTypeEnum.選單圖:
+                    return await _dbContext.WebMenus.AnyAsync(item =>
+                        item.Id == binding.Sid && item.FK_WebsiteId == websiteId
+                        && item.ImgId.HasValue);
+                case FileBindTypeEnum.選單覆蓋:
+                    return await _dbContext.WebMenus.AnyAsync(item =>
+                        item.Id == binding.Sid && item.FK_WebsiteId == websiteId
+                        && item.OverImgId.HasValue);
+                case FileBindTypeEnum.選單Icon:
+                    return await _dbContext.WebMenus.AnyAsync(item =>
+                        item.Id == binding.Sid && item.FK_WebsiteId == websiteId
+                        && item.icon != null && item.icon != "" && item.icon != "empty");
+                case FileBindTypeEnum.右側浮動廣告:
+                case FileBindTypeEnum.進入廣告:
+                    return await _dbContext.Html_Contents.AnyAsync(item =>
+                        item.Id == binding.Sid && item.FK_WebsiteId == websiteId
+                        && !string.IsNullOrEmpty(item.Img));
+                default:
+                    return false;
+            }
+        }
+
+        private async Task RestoreBoundFileSlotsAsync(
+            long websiteId,
+            IReadOnlyCollection<FileBind> bindings,
+            IReadOnlyCollection<FileUpload> files)
+        {
+            var filesById = files.ToDictionary(item => item.Id);
+            foreach (var binding in bindings)
+            {
+                if (!binding.FK_FileUploadId.HasValue
+                    || !filesById.TryGetValue(binding.FK_FileUploadId.Value, out var file))
+                    continue;
+                switch ((FileBindTypeEnum)binding.type)
+                {
+                    case FileBindTypeEnum.網站圖示:
+                        var websiteIcon = await _dbContext.Websites
+                            .FirstOrDefaultAsync(item => item.Id == websiteId);
+                        if (websiteIcon != null) websiteIcon.Icon = file.DownloadFileName;
+                        break;
+                    case FileBindTypeEnum.網站Logo:
+                        var websiteLogo = await _dbContext.Websites
+                            .FirstOrDefaultAsync(item => item.Id == websiteId);
+                        if (websiteLogo != null) websiteLogo.Logo = file.DownloadFileName;
+                        break;
+                    case FileBindTypeEnum.選單圖:
+                        var menuImage = await _dbContext.WebMenus.FirstAsync(item =>
+                            item.Id == binding.Sid && item.FK_WebsiteId == websiteId);
+                        menuImage.ImgId = file.Id;
+                        break;
+                    case FileBindTypeEnum.選單覆蓋:
+                        var menuOverImage = await _dbContext.WebMenus.FirstAsync(item =>
+                            item.Id == binding.Sid && item.FK_WebsiteId == websiteId);
+                        menuOverImage.OverImgId = file.Id;
+                        break;
+                    case FileBindTypeEnum.選單Icon:
+                        var menuIcon = await _dbContext.WebMenus.FirstAsync(item =>
+                            item.Id == binding.Sid && item.FK_WebsiteId == websiteId);
+                        menuIcon.icon = $"IconId:{file.Id}";
+                        break;
+                    case FileBindTypeEnum.右側浮動廣告:
+                    case FileBindTypeEnum.進入廣告:
+                        var html = await _dbContext.Html_Contents.FirstAsync(item =>
+                            item.Id == binding.Sid && item.FK_WebsiteId == websiteId);
+                        html.Img = file.DownloadFileName;
+                        break;
+                }
+            }
+        }
+
+        private static bool IsExclusiveFileBindType(int type)
+            => type == (int)FileBindTypeEnum.網站圖示
+                || type == (int)FileBindTypeEnum.網站Logo
+                || type == (int)FileBindTypeEnum.選單圖
+                || type == (int)FileBindTypeEnum.選單覆蓋
+                || type == (int)FileBindTypeEnum.選單Icon
+                || type == (int)FileBindTypeEnum.右側浮動廣告
+                || type == (int)FileBindTypeEnum.進入廣告
+                || type == (int)FileBindTypeEnum.自訂廣告
+                || type == (int)FileBindTypeEnum.分享圖示
+                || type == (int)FileBindTypeEnum.大頭貼;
+
+        private static string GetFileBindTypeName(int type)
+            => Enum.IsDefined(typeof(FileBindTypeEnum), type)
+                ? ((FileBindTypeEnum)type).ToString()
+                : $"檔案類型 {type}";
+
         private FileCleanupItemDto CreateCleanupItem(
             FileUpload file,
             string orgName,
             DateTime? detectedTime = null,
             string reason = "",
-            bool isRecycle = false)
+            bool isRecycle = false,
+            DateTime? recycleTime = null)
         {
             var physicalExists = false;
             if (!string.IsNullOrWhiteSpace(file.DownloadFileName))
@@ -651,19 +923,24 @@ namespace EtheriT.Coker.Application.FileManagement
                     "/upload/",
                     $"/upload/{orgName}/",
                     StringComparison.OrdinalIgnoreCase);
+            var previewUrl = isRecycle
+                ? $"/api/FileManagement/RecyclePreview?fileUploadId={file.Id}"
+                : url;
             return new FileCleanupItemDto
             {
                 Id = file.Id,
                 Name = file.OriginalFileName ?? Path.GetFileName(path),
                 Path = path,
                 Url = url,
+                PreviewUrl = previewUrl,
                 ContentType = file.ContentType ?? string.Empty,
                 Size = file.Size,
                 CreationTime = file.CreationTime,
                 DetectedTime = detectedTime,
-                DeletionTime = file.DeletionTime,
+                DeletionTime = recycleTime ?? file.DeletionTime,
                 Reason = reason,
-                PhysicalFileExists = physicalExists
+                PhysicalFileExists = physicalExists,
+                IsQuarantined = file.IsDeleted
             };
         }
     }

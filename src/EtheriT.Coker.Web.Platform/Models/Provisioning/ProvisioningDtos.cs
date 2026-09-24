@@ -43,3 +43,77 @@ public sealed record ProvisioningTaskDto(
 
 public sealed record ClaimProvisioningTaskRequest(string ServerId, string WorkerId);
 public sealed record CompleteProvisioningTaskRequest(string ServerId, string WorkerId, bool Succeeded, string? Message);
+
+public sealed record ProvisioningAgentHeartbeatRequest(
+    string ServerId,
+    string WorkerId,
+    string MachineName,
+    string AgentVersion,
+    bool DryRun,
+    double? CpuUsagePercent,
+    long MemoryUsedBytes,
+    long MemoryTotalBytes,
+    double? MemoryUsagePercent,
+    IReadOnlyList<ProvisioningDiskMetricDto>? Disks,
+    IReadOnlyList<ProvisioningAppPoolMetricDto>? ApplicationPools);
+
+public sealed record ProvisioningDiskMetricDto(
+    string Name,
+    string VolumeLabel,
+    long UsedBytes,
+    long TotalBytes,
+    long FreeBytes,
+    double UsagePercent);
+
+public sealed record ProvisioningAppPoolMetricDto(
+    string ApplicationPoolName,
+    IReadOnlyList<string> SiteNames,
+    string State,
+    IReadOnlyList<int> ProcessIds,
+    double? CpuUsagePercent,
+    long WorkingSetBytes,
+    long PrivateMemoryBytes);
+
+public sealed record ProvisioningAgentStatusDto(
+    string ServerId,
+    string DisplayName,
+    bool IsDnsServer,
+    bool IsOnline,
+    string? WorkerId,
+    string? MachineName,
+    string? AgentVersion,
+    bool? DryRun,
+    double? CpuUsagePercent,
+    long? MemoryUsedBytes,
+    long? MemoryTotalBytes,
+    double? MemoryUsagePercent,
+    IReadOnlyList<ProvisioningDiskMetricDto> Disks,
+    IReadOnlyList<ProvisioningAppPoolMetricDto> ApplicationPools,
+    DateTime? LastSeenAtUtc);
+
+public sealed record ProvisioningMetricHistoryDto(
+    string ServerId,
+    DateTime FromUtc,
+    DateTime ToUtc,
+    int BucketMinutes,
+    IReadOnlyList<ProvisioningServerMetricPointDto> ServerMetrics,
+    IReadOnlyList<ProvisioningDiskMetricSeriesDto> Disks);
+
+public sealed record ProvisioningServerMetricPointDto(
+    DateTime SampledAtUtc,
+    double? CpuUsagePercent,
+    double? MemoryUsagePercent,
+    long? MemoryUsedBytes,
+    long? MemoryTotalBytes);
+
+public sealed record ProvisioningDiskMetricSeriesDto(
+    string Name,
+    string VolumeLabel,
+    IReadOnlyList<ProvisioningDiskMetricPointDto> Points);
+
+public sealed record ProvisioningDiskMetricPointDto(
+    DateTime SampledAtUtc,
+    double UsagePercent,
+    long UsedBytes,
+    long TotalBytes,
+    long FreeBytes);

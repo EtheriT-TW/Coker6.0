@@ -81,6 +81,12 @@ export const router = createRouter({
             meta: { title: "系統管理者" }
         },
         {
+            path: "/server-monitoring",
+            name: "server-monitoring",
+            component: () => import("@/views/ServerMonitoringView.vue"),
+            meta: { title: "伺服器監控" }
+        },
+        {
             path: "/provisioning-test",
             name: "provisioning-test",
             component: () => import("@/views/ProvisioningTestView.vue"),

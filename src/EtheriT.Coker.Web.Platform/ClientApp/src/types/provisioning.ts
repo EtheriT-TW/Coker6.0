@@ -51,3 +51,71 @@ export interface ProvisioningServer {
   DisplayName: string;
   IsDnsServer: boolean;
 }
+
+export interface ProvisioningAgentStatus {
+  ServerId: string;
+  DisplayName: string;
+  IsDnsServer: boolean;
+  IsOnline: boolean;
+  WorkerId: string | null;
+  MachineName: string | null;
+  AgentVersion: string | null;
+  DryRun: boolean | null;
+  CpuUsagePercent: number | null;
+  MemoryUsedBytes: number | null;
+  MemoryTotalBytes: number | null;
+  MemoryUsagePercent: number | null;
+  Disks: ProvisioningDiskMetric[];
+  ApplicationPools: ProvisioningAppPoolMetric[];
+  LastSeenAtUtc: string | null;
+}
+
+export interface ProvisioningDiskMetric {
+  Name: string;
+  VolumeLabel: string;
+  UsedBytes: number;
+  TotalBytes: number;
+  FreeBytes: number;
+  UsagePercent: number;
+}
+
+export interface ProvisioningAppPoolMetric {
+  ApplicationPoolName: string;
+  SiteNames: string[];
+  State: string;
+  ProcessIds: number[];
+  CpuUsagePercent: number | null;
+  WorkingSetBytes: number;
+  PrivateMemoryBytes: number;
+}
+
+export interface ProvisioningMetricHistory {
+  ServerId: string;
+  FromUtc: string;
+  ToUtc: string;
+  BucketMinutes: number;
+  ServerMetrics: ProvisioningServerMetricPoint[];
+  Disks: ProvisioningDiskMetricSeries[];
+}
+
+export interface ProvisioningServerMetricPoint {
+  SampledAtUtc: string;
+  CpuUsagePercent: number | null;
+  MemoryUsagePercent: number | null;
+  MemoryUsedBytes: number | null;
+  MemoryTotalBytes: number | null;
+}
+
+export interface ProvisioningDiskMetricSeries {
+  Name: string;
+  VolumeLabel: string;
+  Points: ProvisioningDiskMetricPoint[];
+}
+
+export interface ProvisioningDiskMetricPoint {
+  SampledAtUtc: string;
+  UsagePercent: number;
+  UsedBytes: number;
+  TotalBytes: number;
+  FreeBytes: number;
+}

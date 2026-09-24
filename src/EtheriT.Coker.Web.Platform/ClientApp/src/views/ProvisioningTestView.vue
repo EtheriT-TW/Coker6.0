@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { createProvisioningTask, fetchProvisioningServers, fetchProvisioningTasks } from "@/services/provisioning-api";
+import { useRoute } from "vue-router";
+import { createProvisioningTask, fetchProvisioningAgents, fetchProvisioningServers, fetchProvisioningTasks } from "@/services/provisioning-api";
 import {
   ProvisioningTaskStatus,
   ProvisioningTaskType,
   type CreateProvisioningTaskRequest,
+  type ProvisioningAgentStatus,
   type ProvisioningServer,
   type ProvisioningTask
 } from "@/types/provisioning";
 
 const servers = ref<ProvisioningServer[]>([]);
+const route = useRoute();
+const agents = ref<ProvisioningAgentStatus[]>([]);
 const targetServer = ref("");
 const siteName = ref("");
 const zoneName = ref("");
@@ -40,10 +44,11 @@ const statusText: Record<ProvisioningTaskStatus, string> = {
 async function load(silent = false): Promise<void> {
   if (!silent) loading.value = true;
   try {
-    const [serverResult, taskResult] = await Promise.all([
-      fetchProvisioningServers(), fetchProvisioningTasks()
+    const [serverResult, agentResult, taskResult] = await Promise.all([
+      fetchProvisioningServers(), fetchProvisioningAgents(), fetchProvisioningTasks()
     ]);
     servers.value = serverResult;
+    agents.value = agentResult;
     tasks.value = taskResult;
     if (!servers.value.some(x => x.Id === targetServer.value))
       targetServer.value = servers.value[0]?.Id ?? "";
@@ -110,7 +115,14 @@ function formatTime(value: string | null): string {
   return value ? new Date(value).toLocaleString("zh-TW") : "—";
 }
 
+function formatBytes(value: number | null): string {
+  if (value === null || value < 0) return "—";
+  const gib = value / 1024 / 1024 / 1024;
+  return `${gib.toFixed(1)} GB`;
+}
+
 onMounted(() => {
+  if (typeof route.query.server === "string") targetServer.value = route.query.server;
   void load();
   refreshTimer = window.setInterval(() => void load(true), 5000);
 });
@@ -127,6 +139,21 @@ onBeforeUnmount(() => {
 
   <p class="alert alert-warning" role="status">Worker 的 DryRun=false 時，此頁會執行真實的 IIS、DNS 與 SSL 操作；研發環境請先使用 DryRun=true。</p>
   <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
+
+  <section class="agent-grid" aria-label="伺服器環境監控">
+    <article v-for="agent in agents" :key="agent.ServerId" class="data-card agent-card">
+      <header>
+        <div><h2>{{ agent.DisplayName }}</h2><small>{{ agent.ServerId }} · {{ agent.MachineName ?? "尚未連線" }}</small></div>
+        <span class="agent-state" :class="agent.IsOnline ? 'online' : 'offline'">{{ agent.IsOnline ? "在線" : "離線" }}</span>
+      </header>
+      <div class="agent-metrics">
+        <div><small>CPU</small><strong>{{ agent.CpuUsagePercent === null ? "—" : `${agent.CpuUsagePercent.toFixed(1)}%` }}</strong></div>
+        <div><small>記憶體</small><strong>{{ agent.MemoryUsagePercent === null ? "—" : `${agent.MemoryUsagePercent.toFixed(1)}%` }}</strong></div>
+      </div>
+      <p>{{ formatBytes(agent.MemoryUsedBytes) }} / {{ formatBytes(agent.MemoryTotalBytes) }}</p>
+      <footer><span>版本 {{ agent.AgentVersion ?? "—" }}</span><span>{{ agent.DryRun === null ? "尚未回報模式" : agent.DryRun ? "Dry Run" : "實際執行" }}</span><span>最後回報 {{ formatTime(agent.LastSeenAtUtc) }}</span></footer>
+    </article>
+  </section>
 
   <section class="provisioning-target data-card">
     <label><span>目標伺服器</span><select v-model="targetServer"><option v-for="server in servers" :key="server.Id" :value="server.Id">{{ server.DisplayName }}（{{ server.Id }}）</option></select></label>
@@ -170,6 +197,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .provisioning-target { margin-bottom: 1rem; padding: 1rem 1.25rem; }
+.agent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.agent-card { padding: 1.1rem 1.25rem; }
+.agent-card header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.agent-card h2 { margin: 0 0 .25rem; font-size: 1rem; }.agent-card small, .agent-card p, .agent-card footer { color: #687386; }
+.agent-state { padding: .2rem .55rem; border-radius: 999px; font-size: .8rem; font-weight: 700; }.agent-state.online { color: #17633a; background: #d9f4e5; }.agent-state.offline { color: #9d241d; background: #fde2e0; }
+.agent-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: 1rem; }.agent-metrics div { padding: .75rem; border-radius: 8px; background: #f7f9fc; }.agent-metrics small, .agent-metrics strong { display: block; }.agent-metrics strong { margin-top: .2rem; font-size: 1.25rem; }
+.agent-card footer { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .78rem; }
 .provisioning-target label { max-width: 320px; }
 .operation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .operation-card { padding: 1.25rem; display: flex; flex-direction: column; gap: .8rem; }

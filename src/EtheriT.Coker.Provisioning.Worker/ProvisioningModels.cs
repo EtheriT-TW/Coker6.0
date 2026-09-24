@@ -6,6 +6,7 @@ public sealed class ProvisioningWorkerOptions
     public string PlatformBaseUrl { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
     public int PollingSeconds { get; set; } = 5;
+    public int MonitoringSeconds { get; set; } = 15;
     public int OperationTimeoutSeconds { get; set; } = 300;
     public bool DryRun { get; set; }
     public bool DnsEnabled { get; set; }

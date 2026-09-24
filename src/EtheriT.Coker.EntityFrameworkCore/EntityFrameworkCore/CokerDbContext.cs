@@ -129,6 +129,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<PlatformWebsite> PlatformWebsites { get; set; }
         public DbSet<PlatformDomain> PlatformDomains { get; set; }
         public DbSet<ProvisioningTask> ProvisioningTasks { get; set; }
+        public DbSet<ProvisioningAgentStatus> ProvisioningAgentStatuses { get; set; }
+        public DbSet<ProvisioningMetricSample> ProvisioningMetricSamples { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -983,6 +985,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.Property(x => x.PayloadJson).HasColumnType("nvarchar(max)");
                 o.HasIndex(x => new { x.TargetServerId, x.Status, x.CreatedAtUtc });
                 o.HasIndex(x => x.LeaseExpiresAtUtc);
+            });
+
+            modelBuilder.Entity<ProvisioningAgentStatus>(o =>
+            {
+                o.ToTable("ProvisioningAgentStatuses");
+                o.Property(x => x.DiskMetricsJson).HasColumnType("nvarchar(max)");
+                o.Property(x => x.AppPoolMetricsJson).HasColumnType("nvarchar(max)");
+                o.HasIndex(x => x.LastSeenAtUtc);
+            });
+
+            modelBuilder.Entity<ProvisioningMetricSample>(o =>
+            {
+                o.ToTable("ProvisioningMetricSamples");
+                o.Property(x => x.DiskMetricsJson).HasColumnType("nvarchar(max)");
+                o.HasIndex(x => new { x.ServerId, x.SampledAtUtc });
+                o.HasIndex(x => x.SampledAtUtc);
             });
 
             new SeedHelper(modelBuilder).SeedHost();

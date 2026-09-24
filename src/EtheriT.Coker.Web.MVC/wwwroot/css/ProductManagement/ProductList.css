@@ -381,7 +381,7 @@ body.product-canvas-disabled #ProductCanvas .product-canvas-unavailable {
     padding: 1.5rem;
 }
     #Spec_Frame.no-logistics-box .packingPoint {
-        display: none;
+        display: none !important;
     }
 
     #Spec_Frame > .specList {
@@ -405,7 +405,7 @@ body.product-canvas-disabled #ProductCanvas .product-canvas-unavailable {
 
         #Spec_Frame > .specList > .specHeader > div.del,
         #Spec_Frame > .specList > .ui-sortable-helper > div.del,
-        #Spec_Frame > .specList > .specHeader > div.specDesc,
+        #Spec_Frame > .specList > .specHeader > div.specd_desc,
         #Spec_Frame > .specList > .ui-sortable-helper > div.specDesc,
         #Spec_Frame > .specList > .specHeader > div.specVisible,
         #Spec_Frame > .specList > .ui-sortable-helper > div.specVisible {
@@ -720,6 +720,63 @@ textarea.minHeight {
     }
 }
 
+@media only screen and (max-width: 1800px) {
+    #Spec_Frame .specs > div {
+        flex-direction: column;
+    }
+}
+
+/* 桌面版規格列的欄位會依版型、物流設定動態顯示，改用 flex 避免固定表格留下空欄。 */
+@media only screen and (min-width: 769px) {
+    #Spec_Frame > .specList {
+        display: block;
+    }
+
+    #Spec_Frame > .specList > .specHeader,
+    #Spec_Frame > .specList > .spec_list {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+    #Spec_Frame > .specList > .specHeader > div,
+    #Spec_Frame > .specList > .spec_list > div {
+        display: flex;
+        flex: 0 0 100px;
+        align-items: center;
+        box-sizing: border-box;
+        min-width: 0;
+    }
+
+    #Spec_Frame > .specList > .specHeader > .spec,
+    #Spec_Frame > .specList > .spec_list > .specs {
+        flex: 1 1 320px;
+    }
+
+    #Spec_Frame > .specList > .spec_list > .specs > div {
+        width: 100%;
+    }
+
+    #Spec_Frame > .specList > .specHeader > .specVisible,
+    #Spec_Frame > .specList > .specHeader > .specd_desc,
+    #Spec_Frame > .specList > .specHeader > .del,
+    #Spec_Frame > .specList > .spec_list > .specVisible,
+    #Spec_Frame > .specList > .spec_list > .specDesc,
+    #Spec_Frame > .specList > .spec_list > .del {
+        flex-basis: 52px;
+    }
+
+    #Spec_Frame > .specList > .specHeader > .spec_img,
+    #Spec_Frame > .specList > .spec_list > .specImg {
+        flex-basis: 90px;
+    }
+
+    #Spec_Frame > .specList > .specHeader > .price,
+    #Spec_Frame > .specList > .spec_list > .price {
+        flex-basis: 200px;
+    }
+}
+
 @media only screen and (max-width: 1400px) {
     #Spec_Frame > .specList > .ui-sortable-helper > .specs, #Spec_Frame > .specList > .ui-sortable-helper > .specs > div {
         width: unset;
@@ -730,15 +787,15 @@ textarea.minHeight {
         align-items: center;
     }
 
-    #Spec_Frame .specs > div {
-        flex-direction: column;
-    }
-
-    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader > div.serNo {
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader > div.serNo,
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .spec_list > .upload_list {
+        flex-basis: 50px;
         width: 50px;
     }
 
-    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader > div.price {
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader > div.price,
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .spec_list > .price {
+        flex-basis: 180px;
         width: 180px;
     }
 

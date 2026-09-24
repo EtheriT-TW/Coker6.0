@@ -86,6 +86,7 @@ builder.Services.AddScoped<IAuthorizationHandler, PlatformAccessHandler>();
 builder.Services.AddScoped<PlatformAuditor>();
 builder.Services.AddSingleton<PlatformDomainPasswordProtector>();
 builder.Services.AddSingleton<ViteManifestService>();
+builder.Services.AddSingleton<ProvisioningAgentAuthenticator>();
 builder.Services.AddAuthorization(options =>
 {
     var platformAccessPolicy = new AuthorizationPolicyBuilder()

@@ -128,6 +128,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<SecondaryContact> SecondaryContacts { get; set; }
         public DbSet<PlatformWebsite> PlatformWebsites { get; set; }
         public DbSet<PlatformDomain> PlatformDomains { get; set; }
+        public DbSet<ProvisioningTask> ProvisioningTasks { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -974,6 +975,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                  .IsUnique()
                  .HasFilter("[IsDeleted] = 0");
                 o.HasIndex(x => x.EndDate);
+            });
+
+            modelBuilder.Entity<ProvisioningTask>(o =>
+            {
+                o.ToTable("ProvisioningTasks");
+                o.Property(x => x.PayloadJson).HasColumnType("nvarchar(max)");
+                o.HasIndex(x => new { x.TargetServerId, x.Status, x.CreatedAtUtc });
+                o.HasIndex(x => x.LeaseExpiresAtUtc);
             });
 
             new SeedHelper(modelBuilder).SeedHost();

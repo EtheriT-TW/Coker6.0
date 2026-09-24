@@ -24,6 +24,9 @@ using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Text;
@@ -33,6 +36,14 @@ namespace EtheriT.Coker.Application
 {
     public class FileUploadAppService : IFileUploadAppService
     {
+        private const long CanvasImageImportMaxBytes = 25L * 1024 * 1024;
+        private const int CanvasImageImportMaxCount = 50;
+        private const int CanvasImageRedirectLimit = 3;
+        private static readonly HttpClient CanvasImageHttpClient = new(
+            new HttpClientHandler { AllowAutoRedirect = false })
+        {
+            Timeout = TimeSpan.FromSeconds(20)
+        };
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> AtomicFileLocks =
             new(StringComparer.OrdinalIgnoreCase);
 
@@ -234,6 +245,471 @@ namespace EtheriT.Coker.Application
 
             response.Success = response.ErrorFiles.Count == 0;
             return response;
+        }
+
+        public async Task<CanvasImageInspectOutputDto> inspectCanvasImages(IReadOnlyCollection<string> paths)
+        {
+            await EnsureCanvasImageImportPermissionAsync();
+            var response = new CanvasImageInspectOutputDto { Success = true };
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            using var concurrency = new SemaphoreSlim(4);
+
+            async Task<CanvasImageSourceDto> InspectOneAsync(string sourcePath)
+            {
+                var item = new CanvasImageSourceDto
+                {
+                    Path = sourcePath
+                };
+
+                try
+                {
+                    item.Name = GetCanvasImageName(sourcePath);
+                    if (TryResolveInternalCanvasImage(sourcePath, orgName, out var internalPath, out var isOwned))
+                    {
+                        item.IsInternal = true;
+                        item.Exists = File.Exists(internalPath);
+                        item.Size = item.Exists ? new FileInfo(internalPath).Length : null;
+                        var internalSize = item.Size ?? 0;
+                        item.CanImport = item.Exists
+                            && !isOwned
+                            && internalSize <= CanvasImageImportMaxBytes;
+                        if (!item.Exists) item.Error = "圖片實體檔不存在";
+                        else if (internalSize > CanvasImageImportMaxBytes)
+                            item.Error = "圖片超過可匯入的大小上限";
+                    }
+                    else if (Uri.TryCreate(sourcePath, UriKind.Absolute, out var uri)
+                        && IsHttpUri(uri))
+                    {
+                        var inspected = await InspectRemoteCanvasImageAsync(uri);
+                        item.Exists = inspected.Exists;
+                        item.Size = inspected.Size;
+                        var withinLimit = !inspected.Size.HasValue
+                            || inspected.Size.Value <= CanvasImageImportMaxBytes;
+                        item.CanImport = inspected.Exists
+                            && withinLimit;
+                        item.Error = inspected.Size is long remoteSize && remoteSize > CanvasImageImportMaxBytes
+                            ? "圖片超過可匯入的大小上限"
+                            : inspected.Error;
+                    }
+                    else
+                    {
+                        item.Error = "不是可匯入的圖片路徑";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    item.Error = ex.Message;
+                }
+                finally
+                {
+                    concurrency.Release();
+                }
+                return item;
+            }
+
+            var tasks = NormalizeCanvasImagePaths(paths).Select(async sourcePath =>
+            {
+                await concurrency.WaitAsync();
+                return await InspectOneAsync(sourcePath);
+            });
+            response.Items.AddRange(await Task.WhenAll(tasks));
+            return response;
+        }
+
+        public async Task<UploadFileOutputDto> importCanvasImages(IReadOnlyCollection<string> paths)
+        {
+            await EnsureCanvasImageImportPermissionAsync();
+            var response = new UploadFileOutputDto
+            {
+                Files = new List<FileItemDto>(),
+                ErrorFiles = new List<string>()
+            };
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            var websiteId = await loginUserData.GetWebsiteId();
+
+            foreach (var sourcePath in NormalizeCanvasImagePaths(paths))
+            {
+                var sourceKey = CreateCanvasImageSourceKey(websiteId, sourcePath);
+                var importLock = AtomicFileLocks.GetOrAdd(
+                    $"canvas-image-import:{websiteId}:{sourceKey:N}",
+                    _ => new SemaphoreSlim(1, 1));
+                await importLock.WaitAsync();
+                try
+                {
+                    var existing = await FindExistingCanvasImportAsync(
+                        websiteId,
+                        orgName,
+                        sourcePath,
+                        sourceKey);
+                    if (existing != null)
+                    {
+                        response.Files.Add(existing);
+                        continue;
+                    }
+
+                    if (TryResolveInternalCanvasImage(sourcePath, orgName, out var internalPath, out var isOwned))
+                    {
+                        if (isOwned)
+                        {
+                            response.Files.Add(new FileItemDto
+                            {
+                                SourcePath = sourcePath,
+                                Name = GetCanvasImageName(sourcePath),
+                                Path = sourcePath
+                            });
+                            continue;
+                        }
+
+                        if (!File.Exists(internalPath))
+                            throw new FileNotFoundException("圖片實體檔不存在");
+                        if (new FileInfo(internalPath).Length > CanvasImageImportMaxBytes)
+                            throw new InvalidOperationException("圖片超過可匯入的大小上限");
+
+                        await using var stream = File.OpenRead(internalPath);
+                        response.Files.Add(await SaveCanvasImageAsync(
+                            stream,
+                            GetCanvasImageName(sourcePath),
+                            sourcePath,
+                            sourceKey));
+                        continue;
+                    }
+
+                    if (!Uri.TryCreate(sourcePath, UriKind.Absolute, out var uri) || !IsHttpUri(uri))
+                        throw new InvalidOperationException("不是可匯入的圖片路徑");
+
+                    var remote = await DownloadRemoteCanvasImageAsync(uri);
+                    await using var remoteStream = remote.Stream;
+                    response.Files.Add(await SaveCanvasImageAsync(
+                        remoteStream,
+                        remote.FileName,
+                        sourcePath,
+                        sourceKey));
+                }
+                catch (Exception ex)
+                {
+                    response.ErrorFiles.Add($"{sourcePath}: {ex.Message}");
+                }
+                finally
+                {
+                    importLock.Release();
+                }
+            }
+
+            response.Success = response.Files.Count > 0 && response.ErrorFiles.Count == 0;
+            if (response.ErrorFiles.Count > 0)
+                response.Error = string.Join("\n", response.ErrorFiles);
+            return response;
+        }
+
+        private async Task EnsureCanvasImageImportPermissionAsync()
+        {
+            if (!await loginUserData.isSystemUser())
+                throw new UnauthorizedAccessException("只有系統管理者可以匯入外站圖片");
+        }
+
+        private async Task<FileItemDto?> FindExistingCanvasImportAsync(
+            long websiteId,
+            string orgName,
+            string sourcePath,
+            Guid sourceKey)
+        {
+            var candidates = await db.FileUploads
+                .Where(file => file.FK_WebsiteId == websiteId
+                    && !file.IsDeleted
+                    && file.ContentType.StartsWith("image/")
+                    && file.GuidKey == sourceKey)
+                .OrderByDescending(file => file.Id)
+                .ToListAsync();
+
+            // Compatibility for images imported before source-key deduplication was added.
+            // Internal Coker uploads use a GUID file name, which is safe enough to use as
+            // a fallback without treating common names such as logo.jpg as identical.
+            var sourceName = GetCanvasImageName(sourcePath);
+            if (candidates.Count == 0
+                && Guid.TryParse(Path.GetFileNameWithoutExtension(sourceName), out _))
+            {
+                candidates = await db.FileUploads
+                    .Where(file => file.FK_WebsiteId == websiteId
+                        && !file.IsDeleted
+                        && file.ContentType.StartsWith("image/")
+                        && file.OriginalFileName == sourceName)
+                    .OrderByDescending(file => file.Id)
+                    .ToListAsync();
+            }
+
+            foreach (var file in candidates)
+            {
+                if (string.IsNullOrWhiteSpace(file.DownloadFileName)) continue;
+                var physicalPath = uploadPathResolver.GetPhysicalPathFromDownloadFileName(
+                    orgName,
+                    NormalizeStoredUploadPath(file.DownloadFileName));
+                if (!File.Exists(physicalPath)) continue;
+                return new FileItemDto
+                {
+                    Id = file.Id,
+                    Guid = file.GuidKey,
+                    Name = file.OriginalFileName,
+                    Path = ApplyOrgToUploadPath(file.DownloadFileName, orgName),
+                    SourcePath = sourcePath
+                };
+            }
+            return null;
+        }
+
+        private static Guid CreateCanvasImageSourceKey(long websiteId, string sourcePath)
+        {
+            var normalized = sourcePath.Trim().Replace('\\', '/');
+            if (Uri.TryCreate(normalized, UriKind.Absolute, out var uri) && IsHttpUri(uri))
+            {
+                var builder = new UriBuilder(uri)
+                {
+                    Scheme = uri.Scheme.ToLowerInvariant(),
+                    Host = uri.Host.ToLowerInvariant(),
+                    Fragment = ""
+                };
+                if (uri.IsDefaultPort) builder.Port = -1;
+                normalized = builder.Uri.AbsoluteUri;
+            }
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(
+                $"coker-canvas-image-import\n{websiteId}\n{normalized}"));
+            return new Guid(hash.AsSpan(0, 16));
+        }
+
+        private static IReadOnlyList<string> NormalizeCanvasImagePaths(IReadOnlyCollection<string> paths)
+        {
+            if (paths == null) return Array.Empty<string>();
+            return paths
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => path.Trim())
+                .Where(path => path.Length <= 2048)
+                .Distinct(StringComparer.Ordinal)
+                .Take(CanvasImageImportMaxCount)
+                .ToList();
+        }
+
+        private bool TryResolveInternalCanvasImage(
+            string sourcePath,
+            string currentOrgName,
+            out string physicalPath,
+            out bool isOwned)
+        {
+            physicalPath = "";
+            isOwned = false;
+            var path = sourcePath;
+            var isAbsolute = Uri.TryCreate(sourcePath, UriKind.Absolute, out var absoluteUri);
+            if (isAbsolute)
+                path = absoluteUri!.AbsolutePath;
+            path = path.Split('?', '#')[0].Replace('\\', '/');
+
+            var match = Regex.Match(path, "^/upload/([^/]+)/(.+)$", RegexOptions.IgnoreCase);
+            if (!match.Success) return false;
+
+            var sourceOrgName = Uri.UnescapeDataString(match.Groups[1].Value);
+            var relativePath = Uri.UnescapeDataString(match.Groups[2].Value);
+            if (string.IsNullOrWhiteSpace(sourceOrgName)
+                || sourceOrgName.Contains("..", StringComparison.Ordinal)
+                || sourceOrgName.IndexOfAny(new[] { '/', '\\' }) >= 0
+                || sourceOrgName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                throw new InvalidOperationException("圖片網站路徑不合法");
+
+            isOwned = sourceOrgName.Equals(currentOrgName, StringComparison.OrdinalIgnoreCase);
+            try
+            {
+                physicalPath = uploadPathResolver.GetPhysicalPath(sourceOrgName, relativePath);
+            }
+            catch (DirectoryNotFoundException) when (isAbsolute)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private static string GetCanvasImageName(string sourcePath)
+        {
+            var path = Uri.TryCreate(sourcePath, UriKind.Absolute, out var uri)
+                ? uri.AbsolutePath
+                : sourcePath.Split('?', '#')[0];
+            var name = Path.GetFileName(Uri.UnescapeDataString(path.Replace('\\', '/')));
+            return string.IsNullOrWhiteSpace(name) ? "canvas-image" : name;
+        }
+
+        private static bool IsHttpUri(Uri uri)
+        {
+            return uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+                || uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task<(bool Exists, long? Size, string? Error)> InspectRemoteCanvasImageAsync(Uri uri)
+        {
+            try
+            {
+                using var response = await SendCanvasImageRequestAsync(uri, HttpMethod.Head);
+                if (response.StatusCode is HttpStatusCode.MethodNotAllowed or HttpStatusCode.NotImplemented)
+                    return (true, null, null);
+                if (!response.IsSuccessStatusCode)
+                    return (false, response.Content.Headers.ContentLength, $"圖片伺服器回傳 {(int)response.StatusCode}");
+                if (response.Content.Headers.ContentType?.MediaType is string mediaType
+                    && !mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return (false, response.Content.Headers.ContentLength, "網址內容不是圖片");
+                return (true, response.Content.Headers.ContentLength, null);
+            }
+            catch (Exception ex)
+            {
+                return (false, null, ex.Message);
+            }
+        }
+
+        private static async Task<(MemoryStream Stream, string FileName)> DownloadRemoteCanvasImageAsync(Uri uri)
+        {
+            using var response = await SendCanvasImageRequestAsync(uri, HttpMethod.Get);
+            response.EnsureSuccessStatusCode();
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            if (!string.IsNullOrWhiteSpace(mediaType)
+                && !mediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("網址內容不是圖片");
+            if (response.Content.Headers.ContentLength is long contentLength
+                && contentLength > CanvasImageImportMaxBytes)
+                throw new InvalidOperationException("圖片超過可匯入的大小上限");
+
+            await using var input = await response.Content.ReadAsStreamAsync();
+            var output = new MemoryStream();
+            var buffer = new byte[81920];
+            long total = 0;
+            int read;
+            while ((read = await input.ReadAsync(buffer.AsMemory(0, buffer.Length))) > 0)
+            {
+                total += read;
+                if (total > CanvasImageImportMaxBytes)
+                {
+                    output.Dispose();
+                    throw new InvalidOperationException("圖片超過可匯入的大小上限");
+                }
+                await output.WriteAsync(buffer.AsMemory(0, read));
+            }
+            output.Position = 0;
+            return (output, GetCanvasImageName(response.RequestMessage?.RequestUri?.ToString() ?? uri.ToString()));
+        }
+
+        private static async Task<HttpResponseMessage> SendCanvasImageRequestAsync(Uri initialUri, HttpMethod method)
+        {
+            var uri = initialUri;
+            for (var redirect = 0; redirect <= CanvasImageRedirectLimit; redirect++)
+            {
+                await EnsurePublicCanvasImageHostAsync(uri);
+                using var request = new HttpRequestMessage(method, uri);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("image/*"));
+                request.Headers.UserAgent.ParseAdd("CokerCanvasImageImporter/1.0");
+                var response = await CanvasImageHttpClient.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead);
+
+                if ((int)response.StatusCode is < 300 or >= 400 || response.Headers.Location == null)
+                    return response;
+
+                var next = response.Headers.Location.IsAbsoluteUri
+                    ? response.Headers.Location
+                    : new Uri(uri, response.Headers.Location);
+                response.Dispose();
+                uri = next;
+            }
+            throw new InvalidOperationException("圖片網址重新導向次數過多");
+        }
+
+        private static async Task EnsurePublicCanvasImageHostAsync(Uri uri)
+        {
+            if (!IsHttpUri(uri) || string.IsNullOrWhiteSpace(uri.Host))
+                throw new InvalidOperationException("圖片網址不合法");
+            if (!string.IsNullOrEmpty(uri.UserInfo)
+                || (!uri.IsDefaultPort && uri.Port is not 80 and not 443))
+                throw new InvalidOperationException("圖片網址不合法");
+            var addresses = await Dns.GetHostAddressesAsync(uri.DnsSafeHost);
+            if (addresses.Length == 0 || addresses.Any(IsPrivateAddress))
+                throw new InvalidOperationException("不允許存取內部網路圖片");
+        }
+
+        private static bool IsPrivateAddress(IPAddress address)
+        {
+            if (IPAddress.IsLoopback(address)) return true;
+            if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+            if (address.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                var ipv6 = address.GetAddressBytes();
+                return address.IsIPv6LinkLocal
+                    || address.IsIPv6SiteLocal
+                    || address.Equals(IPAddress.IPv6Any)
+                    || (ipv6[0] & 0xfe) == 0xfc
+                    || ipv6[0] == 0xff;
+            }
+            if (address.AddressFamily != AddressFamily.InterNetwork) return true;
+            var bytes = address.GetAddressBytes();
+            return bytes[0] == 10
+                || bytes[0] == 127
+                || (bytes[0] == 169 && bytes[1] == 254)
+                || (bytes[0] == 172 && bytes[1] is >= 16 and <= 31)
+                || (bytes[0] == 192 && bytes[1] == 168)
+                || (bytes[0] == 0)
+                || bytes[0] >= 224;
+        }
+
+        private async Task<FileItemDto> SaveCanvasImageAsync(
+            Stream input,
+            string originalFileName,
+            string sourcePath,
+            Guid sourceKey)
+        {
+            var buffered = new MemoryStream();
+            await input.CopyToAsync(buffered);
+            if (buffered.Length == 0 || buffered.Length > CanvasImageImportMaxBytes)
+            {
+                buffered.Dispose();
+                throw new InvalidOperationException("圖片檔案大小不合法");
+            }
+
+            buffered.Position = 0;
+            MagickFormat format;
+            try
+            {
+                using var image = new MagickImage(buffered);
+                format = image.Format;
+            }
+            catch
+            {
+                buffered.Dispose();
+                throw new InvalidOperationException("檔案內容不是可支援的圖片");
+            }
+
+            var contentType = GetMimeType(format);
+            var extension = GetExtension(format);
+            if (!IsAllowedFileType(contentType) || extension == ".img")
+            {
+                buffered.Dispose();
+                throw new InvalidOperationException("不支援的圖片格式");
+            }
+
+            buffered.Position = 0;
+            var baseName = Path.GetFileNameWithoutExtension(originalFileName);
+            var fileName = $"{(string.IsNullOrWhiteSpace(baseName) ? "canvas-image" : baseName)}{extension}";
+            var formFile = new FormFile(buffered, 0, buffered.Length, "files", fileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = contentType
+            };
+            try
+            {
+                var saved = await SaveFile(formFile, "", "htmlConten");
+                if (!saved.Id.HasValue || saved.Id.Value <= 0 || string.IsNullOrWhiteSpace(saved.Path))
+                    throw new InvalidOperationException("圖片儲存失敗");
+                var upload = await db.FileUploads.FirstAsync(file => file.Id == saved.Id.Value);
+                upload.GuidKey = sourceKey;
+                await db.SaveChangesAsync();
+                saved.Guid = sourceKey;
+                saved.SourcePath = sourcePath;
+                return saved;
+            }
+            finally
+            {
+                buffered.Dispose();
+            }
         }
 
         private async Task<FileItemDto> SaveGalleryImageAsync(

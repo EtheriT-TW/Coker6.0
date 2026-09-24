@@ -27,13 +27,15 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly IHtmlContentAppService htmlContentAppService;
         private readonly IStoreSetAppService storeSetAppService;
+        private readonly LoginUserData loginUserData;
 
 
-        public FileUploadController(IFileUploadAppService fileUploadAppService, IHtmlContentAppService htmlContentAppService, IStoreSetAppService storeSetAppService)
+        public FileUploadController(IFileUploadAppService fileUploadAppService, IHtmlContentAppService htmlContentAppService, IStoreSetAppService storeSetAppService, LoginUserData loginUserData)
         {
             this.fileUploadAppService = fileUploadAppService;
             this.htmlContentAppService = htmlContentAppService;
             this.storeSetAppService = storeSetAppService;
+            this.loginUserData = loginUserData;
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]
@@ -108,6 +110,18 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         public async Task<UploadFileOutputDto> EnsureGalleryImages(GalleryImagesEnsureDto dto)
         {
             return await fileUploadAppService.ensureGalleryImages(dto.Paths);
+        }
+        [HttpPost]
+        public async Task<ActionResult<CanvasImageInspectOutputDto>> InspectCanvasImages(CanvasImageInspectInputDto dto)
+        {
+            if (!await loginUserData.isSystemUser()) return Forbid();
+            return await fileUploadAppService.inspectCanvasImages(dto.Paths);
+        }
+        [HttpPost]
+        public async Task<ActionResult<UploadFileOutputDto>> ImportCanvasImages(CanvasImageImportInputDto dto)
+        {
+            if (!await loginUserData.isSystemUser()) return Forbid();
+            return await fileUploadAppService.importCanvasImages(dto.Paths);
         }
         [HttpPost]
         //[ValidateAntiForgeryToken]

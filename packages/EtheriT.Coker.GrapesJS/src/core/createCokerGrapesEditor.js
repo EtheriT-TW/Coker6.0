@@ -8,6 +8,7 @@ import { faqComponentPlugin } from '../plugins/faq/faqComponentPlugin.js';
 import { linkComponentPlugin } from '../plugins/link/linkComponentPlugin.js';
 import { fileComponentPlugin } from '../plugins/file/fileComponentPlugin.js';
 import { imageListPlugin } from '../plugins/imageList/imageListPlugin.js';
+import { externalAssetImportPlugin } from '../plugins/externalAssets/externalAssetImportPlugin.js';
 import { richTextProviderPlugin } from '../plugins/richText/Index.js';
 import { createOfficialPlugins } from '../plugins/officialPlugins.js';
 import { grapesZhTw } from '../locales/zhTw.js';
@@ -88,6 +89,10 @@ export function createCokerGrapesEditor(options = {}) {
             }),
             grapesjs.usePlugin(componentInsertPlugin, {
                 adapter
+            }),
+            grapesjs.usePlugin(externalAssetImportPlugin, {
+                adapter,
+                ...(options.externalAssetOptions || {})
             })
         ]
     });

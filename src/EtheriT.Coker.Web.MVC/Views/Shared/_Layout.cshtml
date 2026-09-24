@@ -8,11 +8,17 @@
 	@{
 		var site = await NavigationProvider.getMenus();
 		var currentWebsiteId = await LoginUserData.GetWebsiteId();
+		var currentUserId = await LoginUserData.GetUserId();
+		var currentOrgName = await LoginUserData.GetWebsiteOrgName();
+		var canImportExternalCanvasImages = await LoginUserData.isSystemUser();
 		var pageName = ViewData["Title"]?.ToString() ?? "";
 		var pageTitle = site.PageTitleMap.TryGetValue(pageName, out var title) ? title: pageName;
 	}
 	<meta charset="utf-8" />
 	<meta name="coker-website-id" content="@currentWebsiteId" />
+	<meta name="coker-user-id" content="@currentUserId" />
+	<meta name="coker-org-name" content="@currentOrgName" />
+	<meta name="coker-can-import-external-canvas-images" content="@canImportExternalCanvasImages.ToString().ToLowerInvariant()" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>@pageTitle - EtheriT.Coker.Web.MVC</title>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />

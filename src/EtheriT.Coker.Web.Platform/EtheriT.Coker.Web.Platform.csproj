@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-EtheriT.Coker.Web.Platform-1c61fb93-6741-4b7e-a3e1-43e5914dbce2</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

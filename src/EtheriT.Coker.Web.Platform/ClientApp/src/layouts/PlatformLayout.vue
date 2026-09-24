@@ -75,6 +75,8 @@
 
     const operationLinks = [
         { to: "/analytics", icon: "monitoring", label: "營運分析" },
+        { to: "/provisioning-test", icon: "dns", label: "主機操作測試" },
+        { to: "/system-administrators", icon: "admin_panel_settings", label: "系統管理者" },
         { to: "/settings", icon: "settings", label: "系統設定" }
     ];
 

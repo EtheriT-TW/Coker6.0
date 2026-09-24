@@ -75,6 +75,18 @@ export const router = createRouter({
             meta: { title: "營運分析" }
         },
         {
+            path: "/system-administrators",
+            name: "system-administrators",
+            component: () => import("@/views/SystemAdministratorsView.vue"),
+            meta: { title: "系統管理者" }
+        },
+        {
+            path: "/provisioning-test",
+            name: "provisioning-test",
+            component: () => import("@/views/ProvisioningTestView.vue"),
+            meta: { title: "主機操作測試" }
+        },
+        {
             path: "/settings",
             name: "settings",
             component: () => import("@/views/SystemSettingsView.vue"),

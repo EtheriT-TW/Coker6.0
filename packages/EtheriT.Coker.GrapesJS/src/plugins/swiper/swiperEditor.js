@@ -5,6 +5,7 @@ import {
     parseSwiperSlides
 } from './swiperParser.js';
 import { renderSlides, renderThumbnailSlides } from './swiperRenderer.js';
+import { imageAssetAccept } from '../image/imageAssetTypes.js';
 
 export function openSwiperEditor(editor, component) {
     const controller = new SwiperEditorController(editor, component);
@@ -753,7 +754,7 @@ class SwiperEditorController {
         this.editor.once('asset:close', restoreEditor);
         assetManager.open({
             types: [assetType],
-            accept: assetType === swiperMediaTypes.video ? 'video/*' : 'image/*',
+            accept: assetType === swiperMediaTypes.video ? 'video/*' : imageAssetAccept,
             select: asset => {
                 collectAsset(asset);
                 assetManager.close();
@@ -865,7 +866,7 @@ class SwiperEditorController {
             // Use a dedicated type which no persisted asset has, so this dialog
             // is an upload-only surface instead of an asset picker.
             types: ['coker-swiper-batch-upload'],
-            accept: 'image/*,video/*'
+            accept: `${imageAssetAccept},video/*`
         });
         globalThis.setTimeout(() => {
             const document = this.root.ownerDocument;

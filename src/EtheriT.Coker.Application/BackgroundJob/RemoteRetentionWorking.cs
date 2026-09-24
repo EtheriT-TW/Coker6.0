@@ -25,7 +25,9 @@ namespace EtheriT.Coker.Application.BackgroundJob
             this.logger = logger;
         }
 
-        [AutomaticRetry(Attempts = 1)]
+        // 此工作每小時會再次執行；SQL 逾時時立即重試只會讓同一批查詢
+        // 連續占用資料庫兩次，不交由 Hangfire 自動重試。
+        [AutomaticRetry(Attempts = 0)]
         [DisableConcurrentExecution(3600)]
         public async Task CleanupAggregatedRemotes()
         {
@@ -66,52 +68,52 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 SET NOCOUNT ON;
                 SET XACT_ABORT ON;
 
-                DECLARE @TargetDate date;
+                CREATE TABLE [#TargetRemoteIds]
+                (
+                    [Id] bigint NOT NULL PRIMARY KEY
+                );
 
-                SELECT TOP (1)
-                    @TargetDate = [run].[StatisticDate]
+                INSERT INTO [#TargetRemoteIds] ([Id])
+                SELECT TOP (@BatchSize) [remote].[Id]
                 FROM [dbo].[RemoteDailyAggregationRuns] AS [run]
+                INNER JOIN [dbo].[Remotes] AS [remote]
+                    WITH (INDEX([IX_Remotes_ExecutionTime]), ROWLOCK, READPAST)
+                    ON [remote].[ExecutionTime] >= [run].[StatisticDate]
+                   AND [remote].[ExecutionTime] < DATEADD(day, 1, [run].[StatisticDate])
                 WHERE [run].[AggregationVersion] = @AggregationVersion
                   AND [run].[StatisticDate] < @CutoffDate
-                  AND EXISTS
-                  (
-                      SELECT 1
-                      FROM [dbo].[Remotes] AS [remote] WITH (READPAST)
-                      WHERE [remote].[ExecutionTime] >= [run].[StatisticDate]
-                        AND [remote].[ExecutionTime] < DATEADD(day, 1, [run].[StatisticDate])
-                        AND
-                        (
-                            [remote].[State] <> @PendingState
-                            OR NOT EXISTS
-                            (
-                                SELECT 1
-                                FROM [dbo].[UserActivityTags] AS [activity]
-                                WHERE [activity].[FK_RemoteId] = [remote].[Id]
-                            )
-                        )
-                  )
-                ORDER BY [run].[StatisticDate];
+                  AND [remote].[State] IN (@CompletedState, @IncompleteState)
+                ORDER BY [run].[StatisticDate], [remote].[ExecutionTime], [remote].[Id]
+                OPTION (LOOP JOIN, MAXDOP 1, RECOMPILE);
 
-                IF @TargetDate IS NULL
+                DECLARE @Remaining int = @BatchSize - @@ROWCOUNT;
+
+                IF @Remaining > 0
                 BEGIN
-                    SELECT 0;
-                    RETURN;
-                END;
-
-                DELETE TOP (@BatchSize) [remote]
-                FROM [dbo].[Remotes] AS [remote] WITH (ROWLOCK, READPAST)
-                WHERE [remote].[ExecutionTime] >= @TargetDate
-                  AND [remote].[ExecutionTime] < DATEADD(day, 1, @TargetDate)
-                  AND
-                  (
-                      [remote].[State] <> @PendingState
-                      OR NOT EXISTS
+                    INSERT INTO [#TargetRemoteIds] ([Id])
+                    SELECT TOP (@Remaining) [remote].[Id]
+                    FROM [dbo].[RemoteDailyAggregationRuns] AS [run]
+                    INNER JOIN [dbo].[Remotes] AS [remote]
+                        WITH (INDEX([IX_Remotes_ExecutionTime]), ROWLOCK, READPAST)
+                        ON [remote].[ExecutionTime] >= [run].[StatisticDate]
+                       AND [remote].[ExecutionTime] < DATEADD(day, 1, [run].[StatisticDate])
+                    WHERE [run].[AggregationVersion] = @AggregationVersion
+                      AND [run].[StatisticDate] < @CutoffDate
+                      AND [remote].[State] = @PendingState
+                      AND NOT EXISTS
                       (
                           SELECT 1
                           FROM [dbo].[UserActivityTags] AS [activity]
                           WHERE [activity].[FK_RemoteId] = [remote].[Id]
                       )
-                  );
+                    ORDER BY [run].[StatisticDate], [remote].[ExecutionTime], [remote].[Id]
+                    OPTION (LOOP JOIN, MAXDOP 1, RECOMPILE);
+                END;
+
+                DELETE [remote]
+                FROM [dbo].[Remotes] AS [remote] WITH (ROWLOCK, READPAST)
+                INNER JOIN [#TargetRemoteIds] AS [target]
+                    ON [target].[Id] = [remote].[Id];
 
                 SELECT @@ROWCOUNT;
                 """;
@@ -135,6 +137,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 AddParameter(command, "@CutoffDate", cutoffDate.Date);
                 AddParameter(command, "@AggregationVersion", aggregationVersion);
                 AddParameter(command, "@PendingState", (int)RemoteStateEnum.未處理);
+                AddParameter(command, "@CompletedState", (int)RemoteStateEnum.已完成);
+                AddParameter(command, "@IncompleteState", (int)RemoteStateEnum.資料不完整);
 
                 var result = await command.ExecuteScalarAsync();
                 return result == null || result == DBNull.Value

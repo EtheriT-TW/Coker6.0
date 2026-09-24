@@ -64,16 +64,24 @@ namespace EtheriT.Coker.Application.FileManagement
                     group => group.Key,
                     group => group.Select(item => item.Id).ToArray(),
                     StringComparer.OrdinalIgnoreCase);
+            var uploadPathById = uploads
+                .Where(item => !string.IsNullOrWhiteSpace(item.DownloadFileName))
+                .ToDictionary(
+                    item => item.Id,
+                    item => NormalizeUploadPath(item.DownloadFileName!, website.OrgName));
             var uploadIdByGuid = uploads.ToDictionary(item => item.GuidKey, item => item.Id);
             var uploadIds = uploads.Select(item => item.Id).ToHashSet();
 
-            var referenced = (await (
+            var activeBindings = await (
                 from binding in db.FileBinds.AsNoTracking()
                 join upload in db.FileUploads.IgnoreQueryFilters().AsNoTracking()
                     on binding.FK_FileUploadId equals (long?)upload.Id
                 where !binding.IsDeleted && upload.FK_WebsiteId == websiteId
-                select upload.Id
-            ).Distinct().ToListAsync(cancellationToken)).ToHashSet();
+                select new { FileUploadId = upload.Id, binding.MediaLink }
+            ).ToListAsync(cancellationToken);
+            var referenced = activeBindings
+                .Select(item => item.FileUploadId)
+                .ToHashSet();
 
             var indexedReferenceIds = await db.FileReferences.AsNoTracking()
                 .Where(item => item.FK_WebsiteId == websiteId
@@ -93,6 +101,9 @@ namespace EtheriT.Coker.Application.FileManagement
                 website.Description,
                 website.Statement
             };
+            // 舊商品圖片主要由 FileBind.MediaLink 顯示；即使 FileUpload 關聯資料曾有
+            // 重複或搬移，仍必須以實際使用中的路徑保護對應實體檔案。
+            texts.AddRange(activeBindings.Select(item => item.MediaLink));
             await AppendContentTextsAsync(texts, websiteId, cancellationToken);
 
             foreach (var text in texts.Where(value => !string.IsNullOrWhiteSpace(value)))
@@ -131,13 +142,26 @@ namespace EtheriT.Coker.Application.FileManagement
             while (queue.Count > 0)
             {
                 var current = queue.Dequeue();
-                if (!familyEdges.TryGetValue(current, out var family))
-                    continue;
 
-                foreach (var familyId in family)
+                // 舊資料可能有多筆 FileUpload 指向同一實體路徑。只要其中一筆有引用，
+                // 其他同路徑紀錄也不能列入清理，否則搬檔時會讓真正使用中的圖片掉圖。
+                if (uploadPathById.TryGetValue(current, out var currentPath)
+                    && uploadsByPath.TryGetValue(currentPath, out var samePathIds))
                 {
-                    if (referenced.Add(familyId))
-                        queue.Enqueue(familyId);
+                    foreach (var samePathId in samePathIds)
+                    {
+                        if (referenced.Add(samePathId))
+                            queue.Enqueue(samePathId);
+                    }
+                }
+
+                if (familyEdges.TryGetValue(current, out var family))
+                {
+                    foreach (var familyId in family)
+                    {
+                        if (referenced.Add(familyId))
+                            queue.Enqueue(familyId);
+                    }
                 }
             }
 

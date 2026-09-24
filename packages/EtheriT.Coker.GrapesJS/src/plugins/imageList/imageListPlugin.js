@@ -1,3 +1,5 @@
+import { imageAssetAccept } from '../image/imageAssetTypes.js';
+
 export const imageListComponentType = '相簿';
 export const imageListEditorCommandId = 'coker:image-list:edit';
 export const imageListUploadCommandId = 'coker:image-list:batch-upload';
@@ -450,7 +452,7 @@ export function openImageListEditor(editor, imageList) {
                 editor.on('asset:close', reopen);
                 editor.AssetManager.open({
                     types: ['image'],
-                    accept: 'image/*',
+                    accept: imageAssetAccept,
                     select(asset) {
                         const replacement = normalizeAsset(asset);
                         if (replacement.src) {
@@ -744,7 +746,7 @@ export function openImageListBatchUpload(editor, imageList, options = {}) {
         // No persisted asset uses this type, so the dialog is dedicated to
         // uploading and does not mix the operation with asset selection.
         types: [uploadOnlyAssetType],
-        accept: 'image/*'
+        accept: imageAssetAccept
     });
 
     globalThis.setTimeout(() => {

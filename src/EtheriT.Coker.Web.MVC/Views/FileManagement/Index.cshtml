@@ -87,6 +87,10 @@
         <div>
             <h2 id="file-cleanup-title">查無引用</h2>
             <p id="file-cleanup-description"></p>
+            <div id="file-cleanup-stats" class="file-cleanup-stats" aria-live="polite">
+                <span>檔案數 <strong id="file-cleanup-file-count">—</strong></span>
+                <span>總容量 <strong id="file-cleanup-total-size">—</strong></span>
+            </div>
         </div>
         <div class="file-cleanup-actions">
             <div id="file-cleanup-scan"></div>
@@ -131,6 +135,13 @@
     .file-cleanup-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-bottom: 1rem; padding: .25rem 0; }
     .file-cleanup-toolbar h2 { margin: 0 0 .35rem; font-size: 1.35rem; }
     .file-cleanup-toolbar p { margin: 0; color: #6c757d; }
+    .file-cleanup-stats { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .65rem; }
+    .file-cleanup-stats span {
+        display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .55rem;
+        border: 1px solid #d8dee6; border-radius: 999px; background: #fff; color: #6c757d;
+        font-size: .85rem;
+    }
+    .file-cleanup-stats strong { color: #212529; font-weight: 600; }
     .file-cleanup-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; white-space: nowrap; }
     .file-cleanup-actions .dx-button { min-width: 38px; }
     .file-cleanup-task { margin: 0 0 1rem; padding: .85rem 1rem; border: 1px solid #d8dee6; border-radius: .4rem; background: #fff; }
@@ -658,6 +669,7 @@
         empty.hidden = true;
         gridElement.hidden = true;
         fileCleanupItems = [];
+        updateCleanupStats(null);
         fileCleanupGrid.clearSelection();
         fileCleanupGrid.option("dataSource", []);
         $.ajax({
@@ -668,6 +680,7 @@
             headers: co.Data.Header
         }).done(items => {
             loading.hidden = true;
+            updateCleanupStats(items);
             if (!items.length) {
                 empty.textContent = isRecycle ? "資源回收桶目前沒有檔案。" : "目前沒有查無引用的候選檔案。";
                 empty.hidden = false;
@@ -682,6 +695,7 @@
             fileCleanupGrid.updateDimensions();
         }).fail(xhr => {
             loading.hidden = true;
+            updateCleanupStats(false);
             empty.textContent = getFileActionError(xhr, "讀取檔案清單失敗。");
             empty.hidden = false;
         });
@@ -968,9 +982,31 @@
 
     function formatFileSize(size) {
         const bytes = Number(size || 0);
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+        if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        const value = bytes / Math.pow(1024, unitIndex);
+        return `${unitIndex === 0 ? Math.round(value) : value.toFixed(1)} ${units[unitIndex]}`;
+    }
+
+    function updateCleanupStats(items) {
+        const countElement = document.getElementById("file-cleanup-file-count");
+        const sizeElement = document.getElementById("file-cleanup-total-size");
+        if (items === null) {
+            countElement.textContent = "載入中…";
+            sizeElement.textContent = "載入中…";
+            return;
+        }
+        if (items === false) {
+            countElement.textContent = "—";
+            sizeElement.textContent = "—";
+            return;
+        }
+        const totalSize = items.reduce(
+            (sum, item) => sum + Math.max(0, Number(item.size) || 0),
+            0);
+        countElement.textContent = Number(items.length).toLocaleString("zh-TW");
+        sizeElement.textContent = formatFileSize(totalSize);
     }
 
     function formatFileDate(value) {

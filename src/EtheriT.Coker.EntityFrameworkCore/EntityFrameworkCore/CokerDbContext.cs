@@ -670,6 +670,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(f => f.FK_TechCertId);
                 o.HasIndex(f => f.State);
                 o.HasIndex(f => f.ExecutionTime);
+                o.HasIndex(f => new { f.State, f.ExecutionTime, f.Id })
+                    .HasDatabaseName("IX_Remotes_State_ExecutionTime_Id");
                 o.HasIndex(f => f.UUID);
                 o.HasIndex(f => new { f.FK_WebsiteId, f.LastHeartbeatAt })
                     .HasDatabaseName("IX_Remotes_FK_WebsiteId_LastHeartbeatAt_Online")

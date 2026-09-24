@@ -192,6 +192,13 @@ namespace EtheriT.Coker.Application.FileManagement
             if (legacyHeaderSource != null)
                 sources.Add(legacyHeaderSource);
 
+            var legacyFooterSource = CreateLegacyFooterSource(
+                website.Id,
+                website.OrgName,
+                website.LayoutType);
+            if (legacyFooterSource != null)
+                sources.Add(legacyFooterSource);
+
             await ReplaceSourcesAsync(websiteId, sources, true, userId, cancellationToken);
         }
 
@@ -289,6 +296,87 @@ namespace EtheriT.Coker.Application.FileManagement
                     websiteId,
                     "LegacyFileConvention",
                     Fields(("LegacyHeaderFiles", string.Join("\n", distinctPaths))));
+        }
+
+        private static FileReferenceSource? CreateLegacyFooterSource(
+            long websiteId,
+            string orgName,
+            int? layoutType)
+        {
+            var paths = new List<string>();
+            switch (layoutType)
+            {
+                case 1:
+                    switch (websiteId)
+                    {
+                        case 2:
+                            paths.Add("/upload/derek_logo.png");
+                            break;
+                        case 9:
+                            paths.Add("/upload/yulogo.png");
+                            break;
+                        case 13:
+                            paths.Add("/upload/logo.png");
+                            break;
+                        case 16:
+                            paths.AddRange(new[]
+                            {
+                                "/upload/logo.png",
+                                "/upload/ComLine.jpg",
+                                "/upload/CEOLine.jpg",
+                                "/upload/wechat_qr.png",
+                                "/upload/C_qr.png"
+                            });
+                            break;
+                    }
+                    break;
+                case 3:
+                    paths.AddRange(new[]
+                    {
+                        "/upload/ksp/line_qr.jpg",
+                        "/upload/accessibility_badge.png",
+                        "/upload/ksp/footer-bg.jpg"
+                    });
+                    break;
+                case 4:
+                    paths.Add("/upload/accessibility_badge.png");
+                    break;
+                case 5:
+                    paths.Add("/upload/htmlConten/footer_boat.png");
+                    break;
+                case 6:
+                    paths.Add("/upload/accessibility_badge.png");
+                    paths.Add($"/upload/{orgName}/lineqr.png");
+                    break;
+                case 7 when websiteId == 25:
+                    paths.Add("/upload/footLogo.jpg");
+                    break;
+                case 8 when websiteId == 11:
+                    paths.Add("/upload/footer_image.png");
+                    break;
+                case 9:
+                    paths.Add("/upload/htmlConten/footer_logo.png");
+                    break;
+                case 10:
+                    paths.AddRange(new[]
+                    {
+                        "/upload/htmlConten/title_img.png",
+                        "/upload/htmlConten/app_store.png",
+                        "/upload/htmlConten/google_play.png",
+                        "/upload/htmlConten/Line.png",
+                        "/upload/htmlConten/footer_logo.png"
+                    });
+                    break;
+            }
+
+            var distinctPaths = paths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            return distinctPaths.Length == 0
+                ? null
+                : Source(
+                    "Footer",
+                    websiteId,
+                    "LegacyFileConvention",
+                    Fields(("LegacyFooterFiles", string.Join("\n", distinctPaths))));
         }
 
         public async Task<int> RegisterUntrackedPhysicalFilesAsync(

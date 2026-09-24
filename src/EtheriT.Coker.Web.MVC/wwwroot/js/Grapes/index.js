@@ -177,6 +177,25 @@ var grapesInit = function (options) {
                         return;
                     }
 
+                    const hasUnsupportedTiff = !isFileAssetUpload && files.some(file => {
+                        const contentType = file.type || '';
+                        const fileName = file.name || '';
+
+                        return /^image\/(?:tiff?|x-tiff)$/i.test(contentType) ||
+                            /\.tiff?$/i.test(fileName);
+                    });
+
+                    if (hasUnsupportedTiff) {
+                        co.sweet.error(
+                            "錯誤",
+                            "畫布不支援 TIFF 圖片，請先轉為 JPG、PNG 或 WebP 後再上傳",
+                            null,
+                            false
+                        );
+                        finishUpload([], false);
+                        return;
+                    }
+
                     const supportedMediaPattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v)$/i;
                     const supportedFilePattern = /\.(avif|bmp|gif|jpe?g|png|svg|webp|mp4|webm|ogg|ogv|mov|m4v|mp3|wav|wma|pdf|docx?|xlsx?|ods|pptx?|odp|txt|csv|xml|zip|rar)$/i;
                     const supportedFileMimePattern = /^(?:image|video|audio|text)\//i;

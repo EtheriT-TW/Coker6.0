@@ -179,7 +179,7 @@ onMounted(load);
 </template>
 
 <style scoped>
-.add-card { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(220px, .55fr) auto; gap: 1rem; align-items: end; padding: 1.25rem; margin-bottom: 1rem; }
+.add-card { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(220px, .55fr) auto; gap: 1rem; align-items: end; min-height: 0; padding: 1.25rem; margin-bottom: 1rem; }
 .add-field { display: grid; gap: .4rem; }
 .add-field label { font-size: .86rem; font-weight: 700; color: #445064; }
 .add-field select { height: 38px; padding: 0 .65rem; border: 1px solid #d3d9e3; border-radius: 4px; background: #fff; }

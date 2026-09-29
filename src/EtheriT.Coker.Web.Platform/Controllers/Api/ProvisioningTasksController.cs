@@ -28,12 +28,48 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
         var states = await db.ProvisioningAgentStatuses.AsNoTracking()
             .Where(x => serverIds.Contains(x.ServerId))
             .ToDictionaryAsync(x => x.ServerId, StringComparer.OrdinalIgnoreCase, HttpContext.RequestAborted);
+        var websiteRows = await db.Websites.AsNoTracking()
+            .Where(x => !x.IsDeleted && x.DefaultUrl != null && x.DefaultUrl != "")
+            .Select(x => new { x.OrgName, x.Title, x.DefaultUrl })
+            .ToListAsync(HttpContext.RequestAborted);
+        var websitesByHost = websiteRows
+            .Select(x => new
+            {
+                Host = PlatformDomainName.ToHost(x.DefaultUrl),
+                Name = string.IsNullOrWhiteSpace(x.Title) ? x.OrgName : $"{x.OrgName}｜{x.Title}"
+            })
+            .Where(x => x.Host is not null && !string.IsNullOrWhiteSpace(x.Name))
+            .GroupBy(x => x.Host!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<string>)group.Select(x => x.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList(),
+                StringComparer.OrdinalIgnoreCase);
         var offlineSeconds = Math.Max(15, configuration.GetValue("Provisioning:AgentOfflineSeconds", 45));
         var onlineThreshold = DateTime.UtcNow.AddSeconds(-offlineSeconds);
 
         return configuredServers.Select(server =>
         {
             states.TryGetValue(server.Id, out var state);
+            var additionalPoolNames = configuration
+                .GetSection($"Provisioning:Monitoring:AdditionalApplicationPools:{server.Id}")
+                .Get<string[]>() ?? [];
+            var additionalPools = additionalPoolNames
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var applicationPools = DeserializeList<ProvisioningAppPoolMetricDto>(state?.AppPoolMetricsJson)
+                .Select(pool => pool with
+                {
+                    WebsiteNames = (pool.HostNames ?? [])
+                        .SelectMany(host => websitesByHost.TryGetValue(host, out var names) ? names : [])
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                        .ToList()
+                })
+                .Where(pool =>
+                    (pool.WebsiteNames?.Count ?? 0) > 0 ||
+                    additionalPools.Contains(pool.ApplicationPoolName))
+                .ToList();
             return new ProvisioningAgentStatusDto(
                 server.Id,
                 string.IsNullOrWhiteSpace(server.DisplayName) ? server.Id : server.DisplayName,
@@ -48,7 +84,7 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
                 state?.MemoryTotalBytes,
                 state?.MemoryUsagePercent,
                 DeserializeList<ProvisioningDiskMetricDto>(state?.DiskMetricsJson),
-                DeserializeList<ProvisioningAppPoolMetricDto>(state?.AppPoolMetricsJson),
+                applicationPools,
                 state?.LastSeenAtUtc);
         }).ToList();
     }
@@ -307,39 +343,43 @@ public sealed class ProvisioningAgentTasksController(
             });
         }
 
-        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, HttpContext.RequestAborted);
-        var now = DateTime.UtcNow;
-        // 無法得知 Worker 中斷前是否已完成主機操作，故逾時任務標記失敗、禁止自動重跑，避免重複重啟或重複異動 DNS。
-        await db.ProvisioningTasks
-            .Where(x => x.TargetServerId == request.ServerId &&
-                x.Status == ProvisioningTaskStatus.Running && x.LeaseExpiresAtUtc < now)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(x => x.Status, ProvisioningTaskStatus.Failed)
-                .SetProperty(x => x.CompletedAtUtc, now)
-                .SetProperty(x => x.LeaseExpiresAtUtc, (DateTime?)null)
-                .SetProperty(x => x.ResultMessage, "Worker 執行逾時；為避免重複操作，系統未自動重試。請人工確認主機狀態。"),
-                HttpContext.RequestAborted);
-        var task = await db.ProvisioningTasks
-            .Where(x => x.TargetServerId == request.ServerId &&
-                x.Status == ProvisioningTaskStatus.Pending)
-            .OrderBy(x => x.CreatedAtUtc)
-            .ThenBy(x => x.Id)
-            .FirstOrDefaultAsync(HttpContext.RequestAborted);
-
-        if (task is null)
+        var executionStrategy = db.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync<ActionResult<ProvisioningTaskDto>>(async () =>
         {
-            await transaction.CommitAsync(HttpContext.RequestAborted);
-            return NoContent();
-        }
+            await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, HttpContext.RequestAborted);
+            var now = DateTime.UtcNow;
+            // 無法得知 Worker 中斷前是否已完成主機操作，故逾時任務標記失敗、禁止自動重跑，避免重複重啟或重複異動 DNS。
+            await db.ProvisioningTasks
+                .Where(x => x.TargetServerId == request.ServerId &&
+                    x.Status == ProvisioningTaskStatus.Running && x.LeaseExpiresAtUtc < now)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Status, ProvisioningTaskStatus.Failed)
+                    .SetProperty(x => x.CompletedAtUtc, now)
+                    .SetProperty(x => x.LeaseExpiresAtUtc, (DateTime?)null)
+                    .SetProperty(x => x.ResultMessage, "Worker 執行逾時；為避免重複操作，系統未自動重試。請人工確認主機狀態。"),
+                    HttpContext.RequestAborted);
+            var task = await db.ProvisioningTasks
+                .Where(x => x.TargetServerId == request.ServerId &&
+                    x.Status == ProvisioningTaskStatus.Pending)
+                .OrderBy(x => x.CreatedAtUtc)
+                .ThenBy(x => x.Id)
+                .FirstOrDefaultAsync(HttpContext.RequestAborted);
 
-        task.Status = ProvisioningTaskStatus.Running;
-        task.ClaimedBy = request.WorkerId.Trim();
-        task.StartedAtUtc ??= now;
-        task.LeaseExpiresAtUtc = now.AddMinutes(10);
-        task.AttemptCount++;
-        await db.SaveChangesAsync(HttpContext.RequestAborted);
-        await transaction.CommitAsync(HttpContext.RequestAborted);
-        return ProvisioningTasksController.ToDto(task);
+            if (task is null)
+            {
+                await transaction.CommitAsync(HttpContext.RequestAborted);
+                return NoContent();
+            }
+
+            task.Status = ProvisioningTaskStatus.Running;
+            task.ClaimedBy = request.WorkerId.Trim();
+            task.StartedAtUtc ??= now;
+            task.LeaseExpiresAtUtc = now.AddMinutes(10);
+            task.AttemptCount++;
+            await db.SaveChangesAsync(HttpContext.RequestAborted);
+            await transaction.CommitAsync(HttpContext.RequestAborted);
+            return ProvisioningTasksController.ToDto(task);
+        });
     }
 
     [HttpPost("{id:long}/complete")]

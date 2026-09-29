@@ -6,6 +6,7 @@ export interface AlertRequest {
   details?: string[];
   icon?: string;
   confirmText?: string;
+  tone?: "primary" | "danger";
 }
 
 interface PendingAlert extends AlertRequest {

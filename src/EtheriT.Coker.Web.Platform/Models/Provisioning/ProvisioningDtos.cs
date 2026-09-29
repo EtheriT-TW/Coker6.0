@@ -65,14 +65,22 @@ public sealed record ProvisioningDiskMetricDto(
     long FreeBytes,
     double UsagePercent);
 
+public sealed record ProvisioningIisSiteBindingDto(
+    string SiteName,
+    IReadOnlyList<string> HostNames,
+    string State = "Unknown");
+
 public sealed record ProvisioningAppPoolMetricDto(
     string ApplicationPoolName,
     IReadOnlyList<string> SiteNames,
+    IReadOnlyList<string>? HostNames,
     string State,
     IReadOnlyList<int> ProcessIds,
     double? CpuUsagePercent,
     long WorkingSetBytes,
-    long PrivateMemoryBytes);
+    long PrivateMemoryBytes,
+    IReadOnlyList<string>? WebsiteNames = null,
+    IReadOnlyList<ProvisioningIisSiteBindingDto>? SiteBindings = null);
 
 public sealed record ProvisioningAgentStatusDto(
     string ServerId,

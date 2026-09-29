@@ -4,7 +4,7 @@ using System.Xml.Linq;
 namespace EtheriT.Coker.Provisioning.Worker;
 
 /// <summary>以 IIS 的 PID → Application Pool → Website 關聯收集 w3wp 資源用量。</summary>
-public sealed class IisMetricsCollector
+public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
 {
     private readonly Dictionary<int, ProcessCpuSample> previousCpu = [];
 
@@ -17,6 +17,7 @@ public sealed class IisMetricsCollector
         if (!File.Exists(appCmd)) return [];
 
         var applicationXml = await RunAppCmdAsync(appCmd, ["list", "app", "/xml"], cancellationToken);
+        var siteXml = await RunAppCmdAsync(appCmd, ["list", "site", "/xml"], cancellationToken);
         var workerXml = await RunAppCmdAsync(appCmd, ["list", "wp", "/xml"], cancellationToken);
         var poolXml = await RunAppCmdAsync(appCmd, ["list", "apppool", "/xml"], cancellationToken);
 
@@ -28,6 +29,16 @@ public sealed class IisMetricsCollector
                 x => x.Key,
                 x => (IReadOnlyList<string>)x.Select(y => y.Site).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(y => y, StringComparer.OrdinalIgnoreCase).ToList(),
                 StringComparer.OrdinalIgnoreCase);
+        var detailsBySite = ParseElements(siteXml, "SITE")
+            .Select(x => new
+            {
+                Site = Attribute(x, "SITE.NAME"),
+                Details = new SiteBindingDetails(
+                    ParseBindingHosts(FirstAttribute(x, "bindings", "BINDINGS", "SITE.BINDINGS")),
+                    FirstAttribute(x, "state", "STATE", "SITE.STATE"))
+            })
+            .Where(x => x.Site.Length > 0)
+            .ToDictionary(x => x.Site, x => x.Details, StringComparer.OrdinalIgnoreCase);
         var processIdsByPool = ParseElements(workerXml, "WP")
             .Select(x => new { Pool = Attribute(x, "APPPOOL.NAME"), Pid = ParseInt(Attribute(x, "WP.NAME")) })
             .Where(x => x.Pool.Length > 0 && x.Pid > 0)
@@ -57,7 +68,21 @@ public sealed class IisMetricsCollector
             sitesByPool.TryGetValue(poolName, out var siteNames);
             processIdsByPool.TryGetValue(poolName, out var processIds);
             states.TryGetValue(poolName, out var state);
+            siteNames ??= [];
             processIds ??= [];
+            var siteBindings = siteNames
+                .Select(siteName => detailsBySite.TryGetValue(siteName, out var details)
+                    ? new IisSiteBindingMetrics(
+                        siteName,
+                        details.HostNames,
+                        string.IsNullOrWhiteSpace(details.State) ? "Unknown" : details.State)
+                    : new IisSiteBindingMetrics(siteName, []))
+                .ToList();
+            var hostNames = siteBindings
+                .SelectMany(site => site.HostNames)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
             double cpu = 0;
             var hasCpu = false;
             long workingSet = 0;
@@ -91,12 +116,14 @@ public sealed class IisMetricsCollector
 
             output.Add(new IisApplicationPoolMetrics(
                 poolName,
-                siteNames ?? [],
+                siteNames,
+                hostNames,
                 string.IsNullOrWhiteSpace(state) ? (processIds.Count > 0 ? "Started" : "Unknown") : state,
                 processIds,
                 hasCpu ? Math.Round(Math.Clamp(cpu, 0, 100), 1) : null,
                 workingSet,
-                privateMemory));
+                privateMemory,
+                siteBindings));
         }
 
         foreach (var stalePid in previousCpu.Keys.Where(x => !currentPids.Contains(x)).ToList())
@@ -127,7 +154,15 @@ public sealed class IisMetricsCollector
 
     private static int ParseInt(string value) => int.TryParse(value, out var result) ? result : 0;
 
-    private static async Task<string> RunAppCmdAsync(
+    private static IReadOnlyList<string> ParseBindingHosts(string bindings) => bindings
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(binding => binding[(binding.LastIndexOf(':') + 1)..].Trim().TrimEnd('.').ToLowerInvariant())
+        .Where(host => host.Length > 0 && Uri.CheckHostName(host) == UriHostNameType.Dns)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(host => host, StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    private async Task<string> RunAppCmdAsync(
         string appCmd,
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken)
@@ -149,8 +184,16 @@ public sealed class IisMetricsCollector
         try
         {
             await process.WaitForExitAsync(timeout.Token);
-            await stderr;
-            return process.ExitCode == 0 ? await stdout : string.Empty;
+            var error = await stderr;
+            var output = await stdout;
+            if (process.ExitCode == 0) return output;
+
+            logger.LogWarning(
+                "appcmd failed with exit code {ExitCode}: {Arguments}; Error={Error}",
+                process.ExitCode,
+                string.Join(' ', arguments),
+                string.IsNullOrWhiteSpace(error) ? "<empty>" : error.Trim());
+            return string.Empty;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -160,4 +203,5 @@ public sealed class IisMetricsCollector
     }
 
     private sealed record ProcessCpuSample(DateTime SampledAtUtc, TimeSpan ProcessorTime);
+    private sealed record SiteBindingDetails(IReadOnlyList<string> HostNames, string State);
 }

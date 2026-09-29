@@ -10,7 +10,7 @@
     <ConfirmDialog class="app-dialog-alert"
                    :open="request !== null"
                    hide-cancel
-                   tone="danger"
+                   :tone="request?.tone ?? 'danger'"
                    :icon="request?.icon ?? 'error'"
                    :title="request?.title ?? ''"
                    :message="request?.message"

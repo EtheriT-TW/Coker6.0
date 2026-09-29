@@ -30,6 +30,27 @@ function decodeSearchText(value) {
     }
 }
 
+function syncResponsiveHeaderMenu(rootSelector = "#Offcanvas_Mega_Menu") {
+    const $menu = $(rootSelector);
+    if ($menu.length === 0) return;
+
+    const $menuBody = $menu.find(".offcanvas-body");
+    const $collapses = $menuBody.find(".collapse");
+    const $collapseToggles = $menuBody.find(".nav-link[data-bs-target][aria-controls]");
+    const isDesktop = window.matchMedia("(min-width: 992px)").matches;
+
+    if (isDesktop) {
+        $menuBody.removeClass("accordion");
+        $collapses.addClass("show");
+        $collapseToggles.removeAttr("data-bs-toggle");
+        return;
+    }
+
+    $menuBody.addClass("accordion");
+    $collapses.removeClass("show");
+    $collapseToggles.attr("data-bs-toggle", "collapse");
+}
+
 function ready() {
     const $conten = $("#main");
     loginModal = $("#LoginModal").length > 0 ? new bootstrap.Modal($("#LoginModal")) : null;

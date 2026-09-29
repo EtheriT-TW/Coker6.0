@@ -79,14 +79,23 @@ export interface ProvisioningDiskMetric {
   UsagePercent: number;
 }
 
+export interface ProvisioningIisSiteBinding {
+  SiteName: string;
+  HostNames: string[];
+  State?: string | null;
+}
+
 export interface ProvisioningAppPoolMetric {
   ApplicationPoolName: string;
   SiteNames: string[];
+  HostNames: string[] | null;
   State: string;
   ProcessIds: number[];
   CpuUsagePercent: number | null;
   WorkingSetBytes: number;
   PrivateMemoryBytes: number;
+  WebsiteNames: string[] | null;
+  SiteBindings?: ProvisioningIisSiteBinding[] | null;
 }
 
 export interface ProvisioningMetricHistory {

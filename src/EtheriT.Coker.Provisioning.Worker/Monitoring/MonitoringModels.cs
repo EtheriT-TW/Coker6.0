@@ -29,11 +29,18 @@ public sealed record DiskMetrics(
     long FreeBytes,
     double UsagePercent);
 
+public sealed record IisSiteBindingMetrics(
+    string SiteName,
+    IReadOnlyList<string> HostNames,
+    string State = "Unknown");
+
 public sealed record IisApplicationPoolMetrics(
     string ApplicationPoolName,
     IReadOnlyList<string> SiteNames,
+    IReadOnlyList<string> HostNames,
     string State,
     IReadOnlyList<int> ProcessIds,
     double? CpuUsagePercent,
     long WorkingSetBytes,
-    long PrivateMemoryBytes);
+    long PrivateMemoryBytes,
+    IReadOnlyList<IisSiteBindingMetrics>? SiteBindings = null);

@@ -1,5 +1,8 @@
 ﻿var time = 0;
 function HeaderInit() {
+    syncResponsiveHeaderMenu();
+    $(window).off("resize.layout7Menu").on("resize.layout7Menu", syncResponsiveHeaderMenu);
+
     var Mega_Menu = document.getElementById("Offcanvas_Mega_Menu");
     var observer = new MutationObserver(function (mutations) {
         var icon = document.getElementById("menuIcon");

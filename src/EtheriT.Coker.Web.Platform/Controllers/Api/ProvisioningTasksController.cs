@@ -289,7 +289,23 @@ public sealed class ProvisioningAgentTasksController(
     public async Task<ActionResult<ProvisioningTaskDto>> Claim(ClaimProvisioningTaskRequest request)
     {
         if (!Authenticate(request.ServerId)) return Unauthorized();
-        if (string.IsNullOrWhiteSpace(request.ServerId) || string.IsNullOrWhiteSpace(request.WorkerId)) return BadRequest();
+        if (string.IsNullOrWhiteSpace(request.ServerId) || string.IsNullOrWhiteSpace(request.WorkerId))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Provisioning agent identity is incomplete.",
+                Detail = "ServerId and WorkerId are required.",
+                Extensions =
+                {
+                    ["requestId"] = HttpContext.TraceIdentifier,
+                    ["serverIdPresent"] = !string.IsNullOrWhiteSpace(request.ServerId),
+                    ["serverIdLength"] = request.ServerId?.Length ?? 0,
+                    ["workerIdPresent"] = !string.IsNullOrWhiteSpace(request.WorkerId),
+                    ["workerIdLength"] = request.WorkerId?.Length ?? 0
+                }
+            });
+        }
 
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, HttpContext.RequestAborted);
         var now = DateTime.UtcNow;

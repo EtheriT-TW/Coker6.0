@@ -93,8 +93,6 @@ export interface WebsiteSiteOption {
     /** Website.Level 不可為 null，與本頁的 WebsiteForm.Level 不同 */
     Level: WebsiteLevelValue;
     Locale: string;
-    StartDate: string | null;
-    EndDate: string | null;
 }
 
 export interface WebsiteSiteOptionResult {

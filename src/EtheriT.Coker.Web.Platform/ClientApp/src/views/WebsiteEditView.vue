@@ -27,6 +27,7 @@
         type WebsiteSiteOption
     } from "@/types/website";
     import { toDateInput } from "@/utils/date-input";
+    import DateField from "@/components/DateField.vue";
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
 
@@ -533,14 +534,14 @@
                 <div class="form-field">
                     <label>
                         <span>網站開通日期</span>
-                        <input v-model="form.model.value.ServiceStartDate" type="date" />
+                        <DateField v-model="form.model.value.ServiceStartDate" />
                     </label>
                 </div>
 
                 <div class="form-field">
                     <label>
                         <span>網站到期日期</span>
-                        <input v-model="form.model.value.ServiceEndDate" type="date" />
+                        <DateField v-model="form.model.value.ServiceEndDate" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('ServiceEndDate')" />
                 </div>
@@ -565,9 +566,7 @@
                 <div class="form-field">
                     <label>
                         <span>註銷日期 <i v-if="isTerminated" class="form-required">*</i></span>
-                        <input v-model="form.model.value.TerminatedDate"
-                               type="date"
-                               :disabled="!isTerminated" />
+                        <DateField v-model="form.model.value.TerminatedDate" :disabled="!isTerminated" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('TerminatedDate')" />
                     <p v-if="!isTerminated" class="field-note">狀態為「註銷」時才可填寫。</p>
@@ -734,20 +733,6 @@
                     <label>
                         <span>站台語系</span>
                         <input :value="linkedSite?.Locale ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台開站日期</span>
-                        <input :value="toDateInput(linkedSite?.StartDate)" type="date" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台實際到期日</span>
-                        <input :value="toDateInput(linkedSite?.EndDate)" type="date" readonly />
                     </label>
                 </div>
             </div>

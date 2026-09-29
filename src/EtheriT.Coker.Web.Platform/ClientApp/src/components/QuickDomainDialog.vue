@@ -137,14 +137,14 @@
                     <div class="form-field">
                         <label>
                             <span>網域起始日期</span>
-                            <input v-model="model.StartDate" type="date" />
+                        <DateField v-model="model.StartDate" />
                         </label>
                     </div>
 
                     <div class="form-field">
                         <label>
                             <span>網域到期日期</span>
-                            <input v-model="model.EndDate" type="date" />
+                        <DateField v-model="model.EndDate" />
                         </label>
                         <FormFieldErrors :errors="fieldErrors('EndDate')" />
                     </div>

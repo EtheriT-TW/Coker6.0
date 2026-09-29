@@ -50,9 +50,7 @@ public sealed record WebsiteSiteOptionDto(
     string Title,
     string? DefaultUrl,
     WebsiteLevelEnum Level,
-    string Locale,
-    DateTime? StartDate,
-    DateTime? EndDate);
+    string Locale);
 
 public sealed record WebsiteSiteOptionResult(
     IReadOnlyList<WebsiteSiteOptionDto> Items,

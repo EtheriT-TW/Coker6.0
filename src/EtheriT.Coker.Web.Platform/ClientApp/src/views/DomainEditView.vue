@@ -235,14 +235,14 @@
                 <div class="form-field">
                     <label>
                         <span>網域起始日期</span>
-                        <input v-model="form.model.value.StartDate" type="date" />
+                        <DateField v-model="form.model.value.StartDate" />
                     </label>
                 </div>
 
                 <div class="form-field">
                     <label>
                         <span>網域到期日期</span>
-                        <input v-model="form.model.value.EndDate" type="date" />
+                        <DateField v-model="form.model.value.EndDate" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('EndDate')" />
                 </div>

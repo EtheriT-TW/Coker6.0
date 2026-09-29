@@ -816,6 +816,35 @@ button, input, select, textarea {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+/* ── DateField：DxDateBox 外框對齊一般 input ── */
+.form-field .date-field.dx-texteditor {
+    height: 42px;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+}
+
+.form-field .date-field.dx-state-focused {
+    border-color: var(--platform-primary);
+    box-shadow: 0 0 0 3px rgb(41 87 215 / 12%);
+}
+
+.form-field .date-field.dx-state-disabled {
+    background: #f8fafc;
+}
+
+/* .form-field input 會套到 DxDateBox 內層 input，清掉避免雙層框 */
+.form-field .date-field .dx-texteditor-input {
+    height: 100%;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.form-field .date-field.dx-texteditor::before {
+    content: none;
+}
+
 .form-field {
     display: flex;
     flex-direction: column;

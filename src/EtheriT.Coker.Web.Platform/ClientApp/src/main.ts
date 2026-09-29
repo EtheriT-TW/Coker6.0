@@ -7,6 +7,9 @@ import "./styles/main.css";
 import App from "./App.vue";
 import { router } from "./router";
 import { licenseKey } from "./devextreme-license";
+import { baseZIndex } from "devextreme/ui/overlay";
+
+baseZIndex(2850);
 
 config({ licenseKey });
 loadMessages(zhTwMessages);

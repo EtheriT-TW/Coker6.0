@@ -163,8 +163,12 @@ namespace EtheriT.Coker.Application
             CreateMap<UserGroupListDto, UserGrouping>().ReverseMap();
 
             //Website
+            // 反向（存檔）時不覆蓋開通／到期日：網站資料頁只顯示日期、表單不會送出，
+            // 照原樣對應會把站台日期洗成 NULL。日期改由客戶管理平台維護。
             CreateMap<Website, WebsiteEditDto>()
-                .ReverseMap();
+                .ReverseMap()
+                .ForMember(dest => dest.StartDate, opt => opt.Ignore())
+                .ForMember(dest => dest.EndDate, opt => opt.Ignore());
 
             //Company
             CreateMap<Core.Models.Company, CompanyDto>()

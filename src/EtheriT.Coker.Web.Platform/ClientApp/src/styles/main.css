@@ -981,7 +981,8 @@ button, input, select, textarea {
 }
 
 /* 原生輸入框視覺上隱藏但保留可聚焦與螢幕閱讀器可讀 */
-.form-field .choice input {
+.form-field .choice input,
+.binding-diff-options .choice input {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -1195,6 +1196,46 @@ button, input, select, textarea {
     background: #fff7e0;
     border-color: #f1dfa6;
 }
+
+/* 已綁定站台：提醒修改會同步到後台 */
+.alert-info {
+    color: #1e3a8a;
+    background: #eef3ff;
+    border-color: #c9d7fb;
+}
+
+/* ── 綁定差異彈窗 ── */
+.binding-diff-list {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.binding-diff-item {
+    padding: 12px 14px;
+    border: 1px solid var(--platform-line);
+    border-radius: 10px;
+}
+
+.app-dialog-card .binding-diff-label {
+    margin: 0 0 8px;
+    color: var(--platform-ink);
+    font-weight: 600;
+}
+
+.binding-diff-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+}
+
+    .binding-diff-options .choice {
+        align-items: flex-start;
+        overflow-wrap: anywhere;
+    }
 
 .form-field input[readonly] {
     color: #64748b;
@@ -1617,6 +1658,10 @@ button, input, select, textarea {
 }
 
 @media (max-width: 520px) {
+    .binding-diff-options {
+        grid-template-columns: 1fr;
+    }
+
     .header-context .header-eyebrow {
         display: none;
     }

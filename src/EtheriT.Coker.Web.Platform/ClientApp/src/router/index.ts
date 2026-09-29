@@ -107,7 +107,10 @@ export const router = createRouter({
     ]
 });
 
-router.afterEach((to) => {
+// 導覽被取消（例如離開彈窗選「留在此頁」）時 afterEach 仍會執行，
+// 此時 failure 有值，頁面沒有換，標題也不能換
+router.afterEach((to, _from, failure) => {
+    if (failure) return;
     const title = typeof to.meta.title === "string" ? to.meta.title : "Platform";
     document.title = `${title} - Coker Platform`;
 });

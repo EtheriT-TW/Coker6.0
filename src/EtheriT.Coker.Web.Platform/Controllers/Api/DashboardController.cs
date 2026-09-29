@@ -23,18 +23,30 @@ public sealed class DashboardController(CokerDbContext db) : ControllerBase
         // DbContext 不可並行查詢，逐一 await
         var customerCount = await db.Companies.CountAsync(cancellationToken);
 
-        // 已註銷的網站不算「管理中」
-        var activeWebsites = db.PlatformWebsites
-            .AsNoTracking()
-            .Where(site => site.Status != PlatformWebsiteStatusEnum.註銷);
+        // 已註銷的網站不算「管理中」。
+        // 已綁定站台時名稱與到期日以後台 Website 為準，未綁定才用合約上的預定值；
+        // FK_WebsiteId 有唯一索引，左外接不會讓筆數變多。
+        var activeWebsites =
+            from contract in db.PlatformWebsites.AsNoTracking()
+            where contract.Status != PlatformWebsiteStatusEnum.註銷
+            join linked in db.Websites.AsNoTracking().Where(item => !item.IsDeleted)
+                on contract.FK_WebsiteId equals (long?)linked.Id into linkedSites
+            from linked in linkedSites.DefaultIfEmpty()
+            select new
+            {
+                contract.Id,
+                contract.FK_CompanyId,
+                Name = linked != null ? linked.Title : contract.Name,
+                EndDate = linked != null ? linked.EndDate : contract.ServiceEndDate
+            };
 
         var websiteCount = await activeWebsites.CountAsync(cancellationToken);
 
         // 只算今天到 30 天內；已過期的不在「即將到期」
         var expiring = activeWebsites.Where(site =>
-            site.ServiceEndDate != null &&
-            site.ServiceEndDate >= today &&
-            site.ServiceEndDate <= deadline);
+            site.EndDate != null &&
+            site.EndDate >= today &&
+            site.EndDate <= deadline);
 
         var expiringCount = await expiring.CountAsync(cancellationToken);
 
@@ -44,12 +56,12 @@ public sealed class DashboardController(CokerDbContext db) : ControllerBase
             join customer in db.Companies.AsNoTracking()
                 on site.FK_CompanyId equals customer.Id into customers
             from customer in customers.DefaultIfEmpty()
-            orderby site.ServiceEndDate, site.Id
+            orderby site.EndDate, site.Id
             select new ExpiringWebsiteDto(
                 site.Id,
                 site.Name,
                 customer == null ? null : customer.Name,
-                site.ServiceEndDate))
+                site.EndDate))
             .Take(ExpiringListLimit)
             .ToListAsync(cancellationToken);
 

@@ -14,6 +14,8 @@ namespace EtheriT.Coker.Core.Models
 
         // ── 版本與期限 ──
         public WebsiteLevelEnum? Level { get; set; }                    // 網站版本
+        [StringLength(10)]
+        public string? Locale { get; set; }                             // 語系預定值；綁定站台後以 Website.Locale 為準
         [StringLength(200)]
         public string? HostLocation { get; set; }                       // 主機位置
         public DateTime? ServiceStartDate { get; set; }                 // 網站開通日期

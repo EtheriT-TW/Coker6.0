@@ -126,7 +126,9 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 OrgName = site == null ? null : site.OrgName,
                 SiteTitle = site == null ? null : site.Title,
                 SiteUrl = site == null ? null : site.DefaultUrl,
-                SiteLevel = site == null ? (WebsiteLevelEnum?)null : site.Level
+                SiteLevel = site == null ? (WebsiteLevelEnum?)null : site.Level,
+                SiteStartDate = site == null ? null : site.StartDate,
+                SiteEndDate = site == null ? null : site.EndDate
             })
             .ToListAsync(HttpContext.RequestAborted);
 
@@ -151,7 +153,10 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 site.Title,
                 site.DefaultUrl,
                 site.Level,
+                site.StartDate,
+                site.EndDate,
                 OtherRecordId = record == null ? (long?)null : record.Id
+
             })
             .ToListAsync(HttpContext.RequestAborted);
 
@@ -161,22 +166,25 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
         return recordRows
             .Select(row =>
             {
-                // 版本以站台實際設定為準，網站資料可能填錯（與網站管理清單同一原則）
+                // 已綁定站台時名稱、版本、日期以後台 Website 為準（與網站管理清單同一原則）
+                var isBound = row.WebsiteId is not null;
                 var level = row.SiteLevel ?? row.RecordLevel;
+                var startDate = isBound ? row.SiteStartDate : row.ServiceStartDate;
+                var endDate = isBound ? row.SiteEndDate : row.ServiceEndDate;
                 return new CustomerWebsiteDto(
                     RowKey: $"P{row.Id}",
                     PlatformWebsiteId: row.Id,
                     WebsiteId: row.WebsiteId,
-                    Name: FirstNonBlank(row.RecordName, row.SiteTitle, row.OrgName),
+                    Name: FirstNonBlank(row.SiteTitle, row.RecordName, row.OrgName),
                     OrgName: row.OrgName,
                     Level: level,
                     LevelText: level?.ToString() ?? string.Empty,
                     Status: row.Status,
                     StatusText: row.Status.ToString(),
                     Url: FirstNonBlank(row.SiteUrl, row.RecordUrl),
-                    ServiceStartDate: row.ServiceStartDate,
-                    ServiceEndDate: row.ServiceEndDate,
-                    RemainingDays: ToRemainingDays(row.ServiceEndDate, today),
+                    ServiceStartDate: startDate,
+                    ServiceEndDate: endDate,
+                    RemainingDays: ToRemainingDays(endDate, today),
                     IsLinkedToOtherCustomer: false);
             })
             .Concat(mappedRows.Select(row => new CustomerWebsiteDto(
@@ -191,9 +199,9 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 Status: null,
                 StatusText: string.Empty,
                 Url: row.DefaultUrl,
-                ServiceStartDate: null,
-                ServiceEndDate: null,
-                RemainingDays: null,
+                ServiceStartDate: row.StartDate,
+                ServiceEndDate: row.EndDate,
+                RemainingDays: ToRemainingDays(row.EndDate, today),
                 IsLinkedToOtherCustomer: row.OtherRecordId is not null)))
             // 還沒建網站資料（Status 為 null）排最前，其餘依狀態、到期日
             .OrderBy(item => item.Status)

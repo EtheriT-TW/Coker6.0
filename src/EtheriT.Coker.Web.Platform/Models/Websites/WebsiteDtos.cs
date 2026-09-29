@@ -50,7 +50,11 @@ public sealed record WebsiteSiteOptionDto(
     string Title,
     string? DefaultUrl,
     WebsiteLevelEnum Level,
-    string Locale);
+    string Locale,
+    DateTime? StartDate,
+    DateTime? EndDate,
+    /// <summary>後台綁定的公司（一站一公司）；null＝後台還沒綁公司。</summary>
+    WebsiteCustomerDto? Company);
 
 public sealed record WebsiteSiteOptionResult(
     IReadOnlyList<WebsiteSiteOptionDto> Items,
@@ -70,6 +74,7 @@ public sealed record WebsiteDetailDto
     public long FK_CompanyId { get; init; }
     public string Name { get; init; } = string.Empty;
     public WebsiteLevelEnum? Level { get; init; }
+    public string? Locale { get; init; }
     public string? HostLocation { get; init; }
     public DateTime? ServiceStartDate { get; init; }
     public DateTime? ServiceEndDate { get; init; }
@@ -105,6 +110,9 @@ public sealed class WebsiteSaveRequest
     public string Name { get; set; } = string.Empty;
 
     public WebsiteLevelEnum? Level { get; set; }
+    /// <summary>zh-tw／en；未綁定可空，已綁定必填。</summary>
+    [StringLength(10)]
+    public string? Locale { get; set; }
 
     [StringLength(200)]
     public string? HostLocation { get; set; }

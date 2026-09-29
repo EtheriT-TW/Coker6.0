@@ -868,6 +868,25 @@ button, input, select, textarea {
             grid-column: 1 / -1;
         }
 
+/* ── UrlField：協定下拉＋網址輸入框併成一列 ── */
+.url-field {
+    display: flex;
+}
+
+    .url-field .url-field-scheme {
+        flex: 0 0 auto;
+        width: auto;
+        background: #f8fafc;
+        border-right: 0;
+        border-radius: 9px 0 0 9px;
+    }
+
+    .url-field .url-field-input {
+        flex: 1 1 auto;
+        min-width: 0;
+        border-radius: 0 9px 9px 0;
+    }
+
 /* 標題與選項整組靠右、同一行；寬度不足時選項換行，兩行都靠右 */
 .form-field-right {
     flex-direction: row;

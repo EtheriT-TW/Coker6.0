@@ -28,6 +28,7 @@
     } from "@/types/website";
     import { toDateInput } from "@/utils/date-input";
     import DateField from "@/components/DateField.vue";
+    import UrlField from "@/components/UrlField.vue";
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
 
@@ -594,17 +595,12 @@
                 </div>
 
                 <div class="form-field form-field-wide">
-                    <label>
-                        <span>網址</span>
-                        <input v-model="form.model.value.Url"
-                               type="text"
-                               inputmode="url"
-                               maxlength="500"
-                               placeholder="例：https://www.example.com.tw"
-                               :disabled="form.model.value.IsDomainPending"
-                               @change="checkDomain()"
-                               @keydown.enter.prevent="checkDomain({ force: true })" />
-                    </label>
+                    <label for="website-url" class="form-label">網址</label>
+                    <UrlField v-model="form.model.value.Url"
+                              input-id="website-url"
+                              :disabled="form.model.value.IsDomainPending"
+                              @change="checkDomain()"
+                              @enter="checkDomain({ force: true })" />
                     <FormFieldErrors :errors="form.getErrors('Url')" />
                     <p v-if="form.model.value.IsDomainPending" class="field-note">網域待申請時不需填寫網址。</p>
                     <p v-if="matchingDomain" class="field-note" role="status">比對網域中…</p>

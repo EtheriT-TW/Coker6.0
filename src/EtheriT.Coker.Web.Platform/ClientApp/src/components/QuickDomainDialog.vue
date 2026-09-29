@@ -11,6 +11,7 @@
     import { createDomain, domainValidation, emptyDomainForm } from "@/services/domain-api";
     import type { DomainDetail, DomainForm } from "@/types/domain";
     import { toDomainName } from "@/utils/domain-name";
+    import DateField from "@/components/DateField.vue";
 
     const props = defineProps<{
         open: boolean;

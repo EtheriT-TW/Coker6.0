@@ -13,6 +13,7 @@
     } from "@/services/domain-api";
     import type { DomainDetail, DomainForm } from "@/types/domain";
     import { toDomainName } from "@/utils/domain-name";
+    import DateField from "@/components/DateField.vue";
 
     const route = useRoute();
     const router = useRouter();

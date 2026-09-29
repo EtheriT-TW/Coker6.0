@@ -18,3 +18,20 @@ export function joinUrl(scheme: UrlScheme, rest: string): string {
     const trimmed = rest.trim();
     return trimmed ? `${scheme}://${trimmed}` : "";
 }
+
+/**
+ * 後台 DefaultUrl 會拿來組金流／物流回呼網址，只能是「協定＋網域」。
+ * 與後端 WebsitesController.ToSiteRoot 規則一致：不可有路徑、參數、錨點（結尾單一斜線可以）。
+ */
+export function isSiteRoot(value: string): boolean {
+    try {
+        const url = new URL(value);
+        return (url.protocol === "https:" || url.protocol === "http:")
+            && url.pathname === "/"
+            && url.search === ""
+            && url.hash === "";
+    }
+    catch {
+        return false;
+    }
+}

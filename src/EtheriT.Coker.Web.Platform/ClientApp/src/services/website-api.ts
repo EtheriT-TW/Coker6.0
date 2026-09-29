@@ -1,11 +1,12 @@
 import { api } from "@/core/coker";
 import { fromDateInput, toDateInput } from "@/utils/date-input";
-import type {
-    WebsiteDetail,
-    WebsiteForm,
-    WebsiteListResult,
-    WebsiteSiteOption,
-    WebsiteSiteOptionResult
+import {
+    websiteLocaleOptions,
+    type WebsiteDetail,
+    type WebsiteForm,
+    type WebsiteListResult,
+    type WebsiteSiteOption,
+    type WebsiteSiteOptionResult
 } from "@/types/website";
 
 const baseUrl = "/api/websites";
@@ -15,12 +16,22 @@ function blankToNull(value: string): string | null {
     return trimmed === "" ? null : trimmed;
 }
 
+/**
+ * 後台舊資料可能存成 "zh-TW"；轉小寫後不在選項內就當作未選擇，
+ * 讓下拉顯示「未選擇」、由必填驗證提醒使用者重選，而不是送出一個後端不認得的值。
+ */
+export function toLocaleInput(value: string | null | undefined): string {
+    const normalized = value?.trim().toLowerCase() ?? "";
+    return websiteLocaleOptions.some(option => option.Value === normalized) ? normalized : "";
+}
+
 function toSaveRequest(form: WebsiteForm) {
     return {
         FK_CompanyId: form.FK_CompanyId,
         FK_WebsiteId: form.FK_WebsiteId,
         Name: form.Name.trim(),
         Level: form.Level,
+        Locale: blankToNull(form.Locale),
         HostLocation: blankToNull(form.HostLocation),
         ServiceStartDate: fromDateInput(form.ServiceStartDate),
         ServiceEndDate: fromDateInput(form.ServiceEndDate),
@@ -39,6 +50,7 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         FK_WebsiteId: detail.FK_WebsiteId,
         Name: detail.Name,
         Level: detail.Level,
+        Locale: toLocaleInput(detail.Locale),
         HostLocation: detail.HostLocation ?? "",
         ServiceStartDate: toDateInput(detail.ServiceStartDate),
         ServiceEndDate: toDateInput(detail.ServiceEndDate),

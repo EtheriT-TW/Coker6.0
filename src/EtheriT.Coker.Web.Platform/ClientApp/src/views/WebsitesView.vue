@@ -202,6 +202,8 @@
                       data-type="number"
                       alignment="right"
                       :min-width="90"
+                      sort-order="asc"
+                      :calculate-sort-value="remainingDaysSortValue"
                       cell-template="remainingDaysCell"
                       :hiding-priority="7" />
             <DxColumn data-field="StatusText"

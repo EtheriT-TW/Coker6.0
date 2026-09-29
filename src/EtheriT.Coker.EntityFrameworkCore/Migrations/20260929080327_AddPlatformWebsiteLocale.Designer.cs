@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929080327_AddPlatformWebsiteLocale")]
+    partial class AddPlatformWebsiteLocale
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3122,67 +3125,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("MappingOldNewUUID");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndPlatformRole", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("PlatformRoleId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlatformRoleId");
-
-                    b.HasIndex("UserId", "PlatformRoleId")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
-
-                    b.ToTable("MappingUserAndPlatformRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            CreationTime = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Local),
-                            CreatorUserId = 1L,
-                            IsDeleted = false,
-                            PlatformRoleId = 1L,
-                            UserId = 1L
-                        });
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndRole", b =>
                 {
                     b.Property<long>("Id")
@@ -5373,107 +5315,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("EndDate");
 
                     b.ToTable("PlatformDomains");
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformRole", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
-                    b.Property<DateTime>("CreationTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<long>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Sort")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
-
-                    b.ToTable("PlatformRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1L,
-                            Code = "PlatformAdministrator",
-                            CreationTime = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Local),
-                            CreatorUserId = 1L,
-                            Description = "可管理 Platform 所有功能、角色與伺服器操作。",
-                            IsDeleted = false,
-                            IsEnabled = true,
-                            Name = "Platform 總管理者",
-                            Sort = 10
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            Code = "PlatformDataManager",
-                            CreationTime = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Local),
-                            CreatorUserId = 1L,
-                            Description = "可管理客戶、網站與網域資料，不可操作伺服器或管理 Platform 角色。",
-                            IsDeleted = false,
-                            IsEnabled = true,
-                            Name = "網站資料管理人員",
-                            Sort = 20
-                        },
-                        new
-                        {
-                            Id = 3L,
-                            Code = "PlatformServerOperator",
-                            CreationTime = new DateTime(2026, 9, 29, 0, 0, 0, 0, DateTimeKind.Local),
-                            CreatorUserId = 1L,
-                            Description = "可檢視監控並執行經確認的主機、IIS、DNS 與 SSL 操作。",
-                            IsDeleted = false,
-                            IsEnabled = true,
-                            Name = "伺服器操作管理員",
-                            Sort = 30
-                        });
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformWebsite", b =>
@@ -10354,25 +10195,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Prod");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndPlatformRole", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.PlatformRole", "PlatformRole")
-                        .WithMany("Users")
-                        .HasForeignKey("PlatformRoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", "User")
-                        .WithMany("PlatformRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("PlatformRole");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.MappingUserAndRole", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Role", "Role")
@@ -11167,11 +10989,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("paymentTypesValues");
                 });
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.PlatformRole", b =>
-                {
-                    b.Navigation("Users");
-                });
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Prod", b =>
                 {
                     b.Navigation("MappingLogisticsSettingAndProds");
@@ -11364,8 +11181,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("PermissionDetails");
 
                     b.Navigation("Permissions");
-
-                    b.Navigation("PlatformRoles");
 
                     b.Navigation("Remotes");
 

@@ -48,6 +48,12 @@ export const hostLocationOptions: Array<{ Value: HostLocationValue; Text: string
     { Value: HostLocation.NAS, Text: "NAS封存" }
 ];
 
+/** 值要與後端 WebsiteLocales.All、Website.Locale 一致（小寫文化代碼）。 */
+export const websiteLocaleOptions: Array<{ Value: string; Text: string }> = [
+    { Value: "zh-tw", Text: "中文（繁體）" },
+    { Value: "en", Text: "英文" }
+];
+
 /**
  * 清單是「後台站台」與「僅合約」的聯集，所以兩個 Id 都可能為 null：
  * - 兩個都有值＝後台站台，且已建立合約資料
@@ -93,6 +99,10 @@ export interface WebsiteSiteOption {
     /** Website.Level 不可為 null，與本頁的 WebsiteForm.Level 不同 */
     Level: WebsiteLevelValue;
     Locale: string;
+    StartDate: string | null;
+    EndDate: string | null;
+    /** 後台綁定的公司；null＝後台還沒綁公司 */
+    Company: WebsiteCustomer | null;
 }
 
 export interface WebsiteSiteOptionResult {
@@ -114,6 +124,7 @@ export interface WebsiteDetail {
     FK_CompanyId: number;
     Name: string;
     Level: WebsiteLevelValue | null;
+    Locale: string | null;
     HostLocation: string | null;
     ServiceStartDate: string | null;
     ServiceEndDate: string | null;
@@ -136,6 +147,7 @@ export interface WebsiteForm {
     FK_WebsiteId: number | null;
     Name: string;
     Level: number | null;
+    Locale: string;
     HostLocation: string;
     ServiceStartDate: string;
     ServiceEndDate: string;

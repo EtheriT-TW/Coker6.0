@@ -37,7 +37,22 @@ public sealed class WebsitesController(
             site.Title,
             site.DefaultUrl,
             site.Level,
-            site.Locale);
+            site.Locale,
+            site.StartDate,
+            site.EndDate,
+            // 後台綁定的公司；舊資料若有多筆固定取最早那筆（存檔時會被 SyncCompanyMappingAsync 擋下）
+            site.Company
+                .Where(mapping => !mapping.IsDeleted && mapping.Company != null)
+                .OrderBy(mapping => mapping.Id)
+                .Select(mapping => new WebsiteCustomerDto(
+                    mapping.Company!.Id,
+                    mapping.Company.Name,
+                    mapping.Company.TaxID,
+                    mapping.Company.Phone,
+                    mapping.Company.Email,
+                    mapping.Company.Contact))
+                .FirstOrDefault());
+
 
     /// <summary>
     /// 網站管理清單＝「後台站台」∪「僅合約」。
@@ -65,14 +80,14 @@ public sealed class WebsitesController(
                 SiteLevel = (WebsiteLevelEnum?)site.Level,
                 PlatformWebsiteId = contract == null ? (long?)null : contract.Id,
                 ContractName = contract == null ? null : contract.Name,
-                ContractLevel = contract == null ? null : contract.Level,
                 ContractUrl = contract == null ? null : contract.Url,
                 FK_CompanyId = contract == null ? (long?)null : contract.FK_CompanyId,
                 CustomerName = customer == null ? null : customer.Name,
                 CustomerTaxId = customer == null ? null : customer.TaxID,
                 Status = contract == null ? (PlatformWebsiteStatusEnum?)null : contract.Status,
-                ServiceStartDate = contract == null ? null : contract.ServiceStartDate,
-                ServiceEndDate = contract == null ? null : contract.ServiceEndDate,
+                // 開通／到期日以後台站台為準（Platform 存檔時也是寫回 Website）
+                site.StartDate,
+                site.EndDate,
                 DomainEndDate = contract == null || contract.Domain == null
                     ? (DateTime?)null
                     : contract.Domain.EndDate
@@ -114,8 +129,8 @@ public sealed class WebsitesController(
                 RowKey: $"W{row.WebsiteId}",
                 PlatformWebsiteId: row.PlatformWebsiteId,
                 WebsiteId: row.WebsiteId,
-                // 合約名稱優先；沒建合約就用站台自己的標題，標題空的再退回 OrgName
-                Name: FirstNonBlank(row.ContractName, row.SiteTitle, row.OrgName),
+                // 名稱以後台站台為準；標題空的（舊資料）才退回合約名稱，再退回 OrgName
+                Name: FirstNonBlank(row.SiteTitle, row.ContractName, row.OrgName),
                 OrgName: row.OrgName,
                 FK_CompanyId: row.FK_CompanyId,
                 CustomerName: row.CustomerName,
@@ -126,9 +141,9 @@ public sealed class WebsitesController(
                 Status: row.Status,
                 StatusText: row.Status?.ToString() ?? string.Empty,
                 Url: FirstNonBlank(row.SiteUrl, row.ContractUrl),
-                ServiceStartDate: row.ServiceStartDate,
-                ServiceEndDate: row.ServiceEndDate,
-                RemainingDays: ToRemainingDays(row.ServiceEndDate, today),
+                ServiceStartDate: row.StartDate,
+                ServiceEndDate: row.EndDate,
+                RemainingDays: ToRemainingDays(row.EndDate, today),
                 DomainEndDate: row.DomainEndDate,
                 IsPending: row.PlatformWebsiteId is null))
             .Concat(contractRows
@@ -187,6 +202,8 @@ public sealed class WebsitesController(
 
         var site = new PlatformWebsite();
         Apply(request, domainId, site);
+        if (!await SyncLinkedSiteAsync(request))
+            return ValidationProblem(ModelState);
 
         db.PlatformWebsites.Add(site);
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
@@ -250,6 +267,10 @@ public sealed class WebsitesController(
             return ValidationProblem(ModelState);
 
         Apply(request, domainId, site);
+
+        if (!await SyncLinkedSiteAsync(request))
+            return ValidationProblem(ModelState);
+
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
 
         var detail = await LoadDetailAsync(site.Id);
@@ -263,27 +284,39 @@ public sealed class WebsitesController(
     {
         return (
             from site in db.PlatformWebsites.AsNoTracking()
-            join customer in db.Companies.AsNoTracking()
-                on site.FK_CompanyId equals customer.Id into customers
-            from customer in customers.DefaultIfEmpty()
-            // 站台可能還沒綁定或已被刪除，一律左外接
+                // 站台可能還沒綁定或已被刪除，一律左外接
             join linked in ActiveSites
                 on site.FK_WebsiteId equals (long?)linked.Id into linkedSites
             from linked in linkedSites.DefaultIfEmpty()
+                // 已綁定站台時客戶以後台的公司關聯為準；後台還沒綁公司才用合約上的客戶
+            let mappedCompanyId = linked == null
+                ? null
+                : db.MappingCompanyAndWebsites
+                    .Where(mapping => !mapping.IsDeleted && mapping.FK_WebsiteId == linked.Id)
+                    .OrderBy(mapping => mapping.Id)
+                    .Select(mapping => (long?)mapping.FK_CompanyId)
+                    .FirstOrDefault()
+            let companyId = mappedCompanyId ?? site.FK_CompanyId
+            join customer in db.Companies.AsNoTracking()
+                on companyId equals customer.Id into customers
+            from customer in customers.DefaultIfEmpty()
             where site.Id == id
             select new WebsiteDetailDto
             {
                 Id = site.Id,
-                FK_CompanyId = site.FK_CompanyId,
-                Name = site.Name,
-                Level = site.Level,
+                FK_CompanyId = companyId,
+                Name = linked != null ? linked.Title : site.Name,
+                Level = linked != null ? (WebsiteLevelEnum?)linked.Level : site.Level,
+                Locale = linked != null ? linked.Locale : site.Locale,
                 HostLocation = site.HostLocation,
-                ServiceStartDate = site.ServiceStartDate,
-                ServiceEndDate = site.ServiceEndDate,
+                ServiceStartDate = linked != null ? linked.StartDate : site.ServiceStartDate,
+                ServiceEndDate = linked != null ? linked.EndDate : site.ServiceEndDate,
                 Status = site.Status,
                 TerminatedDate = site.TerminatedDate,
                 IsDomainPending = site.IsDomainPending,
-                Url = site.Url,
+                Url = site.IsDomainPending
+                    ? null
+                    : linked != null ? linked.DefaultUrl ?? site.Url : site.Url,
                 Domain = site.Domain == null
                     ? null
                     : new DomainSummaryDto(
@@ -302,7 +335,19 @@ public sealed class WebsitesController(
                         linked.Title,
                         linked.DefaultUrl,
                         linked.Level,
-                        linked.Locale),
+                        linked.Locale,
+                        linked.StartDate,
+                        linked.EndDate,
+                        // 後台有綁公司時，上面依 companyId join 出來的 customer 就是那家公司
+                        mappedCompanyId == null || customer == null
+                            ? null
+                            : new WebsiteCustomerDto(
+                                customer.Id,
+                                customer.Name,
+                                customer.TaxID,
+                                customer.Phone,
+                                customer.Email,
+                                customer.Contact)),
                 Customer = customer == null
                     ? null
                     : new WebsiteCustomerDto(
@@ -326,6 +371,10 @@ public sealed class WebsitesController(
 
         if (request.Level.HasValue && !Enum.IsDefined(request.Level.Value))
             ModelState.AddModelError(nameof(request.Level), "網站版本不正確。");
+
+        if (!string.IsNullOrWhiteSpace(request.Locale) && WebsiteLocales.Normalize(request.Locale) is null)
+            ModelState.AddModelError(nameof(request.Locale), "語系不正確。");
+
 
         // 註銷才准填註銷日期，且註銷時必填；前端 disabled 只是體驗，這裡才是真的擋
         var isTerminated = request.Status == PlatformWebsiteStatusEnum.註銷;
@@ -405,13 +454,39 @@ public sealed class WebsitesController(
             ModelState.AddModelError(
                 nameof(request.FK_WebsiteId),
                 $"這個站台已經被「{takenBy}」綁定，請先解除該筆的綁定。");
+
+        ValidateBoundSite(request);
     }
+
+    /// <summary>已綁定站台時，這些欄位會寫進後台 Website，要符合 Website 的限制。</summary>
+    private void ValidateBoundSite(WebsiteSaveRequest request)
+    {
+        if (request.Level is null)
+            ModelState.AddModelError(nameof(request.Level), "已綁定站台時必須選擇網站版本。");
+
+        // 格式錯誤已由 ValidateRequestAsync 回報，這裡只擋空值，避免同一欄出現兩則訊息
+        if (string.IsNullOrWhiteSpace(request.Locale))
+            ModelState.AddModelError(nameof(request.Locale), "已綁定站台時必須選擇語系。");
+
+        // 待申請時不寫後台網址，沿用站台原本的值
+        if (request.IsDomainPending)
+            return;
+
+        var root = ToSiteRoot(request.Url);
+        if (root is null)
+            ModelState.AddModelError(nameof(request.Url),
+                "已綁定站台時，網址必須是網站根網址，例：https://www.example.com.tw（不可包含路徑）。");
+        else if (root.Length > 255)
+            ModelState.AddModelError(nameof(request.Url), "已綁定站台時，網址不可超過 255 個字元。");
+    }
+
 
     private static void Apply(WebsiteSaveRequest request, long? domainId, PlatformWebsite site)
     {
         site.FK_CompanyId = request.FK_CompanyId;
         site.Name = request.Name.Trim();
         site.Level = request.Level;
+        site.Locale = WebsiteLocales.Normalize(request.Locale);
         site.HostLocation = Clean(request.HostLocation);
         site.ServiceStartDate = request.ServiceStartDate?.Date;
         site.ServiceEndDate = request.ServiceEndDate?.Date;
@@ -422,6 +497,87 @@ public sealed class WebsitesController(
         site.FK_PlatformDomainId = domainId;
         site.FK_WebsiteId = request.FK_WebsiteId;   // 有效性已在 ValidateRequestAsync 擋掉
         site.Remark = Clean(request.Remark);
+    }
+
+    /// <summary>
+    /// 已綁定站台時，與 Website 重疊的欄位以 Website 為主，直接寫回後台站台。
+    /// 與合約在同一次 SaveChanges 內完成（同一個交易），不會只改到一邊。
+    /// 網域待申請時不動 DefaultUrl：後台網址必填，金流／物流回呼也靠它組網址。
+    /// </summary>
+    private async Task<bool> SyncLinkedSiteAsync(WebsiteSaveRequest request)
+    {
+        if (request.FK_WebsiteId is not long siteId)
+            return true;
+
+        var linked = await db.Websites
+            .FirstOrDefaultAsync(item => item.Id == siteId && !item.IsDeleted, HttpContext.RequestAborted);
+        // 驗證完到這裡之間站台剛好被刪掉的極端情況
+        if (linked is null)
+        {
+            ModelState.AddModelError(nameof(request.FK_WebsiteId), "找不到對應的站台，請重新搜尋。");
+            return false;
+        }
+
+        linked.Title = request.Name.Trim();
+        linked.Level = request.Level!.Value;                        // 已綁定時必填，ValidateBoundSite 已擋
+        linked.Locale = WebsiteLocales.Normalize(request.Locale)!;  // 同上
+        linked.StartDate = request.ServiceStartDate?.Date;
+        linked.EndDate = request.ServiceEndDate?.Date;
+        if (!request.IsDomainPending)
+            linked.DefaultUrl = ToSiteRoot(request.Url);
+
+        return await SyncCompanyMappingAsync(siteId, request.FK_CompanyId);
+    }
+
+    /// <summary>
+    /// 後台用 MappingCompanyAndWebsites 表示站台屬於哪家公司（一站一公司），
+    /// 後台公司資訊、前台 SEO、訂單通知信副本都讀它。
+    /// 換公司時直接改既有那筆的 FK_CompanyId，不採「軟刪除舊的、再新增」：
+    /// 訂單通知信的查詢沒有排除軟刪除，留下舊紀錄可能讓信寄到舊公司。
+    /// </summary>
+    private async Task<bool> SyncCompanyMappingAsync(long siteId, long companyId)
+    {
+        var mappings = await db.MappingCompanyAndWebsites
+            .Where(item => !item.IsDeleted && item.FK_WebsiteId == siteId)
+            .ToListAsync(HttpContext.RequestAborted);
+
+        // 舊資料可能一站多公司，無法判斷要改哪一筆，交給系統管理者處理
+        if (mappings.Count > 1)
+        {
+            ModelState.AddModelError(nameof(WebsiteSaveRequest.FK_CompanyId),
+                "此站台在後台綁定了多筆公司資料，請由系統管理者確認後再儲存。");
+            return false;
+        }
+
+        if (mappings.Count == 0)
+        {
+            db.MappingCompanyAndWebsites.Add(new MappingCompanyAndWebsites
+            {
+                FK_CompanyId = companyId,
+                FK_WebsiteId = siteId
+            });
+            return true;
+        }
+
+        // 公司沒變時 EF 不會產生 UPDATE，也不會動到稽核欄位
+        mappings[0].FK_CompanyId = companyId;
+        return true;
+    }
+
+    /// <summary>
+    /// 後台 DefaultUrl 會被拿來組金流、物流回呼網址（例：{DefaultUrl}/api/ThirdParty/...），
+    /// 只能是「協定＋主機」，不能帶路徑、參數，結尾也不能有斜線。格式不符回傳 null。
+    /// </summary>
+    private static string? ToSiteRoot(string? url)
+    {
+        if (!Uri.TryCreate(url?.Trim(), UriKind.Absolute, out var uri))
+            return null;
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            return null;
+        if (uri.AbsolutePath != "/" || uri.Query.Length > 0 || uri.Fragment.Length > 0)
+            return null;
+
+        return uri.GetLeftPart(UriPartial.Authority);   // https://www.example.com.tw，不含結尾斜線
     }
 
     private static string? Clean(string? value) =>

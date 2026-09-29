@@ -22,7 +22,7 @@
         hideCancel: false
     });
 
-    const emit = defineEmits<{ confirm: []; cancel: [] }>();
+    const emit = defineEmits<{ confirm: []; cancel: []; alt: [] }>();
 
     const confirmButton = ref<HTMLButtonElement | null>(null);
     let lastFocused: HTMLElement | null = null;

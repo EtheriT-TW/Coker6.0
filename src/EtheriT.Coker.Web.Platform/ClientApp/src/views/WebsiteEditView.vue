@@ -7,12 +7,14 @@
     import QuickDomainDialog from "@/components/QuickDomainDialog.vue";
     import { lookupCustomer } from "@/services/customer-api";
     import { fetchDomainPassword, matchDomain } from "@/services/domain-api";
+    import { isSiteRoot } from "@/utils/url-parts";
 
     import {
         createWebsite,
         fetchSiteOption,
         fetchSiteOptions,
         fetchWebsite,
+        toLocaleInput,
         toWebsiteForm,
         updateWebsite
     } from "@/services/website-api";
@@ -21,6 +23,7 @@
     import {
         WebsiteStatus,
         websiteLevelOptions,
+        websiteLocaleOptions,
         websiteStatusOptions,
         hostLocationOptions,
         type WebsiteDetail,
@@ -30,6 +33,18 @@
     import { toDateInput } from "@/utils/date-input";
     import DateField from "@/components/DateField.vue";
     import UrlField from "@/components/UrlField.vue";
+
+    import BindingDiffDialog from "@/components/BindingDiffDialog.vue";
+    import {
+        blankFieldsToFill,
+        buildBindingDiffs,
+        buildCustomerDiff,
+        siteToFormValues,
+        type BindingDiff,
+        type BindingDiffField,
+        type BindingField
+    } from "@/utils/binding-diff";
+
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
 
@@ -143,6 +158,7 @@
             FK_WebsiteId: null,
             Name: "",
             Level: null,
+            Locale: "",
             HostLocation: "",
             ServiceStartDate: "",
             ServiceEndDate: "",
@@ -163,6 +179,19 @@
                     Number(value) > 0 ? null : "請先輸入統一編號或公司名稱並帶出客戶。")
             ],
             Name: [rules.required("請輸入網站名稱。"), rules.maxLength(250)],
+            // 已綁定站台時這些欄位會寫進後台 Website，規則與後端 ValidateBoundSite 一致
+            Level: [
+                rules.custom<WebsiteForm>((value, model) =>
+                    model.FK_WebsiteId !== null && value === null
+                        ? "已綁定站台時必須選擇網站版本。"
+                        : null)
+            ],
+            Locale: [
+                rules.custom<WebsiteForm>((value, model) =>
+                    model.FK_WebsiteId !== null && !value
+                        ? "已綁定站台時必須選擇語系。"
+                        : null)
+            ],
             TerminatedDate: [
                 rules.custom<WebsiteForm>((value, model) => {
                     const terminated = model.Status === WebsiteStatus.註銷;
@@ -177,7 +206,16 @@
                         ? "網站到期日期不可早於開通日期。"
                         : null)
             ],
-            Url: [rules.maxLength(500, "網站網址不可超過 500 個字元。")]
+            Url: [
+                rules.maxLength(500, "網站網址不可超過 500 個字元。"),
+                rules.custom<WebsiteForm>((value, model) => {
+                    // 待申請時不寫後台網址，沿用站台原本的值
+                    if (model.FK_WebsiteId === null || model.IsDomainPending) return null;
+                    const url = String(value ?? "");
+                    if (!isSiteRoot(url)) return "已綁定站台時，網址必須是網站根網址，例：https://www.example.com.tw（不可包含路徑）。";
+                    return url.length > 255 ? "已綁定站台時，網址不可超過 255 個字元。" : null;
+                })
+            ]
         },
         confirmSave: {
             icon: "save",
@@ -187,7 +225,9 @@
         beforeSave: () => {
             pageError.value = "";
             // 任一彈窗開著時，Ctrl+S 不能偷偷送出底下的網站表單
-            return !isNotFoundDialogOpen.value && !isQuickCustomerOpen.value && !isDomainNotFoundOpen.value && !isQuickDomainOpen.value;
+            return !isNotFoundDialogOpen.value && !isQuickCustomerOpen.value && !isDomainNotFoundOpen.value && !isQuickDomainOpen.value
+                && bindingSite.value === null;
+
         },
         save: values => isEdit.value
             ? updateWebsite(websiteId.value, values)
@@ -218,18 +258,88 @@
     const linkedSite = computed(() =>
         siteOptions.value.find(item => item.Id === form.model.value.FK_WebsiteId) ?? null);
 
-    // Website.Level 是 enum，後端不附文字，這裡用既有對照表轉
-    const linkedSiteLevelText = computed(() => {
-        const site = linkedSite.value;
-        if (!site) return "";
-        return websiteLevelOptions.find(option => option.Value === site.Level)?.Text ?? "";
-    });
+    // 已綁定時，名稱／版本／語系／日期／網址直接讀寫後台 Website，不再有兩份資料要比對
+    const isBound = computed(() => form.model.value.FK_WebsiteId !== null);
 
-    // 本頁的合約版本與站台實際版本不一致時提醒，不阻擋存檔
-    const isLevelMismatch = computed(() =>
-        linkedSite.value !== null
-        && form.model.value.Level !== null
-        && form.model.value.Level !== linkedSite.value.Level);
+        // ── 綁定站台時的差異比對 ──
+    const bindingSite = ref<WebsiteSiteOption | null>(null);
+    const bindingDiffs = ref<BindingDiff[]>([]);
+    let previousSiteId: number | null = null;       // 下拉變更前的站台
+    let siteBeforeBinding: number | null = null;    // 彈窗取消時要還原成這個
+
+    // flush: "sync"：要在 @change 處理之前就記下舊值；預設的非同步 watch 會來不及
+    watch(() => form.model.value.FK_WebsiteId, (_next, prev) => {
+        previousSiteId = prev ?? null;
+    }, { flush: "sync" });
+
+    /** 把站台的指定欄位寫進表單；網址換了就重新比對網域。 */
+    async function applySiteFields(site: WebsiteSiteOption, fields: BindingField[]): Promise<void> {
+        if (fields.length === 0) return;
+        const values = siteToFormValues(site);
+        const picked = Object.fromEntries(fields.map(field => [field, values[field]])) as Partial<WebsiteForm>;
+        form.model.value = { ...form.model.value, ...picked };
+        if (fields.includes("Url")) await checkDomain({ force: true, promptWhenMissing: false });
+    }
+
+        /** 改用站台在後台綁定的公司當客戶。 */
+    function useSiteCustomer(site: WebsiteSiteOption): void {
+        if (!site.Company) return;
+        setCustomer(site.Company);
+        lookupKeyword.value = site.Company.TaxId || site.Company.Name;
+        lookupError.value = "";
+    }
+
+    /** 本頁還沒帶客戶時，直接用站台的公司，不必問。 */
+    function fillCustomerFromSite(site: WebsiteSiteOption): void {
+        if (!customer.value) useSiteCustomer(site);
+    }
+
+    /** 使用者在「對應站台」下拉選了站台（程式設定的不會觸發 change 事件）。 */
+    async function onSiteSelected(): Promise<void> {
+        const site = linkedSite.value;
+        if (!site) return;   // 選回「未綁定」不用比對
+
+        const customerDiff = buildCustomerDiff(customer.value, site);
+        const diffs = [
+            ...(customerDiff ? [customerDiff] : []),
+            ...buildBindingDiffs(form.model.value, site)
+        ];
+        if (diffs.length === 0) {
+            fillCustomerFromSite(site);
+            await applySiteFields(site, blankFieldsToFill(form.model.value, site));
+            return;
+        }
+
+
+        siteBeforeBinding = previousSiteId;
+        bindingDiffs.value = diffs;
+        bindingSite.value = site;
+    }
+
+    async function onBindingApply(siteFields: BindingDiffField[]): Promise<void> {
+        const site = bindingSite.value;
+        closeBindingDialog();
+        if (!site) return;
+
+        // 客戶不在表單模型裡，要先處理；setCustomer 會同步寫入 FK_CompanyId
+        if (siteFields.includes("Customer")) useSiteCustomer(site);
+        else fillCustomerFromSite(site);
+
+        // 空白欄位補站台值＋使用者選「站台」的欄位，一次寫入
+        const formFields = siteFields.filter((field): field is BindingField => field !== "Customer");
+        await applySiteFields(site, [...blankFieldsToFill(form.model.value, site), ...formFields]);
+    }
+
+
+    function onBindingCancel(): void {
+        form.model.value.FK_WebsiteId = siteBeforeBinding;
+        closeBindingDialog();
+    }
+
+    function closeBindingDialog(): void {
+        bindingSite.value = null;
+        bindingDiffs.value = [];
+    }
 
     // 狀態切離「註銷」時清空註銷日期，前後端規則一致
     watch(() => form.model.value.Status, status => {
@@ -416,6 +526,11 @@
         form.model.value.FK_WebsiteId = site.Id;
         form.model.value.Name = site.Title || site.OrgName;
         form.model.value.Level = site.Level;
+        form.model.value.Locale = toLocaleInput(site.Locale);
+        form.model.value.ServiceStartDate = toDateInput(site.StartDate);
+        form.model.value.ServiceEndDate = toDateInput(site.EndDate);
+        fillCustomerFromSite(site);
+
         if (site.DefaultUrl) {
             form.model.value.Url = site.DefaultUrl;
             await checkDomain({ force: true, promptWhenMissing: false });
@@ -474,6 +589,9 @@
     </section>
 
     <p v-if="pageError" class="alert alert-error" role="alert">{{ pageError }}</p>
+    <p v-if="isBound" class="alert alert-info" role="status">
+        已綁定後台站台「{{ linkedSite?.OrgName ?? "—" }}」：網站名稱、版本、語系、開通／到期日與網址會同步更新後台站台，儲存後立即生效。
+    </p>
 
     <form class="form-stack" novalidate @submit.prevent="form.save('button')">
         <!-- ── 客戶與網站資料 ── -->
@@ -567,7 +685,7 @@
             <div class="form-grid">
                 <div class="form-field">
                     <label>
-                        <span>網站版本</span>
+                        <span>網站版本 <i v-if="isBound" class="form-required">*</i></span>
                         <select v-model.number="form.model.value.Level">
                             <option :value="null">未選擇</option>
                             <option v-for="option in websiteLevelOptions" :key="option.Value" :value="option.Value">
@@ -576,6 +694,19 @@
                         </select>
                     </label>
                     <FormFieldErrors :errors="form.getErrors('Level')" />
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>語系 <i v-if="isBound" class="form-required">*</i></span>
+                        <select v-model="form.model.value.Locale">
+                            <option value="">未選擇</option>
+                            <option v-for="option in websiteLocaleOptions" :key="option.Value" :value="option.Value">
+                                {{ option.Text }}
+                            </option>
+                        </select>
+                    </label>
+                    <FormFieldErrors :errors="form.getErrors('Locale')" />
                 </div>
 
                 <div class="form-field">
@@ -659,7 +790,7 @@
                 </div>
 
                 <div class="form-field form-field-wide">
-                    <label for="website-url" class="form-label">網址</label>
+                    <label for="website-url" class="form-label">網址 <i v-if="isBound && !form.model.value.IsDomainPending" class="form-required">*</i></label>
                     <UrlField v-model="form.model.value.Url"
                               input-id="website-url"
                               :disabled="form.model.value.IsDomainPending"
@@ -770,7 +901,9 @@
                 <div class="form-field form-field-wide">
                     <label>
                         <span>對應站台</span>
-                        <select v-model="form.model.value.FK_WebsiteId" :disabled="isSiteLocked">
+                        <select v-model="form.model.value.FK_WebsiteId"
+                                :disabled="isSiteLocked"
+                                @change="onSiteSelected">
                             <option :value="null">未綁定</option>
                             <option v-for="option in siteOptions" :key="option.Id" :value="option.Id">
                                 {{ option.OrgName }}（{{ option.Title || "未命名" }}）
@@ -788,37 +921,6 @@
                     <label>
                         <span>站台代碼（OrgName）</span>
                         <input :value="linkedSite?.OrgName ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台名稱</span>
-                        <input :value="linkedSite?.Title ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台預設網址</span>
-                        <input :value="linkedSite?.DefaultUrl ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台實際版本</span>
-                        <input :value="linkedSiteLevelText" type="text" readonly />
-                    </label>
-                    <p v-if="isLevelMismatch" class="field-note field-note-error" role="status">
-                        與本頁「網站版本」不一致，請確認哪一邊才是對的。
-                    </p>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台語系</span>
-                        <input :value="linkedSite?.Locale ?? ''" type="text" readonly />
                     </label>
                 </div>
             </div>
@@ -881,4 +983,9 @@
                        :initial-domain-name="suggestedDomainName"
                        @cancel="isQuickDomainOpen = false"
                        @created="onDomainCreated" />
+    <BindingDiffDialog :open="bindingSite !== null"
+                       :site-name="bindingSite?.OrgName ?? ''"
+                       :diffs="bindingDiffs"
+                       @apply="onBindingApply"
+                       @cancel="onBindingCancel" />
 </template>

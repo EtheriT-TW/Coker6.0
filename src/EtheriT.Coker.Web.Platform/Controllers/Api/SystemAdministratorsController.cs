@@ -1,5 +1,5 @@
 using System.Data;
-using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Authentication.Backoffice;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Platform.Models.SystemAdministrators;
@@ -11,6 +11,7 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 
 [ApiController]
 [Route("api/system-administrators")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = BackofficeAuthorizationPolicies.PlatformAdministration)]
 public sealed class SystemAdministratorsController(CokerDbContext db, PlatformAuditor auditor) : ControllerBase
 {
     private const int UserLimit = 2000;
@@ -20,12 +21,12 @@ public sealed class SystemAdministratorsController(CokerDbContext db, PlatformAu
     {
         var currentUserId = await auditor.GetCurrentUserIdAsync(HttpContext.RequestAborted);
         var administrators = await (
-            from mapping in db.MappingUserAndRoles.AsNoTracking()
+            from mapping in db.MappingUserAndPlatformRoles.AsNoTracking()
             join user in db.Users.AsNoTracking() on mapping.UserId equals user.Id
-            join role in db.Roles.AsNoTracking() on mapping.RoleId equals role.Id
+            join role in db.PlatformRoles.AsNoTracking() on mapping.PlatformRoleId equals role.Id
             where !mapping.IsDeleted && !user.IsDeleted && !role.IsDeleted &&
-                  role.Type == RoleTypeEnum.系統維護
-            orderby user.Name, user.Account, role.Name
+                  role.IsEnabled
+            orderby user.Name, user.Account, role.Sort, role.Name
             select new SystemAdministratorDto(
                 mapping.Id,
                 user.Id,
@@ -33,6 +34,7 @@ public sealed class SystemAdministratorsController(CokerDbContext db, PlatformAu
                 user.Account ?? string.Empty,
                 user.Email,
                 role.Id,
+                role.Code,
                 role.Name ?? string.Empty,
                 user.Id == currentUserId))
             .ToListAsync(HttpContext.RequestAborted);
@@ -49,14 +51,15 @@ public sealed class SystemAdministratorsController(CokerDbContext db, PlatformAu
                 user.Email))
             .ToListAsync(HttpContext.RequestAborted);
 
-        var roles = await db.Roles.AsNoTracking()
-            .Where(role => !role.IsDeleted && role.Type == RoleTypeEnum.系統維護)
-            .OrderByDescending(role => role.IsSuperUser)
+        var roles = await db.PlatformRoles.AsNoTracking()
+            .Where(role => !role.IsDeleted && role.IsEnabled)
+            .OrderBy(role => role.Sort)
             .ThenBy(role => role.Name)
             .Select(role => new SystemAdministratorRoleOptionDto(
                 role.Id,
-                role.Name ?? string.Empty,
-                role.IsSuperUser))
+                role.Code,
+                role.Name,
+                role.Description))
             .ToListAsync(HttpContext.RequestAborted);
 
         return new SystemAdministratorPageDto(administrators, users, roles);
@@ -77,35 +80,51 @@ public sealed class SystemAdministratorsController(CokerDbContext db, PlatformAu
             return ValidationProblem(ModelState);
         }
 
-        var role = await db.Roles
-            .FirstOrDefaultAsync(item => item.Id == request.RoleId && !item.IsDeleted &&
-                item.Type == RoleTypeEnum.系統維護, HttpContext.RequestAborted);
+        var role = await db.PlatformRoles
+            .FirstOrDefaultAsync(item => item.Id == request.RoleId && !item.IsDeleted && item.IsEnabled,
+                HttpContext.RequestAborted);
         if (role is null)
         {
-            ModelState.AddModelError(nameof(request.RoleId), "找不到指定的系統維護角色。");
+            ModelState.AddModelError(nameof(request.RoleId), "找不到指定的 Platform 角色。");
             return ValidationProblem(ModelState);
         }
 
-        if (await db.MappingUserAndRoles.AnyAsync(item =>
-                !item.IsDeleted && item.UserId == request.UserId && item.RoleId == request.RoleId,
-                HttpContext.RequestAborted))
+        var hasPlatformAdministrator = await db.MappingUserAndPlatformRoles
+            .AnyAsync(item =>
+                !item.IsDeleted &&
+                item.User != null && !item.User.IsDeleted &&
+                item.PlatformRole != null && !item.PlatformRole.IsDeleted && item.PlatformRole.IsEnabled &&
+                item.PlatformRole.Code == PlatformRoleCodes.Administrator,
+                HttpContext.RequestAborted);
+        if (!hasPlatformAdministrator && role.Code != PlatformRoleCodes.Administrator)
         {
-            return Conflict(new { Message = "此使用者已經具有指定的系統管理角色。" });
+            return Conflict(new
+            {
+                Message = "首次分配 Platform 角色必須先建立一位 Platform 總管理者。"
+            });
         }
 
-        var mapping = await db.MappingUserAndRoles
-            .Where(item => item.IsDeleted && item.UserId == request.UserId && item.RoleId == request.RoleId)
+        if (await db.MappingUserAndPlatformRoles.AnyAsync(item =>
+                !item.IsDeleted && item.UserId == request.UserId && item.PlatformRoleId == request.RoleId,
+                HttpContext.RequestAborted))
+        {
+            return Conflict(new { Message = "此使用者已經具有指定的 Platform 角色。" });
+        }
+
+        var mapping = await db.MappingUserAndPlatformRoles
+            .IgnoreQueryFilters()
+            .Where(item => item.IsDeleted && item.UserId == request.UserId && item.PlatformRoleId == request.RoleId)
             .OrderByDescending(item => item.Id)
             .FirstOrDefaultAsync(HttpContext.RequestAborted);
 
         if (mapping is null)
         {
-            mapping = new MappingUserAndRole
+            mapping = new MappingUserAndPlatformRole
             {
                 UserId = user.Id,
-                RoleId = role.Id
+                PlatformRoleId = role.Id
             };
-            db.MappingUserAndRoles.Add(mapping);
+            db.MappingUserAndPlatformRoles.Add(mapping);
         }
         else
         {
@@ -124,6 +143,7 @@ public sealed class SystemAdministratorsController(CokerDbContext db, PlatformAu
             user.Account ?? string.Empty,
             user.Email,
             role.Id,
+            role.Code,
             role.Name ?? string.Empty,
             user.Id == currentUserId));
     }
@@ -135,39 +155,35 @@ public sealed class SystemAdministratorsController(CokerDbContext db, PlatformAu
             IsolationLevel.Serializable,
             HttpContext.RequestAborted);
 
-        var mapping = await db.MappingUserAndRoles
+        var mapping = await db.MappingUserAndPlatformRoles
             .Include(item => item.User)
-            .Include(item => item.Role)
+            .Include(item => item.PlatformRole)
             .FirstOrDefaultAsync(item => item.Id == mappingId && !item.IsDeleted,
                 HttpContext.RequestAborted);
         if (mapping is null || mapping.User is null || mapping.User.IsDeleted ||
-            mapping.Role is null || mapping.Role.IsDeleted || mapping.Role.Type != RoleTypeEnum.系統維護)
+            mapping.PlatformRole is null || mapping.PlatformRole.IsDeleted)
         {
             return NotFound();
         }
 
         var currentUserId = await auditor.GetCurrentUserIdAsync(HttpContext.RequestAborted);
         if (mapping.UserId == currentUserId)
-            return Conflict(new { Message = "不可移除自己目前的系統管理角色。" });
+            return Conflict(new { Message = "不可移除自己目前的 Platform 角色。" });
 
-        var targetHasAnotherSystemRole = await db.MappingUserAndRoles
-            .AnyAsync(item => !item.IsDeleted && item.UserId == mapping.UserId && item.Id != mapping.Id &&
-                item.Role != null && !item.Role.IsDeleted && item.Role.Type == RoleTypeEnum.系統維護,
-                HttpContext.RequestAborted);
-
-        if (!targetHasAnotherSystemRole)
+        if (mapping.PlatformRole.Code == PlatformRoleCodes.Administrator)
         {
-            var administratorCount = await db.MappingUserAndRoles
+            var administratorCount = await db.MappingUserAndPlatformRoles
                 .Where(item => !item.IsDeleted && item.User != null && !item.User.IsDeleted &&
-                    item.Role != null && !item.Role.IsDeleted && item.Role.Type == RoleTypeEnum.系統維護)
+                    item.PlatformRole != null && !item.PlatformRole.IsDeleted && item.PlatformRole.IsEnabled &&
+                    item.PlatformRole.Code == PlatformRoleCodes.Administrator)
                 .Select(item => item.UserId)
                 .Distinct()
                 .CountAsync(HttpContext.RequestAborted);
             if (administratorCount <= 1)
-                return Conflict(new { Message = "系統至少必須保留一位管理者。" });
+                return Conflict(new { Message = "Platform 至少必須保留一位總管理者。" });
         }
 
-        db.MappingUserAndRoles.Remove(mapping);
+        db.MappingUserAndPlatformRoles.Remove(mapping);
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
         await transaction.CommitAsync(HttpContext.RequestAborted);
         return NoContent();

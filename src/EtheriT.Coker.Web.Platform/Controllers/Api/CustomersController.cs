@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 // ⚠ 會連動前台 SEO 結構化資料、訂單通知信 CC、後台以統編／名稱比對公司，所以統編與名稱不可重複。
 [ApiController]
 [Route("api/companies")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformDataManagement)]
 public sealed class CustomersController(CokerDbContext db, PlatformAuditor auditor) : ControllerBase
 {
     private const int ListLimit = 2000;

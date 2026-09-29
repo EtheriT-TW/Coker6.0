@@ -12,12 +12,17 @@ public sealed class PlatformContextController(
     IConfiguration configuration,
     IOptions<BackofficeSessionOptions> sessionOptions,
     IAntiforgery antiforgery,
-    PlatformReauthenticationTicketService reauthenticationTicketService) : ControllerBase
+    PlatformReauthenticationTicketService reauthenticationTicketService,
+    PlatformAuthorizationService platformAuthorizationService) : ControllerBase
 {
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> Get()
     {
         var antiforgeryTokens = antiforgery.GetAndStoreTokens(HttpContext);
+        var roleCodes = await platformAuthorizationService.GetRoleCodesAsync(
+            User.Identity?.Name,
+            HttpContext.RequestAborted);
+        var isAdministrator = roleCodes.Contains(EtheriT.Coker.Core.Models.PlatformRoleCodes.Administrator);
 
         return Ok(new
         {
@@ -28,7 +33,12 @@ public sealed class PlatformContextController(
                 (int)sessionOptions.Value.ActivityPingInterval.TotalSeconds),
             AntiforgeryToken = antiforgeryTokens.RequestToken ?? string.Empty,
             ReauthenticationTicket = reauthenticationTicketService.Create(
-                User.Identity?.Name ?? string.Empty)
+                User.Identity?.Name ?? string.Empty),
+            CanManagePlatformData = isAdministrator ||
+                roleCodes.Contains(EtheriT.Coker.Core.Models.PlatformRoleCodes.DataManager),
+            CanControlServers = isAdministrator ||
+                roleCodes.Contains(EtheriT.Coker.Core.Models.PlatformRoleCodes.ServerOperator),
+            CanManagePlatformRoles = isAdministrator
         });
     }
 }

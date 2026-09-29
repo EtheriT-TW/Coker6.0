@@ -7,11 +7,16 @@ public sealed record SystemAdministratorDto(
     string Account,
     string? Email,
     long RoleId,
+    string RoleCode,
     string RoleName,
     bool IsCurrentUser);
 
 public sealed record SystemAdministratorUserOptionDto(long Id, string Name, string Account, string? Email);
-public sealed record SystemAdministratorRoleOptionDto(long Id, string Name, bool IsSuperUser);
+public sealed record SystemAdministratorRoleOptionDto(
+    long Id,
+    string Code,
+    string Name,
+    string Description);
 
 public sealed record SystemAdministratorPageDto(
     IReadOnlyList<SystemAdministratorDto> Administrators,

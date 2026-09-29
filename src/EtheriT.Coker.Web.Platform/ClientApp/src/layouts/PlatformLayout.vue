@@ -24,6 +24,9 @@
     const userName = ref("-");
     const mvcUrl = ref("/");
     const mvcLoginUrl = ref("/");
+    const canManagePlatformData = ref(false);
+    const canControlServers = ref(false);
+    const canManagePlatformRoles = ref(false);
     const sessionState = ref<SessionState | null>(null);
     const checkingSession = ref(false);
     const logoutConfirmationOpen = ref(false);
@@ -65,21 +68,27 @@
         typeof route.meta.nav === "string" ? route.meta.nav : route.path
     );
 
-    const platformLinks = [
+    const platformLinks = computed(() => [
         { to: "/", icon: "space_dashboard", label: "總覽" },
-        { to: "/companies", icon: "domain", label: "客戶資料" },
-        { to: "/websites", icon: "language", label: "網站管理" },
-        { to: "/domains", icon: "dns", label: "網域管理" },
+        ...(canManagePlatformData.value ? [
+            { to: "/companies", icon: "domain", label: "客戶資料" },
+            { to: "/websites", icon: "language", label: "網站管理" },
+            { to: "/domains", icon: "dns", label: "網域管理" }
+        ] : []),
         { to: "/licenses", icon: "verified_user", label: "版本與授權" }
-    ];
+    ]);
 
-    const operationLinks = [
+    const operationLinks = computed(() => [
         { to: "/analytics", icon: "monitoring", label: "營運分析" },
         { to: "/server-monitoring", icon: "speed", label: "伺服器監控" },
-        { to: "/provisioning-test", icon: "dns", label: "主機操作測試" },
-        { to: "/system-administrators", icon: "admin_panel_settings", label: "系統管理者" },
-        { to: "/settings", icon: "settings", label: "系統設定" }
-    ];
+        ...(canControlServers.value ? [
+            { to: "/provisioning-test", icon: "dns", label: "主機操作測試" }
+        ] : []),
+        ...(canManagePlatformRoles.value ? [
+            { to: "/system-administrators", icon: "admin_panel_settings", label: "系統管理者" },
+            { to: "/settings", icon: "settings", label: "系統設定" }
+        ] : [])
+    ]);
 
     watch(() => route.fullPath, (path) => {
         sidebarOpen.value = false;
@@ -141,6 +150,9 @@
         try {
             const context = await getPlatformContext();
             userName.value = context.UserName;
+            canManagePlatformData.value = context.CanManagePlatformData;
+            canControlServers.value = context.CanControlServers;
+            canManagePlatformRoles.value = context.CanManagePlatformRoles;
             mvcUrl.value = `${context.MvcUrl}/Welcome`;
             mvcLoginUrl.value = `${context.MvcUrl}/Account/Index`;
             navigationPreferenceReady = true;

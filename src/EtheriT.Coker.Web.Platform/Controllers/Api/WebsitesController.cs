@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 // 不提供 DELETE：網站以「註銷」取代刪除。
 [ApiController]
 [Route("api/websites")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformDataManagement)]
 public sealed class WebsitesController(
     CokerDbContext db,
     PlatformAuditor auditor) : ControllerBase

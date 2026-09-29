@@ -40,7 +40,7 @@ public sealed class NavigationController(
             return Ok(new { Url = preference.Path });
         }
 
-        if (!await loginUserData.isSystemUser())
+        if (!await loginUserData.CanAccessPlatform())
         {
             return Ok(new { Url = "/Welcome" });
         }

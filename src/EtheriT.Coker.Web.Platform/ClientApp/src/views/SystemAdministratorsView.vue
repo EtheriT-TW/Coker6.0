@@ -100,7 +100,7 @@ onMounted(load);
   <section class="page-heading">
     <div>
       <h1>系統管理者</h1>
-      <p>管理可登入 Coker Platform 的系統維護角色成員；移除只會解除角色，不會刪除使用者帳號。</p>
+      <p>管理 Coker Platform 專用角色；這些角色與 MVC 後台角色、IsSuperUser 彼此獨立。</p>
     </div>
   </section>
 
@@ -120,24 +120,25 @@ onMounted(load);
                    placeholder="搜尋姓名、帳號或 Email" />
     </div>
     <div class="add-field role-field">
-      <label for="administrator-role">系統維護角色</label>
+      <label for="administrator-role">Platform 角色</label>
       <select id="administrator-role" v-model.number="selectedRoleId">
         <option v-for="role in roles" :key="role.Id" :value="role.Id">
-          {{ role.Name }}{{ role.IsSuperUser ? "（總管理者）" : "" }}
+          {{ role.Name }}
         </option>
       </select>
+      <small v-if="selectedRole" class="role-description">{{ selectedRole.Description }}</small>
     </div>
     <button class="ui-button ui-button-primary"
             type="button"
             :disabled="saving || !selectedUserId || !selectedRoleId"
             @click="add">
       <span class="material-symbols-outlined">person_add</span>
-      加入系統管理者
+      分配 Platform 角色
     </button>
   </section>
 
   <p v-if="!roles.length && !loading" class="alert alert-warning" role="status">
-    目前沒有有效的「系統維護」角色，請先確認 Roles 資料。
+    目前沒有有效的 Platform 角色，請確認 PlatformRoles Seed 與 Migration 是否已套用。
   </p>
 
   <section class="data-card">
@@ -147,13 +148,13 @@ onMounted(load);
                 :column-auto-width="true"
                 :column-hiding-enabled="true"
                 :hover-state-enabled="true"
-                no-data-text="目前沒有系統管理者">
+                no-data-text="目前尚未分配 Platform 角色">
       <DxSearchPanel :visible="true" :width="280" placeholder="搜尋姓名、帳號、角色" />
       <DxPaging :page-size="20" />
       <DxColumn data-field="Name" caption="姓名" :min-width="140" />
       <DxColumn data-field="Account" caption="帳號" :min-width="150" />
       <DxColumn data-field="Email" caption="Email" :min-width="200" />
-      <DxColumn data-field="RoleName" caption="系統角色" :min-width="160" />
+      <DxColumn data-field="RoleName" caption="Platform 角色" :min-width="180" />
       <DxColumn caption="操作" :width="90" :allow-sorting="false" cell-template="actions" />
       <template #actions="{ data }">
         <button class="text-button text-button-danger"
@@ -183,5 +184,6 @@ onMounted(load);
 .add-field { display: grid; gap: .4rem; }
 .add-field label { font-size: .86rem; font-weight: 700; color: #445064; }
 .add-field select { height: 38px; padding: 0 .65rem; border: 1px solid #d3d9e3; border-radius: 4px; background: #fff; }
+.role-description { color: #687386; line-height: 1.45; }
 @media (max-width: 900px) { .add-card { grid-template-columns: 1fr; align-items: stretch; } }
 </style>

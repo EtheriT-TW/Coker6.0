@@ -62,6 +62,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<Prod_Price> Prod_Prices { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<MappingUserAndRole> MappingUserAndRoles { get; set; }
+        public DbSet<PlatformRole> PlatformRoles { get; set; }
+        public DbSet<MappingUserAndPlatformRole> MappingUserAndPlatformRoles { get; set; }
         public DbSet<Prod_TechCert> Prod_TechCerts { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<Tag_Associate> Tag_Associates { get; set; }
@@ -549,6 +551,27 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.HasOne(w => w.Role).WithMany(w => w.Users).HasForeignKey(f => f.RoleId);
                 o.HasOne(u => u.User).WithMany(u => u.Roles).HasForeignKey(f => f.UserId);
+            });
+            modelBuilder.Entity<PlatformRole>(o =>
+            {
+                o.ToTable("PlatformRoles");
+                o.Property(x => x.Code).HasMaxLength(80);
+                o.Property(x => x.Name).HasMaxLength(100);
+                o.Property(x => x.Description).HasMaxLength(500);
+                o.HasIndex(x => x.Code).IsUnique().HasFilter("[IsDeleted] = 0");
+            });
+            modelBuilder.Entity<MappingUserAndPlatformRole>(o =>
+            {
+                o.ToTable("MappingUserAndPlatformRoles");
+                o.HasOne(x => x.PlatformRole).WithMany(x => x.Users)
+                    .HasForeignKey(x => x.PlatformRoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                o.HasOne(x => x.User).WithMany(x => x.PlatformRoles)
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                o.HasIndex(x => new { x.UserId, x.PlatformRoleId })
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
             });
             modelBuilder.Entity<Tag>(o =>
             {

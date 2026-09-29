@@ -10,6 +10,7 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 // 不提供 DELETE：網站以 Restrict FK 參照網域。
 [ApiController]
 [Route("api/domains")]
+[Microsoft.AspNetCore.Authorization.Authorize(Policy = EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformDataManagement)]
 public sealed class DomainsController(
     CokerDbContext db,
     PlatformAuditor auditor,

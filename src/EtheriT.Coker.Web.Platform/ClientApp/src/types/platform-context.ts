@@ -4,4 +4,7 @@ export interface PlatformContext {
   SessionActivityIntervalSeconds: number;
   AntiforgeryToken: string;
   ReauthenticationTicket: string;
+  CanManagePlatformData: boolean;
+  CanControlServers: boolean;
+  CanManagePlatformRoles: boolean;
 }

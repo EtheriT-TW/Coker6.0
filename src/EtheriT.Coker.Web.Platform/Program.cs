@@ -82,7 +82,9 @@ builder.Services.AddCokerBackofficeAuthentication(
 builder.Services.AddScoped<IBackofficeSessionValidator, PlatformBackofficeSessionValidator>();
 builder.Services.AddSingleton<PlatformReauthenticationTicketService>();
 builder.Services.AddScoped<PlatformReauthenticationService>();
+builder.Services.AddScoped<PlatformAuthorizationService>();
 builder.Services.AddScoped<IAuthorizationHandler, PlatformAccessHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PlatformRoleHandler>();
 builder.Services.AddScoped<PlatformAuditor>();
 builder.Services.AddSingleton<PlatformDomainPasswordProtector>();
 builder.Services.AddSingleton<ViteManifestService>();
@@ -95,6 +97,20 @@ builder.Services.AddAuthorization(options =>
         .Build();
 
     options.AddPolicy(BackofficeAuthorizationPolicies.PlatformAccess, platformAccessPolicy);
+    options.AddPolicy(BackofficeAuthorizationPolicies.PlatformDataManagement, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new PlatformRoleRequirement(
+            EtheriT.Coker.Core.Models.PlatformRoleCodes.Administrator,
+            EtheriT.Coker.Core.Models.PlatformRoleCodes.DataManager)));
+    options.AddPolicy(BackofficeAuthorizationPolicies.PlatformServerControl, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new PlatformRoleRequirement(
+            EtheriT.Coker.Core.Models.PlatformRoleCodes.Administrator,
+            EtheriT.Coker.Core.Models.PlatformRoleCodes.ServerOperator)));
+    options.AddPolicy(BackofficeAuthorizationPolicies.PlatformAdministration, policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new PlatformRoleRequirement(
+            EtheriT.Coker.Core.Models.PlatformRoleCodes.Administrator)));
 });
 
 var app = builder.Build();

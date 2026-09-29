@@ -4,6 +4,7 @@ import { RouterLink } from "vue-router";
 import MetricLineChart from "@/components/MetricLineChart.vue";
 import { requestAlert, requestConfirm } from "@/core/coker";
 import { createProvisioningTask, fetchProvisioningAgents, fetchProvisioningMetricHistory, fetchProvisioningServers } from "@/services/provisioning-api";
+import { getPlatformContext } from "@/services/platform-context";
 import { ProvisioningTaskType, type ProvisioningAgentStatus, type ProvisioningAppPoolMetric, type ProvisioningIisSiteBinding, type ProvisioningMetricHistory, type ProvisioningServer } from "@/types/provisioning";
 
 const servers = ref<ProvisioningServer[]>([]);
@@ -15,6 +16,7 @@ const loading = ref(false);
 const historyLoading = ref(false);
 const submittingSite = ref("");
 const errorMessage = ref("");
+const canControlServers = ref(false);
 let refreshTimer: number | undefined;
 
 const currentAgent = computed(() => agents.value.find(x => x.ServerId === selectedServer.value) ?? null);
@@ -190,7 +192,13 @@ function formatTime(value: string | null | undefined): string {
 }
 
 watch([selectedServer, selectedDays], () => void loadHistory());
-onMounted(() => {
+onMounted(async () => {
+  try {
+    canControlServers.value = (await getPlatformContext()).CanControlServers;
+  }
+  catch (error) {
+    console.error(error);
+  }
   void loadOverview();
   refreshTimer = window.setInterval(() => void loadOverview(true), 15_000);
 });
@@ -200,7 +208,7 @@ onBeforeUnmount(() => { if (refreshTimer !== undefined) window.clearInterval(ref
 <template>
   <section class="page-heading">
     <div><h1>伺服器監控</h1><p>遠端查看主機、磁碟與 IIS 網站資源使用狀況。</p></div>
-    <div class="heading-actions"><RouterLink class="ui-button" :to="{ path: '/provisioning-test', query: { server: selectedServer } }">前往主機操作</RouterLink><button class="ui-button" type="button" :disabled="loading || historyLoading" @click="refreshAll()">重新整理</button></div>
+    <div class="heading-actions"><RouterLink v-if="canControlServers" class="ui-button" :to="{ path: '/provisioning-test', query: { server: selectedServer } }">前往主機操作</RouterLink><button class="ui-button" type="button" :disabled="loading || historyLoading" @click="refreshAll()">重新整理</button></div>
   </section>
 
   <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
@@ -225,7 +233,7 @@ onBeforeUnmount(() => { if (refreshTimer !== undefined) window.clearInterval(ref
   <section class="data-card pool-card">
     <header><div><h2>IIS 網站資源使用量</h2><p>依 Private Memory 由高至低排序；回收期間會加總同一 Application Pool 的所有 PID。</p></div><span>{{ applicationPools.length }} 個網站集區</span></header>
     <div class="table-wrap"><table><thead><tr><th>IIS 網站／綁定網址</th><th>Application Pool</th><th>集區狀態</th><th>PID</th><th>CPU</th><th>Private Memory</th><th>Working Set</th><th>操作</th></tr></thead>
-      <tbody><tr v-for="pool in applicationPools" :key="pool.ApplicationPoolName"><td><strong>{{ pool.WebsiteNames?.join("、") || pool.SiteNames.join("、") || "未綁定網站" }}</strong><small v-if="pool.WebsiteNames?.length && pool.SiteNames.length" class="binding-hosts">IIS：{{ pool.SiteNames.join("、") }}</small><small v-if="pool.HostNames?.length" class="binding-hosts">{{ pool.HostNames.join("、") }}</small></td><td>{{ pool.ApplicationPoolName }}</td><td><span class="pool-state" :class="pool.State.toLowerCase() === 'started' ? 'started' : ''">{{ pool.State }}</span></td><td>{{ pool.ProcessIds.join(", ") || "—" }}</td><td>{{ formatPercent(pool.CpuUsagePercent) }}</td><td><strong>{{ formatBytes(pool.PrivateMemoryBytes) }}</strong></td><td>{{ formatBytes(pool.WorkingSetBytes) }}</td><td><div v-if="getSiteBindings(pool).length" class="site-controls"><div v-for="site in getSiteBindings(pool)" :key="site.SiteName" class="site-control"><small v-if="getSiteBindings(pool).length > 1">{{ site.SiteName }}</small><div><button v-if="!isSiteStarted(site)" class="table-action icon-action" type="button" title="啟動 IIS 網站" :aria-label="`啟動 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, true)"><span class="material-symbols-outlined">play_arrow</span></button><button v-else class="table-action icon-action danger-action" type="button" title="停止 IIS 網站" :aria-label="`停止 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, false)"><span class="material-symbols-outlined">stop</span></button><button class="table-action icon-action ssl-action" type="button" :title="site.HostNames.length ? `安裝 SSL：${site.HostNames.join('、')}` : '此 IIS 網站沒有可申請 SSL 的主機名稱綁定'" :aria-label="`為 IIS 網站 ${site.SiteName} 安裝 SSL`" :disabled="!currentAgent?.IsOnline || !!submittingSite || !site.HostNames.length" @click="installSsl(site.SiteName, site.HostNames)"><span class="material-symbols-outlined">lock</span></button></div></div></div><span v-else>—</span></td></tr><tr v-if="!applicationPools.length"><td colspan="8">{{ currentAgent?.IsOnline ? "Worker 未回報 IIS Application Pool；請檢查執行帳號是否有權限讀取 IIS 設定" : "Worker 離線，無法取得 IIS 資料" }}</td></tr></tbody>
+      <tbody><tr v-for="pool in applicationPools" :key="pool.ApplicationPoolName"><td><strong>{{ pool.WebsiteNames?.join("、") || pool.SiteNames.join("、") || "未綁定網站" }}</strong><small v-if="pool.WebsiteNames?.length && pool.SiteNames.length" class="binding-hosts">IIS：{{ pool.SiteNames.join("、") }}</small><small v-if="pool.HostNames?.length" class="binding-hosts">{{ pool.HostNames.join("、") }}</small></td><td>{{ pool.ApplicationPoolName }}</td><td><span class="pool-state" :class="pool.State.toLowerCase() === 'started' ? 'started' : ''">{{ pool.State }}</span></td><td>{{ pool.ProcessIds.join(", ") || "—" }}</td><td>{{ formatPercent(pool.CpuUsagePercent) }}</td><td><strong>{{ formatBytes(pool.PrivateMemoryBytes) }}</strong></td><td>{{ formatBytes(pool.WorkingSetBytes) }}</td><td><div v-if="canControlServers && getSiteBindings(pool).length" class="site-controls"><div v-for="site in getSiteBindings(pool)" :key="site.SiteName" class="site-control"><small v-if="getSiteBindings(pool).length > 1">{{ site.SiteName }}</small><div><button v-if="!isSiteStarted(site)" class="table-action icon-action" type="button" title="啟動 IIS 網站" :aria-label="`啟動 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, true)"><span class="material-symbols-outlined">play_arrow</span></button><button v-else class="table-action icon-action danger-action" type="button" title="停止 IIS 網站" :aria-label="`停止 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, false)"><span class="material-symbols-outlined">stop</span></button><button class="table-action icon-action ssl-action" type="button" :title="site.HostNames.length ? `安裝 SSL：${site.HostNames.join('、')}` : '此 IIS 網站沒有可申請 SSL 的主機名稱綁定'" :aria-label="`為 IIS 網站 ${site.SiteName} 安裝 SSL`" :disabled="!currentAgent?.IsOnline || !!submittingSite || !site.HostNames.length" @click="installSsl(site.SiteName, site.HostNames)"><span class="material-symbols-outlined">lock</span></button></div></div></div><span v-else>—</span></td></tr><tr v-if="!applicationPools.length"><td colspan="8">{{ currentAgent?.IsOnline ? "Worker 未回報 IIS Application Pool；請檢查執行帳號是否有權限讀取 IIS 設定" : "Worker 離線，無法取得 IIS 資料" }}</td></tr></tbody>
     </table></div>
   </section>
 </template>

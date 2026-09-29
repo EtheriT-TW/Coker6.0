@@ -41,6 +41,7 @@ namespace EtheriT.Coker.Web.Core.Models
         public List<FrontUser> frontUsers { get; set; }
         public List<MappingUserAndWebsite> Webs { get; set; }
         public List<MappingUserAndRole> Roles { get; set; }
+        public List<MappingUserAndPlatformRole> PlatformRoles { get; set; }
         public List<Permissions> Permissions { get; set; }
 		public List<Remote> Remotes { get; set; }
         public List<PermissionDetail> PermissionDetails { get; set; }

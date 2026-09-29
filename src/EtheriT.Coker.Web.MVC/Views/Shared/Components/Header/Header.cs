@@ -25,7 +25,7 @@ namespace EtheriT.Coker.Web.MVC.Views.Shared.Components.Header
             HeaderModel model = new HeaderModel { 
                 User = user,
                 DefaultUrl = await loginUserData.GetWebsiteUrl(),
-                CanAccessPlatform = await loginUserData.isSystemUser(),
+                CanAccessPlatform = await loginUserData.CanAccessPlatform(),
                 PlatformUrl = configuration["SystemLinks:PlatformUrl"] ?? string.Empty
             };
             return View(model);

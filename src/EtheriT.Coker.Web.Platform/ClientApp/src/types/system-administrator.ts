@@ -5,6 +5,7 @@ export interface SystemAdministrator {
   Account: string;
   Email: string | null;
   RoleId: number;
+  RoleCode: string;
   RoleName: string;
   IsCurrentUser: boolean;
 }
@@ -18,8 +19,9 @@ export interface SystemAdministratorUserOption {
 
 export interface SystemAdministratorRoleOption {
   Id: number;
+  Code: string;
   Name: string;
-  IsSuperUser: boolean;
+  Description: string;
 }
 
 export interface SystemAdministratorPage {

@@ -148,6 +148,7 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
     }
 
     [HttpPost]
+    [Authorize(Policy = EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformServerControl)]
     public async Task<ActionResult<ProvisioningTaskDto>> Create(CreateProvisioningTaskRequest request)
     {
         Validate(request);

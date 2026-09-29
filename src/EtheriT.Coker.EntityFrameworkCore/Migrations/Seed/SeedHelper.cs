@@ -22,6 +22,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
             ComponentPurposeSeed.Seed(modelBuilder);
             StoreSetSeed.Seed(modelBuilder);
             RoleSeed.Seed(modelBuilder);
+            PlatformRoleSeed.Seed(modelBuilder);
             ThirdPartySeed.Seed(modelBuilder);
             LogisticsType_PaymentTypeSeed.Seed(modelBuilder);
         }

@@ -1,4 +1,3 @@
-using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
 using EtheriT.Coker.Web.Platform.Models;
@@ -16,6 +15,7 @@ public sealed class PlatformReauthenticationService(
     IHttpContextAccessor httpContextAccessor,
     IConfiguration configuration,
     PlatformReauthenticationTicketService ticketService,
+    PlatformAuthorizationService platformAuthorizationService,
     IOptions<EtheriT.Coker.Authentication.Backoffice.BackofficeSessionOptions> sessionOptions)
 {
     private static readonly PasswordHasher<User> PasswordHasher = new();
@@ -52,12 +52,9 @@ public sealed class PlatformReauthenticationService(
             return new ReauthenticateResponse(false, "密碼不正確，請重新輸入。");
         }
 
-        var canAccessPlatform = await db.MappingUserAndRoles.AnyAsync(mapping =>
-            !mapping.IsDeleted &&
-            mapping.UserId == user.Id &&
-            mapping.Role != null &&
-            !mapping.Role.IsDeleted &&
-            mapping.Role.Type == RoleTypeEnum.系統維護,
+        var canAccessPlatform = await platformAuthorizationService.HasAnyRoleAsync(
+            user.Account,
+            EtheriT.Coker.Core.Models.PlatformRoleCodes.All,
             cancellationToken);
 
         if (!canAccessPlatform)

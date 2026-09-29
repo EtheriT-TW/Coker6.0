@@ -6,7 +6,8 @@
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
     import QuickDomainDialog from "@/components/QuickDomainDialog.vue";
     import { lookupCustomer } from "@/services/customer-api";
-    import { matchDomain } from "@/services/domain-api";
+    import { fetchDomainPassword, matchDomain } from "@/services/domain-api";
+
     import {
         createWebsite,
         fetchSiteOption,
@@ -27,6 +28,8 @@
         type WebsiteSiteOption
     } from "@/types/website";
     import { toDateInput } from "@/utils/date-input";
+    import DateField from "@/components/DateField.vue";
+    import UrlField from "@/components/UrlField.vue";
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
 
@@ -85,6 +88,52 @@
     const isQuickDomainOpen = ref(false);
     let matchSequence = 0;                 // 比對請求序號，舊回應晚到時丟棄
 
+        // ── 網域密碼（唯讀；要改請到網域編輯頁） ──
+    const PASSWORD_MASK = "********";
+    const domainPassword = ref<string | null>(null);   // 按眼睛後讀回的明文；null＝遮罩中
+    const revealingPassword = ref(false);
+    const domainPasswordNotice = ref("");
+
+    const domainPasswordDisplay = computed(() => {
+        if (!matchedDomain.value?.HasPassword) return "";
+        return domainPassword.value ?? PASSWORD_MASK;
+    });
+
+    // 比對到別的網域時清掉明文，避免顯示成上一個網域的密碼
+    watch(() => matchedDomain.value?.Id, () => {
+        domainPassword.value = null;
+        domainPasswordNotice.value = "";
+    });
+
+    async function toggleDomainPassword(): Promise<void> {
+        if (domainPassword.value !== null) {
+            domainPassword.value = null;
+            return;
+        }
+
+        const domainId = matchedDomain.value?.Id;
+        if (!domainId) return;
+
+        revealingPassword.value = true;
+        domainPasswordNotice.value = "";
+        try {
+            const result = await fetchDomainPassword(domainId);
+            // 等回應期間網址被改掉、換了網域，就丟掉這次結果
+            if (matchedDomain.value?.Id !== domainId) return;
+
+            if (result.State === "Ok") domainPassword.value = result.Password ?? "";
+            else if (result.State === "Empty") domainPasswordNotice.value = "這筆網域尚未記錄密碼。";
+            else domainPasswordNotice.value = "密碼已無法讀取，請到網域資料重新輸入。";
+        }
+        catch (error) {
+            console.error(error);
+            domainPasswordNotice.value = "讀取網域密碼失敗，請稍後再試。";
+        }
+        finally {
+            revealingPassword.value = false;
+        }
+    }
+
     const isDomainMissing = computed(() =>
         unmatchedHost.value !== "" && matchedDomain.value === null && !matchingDomain.value);
 
@@ -129,6 +178,11 @@
                         : null)
             ],
             Url: [rules.maxLength(500, "網站網址不可超過 500 個字元。")]
+        },
+        confirmSave: {
+            icon: "save",
+            title: "確認儲存",
+            message: "確定要儲存這筆網站資料嗎？儲存後會返回網站清單。"
         },
         beforeSave: () => {
             pageError.value = "";
@@ -428,6 +482,12 @@
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-customer-title">客戶與網站資料</span>
+                <RouterLink v-if="isEdit && customer && !isCustomerDeleted"
+                            class="ui-button ui-button-secondary"
+                            :to="{name:'company-edit', params:{id: customer.Id}, query: { returnTo: route.fullPath } }">
+                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    <span>編輯客戶資料</span>
+                </RouterLink>
             </div>
 
             <p v-if="isCustomerDeleted" class="alert alert-warning" role="status">
@@ -533,14 +593,14 @@
                 <div class="form-field">
                     <label>
                         <span>網站開通日期</span>
-                        <input v-model="form.model.value.ServiceStartDate" type="date" />
+                        <DateField v-model="form.model.value.ServiceStartDate" />
                     </label>
                 </div>
 
                 <div class="form-field">
                     <label>
                         <span>網站到期日期</span>
-                        <input v-model="form.model.value.ServiceEndDate" type="date" />
+                        <DateField v-model="form.model.value.ServiceEndDate" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('ServiceEndDate')" />
                 </div>
@@ -565,9 +625,7 @@
                 <div class="form-field">
                     <label>
                         <span>註銷日期 <i v-if="isTerminated" class="form-required">*</i></span>
-                        <input v-model="form.model.value.TerminatedDate"
-                               type="date"
-                               :disabled="!isTerminated" />
+                        <DateField v-model="form.model.value.TerminatedDate" :disabled="!isTerminated" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('TerminatedDate')" />
                     <p v-if="!isTerminated" class="field-note">狀態為「註銷」時才可填寫。</p>
@@ -581,6 +639,12 @@
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-url-title">網址</span>
+                <RouterLink v-if="isEdit && matchedDomain"
+                            class="ui-button ui-button-secondary"
+                            :to="{name:'domain-edit', params: {id: matchedDomain.Id}, query: { returnTo: route.fullPath } }">
+                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    <span>編輯網域資料</span>
+                </RouterLink>
             </div>
 
             <div class="form-grid">
@@ -595,17 +659,12 @@
                 </div>
 
                 <div class="form-field form-field-wide">
-                    <label>
-                        <span>網址</span>
-                        <input v-model="form.model.value.Url"
-                               type="text"
-                               inputmode="url"
-                               maxlength="500"
-                               placeholder="例：https://www.example.com.tw"
-                               :disabled="form.model.value.IsDomainPending"
-                               @change="checkDomain()"
-                               @keydown.enter.prevent="checkDomain({ force: true })" />
-                    </label>
+                    <label for="website-url" class="form-label">網址</label>
+                    <UrlField v-model="form.model.value.Url"
+                              input-id="website-url"
+                              :disabled="form.model.value.IsDomainPending"
+                              @change="checkDomain()"
+                              @enter="checkDomain({ force: true })" />
                     <FormFieldErrors :errors="form.getErrors('Url')" />
                     <p v-if="form.model.value.IsDomainPending" class="field-note">網域待申請時不需填寫網址。</p>
                     <p v-if="matchingDomain" class="field-note" role="status">比對網域中…</p>
@@ -628,6 +687,32 @@
                         <span>網域公司</span>
                         <input :value="matchedDomain?.Registrar ?? ''" type="text" readonly />
                     </label>
+                </div>
+
+                <div class="form-field">
+                    <label for="website-domain-password" class="form-label">網域密碼</label>
+                    <div class="input-with-action">
+                        <input id="website-domain-password"
+                               :value="domainPasswordDisplay"
+                               type="text"
+                               readonly
+                               autocomplete="off"
+                               spellcheck="false"
+                               :placeholder="matchedDomain ? '尚未記錄' : ''" />
+                        <button v-if="matchedDomain?.HasPassword"
+                                class="outline-icon-button"
+                                type="button"
+                                :disabled="revealingPassword"
+                                :title="domainPassword !== null ? '隱藏密碼' : '顯示密碼'"
+                                :aria-label="domainPassword !== null ? '隱藏密碼' : '顯示密碼'"
+                                :aria-pressed="domainPassword !== null"
+                                @click="toggleDomainPassword">
+                            <span class="material-symbols-outlined">
+                                {{ domainPassword !== null ? "visibility_off" : "visibility" }}
+                            </span>
+                        </button>
+                    </div>
+                    <p v-if="domainPasswordNotice" class="field-note field-note-error">{{ domainPasswordNotice }}</p>
                 </div>
 
                 <div class="form-field">
@@ -734,20 +819,6 @@
                     <label>
                         <span>站台語系</span>
                         <input :value="linkedSite?.Locale ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台開站日期</span>
-                        <input :value="toDateInput(linkedSite?.StartDate)" type="date" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>站台實際到期日</span>
-                        <input :value="toDateInput(linkedSite?.EndDate)" type="date" readonly />
                     </label>
                 </div>
             </div>

@@ -11,7 +11,7 @@ import {
 } from "@/core/forms/save-pipeline";
 import { registerSaveShortcut } from "@/core/forms/save-shortcut";
 import { validateSchema, type ValidationSchema } from "@/core/forms/validation";
-import { requestConfirm } from "@/core/dialogs/confirm-request";
+import { requestChoice, requestConfirm, type ConfirmRequest } from "@/core/dialogs/confirm-request";
 import { requestAlert } from "@/core/dialogs/alert-request";
 
 export type SaveStatus = "saved" | "invalid" | "cancelled" | "unauthorized" | "failed";
@@ -25,6 +25,7 @@ export interface ManagedFormOptions<TModel extends object, TResult> {
   save: (values: TModel) => Promise<TResult>;
   afterSave?: (result: TResult, values: TModel) => void | Promise<void>;
   onError?: (error: unknown) => void | Promise<void>;
+  confirmSave?: ConfirmRequest;
   enableSaveShortcut?: boolean;
   protectUnsavedChanges?: boolean;
   unsavedChangesMessage?: string;
@@ -121,6 +122,10 @@ export function useManagedForm<TModel extends object, TResult = unknown>(
       return "cancelled";
     }
 
+    if (options.confirmSave && trigger !== "leave" && !await requestConfirm(options.confirmSave)) {
+      return "cancelled";
+    }
+
     isSaving.value = true;
     try {
       if (!await ensureAuthenticatedForSave()) return "unauthorized";
@@ -141,7 +146,7 @@ export function useManagedForm<TModel extends object, TResult = unknown>(
       }
 
       context.result = result;
-      await options.afterSave?.(result, values);
+      if (trigger !== "leave") await options.afterSave?.(result, values);
       await runAfterSaveHooks(context);
       isDirty.value = false;
       lastSavedAt.value = new Date();
@@ -185,16 +190,20 @@ export function useManagedForm<TModel extends object, TResult = unknown>(
     event.preventDefault();
   }
 
-  onBeforeRouteLeave(() => {
+  onBeforeRouteLeave(async () => {
     if (!isDirty.value || isSaving.value || options.protectUnsavedChanges === false) return true;
-    return requestConfirm({
+    const choice = await requestChoice({
       icon: "warning",
-      tone: "danger",
       title: "尚有未儲存的變更",
-      message: options.unsavedChangesMessage ?? "確定要離開此頁面嗎？未儲存的內容會遺失。",
-      confirmText: "離開",
+      message: options.unsavedChangesMessage ?? "要先儲存再離開嗎？選擇「不儲存離開」會遺失這次的修改。",
+      confirmText: "儲存後離開",
+      altText: "不儲存離開",
       cancelText: "留在此頁"
     });
+    if (choice === "alt") return true;
+    if (choice === "cancel") return false;
+    // 驗證沒過、存檔失敗都會跳錯誤訊息，並留在原頁
+    return await save("leave") === "saved";
   });
 
   onBeforeUnmount(() => {

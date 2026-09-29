@@ -61,7 +61,7 @@ public sealed class DomainsController(
             PlatformDomainName.Suggest(host),
             domain is null
                 ? null
-                : new DomainSummaryDto(domain.Id, domain.DomainName, domain.Registrar, domain.EndDate));
+                : new DomainSummaryDto(domain.Id, domain.DomainName, domain.Registrar, domain.EndDate, domain.PasswordCipher != null));
     }
 
     [HttpPost]

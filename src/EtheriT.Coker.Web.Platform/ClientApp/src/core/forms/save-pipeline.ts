@@ -1,4 +1,5 @@
-export type SaveTrigger = "button" | "shortcut" | "programmatic";
+export type SaveTrigger = "button" | "shortcut" | "programmatic" | "leave";
+
 
 export interface SavePipelineContext<TModel = unknown, TResult = unknown> {
   formId: string;

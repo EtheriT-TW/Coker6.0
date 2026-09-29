@@ -32,7 +32,8 @@ public sealed record DomainSummaryDto(
     long Id,
     string DomainName,
     string? Registrar,
-    DateTime? EndDate);
+    DateTime? EndDate,
+    bool HasPassword);
 
 /// <summary>Host＝null：網址格式不正確；Domain＝null：網域尚未建立。</summary>
 public sealed record DomainMatchDto(

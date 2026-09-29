@@ -13,9 +13,18 @@
     } from "@/services/domain-api";
     import type { DomainDetail, DomainForm } from "@/types/domain";
     import { toDomainName } from "@/utils/domain-name";
+    import DateField from "@/components/DateField.vue";
+    import { safeReturnTo } from "@/utils/return-to";
 
     const route = useRoute();
     const router = useRouter();
+
+    const returnTo = safeReturnTo(route.query.returnTo);
+
+    /** 從網站頁「編輯網域資料」過來的，存檔／取消後回到那裡；否則回網域清單 */
+    function backToOrigin(): void {
+        void router.push(returnTo ?? "/domains");
+    }
 
     const domainId = computed(() => {
         const value = Number(route.params.id);
@@ -41,6 +50,13 @@
         id: "platform-domain-editor",
         initialValue: () => emptyDomainForm(),
         validation: domainValidation,
+        confirmSave: {
+            icon: "save",
+            title: "確認儲存",
+            message: returnTo
+                ? "確定要儲存這筆網域資料嗎？儲存後會返回原本的頁面。"
+                : "確定要儲存這筆網域資料嗎？儲存後會返回網域清單。"
+        },
         beforeSave: () => {
             pageError.value = "";
         },
@@ -48,7 +64,7 @@
             ? updateDomain(domainId.value, values)
             : createDomain(values),
         afterSave: () => {
-            void router.push("/domains");
+            backToOrigin();
         },
         onError: async error => {
             console.error(error);
@@ -164,7 +180,7 @@
     }
 
     function cancel(): void {
-        void router.push("/domains");
+        backToOrigin();
     }
 
     onMounted(async () => {
@@ -235,14 +251,14 @@
                 <div class="form-field">
                     <label>
                         <span>網域起始日期</span>
-                        <input v-model="form.model.value.StartDate" type="date" />
+                        <DateField v-model="form.model.value.StartDate" />
                     </label>
                 </div>
 
                 <div class="form-field">
                     <label>
                         <span>網域到期日期</span>
-                        <input v-model="form.model.value.EndDate" type="date" />
+                        <DateField v-model="form.model.value.EndDate" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('EndDate')" />
                 </div>

@@ -36,9 +36,7 @@ public sealed class WebsitesController(
             site.Title,
             site.DefaultUrl,
             site.Level,
-            site.Locale,
-            site.StartDate,
-            site.EndDate);
+            site.Locale);
 
     /// <summary>
     /// 網站管理清單＝「後台站台」∪「僅合約」。
@@ -291,7 +289,8 @@ public sealed class WebsitesController(
                         site.Domain.Id,
                         site.Domain.DomainName,
                         site.Domain.Registrar,
-                        site.Domain.EndDate),
+                        site.Domain.EndDate,
+                        site.Domain.PasswordCipher != null),
                 Remark = site.Remark,
                 FK_WebsiteId = site.FK_WebsiteId,
                 LinkedSite = linked == null
@@ -302,9 +301,7 @@ public sealed class WebsitesController(
                         linked.Title,
                         linked.DefaultUrl,
                         linked.Level,
-                        linked.Locale,
-                        linked.StartDate,
-                        linked.EndDate),
+                        linked.Locale),
                 Customer = customer == null
                     ? null
                     : new WebsiteCustomerDto(

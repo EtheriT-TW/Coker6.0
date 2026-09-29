@@ -17,6 +17,7 @@
     } from "@/types/customer";
 
     import { remainingDaysClass, statusView, toHref } from "@/utils/website-display";
+    import { safeReturnTo } from "@/utils/return-to";
 
 
     /** 「其他」要跟填空框綁在一起單獨渲染，不走迴圈。 */
@@ -26,6 +27,13 @@
 
     const route = useRoute();
     const router = useRouter();
+
+    const returnTo = safeReturnTo(route.query.returnTo);
+
+    /** 從網站頁「編輯客戶資料」過來的，存檔／取消後回到那裡；否則回客戶清單 */
+    function backToOrigin(): void {
+        void router.push(returnTo ?? "/companies");
+    }
 
     const customerId = computed(() => {
         const value = Number(route.params.id);
@@ -100,12 +108,19 @@
 
             return errors;
         },
+        confirmSave: {
+            icon: "save",
+            title: "確認儲存",
+            message: returnTo
+                ? "確定要儲存這筆客戶資料嗎？儲存後會返回原本的頁面。"
+                : "確定要儲存這筆客戶資料嗎？儲存後會返回客戶清單。"
+        },
         save: values => isEdit.value
             ? updateCustomer(customerId.value, values)
             : createCustomer(values),
         afterSave: () => {
-            // 需求：新增完後返回客戶管理目錄
-            void router.push("/companies");
+            // 需求：新增完後返回客戶管理目錄；從網站頁過來的則回網站頁
+            backToOrigin();
         },
         onError: async error => {
             console.error(error);
@@ -158,7 +173,7 @@
     }
 
     function cancel(): void {
-        void router.push("/companies");
+        backToOrigin();
     }
 
     /** 已建網站資料就開該筆；只有後台綁定時，開新增頁並預先帶入站台（與網站管理清單一致）。 */

@@ -132,6 +132,11 @@
             ],
             Url: [rules.maxLength(500, "網站網址不可超過 500 個字元。")]
         },
+        confirmSave: {
+            icon: "save",
+            title: "確認儲存",
+            message: "確定要儲存這筆網站資料嗎？儲存後會返回網站清單。"
+        },
         beforeSave: () => {
             pageError.value = "";
             // 任一彈窗開著時，Ctrl+S 不能偷偷送出底下的網站表單

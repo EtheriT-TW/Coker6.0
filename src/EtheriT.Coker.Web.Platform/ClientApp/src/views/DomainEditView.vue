@@ -42,6 +42,11 @@
         id: "platform-domain-editor",
         initialValue: () => emptyDomainForm(),
         validation: domainValidation,
+        confirmSave: {
+            icon: "save",
+            title: "確認儲存",
+            message: "確定要儲存這筆網域資料嗎？儲存後會返回網域清單。"
+        },
         beforeSave: () => {
             pageError.value = "";
         },

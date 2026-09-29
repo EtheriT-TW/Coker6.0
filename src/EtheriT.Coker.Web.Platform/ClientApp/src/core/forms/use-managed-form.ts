@@ -11,7 +11,7 @@ import {
 } from "@/core/forms/save-pipeline";
 import { registerSaveShortcut } from "@/core/forms/save-shortcut";
 import { validateSchema, type ValidationSchema } from "@/core/forms/validation";
-import { requestConfirm } from "@/core/dialogs/confirm-request";
+import { requestConfirm, type ConfirmRequest } from "@/core/dialogs/confirm-request";
 import { requestAlert } from "@/core/dialogs/alert-request";
 
 export type SaveStatus = "saved" | "invalid" | "cancelled" | "unauthorized" | "failed";
@@ -25,6 +25,7 @@ export interface ManagedFormOptions<TModel extends object, TResult> {
   save: (values: TModel) => Promise<TResult>;
   afterSave?: (result: TResult, values: TModel) => void | Promise<void>;
   onError?: (error: unknown) => void | Promise<void>;
+  confirmSave?: ConfirmRequest;
   enableSaveShortcut?: boolean;
   protectUnsavedChanges?: boolean;
   unsavedChangesMessage?: string;
@@ -118,6 +119,10 @@ export function useManagedForm<TModel extends object, TResult = unknown>(
 
     if (await options.beforeSave?.(values) === false ||
         !await runBeforeSaveHooks(context)) {
+      return "cancelled";
+    }
+
+    if (options.confirmSave && !await requestConfirm(options.confirmSave)) {
       return "cancelled";
     }
 

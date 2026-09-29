@@ -100,6 +100,11 @@
 
             return errors;
         },
+        confirmSave: {
+            icon: "save",
+            title: "確認儲存",
+            message: "確定要儲存這筆客戶資料嗎？儲存後會返回客戶清單。"
+        },
         save: values => isEdit.value
             ? updateCustomer(customerId.value, values)
             : createCustomer(values),

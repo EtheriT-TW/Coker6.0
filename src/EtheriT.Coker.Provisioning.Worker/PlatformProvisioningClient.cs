@@ -37,7 +37,7 @@ public sealed class PlatformProvisioningClient
             "/api/provisioning/agent/tasks/claim",
             new ClaimRequest(options.ServerId, WorkerId), cancellationToken);
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent) return null;
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessAsync(response, cancellationToken);
         return await response.Content.ReadFromJsonAsync<ProvisioningTaskDto>(cancellationToken: cancellationToken);
     }
 
@@ -46,7 +46,7 @@ public sealed class PlatformProvisioningClient
         using var response = await client.PostAsJsonAsync(
             $"/api/provisioning/agent/tasks/{taskId}/complete",
             new CompleteRequest(options.ServerId, WorkerId, succeeded, message), cancellationToken);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessAsync(response, cancellationToken);
     }
 
     public async Task SendHeartbeatAsync(SystemMetrics metrics, string agentVersion, CancellationToken cancellationToken)
@@ -66,6 +66,28 @@ public sealed class PlatformProvisioningClient
                 metrics.Disks,
                 metrics.ApplicationPools),
             cancellationToken);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessAsync(response, cancellationToken);
+    }
+
+    private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        if (response.IsSuccessStatusCode) return;
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        if (responseBody.Length > 2000)
+            responseBody = responseBody[..2000] + "...";
+
+        var requestId = response.Headers.TryGetValues("X-Coker-Request-Id", out var requestIds)
+            ? requestIds.FirstOrDefault()
+            : null;
+        var request = response.RequestMessage;
+        var detail = string.IsNullOrWhiteSpace(responseBody) ? "<empty>" : responseBody;
+
+        throw new HttpRequestException(
+            $"Platform request failed: {(int)response.StatusCode} ({response.ReasonPhrase}); " +
+            $"Method={request?.Method}; Uri={request?.RequestUri}; " +
+            $"RequestId={requestId ?? "<none>"}; Response={detail}",
+            inner: null,
+            response.StatusCode);
     }
 }

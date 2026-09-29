@@ -6,7 +6,8 @@
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
     import QuickDomainDialog from "@/components/QuickDomainDialog.vue";
     import { lookupCustomer } from "@/services/customer-api";
-    import { matchDomain } from "@/services/domain-api";
+    import { fetchDomainPassword, matchDomain } from "@/services/domain-api";
+
     import {
         createWebsite,
         fetchSiteOption,
@@ -86,6 +87,52 @@
     const isDomainNotFoundOpen = ref(false);
     const isQuickDomainOpen = ref(false);
     let matchSequence = 0;                 // 比對請求序號，舊回應晚到時丟棄
+
+        // ── 網域密碼（唯讀；要改請到網域編輯頁） ──
+    const PASSWORD_MASK = "********";
+    const domainPassword = ref<string | null>(null);   // 按眼睛後讀回的明文；null＝遮罩中
+    const revealingPassword = ref(false);
+    const domainPasswordNotice = ref("");
+
+    const domainPasswordDisplay = computed(() => {
+        if (!matchedDomain.value?.HasPassword) return "";
+        return domainPassword.value ?? PASSWORD_MASK;
+    });
+
+    // 比對到別的網域時清掉明文，避免顯示成上一個網域的密碼
+    watch(() => matchedDomain.value?.Id, () => {
+        domainPassword.value = null;
+        domainPasswordNotice.value = "";
+    });
+
+    async function toggleDomainPassword(): Promise<void> {
+        if (domainPassword.value !== null) {
+            domainPassword.value = null;
+            return;
+        }
+
+        const domainId = matchedDomain.value?.Id;
+        if (!domainId) return;
+
+        revealingPassword.value = true;
+        domainPasswordNotice.value = "";
+        try {
+            const result = await fetchDomainPassword(domainId);
+            // 等回應期間網址被改掉、換了網域，就丟掉這次結果
+            if (matchedDomain.value?.Id !== domainId) return;
+
+            if (result.State === "Ok") domainPassword.value = result.Password ?? "";
+            else if (result.State === "Empty") domainPasswordNotice.value = "這筆網域尚未記錄密碼。";
+            else domainPasswordNotice.value = "密碼已無法讀取，請到網域資料重新輸入。";
+        }
+        catch (error) {
+            console.error(error);
+            domainPasswordNotice.value = "讀取網域密碼失敗，請稍後再試。";
+        }
+        finally {
+            revealingPassword.value = false;
+        }
+    }
 
     const isDomainMissing = computed(() =>
         unmatchedHost.value !== "" && matchedDomain.value === null && !matchingDomain.value);
@@ -640,6 +687,32 @@
                         <span>網域公司</span>
                         <input :value="matchedDomain?.Registrar ?? ''" type="text" readonly />
                     </label>
+                </div>
+
+                <div class="form-field">
+                    <label for="website-domain-password" class="form-label">網域密碼</label>
+                    <div class="input-with-action">
+                        <input id="website-domain-password"
+                               :value="domainPasswordDisplay"
+                               type="text"
+                               readonly
+                               autocomplete="off"
+                               spellcheck="false"
+                               :placeholder="matchedDomain ? '尚未記錄' : ''" />
+                        <button v-if="matchedDomain?.HasPassword"
+                                class="outline-icon-button"
+                                type="button"
+                                :disabled="revealingPassword"
+                                :title="domainPassword !== null ? '隱藏密碼' : '顯示密碼'"
+                                :aria-label="domainPassword !== null ? '隱藏密碼' : '顯示密碼'"
+                                :aria-pressed="domainPassword !== null"
+                                @click="toggleDomainPassword">
+                            <span class="material-symbols-outlined">
+                                {{ domainPassword !== null ? "visibility_off" : "visibility" }}
+                            </span>
+                        </button>
+                    </div>
+                    <p v-if="domainPasswordNotice" class="field-note field-note-error">{{ domainPasswordNotice }}</p>
                 </div>
 
                 <div class="form-field">

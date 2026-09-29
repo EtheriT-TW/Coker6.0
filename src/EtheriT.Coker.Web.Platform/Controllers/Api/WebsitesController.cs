@@ -289,7 +289,8 @@ public sealed class WebsitesController(
                         site.Domain.Id,
                         site.Domain.DomainName,
                         site.Domain.Registrar,
-                        site.Domain.EndDate),
+                        site.Domain.EndDate,
+                        site.Domain.PasswordCipher != null),
                 Remark = site.Remark,
                 FK_WebsiteId = site.FK_WebsiteId,
                 LinkedSite = linked == null

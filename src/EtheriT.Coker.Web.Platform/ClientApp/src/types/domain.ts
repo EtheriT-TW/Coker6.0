@@ -29,6 +29,7 @@ export interface DomainSummary {
     DomainName: string;
     Registrar: string | null;
     EndDate: string | null;
+    HasPassword: boolean;
 }
 
 /** Host＝null：網址格式不正確；Domain＝null：網域尚未建立。 */

@@ -14,6 +14,8 @@
                    :confirm-text="request?.confirmText"
                    :cancel-text="request?.cancelText"
                    :tone="request?.tone"
-                   @confirm="answerConfirm(true)"
-                   @cancel="answerConfirm(false)" />
+                   :alt-text="request?.altText"
+                   @confirm="answerConfirm('confirm')"
+                   @alt="answerConfirm('alt')"
+                   @cancel="answerConfirm('cancel')" />
 </template>

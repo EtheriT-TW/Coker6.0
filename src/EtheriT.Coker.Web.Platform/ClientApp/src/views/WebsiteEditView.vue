@@ -435,6 +435,12 @@
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-customer-title">客戶與網站資料</span>
+                <RouterLink v-if="isEdit && customer && !isCustomerDeleted"
+                            class="ui-button ui-button-secondary"
+                            :to="{name:'company-edit', params:{id: customer.Id}, query: { returnTo: route.fullPath } }">
+                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    <span>編輯客戶資料</span>
+                </RouterLink>
             </div>
 
             <p v-if="isCustomerDeleted" class="alert alert-warning" role="status">
@@ -586,6 +592,12 @@
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-url-title">網址</span>
+                <RouterLink v-if="isEdit && matchedDomain"
+                            class="ui-button ui-button-secondary"
+                            :to="{name:'domain-edit', params: {id: matchedDomain.Id}, query: { returnTo: route.fullPath } }">
+                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                    <span>編輯網域資料</span>
+                </RouterLink>
             </div>
 
             <div class="form-grid">

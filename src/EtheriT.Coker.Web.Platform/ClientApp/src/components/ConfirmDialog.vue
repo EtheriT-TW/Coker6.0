@@ -12,6 +12,7 @@
         tone?: "primary" | "danger";
         busy?: boolean;
         hideCancel?: boolean;
+        altText?: string;
     }>(), {
         icon: "help",
         confirmText: "確認",
@@ -82,6 +83,13 @@
                         :disabled="busy"
                         @click="emit('cancel')">
                     {{ cancelText }}
+                </button>
+                <button v-if="altText"
+                        class="ui-button ui-button-secondary"
+                        type="button"
+                        :disabled="busy"
+                        @click="emit('alt')">
+                    {{ altText }}
                 </button>
                 <button ref="confirmButton"
                         class="ui-button"

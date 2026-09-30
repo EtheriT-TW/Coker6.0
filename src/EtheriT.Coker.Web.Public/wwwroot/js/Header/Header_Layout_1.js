@@ -123,7 +123,42 @@
         if ($self.hasClass("show")) $self.removeClass("show");
         else $self.addClass("show");
     })
+
+    // 加入購物車成功後自動打開購物車抽屜（只有把 #Car_Dropdown 改成 offcanvas
+    // 的版型會作用，其餘版型維持原本的下拉，這裡直接 return）
+    $(document)
+        .off("productQuickCart:added.cartDrawer")
+        .on("productQuickCart:added.cartDrawer", function () {
+            var modalEl = document.getElementById("ShoppingCarModal");
+
+            // 規格 modal 沒開著就直接開抽屜
+            if (!modalEl || !modalEl.classList.contains("show")) {
+                OpenCartDrawer();
+                return;
+            }
+
+            // 等 modal 關完再開，避免它收尾時把 offcanvas 需要的捲動鎖一起清掉。
+            // 但 hidden.bs.modal 不保證一定送得出來，所以加一道逾時保險，
+            // 兩邊只會執行一次。
+            var done = false;
+            var run = function () {
+                if (done) return;
+                done = true;
+                OpenCartDrawer();
+            };
+
+            $(modalEl).one("hidden.bs.modal", run);
+            setTimeout(run, 600);
+        });
+
 }
+
+function OpenCartDrawer() {
+    var panel = document.getElementById("Car_Dropdown");
+    if (!panel || !panel.classList.contains("offcanvas")) return;
+    bootstrap.Offcanvas.getOrCreateInstance(panel).show();
+}
+
 function moveHiUserToMenu() {
     if (document.getElementById('MenuHiUser')) return;
     const hiUser = document.getElementById('HiUser');

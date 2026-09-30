@@ -298,10 +298,12 @@ function HeaderDataInsert($frame, data) {
                         const price = Number(String($self.text() || 0).replaceAll(",", "")) || 0;
                         const priceText = window.CokerCurrency.formatAmount(price);
                         if (data.bonus > 0) {
-                            $self.toggleClass("price", price > 0);
-                            if (price > 0) $self.text(`${priceText}+紅利${data.bonus}`);
-                            else $self.text(`紅利${data.bonus}`);
-                        } else {
+                        // 紅利標籤沿用 .pro_unit .money__symbol（0.7em），與 .price::before 的幣別符號同大小
+                        const bonusLabelHtml = `<span class="money__symbol">紅利</span>`;
+                        $self.toggleClass("price", price > 0);
+                        if (price > 0) $self.html(`${priceText}+${bonusLabelHtml}${data.bonus}`);
+                        else $self.html(`${bonusLabelHtml}${data.bonus}`);
+                    } else {
                             $self.addClass("price").text(priceText);
                         }
                     }

@@ -32,6 +32,13 @@
     --header-cart-dropdown-width: 280px;
     --header-cart-dropdown-max-width: 80vw;
     --header-cart-dropdown-max-height: 90vh;
+    /* 購物車抽屜（offcanvas）可覆寫參數 */
+    --header-cart-drawer-width-mobile: min(92vw, 380px);
+    --header-cart-drawer-width-desktop: calc(100vw / 6);
+    --header-cart-drawer-desktop-bottom: 20vh;
+    --header-cart-drawer-head-border-color: var(--gray-light);
+    --header-cart-close-color: #cccccc;
+    --header-cart-close-size: 40px;
     --header-mobile-logo-max-height: 50px;
     --header-mobile-logo-max-width: 50%;
 }
@@ -795,4 +802,103 @@ body {
     #Mega_Menu > .icon-block {
         padding-right: 2.5rem;
     }
+}
+
+/* ── 購物車改用 Bootstrap offcanvas（手機從左、電腦從右滑出） ──
+   面板已移到 <nav> 之外（Layout_8.cshtml），避免 .navbar-expand-lg .offcanvas
+   在 >=992px 把它攤平、以及被固定表頭的堆疊環境關住。
+
+   左右與上下位置集中用自訂屬性控制，下面所有定位規則都讀同一組值。
+   標籤上的 offcanvas-start 只負責提供基本的 offcanvas 樣式，
+   實際靠哪一邊由 --cart-drawer-* 決定。 */
+#Car_Dropdown.offcanvas {
+    --bs-offcanvas-width: var(--header-cart-drawer-width-mobile);
+    --bs-offcanvas-zindex: var(--header-cart-dropdown-z-index);
+    --cart-drawer-left: 0; /* 手機：貼左 */
+    --cart-drawer-right: auto;
+    --cart-drawer-top: 0; /* 手機：上下滿高 */
+    --cart-drawer-bottom: 0;
+    --cart-drawer-hidden: translateX(-100%); /* 關閉時收到畫面左外側 */
+    width: var(--bs-offcanvas-width) !important; /* 蓋掉上方的 --header-cart-dropdown-width */
+    max-width: none !important;
+    max-height: none !important;
+    overflow: hidden !important; /* 蓋掉標籤上的 .overflow-auto，改由 ul 自己捲 */
+    left: var(--cart-drawer-left);
+    right: var(--cart-drawer-right);
+    top: var(--cart-drawer-top);
+    bottom: var(--cart-drawer-bottom);
+    transform: var(--cart-drawer-hidden);
+}
+
+/* 電腦版：寬度為螢幕的六分之一，從右側滑出、貼齊頂端且高度八成 */
+@media (min-width: 992px) {
+    #Car_Dropdown.offcanvas {
+        --bs-offcanvas-width: var(--header-cart-drawer-width-desktop);
+        --cart-drawer-left: auto;
+        --cart-drawer-right: 0;
+        --cart-drawer-top: 0;
+        --cart-drawer-bottom: var(--header-cart-drawer-desktop-bottom);
+        --cart-drawer-hidden: translateX(100%);
+    }
+
+    /* 抽屜從右側出來，關閉鈕改放左上角
+       （!important 是為了蓋掉標籤上 .justify-content-end 的 !important） */
+    #Car_Dropdown.offcanvas > .cart_offcanvas_head {
+        justify-content: flex-start !important;
+    }
+}
+
+/* 關閉鈕列：釘在頂端，清單捲動時不會跟著跑掉 */
+#Car_Dropdown.offcanvas > .cart_offcanvas_head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: .5rem 0;
+    background: #fff;
+    border-bottom: 1px solid var(--header-cart-drawer-head-border-color);
+}
+
+    /* fa-times-square 是實心圓角方塊、中間的 X 為挖空，所以 color 是在塗方塊本體，
+       X 顯示的是面板底色。與版型 7 的關閉鈕同一顆圖示、同一組數值。 */
+    #Car_Dropdown.offcanvas > .cart_offcanvas_head > .btn_cart_close > .fa-times-square {
+        font-size: var(--header-cart-close-size);
+        color: var(--header-cart-close-color);
+    }
+
+    #Car_Dropdown.offcanvas > .cart_offcanvas_head > .btn_cart_close:focus-visible {
+        outline: 2px solid var(--red-main);
+        outline-offset: 2px;
+    }
+
+/* 只有商品清單捲動，標題列與購買鈕留在捲動範圍外 */
+#Car_Dropdown.offcanvas > ul {
+    min-height: 0; /* flex 項目預設不會縮到比內容小，沒這行就不會出現捲軸 */
+    overflow-y: auto;
+}
+
+/* 「購買」鈕固定在底部，底部留白（!important 是為了蓋掉標籤上 .mt-2 的 margin-top: .5rem !important） */
+#Car_Dropdown.offcanvas > .btn_car_buy {
+    flex: 0 0 auto;
+    margin-top: auto !important;
+    margin-bottom: 1rem;
+}
+
+/* ProductAction.js 的 CartDropPosition() 仍掛在 window 的 resize / scroll，
+   而它只判斷有沒有 .show —— offcanvas 打開時也有 .show，會被它重新定位回按鈕旁。
+   這裡用較高的特異性把它擋回來（該 JS 未修改）。 */
+#Car_Dropdown.offcanvas.cart-dropdown--positioned {
+    top: var(--cart-drawer-top) !important;
+    bottom: var(--cart-drawer-bottom) !important;
+    left: var(--cart-drawer-left) !important;
+    right: var(--cart-drawer-right) !important;
+    margin: 0 !important;
+    max-height: none !important;
+    transform: var(--cart-drawer-hidden) !important;
+}
+
+/* 打開時滑入定位。必須放在最後：同時蓋掉上面兩組 transform，
+   以及 Bootstrap 自己的 .offcanvas.show 規則（它的階級輸給帶 id 的選擇器）。 */
+#Car_Dropdown.offcanvas.showing,
+#Car_Dropdown.offcanvas.show:not(.hiding) {
+    transform: none !important;
 }

@@ -11,7 +11,7 @@
 @{
 	string imgurl = Model.UploadPath;
 }
-<nav class="navbar navbar-expand-lg flex-column p-0 fixed-top shadow">
+<nav class="navbar navbar-expand-lg flex-column fixed-top shadow">
 	<!-- Mega Menu -->
 	<div id="Mega_Menu" class=" navbar navbar-expand-lg w-100">
 		<div id="iswrap" class="d-flex justify-content-center align-items-center bg-white">
@@ -80,39 +80,10 @@
 					@if (ViewBag.ShoppingEnable?? false && ViewBag.HasShoppingCar ?? false && ViewBag.storeBuyState.IndexOf("noPay") < 0)
 					{
 						<div id="Cart_Dropdown_Parent" class="d-flex px-1">
-							<button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+							<button id="btn_car_dropdown" class="bg-transparent border-0 position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#Car_Dropdown" aria-controls="Car_Dropdown">
 								<span class="d-flex fs-4 fw-light material-symbols-outlined">shopping_cart</span>
 								<span id="Car_Badge" class="badge position-absolute rounded-pill"></span>
 							</button>
-
-							<div id="Car_Dropdown" class="dropdown-menu dropdown-menu-end px-2 border-0 shadow-lg overflow-auto me-5" aria-labelledby="btn_car_dropdown">
-								<ul class="m-0">
-									<template id="Template_Car_Dropdown">
-										<li class="border-bottom me-4" data-scid="">
-											<figure class="position-relative mb-0">
-												<a data-key="link" class="pro_link d-flex" href="" title="" target="_blank" rel="noopener noreferrer">
-													<img data-key="imagePath" class="pro_image me-2" src="" alt="" />
-													<figcaption class="overflow-hidden">
-														<div data-key="title" class="pro_name h-auto"></div>
-														<div data-key="spec" class="pro_spec h-auto my-1"></div>
-														<div class="number d-flex">
-															<div data-key="price" data-type="price" class="pro_unit price fw-bold"></div>
-															<div data-key="quantity" data-type="quantity" class="pro_quantity fw-bold"></div>
-														</div>
-													</figcaption>
-												</a>
-												<button class="btn_cart_delete bg-transparent border-0 position-absolute">
-													<i class="fa-solid fa-trash"></i>
-												</button>
-											</figure>
-										</li>
-									</template>
-								</ul>
-
-								<div id="Car_Dropdown_Null" class="drpy-3 text-center">@L.get("CartEmpty")</div>
-
-								<a href="/@ViewData["OrgName"]/ShoppingCar" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>@L.get("Buy")</a>
-							</div>
 						</div>
 					}
 					@if (ViewBag.LoginEnable)
@@ -207,6 +178,45 @@
 		</div> -->
 	</div>
 </nav>
+
+<!-- 購物車 Offcanvas：必須放在 <nav> 之外 -->
+@if (ViewBag.ShoppingEnable?? false && ViewBag.HasShoppingCar ?? false && ViewBag.storeBuyState.IndexOf("noPay") < 0)
+{
+	<div id="Car_Dropdown" class="offcanvas offcanvas-start px-2 border-0 shadow-lg overflow-auto" tabindex="-1" aria-labelledby="btn_car_dropdown">
+		<div class="cart_offcanvas_head d-flex justify-content-end">
+			<button type="button" class="btn_cart_close bg-transparent border-0 p-0 lh-1" data-bs-dismiss="offcanvas" aria-label="Close">
+				<i class="fas fa-times-square"></i>
+			</button>
+		</div>
+
+		<ul class="m-0">
+			<template id="Template_Car_Dropdown">
+				<li class="border-bottom me-4" data-scid="">
+					<figure class="position-relative mb-0">
+						<a data-key="link" class="pro_link d-flex" href="" title="" target="_blank" rel="noopener noreferrer">
+							<img data-key="imagePath" class="pro_image me-2" src="" alt="" />
+							<figcaption class="overflow-hidden">
+								<div data-key="title" class="pro_name h-auto"></div>
+								<div data-key="spec" class="pro_spec h-auto my-1"></div>
+								<div class="number d-flex">
+									<div data-key="price" data-type="price" class="pro_unit price fw-bold"></div>
+									<div data-key="quantity" data-type="quantity" class="pro_quantity fw-bold"></div>
+								</div>
+							</figcaption>
+						</a>
+						<button class="btn_cart_delete bg-transparent border-0 position-absolute">
+							<i class="fa-solid fa-trash"></i>
+						</button>
+					</figure>
+				</li>
+			</template>
+		</ul>
+
+		<div id="Car_Dropdown_Null" class="drpy-3 text-center">@L.get("CartEmpty")</div>
+
+		<a href="/@ViewData["OrgName"]/ShoppingCar" class="btn_car_buy border-0 rounded-1 w-100 py-1 mt-2 text-white" disabled>@L.get("Buy")</a>
+	</div>
+}
 @if (Model.Bannners != null && Model.Bannners.Count > 0)
 {
 	@if (Model.Bannners.Count == 1)

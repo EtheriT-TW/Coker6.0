@@ -8,7 +8,7 @@
         DxSearchPanel
     } from "devextreme-vue/data-grid";
     import { fetchWebsites } from "@/services/website-api";
-    import type { WebsiteListItem } from "@/types/website";
+    import { WebsiteStatus, type WebsiteListItem } from "@/types/website";
     import {
         EXPIRING_WITHIN_DAYS,
         remainingDaysClass,
@@ -91,14 +91,16 @@
         return site.Status === null ? "" : statusView(site).Text;
     }
 
-    // 畫面顯示「—」的（已到期、未填到期日）排在所有有天數的資料之後
-    const DASH_SORT_BASE = Number.MAX_SAFE_INTEGER - 1;
+    // 未填到期日排在有天數的資料之後
+    const NO_END_DATE_SORT = 1_000_000_000;
+    // 註銷的整批排到最後，彼此之間仍照上面的規則排
+    const TERMINATED_SORT_OFFSET = NO_END_DATE_SORT * 10;
 
     function remainingDaysSortValue(row: WebsiteListItem): number {
+        const offset = row.Status === WebsiteStatus.註銷 ? TERMINATED_SORT_OFFSET : 0;
         const days = row.RemainingDays;
-        if (days === null) return Number.MAX_SAFE_INTEGER;   // 未填到期日：最後
-        if (days < 0) return DASH_SORT_BASE;                  // 已到期：排在未填到期日之前
-        return days;                                          // 0 天以上：照天數由小到大
+        if (days === null) return offset + NO_END_DATE_SORT;   // 未填到期日：排在有天數的之後
+        return offset + days;                                   // 照天數由小到大（已到期的負數會在最前面）
     }
 
     function goCreate(): void {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed, onMounted, ref, watch } from "vue";
+    import { computed, onMounted, ref } from "vue";
     import { useRoute, useRouter } from "vue-router";
     import { ApiError, FormFieldErrors, requestAlert, useManagedForm } from "@/core/coker";
     import {
@@ -61,7 +61,7 @@
             pageError.value = "";
         },
         save: values => isEdit.value
-            ? updateDomain(domainId.value, values)
+            ? updateDomain(domainId.value, { ...values, ClearPassword: willClearPassword.value })
             : createDomain(values),
         afterSave: () => {
             backToOrigin();
@@ -84,29 +84,20 @@
     // 已有網站使用時，改名會讓網站網址對不上
     const isNameLocked = computed(() => websiteCount.value > 0);
 
-    const isClearingPassword = computed(() => form.model.value.ClearPassword);
     const currentPassword = computed(() =>
         isPasswordEdited.value ? form.model.value.Password : (revealedPassword.value ?? ""));
     const hasPasswordValue = computed(() =>
-        !isClearingPassword.value &&
-        (isPasswordEdited.value ? form.model.value.Password !== "" : hasStoredPassword.value));
+        isPasswordEdited.value ? form.model.value.Password !== "" : hasStoredPassword.value);
+    // 原本有密碼、使用者親手清空 → 儲存時清除（沒碰過欄位不算）
+    const willClearPassword = computed((): boolean =>
+        hasStoredPassword.value && isPasswordEdited.value && form.model.value.Password.trim() === "");
     // 隱藏時有值就顯示固定遮罩；顯示時才放實際內容
     const passwordDisplay = computed(() => {
-        if (isClearingPassword.value) return "";
         if (isPasswordVisible.value) return currentPassword.value;
         return hasPasswordValue.value ? PASSWORD_MASK : "";
     });
     // 遮罩狀態不可編輯，否則會把 ******** 當成新密碼送出
     const isPasswordReadonly = computed(() => !isPasswordVisible.value && hasPasswordValue.value);
-
-    // 勾選「清除密碼」時清空新密碼輸入（兩者互斥）
-    watch(isClearingPassword, clear => {
-        if (!clear) return;
-        form.model.value.Password = "";
-        isPasswordEdited.value = false;
-        isPasswordVisible.value = false;
-        form.clearErrors("Password");
-    });
 
         function normalizeDomainName(): void {
         const cleaned = toDomainName(form.model.value.DomainName);
@@ -249,21 +240,6 @@
                 </div>
 
                 <div class="form-field">
-                    <label>
-                        <span>網域起始日期</span>
-                        <DateField v-model="form.model.value.StartDate" />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>網域到期日期</span>
-                        <DateField v-model="form.model.value.EndDate" />
-                    </label>
-                    <FormFieldErrors :errors="form.getErrors('EndDate')" />
-                </div>
-
-                <div class="form-field form-field-wide">
                     <label for="domain-password" class="form-label">網域密碼</label>
                     <div class="input-with-action">
                         <input id="domain-password"
@@ -273,8 +249,7 @@
                                autocomplete="off"
                                spellcheck="false"
                                :readonly="isPasswordReadonly"
-                               :disabled="isClearingPassword"
-                               :placeholder="isClearingPassword ? '' : '尚未記錄'"
+                               placeholder="尚未記錄"
                                @input="onPasswordInput" />
                         <button v-if="hasPasswordValue"
                                 class="outline-icon-button"
@@ -292,13 +267,22 @@
                     <FormFieldErrors :errors="form.getErrors('Password')" />
                     <p v-if="isPasswordReadonly" class="field-note">點擊眼睛顯示密碼後即可修改。</p>
                     <p v-if="passwordNotice" class="field-note field-note-error">{{ passwordNotice }}</p>
-                    <div v-if="hasStoredPassword" class="choice-group choice-group-compact">
-                        <label class="choice">
-                            <input type="checkbox" v-model="form.model.value.ClearPassword" />
-                            <span class="choice-box" aria-hidden="true"></span>
-                            <span>清除已儲存的網域密碼</span>
-                        </label>
-                    </div>
+                    <p v-if="willClearPassword" class="field-note field-note-error">儲存後會清除原本的網域密碼。</p>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>網域起始日期</span>
+                        <DateField v-model="form.model.value.StartDate" />
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        <span>網域到期日期</span>
+                        <DateField v-model="form.model.value.EndDate" />
+                    </label>
+                    <FormFieldErrors :errors="form.getErrors('EndDate')" />
                 </div>
             </div>
         </fieldset>

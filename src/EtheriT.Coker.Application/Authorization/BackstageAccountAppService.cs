@@ -424,7 +424,8 @@ namespace EtheriT.Coker.Application.Authorization
                     !e.IsDeleted && e.Email != null && e.Email == email);
 
                 // 不揭露信箱是否存在，避免被用來枚舉後台帳號。
-                if (user == null || !await HasBackofficeAccess(user.Id))
+                var isPlatformInvitation = user != null && await HasPendingPlatformInvitation(user.Id);
+                if (user == null || (!isPlatformInvitation && !await HasBackofficeAccess(user.Id)))
                     return new ResponseMessageDto { Success = true };
 
                 user.ForgetID = Guid.NewGuid();
@@ -443,7 +444,9 @@ namespace EtheriT.Coker.Application.Authorization
                     Name = user.Name,
                     Account = user.Account ?? user.Email ?? string.Empty,
                     ResetPasswordUrl = resetUrl,
-                    ExpireTime = expireTime
+                    ExpireTime = expireTime,
+                    IsAccountActivation = string.IsNullOrWhiteSpace(user.Account),
+                    IsPlatformInvitation = isPlatformInvitation
                 };
                 var rendered = await mailTemplateAppService.GetTemplateRenderAsync(
                     MailTemplateTypeEnum.後台密碼重設通知,
@@ -484,7 +487,7 @@ namespace EtheriT.Coker.Application.Authorization
                 e.ForgetID == forgetId &&
                 e.ForgeIDSendDate != null &&
                 e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
-            var isValid = user != null && await HasBackofficeAccess(user.Id);
+            var isValid = user != null && await CanResetBackofficePassword(user.Id);
             return new ResponseMessageDto
             {
                 Success = isValid,
@@ -498,7 +501,7 @@ namespace EtheriT.Coker.Application.Authorization
             var user = dto.ForgetID == Guid.Empty ? null : await db.Users.AsNoTracking().FirstOrDefaultAsync(e =>
                 !e.IsDeleted && e.ForgetID == dto.ForgetID && e.ForgeIDSendDate != null &&
                 e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
-            if (user == null || !await HasBackofficeAccess(user.Id) || !string.IsNullOrWhiteSpace(user.Account))
+            if (user == null || !await CanResetBackofficePassword(user.Id) || !string.IsNullOrWhiteSpace(user.Account))
                 return new ResponseMessageDto { Error = "帳號設定連結無效或已逾期，請重新申請。" };
 
             var account = dto.Account?.Trim();
@@ -524,6 +527,7 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<ResponseMessageDto> ResetPassword(BackstagePasswordResetDto dto)
         {
             var response = new ResponseMessageDto();
+            var completedInvitation = false;
             try
             {
                 if (string.IsNullOrWhiteSpace(dto.Password))
@@ -545,7 +549,7 @@ namespace EtheriT.Coker.Application.Authorization
                     e.ForgeIDSendDate.Value.AddDays(1) >= DateTime.Now);
                 if (user == null)
                     throw new Exception("密碼重設連結無效或已逾期，請重新申請。");
-                if (!await HasBackofficeAccess(user.Id))
+                if (!await CanResetBackofficePassword(user.Id))
                     throw new Exception("密碼重設連結無效或已逾期，請重新申請。");
 
                 if (string.IsNullOrWhiteSpace(user.Account))
@@ -567,6 +571,19 @@ namespace EtheriT.Coker.Application.Authorization
                 user.LockTime = null;
                 user.LastModificationTime = DateTime.Now;
 
+                var invitation = await db.PlatformAdministratorInvitations.FirstOrDefaultAsync(item =>
+                    !item.IsDeleted &&
+                    item.UserId == user.Id &&
+                    item.ApprovedAtUtc == null &&
+                    item.RevokedAtUtc == null &&
+                    item.EmailVerifiedAtUtc == null &&
+                    item.ExpiresAtUtc >= DateTime.UtcNow);
+                if (invitation != null)
+                {
+                    invitation.EmailVerifiedAtUtc = DateTime.UtcNow;
+                    completedInvitation = true;
+                }
+
                 var tokens = await db.Tokens.Where(e => e.UserID == user.Id).ToListAsync();
                 db.Tokens.RemoveRange(tokens);
                 await db.SaveChangesAsync();
@@ -574,6 +591,7 @@ namespace EtheriT.Coker.Application.Authorization
                 });
                 ClearBackstageCookies();
                 response.Success = true;
+                response.Message = completedInvitation ? "PendingAdministratorApproval" : null;
             }
             catch (Exception ex)
             {
@@ -600,6 +618,22 @@ namespace EtheriT.Coker.Application.Authorization
                       binding.Website != null && !binding.Website.IsDeleted &&
                       (!websiteId.HasValue || binding.WebsiteId == websiteId.Value) &&
                       binding.WebsiteId == mapping.Role.FK_WebsiteId))));
+        }
+
+        private async Task<bool> CanResetBackofficePassword(long userId)
+        {
+            return await HasBackofficeAccess(userId) || await HasPendingPlatformInvitation(userId);
+        }
+
+        private Task<bool> HasPendingPlatformInvitation(long userId)
+        {
+            return db.PlatformAdministratorInvitations.AnyAsync(invitation =>
+                !invitation.IsDeleted &&
+                invitation.UserId == userId &&
+                invitation.ApprovedAtUtc == null &&
+                invitation.RevokedAtUtc == null &&
+                invitation.EmailVerifiedAtUtc == null &&
+                invitation.ExpiresAtUtc >= DateTime.UtcNow);
         }
 
         private void ClearBackstageCookies()

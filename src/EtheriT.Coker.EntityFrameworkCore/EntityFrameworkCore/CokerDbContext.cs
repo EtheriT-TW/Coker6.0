@@ -64,6 +64,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MappingUserAndRole> MappingUserAndRoles { get; set; }
         public DbSet<PlatformRole> PlatformRoles { get; set; }
         public DbSet<MappingUserAndPlatformRole> MappingUserAndPlatformRoles { get; set; }
+        public DbSet<PlatformAdministratorInvitation> PlatformAdministratorInvitations { get; set; }
         public DbSet<Prod_TechCert> Prod_TechCerts { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<Tag_Associate> Tag_Associates { get; set; }
@@ -572,6 +573,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(x => new { x.UserId, x.PlatformRoleId })
                     .IsUnique()
                     .HasFilter("[IsDeleted] = 0");
+            });
+            modelBuilder.Entity<PlatformAdministratorInvitation>(o =>
+            {
+                o.ToTable("PlatformAdministratorInvitations");
+                o.Property(x => x.InvitedEmail).HasMaxLength(150);
+                o.HasOne(x => x.User).WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                o.HasOne(x => x.MvcRole).WithMany()
+                    .HasForeignKey(x => x.MvcRoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                o.HasOne(x => x.PlatformRole).WithMany()
+                    .HasForeignKey(x => x.PlatformRoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                o.HasIndex(x => x.UserId).IsUnique();
+                o.HasIndex(x => new { x.InvitedEmail, x.ApprovedAtUtc, x.RevokedAtUtc });
             });
             modelBuilder.Entity<Tag>(o =>
             {

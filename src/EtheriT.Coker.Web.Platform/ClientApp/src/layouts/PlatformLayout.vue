@@ -80,8 +80,8 @@
 
     const operationLinks = computed(() => [
         { to: "/analytics", icon: "monitoring", label: "營運分析" },
-        { to: "/server-monitoring", icon: "speed", label: "伺服器監控" },
         ...(canControlServers.value ? [
+            { to: "/server-monitoring", icon: "speed", label: "伺服器監控" },
             { to: "/provisioning-test", icon: "dns", label: "主機操作測試" }
         ] : []),
         ...(canManagePlatformRoles.value ? [

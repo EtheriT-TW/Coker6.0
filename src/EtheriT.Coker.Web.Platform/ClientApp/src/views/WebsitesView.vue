@@ -91,6 +91,11 @@
         return site.Status === null ? "" : statusView(site).Text;
     }
 
+    /** 剩餘天數由小到大排序；未設定到期日的資料統一排在最後。 */
+    function remainingDaysSortValue(site: WebsiteListItem): number {
+        return site.RemainingDays ?? Number.MAX_SAFE_INTEGER;
+    }
+
     function goCreate(): void {
         void router.push("/websites/new");
     }

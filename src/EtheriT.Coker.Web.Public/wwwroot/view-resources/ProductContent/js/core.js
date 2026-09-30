@@ -217,9 +217,12 @@
         const bonusLabel = escapeHtml(local.Bonus);
 
         if (bonus > 0) {
-            if (price === 0) return `${bonusLabel}:${formatNumber(bonus)}`;
-            return `${money} + ${bonusLabel}:${formatNumber(bonus)}`;
+            // 標籤包進 .money 才會吃到與幣別符號相同的 em 基準；數字維持外層字級
+            const bonusLabelHtml = `<span class="money"><span class="money__symbol">${bonusLabel}:</span></span>`;
+            if (price === 0) return `${bonusLabelHtml}${formatNumber(bonus)}`;
+            return `${money} + ${bonusLabelHtml}${formatNumber(bonus)}`;
         }
+
 
         return money;
     }
@@ -570,6 +573,13 @@
                         });
                     });
                 }
+
+                // 與 ShoppingCarModal.js 相同的通知事件，讓版型能在加入成功後做事
+                //（版型 7 用它自動打開購物車抽屜）。沒有監聽者的站台就是 no-op。
+                cartDropRequest.always(function () {
+                    $(document).trigger('productQuickCart:added');
+                });
+
 
                 if (typeof options.onSuccess === 'function') {
                     options.onSuccess(result);

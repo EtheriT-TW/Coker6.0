@@ -8,7 +8,7 @@
         DxSearchPanel
     } from "devextreme-vue/data-grid";
     import { fetchWebsites } from "@/services/website-api";
-    import type { WebsiteListItem } from "@/types/website";
+    import { WebsiteStatus, type WebsiteListItem } from "@/types/website";
     import {
         EXPIRING_WITHIN_DAYS,
         remainingDaysClass,
@@ -91,9 +91,15 @@
         return site.Status === null ? "" : statusView(site).Text;
     }
 
-    /** 剩餘天數由小到大排序；未設定到期日的資料統一排在最後。 */
+    // 未填到期日排在有天數的資料之後
+    const NO_END_DATE_SORT = 1_000_000_000;
+    // 註銷資料整批排到最後，彼此之間仍依剩餘天數排序
+    const TERMINATED_SORT_OFFSET = NO_END_DATE_SORT * 10;
+
+    /** 剩餘天數由小到大排序；未設定到期日與註銷資料依序排在後方。 */
     function remainingDaysSortValue(site: WebsiteListItem): number {
-        return site.RemainingDays ?? Number.MAX_SAFE_INTEGER;
+        const offset = site.Status === WebsiteStatus.註銷 ? TERMINATED_SORT_OFFSET : 0;
+        return offset + (site.RemainingDays ?? NO_END_DATE_SORT);
     }
 
     function goCreate(): void {

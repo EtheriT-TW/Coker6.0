@@ -1823,6 +1823,7 @@ body > .popover.bs-popover-auto.fade {
 
 .purchase_item .cart-price-bonus {
     margin-top: 0.15rem;
+    margin-left:.5rem;
     font-size: 0.9rem;
     font-weight: 500;
     white-space: nowrap;

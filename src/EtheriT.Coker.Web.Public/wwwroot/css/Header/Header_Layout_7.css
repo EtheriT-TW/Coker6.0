@@ -230,6 +230,14 @@ body {
 #Mega_Menu .bj-white {
     background: transparent !important;
 }
+/* 取代 <nav> 原本的 .p-0。p-0 是 padding: 0 !important，會擋掉 Bootstrap 開啟
+   offcanvas／modal 時寫在標籤上的 padding-right（用來補償捲軸消失的寬度），
+   導致 #Mega_Menu 裡的元素在開啟當下往右跳一個捲軸寬。改成一般宣告後，
+   行內的 padding-right 就能正常覆蓋。 */
+nav.navbar.fixed-top {
+    padding: 0;
+}
+
 /* Cart Dropdown*/
 #Cart_Dropdown_Parent {
     position: relative;
@@ -239,8 +247,6 @@ body {
     width: 280px;
     max-width: 80vw;
     max-height: 90vh;
-    left: 0;
-    top: 2.5rem;
 }
 
     #Car_Dropdown > ul > li.unavailable {
@@ -265,7 +271,11 @@ body {
         }
 
     #Car_Dropdown > ul > li > figure > a > .pro_image {
-        max-width: 80px;
+        flex-shrink: 0;
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        object-position:left;
     }
 
     #Car_Dropdown > ul > li > figure > a > figcaption > .pro_name {
@@ -578,14 +588,6 @@ body {
         max-height: 50px;
         max-width: 50%;
     }
-    #Car_Dropdown {
-        left:unset;
-        right: 0;
-        top: 4.5rem;
-        position: fixed;
-        margin: 0 !important;
-    }
-
     #Offcanvas_Mega_Menu {
         background-color: rgb(101 169 239 / 95%);
         width: 85% !important;
@@ -1247,4 +1249,103 @@ body {
         margin: auto;
         display: block;
     }
+}
+
+/* ── 購物車改用 Bootstrap offcanvas（手機從左、電腦從右滑出，上下滿高） ──
+   面板已移到 <nav> 之外（Layout_7.cshtml），避免 .navbar-expand-lg .offcanvas
+   在 >=992px 把它攤平、以及被 .fixed-top 的 z-index:1030 堆疊環境關住。
+
+   左右方向集中用三個自訂屬性控制，下面所有定位規則都讀同一組值。
+   標籤上的 offcanvas-start 保留不動，它在這裡只負責提供 top: 0，
+   實際靠左或靠右由這裡的 --cart-drawer-* 決定。 */
+#Car_Dropdown.offcanvas {
+    --bs-offcanvas-width: min(92vw, 380px);
+    --bs-offcanvas-zindex: 1070;
+    --cart-drawer-left: 0; /* 手機：貼左 */
+    --cart-drawer-right: auto;
+    --cart-drawer-top: 0; /* 手機：上下滿高 */
+    --cart-drawer-bottom: 0;
+    --cart-drawer-hidden: translateX(-100%); /* 關閉時收到畫面左外側 */
+    width: var(--bs-offcanvas-width) !important; /* 蓋掉上方 width: 280px */
+    max-width: none !important; /* 蓋掉 max-width: 80vw */
+    max-height: none !important; /* 蓋掉 max-height: 90vh，否則不會滿高 */
+    overflow: hidden !important; /* 蓋掉標籤上的 .overflow-auto，改由 ul 自己捲 */
+    left: var(--cart-drawer-left);
+    right: var(--cart-drawer-right);
+    top: var(--cart-drawer-top);
+    bottom: var(--cart-drawer-bottom);
+    transform: var(--cart-drawer-hidden);
+}
+
+/* 電腦版：寬度為螢幕的六分之一，並改成從右側滑出 */
+@media (min-width: 992px) {
+    #Car_Dropdown.offcanvas {
+        --bs-offcanvas-width: calc(100vw / 6);
+        --cart-drawer-left: auto;
+        --cart-drawer-right: 0; /* 電腦：貼右 */
+        --cart-drawer-hidden: translateX(100%); /* 關閉時收到畫面右外側 */
+        --cart-drawer-top: 0; /* 電腦：上下各留 10vh，高度剛好八成、垂直置中 */
+        --cart-drawer-bottom: 20vh;
+    }
+
+        /* 抽屜從右側出來，關閉鈕改放左上角
+       （!important 是為了蓋掉標籤上 .justify-content-end 的 !important） */
+        #Car_Dropdown.offcanvas > .cart_offcanvas_head {
+            justify-content: flex-start !important;
+        }
+}
+
+/* 關閉鈕列：釘在頂端，清單捲動時不會跟著跑掉 */
+#Car_Dropdown.offcanvas > .cart_offcanvas_head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: .5rem 0;
+    background: #fff;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+    /* 外觀完全交給第 39 行的全域 .fa-times-square（40px / #cccccc），與漢堡選單
+           開啟時的關閉鈕是同一顆圖示、同一組數值，這裡不覆蓋任何外觀，連 hover 也不加。
+           只補鍵盤焦點框（滑鼠操作看不到，不影響外觀）。 */
+    #Car_Dropdown.offcanvas > .cart_offcanvas_head > .btn_cart_close:focus-visible {
+        outline: 2px solid var(--red-main);
+        outline-offset: 2px;
+    }
+
+/* 只有商品清單捲動，標題列與購買鈕留在捲動範圍外 */
+#Car_Dropdown.offcanvas > ul {
+    min-height: 0; /* flex 項目預設不會縮到比內容小，沒這行就不會出現捲軸 */
+    overflow-y: auto;
+}
+
+#Car_Dropdown > ul > li.cart-item--primary{
+    padding-bottom:.25rem;
+}
+
+/* 「購買」鈕固定在底部，底部留白（!important 是為了蓋掉標籤上 .mt-2 的 margin-top: .5rem !important） */
+#Car_Dropdown.offcanvas > .btn_car_buy {
+    flex: 0 0 auto;
+    margin-top: auto !important;
+    margin-bottom: 1rem;
+}
+
+/* ProductAction.js 的 CartDropPosition() 仍掛在 window 的 resize / scroll，
+   而它只判斷有沒有 .show —— offcanvas 打開時也有 .show，會被它重新定位回按鈕旁。
+   這裡用較高的特異性把它擋回來（該 JS 未修改）。 */
+#Car_Dropdown.offcanvas.cart-dropdown--positioned {
+    top: var(--cart-drawer-top) !important;
+    bottom: var(--cart-drawer-bottom) !important;
+    left: var(--cart-drawer-left) !important;
+    right: var(--cart-drawer-right) !important;
+    margin: 0 !important;
+    max-height: none !important;
+    transform: var(--cart-drawer-hidden) !important;
+}
+
+/* 打開時滑入定位。必須放在最後：同時蓋掉上面兩組 transform，
+   以及 Bootstrap 自己的 .offcanvas.show 規則（它的階級輸給帶 id 的選擇器）。 */
+#Car_Dropdown.offcanvas.showing,
+#Car_Dropdown.offcanvas.show:not(.hiding) {
+    transform: none !important;
 }

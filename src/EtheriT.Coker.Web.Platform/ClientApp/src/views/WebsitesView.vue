@@ -91,6 +91,16 @@
         return site.Status === null ? "" : statusView(site).Text;
     }
 
+    // 畫面顯示「—」的（已到期、未填到期日）排在所有有天數的資料之後
+    const DASH_SORT_BASE = Number.MAX_SAFE_INTEGER - 1;
+
+    function remainingDaysSortValue(row: WebsiteListItem): number {
+        const days = row.RemainingDays;
+        if (days === null) return Number.MAX_SAFE_INTEGER;   // 未填到期日：最後
+        if (days < 0) return DASH_SORT_BASE;                  // 已到期：排在未填到期日之前
+        return days;                                          // 0 天以上：照天數由小到大
+    }
+
     function goCreate(): void {
         void router.push("/websites/new");
     }

@@ -3472,6 +3472,15 @@ namespace EtheriT.Coker.Application.Order
 
                 if (oldStatus == newStatus)
                 {
+                    // A previous payment path may already have written the closed
+                    // status without refunding redeemed bonus. Reconcile it here;
+                    // RefundRedeemByOrderAsync is idempotent by order RefKey.
+                    if (IsClosedOrderStatusForBonus(newStatus))
+                    {
+                        await RefundUsedBonusByOrderAsync(orderHeader);
+                        await db.SaveChangesAsync();
+                    }
+
                     response.Success = true;
                     return response;
                 }
@@ -3496,6 +3505,10 @@ namespace EtheriT.Coker.Application.Order
                 }
 
                 orderHeader.State = newStatus;
+
+                // All order status entry points (back office, payment callbacks and
+                // member cancellation) must share the same bonus transition logic.
+                await HandleOrderBonusStateChangeAsync(orderHeader, oldStatus, newStatus);
 
                 if (newStatus == OrderStatusEnum.已取消)
                     await CancelOrderMailSend(orderHeader.Id, now);
@@ -4342,9 +4355,18 @@ namespace EtheriT.Coker.Application.Order
 
                 ValidateCancelStatusChange(order, oldStatus, newStatus, dto.ForceCancel);
 
-                // 狀態相同，只更新備註
+                // 狀態相同：已結案訂單先對帳紅利，再更新備註。
                 if (oldStatus == newStatus)
                 {
+                    // 允許後台重新儲存已結案訂單時修復過去漏掉的紅利回補。
+                    // OrderStateChange 內部會依 Refund RefKey 做冪等判斷。
+                    if (IsClosedOrderStatusForBonus(newStatus))
+                    {
+                        response = await OrderStateChange(order.Id, (int)newStatus);
+                        if (!response.Success)
+                            throw new Exception(response.Message ?? response.Error ?? "訂單紅利回補檢查失敗。");
+                    }
+
                     if (dto.Memo != null)
                     {
                         order.Memo = dto.Memo;
@@ -4389,9 +4411,6 @@ namespace EtheriT.Coker.Application.Order
                         order.TrackingNumber = dto.TrackingNumber;
 
                     await loginUserData.SaveChanges(order);
-
-                    // 5. 紅利狀態事件
-                    await HandleOrderBonusStateChangeAsync(order, oldStatus, newStatus);
 
                     await db.SaveChangesAsync();
                     await tx.CommitAsync();
@@ -4981,25 +5000,11 @@ namespace EtheriT.Coker.Application.Order
                     if (!shouldFail)
                         continue;
 
-                    var oldStatus = order.State;
-
                     var changeResult = await OrderStateChange(order.Id, (int)OrderStatusEnum.付款失敗);
 
                     if (!changeResult.Success)
                         throw new Exception(changeResult.Message ?? changeResult.Error ?? "逾期訂單狀態更新失敗。");
 
-                    var refreshedOrder = await db.Order_Headers
-                        .Where(e => e.Id == order.Id)
-                        .FirstOrDefaultAsync();
-
-                    if (refreshedOrder == null)
-                        throw new Exception("逾期訂單更新後查無訂單資料。");
-
-                    await HandleOrderBonusStateChangeAsync(
-                        refreshedOrder,
-                        oldStatus,
-                        OrderStatusEnum.付款失敗
-                    );
                 }
                 response.Success = true;
             }

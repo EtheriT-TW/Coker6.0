@@ -164,16 +164,13 @@ export function externalAssetImportPlugin(editor, options = {}) {
         }
         refreshPendingCount();
         const importable = items.filter(item => item.canImport);
-        if (!importable.length) {
-            if (forceAsk) options.adapter?.ui?.alert?.('目前找不到可匯入的外站圖片檔案。');
-            return;
-        }
 
         if (mode === 'ask') {
             const choice = await showImportPrompt(hostDocument, items, smallImageMaxBytes);
             if (!choice) return;
             mode = choice.mode;
             if (choice.remember) savePreference(mode);
+            applyUnavailableActions(editor, choice.unavailableActions, hostDocument);
         }
 
         const selected = mode === 'all'
@@ -396,6 +393,128 @@ function applyReplacements(editor, replacements) {
     });
 }
 
+function applyUnavailableActions(editor, actions, document) {
+    const selected = new Map(
+        (actions || [])
+            .filter(action => action?.path && action.mode !== 'skip')
+            .map(action => [action.path, action.mode])
+    );
+    if (!selected.size) return;
+
+    const removedComponents = new Set();
+    editor.getWrapper?.()?.onAll?.(component => {
+        if (removedComponents.has(component)) return;
+        const matchedEntries = [...selected.entries()].filter(([path]) => componentReferencesPath(component, path));
+        if (!matchedEntries.length) return;
+
+        if (matchedEntries.some(([path, mode]) => mode === 'delete' && isImageComponentReference(component, path))) {
+            removedComponents.add(component);
+            component.remove?.();
+            return;
+        }
+
+        removeComponentAssetSettings(component, matchedEntries.map(([path]) => path), document);
+    });
+
+    editor.CssComposer?.getAll?.().forEach(rule => {
+        const style = rule.getStyle?.() || {};
+        const next = removeMatchingStyleProperties(style, selected.keys());
+        if (next.changed) rule.setStyle?.(next.style);
+    });
+}
+
+function componentReferencesPath(component, path) {
+    const attributes = component.getAttributes?.() || {};
+    if (Object.values(attributes).some(value => typeof value === 'string' && value.includes(path))) return true;
+    if (['src', 'poster'].some(property => String(component.get?.(property) || '').includes(path))) return true;
+    if (Object.values(component.getStyle?.() || {}).some(value => cssValueReferencesPath(value, path))) return true;
+    return String(component.get?.('content') || '').includes(path);
+}
+
+function isImageComponentReference(component, path) {
+    const tagName = String(component.get?.('tagName') || '').toLowerCase();
+    const type = String(component.get?.('type') || '').toLowerCase();
+    if (tagName !== 'img' && tagName !== 'source' && type !== 'image') return false;
+    const attributes = component.getAttributes?.() || {};
+    return ['src', 'data-src', 'srcset', 'data-full-src', 'data-medium-src']
+        .some(name => String(attributes[name] || component.get?.(name) || '').includes(path));
+}
+
+function removeComponentAssetSettings(component, paths, document) {
+    const pathSet = new Set(paths);
+    const attributes = component.getAttributes?.() || {};
+    const updated = {};
+    const removals = [];
+
+    Object.entries(attributes).forEach(([name, value]) => {
+        if (typeof value !== 'string') return;
+        if (name === 'style') {
+            const next = removeMatchingCssDeclarations(value, pathSet, document);
+            if (next !== value) {
+                if (next) updated[name] = next;
+                else removals.push(name);
+            }
+            return;
+        }
+        if (!paths.some(path => value.includes(path))) return;
+        if (name === 'srcset') {
+            const next = removeSrcsetPaths(value, pathSet);
+            if (next) updated[name] = next;
+            else removals.push(name);
+        } else {
+            removals.push(name);
+        }
+    });
+
+    if (Object.keys(updated).length) component.addAttributes?.(updated);
+    if (removals.length) component.removeAttributes?.([...new Set(removals)]);
+
+    ['src', 'poster'].forEach(property => {
+        const value = component.get?.(property);
+        if (typeof value === 'string' && paths.some(path => value.includes(path))) component.set?.(property, '');
+    });
+
+    const componentStyle = removeMatchingStyleProperties(component.getStyle?.() || {}, pathSet);
+    if (componentStyle.changed) component.setStyle?.(componentStyle.style);
+}
+
+function removeMatchingStyleProperties(style, paths) {
+    const pathList = [...paths];
+    const next = { ...style };
+    let changed = false;
+    Object.entries(style).forEach(([name, value]) => {
+        if (!pathList.some(path => cssValueReferencesPath(value, path))) return;
+        delete next[name];
+        changed = true;
+    });
+    return { style: next, changed };
+}
+
+function removeMatchingCssDeclarations(value, paths, document) {
+    if (!document?.createElement) return value;
+    const element = document.createElement('span');
+    element.style.cssText = value;
+    Array.from(element.style).forEach(name => {
+        const propertyValue = element.style.getPropertyValue(name);
+        if ([...paths].some(path => cssValueReferencesPath(propertyValue, path))) {
+            element.style.removeProperty(name);
+        }
+    });
+    return element.style.cssText;
+}
+
+function cssValueReferencesPath(value, path) {
+    return parseCssUrls(value).some(url => url === path);
+}
+
+function removeSrcsetPaths(value, paths) {
+    return String(value || '')
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item && !paths.has(item.split(/\s+/)[0]))
+        .join(', ');
+}
+
 function ensureStyles(document) {
     if (!document || document.getElementById(styleId)) return;
     const style = document.createElement('style');
@@ -408,6 +527,7 @@ function ensureStyles(document) {
         .coker-asset-actions button{border:1px solid #cbd5e1;border-radius:7px;background:#fff;padding:8px 14px;cursor:pointer}.coker-asset-actions button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
         .coker-asset-choice{display:block;padding:8px 0}.coker-asset-loading{text-align:center}.coker-asset-spinner{width:36px;height:36px;border:4px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;animation:coker-asset-spin .8s linear infinite;margin:0 auto 14px}
         .coker-asset-pending{margin-top:14px}.coker-asset-pending ul{max-height:150px;overflow:auto;margin:8px 0 0;padding-left:22px}.coker-asset-pending li{overflow-wrap:anywhere;margin:5px 0;font-size:12px}
+        .coker-asset-problems{margin-top:14px}.coker-asset-problem{border:1px solid #fecaca;background:#fff7f7;border-radius:8px;padding:10px;margin-top:8px}.coker-asset-problem-path{font-size:12px;overflow-wrap:anywhere}.coker-asset-problem-error{font-size:12px;color:#b91c1c;margin-top:4px}.coker-asset-problem-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:13px}
         .coker-asset-toolbar-count{display:inline-block;margin-left:2px;color:#fbbf24;font-size:9px;line-height:1;vertical-align:top}
         @keyframes coker-asset-spin{to{transform:rotate(360deg)}}
     `;
@@ -427,6 +547,7 @@ function createModal(document, content) {
 
 function showImportPrompt(document, items, smallMaxBytes) {
     const available = items.filter(item => item.canImport);
+    const unavailableItems = items.filter(item => !item.canImport);
     const small = available.filter(item => item.size != null && item.size <= smallMaxBytes).length;
     const large = available.filter(item => item.size != null && item.size > smallMaxBytes).length;
     const unknown = available.filter(item => item.size == null).length;
@@ -436,18 +557,47 @@ function showImportPrompt(document, items, smallMaxBytes) {
             <h3>發現非本站圖片</h3>
             <p>此元件包含非本站上傳圖片。若不匯入網站空間，前台可能因來源圖片被刪除或路徑不同而出現掉圖。</p>
             <div class="coker-asset-summary">小型圖片（${formatBytes(smallMaxBytes)} 以下）：${small} 張<br>大型圖片：${large} 張<br>大小未知：${unknown} 張${unavailable ? `<br>無法匯入或來源不存在：${unavailable} 張` : ''}</div>
-            <label><input type="checkbox" data-remember> 記住我的選擇</label>
-            <div class="coker-asset-actions"><button data-mode="skip">暫時略過</button><button data-mode="all">全部匯入</button><button class="primary" data-mode="small-only">僅匯入小型圖片</button></div>
+            ${unavailableItems.length ? `
+                <div class="coker-asset-problems">
+                    <strong>有問題的圖片來源</strong>
+                    <p>請選擇如何處理。若來源位於 CSS，選擇移除或刪除時會移除完整 CSS 設定。</p>
+                    ${unavailableItems.map((item, index) => `
+                        <div class="coker-asset-problem" data-problem-index="${index}">
+                            <div class="coker-asset-problem-path">${escapeHtml(item.path)}</div>
+                            ${item.error ? `<div class="coker-asset-problem-error">${escapeHtml(item.error)}</div>` : ''}
+                            <div class="coker-asset-problem-actions">
+                                <label><input type="radio" name="coker-problem-${index}" value="remove"> 移除圖片設定</label>
+                                <label><input type="radio" name="coker-problem-${index}" value="delete"> 刪除圖片元件</label>
+                                <label><input type="radio" name="coker-problem-${index}" value="skip" checked> 暫時略過</label>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            ${available.length ? '<label><input type="checkbox" data-remember> 記住我的匯入選擇</label>' : ''}
+            <div class="coker-asset-actions">
+                ${available.length
+                    ? '<button data-mode="skip">暫時略過可匯入圖片</button><button data-mode="all">全部匯入</button><button class="primary" data-mode="small-only">僅匯入小型圖片</button>'
+                    : '<button data-cancel>取消</button><button class="primary" data-mode="skip">套用問題圖片處理</button>'}
+            </div>
         `);
         modal.dialog.querySelectorAll('[data-mode]').forEach(button => {
             button.addEventListener('click', () => {
                 const result = {
                     mode: button.dataset.mode,
-                    remember: modal.dialog.querySelector('[data-remember]').checked
+                    remember: modal.dialog.querySelector('[data-remember]')?.checked || false,
+                    unavailableActions: unavailableItems.map((item, index) => ({
+                        path: item.path,
+                        mode: modal.dialog.querySelector(`input[name="coker-problem-${index}"]:checked`)?.value || 'skip'
+                    }))
                 };
                 modal.close();
                 resolve(result);
             });
+        });
+        modal.dialog.querySelector('[data-cancel]')?.addEventListener('click', () => {
+            modal.close();
+            resolve(null);
         });
         modal.overlay.addEventListener('click', event => {
             if (event.target === modal.overlay) { modal.close(); resolve(null); }

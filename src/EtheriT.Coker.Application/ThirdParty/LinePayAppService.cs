@@ -83,8 +83,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                             }
                             else
                             {
-                                ohdata.State = OrderStatusEnum.付款失敗;
-                                db.SaveChanges();
+                                response.Success = false;
                                 response.Error = linePayResponse.ReturnCode;
                                 response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
                             }
@@ -158,8 +157,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                         }
                         else
                         {
-                            ohdata.State = OrderStatusEnum.付款失敗;
-                            db.SaveChanges();
+                            await orderAppService.OrderStateChange(
+                                ohdata.Id,
+                                (int)OrderStatusEnum.付款失敗);
                         }
                     }
                 }
@@ -225,8 +225,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                         }
                         else
                         {
-                            ohdata.State = OrderStatusEnum.付款失敗;
-                            db.SaveChanges();
+                            var stateResponse = await orderAppService.OrderStateChange(
+                                ohdata.Id,
+                                (int)OrderStatusEnum.付款失敗);
+                            if (!stateResponse.Success)
+                                throw new Exception(stateResponse.Message ?? stateResponse.Error ?? "訂單付款失敗狀態更新失敗。");
+
                             response.Error = linePayResponse.ReturnCode;
                             response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
                         }
@@ -301,10 +305,9 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                             if (linePayResponse.ReturnCode == "0000")
                             {
-                                response.Success = true;
-                                ohdata.State = OrderStatusEnum.已取消;
-                                await orderAppService.CancelOrderMailSend(ohid, DateTime.Now);
-                                db.SaveChanges();
+                                response = await orderAppService.OrderStateChange(
+                                    ohdata.Id,
+                                    (int)OrderStatusEnum.已取消);
                             }
                             response.Error = linePayResponse.ReturnCode;
                             response.Message = $"{(LinePayErrorCodeEnum)int.Parse(linePayResponse.ReturnCode)}({linePayResponse.ReturnMessage})";
@@ -350,23 +353,27 @@ namespace EtheriT.Coker.Application.ThirdParty
                             switch (linePayResponse.ReturnCode)
                             {
                                 case "0000":
-                                    ohdata.State = OrderStatusEnum.待確認;
-                                    response.Success = true;
+                                    response = await orderAppService.OrderStateChange(
+                                        ohdata.Id,
+                                        (int)OrderStatusEnum.待確認);
                                     break;
                                 case "0110":
-                                    ohdata.State = OrderStatusEnum.待付款;
-                                    response.Success = true;
+                                    response = await orderAppService.OrderStateChange(
+                                        ohdata.Id,
+                                        (int)OrderStatusEnum.待付款);
                                     break;
                                 case "0121":
                                     response = await orderAppService.OrderStateChange(ohdata.Id, (int)OrderStatusEnum.已取消);
                                     break;
                                 case "0122":
-                                    ohdata.State = OrderStatusEnum.付款失敗;
-                                    response.Success = true;
+                                    response = await orderAppService.OrderStateChange(
+                                        ohdata.Id,
+                                        (int)OrderStatusEnum.付款失敗);
                                     break;
                                 case "0123":
-                                    ohdata.State = OrderStatusEnum.已付款;
-                                    response.Success = true;
+                                    response = await orderAppService.OrderStateChange(
+                                        ohdata.Id,
+                                        (int)OrderStatusEnum.已付款);
                                     break;
                                 default:
                                     response.Success = false;
@@ -374,7 +381,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                             }
                             if (response.Success)
                             {
-                                db.SaveChanges();
                                 response.Message = $"{(int)ohdata.State},{linePayResponse.ReturnMessage}";
                             }
                             else
@@ -428,13 +434,17 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                             if (linePayResponse.ReturnCode == "0000")
                             {
-                                response.Success = true;
-                                response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
                                 ohdata.refundTransactionId = linePayResponse.info.refundTransactionId;
                                 ohdata.refundTransactionDate = linePayResponse.info.refundTransactionDate != null ? DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime() : null;
-                                ohdata.State = OrderStatusEnum.已取消;
-                                await orderAppService.CancelOrderMailSend(ohid, DateTime.Parse(linePayResponse.info.refundTransactionDate).ToLocalTime());
-                                db.SaveChanges();
+
+                                var stateResponse = await orderAppService.OrderStateChange(
+                                    ohdata.Id,
+                                    (int)OrderStatusEnum.已取消);
+                                if (!stateResponse.Success)
+                                    throw new Exception(stateResponse.Message ?? stateResponse.Error ?? "LINE Pay 退款成功，但訂單取消狀態更新失敗。");
+
+                                response.Success = true;
+                                response.Message = $"Message: {linePayResponse.ReturnMessage}; RefundId: {linePayResponse.info.refundTransactionId}; Date: {linePayResponse.info.refundTransactionDate}";
                             }
                             else
                             {
@@ -511,17 +521,23 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                ResponseMessageDto temp_response = await LinePayCheckPaymentStatus(ohid);
-                if (!temp_response.Success)
-                {
-                    return temp_response;
-                }
-
                 var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 if (ohdata != null)
                 {
-                    if (ohdata.TransactionId != null)
+                    if (string.IsNullOrWhiteSpace(ohdata.TransactionId))
                     {
+                        response = await orderAppService.OrderStateChange(
+                            ohdata.Id,
+                            (int)OrderStatusEnum.已取消);
+                        if (response.Success) response.Message = "訂單已取消。";
+                    }
+                    else
+                    {
+                        ResponseMessageDto temp_response = await LinePayCheckPaymentStatus(ohid);
+                        if (!temp_response.Success)
+                            return temp_response;
+
+                        response = temp_response;
                         switch (ohdata.State)
                         {
                             case OrderStatusEnum.待付款:
@@ -540,12 +556,16 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 response = await LinePayRefund(ohdata.Id, null);
                                 if (response.Success) response.Message = "訂單已取消並送出退款申請。";
                                 break;
+                            case OrderStatusEnum.付款失敗:
+                                response = await orderAppService.OrderStateChange(
+                                    ohdata.Id,
+                                    (int)OrderStatusEnum.已取消);
+                                if (response.Success) response.Message = "訂單已取消。";
+                                break;
+                            case OrderStatusEnum.已取消:
+                                response.Message = "訂單已取消。";
+                                break;
                         }
-                    }
-                    else
-                    {
-                        response = await orderAppService.OrderStateChange(ohid, (int)OrderStatusEnum.已取消);
-                        if (response.Success) response.Message = "訂單已取消。";
                     }
                 }
                 else throw new Exception("查無訂單資訊");

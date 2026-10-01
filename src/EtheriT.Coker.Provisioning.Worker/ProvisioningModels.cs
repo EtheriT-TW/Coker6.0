@@ -9,6 +9,11 @@ public sealed class ProvisioningWorkerOptions
     public int MonitoringSeconds { get; set; } = 15;
     // Daily sampling hour in the worker server's local time (0–23).
     public int TlsSamplingHour { get; set; } = 3;
+    // Optional PFX password; never included in heartbeat payloads or logs.
+    public string TlsPfxPassword { get; set; } = string.Empty;
+    public string WacsLogDirectory { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "win-acme", "acme-v02.api.letsencrypt.org", "Log");
     public int OperationTimeoutSeconds { get; set; } = 300;
     public bool DryRun { get; set; }
     public bool DnsEnabled { get; set; }

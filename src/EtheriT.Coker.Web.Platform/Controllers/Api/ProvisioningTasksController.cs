@@ -31,6 +31,38 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
             .FirstOrDefaultAsync(x => x.ServerId == server.Id, HttpContext.RequestAborted);
         var snapshot = string.IsNullOrWhiteSpace(state?.TlsSnapshotJson)
             ? null : JsonSerializer.Deserialize<TlsSnapshotDto>(state.TlsSnapshotJson);
+        if (snapshot?.Websites is not null)
+        {
+            // Match the monitoring page's system website scope, rather than IIS running state.
+            var defaultUrls = await db.Websites.AsNoTracking()
+                .Where(x => !x.IsDeleted && x.DefaultUrl != null && x.DefaultUrl != "")
+                .Select(x => x.DefaultUrl)
+                .ToListAsync(HttpContext.RequestAborted);
+            var systemHosts = defaultUrls.Select(PlatformDomainName.ToHost)
+                .OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var additionalPools = (configuration
+                .GetSection($"Provisioning:Monitoring:AdditionalApplicationPools:{server.Id}")
+                .Get<string[]>() ?? [])
+                .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var additionalSites = DeserializeList<ProvisioningAppPoolMetricDto>(state?.AppPoolMetricsJson)
+                .Where(pool => additionalPools.Contains(pool.ApplicationPoolName))
+                .SelectMany(pool => pool.SiteNames)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            snapshot = snapshot with
+            {
+                Websites = snapshot.Websites.Select(site => additionalSites.Contains(site.SiteName)
+                    ? site : site with
+                    {
+                        HttpsUrls = site.HttpsUrls.Where(url =>
+                            PlatformDomainName.ToHost(url) is { } host && systemHosts.Contains(host)).ToArray(),
+                        HttpsBindings = site.HttpsBindings.Where(binding =>
+                            systemHosts.Contains(binding[(binding.LastIndexOf(':') + 1)..].Trim().TrimEnd('.'))).ToArray()
+                    })
+                    .Where(site => additionalSites.Contains(site.SiteName) || site.HttpsBindings.Count > 0)
+                    .ToArray()
+            };
+        }
         var threshold = DateTime.UtcNow.AddSeconds(-Math.Max(15, configuration.GetValue("Provisioning:AgentOfflineSeconds", 45)));
         return new ServerTlsStatusDto(server.Id, state?.LastSeenAtUtc >= threshold, state?.LastSeenAtUtc, snapshot);
     }

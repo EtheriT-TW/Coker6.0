@@ -65,7 +65,18 @@ public sealed record ProvisioningAgentHeartbeatRequest(
     IReadOnlyList<ProvisioningAppPoolMetricDto>? ApplicationPools,
     TlsSnapshotDto? TlsSnapshot = null);
 
-public sealed record TlsSnapshotDto(DateTime? CollectedAtUtc, IReadOnlyList<TlsCertificateDto> Certificates, string? Error);
+public sealed record TlsSnapshotDto(DateTime? CollectedAtUtc, IReadOnlyList<TlsCertificateDto> Certificates, string? Error,
+    IReadOnlyList<TlsWebsiteDto>? Websites = null, TlsCentralStoreDto? CentralStore = null, TlsWacsLogsDto? WacsLogs = null);
+public sealed record TlsWacsLogsDto(DateTime? CollectedAtUtc, string DirectoryPath, IReadOnlyList<TlsWacsLogFileDto> Files, string? Error,
+    IReadOnlyList<TlsWacsExecutionDto>? Executions = null);
+public sealed record TlsWacsExecutionDto(string Id, DateTime? StartedAtUtc, DateTime? CompletedAtUtc,
+    string TaskName, string Result, string Details, string FileName, int StartLine, int EndLine);
+public sealed record TlsWacsLogFileDto(string FileName, DateTime LastWriteAtUtc, int? ErrorEntries, int? WarningEntries, string? Error);
+public sealed record TlsCentralStoreDto(DateTime? CollectedAtUtc, bool? Enabled, string? DirectoryPath,
+    IReadOnlyList<string> PfxFileNames, string? Error, IReadOnlyList<TlsPfxCertificateDto>? Certificates = null);
+public sealed record TlsPfxCertificateDto(string FileName, string? Subject, string? Issuer, string? Thumbprint,
+    DateTime? NotBeforeUtc, DateTime? NotAfterUtc, string? Error);
+public sealed record TlsWebsiteDto(string SiteName, string State, IReadOnlyList<string> HttpsBindings, IReadOnlyList<string> HttpsUrls);
 public sealed record TlsCertificateDto(
     string Thumbprint, string StoreName, string? Subject, string? Issuer,
     IReadOnlyList<string> DnsNames, DateTime? NotBeforeUtc, DateTime? NotAfterUtc,

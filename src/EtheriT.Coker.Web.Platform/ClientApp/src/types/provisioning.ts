@@ -78,7 +78,16 @@ export interface ServerTlsStatus {
   ServerId: string;
   IsOnline: boolean;
   LastSeenAtUtc: string | null;
-  Snapshot: { CollectedAtUtc: string | null; Certificates: TlsCertificate[]; Error: string | null } | null;
+  Snapshot: { CollectedAtUtc: string | null; Certificates: TlsCertificate[]; Error: string | null;
+    WacsLogs?: { CollectedAtUtc: string | null; DirectoryPath: string; Error: string | null;
+      Executions?: { Id: string; StartedAtUtc: string | null; CompletedAtUtc: string | null;
+        TaskName: string; Result: string; Details: string; FileName: string; StartLine: number; EndLine: number }[] | null;
+      Files: { FileName: string; LastWriteAtUtc: string; ErrorEntries: number | null; WarningEntries: number | null; Error: string | null }[] } | null;
+    Websites?: { SiteName: string; State: string; HttpsBindings: string[]; HttpsUrls: string[] }[] | null;
+    CentralStore?: { CollectedAtUtc: string | null; Enabled: boolean | null; DirectoryPath: string | null;
+      PfxFileNames: string[]; Error: string | null;
+      Certificates?: { FileName: string; Subject: string | null; Issuer: string | null; Thumbprint: string | null;
+        NotBeforeUtc: string | null; NotAfterUtc: string | null; Error: string | null }[] | null } | null } | null;
 }
 
 export interface ProvisioningAgentStatus {

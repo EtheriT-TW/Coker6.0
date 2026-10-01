@@ -11,7 +11,8 @@ public sealed record AgentHeartbeatRequest(
     long MemoryTotalBytes,
     double? MemoryUsagePercent,
     IReadOnlyList<DiskMetrics> Disks,
-    IReadOnlyList<IisApplicationPoolMetrics> ApplicationPools);
+    IReadOnlyList<IisApplicationPoolMetrics> ApplicationPools,
+    TlsSnapshot? TlsSnapshot = null);
 
 public sealed record SystemMetrics(
     double? CpuUsagePercent,
@@ -19,7 +20,14 @@ public sealed record SystemMetrics(
     long MemoryTotalBytes,
     double? MemoryUsagePercent,
     IReadOnlyList<DiskMetrics> Disks,
-    IReadOnlyList<IisApplicationPoolMetrics> ApplicationPools);
+    IReadOnlyList<IisApplicationPoolMetrics> ApplicationPools,
+    TlsSnapshot? TlsSnapshot = null);
+
+public sealed record TlsSnapshot(DateTime? CollectedAtUtc, IReadOnlyList<TlsCertificate> Certificates, string? Error);
+public sealed record TlsCertificate(
+    string Thumbprint, string StoreName, string? Subject, string? Issuer,
+    IReadOnlyList<string> DnsNames, DateTime? NotBeforeUtc, DateTime? NotAfterUtc,
+    bool HasPrivateKey, IReadOnlyList<string> IisBindings, string? Error);
 
 public sealed record DiskMetrics(
     string Name,

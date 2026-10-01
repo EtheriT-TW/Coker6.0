@@ -82,6 +82,7 @@
         { to: "/analytics", icon: "monitoring", label: "營運分析" },
         ...(canControlServers.value ? [
             { to: "/server-monitoring", icon: "speed", label: "伺服器監控" },
+            { to: "/tls-certificates", icon: "verified_user", label: "TLS 憑證管理" },
             { to: "/provisioning-test", icon: "dns", label: "主機操作測試" }
         ] : []),
         ...(canManagePlatformRoles.value ? [

@@ -7,6 +7,8 @@ public sealed class ProvisioningWorkerOptions
     public string ApiKey { get; set; } = string.Empty;
     public int PollingSeconds { get; set; } = 5;
     public int MonitoringSeconds { get; set; } = 15;
+    // Daily sampling hour in the worker server's local time (0–23).
+    public int TlsSamplingHour { get; set; } = 3;
     public int OperationTimeoutSeconds { get; set; } = 300;
     public bool DryRun { get; set; }
     public bool DnsEnabled { get; set; }

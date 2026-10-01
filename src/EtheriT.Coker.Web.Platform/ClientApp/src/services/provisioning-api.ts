@@ -1,5 +1,9 @@
 import { api } from "@/core/api/api-client";
-import type { CreateProvisioningTaskRequest, ProvisioningAgentStatus, ProvisioningMetricHistory, ProvisioningServer, ProvisioningTask } from "@/types/provisioning";
+import type { CreateProvisioningTaskRequest, ProvisioningAgentStatus, ProvisioningMetricHistory, ProvisioningServer, ProvisioningTask, ServerTlsStatus } from "@/types/provisioning";
+
+export function fetchServerTlsStatus(serverId: string): Promise<ServerTlsStatus> {
+  return api.get<ServerTlsStatus>(`/api/provisioning/tasks/servers/${encodeURIComponent(serverId)}/tls`);
+}
 
 export function fetchProvisioningServers(): Promise<ProvisioningServer[]> {
   return api.get<ProvisioningServer[]>("/api/provisioning/tasks/servers");

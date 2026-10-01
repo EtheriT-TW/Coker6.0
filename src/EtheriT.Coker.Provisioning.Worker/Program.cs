@@ -11,11 +11,13 @@ builder.Services.AddSingleton<PlatformProvisioningClient>();
 builder.Services.AddSingleton<ProcessRunner>();
 builder.Services.AddSingleton<WindowsSystemMetricsCollector>();
 builder.Services.AddSingleton<IisMetricsCollector>();
+builder.Services.AddSingleton<TlsCertificateCollector>();
 builder.Services.AddSingleton<IProvisioningTaskHandler, IisTaskHandler>();
 builder.Services.AddSingleton<IProvisioningTaskHandler, DnsTaskHandler>();
 builder.Services.AddSingleton<IProvisioningTaskHandler, SslTaskHandler>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddHostedService<SystemMonitoringWorker>();
+builder.Services.AddHostedService<TlsMonitoringWorker>();
 
 var host = builder.Build();
 host.Run();

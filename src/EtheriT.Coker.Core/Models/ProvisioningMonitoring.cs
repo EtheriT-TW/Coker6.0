@@ -20,6 +20,7 @@ public sealed class ProvisioningAgentStatus
     public double? MemoryUsagePercent { get; set; }
     public string DiskMetricsJson { get; set; } = "[]";
     public string AppPoolMetricsJson { get; set; } = "[]";
+    public string? TlsSnapshotJson { get; set; }
     public DateTime LastSeenAtUtc { get; set; }
 }
 

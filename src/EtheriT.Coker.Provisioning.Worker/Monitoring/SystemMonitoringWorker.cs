@@ -5,7 +5,8 @@ public sealed class SystemMonitoringWorker(
     ProvisioningWorkerOptions options,
     PlatformProvisioningClient client,
     WindowsSystemMetricsCollector metricsCollector,
-    IisMetricsCollector iisMetricsCollector) : BackgroundService
+    IisMetricsCollector iisMetricsCollector,
+    TlsCertificateCollector tlsCollector) : BackgroundService
 {
     private static readonly string AgentVersion =
         typeof(SystemMonitoringWorker).Assembly.GetName().Version?.ToString() ?? "unknown";
@@ -25,7 +26,8 @@ public sealed class SystemMonitoringWorker(
                 {
                     logger.LogWarning(ex, "Unable to collect IIS metrics for {ServerId}", options.ServerId);
                 }
-                var metrics = metricsCollector.Collect(applicationPools);
+                var tlsSnapshot = tlsCollector.CurrentSnapshot;
+                var metrics = metricsCollector.Collect(applicationPools) with { TlsSnapshot = tlsSnapshot };
                 await client.SendHeartbeatAsync(metrics, AgentVersion, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

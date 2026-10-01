@@ -87,6 +87,12 @@ export const router = createRouter({
             meta: { title: "伺服器監控" }
         },
         {
+            path: "/tls-certificates",
+            name: "tls-certificates",
+            component: () => import("@/views/TlsCertificatesView.vue"),
+            meta: { title: "TLS 憑證管理" }
+        },
+        {
             path: "/provisioning-test",
             name: "provisioning-test",
             component: () => import("@/views/ProvisioningTestView.vue"),

@@ -62,7 +62,15 @@ public sealed record ProvisioningAgentHeartbeatRequest(
     long MemoryTotalBytes,
     double? MemoryUsagePercent,
     IReadOnlyList<ProvisioningDiskMetricDto>? Disks,
-    IReadOnlyList<ProvisioningAppPoolMetricDto>? ApplicationPools);
+    IReadOnlyList<ProvisioningAppPoolMetricDto>? ApplicationPools,
+    TlsSnapshotDto? TlsSnapshot = null);
+
+public sealed record TlsSnapshotDto(DateTime? CollectedAtUtc, IReadOnlyList<TlsCertificateDto> Certificates, string? Error);
+public sealed record TlsCertificateDto(
+    string Thumbprint, string StoreName, string? Subject, string? Issuer,
+    IReadOnlyList<string> DnsNames, DateTime? NotBeforeUtc, DateTime? NotAfterUtc,
+    bool HasPrivateKey, IReadOnlyList<string> IisBindings, string? Error);
+public sealed record ServerTlsStatusDto(string ServerId, bool IsOnline, DateTime? LastSeenAtUtc, TlsSnapshotDto? Snapshot);
 
 public sealed record ProvisioningDiskMetricDto(
     string Name,

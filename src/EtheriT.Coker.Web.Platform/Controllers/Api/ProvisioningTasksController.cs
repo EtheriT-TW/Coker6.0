@@ -21,6 +21,20 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
             x.AllowedDnsZones.Where(IsDnsName).Select(zone => zone.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList()))
         .ToList();
 
+    [HttpGet("servers/{serverId}/tls")]
+    [Authorize(Policy = EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformServerControl)]
+    public async Task<ActionResult<ServerTlsStatusDto>> GetTlsStatus(string serverId)
+    {
+        var server = GetConfiguredServers().FirstOrDefault(x => string.Equals(x.Id, serverId, StringComparison.OrdinalIgnoreCase));
+        if (server is null) return NotFound();
+        var state = await db.ProvisioningAgentStatuses.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ServerId == server.Id, HttpContext.RequestAborted);
+        var snapshot = string.IsNullOrWhiteSpace(state?.TlsSnapshotJson)
+            ? null : JsonSerializer.Deserialize<TlsSnapshotDto>(state.TlsSnapshotJson);
+        var threshold = DateTime.UtcNow.AddSeconds(-Math.Max(15, configuration.GetValue("Provisioning:AgentOfflineSeconds", 45)));
+        return new ServerTlsStatusDto(server.Id, state?.LastSeenAtUtc >= threshold, state?.LastSeenAtUtc, snapshot);
+    }
+
     [HttpGet("agents")]
     public async Task<IReadOnlyList<ProvisioningAgentStatusDto>> GetAgents()
     {
@@ -299,6 +313,18 @@ public sealed class ProvisioningAgentTasksController(
 {
     private const string ApiKeyHeader = "X-Provisioning-Key";
 
+    [HttpGet("tls-snapshot")]
+    public async Task<ActionResult<TlsSnapshotDto>> GetTlsSnapshot([FromQuery] string serverId)
+    {
+        if (string.IsNullOrWhiteSpace(serverId)) return BadRequest();
+        serverId = serverId.Trim();
+        if (!Authenticate(serverId)) return Unauthorized();
+        var state = await db.ProvisioningAgentStatuses.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ServerId == serverId, HttpContext.RequestAborted);
+        if (string.IsNullOrWhiteSpace(state?.TlsSnapshotJson)) return NoContent();
+        return Ok(JsonSerializer.Deserialize<TlsSnapshotDto>(state.TlsSnapshotJson));
+    }
+
     [HttpPost("heartbeat")]
     public async Task<IActionResult> Heartbeat(ProvisioningAgentHeartbeatRequest request)
     {
@@ -326,6 +352,8 @@ public sealed class ProvisioningAgentTasksController(
         var applicationPools = (request.ApplicationPools ?? []).Take(1000).ToList();
         state.DiskMetricsJson = JsonSerializer.Serialize(disks);
         state.AppPoolMetricsJson = JsonSerializer.Serialize(applicationPools);
+        if (request.TlsSnapshot is not null)
+            state.TlsSnapshotJson = JsonSerializer.Serialize(request.TlsSnapshot);
         var now = DateTime.UtcNow;
         state.LastSeenAtUtc = now;
 

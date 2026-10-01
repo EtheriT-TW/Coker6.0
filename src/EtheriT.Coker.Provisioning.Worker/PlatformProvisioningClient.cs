@@ -24,6 +24,16 @@ public sealed class PlatformProvisioningClient
 
     public string WorkerId { get; }
 
+    public async Task<TlsSnapshot?> GetTlsSnapshotAsync(CancellationToken cancellationToken)
+    {
+        using var response = await client.GetAsync(
+            $"/api/provisioning/agent/tasks/tls-snapshot?serverId={Uri.EscapeDataString(options.ServerId)}",
+            cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken);
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent) return null;
+        return await response.Content.ReadFromJsonAsync<TlsSnapshot>(cancellationToken: cancellationToken);
+    }
+
     public void ValidateConfiguration()
     {
         if (client.BaseAddress is null) throw new InvalidOperationException("ProvisioningWorker:PlatformBaseUrl is invalid.");
@@ -64,7 +74,8 @@ public sealed class PlatformProvisioningClient
                 metrics.MemoryTotalBytes,
                 metrics.MemoryUsagePercent,
                 metrics.Disks,
-                metrics.ApplicationPools),
+                metrics.ApplicationPools,
+                metrics.TlsSnapshot),
             cancellationToken);
         await EnsureSuccessAsync(response, cancellationToken);
     }

@@ -8,7 +8,8 @@ public sealed class ProcessRunner(ProvisioningWorkerOptions options)
         string executable,
         IReadOnlyList<string> arguments,
         IReadOnlyDictionary<string, string?>? environment,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int maxOutputLength = 3500)
     {
         if (!File.Exists(executable)) throw new FileNotFoundException("Required executable was not found.", executable);
         var startInfo = new ProcessStartInfo(executable)
@@ -42,6 +43,6 @@ public sealed class ProcessRunner(ProvisioningWorkerOptions options)
         var stderr = (await stderrTask).Trim();
         if (process.ExitCode != 0)
             throw new InvalidOperationException($"{Path.GetFileName(executable)} exited with code {process.ExitCode}: {stderr}");
-        return string.IsNullOrWhiteSpace(stdout) ? "操作完成。" : stdout[..Math.Min(stdout.Length, 3500)];
+        return string.IsNullOrWhiteSpace(stdout) ? "操作完成。" : stdout[..Math.Min(stdout.Length, maxOutputLength)];
     }
 }

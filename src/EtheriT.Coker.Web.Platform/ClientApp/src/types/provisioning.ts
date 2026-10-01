@@ -61,6 +61,26 @@ export interface ProvisioningServer {
   AllowedDnsZones: string[];
 }
 
+export interface TlsCertificate {
+  Thumbprint: string;
+  StoreName: string;
+  Subject: string | null;
+  Issuer: string | null;
+  DnsNames: string[];
+  NotBeforeUtc: string | null;
+  NotAfterUtc: string | null;
+  HasPrivateKey: boolean;
+  IisBindings: string[];
+  Error: string | null;
+}
+
+export interface ServerTlsStatus {
+  ServerId: string;
+  IsOnline: boolean;
+  LastSeenAtUtc: string | null;
+  Snapshot: { CollectedAtUtc: string | null; Certificates: TlsCertificate[]; Error: string | null } | null;
+}
+
 export interface ProvisioningAgentStatus {
   ServerId: string;
   DisplayName: string;

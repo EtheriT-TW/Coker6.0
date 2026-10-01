@@ -93,14 +93,13 @@
 
     // 未填到期日排在有天數的資料之後
     const NO_END_DATE_SORT = 1_000_000_000;
-    // 註銷的整批排到最後，彼此之間仍照上面的規則排
+    // 註銷資料整批排到最後，彼此之間仍依剩餘天數排序
     const TERMINATED_SORT_OFFSET = NO_END_DATE_SORT * 10;
 
-    function remainingDaysSortValue(row: WebsiteListItem): number {
-        const offset = row.Status === WebsiteStatus.註銷 ? TERMINATED_SORT_OFFSET : 0;
-        const days = row.RemainingDays;
-        if (days === null) return offset + NO_END_DATE_SORT;   // 未填到期日：排在有天數的之後
-        return offset + days;                                   // 照天數由小到大（已到期的負數會在最前面）
+    /** 剩餘天數由小到大排序；未設定到期日與註銷資料依序排在後方。 */
+    function remainingDaysSortValue(site: WebsiteListItem): number {
+        const offset = site.Status === WebsiteStatus.註銷 ? TERMINATED_SORT_OFFSET : 0;
+        return offset + (site.RemainingDays ?? NO_END_DATE_SORT);
     }
 
     function goCreate(): void {

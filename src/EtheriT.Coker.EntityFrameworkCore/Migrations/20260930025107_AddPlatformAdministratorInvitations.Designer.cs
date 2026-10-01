@@ -4,6 +4,7 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(CokerDbContext))]
-    partial class CokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260930025107_AddPlatformAdministratorInvitations")]
+    partial class AddPlatformAdministratorInvitations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -955,17 +958,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Name = "商品匯入目錄",
                             SerNo = 10,
-                            Visible = true
-                        },
-                        new
-                        {
-                            Id = 2L,
-                            Code = "imglist-layout-change",
-                            CreationTime = new DateTime(2026, 9, 30, 0, 0, 0, 0, DateTimeKind.Local),
-                            CreatorUserId = 2L,
-                            IsDeleted = false,
-                            Name = "相簿排版切換",
-                            SerNo = 20,
                             Visible = true
                         });
                 });

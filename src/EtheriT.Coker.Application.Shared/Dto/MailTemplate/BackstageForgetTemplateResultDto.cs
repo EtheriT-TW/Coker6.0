@@ -6,5 +6,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.MailTemplate
         public string Account { get; set; } = string.Empty;
         public string ResetPasswordUrl { get; set; } = string.Empty;
         public DateTime ExpireTime { get; set; }
+        public bool IsAccountActivation { get; set; }
+        public bool IsPlatformInvitation { get; set; }
     }
 }

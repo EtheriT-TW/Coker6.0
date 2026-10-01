@@ -249,7 +249,10 @@
                 co.sweet.error("重設失敗", result.error || "無法重設密碼，請重新確認。");
                 return;
             }
-            co.sweet.success("密碼重設成功", function () {
+            const invitationPending = result.message === "PendingAdministratorApproval";
+            co.sweet.success(invitationPending
+                ? "Email 驗證完成，請等待管理員核准權限後再登入。"
+                : "密碼重設成功", function () {
                 location.href = "/Account/Index";
             }, false);
         }).fail(function () {

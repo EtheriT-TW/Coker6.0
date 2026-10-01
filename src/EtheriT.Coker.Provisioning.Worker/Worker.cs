@@ -93,6 +93,6 @@ public sealed class Worker : BackgroundService
 
     private static string DescribePayload(ProvisioningTaskPayload payload) =>
         $"SiteName={payload.SiteName ?? "-"}, StartSite={payload.StartSite?.ToString() ?? "-"}, " +
-        $"DNS={payload.RecordName ?? "-"}.{payload.ZoneName ?? "-"} -> {payload.IPv4Address ?? "-"}, " +
+        $"DNS {payload.DnsRecordType ?? "A"}={payload.RecordName ?? "-"}.{payload.ZoneName ?? "-"} -> {payload.DnsRecordValue ?? payload.IPv4Address ?? "-"}, MX Preference={payload.MxPreference?.ToString() ?? "-"}, " +
         $"SSL Hosts={string.Join(",", payload.HostNames ?? [])}";
 }

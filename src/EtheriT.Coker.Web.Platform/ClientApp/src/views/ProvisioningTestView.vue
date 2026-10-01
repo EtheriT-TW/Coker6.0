@@ -1,24 +1,31 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import { createProvisioningTask, fetchProvisioningAgents, fetchProvisioningServers, fetchProvisioningTasks } from "@/services/provisioning-api";
+import { createProvisioningTask, fetchProvisioningServers, fetchProvisioningTasks } from "@/services/provisioning-api";
 import {
   ProvisioningTaskStatus,
   ProvisioningTaskType,
   type CreateProvisioningTaskRequest,
-  type ProvisioningAgentStatus,
   type ProvisioningServer,
   type ProvisioningTask
 } from "@/types/provisioning";
 
 const servers = ref<ProvisioningServer[]>([]);
 const route = useRoute();
-const agents = ref<ProvisioningAgentStatus[]>([]);
 const targetServer = ref("");
 const siteName = ref("");
 const zoneName = ref("");
 const recordName = ref("");
-const ipAddress = ref("");
+const dnsRecordType = ref("A");
+const dnsRecordValue = ref("");
+const mxPreference = ref(10);
+const dnsServer = computed(() => servers.value.find(server => server.IsDnsServer));
+const allowedZones = computed(() => dnsServer.value?.AllowedDnsZones ?? []);
+const dnsValueLabels: Record<string, string> = { A: "IPv4", TXT: "文字內容", MX: "郵件伺服器主機名稱", CNAME: "別名目標主機名稱" };
+const dnsValueLabel = computed(() => dnsValueLabels[dnsRecordType.value] ?? "記錄值");
+const canSubmitDns = computed(() => allowedZones.value.includes(zoneName.value) && !!recordName.value &&
+  !!dnsRecordValue.value.trim() && (dnsRecordType.value !== "MX" ||
+    (Number.isInteger(mxPreference.value) && mxPreference.value >= 0 && mxPreference.value <= 65535)));
 const sslHostNames = ref("");
 const tasks = ref<ProvisioningTask[]>([]);
 const loading = ref(false);
@@ -31,7 +38,9 @@ const typeText: Record<ProvisioningTaskType, string> = {
   [ProvisioningTaskType.SetIisSiteState]: "IIS 單站操作",
   [ProvisioningTaskType.CreateDnsARecord]: "建立 DNS A 記錄",
   [ProvisioningTaskType.DeleteDnsARecord]: "刪除 DNS A 記錄",
-  [ProvisioningTaskType.InstallSsl]: "安裝 SSL"
+  [ProvisioningTaskType.InstallSsl]: "安裝 SSL",
+  [ProvisioningTaskType.CreateDnsRecord]: "建立 DNS 記錄",
+  [ProvisioningTaskType.DeleteDnsRecord]: "刪除 DNS 記錄"
 };
 
 const statusText: Record<ProvisioningTaskStatus, string> = {
@@ -44,14 +53,15 @@ const statusText: Record<ProvisioningTaskStatus, string> = {
 async function load(silent = false): Promise<void> {
   if (!silent) loading.value = true;
   try {
-    const [serverResult, agentResult, taskResult] = await Promise.all([
-      fetchProvisioningServers(), fetchProvisioningAgents(), fetchProvisioningTasks()
+    const [serverResult, taskResult] = await Promise.all([
+      fetchProvisioningServers(), fetchProvisioningTasks()
     ]);
     servers.value = serverResult;
-    agents.value = agentResult;
     tasks.value = taskResult;
     if (!servers.value.some(x => x.Id === targetServer.value))
       targetServer.value = servers.value[0]?.Id ?? "";
+    if (!allowedZones.value.includes(zoneName.value))
+      zoneName.value = allowedZones.value[0] ?? "";
     errorMessage.value = "";
   }
   catch (error) {
@@ -91,18 +101,20 @@ function setSiteState(start: boolean): void {
 }
 
 function changeDns(deleteRecord: boolean): void {
-  const dnsServer = servers.value.find(x => x.IsDnsServer)?.Id;
-  if (!dnsServer) {
-    errorMessage.value = "目前設定中沒有 DNS Server。";
+  const dnsServerId = dnsServer.value?.Id;
+  if (!dnsServerId || !canSubmitDns.value) {
+    errorMessage.value = "請選擇允許的 Zone，並填寫 DNS 記錄資料。";
     return;
   }
   void submit({
-    TargetServerId: dnsServer,
-    Type: deleteRecord ? ProvisioningTaskType.DeleteDnsARecord : ProvisioningTaskType.CreateDnsARecord,
+    TargetServerId: dnsServerId,
+    Type: deleteRecord ? ProvisioningTaskType.DeleteDnsRecord : ProvisioningTaskType.CreateDnsRecord,
     ZoneName: zoneName.value,
     RecordName: recordName.value,
-    IPv4Address: ipAddress.value
-  }, `確定要${deleteRecord ? "刪除" : "建立"} DNS A 記錄 ${recordName.value}.${zoneName.value} → ${ipAddress.value}？`);
+    DnsRecordType: dnsRecordType.value,
+    DnsRecordValue: dnsRecordValue.value,
+    MxPreference: dnsRecordType.value === "MX" ? mxPreference.value : undefined
+  }, `確定要${deleteRecord ? "刪除" : "建立"} DNS ${dnsRecordType.value} 記錄 ${recordName.value}.${zoneName.value} → ${dnsRecordValue.value}${dnsRecordType.value === "MX" ? `（優先序 ${mxPreference.value}）` : ""}？`);
 }
 
 function installSsl(): void {
@@ -113,12 +125,6 @@ function installSsl(): void {
 
 function formatTime(value: string | null): string {
   return value ? new Date(value).toLocaleString("zh-TW") : "—";
-}
-
-function formatBytes(value: number | null): string {
-  if (value === null || value < 0) return "—";
-  const gib = value / 1024 / 1024 / 1024;
-  return `${gib.toFixed(1)} GB`;
 }
 
 onMounted(() => {
@@ -133,27 +139,12 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="page-heading">
-    <div><h1>主機操作測試</h1><p>建立受控任務，由 JSON 設定中的 Provisioning Worker 各自領取並執行。</p></div>
+    <div><h1>主機操作測試</h1><p>此頁用於驗證 IIS、DNS 與 SSL 操作；伺服器狀態請至伺服器監控查看。</p></div>
     <button class="ui-button" type="button" :disabled="loading" @click="load()">重新整理</button>
   </section>
 
   <p class="alert alert-warning" role="status">Worker 的 DryRun=false 時，此頁會執行真實的 IIS、DNS 與 SSL 操作；研發環境請先使用 DryRun=true。</p>
   <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
-
-  <section class="agent-grid" aria-label="伺服器環境監控">
-    <article v-for="agent in agents" :key="agent.ServerId" class="data-card agent-card">
-      <header>
-        <div><h2>{{ agent.DisplayName }}</h2><small>{{ agent.ServerId }} · {{ agent.MachineName ?? "尚未連線" }}</small></div>
-        <span class="agent-state" :class="agent.IsOnline ? 'online' : 'offline'">{{ agent.IsOnline ? "在線" : "離線" }}</span>
-      </header>
-      <div class="agent-metrics">
-        <div><small>CPU</small><strong>{{ agent.CpuUsagePercent === null ? "—" : `${agent.CpuUsagePercent.toFixed(1)}%` }}</strong></div>
-        <div><small>記憶體</small><strong>{{ agent.MemoryUsagePercent === null ? "—" : `${agent.MemoryUsagePercent.toFixed(1)}%` }}</strong></div>
-      </div>
-      <p>{{ formatBytes(agent.MemoryUsedBytes) }} / {{ formatBytes(agent.MemoryTotalBytes) }}</p>
-      <footer><span>版本 {{ agent.AgentVersion ?? "—" }}</span><span>{{ agent.DryRun === null ? "尚未回報模式" : agent.DryRun ? "Dry Run" : "實際執行" }}</span><span>最後回報 {{ formatTime(agent.LastSeenAtUtc) }}</span></footer>
-    </article>
-  </section>
 
   <section class="provisioning-target data-card">
     <label><span>目標伺服器</span><select v-model="targetServer"><option v-for="server in servers" :key="server.Id" :value="server.Id">{{ server.DisplayName }}（{{ server.Id }}）</option></select></label>
@@ -162,7 +153,7 @@ onBeforeUnmount(() => {
   <section class="operation-grid">
     <article class="data-card operation-card">
       <h2>整個 IIS</h2><p>重新啟動目標伺服器的 IIS，會影響該主機上的所有網站。</p>
-      <button class="ui-button danger-button" type="button" :disabled="submitting" @click="restartIis">重新啟動 IIS</button>
+      <button class="ui-button danger-button" type="button" :disabled="submitting || !targetServer" @click="restartIis">重新啟動 IIS</button>
     </article>
 
     <article class="data-card operation-card">
@@ -172,11 +163,14 @@ onBeforeUnmount(() => {
     </article>
 
     <article class="data-card operation-card">
-      <h2>Windows DNS（固定由 .31 執行）</h2>
-      <label><span>Zone</span><input v-model.trim="zoneName" placeholder="example.com"></label>
+      <h2>Windows DNS</h2>
+      <p>由 {{ dnsServer?.DisplayName || "未設定的 DNS Server" }} 執行，只能操作既有 Zone，不會建立 Zone。</p>
+      <label><span>Zone</span><select v-model="zoneName" :disabled="!allowedZones.length"><option v-if="!allowedZones.length" value="">尚未設定允許的 Zone</option><option v-for="zone in allowedZones" :key="zone" :value="zone">{{ zone }}</option></select></label>
+      <label><span>記錄類型</span><select v-model="dnsRecordType" @change="dnsRecordValue = ''"><option v-for="type in ['A', 'TXT', 'MX', 'CNAME']" :key="type" :value="type">{{ type }}</option></select></label>
       <label><span>記錄名稱</span><input v-model.trim="recordName" placeholder="www 或 @"></label>
-      <label><span>IPv4</span><input v-model.trim="ipAddress" placeholder="210.65.132.30"></label>
-      <div class="button-row"><button class="ui-button" type="button" :disabled="submitting || !zoneName || !recordName || !ipAddress" @click="changeDns(false)">建立 A 記錄</button><button class="ui-button danger-button" type="button" :disabled="submitting || !zoneName || !recordName || !ipAddress" @click="changeDns(true)">刪除 A 記錄</button></div>
+      <label><span>{{ dnsValueLabel }}</span><textarea v-if="dnsRecordType === 'TXT'" v-model="dnsRecordValue" rows="3" placeholder="TXT 內容（最多 255 UTF-8 bytes）"></textarea><input v-else v-model.trim="dnsRecordValue" :placeholder="dnsRecordType === 'A' ? '192.0.2.1' : 'mail.example.com'"></label>
+      <label v-if="dnsRecordType === 'MX'"><span>優先序（數字越小越優先）</span><input v-model.number="mxPreference" type="number" min="0" max="65535"></label>
+      <div class="button-row"><button class="ui-button" type="button" :disabled="submitting || !canSubmitDns" @click="changeDns(false)">建立記錄</button><button class="ui-button danger-button" type="button" :disabled="submitting || !canSubmitDns" @click="changeDns(true)">刪除記錄</button></div>
     </article>
 
     <article class="data-card operation-card">
@@ -196,24 +190,17 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.provisioning-target { margin-bottom: 1rem; padding: 1rem 1.25rem; }
-.agent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-.agent-card { padding: 1.1rem 1.25rem; }
-.agent-card header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
-.agent-card h2 { margin: 0 0 .25rem; font-size: 1rem; }.agent-card small, .agent-card p, .agent-card footer { color: #687386; }
-.agent-state { padding: .2rem .55rem; border-radius: 999px; font-size: .8rem; font-weight: 700; }.agent-state.online { color: #17633a; background: #d9f4e5; }.agent-state.offline { color: #9d241d; background: #fde2e0; }
-.agent-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: 1rem; }.agent-metrics div { padding: .75rem; border-radius: 8px; background: #f7f9fc; }.agent-metrics small, .agent-metrics strong { display: block; }.agent-metrics strong { margin-top: .2rem; font-size: 1.25rem; }
-.agent-card footer { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .78rem; }
+.provisioning-target { min-height: 0; margin-bottom: 1rem; padding: 1rem 1.25rem; }
 .provisioning-target label { max-width: 320px; }
-.operation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-.operation-card { padding: 1.25rem; display: flex; flex-direction: column; gap: .8rem; }
+.operation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
+.operation-card { min-height: 0; padding: 1.25rem; display: flex; flex-direction: column; gap: .8rem; }
 .operation-card h2, .task-card h2 { margin: 0; font-size: 1.1rem; }
 .operation-card p { margin: 0; color: #687386; }
 label { display: grid; gap: .35rem; font-size: .9rem; font-weight: 600; }
-input, select, textarea { min-height: 40px; padding: .5rem .7rem; border: 1px solid #cfd6e2; border-radius: 6px; background: #fff; font: inherit; }
+input, select, textarea { width: 100%; min-width: 0; min-height: 40px; padding: .5rem .7rem; border: 1px solid #cfd6e2; border-radius: 6px; background: #fff; font: inherit; }
 .button-row { display: flex; flex-wrap: wrap; gap: .6rem; }
 .danger-button { color: #b42318; border-color: #f0aaa5; }
-.task-card { margin-top: 1rem; padding: 1.25rem; }
+.task-card { min-height: 0; margin-top: 1rem; padding: 1.25rem; }
 .task-table-wrap { overflow-x: auto; margin-top: 1rem; }
 table { width: 100%; border-collapse: collapse; font-size: .9rem; }
 th, td { padding: .65rem; text-align: left; border-bottom: 1px solid #e8ebf0; vertical-align: top; }

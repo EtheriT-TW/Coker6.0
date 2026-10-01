@@ -3,7 +3,9 @@ export enum ProvisioningTaskType {
   SetIisSiteState = 2,
   CreateDnsARecord = 3,
   DeleteDnsARecord = 4,
-  InstallSsl = 5
+  InstallSsl = 5,
+  CreateDnsRecord = 6,
+  DeleteDnsRecord = 7
 }
 
 export enum ProvisioningTaskStatus {
@@ -20,6 +22,9 @@ export interface ProvisioningTaskPayload {
   RecordName: string | null;
   IPv4Address: string | null;
   HostNames: string[] | null;
+  DnsRecordType?: string | null;
+  DnsRecordValue?: string | null;
+  MxPreference?: number | null;
 }
 
 export interface ProvisioningTask {
@@ -44,12 +49,16 @@ export interface CreateProvisioningTaskRequest {
   RecordName?: string;
   IPv4Address?: string;
   HostNames?: string[];
+  DnsRecordType?: string;
+  DnsRecordValue?: string;
+  MxPreference?: number;
 }
 
 export interface ProvisioningServer {
   Id: string;
   DisplayName: string;
   IsDnsServer: boolean;
+  AllowedDnsZones: string[];
 }
 
 export interface ProvisioningAgentStatus {

@@ -10,7 +10,10 @@ public sealed record CreateProvisioningTaskRequest(
     string? ZoneName,
     string? RecordName,
     string? IPv4Address,
-    IReadOnlyList<string>? HostNames);
+    IReadOnlyList<string>? HostNames,
+    string? DnsRecordType = null,
+    string? DnsRecordValue = null,
+    int? MxPreference = null);
 
 public sealed record ProvisioningTaskPayload(
     string? SiteName,
@@ -18,16 +21,20 @@ public sealed record ProvisioningTaskPayload(
     string? ZoneName,
     string? RecordName,
     string? IPv4Address,
-    IReadOnlyList<string>? HostNames);
+    IReadOnlyList<string>? HostNames,
+    string? DnsRecordType = null,
+    string? DnsRecordValue = null,
+    int? MxPreference = null);
 
 public sealed class ProvisioningServerOptions
 {
     public string Id { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public bool IsDnsServer { get; set; }
+    public string[] AllowedDnsZones { get; set; } = [];
 }
 
-public sealed record ProvisioningServerDto(string Id, string DisplayName, bool IsDnsServer);
+public sealed record ProvisioningServerDto(string Id, string DisplayName, bool IsDnsServer, IReadOnlyList<string> AllowedDnsZones);
 
 public sealed record ProvisioningTaskDto(
     long Id,

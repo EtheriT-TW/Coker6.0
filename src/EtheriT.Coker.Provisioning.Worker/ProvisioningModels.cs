@@ -21,7 +21,9 @@ public enum ProvisioningTaskType
     SetIisSiteState = 2,
     CreateDnsARecord = 3,
     DeleteDnsARecord = 4,
-    InstallSsl = 5
+    InstallSsl = 5,
+    CreateDnsRecord = 6,
+    DeleteDnsRecord = 7
 }
 
 public sealed record ProvisioningTaskPayload(
@@ -30,7 +32,10 @@ public sealed record ProvisioningTaskPayload(
     string? ZoneName,
     string? RecordName,
     string? IPv4Address,
-    IReadOnlyList<string>? HostNames);
+    IReadOnlyList<string>? HostNames,
+    string? DnsRecordType = null,
+    string? DnsRecordValue = null,
+    int? MxPreference = null);
 
 public sealed record ProvisioningTaskDto(long Id, ProvisioningTaskType Type, ProvisioningTaskPayload Payload);
 public sealed record ClaimRequest(string ServerId, string WorkerId);

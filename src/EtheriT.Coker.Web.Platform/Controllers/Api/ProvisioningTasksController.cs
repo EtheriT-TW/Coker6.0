@@ -17,7 +17,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
 {
     [HttpGet("servers")]
     public IReadOnlyList<ProvisioningServerDto> GetServers() => GetConfiguredServers()
-        .Select(x => new ProvisioningServerDto(x.Id, string.IsNullOrWhiteSpace(x.DisplayName) ? x.Id : x.DisplayName, x.IsDnsServer))
+        .Select(x => new ProvisioningServerDto(x.Id, string.IsNullOrWhiteSpace(x.DisplayName) ? x.Id : x.DisplayName, x.IsDnsServer,
+            x.AllowedDnsZones.Where(IsDnsName).Select(zone => zone.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList()))
         .ToList();
 
     [HttpGet("agents")]
@@ -163,7 +164,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
             PayloadJson = JsonSerializer.Serialize(new ProvisioningTaskPayload(
                 Clean(request.SiteName), request.StartSite, Clean(request.ZoneName),
                 Clean(request.RecordName), Clean(request.IPv4Address),
-                NormalizeHosts(request.HostNames))),
+                NormalizeHosts(request.HostNames), Clean(request.DnsRecordType)?.ToUpperInvariant(),
+                request.DnsRecordValue, request.MxPreference)),
             CreatedAtUtc = DateTime.UtcNow
         };
         db.ProvisioningTasks.Add(task);
@@ -184,14 +186,44 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
         if (request.Type == ProvisioningTaskType.SetIisSiteState && string.IsNullOrWhiteSpace(request.SiteName))
             ModelState.AddModelError(nameof(request.SiteName), "請輸入 IIS 網站名稱。");
 
-        if (request.Type is ProvisioningTaskType.CreateDnsARecord or ProvisioningTaskType.DeleteDnsARecord)
+        if (request.Type is ProvisioningTaskType.CreateDnsARecord or ProvisioningTaskType.DeleteDnsARecord or
+            ProvisioningTaskType.CreateDnsRecord or ProvisioningTaskType.DeleteDnsRecord)
         {
-            if (!servers.Any(x => x.IsDnsServer && string.Equals(x.Id, request.TargetServerId?.Trim(), StringComparison.OrdinalIgnoreCase)))
+            var dnsServer = servers.FirstOrDefault(x => x.IsDnsServer &&
+                string.Equals(x.Id, request.TargetServerId?.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (dnsServer is null)
                 ModelState.AddModelError(nameof(request.TargetServerId), "DNS 任務只能交由 DNS Server 執行。");
             if (!IsDnsName(request.ZoneName)) ModelState.AddModelError(nameof(request.ZoneName), "DNS Zone 格式不正確。");
+            if (dnsServer is null || !dnsServer.AllowedDnsZones.Any(zone =>
+                string.Equals(zone.Trim(), request.ZoneName?.Trim(), StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(request.ZoneName), "只能操作設定允許的既有 DNS Zone，不能建立 Zone。");
             if (!IsRecordName(request.RecordName)) ModelState.AddModelError(nameof(request.RecordName), "DNS 記錄名稱格式不正確。");
-            if (!IPAddress.TryParse(request.IPv4Address, out var address) || address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
-                ModelState.AddModelError(nameof(request.IPv4Address), "請輸入正確的 IPv4 位址。");
+            var legacy = request.Type is ProvisioningTaskType.CreateDnsARecord or ProvisioningTaskType.DeleteDnsARecord;
+            var recordType = legacy ? "A" : Clean(request.DnsRecordType)?.ToUpperInvariant();
+            var value = legacy ? request.IPv4Address : request.DnsRecordValue;
+            switch (recordType)
+            {
+                case "A":
+                    if (!IPAddress.TryParse(value, out var address) || address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+                        ModelState.AddModelError(nameof(request.DnsRecordValue), "請輸入正確的 IPv4 位址。");
+                    break;
+                case "TXT":
+                    if (string.IsNullOrWhiteSpace(value) || System.Text.Encoding.UTF8.GetByteCount(value) > 255)
+                        ModelState.AddModelError(nameof(request.DnsRecordValue), "TXT 內容需為 1 到 255 個 UTF-8 bytes。");
+                    break;
+                case "MX":
+                case "CNAME":
+                    if (!IsDnsName(value?.TrimEnd('.')))
+                        ModelState.AddModelError(nameof(request.DnsRecordValue), "請輸入完整目標主機名稱。");
+                    if (recordType == "MX" && (request.MxPreference is null or < 0 or > 65535))
+                        ModelState.AddModelError(nameof(request.MxPreference), "MX 優先序需為 0 到 65535。");
+                    if (recordType == "CNAME" && request.RecordName?.Trim() == "@")
+                        ModelState.AddModelError(nameof(request.RecordName), "Zone 根節點不能建立 CNAME。");
+                    break;
+                default:
+                    ModelState.AddModelError(nameof(request.DnsRecordType), "只支援 A、TXT、MX、CNAME。");
+                    break;
+            }
         }
 
         if (request.Type == ProvisioningTaskType.InstallSsl)
@@ -208,7 +240,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
 
     private static bool IsRecordName(string? value) =>
         !string.IsNullOrWhiteSpace(value) && (value.Trim() == "@" ||
-        Uri.CheckHostName(value.Trim()) == UriHostNameType.Dns);
+        System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), @"\A[a-zA-Z0-9_](?:[a-zA-Z0-9_-]*[a-zA-Z0-9_])?(?:\.[a-zA-Z0-9_](?:[a-zA-Z0-9_-]*[a-zA-Z0-9_])?)*\z") &&
+        value.Trim().Length <= 253);
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

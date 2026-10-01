@@ -8,7 +8,9 @@ public enum ProvisioningTaskType
     SetIisSiteState = 2,
     CreateDnsARecord = 3,
     DeleteDnsARecord = 4,
-    InstallSsl = 5
+    InstallSsl = 5,
+    CreateDnsRecord = 6,
+    DeleteDnsRecord = 7
 }
 
 public enum ProvisioningTaskStatus

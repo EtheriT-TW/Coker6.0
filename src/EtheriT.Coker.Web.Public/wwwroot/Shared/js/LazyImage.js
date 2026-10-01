@@ -133,7 +133,8 @@
         };
     }
 
-    Coker.LazyImage = {
-        create: create
+        Coker.LazyImage = {
+        create: create,
+        placeholder: defaultPlaceholder
     };
 })(window);

@@ -81,6 +81,43 @@ iframe {
     height: auto;
 }
 
+/* 瀑布式相簿：元件自帶 CSS 把 .imageItem 高度寫死且權重較高，只在這三個屬性使用 !important */
+.imageList.layout-masonry > .imageItem {
+    flex: 0 0 auto !important;
+    width: calc((100% - 1.5rem) / 4) !important;
+    height: auto !important;
+    margin-bottom: 0.5rem;
+}
+
+    .imageList.layout-masonry > .imageItem > img {
+        width: 100%;
+        height: auto;
+    }
+
+/* masonry 需要絕對定位，但 .imageItem 帶有 Bootstrap 的 position-relative（!important），
+   只在 JS 啟動後覆蓋，避免尚未排版時所有圖片疊在左上角 */
+.imageList.layout-masonry.is-masonry-ready > .imageItem {
+    position: absolute !important;
+}
+
+/* 絕對定位的格子以「含內距」寬度計算 %，masonry 卻以「不含內距」寬度算欄數，
+   有內距（例如後台「顯示邊框」模式的 .gjs-dashed div）就會少一欄 */
+.imageList.layout-masonry.is-masonry-ready {
+    padding: 0 !important;
+}
+
+@media only screen and (max-width: 991.98px) {
+    .imageList.layout-masonry > .imageItem {
+        width: calc((100% - 1rem) / 3) !important;
+    }
+}
+
+@media only screen and (max-width: 767.98px) {
+    .imageList.layout-masonry > .imageItem {
+        width: calc((100% - 0.5rem) / 2) !important;
+    }
+}
+
 .bottom_3-2 {
     top: calc(100%/3*2);
     transform: translateY(-50%);

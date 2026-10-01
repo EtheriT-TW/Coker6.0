@@ -599,6 +599,7 @@
                 label: `${this.title}`,
                 media: media,
                 content: elementHtmlCss,
+                purposeCodes: this.purposeCodes || [],
             });
         });
     });

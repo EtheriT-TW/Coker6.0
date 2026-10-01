@@ -21,5 +21,6 @@ namespace EtheriT.Coker.Application.Dto
         public virtual DateTime? StartDate { get; set; }
         public virtual DateTime? EndDate { get; set; }
         public bool permanent { get; set; }
+        public List<string> PurposeCodes { get; set; } = new();
     }
 }

@@ -14,6 +14,14 @@ namespace EtheriT.Coker.Web.Public.Helpers
             var imageIndex = 0;
             foreach (var image in htmlProcessor.Find(document, "img"))
             {
+                // 瀑布式相簿依圖片實際高度排版，不能換成固定比例的佔位圖
+                if (IsMasonryGalleryImage(image))
+                {
+                    image.SetAttributeValue("loading", "lazy");
+                    imageIndex++;
+                    continue;
+                }
+
                 if (IsPictureGalleryImage(image))
                 {
                     var src = image.GetAttributeValue("data-src", "");
@@ -56,6 +64,17 @@ namespace EtheriT.Coker.Web.Public.Helpers
                 .GetAttributeValue("class", "")
                 .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
                 .Contains("imageItem", StringComparer.Ordinal));
+        }
+
+        private static bool IsMasonryGalleryImage(HtmlNode image)
+        {
+            return image.Ancestors().Any(node =>
+            {
+                var classes = node.GetAttributeValue("class", "")
+                    .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                return classes.Contains("imageList", StringComparer.Ordinal)
+                    && classes.Contains("layout-masonry", StringComparer.Ordinal);
+            });
         }
 
         private static bool HasIndependentLoading(HtmlNode image)

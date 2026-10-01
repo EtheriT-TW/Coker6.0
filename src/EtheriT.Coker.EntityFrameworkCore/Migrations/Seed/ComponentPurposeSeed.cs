@@ -17,6 +17,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Visible = true,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2026, 7, 17, 0, 0, 0, DateTimeKind.Local),
+                },
+                new ComponentPurpose
+                {
+                    Id = 2,
+                    Code = "imglist-layout-change",
+                    Name = "相簿排版切換",
+                    SerNo = 20,
+                    Visible = true,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2026, 9, 30, 0, 0, 0, DateTimeKind.Local),
                 }
             );
         }

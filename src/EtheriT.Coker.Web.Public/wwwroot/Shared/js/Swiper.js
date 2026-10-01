@@ -924,7 +924,8 @@ function SwiperInit(obj) {
                 return iosPictureImageReleasePromise;
             }
             const $sourcePictureImages = $('.picture-category img').filter(function () {
-                return $(this).closest('.swiper-thumbs').length === 0;
+                return $(this).closest('.swiper-thumbs').length === 0
+                    && $(this).closest('.imageList.layout-masonry').length === 0;
             });
             const $sourcePictureContainers = $sourcePictureImages.closest('.picture-category');
             const sourcePictureLazyImages = window.Coker.LazyImage.create($sourcePictureImages, {

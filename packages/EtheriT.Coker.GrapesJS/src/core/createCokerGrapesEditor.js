@@ -65,7 +65,9 @@ export function createCokerGrapesEditor(options = {}) {
                 ...(options.cokerCoreOptions || {})
             }),
             grapesjs.usePlugin(faqComponentPlugin),
-            grapesjs.usePlugin(linkComponentPlugin),
+            grapesjs.usePlugin(linkComponentPlugin, {
+                            locale: options.siteLocale
+                        }),
             grapesjs.usePlugin(richTextProviderPlugin, {
                 ...(options.richTextOptions || {}),
                 jodit: {

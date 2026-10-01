@@ -421,6 +421,7 @@ var grapesInit = function (options) {
                                         break;
 
                                     case "masonry":
+                                    case "layout-masonry":
                                     case "YTmodal_frame":
                                         setConfig(1, s);
                                         break;

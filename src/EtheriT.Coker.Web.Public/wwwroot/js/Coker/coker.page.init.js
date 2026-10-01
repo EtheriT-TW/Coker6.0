@@ -113,7 +113,8 @@
                 name: "frameInit",
                 key: "coker_inited_frameInit",
                 test: function ($root) {
-                    return has($root, ".masonry, .YTmodal_frame");
+                    return has($root, ".masonry, .YTmodal_frame, .imageList.layout-masonry");
+                    
                 },
                 run: function ($root) {
                     if (isFn(w.FrameInit)) w.FrameInit($root);

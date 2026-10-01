@@ -117,11 +117,23 @@ namespace EtheriT.Coker.Application.HtmlContent
                 var websiteId = await loginUserData.GetWebsiteId();
 
                 var result = await db.Html_Contents.Include(e => e.ObjectClassify)
-                        .Where(e => e.Disp_opt && (isSystemUser || e.Type != 999 || (e.Type == 999 && e.FK_WebsiteId == websiteId)))
-                        .OrderBy(e => e.ObjectClassify.SerNo)
-                        .ThenBy(e => e.Ser_no)
-                        .ToListAsync();
+                    .Include(e => e.HtmlContentPurposes)
+                        .ThenInclude(p => p.ComponentPurpose)
+                    .Where(e => e.Disp_opt && (isSystemUser || e.Type != 999 || (e.Type == 999 && e.FK_WebsiteId == websiteId)))
+                    .OrderBy(e => e.ObjectClassify.SerNo)
+                    .ThenBy(e => e.Ser_no)
+                    .ToListAsync();
                 respose.List = mapper.Map<List<HtmlContentDto>>(result);
+                var purposeCodesById = result.ToDictionary(
+                    e => e.Id,
+                    e => e.HtmlContentPurposes
+                        .Where(p => p.ComponentPurpose.Visible)
+                        .Select(p => p.ComponentPurpose.Code)
+                        .ToList());
+                foreach (var item in respose.List)
+                {
+                    item.PurposeCodes = purposeCodesById[item.Id];
+                }
                 await PopulateComponentImages(respose.List);
                 respose.Success = true;
             }

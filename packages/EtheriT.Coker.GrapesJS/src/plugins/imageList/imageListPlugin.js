@@ -6,7 +6,71 @@ export const imageListUploadCommandId = 'coker:image-list:batch-upload';
 
 const defaultItemHtml = '<a href="#" data-link-value="#" data-link-type="link" target="_self" class="imageItem align-items-center d-flex justify-content-center p-1 position-relative rounded templatecontent"><img src="/images/noImg.jpg" alt="" /><i class="material-symbols-outlined notranslate position-absolute">zoom_out_map</i></a>';
 const uploadOnlyAssetType = 'coker-image-list-batch-upload';
+const masonryPurposeCode = 'imglist-layout-change';
+const masonryLayoutClass = 'layout-masonry';
+const layoutTraitName = 'cokerLayout';
 
+// 往外層找最近的元件名稱（元件拖入時由 addBlockMetadata 蓋上），名稱不固定
+function findBlockName(component) {
+    let current = component;
+    while (current) {
+        const name = current.getAttributes?.()['data-block-name'];
+        if (name) {
+            return String(name);
+        }
+        current = current.parent?.();
+    }
+    return '';
+}
+
+// 找不到元件名稱或同名元件都沒有勾用途時，一律視為不可切換
+function canSwitchToMasonry(editor, component) {
+    const blockName = findBlockName(component);
+    if (!blockName) {
+        return false;
+    }
+
+    return editor.BlockManager.getAll().some(block => (
+        String(block.get('label') || '') === blockName &&
+        (block.get('purposeCodes') || []).includes(masonryPurposeCode)
+    ));
+}
+
+// 實際排版由畫布內 Frame.js 負責；元件 class 更新後 DOM 才會同步，所以延到下一輪再通知
+function refreshCanvasMasonry(editor, component) {
+    globalThis.setTimeout(() => {
+        const canvasWindow = editor.Canvas?.getWindow?.();
+        const element = component.getEl?.();
+        if (element && typeof canvasWindow?.refreshAlbumMasonry === 'function') {
+            canvasWindow.refreshAlbumMasonry(element);
+        }
+    }, 0);
+}
+
+function syncLayoutTrait(editor, component) {
+    const hasTrait = Boolean(component.getTrait?.(layoutTraitName));
+    if (!canSwitchToMasonry(editor, component)) {
+        if (hasTrait) {
+            component.removeTrait(layoutTraitName);
+        }
+        return;
+    }
+
+    const isMasonry = (component.getClasses?.() || []).includes(masonryLayoutClass);
+    component.set(layoutTraitName, isMasonry ? 'masonry' : 'grid', { silent: true });
+    if (!hasTrait) {
+        component.addTrait({
+            type: 'select',
+            name: layoutTraitName,
+            label: '排版方式',
+            changeProp: true,
+            options: [
+                { id: 'grid', label: '格列' },
+                { id: 'masonry', label: '瀑布式' }
+            ]
+        }, { at: 0 });
+    }
+}
 function normalizeAsset(asset) {
     return {
         src: asset?.get?.('src') || asset?.src || asset?.id || asset?.attributes?.src || '',
@@ -804,14 +868,27 @@ export function imageListPlugin(editor) {
                     text: '開啟相簿編輯',
                     command: imageListEditorCommandId
                 }]
+            },
+            init() {
+                this.on(`change:${layoutTraitName}`, this.handleLayoutChange);
+            },
+                        handleLayoutChange() {
+                if (this.get(layoutTraitName) === 'masonry') {
+                    this.addClass(masonryLayoutClass);
+                } else {
+                    this.removeClass(masonryLayoutClass);
+                }
+                refreshCanvasMasonry(editor, this);
             }
         }
     });
 
-    editor.on('component:selected', component => {
+        editor.on('component:selected', component => {
         if (component?.get?.('type') !== imageListComponentType) {
             return;
         }
+
+        syncLayoutTrait(editor, component);
 
         const toolbar = component.get('toolbar') || [];
         if (toolbar.some(item => item.command === imageListEditorCommandId)) {

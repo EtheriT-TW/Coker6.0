@@ -29,6 +29,15 @@ export interface SystemAdministratorMvcRoleOption {
   Name: string;
 }
 
+export interface MvcSystemAdministrator {
+  UserId: number;
+  Name: string;
+  Account: string;
+  Email: string | null;
+  RoleNames: string;
+  IsCurrentUser: boolean;
+}
+
 export interface CreateSystemAdministratorForm {
   Name: string;
   Email: string;
@@ -42,10 +51,10 @@ export interface SystemAdministratorInvitation {
   Name: string;
   Email: string;
   Account: string | null;
-  MvcRoleId: number;
-  MvcRoleName: string;
-  PlatformRoleId: number;
-  PlatformRoleName: string;
+  MvcRoleId: number | null;
+  MvcRoleName: string | null;
+  PlatformRoleId: number | null;
+  PlatformRoleName: string | null;
   ExpiresAtUtc: string;
   EmailVerifiedAtUtc: string | null;
 }
@@ -62,4 +71,5 @@ export interface SystemAdministratorPage {
   Roles: SystemAdministratorRoleOption[];
   MvcRoles: SystemAdministratorMvcRoleOption[];
   Invitations: SystemAdministratorInvitation[];
+  MvcAdministrators: MvcSystemAdministrator[];
 }

@@ -89,7 +89,9 @@ namespace EtheriT.Coker.Application.Authorization
                     throw new Exception("帳號或密碼錯誤");
 
                 userId = user.Id;
-                if (!await HasBackofficeAccess(user.Id))
+                var hasMvcAccess = await HasBackofficeAccess(user.Id);
+                var hasPlatformAccess = await HasPlatformAccess(user.Id);
+                if (!hasMvcAccess && !hasPlatformAccess)
                     throw new Exception("此帳號沒有後台管理權限");
                 if (string.IsNullOrWhiteSpace(user.Account))
                 {
@@ -107,7 +109,17 @@ namespace EtheriT.Coker.Application.Authorization
                     long.TryParse(lastWebsiteCookie, out bindId);
                 }
 
-                if (!await loginUserData.CheckedWebSiteId(user.Id, bindId))
+                if (!hasMvcAccess)
+                {
+                    if (!Uri.TryCreate(configuration["SystemLinks:PlatformUrl"], UriKind.Absolute, out var platformUri) ||
+                        (platformUri.Scheme != Uri.UriSchemeHttp && platformUri.Scheme != Uri.UriSchemeHttps))
+                        throw new Exception("尚未設定有效的客戶管理平台網址");
+                    // Platform sessions do not grant MVC website access.
+                    bindId = await db.Websites.Where(website => !website.IsDeleted)
+                        .OrderBy(website => website.Id).Select(website => website.Id).FirstOrDefaultAsync();
+                }
+
+                if (hasMvcAccess && !await loginUserData.CheckedWebSiteId(user.Id, bindId))
                 {
                     var preferredWebsiteId = dto.PreferredWebsiteIds?
                         .Where(e => string.Equals(
@@ -157,7 +169,7 @@ namespace EtheriT.Coker.Application.Authorization
                     }
                 }
                 websiteId = bindId;
-                if (!await HasBackofficeAccess(user.Id, bindId))
+                if (hasMvcAccess && !await HasBackofficeAccess(user.Id, bindId))
                     throw new Exception("此帳號沒有該網站的後台管理權限");
 
                 var endDateTime = DateTime.Now.AddMinutes(30);
@@ -425,7 +437,7 @@ namespace EtheriT.Coker.Application.Authorization
 
                 // 不揭露信箱是否存在，避免被用來枚舉後台帳號。
                 var isPlatformInvitation = user != null && await HasPendingPlatformInvitation(user.Id);
-                if (user == null || (!isPlatformInvitation && !await HasBackofficeAccess(user.Id)))
+                if (user == null || (!isPlatformInvitation && !await HasBackofficeAccess(user.Id) && !await HasPlatformAccess(user.Id)))
                     return new ResponseMessageDto { Success = true };
 
                 user.ForgetID = Guid.NewGuid();
@@ -606,6 +618,15 @@ namespace EtheriT.Coker.Application.Authorization
             return response;
         }
 
+        private Task<bool> HasPlatformAccess(long userId)
+        {
+            var acceptedRoleCodes = PlatformRoleCodes.All.ToArray();
+            return db.MappingUserAndPlatformRoles.AnyAsync(mapping =>
+                !mapping.IsDeleted && mapping.UserId == userId &&
+                mapping.PlatformRole != null && !mapping.PlatformRole.IsDeleted && mapping.PlatformRole.IsEnabled &&
+                acceptedRoleCodes.Contains(mapping.PlatformRole.Code));
+        }
+
         private Task<bool> HasBackofficeAccess(long userId, long? websiteId = null)
         {
             return db.MappingUserAndRoles.AnyAsync(mapping =>
@@ -622,7 +643,7 @@ namespace EtheriT.Coker.Application.Authorization
 
         private async Task<bool> CanResetBackofficePassword(long userId)
         {
-            return await HasBackofficeAccess(userId) || await HasPendingPlatformInvitation(userId);
+            return await HasBackofficeAccess(userId) || await HasPlatformAccess(userId) || await HasPendingPlatformInvitation(userId);
         }
 
         private Task<bool> HasPendingPlatformInvitation(long userId)

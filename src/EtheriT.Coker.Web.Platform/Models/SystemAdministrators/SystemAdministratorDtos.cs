@@ -19,16 +19,24 @@ public sealed record SystemAdministratorRoleOptionDto(
     string Description);
 public sealed record SystemAdministratorMvcRoleOptionDto(long Id, string Name);
 
+public sealed record MvcSystemAdministratorDto(
+    long UserId,
+    string Name,
+    string Account,
+    string? Email,
+    string RoleNames,
+    bool IsCurrentUser);
+
 public sealed record SystemAdministratorInvitationDto(
     long Id,
     long UserId,
     string Name,
     string Email,
     string? Account,
-    long MvcRoleId,
-    string MvcRoleName,
-    long PlatformRoleId,
-    string PlatformRoleName,
+    long? MvcRoleId,
+    string? MvcRoleName,
+    long? PlatformRoleId,
+    string? PlatformRoleName,
     DateTime ExpiresAtUtc,
     DateTime? EmailVerifiedAtUtc);
 
@@ -37,15 +45,16 @@ public sealed record SystemAdministratorPageDto(
     IReadOnlyList<SystemAdministratorUserOptionDto> Users,
     IReadOnlyList<SystemAdministratorRoleOptionDto> Roles,
     IReadOnlyList<SystemAdministratorMvcRoleOptionDto> MvcRoles,
-    IReadOnlyList<SystemAdministratorInvitationDto> Invitations);
+    IReadOnlyList<SystemAdministratorInvitationDto> Invitations,
+    IReadOnlyList<MvcSystemAdministratorDto> MvcAdministrators);
 
 public sealed record AddSystemAdministratorRequest(long UserId, long RoleId);
 
 public sealed record CreateSystemAdministratorRequest(
     string Name,
     string Email,
-    long MvcRoleId,
-    long PlatformRoleId);
+    long? MvcRoleId,
+    long? PlatformRoleId);
 
 public sealed record CreateSystemAdministratorInvitationResponse(
     SystemAdministratorInvitationDto Invitation,

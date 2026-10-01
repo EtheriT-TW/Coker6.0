@@ -416,6 +416,21 @@ namespace EtheriT.Coker.Application
             var data = db.MappingUserAndRoles.Include(e => e.Role).Where(e => e.UserId == userId && e.Role!.Type == RoleTypeEnum.系統維護);
             return data.Any();
         }
+        public async Task<bool> CanAccessMvc()
+        {
+            var userId = await GetUserId();
+            if (userId <= 0) return false;
+            return await db.MappingUserAndRoles.AnyAsync(mapping =>
+                !mapping.IsDeleted && mapping.UserId == userId &&
+                mapping.Role != null && !mapping.Role.IsDeleted &&
+                (mapping.Role.Type == RoleTypeEnum.系統維護 ||
+                    (mapping.Role.Type == RoleTypeEnum.後台 &&
+                        db.MappingUserAndWebsites.Any(binding =>
+                            !binding.IsDeleted && binding.UserId == userId &&
+                            binding.Website != null && !binding.Website.IsDeleted &&
+                            binding.WebsiteId == mapping.Role.FK_WebsiteId))));
+        }
+
         public async Task<bool> CanAccessPlatform()
         {
             var userId = await GetUserId();

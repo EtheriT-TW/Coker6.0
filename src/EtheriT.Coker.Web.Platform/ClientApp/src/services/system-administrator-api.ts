@@ -17,8 +17,8 @@ export function resendSystemAdministratorInvitation(invitationId: number): Promi
   return api.post<void>(`/api/system-administrators/invitations/${invitationId}/resend`);
 }
 
-export function approveSystemAdministratorInvitation(invitationId: number): Promise<SystemAdministrator> {
-  return api.post<SystemAdministrator>(`/api/system-administrators/invitations/${invitationId}/approve`);
+export function approveSystemAdministratorInvitation(invitationId: number): Promise<void> {
+  return api.post<void>(`/api/system-administrators/invitations/${invitationId}/approve`);
 }
 
 export function revokeSystemAdministratorInvitation(invitationId: number): Promise<void> {
@@ -27,4 +27,8 @@ export function revokeSystemAdministratorInvitation(invitationId: number): Promi
 
 export function removeSystemAdministrator(mappingId: number): Promise<void> {
   return api.delete<void>(`/api/system-administrators/${mappingId}`);
+}
+
+export function removeMvcSystemAdministrator(userId: number): Promise<void> {
+  return api.delete<void>(`/api/system-administrators/users/${userId}/mvc-roles`);
 }

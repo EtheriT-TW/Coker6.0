@@ -16,6 +16,16 @@ public sealed class NavigationController(
     [HttpGet("post-login-destination")]
     public async Task<IActionResult> GetPostLoginDestination(string? returnUrl = null)
     {
+        if (!await loginUserData.CanAccessMvc() && await loginUserData.CanAccessPlatform())
+        {
+            var configuredPlatformUrl = configuration["SystemLinks:PlatformUrl"];
+            if (!Uri.TryCreate(configuredPlatformUrl, UriKind.Absolute, out var platformUri) ||
+                (platformUri.Scheme != Uri.UriSchemeHttp && platformUri.Scheme != Uri.UriSchemeHttps))
+                return Problem("尚未設定有效的客戶管理平台網址。");
+
+            return Ok(new { Url = $"{platformUri.AbsoluteUri.TrimEnd('/')}/" });
+        }
+
         // A returnUrl produced by MVC session expiry has priority over the stored location.
         if (!string.IsNullOrWhiteSpace(returnUrl) &&
             BackofficeNavigationPreferenceCookie.TryNormalizePath(

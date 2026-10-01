@@ -6,8 +6,8 @@ namespace EtheriT.Coker.Core.Models;
 public sealed class PlatformAdministratorInvitation : FullAuditedEntity
 {
     public long UserId { get; set; }
-    public long MvcRoleId { get; set; }
-    public long PlatformRoleId { get; set; }
+    public long? MvcRoleId { get; set; }
+    public long? PlatformRoleId { get; set; }
     public string InvitedEmail { get; set; } = string.Empty;
     public DateTime ExpiresAtUtc { get; set; }
     public DateTime? EmailVerifiedAtUtc { get; set; }

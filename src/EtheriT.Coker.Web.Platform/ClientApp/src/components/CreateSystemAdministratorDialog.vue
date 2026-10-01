@@ -33,8 +33,8 @@ function emptyForm(): CreateSystemAdministratorForm {
   return {
     Name: "",
     Email: "",
-    MvcRoleId: props.mvcRoles[0]?.Id ?? null,
-    PlatformRoleId: props.platformRoles[0]?.Id ?? null
+    MvcRoleId: null,
+    PlatformRoleId: null
   };
 }
 
@@ -44,9 +44,7 @@ const busy = ref(false);
 
 const validation: ValidationSchema<CreateSystemAdministratorForm> = {
   Name: [rules.required("請輸入姓名。"), rules.maxLength(150)],
-  Email: [rules.required("請輸入 Email。"), rules.email(), rules.maxLength(150)],
-  MvcRoleId: [rules.required("請選擇 MVC 系統角色。")],
-  PlatformRoleId: [rules.required("請選擇 Platform 角色。")]
+  Email: [rules.required("請輸入 Email。"), rules.email(), rules.maxLength(150)]
 };
 
 watch(() => props.open, open => {
@@ -65,6 +63,8 @@ async function submit(): Promise<void> {
   if (busy.value) return;
 
   errors.value = await validateSchema(model.value, validation);
+  if (model.value.MvcRoleId === null && model.value.PlatformRoleId === null)
+    errors.value.MvcRoleId = ["請至少選擇一個 MVC 或平台角色。"];
   if (Object.keys(errors.value).length > 0) {
     await requestAlert({
       title: "表單尚未填寫完整",
@@ -110,7 +110,7 @@ async function submit(): Promise<void> {
                  :open="open"
                  icon="person_add"
                  title="邀請系統管理者"
-                 message="系統會寄出 Email 驗證信；受邀者設定帳號與密碼後，仍需由 Platform 總管理者核准才會取得權限。"
+                 message="系統會寄出 Email 驗證信；受邀者設定帳號與密碼後，仍需由客戶管理平台總管理者核准才會取得所選權限。"
                  confirm-text="寄出邀請"
                  :busy="busy"
                  @cancel="emit('cancel')"
@@ -128,8 +128,9 @@ async function submit(): Promise<void> {
           </div>
           <div class="form-field">
             <label>
-              <span>MVC 系統角色 <i class="form-required">*</i></span>
+              <span>MVC 系統角色（選填）</span>
               <select v-model.number="model.MvcRoleId">
+                <option :value="null">無</option>
                 <option v-for="role in mvcRoles" :key="role.Id" :value="role.Id">{{ role.Name }}</option>
               </select>
             </label>
@@ -137,15 +138,16 @@ async function submit(): Promise<void> {
           </div>
           <div class="form-field">
             <label>
-              <span>Platform 角色 <i class="form-required">*</i></span>
+              <span>平台角色（選填）</span>
               <select v-model.number="model.PlatformRoleId">
+                <option :value="null">無</option>
                 <option v-for="role in platformRoles" :key="role.Id" :value="role.Id">{{ role.Name }}</option>
               </select>
             </label>
             <FormFieldErrors :errors="fieldErrors('PlatformRoleId')" />
           </div>
         </div>
-        <p class="invitation-note">角色只會在 Email 驗證完成且管理員核准後生效。</p>
+        <p class="invitation-note">MVC 與平台角色可分開授予，請至少選擇一項。角色只會在 Email 驗證完成且管理員核准後生效。</p>
       </fieldset>
     </form>
   </ConfirmDialog>

@@ -95,10 +95,10 @@ public sealed class SystemAdministratorsController(
                 invitation.RevokedAtUtc == null &&
                 invitation.User != null &&
                 !invitation.User.IsDeleted &&
-                invitation.MvcRole != null &&
-                !invitation.MvcRole.IsDeleted &&
-                invitation.PlatformRole != null &&
-                !invitation.PlatformRole.IsDeleted)
+                (invitation.MvcRoleId == null ||
+                    (invitation.MvcRole != null && !invitation.MvcRole.IsDeleted)) &&
+                (invitation.PlatformRoleId == null ||
+                    (invitation.PlatformRole != null && !invitation.PlatformRole.IsDeleted)))
             .OrderByDescending(invitation => invitation.Id)
             .Select(invitation => new SystemAdministratorInvitationDto(
                 invitation.Id,
@@ -107,14 +107,41 @@ public sealed class SystemAdministratorsController(
                 invitation.InvitedEmail,
                 invitation.User.Account,
                 invitation.MvcRoleId,
-                invitation.MvcRole!.Name,
+                invitation.MvcRole == null ? null : invitation.MvcRole.Name,
                 invitation.PlatformRoleId,
-                invitation.PlatformRole!.Name,
+                invitation.PlatformRole == null ? null : invitation.PlatformRole.Name,
                 invitation.ExpiresAtUtc,
                 invitation.EmailVerifiedAtUtc))
             .ToListAsync(HttpContext.RequestAborted);
 
-        return new SystemAdministratorPageDto(administrators, users, roles, mvcRoles, invitations);
+        var mvcMappings = await db.MappingUserAndRoles.AsNoTracking()
+            .Where(mapping => !mapping.IsDeleted &&
+                mapping.User != null && !mapping.User.IsDeleted &&
+                mapping.Role != null && !mapping.Role.IsDeleted &&
+                mapping.Role.Type == RoleTypeEnum.系統維護)
+            .Select(mapping => new
+            {
+                mapping.UserId,
+                mapping.User!.Name,
+                mapping.User.Account,
+                mapping.User.Email,
+                RoleName = mapping.Role!.Name
+            })
+            .ToListAsync(HttpContext.RequestAborted);
+        var mvcAdministrators = mvcMappings
+            .GroupBy(mapping => new { mapping.UserId, mapping.Name, mapping.Account, mapping.Email })
+            .OrderBy(group => group.Key.Name)
+            .ThenBy(group => group.Key.Account)
+            .Select(group => new MvcSystemAdministratorDto(
+                group.Key.UserId,
+                group.Key.Name ?? string.Empty,
+                group.Key.Account ?? string.Empty,
+                group.Key.Email,
+                string.Join("、", group.Select(mapping => mapping.RoleName).Distinct().OrderBy(name => name)),
+                group.Key.UserId == currentUserId))
+            .ToList();
+
+        return new SystemAdministratorPageDto(administrators, users, roles, mvcRoles, invitations, mvcAdministrators);
     }
 
     [HttpPost("users")]
@@ -128,6 +155,8 @@ public sealed class SystemAdministratorsController(
             ModelState.AddModelError(nameof(request.Name), "姓名為必填，且不可超過 150 個字元。");
         if (email.Length is < 3 or > 150 || !new EmailAddressAttribute().IsValid(email))
             ModelState.AddModelError(nameof(request.Email), "請輸入正確的 Email，且不可超過 150 個字元。");
+        if (request.MvcRoleId is null && request.PlatformRoleId is null)
+            ModelState.AddModelError(nameof(request.MvcRoleId), "請至少選擇一個 MVC 或平台角色。");
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
@@ -148,22 +177,25 @@ public sealed class SystemAdministratorsController(
                     throw new InvitationConflictException("此 Email 已有使用者帳號；請從既有 MVC 系統管理者清單分配角色。");
                 }
 
-                var mvcRole = await db.Roles.FirstOrDefaultAsync(role =>
-                role.Id == request.MvcRoleId &&
-                !role.IsDeleted &&
-                role.Type == RoleTypeEnum.系統維護,
-                HttpContext.RequestAborted);
-                if (mvcRole is null)
+                Role? mvcRole = null;
+                if (request.MvcRoleId.HasValue)
                 {
-                    throw new InvitationValidationException(nameof(request.MvcRoleId), "找不到指定的 MVC 系統角色。");
+                    mvcRole = await db.Roles.FirstOrDefaultAsync(role =>
+                        role.Id == request.MvcRoleId.Value && !role.IsDeleted &&
+                        role.Type == RoleTypeEnum.系統維護,
+                        HttpContext.RequestAborted);
+                    if (mvcRole is null)
+                        throw new InvitationValidationException(nameof(request.MvcRoleId), "找不到指定的 MVC 系統角色。");
                 }
 
-                var platformRole = await db.PlatformRoles.FirstOrDefaultAsync(role =>
-                role.Id == request.PlatformRoleId && !role.IsDeleted && role.IsEnabled,
-                HttpContext.RequestAborted);
-                if (platformRole is null)
+                PlatformRole? platformRole = null;
+                if (request.PlatformRoleId.HasValue)
                 {
-                    throw new InvitationValidationException(nameof(request.PlatformRoleId), "找不到指定的 Platform 角色。");
+                    platformRole = await db.PlatformRoles.FirstOrDefaultAsync(role =>
+                        role.Id == request.PlatformRoleId.Value && !role.IsDeleted && role.IsEnabled,
+                        HttpContext.RequestAborted);
+                    if (platformRole is null)
+                        throw new InvitationValidationException(nameof(request.PlatformRoleId), "找不到指定的客戶管理平台角色。");
                 }
 
                 var user = new User
@@ -194,10 +226,10 @@ public sealed class SystemAdministratorsController(
                     user.Name,
                     email,
                     null,
-                    mvcRole.Id,
-                    mvcRole.Name,
-                    platformRole.Id,
-                    platformRole.Name,
+                    mvcRole?.Id,
+                    mvcRole?.Name,
+                    platformRole?.Id,
+                    platformRole?.Name,
                     pendingInvitation.ExpiresAtUtc,
                     null);
             });
@@ -244,10 +276,10 @@ public sealed class SystemAdministratorsController(
     }
 
     [HttpPost("invitations/{invitationId:long}/approve")]
-    public async Task<ActionResult<SystemAdministratorDto>> ApproveInvitation(long invitationId)
+    public async Task<IActionResult> ApproveInvitation(long invitationId)
     {
         var executionStrategy = db.Database.CreateExecutionStrategy();
-        return await executionStrategy.ExecuteAsync<ActionResult<SystemAdministratorDto>>(async () =>
+        return await executionStrategy.ExecuteAsync<IActionResult>(async () =>
         {
             await using var transaction = await db.Database.BeginTransactionAsync(
                 IsolationLevel.Serializable,
@@ -263,38 +295,38 @@ public sealed class SystemAdministratorsController(
                     item.RevokedAtUtc == null,
                     HttpContext.RequestAborted);
             if (invitation?.User is null || invitation.User.IsDeleted ||
-                invitation.MvcRole is null || invitation.MvcRole.IsDeleted ||
-                invitation.PlatformRole is null || invitation.PlatformRole.IsDeleted || !invitation.PlatformRole.IsEnabled)
+                (invitation.MvcRoleId.HasValue && (invitation.MvcRole is null || invitation.MvcRole.IsDeleted)) ||
+                (invitation.PlatformRoleId.HasValue &&
+                    (invitation.PlatformRole is null || invitation.PlatformRole.IsDeleted || !invitation.PlatformRole.IsEnabled)))
                 return NotFound();
             if (invitation.EmailVerifiedAtUtc is null || string.IsNullOrWhiteSpace(invitation.User.Account))
                 return Conflict(new { Message = "受邀者尚未完成 Email 驗證與帳號設定。" });
 
-            db.MappingUserAndRoles.Add(new MappingUserAndRole
+            if (invitation.MvcRoleId is null && invitation.PlatformRoleId is null)
+                return Conflict(new { Message = "邀請未指定任何管理角色。" });
+
+            if (invitation.MvcRoleId.HasValue)
             {
-                UserId = invitation.UserId,
-                RoleId = invitation.MvcRoleId
-            });
-            var platformMapping = new MappingUserAndPlatformRole
+                db.MappingUserAndRoles.Add(new MappingUserAndRole
+                {
+                    UserId = invitation.UserId,
+                    RoleId = invitation.MvcRoleId.Value
+                });
+            }
+            if (invitation.PlatformRoleId.HasValue)
             {
-                UserId = invitation.UserId,
-                PlatformRoleId = invitation.PlatformRoleId
-            };
-            db.MappingUserAndPlatformRoles.Add(platformMapping);
+                db.MappingUserAndPlatformRoles.Add(new MappingUserAndPlatformRole
+                {
+                    UserId = invitation.UserId,
+                    PlatformRoleId = invitation.PlatformRoleId.Value
+                });
+            }
             invitation.ApprovedAtUtc = DateTime.UtcNow;
             invitation.ApprovedByUserId = await auditor.GetCurrentUserIdAsync(HttpContext.RequestAborted);
 
             await auditor.SaveChangesAsync(HttpContext.RequestAborted);
             await transaction.CommitAsync(HttpContext.RequestAborted);
-            return Ok(new SystemAdministratorDto(
-                platformMapping.Id,
-                invitation.User.Id,
-                invitation.User.Name ?? string.Empty,
-                invitation.User.Account,
-                invitation.User.Email,
-                invitation.PlatformRole.Id,
-                invitation.PlatformRole.Code,
-                invitation.PlatformRole.Name,
-                false));
+            return NoContent();
         });
     }
 
@@ -337,22 +369,6 @@ public sealed class SystemAdministratorsController(
             if (user is null)
             {
                 ModelState.AddModelError(nameof(request.UserId), "找不到指定的使用者。");
-                return ValidationProblem(ModelState);
-            }
-
-            var isMvcSystemAdministrator = await db.MappingUserAndRoles
-                .AnyAsync(mapping =>
-                    !mapping.IsDeleted &&
-                    mapping.UserId == user.Id &&
-                    mapping.Role != null &&
-                    !mapping.Role.IsDeleted &&
-                    mapping.Role.Type == RoleTypeEnum.系統維護,
-                    HttpContext.RequestAborted);
-            if (!isMvcSystemAdministrator)
-            {
-                ModelState.AddModelError(
-                    nameof(request.UserId),
-                    "只能替 MVC 系統管理者分配 Platform 角色。");
                 return ValidationProblem(ModelState);
             }
 
@@ -422,6 +438,41 @@ public sealed class SystemAdministratorsController(
                 role.Code,
                 role.Name ?? string.Empty,
                 user.Id == currentUserId));
+        });
+    }
+
+    [HttpDelete("users/{userId:long}/mvc-roles")]
+    public async Task<IActionResult> RemoveMvcAdministrator(long userId)
+    {
+        var executionStrategy = db.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync<IActionResult>(async () =>
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                HttpContext.RequestAborted);
+
+            var currentUserId = await auditor.GetCurrentUserIdAsync(HttpContext.RequestAborted);
+            if (userId == currentUserId)
+                return Conflict(new { Message = "不可取消自己的 MVC 系統管理者身分。" });
+
+            var activeMappings = db.MappingUserAndRoles
+                .Where(mapping => !mapping.IsDeleted &&
+                    mapping.User != null && !mapping.User.IsDeleted &&
+                    mapping.Role != null && !mapping.Role.IsDeleted &&
+                    mapping.Role.Type == RoleTypeEnum.系統維護);
+            var mappings = await activeMappings.Where(mapping => mapping.UserId == userId)
+                .ToListAsync(HttpContext.RequestAborted);
+            if (mappings.Count == 0)
+                return NotFound();
+
+            if (!await activeMappings.AnyAsync(mapping => mapping.UserId != userId,
+                HttpContext.RequestAborted))
+                return Conflict(new { Message = "至少必須保留一位 MVC 系統管理者。" });
+
+            db.MappingUserAndRoles.RemoveRange(mappings);
+            await auditor.SaveChangesAsync(HttpContext.RequestAborted);
+            await transaction.CommitAsync(HttpContext.RequestAborted);
+            return NoContent();
         });
     }
 

@@ -5,6 +5,7 @@ using EtheriT.Coker.Web.MVC.Common;
 using EtheriT.Coker.Web.MVC.Startup;
 using EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace EtheriT.Coker.Web.MVC.Middleware
@@ -31,6 +32,7 @@ namespace EtheriT.Coker.Web.MVC.Middleware
             bool isSessionLifecycleRequest =
                 context.Request.Path.StartsWithSegments("/api/User/Login") ||
                 context.Request.Path.StartsWithSegments("/api/User/Chech") ||
+                context.Request.Path.StartsWithSegments("/api/navigation/post-login-destination") ||
                 context.Request.Path.StartsWithSegments("/api/User/Logout");
 
             // The selected website lives on the shared login token. Bind requests to the
@@ -73,6 +75,26 @@ namespace EtheriT.Coker.Web.MVC.Middleware
 
             if (isApiRequest)
             {
+                // A shared login session does not grant access to MVC management APIs.
+                if (context.User.Identity?.IsAuthenticated == true &&
+                    context.Request.Path.StartsWithSegments("/api") &&
+                    !isSessionLifecycleRequest &&
+                    !context.Request.Path.StartsWithSegments("/api/backoffice-session") &&
+                    !context.Request.Path.StartsWithSegments("/api/User/UpdatePassword") &&
+                    context.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() == null)
+                {
+                    var apiAccess = context.RequestServices.GetRequiredService<LoginUserData>();
+                    if (!await apiAccess.CanAccessMvc())
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            success = false,
+                            error = "此帳號沒有 MVC 後台管理權限。"
+                        });
+                        return;
+                    }
+                }
                 await _next(context);
                 return;
             }
@@ -110,6 +132,20 @@ namespace EtheriT.Coker.Web.MVC.Middleware
                 }
 
                 context.Response.Redirect(loginUrl);
+                return;
+            }
+
+            var access = context.RequestServices.GetRequiredService<LoginUserData>();
+            if (!await access.CanAccessMvc() && await access.CanAccessPlatform())
+            {
+                var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
+                if (Uri.TryCreate(configuration["SystemLinks:PlatformUrl"], UriKind.Absolute, out var platformUri) &&
+                    (platformUri.Scheme == Uri.UriSchemeHttp || platformUri.Scheme == Uri.UriSchemeHttps))
+                {
+                    context.Response.Redirect($"{platformUri.AbsoluteUri.TrimEnd('/')}/");
+                    return;
+                }
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return;
             }
 

@@ -34,6 +34,12 @@ export const router = createRouter({
             meta: { title: "網站管理" }
         },
         {
+            path: "/websites/new",
+            name: "website-create",
+            component: () => import("@/views/WebsiteEditView.vue"),
+            meta: { title: "新增網站", nav: "/websites" }
+        },
+        {
             path: "/websites/:id(\\d+)",
             name: "website-edit",
             component: () => import("@/views/WebsiteEditView.vue"),

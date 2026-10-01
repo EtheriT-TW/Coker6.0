@@ -69,7 +69,7 @@ public sealed record WebsiteDetailDto
 
 // ───────────────────────── 送出 ─────────────────────────
 
-public sealed class WebsiteSaveRequest
+public class WebsiteSaveRequest
 {
     [Range(1, long.MaxValue, ErrorMessage = "請先以統一編號或公司名稱帶出客戶。")]
     public long FK_CompanyId { get; set; }
@@ -103,4 +103,15 @@ public sealed class WebsiteSaveRequest
 
     [StringLength(2000)]
     public string? Remark { get; set; }
+}
+
+/// <summary>
+/// 新增站台用。OrgName 建立後不可修改：upload 目錄、前台站台設定都綁著它。
+/// 格式與重複檢查在 WebsitesController.Create。
+/// </summary>
+public sealed class WebsiteCreateRequest : WebsiteSaveRequest
+{
+    [Required(ErrorMessage = "請輸入站台代碼。")]
+    [StringLength(100, ErrorMessage = "站台代碼不可超過 100 個字元。")]
+    public string OrgName { get; set; } = string.Empty;
 }

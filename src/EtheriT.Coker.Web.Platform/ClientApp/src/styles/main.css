@@ -852,7 +852,8 @@ button, input, select, textarea {
     min-width: 0;
 }
 
-    .form-field > label {
+    /* 包住輸入框的 label 才直向排列；.form-label 只是標題，文字與必填星號要在同一行 */
+    .form-field > label:not(.form-label) {
         display: flex;
         flex-direction: column;
         gap: 6px;

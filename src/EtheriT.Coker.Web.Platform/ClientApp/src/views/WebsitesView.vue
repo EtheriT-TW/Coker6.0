@@ -102,6 +102,10 @@
         return offset + (site.RemainingDays ?? NO_END_DATE_SORT);
     }
 
+    function goCreate(): void {
+        void router.push("/websites/new");
+    }
+
     function goEdit(site: WebsiteListItem): void {
         void router.push(`/websites/${site.Id}`);
     }
@@ -115,6 +119,10 @@
             <h1>網站管理</h1>
             <p>後台所有站台。查看各網站的客戶、期限與目前運作狀態。</p>
         </div>
+        <button class="ui-button ui-button-primary" type="button" @click="goCreate">
+            <span class="material-symbols-outlined">add</span>
+            <span>新增網站</span>
+        </button>
     </section>
 
     <p v-if="pageError" class="alert alert-error" role="alert">{{ pageError }}</p>

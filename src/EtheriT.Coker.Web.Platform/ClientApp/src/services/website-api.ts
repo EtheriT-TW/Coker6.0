@@ -43,6 +43,7 @@ function toSaveRequest(form: WebsiteForm) {
 /** API 回應轉成表單模型，日期欄位都要經過 toDateInput。 */
 export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
     return {
+        OrgName: detail.OrgName,
         FK_CompanyId: detail.FK_CompanyId,
         Name: detail.Name,
         Level: detail.Level,
@@ -64,6 +65,14 @@ export function fetchWebsites(): Promise<WebsiteListResult> {
 
 export function fetchWebsite(id: number): Promise<WebsiteDetail> {
     return api.get<WebsiteDetail>(`${baseUrl}/${id}`);
+}
+
+/** 新增站台：只有這裡會送 OrgName。 */
+export function createWebsite(form: WebsiteForm): Promise<WebsiteDetail> {
+    return api.post<WebsiteDetail>(baseUrl, {
+        ...toSaveRequest(form),
+        OrgName: form.OrgName.trim().toLowerCase()
+    });
 }
 
 export function updateWebsite(id: number, form: WebsiteForm): Promise<WebsiteDetail> {

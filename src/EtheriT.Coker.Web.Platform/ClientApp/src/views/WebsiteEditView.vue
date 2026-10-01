@@ -10,6 +10,7 @@
     import { isSiteRoot } from "@/utils/url-parts";
 
     import {
+        createWebsite,
         fetchWebsite,
         toWebsiteForm,
         updateWebsite
@@ -34,15 +35,18 @@
     const route = useRoute();
     const router = useRouter();
 
-    // 後台 Websites.Id；路由已用 \d+ 限制，這裡只防 0
+    // 後台 Websites.Id；/websites/new 沒有 id，為 0
     const websiteId = computed(() => {
         const value = Number(route.params.id);
         return Number.isInteger(value) && value > 0 ? value : 0;
     });
+    const isEdit = computed(() => websiteId.value > 0);
+
+    // 與後端 WebsitesController.OrgNamePattern 一致
+    const ORG_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{1,99}$/;
 
     const loading = ref(false);
     const pageError = ref("");
-    const orgName = ref("");     // 站台代碼，唯讀顯示
 
     // ── 以統編或公司名稱帶出客戶（兩者都不可重複，最多一筆） ──
     const lookupKeyword = ref("");
@@ -122,6 +126,7 @@
 
     function emptyForm(): WebsiteForm {
         return {
+            OrgName: "",
             FK_CompanyId: 0,
             Name: "",
             Level: null,
@@ -144,6 +149,17 @@
             FK_CompanyId: [
                 rules.custom<WebsiteForm>(value =>
                     Number(value) > 0 ? null : "請先輸入統一編號或公司名稱並帶出客戶。")
+            ],
+            // 只有新增時要驗；編輯時 OrgName 唯讀、後端也不會讀
+            OrgName: [
+                rules.custom<WebsiteForm>(value => {
+                    if (isEdit.value) return null;
+                    const text = String(value ?? "").trim().toLowerCase();
+                    if (!text) return "請輸入站台代碼。";
+                    return ORG_NAME_PATTERN.test(text)
+                        ? null
+                        : "站台代碼只能使用小寫英文、數字、- 與 _，長度 2～100 字，且須以英文或數字開頭。";
+                })
             ],
             Name: [rules.required("請輸入網站名稱。"), rules.maxLength(250)],
             // 這些欄位直接寫進後台 Website，規則與後端 WebsitesController 一致
@@ -183,14 +199,16 @@
         confirmSave: {
             icon: "save",
             title: "確認儲存",
-            message: "確定要儲存這筆網站資料嗎？儲存後會返回網站清單。"
+            message: "確定要儲存這筆網站資料嗎？新增時會在後台建立站台，站台代碼建立後不可修改。儲存後會返回網站清單。"
         },
         beforeSave: () => {
             pageError.value = "";
             // 任一彈窗開著時，Ctrl+S 不能偷偷送出底下的網站表單
             return !isNotFoundDialogOpen.value && !isQuickCustomerOpen.value && !isDomainNotFoundOpen.value && !isQuickDomainOpen.value;
         },
-        save: values => updateWebsite(websiteId.value, values),
+        save: values => isEdit.value
+            ? updateWebsite(websiteId.value, values)
+            : createWebsite(values),
         afterSave: () => {
             // 與客戶頁一致：存檔後返回清單
             void router.push("/websites");
@@ -238,7 +256,6 @@
     function applyDetail(detail: WebsiteDetail): void {
         // 用 reset 載入而非逐欄指派，才不會一進頁面就被標成「尚未儲存」
         form.reset(toWebsiteForm(detail));
-        orgName.value = detail.OrgName;
         customer.value = detail.Customer;
         // FK_CompanyId 為 0＝後台還沒綁公司；有 Id 卻帶不出客戶才是客戶被刪除
         isCustomerDeleted.value = detail.FK_CompanyId > 0 && detail.Customer === null;
@@ -352,6 +369,8 @@
     }
 
     onMounted(async () => {
+        if (!isEdit.value) return;
+
         loading.value = true;
         try {
             applyDetail(await fetchWebsite(websiteId.value));
@@ -374,24 +393,27 @@
 <template>
     <section class="page-heading">
         <div>
-            <h1>編輯網站</h1>
+            <h1>{{ isEdit ? "編輯網站" : "新增網站" }}</h1>
             <p>輸入統一編號或公司名稱帶出客戶，再填寫網站、期限與網址。</p>
         </div>
     </section>
 
     <p v-if="pageError" class="alert alert-error" role="alert">{{ pageError }}</p>
-    <p class="alert alert-info" role="status">
-        網站名稱、版本、語系、開通／到期日與網址直接寫入後台站台「{{ orgName || "—" }}」，儲存後立即生效。
+    <p v-if="isEdit" class="alert alert-info" role="status">
+        網站名稱、版本、語系、開通／到期日與網址直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
+    </p>
+    <p v-else class="alert alert-warning" role="status">
+        儲存後會在後台建立新站台，但目錄、商店設定與權限尚未建立，需由系統管理者在後台補齊後才能使用。
     </p>
 
-    <form class="form-stack" novalidate @submit.prevent="form.save('button')">
+    <form class="form-stack" novalidate autocomplete="off" @submit.prevent="form.save('button')">
         <!-- ── 客戶與網站資料 ── -->
         <fieldset class="form-card form-section"
                   aria-labelledby="section-website-customer-title"
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-customer-title">客戶與網站資料</span>
-                <RouterLink v-if="customer && !isCustomerDeleted"
+                <RouterLink v-if="isEdit && customer && !isCustomerDeleted"
                             class="ui-button ui-button-secondary"
                             :to="{name:'company-edit', params:{id: customer.Id}, query: { returnTo: route.fullPath } }">
                     <span class="material-symbols-outlined" aria-hidden="true">edit</span>
@@ -457,9 +479,18 @@
 
                 <div class="form-field">
                     <label>
-                        <span>站台代碼（OrgName）</span>
-                        <input :value="orgName" type="text" readonly />
+                        <span>站台代碼（OrgName） <i v-if="!isEdit" class="form-required">*</i></span>
+                        <input v-if="isEdit" :value="form.model.value.OrgName" type="text" readonly />
+                        <input v-else
+                               v-model="form.model.value.OrgName"
+                               type="text"
+                               maxlength="100"
+                               autocomplete="off"
+                               spellcheck="false"
+                               placeholder="例：coker6" />
                     </label>
+                    <FormFieldErrors :errors="form.getErrors('OrgName')" />
+                    <p v-if="!isEdit" class="field-note">建立後不可修改；只能用小寫英文、數字、- 與 _。</p>
                 </div>
 
                 <div class="form-field form-field-wide">
@@ -568,7 +599,7 @@
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-url-title">網址</span>
-                <RouterLink v-if="matchedDomain"
+                <RouterLink v-if="isEdit && matchedDomain"
                             class="ui-button ui-button-secondary"
                             :to="{name:'domain-edit', params: {id: matchedDomain.Id}, query: { returnTo: route.fullPath } }">
                     <span class="material-symbols-outlined" aria-hidden="true">edit</span>

@@ -1,4 +1,6 @@
-﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
+﻿using System.Data;
+using System.Text.RegularExpressions;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Platform.Models.Domains;
@@ -10,7 +12,8 @@ using Microsoft.EntityFrameworkCore;
 namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 
 // 網站資料直接讀寫後台 Websites；PlatformWebsites 已停用，僅保留作為搬移備份。
-// 不提供新增：站台由開站流程建立。不提供 DELETE：網站以「註銷」取代刪除。
+// 新增只建立 Website 與客戶綁定；目錄、商店設定、權限仍由後台人工補齊。
+// 不提供 DELETE：網站以「註銷」取代刪除。
 [ApiController]
 [Route("api/websites")]
 [Microsoft.AspNetCore.Authorization.Authorize(Policy = EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformDataManagement)]
@@ -19,6 +22,15 @@ public sealed class WebsitesController(
     PlatformAuditor auditor) : ControllerBase
 {
     private const int ListLimit = 1000;
+
+    /// <summary>與種子資料相同；目前沒有任何程式依 Website.Type 分流。</summary>
+    private const string DefaultWebsiteType = "website";
+
+    /// <summary>
+    /// OrgName 會當 upload 目錄名稱，也會直接嵌進後台寄信的正規表達式（MailAppService），
+    /// 只允許小寫英數、- 與 _，且以英數開頭。
+    /// </summary>
+    private static readonly Regex OrgNamePattern = new("^[a-z0-9][a-z0-9_-]{1,99}$", RegexOptions.Compiled);
 
     /// <summary>未被軟刪除的實際站台。沒有全域過濾器，每個查詢都得經過這裡。</summary>
     private IQueryable<Website> ActiveSites =>
@@ -96,6 +108,70 @@ public sealed class WebsitesController(
     public async Task<ActionResult<WebsiteDetailDto>> GetDetail(long id)
     {
         var detail = await LoadDetailAsync(id);
+        if (detail is null)
+            return NotFound();
+
+        return detail;
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<WebsiteDetailDto>> Create(WebsiteCreateRequest request)
+    {
+        var orgName = request.OrgName.Trim().ToLowerInvariant();
+        if (!OrgNamePattern.IsMatch(orgName))
+            ModelState.AddModelError(nameof(request.OrgName),
+                "站台代碼只能使用小寫英文、數字、- 與 _，長度 2～100 字，且須以英文或數字開頭。");
+
+        var domainId = await ValidateRequestAsync(request);
+        if (!ModelState.IsValid)
+            return ValidationProblem(ModelState);
+
+        var cancellationToken = HttpContext.RequestAborted;
+        var strategy = db.Database.CreateExecutionStrategy();
+        var siteId = await strategy.ExecuteAsync(async () =>
+        {
+            // Serializable：OrgName 沒有唯一索引，靠交易擋住兩人同時建立同一個代碼
+            await using var transaction = await db.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+
+            // 已刪除的站台也算：舊站的 upload 目錄可能還在，重複使用會讀到別人的檔案
+            if (await db.Websites.AnyAsync(site => site.OrgName == orgName, cancellationToken))
+                return (long?)null;
+
+            var site = new Website
+            {
+                OrgName = orgName,
+                Type = DefaultWebsiteType
+            };
+            Apply(request, domainId, site);
+            db.Websites.Add(site);
+            db.MappingCompanyAndWebsites.Add(new MappingCompanyAndWebsites
+            {
+                FK_CompanyId = request.FK_CompanyId,
+                Website = site
+            });
+            await auditor.SaveChangesAsync(cancellationToken);
+
+            // Level 設了資料庫預設值「形象」，EF 會把 0（簡約）當成沒填而改用預設值，
+            // 存完讀回來不一樣就再寫一次
+            if (site.Level != request.Level!.Value)
+            {
+                site.Level = request.Level.Value;
+                await auditor.SaveChangesAsync(cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return (long?)site.Id;
+        });
+
+        if (siteId is null)
+        {
+            ModelState.AddModelError(nameof(request.OrgName), $"站台代碼「{orgName}」已被使用（含已刪除的站台）。");
+            return ValidationProblem(ModelState);
+        }
+
+        var detail = await LoadDetailAsync(siteId.Value);
         if (detail is null)
             return NotFound();
 

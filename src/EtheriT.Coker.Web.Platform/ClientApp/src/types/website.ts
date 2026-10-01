@@ -117,6 +117,8 @@ export interface WebsiteDetail {
 
 /** 表單模型：字串與日期一律用 ""；Status／Level 用 number，避免 v-model 在 vue-tsc 報型別錯。 */
 export interface WebsiteForm {
+    /** 站台代碼：新增時可填，編輯時唯讀（送出時後端也不會讀） */
+    OrgName: string;
     FK_CompanyId: number;
     Name: string;
     Level: number | null;

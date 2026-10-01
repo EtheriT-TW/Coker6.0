@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Web.Platform.Models.Websites;
 /// <summary>
 /// 網站管理清單的一列，一列＝一個後台站台（Websites）。
 /// 客戶取後台綁定的公司（MappingCompanyAndWebsites，多筆時取最早那筆）；沒綁公司時 Customer* 為 null。
+/// Url 是主要網址；DomainEndDate 取主要網址與其他網址的網域中最早到期的。
 /// </summary>
 public sealed record WebsiteListItemDto(
     long Id,
@@ -39,6 +40,12 @@ public sealed record WebsiteCustomerDto(
     string? Email,
     string? PrimaryContactName);
 
+/// <summary>網站的一筆網址。IsPrimary＝後台 Website.DefaultUrl；其餘存在 WebsiteAlternateUrls。</summary>
+public sealed record WebsiteUrlDto(
+    string Url,
+    bool IsPrimary,
+    DomainSummaryDto? Domain);   // null＝後台舊資料沒比對過網域
+
 public sealed record WebsiteDetailDto
 {
     /// <summary>後台 Websites.Id。</summary>
@@ -56,10 +63,10 @@ public sealed record WebsiteDetailDto
     public PlatformWebsiteStatusEnum Status { get; init; }
     public DateTime? TerminatedDate { get; init; }
     public bool IsDomainPending { get; init; }
-    public string? Url { get; init; }
 
-    /// <summary>null＝網域待申請或未填網址。</summary>
-    public DomainSummaryDto? Domain { get; init; }
+    /// <summary>主要網址排第一，其他網址依排序；網域待申請時為空清單。</summary>
+    public IReadOnlyList<WebsiteUrlDto> Urls { get; init; } = [];
+
     public string? Remark { get; init; }
 
     /// <summary>null＝後台還沒綁公司。</summary>
@@ -97,12 +104,23 @@ public class WebsiteSaveRequest
 
     public bool IsDomainPending { get; set; }
 
-    /// <summary>網站根網址；待申請時不可填。後端依網址比對網域，前端不送 FK。</summary>
-    [StringLength(500, ErrorMessage = "網址不可超過 500 個字元。")]
-    public string? Url { get; set; }
+    /// <summary>
+    /// 網站的所有網址，必須剛好一筆 IsPrimary；待申請時必須是空清單。
+    /// 後端依每筆網址比對網域，前端不送 FK。
+    /// </summary>
+    public List<WebsiteUrlInput> Urls { get; set; } = [];
 
     [StringLength(2000)]
     public string? Remark { get; set; }
+}
+
+public sealed class WebsiteUrlInput
+{
+    [StringLength(500, ErrorMessage = "網址不可超過 500 個字元。")]
+    public string? Url { get; set; }
+
+    /// <summary>true＝寫入後台 Website.DefaultUrl。</summary>
+    public bool IsPrimary { get; set; }
 }
 
 /// <summary>

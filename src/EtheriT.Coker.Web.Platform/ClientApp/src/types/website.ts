@@ -92,6 +92,23 @@ export interface WebsiteCustomer {
     PrimaryContactName: string | null;
 }
 
+/** 網站的一筆網址。IsPrimary＝後台 Website.DefaultUrl；其餘存在 WebsiteAlternateUrls。 */
+export interface WebsiteUrl {
+    Url: string;
+    IsPrimary: boolean;
+    /** null＝後台舊資料沒比對過網域 */
+    Domain: DomainSummary | null;
+}
+
+/** 表單上的一筆網址。Key 只給 v-for 與彈窗追蹤用，不送後端。 */
+export interface WebsiteUrlFormItem {
+    Key: number;
+    Url: string;
+    IsPrimary: boolean;
+    /** 載入時後端比對出的網域，給列元件當初始顯示；新增的列為 null */
+    InitialDomain: DomainSummary | null;
+}
+
 export interface WebsiteDetail {
     /** 後台 Websites.Id */
     Id: number;
@@ -108,8 +125,8 @@ export interface WebsiteDetail {
     Status: WebsiteStatusValue;
     TerminatedDate: string | null;
     IsDomainPending: boolean;
-    Url: string | null;
-    Domain: DomainSummary | null;
+    /** 主要網址排第一；網域待申請時為空陣列 */
+    Urls: WebsiteUrl[];
     Remark: string | null;
     /** null＝後台還沒綁公司 */
     Customer: WebsiteCustomer | null;
@@ -129,6 +146,6 @@ export interface WebsiteForm {
     Status: number;
     TerminatedDate: string;
     IsDomainPending: boolean;
-    Url: string;
+    Urls: WebsiteUrlFormItem[];
     Remark: string;
 }

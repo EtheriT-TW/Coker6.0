@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 
 // 網站資料直接讀寫後台 Websites；PlatformWebsites 已停用，僅保留作為搬移備份。
 // 新增只建立 Website 與客戶綁定；目錄、商店設定、權限仍由後台人工補齊。
+// 網址：主要網址寫 Website.DefaultUrl，其他網址寫 WebsiteAlternateUrls（只有 Platform 讀寫）。
 // 不提供 DELETE：網站以「註銷」取代刪除。
 [ApiController]
 [Route("api/websites")]
@@ -23,6 +24,12 @@ public sealed class WebsitesController(
 {
     private const int ListLimit = 1000;
 
+    /// <summary>一個站台最多幾筆網址（含主要網址），前端 MAX_URL_COUNT 要一致。</summary>
+    private const int MaxUrlCount = 10;
+
+    private const string SiteRootMessage =
+        "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）；網域還沒申請請勾選「網域待申請」。";
+
     /// <summary>與種子資料相同；目前沒有任何程式依 Website.Type 分流。</summary>
     private const string DefaultWebsiteType = "website";
 
@@ -31,6 +38,9 @@ public sealed class WebsitesController(
     /// 只允許小寫英數、- 與 _，且以英數開頭。
     /// </summary>
     private static readonly Regex OrgNamePattern = new("^[a-z0-9][a-z0-9_-]{1,99}$", RegexOptions.Compiled);
+
+    /// <summary>驗證通過的網址：已轉成根網址，並比對出網域。</summary>
+    private sealed record ResolvedUrl(string Url, long DomainId, bool IsPrimary);
 
     /// <summary>未被軟刪除的實際站台。沒有全域過濾器，每個查詢都得經過這裡。</summary>
     private IQueryable<Website> ActiveSites =>
@@ -54,7 +64,11 @@ public sealed class WebsitesController(
                 site.ServiceStatus,
                 site.StartDate,
                 site.EndDate,
-                DomainEndDate = site.PlatformDomain == null ? (DateTime?)null : site.PlatformDomain.EndDate,
+                // 主要網址與其他網址的網域分開取，回來再挑最早到期的
+                PrimaryDomainEndDate = site.PlatformDomain == null ? (DateTime?)null : site.PlatformDomain.EndDate,
+                AlternateDomainEndDate = db.WebsiteAlternateUrls
+                    .Where(url => !url.IsDeleted && url.FK_WebsiteId == site.Id)
+                    .Min(url => url.PlatformDomain!.EndDate),
                 // 後台綁定的公司；舊資料若有多筆固定取最早那筆（存檔時會被 SyncCompanyMappingAsync 擋下）。
                 // 客戶被軟刪除時仍帶出名稱，網站不能無聲失去客戶。
                 Customer = site.Company
@@ -92,7 +106,7 @@ public sealed class WebsitesController(
                 ServiceStartDate: row.StartDate,
                 ServiceEndDate: row.EndDate,
                 RemainingDays: ToRemainingDays(row.EndDate, today),
-                DomainEndDate: row.DomainEndDate))
+                DomainEndDate: Earliest(row.PrimaryDomainEndDate, row.AlternateDomainEndDate)))
             .ToList();
 
         return new WebsiteListResult(items, rows.Count > ListLimit);
@@ -100,6 +114,14 @@ public sealed class WebsitesController(
 
     private static int? ToRemainingDays(DateTime? endDate, DateTime today) =>
         endDate is null ? null : (endDate.Value.Date - today).Days;
+
+    /// <summary>兩個日期取較早的；任一為 null 時回傳另一個。</summary>
+    private static DateTime? Earliest(DateTime? first, DateTime? second)
+    {
+        if (first is null) return second;
+        if (second is null) return first;
+        return first <= second ? first : second;
+    }
 
     private static string FirstNonBlank(params string?[] values) =>
         Array.Find(values, value => !string.IsNullOrWhiteSpace(value))?.Trim() ?? string.Empty;
@@ -122,7 +144,7 @@ public sealed class WebsitesController(
             ModelState.AddModelError(nameof(request.OrgName),
                 "站台代碼只能使用小寫英文、數字、- 與 _，長度 2～100 字，且須以英文或數字開頭。");
 
-        var domainId = await ValidateRequestAsync(request);
+        var urls = await ValidateRequestAsync(request);
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
@@ -144,8 +166,9 @@ public sealed class WebsitesController(
                 OrgName = orgName,
                 Type = DefaultWebsiteType
             };
-            Apply(request, domainId, site);
+            Apply(request, urls, site);
             db.Websites.Add(site);
+            SyncAlternateUrls(site, urls, existing: []);
             db.MappingCompanyAndWebsites.Add(new MappingCompanyAndWebsites
             {
                 FK_CompanyId = request.FK_CompanyId,
@@ -186,11 +209,16 @@ public sealed class WebsitesController(
         if (site is null)
             return NotFound();
 
-        var domainId = await ValidateRequestAsync(request);
+        var urls = await ValidateRequestAsync(request);
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
-        Apply(request, domainId, site);
+        Apply(request, urls, site);
+
+        var alternates = await db.WebsiteAlternateUrls
+            .Where(item => !item.IsDeleted && item.FK_WebsiteId == site.Id)
+            .ToListAsync(HttpContext.RequestAborted);
+        SyncAlternateUrls(site, urls, alternates);
 
         if (!await SyncCompanyMappingAsync(site.Id, request.FK_CompanyId))
             return ValidationProblem(ModelState);
@@ -204,9 +232,9 @@ public sealed class WebsitesController(
         return detail;
     }
 
-    private Task<WebsiteDetailDto?> LoadDetailAsync(long id)
+    private async Task<WebsiteDetailDto?> LoadDetailAsync(long id)
     {
-        return (
+        var detail = await (
             from site in ActiveSites
             where site.Id == id
             // 後台綁定的公司；舊資料若有多筆固定取最早那筆（存檔時會被 SyncCompanyMappingAsync 擋下）
@@ -232,15 +260,6 @@ public sealed class WebsitesController(
                 Status = site.ServiceStatus,
                 TerminatedDate = site.TerminatedDate,
                 IsDomainPending = site.IsDomainPending,
-                Url = site.IsDomainPending ? null : site.DefaultUrl,
-                Domain = site.PlatformDomain == null
-                    ? null
-                    : new DomainSummaryDto(
-                        site.PlatformDomain.Id,
-                        site.PlatformDomain.DomainName,
-                        site.PlatformDomain.Registrar,
-                        site.PlatformDomain.EndDate,
-                        site.PlatformDomain.PasswordCipher != null),
                 Remark = site.PlatformRemark,
                 Customer = customer == null
                     ? null
@@ -253,10 +272,61 @@ public sealed class WebsitesController(
                         customer.Contact)
             })
             .FirstOrDefaultAsync(HttpContext.RequestAborted);
+
+        if (detail is null)
+            return null;
+
+        return detail with { Urls = await LoadUrlsAsync(id) };
     }
 
-    /// <summary>回傳依網址比對出的網域 Id（待申請時為 null）。</summary>
-    private async Task<long?> ValidateRequestAsync(WebsiteSaveRequest request)
+    /// <summary>
+    /// 主要網址（Website.DefaultUrl）排第一，其他網址依排序。
+    /// 網域待申請、或後台沒填網址時回傳空清單。
+    /// </summary>
+    private async Task<IReadOnlyList<WebsiteUrlDto>> LoadUrlsAsync(long siteId)
+    {
+        var cancellationToken = HttpContext.RequestAborted;
+        var primary = await ActiveSites
+            .Where(site => site.Id == siteId &&
+                           !site.IsDomainPending &&
+                           site.DefaultUrl != null &&
+                           site.DefaultUrl != "")
+            .Select(site => new WebsiteUrlDto(
+                site.DefaultUrl!,
+                true,
+                site.PlatformDomain == null
+                    ? null
+                    : new DomainSummaryDto(
+                        site.PlatformDomain.Id,
+                        site.PlatformDomain.DomainName,
+                        site.PlatformDomain.Registrar,
+                        site.PlatformDomain.EndDate,
+                        site.PlatformDomain.PasswordCipher != null)))
+            .FirstOrDefaultAsync(cancellationToken);
+        if (primary is null)
+            return [];
+
+        var alternates = await db.WebsiteAlternateUrls
+            .AsNoTracking()
+            .Where(item => !item.IsDeleted && item.FK_WebsiteId == siteId)
+            .OrderBy(item => item.Sort)
+            .ThenBy(item => item.Id)
+            .Select(item => new WebsiteUrlDto(
+                item.Url,
+                false,
+                new DomainSummaryDto(
+                    item.PlatformDomain!.Id,
+                    item.PlatformDomain.DomainName,
+                    item.PlatformDomain.Registrar,
+                    item.PlatformDomain.EndDate,
+                    item.PlatformDomain.PasswordCipher != null)))
+            .ToListAsync(cancellationToken);
+
+        return [primary, .. alternates];
+    }
+
+    /// <summary>回傳驗證通過的網址（待申請時為空清單）。錯誤一律寫進 ModelState。</summary>
+    private async Task<IReadOnlyList<ResolvedUrl>> ValidateRequestAsync(WebsiteSaveRequest request)
     {
         // ASP.NET 預設不驗 enum 範圍，Status: 99 會原樣寫進資料庫
         if (!Enum.IsDefined(request.Status))
@@ -286,45 +356,80 @@ public sealed class WebsitesController(
                 HttpContext.RequestAborted))
             ModelState.AddModelError(nameof(request.FK_CompanyId), "找不到對應的客戶資料，請重新帶出客戶。");
 
+        // JSON 送 "Urls": null 時不會套用屬性預設值
+        var inputs = request.Urls ?? [];
         if (request.IsDomainPending)
         {
-            if (!string.IsNullOrWhiteSpace(request.Url))
-                ModelState.AddModelError(nameof(request.Url), "網域待申請時不可填寫網址。");
-            return null;
+            if (inputs.Any(item => !string.IsNullOrWhiteSpace(item.Url)))
+                ModelState.AddModelError(nameof(request.Urls), "網域待申請時不可填寫網址。");
+            return [];
         }
 
-        // 寫進 Website.DefaultUrl，後台會拿來組金流、物流回呼網址，所以只收根網址
-        var root = ToSiteRoot(request.Url);
+        return await ResolveUrlsAsync(inputs);
+    }
+
+    /// <summary>
+    /// 逐筆轉成根網址、檢查重複、比對網域。
+    /// 單筆錯誤掛在 Urls[i].Url，前端才能對到那一列；整體錯誤掛在 Urls。
+    /// </summary>
+    private async Task<IReadOnlyList<ResolvedUrl>> ResolveUrlsAsync(IReadOnlyList<WebsiteUrlInput> inputs)
+    {
+        const string listKey = nameof(WebsiteSaveRequest.Urls);
+        if (inputs.Count == 0)
+        {
+            ModelState.AddModelError(listKey, "請至少輸入一筆網址；網域還沒申請請勾選「網域待申請」。");
+            return [];
+        }
+        if (inputs.Count > MaxUrlCount)
+        {
+            ModelState.AddModelError(listKey, $"網址最多 {MaxUrlCount} 筆。");
+            return [];
+        }
+        if (inputs.Count(item => item.IsPrimary) != 1)
+            ModelState.AddModelError(listKey, "請指定一筆主要網址。");
+
+        var resolved = new List<ResolvedUrl>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (var index = 0; index < inputs.Count; index++)
+        {
+            var key = $"{listKey}[{index}].{nameof(WebsiteUrlInput.Url)}";
+            var (url, domainId, error) = await ResolveUrlAsync(inputs[index].Url);
+            if (error is null && !seen.Add(url!))
+                error = $"網址「{url}」重複輸入。";
+
+            if (error is not null)
+                ModelState.AddModelError(key, error);
+            else
+                resolved.Add(new ResolvedUrl(url!, domainId, inputs[index].IsPrimary));
+        }
+
+        return resolved;
+    }
+
+    /// <summary>單筆網址轉成根網址並比對網域。成功時 Error 為 null。</summary>
+    private async Task<(string? Url, long DomainId, string? Error)> ResolveUrlAsync(string? input)
+    {
+        // 主要網址會寫進 Website.DefaultUrl，後台拿來組金流、物流回呼網址，所以一律只收根網址
+        var root = ToSiteRoot(input);
         if (root is null)
-        {
-            ModelState.AddModelError(nameof(request.Url),
-                "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）；網域還沒申請請勾選「網域待申請」。");
-            return null;
-        }
+            return (null, 0, SiteRootMessage);
         if (root.Length > 255)
-        {
-            ModelState.AddModelError(nameof(request.Url), "網址不可超過 255 個字元。");
-            return null;
-        }
+            return (null, 0, "網址不可超過 255 個字元。");
 
         // 網址 → 網域由後端比對，不相信前端
         var host = PlatformDomainName.ToHost(root);
         if (host is null)
-        {
-            ModelState.AddModelError(nameof(request.Url), "網址格式不正確，例：https://www.example.com.tw");
-            return null;
-        }
+            return (null, 0, "網址格式不正確，例：https://www.example.com.tw");
 
         var domain = await db.PlatformDomains
             .AsNoTracking()
             .FindBestMatchAsync(host, HttpContext.RequestAborted);
-        if (domain is null)
-            ModelState.AddModelError(nameof(request.Url), $"網域管理中沒有「{host}」對應的網域，請先建立網域資料。");
-
-        return domain?.Id;
+        return domain is null
+            ? (null, 0, $"網域管理中沒有「{host}」對應的網域，請先建立網域資料。")
+            : (root, domain.Id, null);
     }
 
-    private static void Apply(WebsiteSaveRequest request, long? domainId, Website site)
+    private static void Apply(WebsiteSaveRequest request, IReadOnlyList<ResolvedUrl> urls, Website site)
     {
         site.Title = request.Name.Trim();
         site.Level = request.Level!.Value;                        // [Required] 已擋
@@ -335,11 +440,49 @@ public sealed class WebsitesController(
         site.TerminatedDate = request.TerminatedDate?.Date;
         site.HostLocation = Clean(request.HostLocation);
         site.IsDomainPending = request.IsDomainPending;
-        // 待申請時不動 DefaultUrl：後台網址必填，金流／物流回呼也靠它組網址
-        if (!request.IsDomainPending)
-            site.DefaultUrl = ToSiteRoot(request.Url);
-        site.FK_PlatformDomainId = domainId;
+        // 主要網址寫回後台 DefaultUrl。待申請時沒有主要網址，不動 DefaultUrl：
+        // 後台網址必填，金流／物流回呼也靠它組網址
+        var primary = urls.FirstOrDefault(item => item.IsPrimary);
+        if (primary is not null)
+            site.DefaultUrl = primary.Url;
+        site.FK_PlatformDomainId = primary?.DomainId;
         site.PlatformRemark = Clean(request.Remark);
+    }
+
+    /// <summary>
+    /// 其他網址整批比對：網址相同的沿用原紀錄（只更新網域與排序）、新的新增、不在清單裡的軟刪除。
+    /// 待申請時 urls 是空清單，等於全部移除。
+    /// </summary>
+    private void SyncAlternateUrls(Website site, IReadOnlyList<ResolvedUrl> urls, List<WebsiteAlternateUrl> existing)
+    {
+        var alternates = urls.Where(item => !item.IsPrimary).ToList();
+        var keptIds = new HashSet<long>();
+
+        for (var sort = 0; sort < alternates.Count; sort++)
+        {
+            var item = alternates[sort];
+            var target = existing.FirstOrDefault(row =>
+                !keptIds.Contains(row.Id) &&
+                string.Equals(row.Url, item.Url, StringComparison.OrdinalIgnoreCase));
+
+            if (target is null)
+            {
+                target = new WebsiteAlternateUrl { Website = site };
+                db.WebsiteAlternateUrls.Add(target);
+            }
+            else
+            {
+                keptIds.Add(target.Id);
+            }
+
+            target.Url = item.Url;
+            target.FK_PlatformDomainId = item.DomainId;
+            target.Sort = sort;
+        }
+
+        // PlatformAuditor 會把 Remove 轉成軟刪除
+        foreach (var orphan in existing.Where(row => !keptIds.Contains(row.Id)))
+            db.WebsiteAlternateUrls.Remove(orphan);
     }
 
     /// <summary>

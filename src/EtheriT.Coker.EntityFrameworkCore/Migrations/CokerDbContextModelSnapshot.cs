@@ -9543,6 +9543,62 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         });
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteAlternateUrl", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_PlatformDomainId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Sort")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_PlatformDomainId");
+
+                    b.HasIndex("FK_WebsiteId", "Sort");
+
+                    b.ToTable("WebsiteAlternateUrls");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteCacheState", b =>
                 {
                     b.Property<long>("Id")
@@ -11169,6 +11225,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("PlatformDomain");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteAlternateUrl", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.PlatformDomain", "PlatformDomain")
+                        .WithMany()
+                        .HasForeignKey("FK_PlatformDomainId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
+                        .WithMany()
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PlatformDomain");
+
+                    b.Navigation("Website");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteCacheState", b =>

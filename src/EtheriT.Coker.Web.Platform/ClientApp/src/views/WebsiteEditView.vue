@@ -4,19 +4,18 @@
     import { ApiError, FormFieldErrors, requestAlert, rules, useManagedForm } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
-    import QuickDomainDialog from "@/components/QuickDomainDialog.vue";
+    import WebsiteUrlItem from "@/components/WebsiteUrlItem.vue";
     import { lookupCustomer } from "@/services/customer-api";
-    import { fetchDomainPassword, matchDomain } from "@/services/domain-api";
     import { isSiteRoot } from "@/utils/url-parts";
 
     import {
         createWebsite,
         fetchWebsite,
+        newWebsiteUrlItem,
         toWebsiteForm,
         updateWebsite
     } from "@/services/website-api";
     import type { CustomerLookup } from "@/types/customer";
-    import type { DomainSummary } from "@/types/domain";
     import {
         WebsiteStatus,
         websiteLevelOptions,
@@ -26,11 +25,13 @@
         type WebsiteDetail,
         type WebsiteForm
     } from "@/types/website";
-    import { toDateInput } from "@/utils/date-input";
     import DateField from "@/components/DateField.vue";
-    import UrlField from "@/components/UrlField.vue";
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
+
+    // 與後端 WebsitesController.MaxUrlCount 一致
+    const MAX_URL_COUNT = 10;
+    const SITE_ROOT_MESSAGE = "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）；網域還沒申請請勾選「網域待申請」。";
 
     const route = useRoute();
     const router = useRouter();
@@ -64,65 +65,9 @@
     });
     const quickCustomerName = computed(() =>
         quickCustomerTaxId.value ? "" : lookupKeyword.value.trim());
-    // ── 網址 → 網域比對 ──
-    const matchedDomain = ref<DomainSummary | null>(null);
-    const matchedUrl = ref("");            // 最近一次比對成功送出的網址，沒變就不重查
-    const unmatchedHost = ref("");
-    const suggestedDomainName = ref("");
-    const matchingDomain = ref(false);
-    const domainMatchError = ref("");
-    const isDomainNotFoundOpen = ref(false);
-    const isQuickDomainOpen = ref(false);
-    let matchSequence = 0;                 // 比對請求序號，舊回應晚到時丟棄
 
-        // ── 網域密碼（唯讀；要改請到網域編輯頁） ──
-    const PASSWORD_MASK = "********";
-    const domainPassword = ref<string | null>(null);   // 按眼睛後讀回的明文；null＝遮罩中
-    const revealingPassword = ref(false);
-    const domainPasswordNotice = ref("");
-
-    const domainPasswordDisplay = computed(() => {
-        if (!matchedDomain.value?.HasPassword) return "";
-        return domainPassword.value ?? PASSWORD_MASK;
-    });
-
-    // 比對到別的網域時清掉明文，避免顯示成上一個網域的密碼
-    watch(() => matchedDomain.value?.Id, () => {
-        domainPassword.value = null;
-        domainPasswordNotice.value = "";
-    });
-
-    async function toggleDomainPassword(): Promise<void> {
-        if (domainPassword.value !== null) {
-            domainPassword.value = null;
-            return;
-        }
-
-        const domainId = matchedDomain.value?.Id;
-        if (!domainId) return;
-
-        revealingPassword.value = true;
-        domainPasswordNotice.value = "";
-        try {
-            const result = await fetchDomainPassword(domainId);
-            // 等回應期間網址被改掉、換了網域，就丟掉這次結果
-            if (matchedDomain.value?.Id !== domainId) return;
-
-            if (result.State === "Ok") domainPassword.value = result.Password ?? "";
-            else if (result.State === "Empty") domainPasswordNotice.value = "這筆網域尚未記錄密碼。";
-            else domainPasswordNotice.value = "密碼已無法讀取，請到網域資料重新輸入。";
-        }
-        catch (error) {
-            console.error(error);
-            domainPasswordNotice.value = "讀取網域密碼失敗，請稍後再試。";
-        }
-        finally {
-            revealingPassword.value = false;
-        }
-    }
-
-    const isDomainMissing = computed(() =>
-        unmatchedHost.value !== "" && matchedDomain.value === null && !matchingDomain.value);
+    // 各網址列目前開著彈窗的 Key；只在 beforeSave 讀，不需要響應式
+    const openUrlDialogKeys = new Set<number>();
 
     function emptyForm(): WebsiteForm {
         return {
@@ -137,9 +82,34 @@
             Status: WebsiteStatus.正常,
             TerminatedDate: "",
             IsDomainPending: false,
-            Url: "",
+            Urls: [newWebsiteUrlItem(true)],
             Remark: ""
         };
+    }
+
+    /** 網址是陣列，逐列驗證；錯誤 key 與後端一致（Urls[i].Url），才能掛到對的那一列。 */
+    function validateUrls(values: WebsiteForm): Record<string, string[]> {
+        // 待申請時不寫後台網址，沿用站台原本的值
+        if (values.IsDomainPending) return {};
+        if (values.Urls.length === 0) {
+            return { Urls: ["請至少輸入一筆網址；網域還沒申請請勾選「網域待申請」。"] };
+        }
+
+        const errors: Record<string, string[]> = {};
+        if (values.Urls.filter(item => item.IsPrimary).length !== 1) {
+            errors.Urls = ["請指定一筆主要網址。"];
+        }
+
+        const seen = new Set<string>();
+        for (const [index, item] of values.Urls.entries()) {
+            const url = item.Url.trim();
+            const key = `Urls[${index}].Url`;
+            if (!isSiteRoot(url)) errors[key] = [SITE_ROOT_MESSAGE];
+            else if (url.length > 255) errors[key] = ["網址不可超過 255 個字元。"];
+            else if (seen.has(url.toLowerCase())) errors[key] = ["這筆網址與前面的網址重複。"];
+            seen.add(url.toLowerCase());
+        }
+        return errors;
     }
 
     const form = useManagedForm<WebsiteForm, WebsiteDetail>({
@@ -184,18 +154,9 @@
                     value && model.ServiceStartDate && String(value) < model.ServiceStartDate
                         ? "網站到期日期不可早於開通日期。"
                         : null)
-            ],
-            Url: [
-                rules.maxLength(500, "網站網址不可超過 500 個字元。"),
-                rules.custom<WebsiteForm>((value, model) => {
-                    // 待申請時不寫後台網址，沿用站台原本的值
-                    if (model.IsDomainPending) return null;
-                    const url = String(value ?? "");
-                    if (!isSiteRoot(url)) return "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）；網域還沒申請請勾選「網域待申請」。";
-                    return url.length > 255 ? "網址不可超過 255 個字元。" : null;
-                })
             ]
         },
+        validate: values => validateUrls(values),
         confirmSave: {
             icon: "save",
             title: "確認儲存",
@@ -204,7 +165,7 @@
         beforeSave: () => {
             pageError.value = "";
             // 任一彈窗開著時，Ctrl+S 不能偷偷送出底下的網站表單
-            return !isNotFoundDialogOpen.value && !isQuickCustomerOpen.value && !isDomainNotFoundOpen.value && !isQuickDomainOpen.value;
+            return !isNotFoundDialogOpen.value && !isQuickCustomerOpen.value && openUrlDialogKeys.size === 0;
         },
         save: values => isEdit.value
             ? updateWebsite(websiteId.value, values)
@@ -238,13 +199,59 @@
         form.clearErrors("TerminatedDate");
     });
 
-    // 勾選「網域待申請」時清空網址與比對結果（兩者互斥，後端也會擋）
+    // 勾選「網域待申請」時清空所有網址（兩者互斥，後端也會擋）；取消勾選時補一列空白主要網址。
+    // 只在真的有變動時才指派，避免載入資料時就被標成「尚未儲存」
     watch(() => form.model.value.IsDomainPending, pending => {
-        if (!pending) return;
-        form.model.value.Url = "";
-        form.clearErrors("Url");
-        resetDomainMatch();
+        clearUrlErrors();
+        if (pending) {
+            if (form.model.value.Urls.length > 0) form.model.value.Urls = [];
+            return;
+        }
+        if (form.model.value.Urls.length === 0) form.model.value.Urls = [newWebsiteUrlItem(true)];
     });
+
+    function addUrl(): void {
+        const urls = form.model.value.Urls;
+        if (urls.length >= MAX_URL_COUNT) return;
+        // 清單空的時候，第一筆自動當主要網址
+        urls.push(newWebsiteUrlItem(urls.length === 0));
+        form.clearErrors("Urls");
+    }
+
+    function removeUrl(index: number): void {
+        const urls = form.model.value.Urls;
+        const [removed] = urls.splice(index, 1);
+        // 刪掉主要網址時改由剩下的第一筆接手，存檔時才不會沒有主要網址
+        const first = urls[0];
+        if (removed?.IsPrimary && first) first.IsPrimary = true;
+        // 索引會位移，只清掉被刪那列的 key 會讓後面的錯誤訊息錯位到別列
+        clearUrlErrors();
+    }
+
+    function setPrimaryUrl(index: number): void {
+        form.model.value.Urls.forEach((item, position) => {
+            item.IsPrimary = position === index;
+        });
+        form.clearErrors("Urls");
+    }
+
+    function updateUrl(index: number, value: string): void {
+        const item = form.model.value.Urls[index];
+        if (!item) return;
+        item.Url = value;
+        form.clearErrors(`Urls[${index}].Url`);
+    }
+
+    function clearUrlErrors(): void {
+        for (const key of Object.keys(form.errors.value)) {
+            if (key.startsWith("Urls")) form.clearErrors(key);
+        }
+    }
+
+    function onUrlDialogChange(key: number, open: boolean): void {
+        if (open) openUrlDialogKeys.add(key);
+        else openUrlDialogKeys.delete(key);
+    }
 
     function setCustomer(value: CustomerLookup | null): void {
         customer.value = value;
@@ -261,8 +268,6 @@
         isCustomerDeleted.value = detail.FK_CompanyId > 0 && detail.Customer === null;
         // 統編選填，沒統編的客戶改顯示公司名稱
         lookupKeyword.value = detail.Customer?.TaxId || detail.Customer?.Name || "";
-        matchedDomain.value = detail.Domain;
-        matchedUrl.value = detail.Url ?? "";
     }
 
     async function lookupByKeyword(): Promise<void> {
@@ -302,68 +307,6 @@
         setCustomer(created);
     }
 
-    function resetDomainMatch(): void {
-        matchSequence += 1;   // 讓還在路上的舊回應作廢
-        matchedDomain.value = null;
-        matchedUrl.value = "";
-        unmatchedHost.value = "";
-        domainMatchError.value = "";
-        matchingDomain.value = false;
-    }
-
-    /**
-     * 網址欄位 change／Enter 時比對網域（由長到短逐段比對在後端做）。
-     * promptWhenMissing＝false：剛建完網域後的重查用，避免彈窗無限循環。
-     */
-    async function checkDomain(options: { force?: boolean; promptWhenMissing?: boolean } = {}): Promise<void> {
-        const { force = false, promptWhenMissing = true } = options;
-        const url = form.model.value.Url.trim();
-        if (!force && url === matchedUrl.value) return;
-
-        resetDomainMatch();
-        form.clearErrors("Url");
-        if (!url) return;
-
-        const sequence = matchSequence;
-        matchingDomain.value = true;
-        try {
-            const result = await matchDomain(url);
-            if (sequence !== matchSequence) return;
-
-            matchedUrl.value = url;
-            if (!result.Host) {
-                domainMatchError.value = "網址格式不正確，例：https://www.example.com.tw";
-                return;
-            }
-
-            matchedDomain.value = result.Domain;
-            if (result.Domain) return;
-
-            unmatchedHost.value = result.Host;
-            suggestedDomainName.value = result.SuggestedDomainName ?? result.Host;
-            if (promptWhenMissing) isDomainNotFoundOpen.value = true;
-        }
-        catch (error) {
-            if (sequence !== matchSequence) return;
-            console.error(error);
-            domainMatchError.value = "比對網域失敗，請稍後再試。";
-        }
-        finally {
-            if (sequence === matchSequence) matchingDomain.value = false;
-        }
-    }
-
-    function openQuickDomain(): void {
-        isDomainNotFoundOpen.value = false;
-        isQuickDomainOpen.value = true;
-    }
-
-    async function onDomainCreated(): Promise<void> {
-        isQuickDomainOpen.value = false;
-        // 使用者可能在彈窗改過網域，重查一次確認真的對得上
-        await checkDomain({ force: true, promptWhenMissing: false });
-    }
-
     function cancel(): void {
         void router.push("/websites");
     }
@@ -400,7 +343,7 @@
 
     <p v-if="pageError" class="alert alert-error" role="alert">{{ pageError }}</p>
     <p v-if="isEdit" class="alert alert-info" role="status">
-        網站名稱、版本、語系、開通／到期日與網址直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
+        網站名稱、版本、語系、開通／到期日與主要網址直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
     </p>
     <p v-else class="alert alert-warning" role="status">
         儲存後會在後台建立新站台，但目錄、商店設定與權限尚未建立，需由系統管理者在後台補齊後才能使用。
@@ -599,12 +542,14 @@
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-url-title">網址</span>
-                <RouterLink v-if="isEdit && matchedDomain"
-                            class="ui-button ui-button-secondary"
-                            :to="{name:'domain-edit', params: {id: matchedDomain.Id}, query: { returnTo: route.fullPath } }">
-                    <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-                    <span>編輯網域資料</span>
-                </RouterLink>
+                <button v-if="!form.model.value.IsDomainPending"
+                        class="ui-button ui-button-ghost"
+                        type="button"
+                        :disabled="form.model.value.Urls.length >= MAX_URL_COUNT"
+                        @click="addUrl">
+                    <span class="material-symbols-outlined">add</span>
+                    <span>新增網址</span>
+                </button>
             </div>
 
             <div class="form-grid">
@@ -616,70 +561,30 @@
                             <span>網域待申請</span>
                         </label>
                     </div>
-                </div>
-
-                <div class="form-field form-field-wide">
-                    <label for="website-url" class="form-label">網址 <i v-if="!form.model.value.IsDomainPending" class="form-required">*</i></label>
-                    <UrlField v-model="form.model.value.Url"
-                              input-id="website-url"
-                              :disabled="form.model.value.IsDomainPending"
-                              @change="checkDomain()"
-                              @enter="checkDomain({ force: true })" />
-                    <FormFieldErrors :errors="form.getErrors('Url')" />
-                    <p v-if="form.model.value.IsDomainPending" class="field-note">網域待申請時不需填寫網址。</p>
-                    <p v-if="matchingDomain" class="field-note" role="status">比對網域中…</p>
-                    <p v-if="domainMatchError" class="field-note field-note-error" role="alert">{{ domainMatchError }}</p>
-                    <p v-if="isDomainMissing" class="field-note field-note-error field-note-with-action" role="alert">
-                        <span>網域管理中沒有「{{ unmatchedHost }}」對應的網域資料。</span>
-                        <button class="field-note-action" type="button" @click="openQuickDomain">建立網域</button>
+                    <FormFieldErrors :errors="form.getErrors('Urls')" />
+                    <p class="field-note">
+                        主要網址會寫入後台站台網址，金流、物流回呼與通知信都使用它；其他網址只記錄在客戶管理平台。最多 {{ MAX_URL_COUNT }} 筆。
                     </p>
                 </div>
 
-                <div class="form-field">
-                    <label>
-                        <span>網域</span>
-                        <input :value="matchedDomain?.DomainName ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>網域公司</span>
-                        <input :value="matchedDomain?.Registrar ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label for="website-domain-password" class="form-label">網域密碼</label>
-                    <div class="input-with-action">
-                        <input id="website-domain-password"
-                               :value="domainPasswordDisplay"
-                               type="text"
-                               readonly
-                               autocomplete="off"
-                               spellcheck="false"
-                               :placeholder="matchedDomain ? '尚未記錄' : ''" />
-                        <button v-if="matchedDomain?.HasPassword"
-                                class="outline-icon-button"
-                                type="button"
-                                :disabled="revealingPassword"
-                                :title="domainPassword !== null ? '隱藏密碼' : '顯示密碼'"
-                                :aria-label="domainPassword !== null ? '隱藏密碼' : '顯示密碼'"
-                                :aria-pressed="domainPassword !== null"
-                                @click="toggleDomainPassword">
-                            <span class="material-symbols-outlined">
-                                {{ domainPassword !== null ? "visibility_off" : "visibility" }}
-                            </span>
-                        </button>
+                <div class="form-field form-field-wide">
+                    <p v-if="form.model.value.IsDomainPending" class="repeater-empty">網域待申請時不需填寫網址。</p>
+                    <p v-else-if="!form.model.value.Urls.length" class="repeater-empty">尚未新增網址。</p>
+                    <div v-else class="repeater">
+                        <WebsiteUrlItem v-for="(item, index) in form.model.value.Urls"
+                                        :key="item.Key"
+                                        :url="item.Url"
+                                        :index="index"
+                                        :is-primary="item.IsPrimary"
+                                        :initial-domain="item.InitialDomain"
+                                        :errors="form.getErrors(`Urls[${index}].Url`)"
+                                        :can-remove="form.model.value.Urls.length > 1"
+                                        :can-edit-domain="isEdit"
+                                        @update:url="value => updateUrl(index, value)"
+                                        @set-primary="setPrimaryUrl(index)"
+                                        @remove="removeUrl(index)"
+                                        @dialog-change="open => onUrlDialogChange(item.Key, open)" />
                     </div>
-                    <p v-if="domainPasswordNotice" class="field-note field-note-error">{{ domainPasswordNotice }}</p>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>網域到期日期</span>
-                        <input :value="toDateInput(matchedDomain?.EndDate)" type="date" readonly />
-                    </label>
                 </div>
             </div>
         </fieldset>
@@ -727,18 +632,4 @@
                          :initial-name="quickCustomerName"
                          @cancel="isQuickCustomerOpen = false"
                          @created="onCustomerCreated" />
-
-    <ConfirmDialog :open="isDomainNotFoundOpen"
-                   icon="dns"
-                   title="找不到網域"
-                   :message="`網域管理中沒有「${unmatchedHost}」對應的網域資料，要現在建立嗎？`"
-                   cancel-text="稍後再說"
-                   confirm-text="填寫網域資料"
-                   @cancel="isDomainNotFoundOpen = false"
-                   @confirm="openQuickDomain" />
-
-    <QuickDomainDialog :open="isQuickDomainOpen"
-                       :initial-domain-name="suggestedDomainName"
-                       @cancel="isQuickDomainOpen = false"
-                       @created="onDomainCreated" />
 </template>

@@ -1,13 +1,17 @@
 import { api } from "@/core/coker";
 import { fromDateInput, toDateInput } from "@/utils/date-input";
+import type { DomainSummary } from "@/types/domain";
 import {
     websiteLocaleOptions,
     type WebsiteDetail,
     type WebsiteForm,
-    type WebsiteListResult
+    type WebsiteListResult,
+    type WebsiteUrlFormItem
 } from "@/types/website";
 
 const baseUrl = "/api/websites";
+
+let nextUrlKey = 1;
 
 function blankToNull(value: string): string | null {
     const trimmed = value.trim();
@@ -23,6 +27,15 @@ export function toLocaleInput(value: string | null | undefined): string {
     return websiteLocaleOptions.some(option => option.Value === normalized) ? normalized : "";
 }
 
+/** 建立表單上的一筆網址；Key 遞增，在頁面存活期間不重複即可。 */
+export function newWebsiteUrlItem(
+    isPrimary: boolean,
+    url = "",
+    domain: DomainSummary | null = null
+): WebsiteUrlFormItem {
+    return { Key: nextUrlKey++, Url: url, IsPrimary: isPrimary, InitialDomain: domain };
+}
+
 function toSaveRequest(form: WebsiteForm) {
     return {
         FK_CompanyId: form.FK_CompanyId,
@@ -35,7 +48,10 @@ function toSaveRequest(form: WebsiteForm) {
         Status: form.Status,
         TerminatedDate: fromDateInput(form.TerminatedDate),
         IsDomainPending: form.IsDomainPending,
-        Url: form.IsDomainPending ? null : blankToNull(form.Url),
+        // 待申請時網址一律不送；Key、InitialDomain 只是畫面用
+        Urls: form.IsDomainPending
+            ? []
+            : form.Urls.map(item => ({ Url: item.Url.trim(), IsPrimary: item.IsPrimary })),
         Remark: blankToNull(form.Remark)
     };
 }
@@ -54,7 +70,7 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         Status: detail.Status,
         TerminatedDate: toDateInput(detail.TerminatedDate),
         IsDomainPending: detail.IsDomainPending,
-        Url: detail.Url ?? "",
+        Urls: detail.Urls.map(item => newWebsiteUrlItem(item.IsPrimary, item.Url, item.Domain)),
         Remark: detail.Remark ?? ""
     };
 }

@@ -1098,6 +1098,13 @@ button, input, select, textarea {
     text-align: center;
 }
 
+/* 一個重複項目內有多排內容時（例：網址＋網域資料），排與排之間留距 */
+.repeater-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 /* ── 通用對話框 ── */
 .dialog-open {
     overflow: hidden;

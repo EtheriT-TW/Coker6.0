@@ -4,9 +4,7 @@ import {
     websiteLocaleOptions,
     type WebsiteDetail,
     type WebsiteForm,
-    type WebsiteListResult,
-    type WebsiteSiteOption,
-    type WebsiteSiteOptionResult
+    type WebsiteListResult
 } from "@/types/website";
 
 const baseUrl = "/api/websites";
@@ -28,7 +26,6 @@ export function toLocaleInput(value: string | null | undefined): string {
 function toSaveRequest(form: WebsiteForm) {
     return {
         FK_CompanyId: form.FK_CompanyId,
-        FK_WebsiteId: form.FK_WebsiteId,
         Name: form.Name.trim(),
         Level: form.Level,
         Locale: blankToNull(form.Locale),
@@ -43,11 +40,10 @@ function toSaveRequest(form: WebsiteForm) {
     };
 }
 
-/** API 回應轉成表單模型，六個日期欄位都要經過 toDateInput。 */
+/** API 回應轉成表單模型，日期欄位都要經過 toDateInput。 */
 export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
     return {
         FK_CompanyId: detail.FK_CompanyId,
-        FK_WebsiteId: detail.FK_WebsiteId,
         Name: detail.Name,
         Level: detail.Level,
         Locale: toLocaleInput(detail.Locale),
@@ -70,20 +66,6 @@ export function fetchWebsite(id: number): Promise<WebsiteDetail> {
     return api.get<WebsiteDetail>(`${baseUrl}/${id}`);
 }
 
-export function createWebsite(form: WebsiteForm): Promise<WebsiteDetail> {
-    return api.post<WebsiteDetail>(baseUrl, toSaveRequest(form));
-}
-
 export function updateWebsite(id: number, form: WebsiteForm): Promise<WebsiteDetail> {
     return api.put<WebsiteDetail>(`${baseUrl}/${id}`, toSaveRequest(form));
-}
-
-/** 搜尋可綁定的實際站台；keyword 留空時回傳前 20 筆。 */
-export function fetchSiteOptions(keyword: string): Promise<WebsiteSiteOptionResult> {
-    return api.get<WebsiteSiteOptionResult>(`${baseUrl}/site-options`, { query: { keyword } });
-}
-
-/** 依 Id 取單筆站台；清單上尚未建合約的列會直接指定站台，不受搜尋筆數上限影響。 */
-export function fetchSiteOption(id: number): Promise<WebsiteSiteOption> {
-    return api.get<WebsiteSiteOption>(`${baseUrl}/site-options/${id}`);
 }

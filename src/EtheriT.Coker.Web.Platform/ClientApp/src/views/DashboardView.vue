@@ -98,7 +98,7 @@
                 <li v-for="site in summary.ExpiringWebsites" :key="site.Id">
                     <a :href="`/websites/${site.Id}`" @click.prevent="openWebsite(site.Id)">
                         <strong>{{ site.Name }}</strong>
-                        <small>{{ site.CustomerName ?? "（客戶已刪除）" }}</small>
+                        <small>{{ site.CustomerName ?? "（未綁定客戶）" }}</small>
                     </a>
                     <span class="expiring-date">{{ formatDate(site.ServiceEndDate) }}</span>
                 </li>

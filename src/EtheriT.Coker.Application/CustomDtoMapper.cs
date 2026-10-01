@@ -165,6 +165,7 @@ namespace EtheriT.Coker.Application
             //Website
             // 反向（存檔）時不覆蓋開通／到期日：網站資料頁只顯示日期、表單不會送出，
             // 照原樣對應會把站台日期洗成 NULL。日期改由客戶管理平台維護。
+            // 平台欄位（ServiceStatus 等）不在 WebsiteEditDto 裡，所以不會被覆蓋；日後若加進 DTO，這裡要一併 Ignore。
             CreateMap<Website, WebsiteEditDto>()
                 .ReverseMap()
                 .ForMember(dest => dest.StartDate, opt => opt.Ignore())

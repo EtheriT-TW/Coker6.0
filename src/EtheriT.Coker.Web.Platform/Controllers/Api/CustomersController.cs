@@ -96,118 +96,48 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
     private IQueryable<Website> ActiveSites =>
         db.Websites.AsNoTracking().Where(site => !site.IsDeleted);
 
-    /// <summary>未被軟刪除的網站資料（Platform 自己維護的 PlatformWebsites）。</summary>
-    private IQueryable<PlatformWebsite> ActiveRecords =>
-        db.PlatformWebsites.AsNoTracking().Where(record => !record.IsDeleted);
-
     /// <summary>
-    /// 客戶編輯頁的「所屬站台」。與網站管理清單同樣取聯集，兩邊數量才對得上：
-    /// ① 掛在這個客戶底下的網站資料；② 後台綁到這個客戶、但①沒涵蓋到的站台。
+    /// 客戶編輯頁的「所屬站台」：後台綁到這個客戶的站台。
     /// 客戶不存在時回空陣列即可，編輯頁本身的 GetDetail 已經負責導回清單。
     /// </summary>
     [HttpGet("{id:long}/websites")]
     public async Task<IReadOnlyList<CustomerWebsiteDto>> GetWebsites(long id)
     {
-        // ① 客戶底下的網站資料，左外接後台站台（還沒對應站台時站台欄位為 null）
-        var recordRows = await (
-            from record in ActiveRecords
-            where record.FK_CompanyId == id
-            join site in ActiveSites on record.FK_WebsiteId equals site.Id into siteGroup
-            from site in siteGroup.DefaultIfEmpty()
-            select new
-            {
-                record.Id,
-                RecordName = record.Name,
-                RecordLevel = record.Level,
-                RecordUrl = record.Url,
-                record.Status,
-                record.ServiceStartDate,
-                record.ServiceEndDate,
-                WebsiteId = site == null ? (long?)null : site.Id,
-                OrgName = site == null ? null : site.OrgName,
-                SiteTitle = site == null ? null : site.Title,
-                SiteUrl = site == null ? null : site.DefaultUrl,
-                SiteLevel = site == null ? (WebsiteLevelEnum?)null : site.Level,
-                SiteStartDate = site == null ? null : site.StartDate,
-                SiteEndDate = site == null ? null : site.EndDate
-            })
-            .ToListAsync(HttpContext.RequestAborted);
-
-        var listedSiteIds = recordRows
-            .Where(row => row.WebsiteId is not null)
-            .Select(row => row.WebsiteId!.Value)
-            .ToList();
-
-        // ② 後台綁定的站台，排除①已列出的。
-        //    再左外接一次網站資料：接得到代表這個站台的網站資料掛在別的客戶身上。
-        var mappedRows = await (
-            from mapping in db.MappingCompanyAndWebsites.AsNoTracking()
-            where !mapping.IsDeleted && mapping.FK_CompanyId == id
-            join site in ActiveSites on mapping.FK_WebsiteId equals site.Id
-            where !listedSiteIds.Contains(site.Id)
-            join record in ActiveRecords on (long?)site.Id equals record.FK_WebsiteId into recordGroup
-            from record in recordGroup.DefaultIfEmpty()
-            select new
+        var rows = await ActiveSites
+            // 用 Any 而不是 join：同一站台有重複綁定時也只列一次
+            .Where(site => site.Company.Any(mapping => !mapping.IsDeleted && mapping.FK_CompanyId == id))
+            .OrderBy(site => site.ServiceStatus)
+            .ThenBy(site => site.EndDate == null)
+            .ThenBy(site => site.EndDate)
+            .Select(site => new
             {
                 site.Id,
                 site.OrgName,
                 site.Title,
                 site.DefaultUrl,
                 site.Level,
+                site.ServiceStatus,
                 site.StartDate,
-                site.EndDate,
-                OtherRecordId = record == null ? (long?)null : record.Id
-
+                site.EndDate
             })
             .ToListAsync(HttpContext.RequestAborted);
 
         // 用伺服器日期計算，與網站管理清單的剩餘天數一致
         var today = DateTime.Today;
 
-        return recordRows
-            .Select(row =>
-            {
-                // 已綁定站台時名稱、版本、日期以後台 Website 為準（與網站管理清單同一原則）
-                var isBound = row.WebsiteId is not null;
-                var level = row.SiteLevel ?? row.RecordLevel;
-                var startDate = isBound ? row.SiteStartDate : row.ServiceStartDate;
-                var endDate = isBound ? row.SiteEndDate : row.ServiceEndDate;
-                return new CustomerWebsiteDto(
-                    RowKey: $"P{row.Id}",
-                    PlatformWebsiteId: row.Id,
-                    WebsiteId: row.WebsiteId,
-                    Name: FirstNonBlank(row.SiteTitle, row.RecordName, row.OrgName),
-                    OrgName: row.OrgName,
-                    Level: level,
-                    LevelText: level?.ToString() ?? string.Empty,
-                    Status: row.Status,
-                    StatusText: row.Status.ToString(),
-                    Url: FirstNonBlank(row.SiteUrl, row.RecordUrl),
-                    ServiceStartDate: startDate,
-                    ServiceEndDate: endDate,
-                    RemainingDays: ToRemainingDays(endDate, today),
-                    IsLinkedToOtherCustomer: false);
-            })
-            .Concat(mappedRows.Select(row => new CustomerWebsiteDto(
-                RowKey: $"W{row.Id}",
-                // 網站資料掛在別的客戶時仍給 Id，讓使用者點得過去看是誰
-                PlatformWebsiteId: row.OtherRecordId,
+        return rows
+            .Select(row => new CustomerWebsiteDto(
                 WebsiteId: row.Id,
                 Name: FirstNonBlank(row.Title, row.OrgName),
                 OrgName: row.OrgName,
                 Level: row.Level,
                 LevelText: row.Level.ToString(),
-                Status: null,
-                StatusText: string.Empty,
+                Status: row.ServiceStatus,
+                StatusText: row.ServiceStatus.ToString(),
                 Url: row.DefaultUrl,
                 ServiceStartDate: row.StartDate,
                 ServiceEndDate: row.EndDate,
-                RemainingDays: ToRemainingDays(row.EndDate, today),
-                IsLinkedToOtherCustomer: row.OtherRecordId is not null)))
-            // 還沒建網站資料（Status 為 null）排最前，其餘依狀態、到期日
-            .OrderBy(item => item.Status)
-            .ThenBy(item => item.ServiceEndDate is null)
-            .ThenBy(item => item.ServiceEndDate)
+                RemainingDays: ToRemainingDays(row.EndDate, today)))
             .ToList();
     }
 
@@ -305,16 +235,6 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             return Conflict(new
             {
                 Error = $"此客戶已在後台綁定 {boundSiteCount} 個站台，無法刪除。"
-            });
-
-        // 網站不提供刪除，只要客戶底下有任何網站（含已註銷）就不能刪，
-        // 否則網站會失去對應客戶。
-        var websiteCount = await db.PlatformWebsites
-            .CountAsync(site => site.FK_CompanyId == id, HttpContext.RequestAborted);
-        if (websiteCount > 0)
-            return Conflict(new
-            {
-                Error = $"此客戶底下還有 {websiteCount} 個網站，無法刪除。網站不提供刪除，請改為註銷網站並保留客戶資料。"
             });
 
         foreach (var contact in company.SecondaryContacts)

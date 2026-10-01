@@ -176,20 +176,8 @@
         backToOrigin();
     }
 
-    /** 已建網站資料就開該筆；只有後台綁定時，開新增頁並預先帶入站台（與網站管理清單一致）。 */
-    function siteLink(site: CustomerWebsite) {
-        if (site.PlatformWebsiteId !== null)
-            return `/websites/${site.PlatformWebsiteId}`;
-        if (site.WebsiteId !== null)
-            return { path: "/websites/new", query: { siteId: String(site.WebsiteId) } };
-        return null;
-    }
-
-    /** 後台與 Platform 兩邊對不起來時要標出來，否則使用者會以為資料漏了。 */
-    function siteFlag(site: CustomerWebsite): string {
-        if (site.PlatformWebsiteId === null) return "尚未建立網站資料";
-        if (site.IsLinkedToOtherCustomer) return "網站資料掛在其他客戶";
-        return "";
+    function siteLink(site: CustomerWebsite): string {
+        return `/websites/${site.WebsiteId}`;
     }
 
     async function loadCustomer(): Promise<void> {
@@ -395,12 +383,11 @@
             <p v-else-if="!websites.length" class="repeater-empty">這個客戶底下還沒有站台。</p>
 
             <ul v-else class="site-list">
-                <li v-for="site in websites" :key="site.RowKey">
+                <li v-for="site in websites" :key="site.WebsiteId">
                     <div class="site-list-main">
-                        <RouterLink v-if="siteLink(site)" :to="siteLink(site)!">
+                        <RouterLink :to="siteLink(site)">
                             <strong>{{ site.Name }}</strong>
                         </RouterLink>
-                        <strong v-else>{{ site.Name }}</strong>
 
                         <div class="site-list-meta">
                             <span v-if="site.OrgName">{{ site.OrgName }}</span>
@@ -410,13 +397,11 @@
                                :href="toHref(site.Url)!"
                                target="_blank"
                                rel="noopener noreferrer">{{ site.Url }}</a>
-                            <span v-if="siteFlag(site)" class="site-flag">{{ siteFlag(site) }}</span>
                         </div>
                     </div>
 
                     <div class="site-list-side">
-                        <span v-if="site.Status === null" class="grid-muted">—</span>
-                        <span v-else class="status-pill" :class="statusView(site).CssClass">
+                        <span class="status-pill" :class="statusView(site).CssClass">
                             {{ statusView(site).Text }}
                         </span>
 

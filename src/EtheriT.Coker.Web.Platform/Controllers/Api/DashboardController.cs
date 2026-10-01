@@ -23,21 +23,21 @@ public sealed class DashboardController(CokerDbContext db) : ControllerBase
         // DbContext 不可並行查詢，逐一 await
         var customerCount = await db.Companies.CountAsync(cancellationToken);
 
-        // 已註銷的網站不算「管理中」。
-        // 已綁定站台時名稱與到期日以後台 Website 為準，未綁定才用合約上的預定值；
-        // FK_WebsiteId 有唯一索引，左外接不會讓筆數變多。
+        // 已註銷的網站不算「管理中」。一筆＝一個後台站台（含尚未在 Platform 編輯過的，狀態預設正常）。
         var activeWebsites =
-            from contract in db.PlatformWebsites.AsNoTracking()
-            where contract.Status != PlatformWebsiteStatusEnum.註銷
-            join linked in db.Websites.AsNoTracking().Where(item => !item.IsDeleted)
-                on contract.FK_WebsiteId equals (long?)linked.Id into linkedSites
-            from linked in linkedSites.DefaultIfEmpty()
+            from site in db.Websites.AsNoTracking()
+            where !site.IsDeleted && site.ServiceStatus != PlatformWebsiteStatusEnum.註銷
             select new
             {
-                contract.Id,
-                contract.FK_CompanyId,
-                Name = linked != null ? linked.Title : contract.Name,
-                EndDate = linked != null ? linked.EndDate : contract.ServiceEndDate
+                site.Id,
+                Name = site.Title,
+                site.EndDate,
+                // 後台綁定的公司，多筆時取最早那筆；沒綁公司時為 null
+                CustomerName = site.Company
+                    .Where(mapping => !mapping.IsDeleted && mapping.Company != null)
+                    .OrderBy(mapping => mapping.Id)
+                    .Select(mapping => mapping.Company!.Name)
+                    .FirstOrDefault()
             };
 
         var websiteCount = await activeWebsites.CountAsync(cancellationToken);
@@ -50,17 +50,13 @@ public sealed class DashboardController(CokerDbContext db) : ControllerBase
 
         var expiringCount = await expiring.CountAsync(cancellationToken);
 
-        // 左外接：客戶被軟刪除時網站仍要列出，前端顯示「（客戶已刪除）」
-        var expiringWebsites = await (
-            from site in expiring
-            join customer in db.Companies.AsNoTracking()
-                on site.FK_CompanyId equals customer.Id into customers
-            from customer in customers.DefaultIfEmpty()
-            orderby site.EndDate, site.Id
-            select new ExpiringWebsiteDto(
+        var expiringWebsites = await expiring
+            .OrderBy(site => site.EndDate)
+            .ThenBy(site => site.Id)
+            .Select(site => new ExpiringWebsiteDto(
                 site.Id,
                 site.Name,
-                customer == null ? null : customer.Name,
+                site.CustomerName,
                 site.EndDate))
             .Take(ExpiringListLimit)
             .ToListAsync(cancellationToken);

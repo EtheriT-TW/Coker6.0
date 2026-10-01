@@ -9428,6 +9428,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<long?>("FK_PlatformDomainId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("HostLocation")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");
 
@@ -9435,6 +9442,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("IsDomainPending")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Keywords")
                         .HasColumnType("nvarchar(max)");
@@ -9466,11 +9476,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("PlatformRemark")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("ServiceStatus")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Statement")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("TerminatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -9484,6 +9504,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EndDate");
+
+                    b.HasIndex("FK_PlatformDomainId");
+
+                    b.HasIndex("ServiceStatus");
+
                     b.ToTable("Websites");
 
                     b.HasData(
@@ -9493,9 +9519,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1441),
                             CreatorUserId = 0L,
                             IsDeleted = false,
+                            IsDomainPending = false,
                             Level = 0,
                             Locale = "zh-tw",
                             OrgName = "coker6",
+                            ServiceStatus = 0,
                             Title = "Coker雲端開店大師",
                             Type = "website"
                         },
@@ -9505,9 +9533,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2022, 11, 7, 17, 52, 57, 552, DateTimeKind.Local).AddTicks(1443),
                             CreatorUserId = 0L,
                             IsDeleted = false,
+                            IsDomainPending = false,
                             Level = 0,
                             Locale = "zh-tw",
                             OrgName = "lcb",
+                            ServiceStatus = 0,
                             Title = "｜Derek｜德瑞克．隆昌窯業",
                             Type = "website"
                         });
@@ -11129,6 +11159,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("FK_TopNode");
 
                     b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.Website", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.PlatformDomain", "PlatformDomain")
+                        .WithMany()
+                        .HasForeignKey("FK_PlatformDomainId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("PlatformDomain");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteCacheState", b =>

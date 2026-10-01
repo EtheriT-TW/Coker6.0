@@ -31,7 +31,7 @@ public sealed class DomainsController(
                 item.Registrar,
                 item.StartDate,
                 item.EndDate,
-                db.PlatformWebsites.Count(site => site.FK_PlatformDomainId == item.Id)))
+                db.Websites.Count(site => !site.IsDeleted && site.FK_PlatformDomainId == item.Id)))
             .Take(ListLimit + 1)   // 多拿一筆，用來判斷是否被截斷
             .ToListAsync(HttpContext.RequestAborted);
 
@@ -135,7 +135,7 @@ public sealed class DomainsController(
                 item.EndDate,
                 item.PasswordCipher != null,
                 item.Remark,
-                db.PlatformWebsites.Count(site => site.FK_PlatformDomainId == item.Id)))
+                db.Websites.Count(site => !site.IsDeleted && site.FK_PlatformDomainId == item.Id)))
             .FirstOrDefaultAsync(HttpContext.RequestAborted);
     }
 
@@ -153,8 +153,8 @@ public sealed class DomainsController(
                      HttpContext.RequestAborted))
             ModelState.AddModelError(nameof(request.DomainName), $"網域「{domainName}」已經建立過。");
         else if (current is not null && current.DomainName != domainName &&
-                 await db.PlatformWebsites.AnyAsync(
-                     site => site.FK_PlatformDomainId == current.Id,
+                 await db.Websites.AnyAsync(
+                     site => !site.IsDeleted && site.FK_PlatformDomainId == current.Id,
                      HttpContext.RequestAborted))
             // 改名後既有網站的網址就對不上，關聯會變成錯的
             ModelState.AddModelError(nameof(request.DomainName), "已有網站使用此網域，不可修改網域名稱。");

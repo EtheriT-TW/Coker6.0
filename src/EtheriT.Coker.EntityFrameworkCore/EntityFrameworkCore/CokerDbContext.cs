@@ -259,6 +259,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             modelBuilder.Entity<Website>(o =>
             {
                 o.Property(w => w.Level).HasDefaultValue(WebsiteLevelEnum.形象);
+
+                // 客戶管理平台欄位：網域被網站使用時不可刪除
+                o.HasOne(w => w.PlatformDomain).WithMany()
+                 .HasForeignKey(w => w.FK_PlatformDomainId)
+                 .OnDelete(DeleteBehavior.Restrict);
+                o.HasIndex(w => w.EndDate);          // 總覽頁「即將到期」用
+                o.HasIndex(w => w.ServiceStatus);
             });
             modelBuilder.Entity<Template>(o =>
             {

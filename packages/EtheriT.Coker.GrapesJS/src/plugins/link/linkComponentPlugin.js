@@ -383,7 +383,7 @@ function getEditableTextComponents(component) {
     return typeof content === 'string' ? [component] : [];
 }
 
-function hasMultipleDisplayTextComponents(component) {
+export function hasMultipleDisplayTextComponents(component) {
     const nameComponent = component.find?.('.name')?.[0];
     const textRoot = nameComponent || component;
     return getEditableTextComponents(textRoot)
@@ -440,9 +440,14 @@ function getRawComponentTextContent(component) {
         .join('');
 }
 
+function normalizeTextForComparison(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
 function initializeDisplayText(component) {
     const attributes = component.getAttributes();
     const displayText = getComponentTextContent(component).trim();
+    const hasMultipleTextComponents = hasMultipleDisplayTextComponents(component);
     const hasDisplayText = Object.prototype.hasOwnProperty.call(
         attributes,
         'data-text'
@@ -451,6 +456,38 @@ function initializeDisplayText(component) {
     if (hasDisplayText) {
         const currentDisplayText = String(attributes['data-text'] || '').trim();
         const rawDisplayText = getRawComponentTextContent(component).trim();
+
+        // A card or other composite link can contain dates, separators, arrows,
+        // titles, and other independent text nodes. Older initialization logic
+        // joined those nodes and wrote values such as "// >" into data-text,
+        // then generated an equally misleading title. Remove only values that
+        // exactly match the derived component text; preserve explicit custom
+        // data-text and title values.
+        if (
+            hasMultipleTextComponents
+            && currentDisplayText
+            && (
+                normalizeTextForComparison(currentDisplayText)
+                    === normalizeTextForComparison(displayText)
+                || normalizeTextForComparison(currentDisplayText)
+                    === normalizeTextForComparison(rawDisplayText)
+            )
+        ) {
+            const removals = ['data-text'];
+            const type = inferLinkType(attributes);
+            const target = attributes.target || getDefaultTarget(type);
+            const generatedTitle = createGeneratedTitle(
+                type,
+                currentDisplayText,
+                target,
+                component.getLinkTitleTexts()
+            );
+            if (String(attributes.title || '') === generatedTitle) {
+                removals.push('title');
+            }
+            component.removeAttributes(removals);
+            return;
+        }
 
         // Repair values previously initialized from element.textContent,
         // which also included ligature names such as "Telephone" from a
@@ -465,7 +502,7 @@ function initializeDisplayText(component) {
         return;
     }
 
-    if (displayText) {
+    if (displayText && !hasMultipleTextComponents) {
         component.addAttributes({ 'data-text': displayText });
     }
 }

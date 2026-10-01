@@ -1,5 +1,3 @@
-const preferenceModes = new Set(['ask', 'small-only', 'all', 'skip']);
-const defaultSmallImageMaxBytes = 300 * 1024;
 const styleId = 'coker-external-asset-import-style';
 
 export function externalAssetImportPlugin(editor, options = {}) {
@@ -9,13 +7,12 @@ export function externalAssetImportPlugin(editor, options = {}) {
         ?.querySelector('meta[name="coker-can-import-external-canvas-images"]')
         ?.getAttribute('content') === 'true';
     if (!canImportExternalImages) return;
-    const smallImageMaxBytes = Number(options.smallImageMaxBytes) || defaultSmallImageMaxBytes;
     const apiRoot = options.apiRoot || '/api/FileUpload';
     let isReady = false;
     let processing = Promise.resolve();
     let toolbarButton = null;
     let refreshTimer = null;
-    const unavailablePaths = new Set();
+    let scanTimer = null;
 
     ensureStyles(hostDocument);
 
@@ -25,31 +22,6 @@ export function externalAssetImportPlugin(editor, options = {}) {
         || hostWindow?.OrgName
         || ''
     ).replace(/^\/+|\/+$/g, '');
-
-    const getPreferenceKey = () => {
-        const userId = hostDocument
-            ?.querySelector('meta[name="coker-user-id"]')
-            ?.getAttribute('content') || 'anonymous';
-        return `coker:grapes:external-assets:v1:${userId}`;
-    };
-
-    const loadPreference = () => {
-        try {
-            const value = JSON.parse(hostWindow.localStorage.getItem(getPreferenceKey()));
-            return preferenceModes.has(value?.mode) ? value.mode : 'ask';
-        } catch {
-            return 'ask';
-        }
-    };
-
-    const savePreference = mode => {
-        if (!preferenceModes.has(mode)) return;
-        try {
-            hostWindow.localStorage.setItem(getPreferenceKey(), JSON.stringify({ mode }));
-        } catch {
-            // Browser storage may be disabled; the current operation can still continue.
-        }
-    };
 
     const request = async (action, paths) => {
         const websiteId = hostDocument
@@ -76,15 +48,15 @@ export function externalAssetImportPlugin(editor, options = {}) {
     );
 
     const refreshPendingCount = () => {
-        const count = collectForeignPaths().filter(path => !unavailablePaths.has(path)).length;
+        const count = collectForeignPaths().length;
         if (!toolbarButton) return count;
         toolbarButton.set('label', count > 0
             ? `<i class="fa fa-image" aria-hidden="true"></i><span class="coker-asset-toolbar-count">${count}</span>`
             : '<i class="fa fa-image" aria-hidden="true"></i>');
         toolbarButton.set('attributes', {
             title: count > 0
-                ? `外站圖片匯入設定（尚有 ${count} 張）`
-                : '外站圖片匯入設定'
+                ? `檢查外部圖片（尚有 ${count} 張）`
+                : '檢查外部圖片'
         });
         return count;
     };
@@ -99,35 +71,25 @@ export function externalAssetImportPlugin(editor, options = {}) {
         const loading = showLoading(hostDocument, items.length);
         const replacements = new Map();
         const importedAssets = [];
-        const failedItems = [];
         try {
-            for (let index = 0; index < items.length; index++) {
-                const item = items[index];
-                loading.update(
-                    item.isInternal ? '正在複製圖片' : '正在下載圖片',
-                    item.name || item.path,
-                    index + 1
-                );
-                try {
-                    const result = await request('ImportCanvasImages', [item.path]);
-                    const imported = (result.files || result.Files || [])[0];
-                    const newPath = imported?.path || imported?.Path;
-                    if (newPath) {
-                        replacements.set(item.path, newPath);
-                        importedAssets.push({
-                            src: newPath,
-                            fullSrc: newPath,
-                            thumbnailSrc: newPath,
-                            name: imported?.name || imported?.Name || item.name || '',
-                            guid: imported?.guid || imported?.Guid || '',
-                            type: 'image'
-                        });
-                    }
-                    else failedItems.push(item);
-                } catch {
-                    failedItems.push(item);
-                }
-            }
+            loading.update(`正在匯入 ${items.length} 張圖片`, '', 0);
+            const result = await request('ImportCanvasImages', items.map(item => item.path));
+            const importedFiles = result.files || result.Files || [];
+            importedFiles.forEach(imported => {
+                const sourcePath = imported?.sourcePath || imported?.SourcePath;
+                const newPath = imported?.path || imported?.Path;
+                if (!sourcePath || !newPath) return;
+                const item = items.find(candidate => candidate.path === sourcePath);
+                replacements.set(sourcePath, newPath);
+                importedAssets.push({
+                    src: newPath,
+                    fullSrc: newPath,
+                    thumbnailSrc: imported?.thumbnailPath || imported?.ThumbnailPath || newPath,
+                    name: imported?.name || imported?.Name || item?.name || '',
+                    guid: imported?.guid || imported?.Guid || '',
+                    type: 'image'
+                });
+            });
             loading.update('正在套用圖片路徑', '', items.length);
             applyReplacements(editor, replacements);
             addImportedAssets(editor, importedAssets);
@@ -135,6 +97,7 @@ export function externalAssetImportPlugin(editor, options = {}) {
             loading.close();
         }
         refreshPendingCount();
+        const failedItems = items.filter(item => !replacements.has(item.path));
         return { imported: replacements.size, failedItems };
     };
 
@@ -146,38 +109,24 @@ export function externalAssetImportPlugin(editor, options = {}) {
             return;
         }
 
-        let mode = forceAsk ? 'ask' : loadPreference();
-        if (mode === 'skip') return;
-
         let items;
         const inspecting = showLoading(hostDocument, paths.length);
         inspecting.update('正在分析元件圖片', '', 0);
         try {
             const inspected = await request('InspectCanvasImages', paths);
-            items = (inspected.items || inspected.Items || []).map(normalizeInspectItem);
-            items.forEach(item => {
-                if (item.canImport) unavailablePaths.delete(item.path);
-                else unavailablePaths.add(item.path);
-            });
+            items = (inspected.items || inspected.Items || [])
+                .map(normalizeInspectItem)
+                .map(item => ({ ...item, usages: describeAssetUsages(editor, item.path) }));
         } finally {
             inspecting.close();
         }
         refreshPendingCount();
-        const importable = items.filter(item => item.canImport);
+        const choice = await showImportPrompt(hostDocument, items);
+        if (!choice) return;
+        applyUnavailableActions(editor, choice.unavailableActions, hostDocument);
 
-        if (mode === 'ask') {
-            const choice = await showImportPrompt(hostDocument, items, smallImageMaxBytes);
-            if (!choice) return;
-            mode = choice.mode;
-            if (choice.remember) savePreference(mode);
-            applyUnavailableActions(editor, choice.unavailableActions, hostDocument);
-        }
-
-        const selected = mode === 'all'
-            ? importable
-            : mode === 'small-only'
-                ? importable.filter(item => item.size != null && item.size <= smallImageMaxBytes)
-                : [];
+        const selectedPaths = new Set(choice.importPaths);
+        const selected = items.filter(item => item.canImport && selectedPaths.has(item.path));
         if (!selected.length) {
             refreshPendingCount();
             return;
@@ -185,33 +134,31 @@ export function externalAssetImportPlugin(editor, options = {}) {
 
         const result = await importItems(selected);
         if (result.failedItems.length > 0) {
-            const failedPaths = result.failedItems.map(item => item.path).join('\n');
             options.adapter?.ui?.alert?.(
-                `已匯入 ${result.imported} 張圖片，${result.failedItems.length} 張匯入失敗並保留原始路徑：\n${failedPaths}`
+                `已匯入 ${result.imported} 張圖片，另有 ${result.failedItems.length} 張未成功，已保留原圖。`
             );
         } else {
             options.adapter?.ui?.success?.(`已匯入 ${result.imported} 張圖片。`);
         }
     };
 
-    const openSettings = async () => {
-        const pendingPaths = collectForeignPaths().filter(path => !unavailablePaths.has(path));
-        const selected = await showSettings(
-            hostDocument,
-            loadPreference(),
-            smallImageMaxBytes,
-            pendingPaths
-        );
-        if (!selected) return;
-        savePreference(selected.mode);
-        if (selected.scan) {
+    const openImageList = () => {
+        processing = processing
+            .then(() => scanAndHandle({ forceAsk: true }))
+            .catch(error => options.adapter?.ui?.error?.(error.message));
+    };
+
+    const scheduleImageList = () => {
+        if (scanTimer) clearTimeout(scanTimer);
+        scanTimer = setTimeout(() => {
+            scanTimer = null;
             processing = processing
                 .then(() => scanAndHandle())
                 .catch(error => options.adapter?.ui?.error?.(error.message));
-        }
+        }, 300);
     };
 
-    editor.Commands.add('coker:external-assets-settings', { run: openSettings });
+    editor.Commands.add('coker:external-assets-settings', { run: openImageList });
     const panel = editor.Panels?.getPanel?.('options');
     if (panel && !editor.Panels.getButton('options', 'cokerExternalAssets')) {
         const codeButton = editor.Panels.getButton('options', 'export-template');
@@ -225,7 +172,7 @@ export function externalAssetImportPlugin(editor, options = {}) {
             id: 'cokerExternalAssets',
             label: '<i class="fa fa-image" aria-hidden="true"></i>',
             command: 'coker:external-assets-settings',
-            attributes: { title: '外站圖片匯入設定' },
+            attributes: { title: '檢查外部圖片' },
             active: false
         };
         if (codeButtonIndex >= 0 && panel.buttons) {
@@ -246,9 +193,7 @@ export function externalAssetImportPlugin(editor, options = {}) {
         if (!isReady) return;
         const attributes = component?.getAttributes?.() || {};
         if (!attributes['data-block-name']) return;
-        processing = processing
-            .then(() => scanAndHandle())
-            .catch(error => options.adapter?.ui?.error?.(error.message));
+        scheduleImageList();
     });
 
     editor.on('component:remove', () => {
@@ -282,6 +227,170 @@ function normalizeInspectItem(item) {
         canImport: item.canImport ?? item.CanImport ?? false,
         error: item.error ?? item.Error ?? ''
     };
+}
+
+function describeAssetUsages(editor, path) {
+    const usages = [];
+    const addUsage = (type, nearbyText = '') => {
+        const key = `${type}|${nearbyText}`;
+        if (!usages.some(usage => usage.key === key)) usages.push({ key, type, nearbyText });
+    };
+
+    editor.getWrapper?.()?.onAll?.(component => {
+        const attributes = component.getAttributes?.() || {};
+        const tagName = String(component.get?.('tagName') || '').toLowerCase();
+        const componentType = String(component.get?.('type') || '').toLowerCase();
+        const isImage = tagName === 'img' || tagName === 'source' || componentType === 'image';
+        const nearbyText = getComponentNearbyText(component, !isImage);
+
+        Object.entries(attributes).forEach(([name, value]) => {
+            if (typeof value !== 'string' || !referenceContainsPath(value, path)) return;
+            if (name === 'style') addUsage(getInlineStyleUsageType(value, path), nearbyText);
+            else if (name === 'poster' || name === 'data-coker-poster') addUsage('影片封面', nearbyText);
+            else if (isImage || ['src', 'data-src', 'srcset', 'data-full-src', 'data-medium-src'].includes(name)) addUsage('圖片', nearbyText);
+            else addUsage('圖片設定', nearbyText);
+        });
+
+        ['src', 'poster'].forEach(property => {
+            const value = component.get?.(property);
+            if (!referenceContainsPath(value, path)) return;
+            addUsage(property === 'poster' ? '影片封面' : '圖片', nearbyText);
+        });
+
+        Object.entries(component.getStyle?.() || {}).forEach(([property, value]) => {
+            if (cssValueReferencesPath(value, path)) addUsage(getStyleUsageType(property), nearbyText);
+        });
+    });
+
+    editor.CssComposer?.getAll?.().forEach(rule => {
+        Object.entries(rule.getStyle?.() || {}).forEach(([property, value]) => {
+            if (!cssValueReferencesPath(value, path)) return;
+            const selector = rule.getSelectorsString?.() || '';
+            const element = findCanvasElement(editor, selector);
+            addUsage(getStyleUsageType(property), getElementNearbyText(element, true));
+        });
+    });
+
+    return usages.slice(0, 3).map(({ type, nearbyText }) => ({ type, nearbyText }));
+}
+
+function getInlineStyleUsageType(value, path) {
+    const declaration = String(value || '')
+        .split(';')
+        .find(item => referenceContainsPath(item, path)) || '';
+    return getStyleUsageType(declaration.split(':')[0]);
+}
+
+function getStyleUsageType(property) {
+    const name = String(property || '').toLowerCase();
+    if (name.includes('background')) return '背景圖';
+    if (name.includes('poster')) return '影片封面';
+    return '樣式圖片';
+}
+
+function referenceContainsPath(value, path) {
+    const text = String(value || '');
+    if (text.includes(path)) return true;
+    const protocolRelativePath = String(path || '').replace(/^https?:/i, '');
+    return protocolRelativePath !== path && text.includes(protocolRelativePath);
+}
+
+function getComponentNearbyText(component, includeOwnText) {
+    const elementText = getElementNearbyText(component.getEl?.(), includeOwnText);
+    if (elementText) return elementText;
+
+    let current = component;
+    for (let depth = 0; current && depth < 4; depth++) {
+        const attributes = current.getAttributes?.() || {};
+        const candidates = [
+            attributes.alt,
+            attributes.title,
+            attributes['aria-label'],
+            attributes['data-block-name'],
+            includeOwnText || depth > 0 ? current.get?.('content') : ''
+        ];
+        const text = candidates.map(cleanNearbyText).find(Boolean);
+        if (text) return text;
+        current = current.parent?.();
+    }
+    return '';
+}
+
+function getElementNearbyText(element, includeOwnText) {
+    if (!element) return '';
+    const attributeText = ['alt', 'title', 'aria-label']
+        .map(name => cleanNearbyText(element.getAttribute?.(name)))
+        .find(Boolean);
+    if (includeOwnText) {
+        const ownText = getPreferredContextText(element);
+        if (ownText) return ownText;
+    }
+
+    let current = element;
+    for (let depth = 0; current?.parentElement && depth < 4; depth++) {
+        const siblings = [...current.parentElement.children];
+        const currentIndex = siblings.indexOf(current);
+        for (let distance = 1; distance <= 2; distance++) {
+            const text = [siblings[currentIndex - distance], siblings[currentIndex + distance]]
+                .map(getPreferredContextText)
+                .find(Boolean);
+            if (text) return text;
+        }
+        current = current.parentElement;
+    }
+    return attributeText || '';
+}
+
+function getPreferredContextText(element) {
+    if (!element) return '';
+    const preferredSelectors = [
+        '.cht',
+        '[lang^="zh"]',
+        'h1, h2, h3, h4, h5, h6',
+        '.name',
+        '.title',
+        '[class*="-title"]',
+        '[class*="_title"]'
+    ];
+    for (const selector of preferredSelectors) {
+        const matched = element.matches?.(selector)
+            ? element
+            : element.querySelector?.(selector);
+        const text = getUsefulContextText(matched?.textContent);
+        if (text) return text;
+    }
+    return getUsefulContextText(element.textContent);
+}
+
+function getUsefulContextText(value) {
+    const text = cleanNearbyText(value);
+    if (!text) return '';
+
+    // Animated counters and telephone numbers are often split into one span
+    // per character. A nearby "0", "-", or similarly short fragment does not
+    // identify the image location, so keep searching for the section label.
+    const digitCount = (text.match(/\d/g) || []).length;
+    const hasWords = /[A-Za-z\u3400-\u9fff]/u.test(text);
+    if (!hasWords && digitCount <= 2) return '';
+    return text;
+}
+
+function cleanNearbyText(value) {
+    const text = String(value || '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    if (!text || /^(?:https?:)?\/\//i.test(text)) return '';
+    return text.length > 48 ? `${text.slice(0, 48)}…` : text;
+}
+
+function findCanvasElement(editor, selector) {
+    if (!selector) return null;
+    try {
+        return editor.Canvas?.getDocument?.()?.querySelector(selector) || null;
+    } catch {
+        return null;
+    }
 }
 
 function collectCanvasImagePaths(html, css, orgName, location) {
@@ -346,7 +455,12 @@ function replaceText(value, replacements) {
     let result = String(value ?? '');
     [...replacements.entries()]
         .sort((left, right) => right[0].length - left[0].length)
-        .forEach(([source, target]) => { result = result.split(source).join(target); });
+        .forEach(([source, target]) => {
+            const variants = [source];
+            const protocolRelative = source.replace(/^https?:/i, '');
+            if (protocolRelative !== source) variants.push(protocolRelative);
+            variants.forEach(variant => { result = result.split(variant).join(target); });
+        });
     return result;
 }
 
@@ -425,8 +539,8 @@ function applyUnavailableActions(editor, actions, document) {
 
 function componentReferencesPath(component, path) {
     const attributes = component.getAttributes?.() || {};
-    if (Object.values(attributes).some(value => typeof value === 'string' && value.includes(path))) return true;
-    if (['src', 'poster'].some(property => String(component.get?.(property) || '').includes(path))) return true;
+    if (Object.values(attributes).some(value => typeof value === 'string' && referenceContainsPath(value, path))) return true;
+    if (['src', 'poster'].some(property => referenceContainsPath(component.get?.(property), path))) return true;
     if (Object.values(component.getStyle?.() || {}).some(value => cssValueReferencesPath(value, path))) return true;
     return String(component.get?.('content') || '').includes(path);
 }
@@ -437,7 +551,7 @@ function isImageComponentReference(component, path) {
     if (tagName !== 'img' && tagName !== 'source' && type !== 'image') return false;
     const attributes = component.getAttributes?.() || {};
     return ['src', 'data-src', 'srcset', 'data-full-src', 'data-medium-src']
-        .some(name => String(attributes[name] || component.get?.(name) || '').includes(path));
+        .some(name => referenceContainsPath(attributes[name] || component.get?.(name), path));
 }
 
 function removeComponentAssetSettings(component, paths, document) {
@@ -456,7 +570,7 @@ function removeComponentAssetSettings(component, paths, document) {
             }
             return;
         }
-        if (!paths.some(path => value.includes(path))) return;
+        if (!paths.some(path => referenceContainsPath(value, path))) return;
         if (name === 'srcset') {
             const next = removeSrcsetPaths(value, pathSet);
             if (next) updated[name] = next;
@@ -471,7 +585,7 @@ function removeComponentAssetSettings(component, paths, document) {
 
     ['src', 'poster'].forEach(property => {
         const value = component.get?.(property);
-        if (typeof value === 'string' && paths.some(path => value.includes(path))) component.set?.(property, '');
+        if (typeof value === 'string' && paths.some(path => referenceContainsPath(value, path))) component.set?.(property, '');
     });
 
     const componentStyle = removeMatchingStyleProperties(component.getStyle?.() || {}, pathSet);
@@ -504,14 +618,14 @@ function removeMatchingCssDeclarations(value, paths, document) {
 }
 
 function cssValueReferencesPath(value, path) {
-    return parseCssUrls(value).some(url => url === path);
+    return parseCssUrls(value).some(url => referenceContainsPath(url, path));
 }
 
 function removeSrcsetPaths(value, paths) {
     return String(value || '')
         .split(',')
         .map(item => item.trim())
-        .filter(item => item && !paths.has(item.split(/\s+/)[0]))
+        .filter(item => item && ![...paths].some(path => referenceContainsPath(item.split(/\s+/)[0], path)))
         .join(', ');
 }
 
@@ -521,14 +635,18 @@ function ensureStyles(document) {
     style.id = styleId;
     style.textContent = `
         .coker-asset-modal{position:fixed;inset:0;z-index:2147483000;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px}
-        .coker-asset-dialog{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#fff;color:#1f2937;border-radius:12px;box-shadow:0 24px 70px rgba(0,0,0,.3);padding:24px}
+        .coker-asset-dialog{width:min(720px,100%);max-height:calc(100vh - 40px);overflow:auto;background:#fff;color:#1f2937;border-radius:12px;box-shadow:0 24px 70px rgba(0,0,0,.3);padding:24px}
         .coker-asset-dialog h3{font-size:20px;margin:0 0 12px}.coker-asset-dialog p{line-height:1.6;margin:8px 0}
-        .coker-asset-summary{background:#f8fafc;border-radius:8px;padding:12px;margin:14px 0}.coker-asset-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+        .coker-asset-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
         .coker-asset-actions button{border:1px solid #cbd5e1;border-radius:7px;background:#fff;padding:8px 14px;cursor:pointer}.coker-asset-actions button.primary{background:#2563eb;color:#fff;border-color:#2563eb}
-        .coker-asset-choice{display:block;padding:8px 0}.coker-asset-loading{text-align:center}.coker-asset-spinner{width:36px;height:36px;border:4px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;animation:coker-asset-spin .8s linear infinite;margin:0 auto 14px}
-        .coker-asset-pending{margin-top:14px}.coker-asset-pending ul{max-height:150px;overflow:auto;margin:8px 0 0;padding-left:22px}.coker-asset-pending li{overflow-wrap:anywhere;margin:5px 0;font-size:12px}
-        .coker-asset-problems{margin-top:14px}.coker-asset-problem{border:1px solid #fecaca;background:#fff7f7;border-radius:8px;padding:10px;margin-top:8px}.coker-asset-problem-path{font-size:12px;overflow-wrap:anywhere}.coker-asset-problem-error{font-size:12px;color:#b91c1c;margin-top:4px}.coker-asset-problem-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:13px}
+        .coker-asset-loading{text-align:center}.coker-asset-spinner{width:36px;height:36px;border:4px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;animation:coker-asset-spin .8s linear infinite;margin:0 auto 14px}
+        .coker-asset-list{display:grid;gap:10px;margin-top:16px}.coker-asset-item{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;align-items:center;border:1px solid #e2e8f0;border-radius:10px;padding:10px}.coker-asset-item.problem{border-color:#fecaca;background:#fffafa}
+        .coker-asset-preview{position:relative;height:72px;border-radius:7px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#94a3b8}.coker-asset-preview img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}.coker-asset-preview i{font-size:24px}
+        .coker-asset-name{font-weight:600;overflow-wrap:anywhere}.coker-asset-meta{color:#64748b;font-size:13px;margin-top:4px}.coker-asset-source{font-size:12px;margin-top:5px}.coker-asset-source summary{cursor:pointer;color:#64748b}.coker-asset-path{margin-top:5px;overflow-wrap:anywhere;color:#64748b}
+        .coker-asset-usages{display:grid;gap:3px;margin-top:5px}.coker-asset-usage{font-size:13px;color:#475569}.coker-asset-usage-type{display:inline-block;border-radius:999px;background:#e2e8f0;color:#334155;padding:1px 7px;margin-right:5px}.coker-asset-item.problem .coker-asset-usage-type{background:#fee2e2;color:#991b1b}
+        .coker-asset-select{display:inline-flex;align-items:center;gap:6px;margin-top:9px;font-size:14px}.coker-asset-error{color:#b91c1c;font-size:13px;margin-top:5px}.coker-asset-item-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;font-size:13px}
         .coker-asset-toolbar-count{display:inline-block;margin-left:2px;color:#fbbf24;font-size:9px;line-height:1;vertical-align:top}
+        @media (max-width:600px){.coker-asset-item{grid-template-columns:72px minmax(0,1fr)}.coker-asset-preview{height:60px}}
         @keyframes coker-asset-spin{to{transform:rotate(360deg)}}
     `;
     document.head.append(style);
@@ -545,57 +663,68 @@ function createModal(document, content) {
     return { overlay, dialog, close: () => overlay.remove() };
 }
 
-function showImportPrompt(document, items, smallMaxBytes) {
-    const available = items.filter(item => item.canImport);
-    const unavailableItems = items.filter(item => !item.canImport);
-    const small = available.filter(item => item.size != null && item.size <= smallMaxBytes).length;
-    const large = available.filter(item => item.size != null && item.size > smallMaxBytes).length;
-    const unknown = available.filter(item => item.size == null).length;
-    const unavailable = items.length - available.length;
+function showImportPrompt(document, items) {
     return new Promise(resolve => {
         const modal = createModal(document, `
-            <h3>發現非本站圖片</h3>
-            <p>此元件包含非本站上傳圖片。若不匯入網站空間，前台可能因來源圖片被刪除或路徑不同而出現掉圖。</p>
-            <div class="coker-asset-summary">小型圖片（${formatBytes(smallMaxBytes)} 以下）：${small} 張<br>大型圖片：${large} 張<br>大小未知：${unknown} 張${unavailable ? `<br>無法匯入或來源不存在：${unavailable} 張` : ''}</div>
-            ${unavailableItems.length ? `
-                <div class="coker-asset-problems">
-                    <strong>有問題的圖片來源</strong>
-                    <p>請選擇如何處理。若來源位於 CSS，選擇移除或刪除時會移除完整 CSS 設定。</p>
-                    ${unavailableItems.map((item, index) => `
-                        <div class="coker-asset-problem" data-problem-index="${index}">
-                            <div class="coker-asset-problem-path">${escapeHtml(item.path)}</div>
-                            ${item.error ? `<div class="coker-asset-problem-error">${escapeHtml(item.error)}</div>` : ''}
-                            <div class="coker-asset-problem-actions">
-                                <label><input type="radio" name="coker-problem-${index}" value="remove"> 移除圖片設定</label>
-                                <label><input type="radio" name="coker-problem-${index}" value="delete"> 刪除圖片元件</label>
-                                <label><input type="radio" name="coker-problem-${index}" value="skip" checked> 暫時略過</label>
-                            </div>
+            <h3>外部圖片</h3>
+            <p>下列 ${items.length} 張圖片來自其他網站或站台，請確認要如何處理。</p>
+            <div class="coker-asset-list">
+                ${items.map((item, index) => `
+                    <div class="coker-asset-item ${item.canImport ? '' : 'problem'}">
+                        <div class="coker-asset-preview">
+                            <i class="fa fa-image" aria-hidden="true"></i>
+                            <img data-preview src="${escapeHtml(item.path)}" alt="" loading="lazy">
                         </div>
-                    `).join('')}
-                </div>
-            ` : ''}
-            ${available.length ? '<label><input type="checkbox" data-remember> 記住我的匯入選擇</label>' : ''}
-            <div class="coker-asset-actions">
-                ${available.length
-                    ? '<button data-mode="skip">暫時略過可匯入圖片</button><button data-mode="all">全部匯入</button><button class="primary" data-mode="small-only">僅匯入小型圖片</button>'
-                    : '<button data-cancel>取消</button><button class="primary" data-mode="skip">套用問題圖片處理</button>'}
+                        <div>
+                            <div class="coker-asset-name">${escapeHtml(getImageDisplayName(item, index))}</div>
+                            <div class="coker-asset-meta">圖片大小：${item.size == null ? '無法取得' : formatBytes(item.size)}</div>
+                            <div class="coker-asset-usages">
+                                ${(item.usages || []).length
+                                    ? item.usages.map(usage => `
+                                        <div class="coker-asset-usage"><span class="coker-asset-usage-type">${escapeHtml(usage.type)}</span>${usage.nearbyText ? `位於「${escapeHtml(usage.nearbyText)}」附近` : '畫布中'}</div>
+                                    `).join('')
+                                    : '<div class="coker-asset-usage"><span class="coker-asset-usage-type">圖片設定</span>無法辨識附近文字</div>'}
+                            </div>
+                            <details class="coker-asset-source">
+                                <summary>查看圖片來源</summary>
+                                <div class="coker-asset-path">${escapeHtml(item.path)}</div>
+                            </details>
+                            ${item.canImport
+                                ? `<label class="coker-asset-select"><input type="checkbox" data-import-index="${index}" checked> 匯入本站</label>`
+                                : `
+                                    <div class="coker-asset-error">目前無法匯入這張圖片</div>
+                                    ${item.error ? `<details class="coker-asset-source"><summary>查看原因</summary><div class="coker-asset-path">${escapeHtml(item.error)}</div></details>` : ''}
+                                    <div class="coker-asset-item-actions">
+                                        <label><input type="radio" name="coker-problem-${index}" value="skip" checked> 保留原狀</label>
+                                        <label><input type="radio" name="coker-problem-${index}" value="remove"> 移除圖片設定</label>
+                                        <label><input type="radio" name="coker-problem-${index}" value="delete"> 刪除圖片</label>
+                                    </div>
+                                `}
+                        </div>
+                    </div>
+                `).join('')}
             </div>
+            <div class="coker-asset-actions"><button data-cancel>取消</button><button class="primary" data-apply>套用選擇</button></div>
         `);
-        modal.dialog.querySelectorAll('[data-mode]').forEach(button => {
-            button.addEventListener('click', () => {
-                const result = {
-                    mode: button.dataset.mode,
-                    remember: modal.dialog.querySelector('[data-remember]')?.checked || false,
-                    unavailableActions: unavailableItems.map((item, index) => ({
+        modal.dialog.querySelectorAll('[data-preview]').forEach(image => {
+            image.addEventListener('error', () => { image.hidden = true; });
+        });
+        modal.dialog.querySelector('[data-apply]').addEventListener('click', () => {
+            const result = {
+                importPaths: items
+                    .filter((item, index) => item.canImport && modal.dialog.querySelector(`[data-import-index="${index}"]`)?.checked)
+                    .map(item => item.path),
+                unavailableActions: items
+                    .map((item, index) => item.canImport ? null : ({
                         path: item.path,
                         mode: modal.dialog.querySelector(`input[name="coker-problem-${index}"]:checked`)?.value || 'skip'
                     }))
-                };
-                modal.close();
-                resolve(result);
-            });
+                    .filter(Boolean)
+            };
+            modal.close();
+            resolve(result);
         });
-        modal.dialog.querySelector('[data-cancel]')?.addEventListener('click', () => {
+        modal.dialog.querySelector('[data-cancel]').addEventListener('click', () => {
             modal.close();
             resolve(null);
         });
@@ -605,36 +734,14 @@ function showImportPrompt(document, items, smallMaxBytes) {
     });
 }
 
-function showSettings(document, currentMode, smallMaxBytes, pendingPaths = []) {
-    return new Promise(resolve => {
-        const choices = [
-            ['ask', '每次詢問'],
-            ['small-only', `自動匯入小型圖片（${formatBytes(smallMaxBytes)} 以下）`],
-            ['all', '自動匯入全部圖片'],
-            ['skip', '不自動匯入']
-        ];
-        const modal = createModal(document, `
-            <h3>外站圖片匯入設定</h3>
-            <p>插入含有非本站圖片的元件時：</p>
-            ${choices.map(([value, label]) => `<label class="coker-asset-choice"><input type="radio" name="coker-asset-mode" value="${value}" ${value === currentMode ? 'checked' : ''}> ${label}</label>`).join('')}
-            <p>未匯入的圖片可能因來源網站變更、圖片刪除或路徑不同，導致前台出現掉圖。</p>
-            ${pendingPaths.length ? `
-                <details class="coker-asset-pending">
-                    <summary>尚有 ${pendingPaths.length} 張圖片待處理</summary>
-                    <ul>${pendingPaths.map(path => `<li title="${escapeHtml(path)}">${escapeHtml(path)}</li>`).join('')}</ul>
-                </details>
-            ` : '<p>目前沒有待處理的圖片。</p>'}
-            <div class="coker-asset-actions"><button data-cancel>取消</button><button data-save>儲存設定</button><button class="primary" data-scan>儲存並掃描目前畫布</button></div>
-        `);
-        const finish = scan => {
-            const mode = modal.dialog.querySelector('input[name="coker-asset-mode"]:checked')?.value || 'ask';
-            modal.close();
-            resolve({ mode, scan });
-        };
-        modal.dialog.querySelector('[data-cancel]').addEventListener('click', () => { modal.close(); resolve(null); });
-        modal.dialog.querySelector('[data-save]').addEventListener('click', () => finish(false));
-        modal.dialog.querySelector('[data-scan]').addEventListener('click', () => finish(true));
-    });
+function getImageDisplayName(item, index) {
+    if (item.name) return item.name;
+    try {
+        const pathName = new URL(item.path, 'http://localhost').pathname;
+        return decodeURIComponent(pathName.split('/').filter(Boolean).pop() || `圖片 ${index + 1}`);
+    } catch {
+        return `圖片 ${index + 1}`;
+    }
 }
 
 function showLoading(document, total) {
@@ -652,9 +759,9 @@ function showLoading(document, total) {
 }
 
 function formatBytes(bytes) {
-    return bytes >= 1024 * 1024
-        ? `${Math.round(bytes / 1024 / 1024 * 10) / 10} MB`
-        : `${Math.round(bytes / 1024)} KB`;
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024 * 10) / 10} KB`;
+    return `${Math.round(bytes / 1024 / 1024 * 10) / 10} MB`;
 }
 
 function escapeHtml(value) {

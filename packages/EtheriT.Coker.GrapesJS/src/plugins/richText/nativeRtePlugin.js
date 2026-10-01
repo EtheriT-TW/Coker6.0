@@ -1,4 +1,5 @@
 import {
+    hasMultipleDisplayTextComponents,
     linkComponentType,
     openLinkComponentEditor
 } from '../link/linkComponentPlugin.js';
@@ -566,6 +567,7 @@ async function openLinkTraits(editor, rte) {
                 attributes,
                 'data-text'
             )
+            && !hasMultipleDisplayTextComponents(editingComponent)
         ) {
             editingComponent.addAttributes({
                 'data-text':

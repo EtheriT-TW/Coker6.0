@@ -66,10 +66,7 @@
                     @if (Model.Website.StartDate != null && Model.Website.EndDate != null)
                     {
                         <div class="website_deadline d-flex">
-                            <div class="title bg-danger fs-5 fw-bold px-3 text-white d-flex">
-                                <div class="align-self-center">智慧電商系統</div>
-                            </div>
-                            <div class="deadline_date fw-bold text-danger py-2 px-4">
+                            <div class="deadline_date d-flex flex-wrap column-gap-4 fw-bold py-2 px-4">
                                 <div class="start_date">@Model.Website.StartDate.Value.ToString("yyyy/MM/dd")</div>
                                 <div class="end_date">@Model.Website.EndDate.Value.ToString("yyyy/MM/dd")</div>
                             </div>

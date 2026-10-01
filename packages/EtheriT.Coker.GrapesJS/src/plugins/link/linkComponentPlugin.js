@@ -2,6 +2,7 @@ import {
     fileAssetAccept,
     openFileAssetManager
 } from '../file/fileComponentPlugin.js';
+import { getLinkTitleTexts } from './linkTitleLocales.js';
 
 export const linkComponentType = '連結';
 
@@ -571,17 +572,12 @@ function createGeneratedHref(type, destinationValue) {
     }
 }
 
-function createGeneratedTitle(type, displayText, target) {
+function createGeneratedTitle(type, displayText, target, texts) {
     const text = String(displayText || '').trim();
     if (!text) return '';
 
-    const prefix = {
-        phone: '撥打電話：',
-        email: '寄送郵件至：',
-        address: '在 Google 地圖搜尋：',
-        link: '連結至：'
-    }[type] || '連結至：';
-    const targetHint = target === '_blank' ? '(另開新視窗)' : '';
+    const prefix = texts[type] || texts.link;
+    const targetHint = target === '_blank' ? texts.newWindow : '';
     return `${prefix}${text}${targetHint}`;
 }
 
@@ -604,10 +600,12 @@ function synchronizeLinkAttributes(component, options = {}) {
             ? getDefaultTarget(type)
             : attributes.target || getDefaultTarget(type);
 
+        const titleTexts = component.getLinkTitleTexts();
         const generatedTitle = createGeneratedTitle(
             type,
             attributes['data-text'],
-            target
+            target,
+            titleTexts
         );
         const desiredValues = {
             'data-link-type': type,
@@ -624,7 +622,8 @@ function synchronizeLinkAttributes(component, options = {}) {
             const previousGeneratedTitle = createGeneratedTitle(
                 previousType,
                 previousAttributes['data-text'],
-                previousTarget
+                previousTarget,
+                titleTexts
             );
             shouldGenerateTitle = currentTitle === previousGeneratedTitle;
         }
@@ -741,7 +740,9 @@ function updateTargetSecurity(component) {
     }
 }
 
-export function linkComponentPlugin(editor) {
+export function linkComponentPlugin(editor, options = {}) {
+    const titleTexts = getLinkTitleTexts(options.locale);
+
     editor.DomComponents.addType(linkComponentType, {
         extend: 'link',
         extendView: 'text',
@@ -820,6 +821,9 @@ export function linkComponentPlugin(editor) {
                         category: hintCategory
                     }
                 ]
+            },
+            getLinkTitleTexts() {
+                return titleTexts;
             },
             init() {
                 initializeDisplayText(this);

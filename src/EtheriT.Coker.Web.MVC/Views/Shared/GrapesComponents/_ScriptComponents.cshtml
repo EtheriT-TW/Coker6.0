@@ -1,5 +1,6 @@
 ﻿<!--導入grapesjs-->
 @inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersionProvider
+@inject EtheriT.Coker.Application.LoginUserData LoginUserData
 @{
     var grapesModuleUrl = FileVersionProvider.AddFileVersionToPath(
         Context.Request.PathBase,
@@ -7,6 +8,7 @@
     var imageEditorModuleUrl = FileVersionProvider.AddFileVersionToPath(
         Context.Request.PathBase,
         "/modules/grapesjs/etherit-coker-grapesjs-image-editor.min.js");
+    var siteLocale = await LoginUserData.GetWebsiteLocal();
 }
 
 <link rel="stylesheet" href="/modules/grapesjs/etherit-coker-grapesjs.min.css" asp-append-version="true">
@@ -82,6 +84,7 @@
 
         library.createEditor = function (options = {}) {
             return createCokerGrapesEditor({
+                siteLocale: @Json.Serialize(siteLocale),
                 ...options,
                 adapter: options.adapter || library.adapter
             });

@@ -24,7 +24,11 @@ public sealed record SystemMetrics(
     TlsSnapshot? TlsSnapshot = null);
 
 public sealed record TlsSnapshot(DateTime? CollectedAtUtc, IReadOnlyList<TlsCertificate> Certificates, string? Error,
-    IReadOnlyList<TlsWebsite>? Websites = null, TlsCentralStore? CentralStore = null, TlsWacsLogs? WacsLogs = null);
+    IReadOnlyList<TlsWebsite>? Websites = null, TlsCentralStore? CentralStore = null, TlsWacsLogs? WacsLogs = null,
+    TlsWacsSchedule? WacsSchedule = null);
+public sealed record TlsWacsSchedule(DateTime? CollectedAtUtc, string Folder, IReadOnlyList<TlsWacsTask> Tasks, string? Error);
+public sealed record TlsWacsTask(string TaskPath, bool Enabled, string State, DateTime? NextRunAtUtc,
+    DateTime? LastRunAtUtc, int LastResult);
 public sealed record TlsWacsLogs(DateTime? CollectedAtUtc, string DirectoryPath, IReadOnlyList<TlsWacsLogFile> Files, string? Error,
     IReadOnlyList<TlsWacsExecution>? Executions = null);
 public sealed record TlsWacsExecution(string Id, DateTime? StartedAtUtc, DateTime? CompletedAtUtc,

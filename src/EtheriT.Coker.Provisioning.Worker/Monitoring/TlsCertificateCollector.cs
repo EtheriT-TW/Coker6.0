@@ -66,6 +66,7 @@ public sealed partial class TlsCertificateCollector(ProcessRunner runner, ILogge
         if (snapshot.CentralStore is { Error: null, DirectoryPath: not null } store)
             snapshot = snapshot with { CentralStore = store with { Certificates = ReadPfxCertificates(store, cancellationToken) } };
         snapshot = snapshot with { WacsLogs = await ReadWacsLogsAsync(cancellationToken) };
+        snapshot = snapshot with { WacsSchedule = ReadWacsSchedule(cancellationToken) };
         Volatile.Write(ref cached, snapshot);
         return snapshot;
     }

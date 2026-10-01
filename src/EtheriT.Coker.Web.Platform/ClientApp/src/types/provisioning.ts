@@ -79,6 +79,9 @@ export interface ServerTlsStatus {
   IsOnline: boolean;
   LastSeenAtUtc: string | null;
   Snapshot: { CollectedAtUtc: string | null; Certificates: TlsCertificate[]; Error: string | null;
+    WacsSchedule?: { CollectedAtUtc: string | null; Folder: string; Error: string | null;
+      Tasks: { TaskPath: string; Enabled: boolean; State: string; NextRunAtUtc: string | null;
+        LastRunAtUtc: string | null; LastResult: number }[] } | null;
     WacsLogs?: { CollectedAtUtc: string | null; DirectoryPath: string; Error: string | null;
       Executions?: { Id: string; StartedAtUtc: string | null; CompletedAtUtc: string | null;
         TaskName: string; Result: string; Details: string; FileName: string; StartLine: number; EndLine: number }[] | null;

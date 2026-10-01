@@ -37,9 +37,18 @@ public static partial class PlatformDomainName
         if (!Uri.TryCreate(text, UriKind.Absolute, out var uri) || uri.HostNameType != UriHostNameType.Dns)
             return null;
 
-        // IdnHost：中文網域轉成 xn-- 形式，同一個網域才不會有兩種寫法
-        var host = uri.IdnHost.TrimEnd('.').ToLowerInvariant();
-        return HostPattern().IsMatch(host) ? host : null;
+        try
+        {
+            // TryCreate 成功不代表主機名稱符合 IDN 規則；IdnHost 仍可能拋出例外。
+            // 合法中文網域轉成 xn-- 形式，同一個網域才不會有兩種寫法。
+            var host = uri.IdnHost.TrimEnd('.').ToLowerInvariant();
+            return HostPattern().IsMatch(host) ? host : null;
+        }
+        catch (UriFormatException)
+        {
+            // 與其他不合法網址一致回傳 null，不讓單筆資料中斷整份網站清單。
+            return null;
+        }
     }
 
     /// <summary>shop.example.com.tw → [shop.example.com.tw, example.com.tw, com.tw]：由長到短、至少兩段。</summary>

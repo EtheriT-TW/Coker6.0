@@ -66,7 +66,11 @@ public sealed record ProvisioningAgentHeartbeatRequest(
     TlsSnapshotDto? TlsSnapshot = null);
 
 public sealed record TlsSnapshotDto(DateTime? CollectedAtUtc, IReadOnlyList<TlsCertificateDto> Certificates, string? Error,
-    IReadOnlyList<TlsWebsiteDto>? Websites = null, TlsCentralStoreDto? CentralStore = null, TlsWacsLogsDto? WacsLogs = null);
+    IReadOnlyList<TlsWebsiteDto>? Websites = null, TlsCentralStoreDto? CentralStore = null, TlsWacsLogsDto? WacsLogs = null,
+    TlsWacsScheduleDto? WacsSchedule = null);
+public sealed record TlsWacsScheduleDto(DateTime? CollectedAtUtc, string Folder, IReadOnlyList<TlsWacsTaskDto> Tasks, string? Error);
+public sealed record TlsWacsTaskDto(string TaskPath, bool Enabled, string State, DateTime? NextRunAtUtc,
+    DateTime? LastRunAtUtc, int LastResult);
 public sealed record TlsWacsLogsDto(DateTime? CollectedAtUtc, string DirectoryPath, IReadOnlyList<TlsWacsLogFileDto> Files, string? Error,
     IReadOnlyList<TlsWacsExecutionDto>? Executions = null);
 public sealed record TlsWacsExecutionDto(string Id, DateTime? StartedAtUtc, DateTime? CompletedAtUtc,

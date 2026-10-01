@@ -19,6 +19,7 @@ public sealed class ProvisioningWorkerOptions
     public bool DnsEnabled { get; set; }
     public bool SslEnabled { get; set; } = true;
     public string WacsPath { get; set; } = @"C:\Program Files\win-acme\wacs.exe";
+    public string WacsTaskFolder { get; set; } = @"\";
     public string AcmeEmail { get; set; } = string.Empty;
 }
 

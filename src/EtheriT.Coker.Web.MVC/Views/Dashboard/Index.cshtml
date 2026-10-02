@@ -5,76 +5,117 @@
 <link rel="stylesheet" href="~/css/Dashboard/index.min.css" asp-append-version="true" />
 
 <div class="container-fluid py-4 dashboard">
-    <div class="row g-4 dashboard-kpis dashboard-system-kpis">
-        <div class="col-12 col-md-6 col-xl">
-            <div class="card dashboard-kpi h-100">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-symbols-outlined opacity-10">storage</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0">使用空間</p>
-                        <h4 class="mb-0 storage-size">--</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0" />
-                <div class="card-footer p-3">
-                    <p class="mb-0 text-sm">最後更新：<span class="text-success font-weight-bolder storage-updated-at">載入中</span></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-xl">
-            <div class="card dashboard-kpi h-100">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-symbols-outlined opacity-10">monitoring</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0">本月流量</p>
-                        <h4 class="mb-0 month-flow-size">--</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0" />
-                <div class="card-footer p-3">
-                    <p class="mb-0 text-sm">統計區間：<span class="text-success font-weight-bolder month-flow-range">載入中</span></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-xl">
-            <div class="card dashboard-kpi h-100">
-                <div class="card-header p-3 pt-2">
-                    <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
-                        <i class="material-symbols-outlined opacity-10">groups</i>
-                    </div>
-                    <div class="text-end pt-1">
-                        <p class="text-sm mb-0">在線訪客</p>
-                        <h4 class="mb-0 online-visitor-count">--</h4>
-                    </div>
-                </div>
-                <hr class="dark horizontal my-0" />
-                <div class="card-footer p-3">
-                    <p class="mb-0 text-sm">最近 2 分鐘內仍在瀏覽網站，每 30 秒更新</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6 col-xl dashboard-contact-kpi" hidden>
-            <a class="text-decoration-none text-reset" href="/ContentManagement/ContactUs">
+    <div class="row g-4 dashboard-commerce-kpis" hidden>
+        <div class="col-6 col-lg-4 dashboard-commerce-col dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
                 <div class="card dashboard-kpi h-100">
                     <div class="card-header p-3 pt-2">
-                        <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
-                            <i class="material-symbols-outlined opacity-10">mark_email_unread</i>
+                        <div class="icon icon-lg icon-shape bg-gradient-warning shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-outlined opacity-10">assignment_late</i>
                         </div>
                         <div class="text-end pt-1">
-                            <p class="text-sm mb-0">待處理表單</p>
-                            <h4 class="mb-0 pending-contact-count">--</h4>
+                            <p class="text-sm mb-0">待確認訂單</p>
+                            <h4 class="mb-0 pending-confirmation-order-count">--</h4>
                         </div>
                     </div>
                     <hr class="dark horizontal my-0" />
                     <div class="card-footer p-3">
-                        <p class="mb-0 text-sm">尚未開始處理的表單資料</p>
+                        <p class="mb-0 text-sm">需要優先確認</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-4 dashboard-commerce-col dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
+                <div class="card dashboard-kpi h-100">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-outlined opacity-10">payments</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0">待付款訂單</p>
+                            <h4 class="mb-0 pending-payment-order-count">--</h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0" />
+                    <div class="card-footer p-3">
+                        <p class="mb-0 text-sm">等待付款完成</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-4 dashboard-commerce-col dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
+                <div class="card dashboard-kpi h-100">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-info shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-outlined opacity-10">inventory_2</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0">待出貨訂單</p>
+                            <h4 class="mb-0 awaiting-shipment-order-count">--</h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0" />
+                    <div class="card-footer p-3">
+                        <p class="mb-0 text-sm">已付款待處理</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-4 dashboard-commerce-col dashboard-order-kpi">
+            <a class="text-decoration-none text-reset" href="/OrderManagement">
+                <div class="card dashboard-kpi h-100">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-outlined opacity-10">local_shipping</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0">配送中訂單</p>
+                            <h4 class="mb-0 shipping-order-count">--</h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0" />
+                    <div class="card-footer p-3">
+                        <p class="mb-0 text-sm">已出貨未完成</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-4 dashboard-commerce-col dashboard-product-kpi">
+            <a class="text-decoration-none text-reset" href="/ProductManagement/SaleQuantityStaging">
+                <div class="card dashboard-kpi h-100">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-danger shadow-danger text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-outlined opacity-10">inventory</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0">庫存警示規格</p>
+                            <h4 class="mb-0 low-stock-count">--</h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0" />
+                    <div class="card-footer p-3">
+                        <p class="mb-0 text-sm">已達安全庫存量</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-lg-4 dashboard-commerce-col dashboard-product-kpi">
+            <a class="text-decoration-none text-reset" href="/ProductManagement/ProductList">
+                <div class="card dashboard-kpi h-100">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-outlined opacity-10">production_quantity_limits</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0">已售完商品</p>
+                            <h4 class="mb-0 sold-out-product-count">--</h4>
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0" />
+                    <div class="card-footer p-3">
+                        <p class="mb-0 text-sm">目前前台售完</p>
                     </div>
                 </div>
             </a>
@@ -132,99 +173,64 @@
         </div>
     </div>
 
-    <div class="row g-4 mt-1 dashboard-commerce-kpis" hidden>
-        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
-            <a class="text-decoration-none text-reset" href="/OrderManagement">
-                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
-                    <div class="card-header p-3">
-                        <div class="dashboard-commerce-icon bg-gradient-warning">
-                            <i class="material-symbols-outlined">assignment_late</i>
-                        </div>
-                        <p class="text-sm text-secondary mb-1 mt-3">待確認訂單</p>
-                        <h4 class="mb-0 pending-confirmation-order-count">--</h4>
+    <div class="row g-4 dashboard-kpis dashboard-system-kpis">
+        <div class="col-6 col-xl">
+            <div class="card dashboard-kpi dashboard-compact-kpi h-100">
+                <div class="card-header p-3">
+                    <div class="dashboard-compact-icon bg-gradient-warning">
+                        <i class="material-symbols-outlined">storage</i>
                     </div>
-                    <div class="card-footer px-3 py-2">
-                        <span class="text-xs text-secondary">需要優先確認</span>
-                    </div>
+                    <p class="text-sm text-secondary mb-1 mt-3">使用空間</p>
+                    <h4 class="mb-0 storage-size">--</h4>
                 </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
-            <a class="text-decoration-none text-reset" href="/OrderManagement">
-                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
-                    <div class="card-header p-3">
-                        <div class="dashboard-commerce-icon bg-gradient-danger">
-                            <i class="material-symbols-outlined">payments</i>
-                        </div>
-                        <p class="text-sm text-secondary mb-1 mt-3">待付款訂單</p>
-                        <h4 class="mb-0 pending-payment-order-count">--</h4>
-                    </div>
-                    <div class="card-footer px-3 py-2">
-                        <span class="text-xs text-secondary">等待付款完成</span>
-                    </div>
+                <div class="card-footer px-3 py-2">
+                    <span class="text-xs text-secondary">最後更新：<span class="text-success font-weight-bolder storage-updated-at">載入中</span></span>
                 </div>
-            </a>
+            </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
-            <a class="text-decoration-none text-reset" href="/OrderManagement">
-                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
-                    <div class="card-header p-3">
-                        <div class="dashboard-commerce-icon bg-gradient-info">
-                            <i class="material-symbols-outlined">inventory_2</i>
-                        </div>
-                        <p class="text-sm text-secondary mb-1 mt-3">待出貨訂單</p>
-                        <h4 class="mb-0 awaiting-shipment-order-count">--</h4>
+
+        <div class="col-6 col-xl">
+            <div class="card dashboard-kpi dashboard-compact-kpi h-100">
+                <div class="card-header p-3">
+                    <div class="dashboard-compact-icon bg-gradient-info">
+                        <i class="material-symbols-outlined">monitoring</i>
                     </div>
-                    <div class="card-footer px-3 py-2">
-                        <span class="text-xs text-secondary">已付款待處理</span>
-                    </div>
+                    <p class="text-sm text-secondary mb-1 mt-3">本月流量</p>
+                    <h4 class="mb-0 month-flow-size">--</h4>
                 </div>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2 dashboard-order-kpi">
-            <a class="text-decoration-none text-reset" href="/OrderManagement">
-                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
-                    <div class="card-header p-3">
-                        <div class="dashboard-commerce-icon bg-gradient-success">
-                            <i class="material-symbols-outlined">local_shipping</i>
-                        </div>
-                        <p class="text-sm text-secondary mb-1 mt-3">配送中訂單</p>
-                        <h4 class="mb-0 shipping-order-count">--</h4>
-                    </div>
-                    <div class="card-footer px-3 py-2">
-                        <span class="text-xs text-secondary">已出貨未完成</span>
-                    </div>
+                <div class="card-footer px-3 py-2">
+                    <span class="text-xs text-secondary">統計區間：<span class="text-success font-weight-bolder month-flow-range">載入中</span></span>
                 </div>
-            </a>
+            </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2 dashboard-product-kpi">
-            <a class="text-decoration-none text-reset" href="/ProductManagement/SaleQuantityStaging">
-                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
-                    <div class="card-header p-3">
-                        <div class="dashboard-commerce-icon bg-gradient-danger">
-                            <i class="material-symbols-outlined">inventory</i>
-                        </div>
-                        <p class="text-sm text-secondary mb-1 mt-3">庫存警示規格</p>
-                        <h4 class="mb-0 low-stock-count">--</h4>
+
+        <div class="col-6 col-xl">
+            <div class="card dashboard-kpi dashboard-compact-kpi h-100">
+                <div class="card-header p-3">
+                    <div class="dashboard-compact-icon bg-gradient-success">
+                        <i class="material-symbols-outlined">groups</i>
                     </div>
-                    <div class="card-footer px-3 py-2">
-                        <span class="text-xs text-secondary">已達安全庫存量</span>
-                    </div>
+                    <p class="text-sm text-secondary mb-1 mt-3">在線訪客</p>
+                    <h4 class="mb-0 online-visitor-count">--</h4>
                 </div>
-            </a>
+                <div class="card-footer px-3 py-2">
+                    <span class="text-xs text-secondary">最近 2 分鐘內仍在瀏覽網站，每 30 秒更新</span>
+                </div>
+            </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2 dashboard-product-kpi">
-            <a class="text-decoration-none text-reset" href="/ProductManagement/ProductList">
-                <div class="card dashboard-kpi dashboard-commerce-kpi h-100">
+
+        <div class="col-6 col-xl dashboard-contact-kpi" hidden>
+            <a class="text-decoration-none text-reset" href="/ContentManagement/ContactUs">
+                <div class="card dashboard-kpi dashboard-compact-kpi h-100">
                     <div class="card-header p-3">
-                        <div class="dashboard-commerce-icon bg-gradient-dark">
-                            <i class="material-symbols-outlined">production_quantity_limits</i>
+                        <div class="dashboard-compact-icon bg-gradient-danger">
+                            <i class="material-symbols-outlined">mark_email_unread</i>
                         </div>
-                        <p class="text-sm text-secondary mb-1 mt-3">已售完商品</p>
-                        <h4 class="mb-0 sold-out-product-count">--</h4>
+                        <p class="text-sm text-secondary mb-1 mt-3">待處理表單</p>
+                        <h4 class="mb-0 pending-contact-count">--</h4>
                     </div>
                     <div class="card-footer px-3 py-2">
-                        <span class="text-xs text-secondary">目前前台售完</span>
+                        <span class="text-xs text-secondary">尚未開始處理的表單資料</span>
                     </div>
                 </div>
             </a>

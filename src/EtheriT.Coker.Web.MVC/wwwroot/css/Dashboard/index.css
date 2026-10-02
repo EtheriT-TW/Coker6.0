@@ -1048,7 +1048,7 @@ p,
     font-weight: 500 !important;
 }
 
-.dashboard-system-kpis {
+.dashboard-commerce-kpis {
     order: 1;
 }
 
@@ -1056,8 +1056,12 @@ p,
     order: 2;
 }
 
-.dashboard-commerce-kpis {
+.dashboard-system-kpis {
     order: 3;
+}
+
+.dashboard-commerce-kpis:not([hidden]) ~ .dashboard-system-kpis {
+    margin-top: 0.25rem;
 }
 
 .dashboard-order-trend-section {
@@ -1099,9 +1103,22 @@ p,
     max-width: 100%;
 }
 
+@media (min-width: 1700px) {
+    .dashboard-commerce-kpis > .dashboard-commerce-col {
+        flex: 0 0 auto;
+        width: 16.66666667%;
+    }
+}
+
 .dashboard-commerce-kpis.has-no-order-data .dashboard-product-kpi {
     flex: 0 0 50%;
     max-width: 50%;
+}
+
+@media (max-width: 575.98px) {
+    .dashboard-commerce-kpis .card-header .text-end {
+        margin-top: 2.5rem;
+    }
 }
 
 .dashboard-revenue-card {
@@ -1155,17 +1172,20 @@ p,
     color: #d32f2f;
 }
 
-.dashboard .dashboard-commerce-kpi {
+.dashboard .dashboard-compact-kpi {
     min-height: 142px;
+}
+
+.dashboard a > .dashboard-kpi {
     transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-.dashboard .dashboard-commerce-kpi:hover {
+.dashboard a > .dashboard-kpi:hover {
     box-shadow: 0 8px 18px rgba(52, 71, 103, 0.12);
     transform: translateY(-2px);
 }
 
-.dashboard-commerce-icon {
+.dashboard-compact-icon {
     align-items: center;
     border-radius: 0.6rem;
     box-shadow: 0 3px 8px rgba(52, 71, 103, 0.18);
@@ -1176,11 +1196,11 @@ p,
     width: 42px;
 }
 
-.dashboard-commerce-icon .material-symbols-outlined {
+.dashboard-compact-icon .material-symbols-outlined {
     font-size: 1.25rem;
 }
 
-.dashboard-commerce-kpi .card-footer {
+.dashboard-compact-kpi .card-footer {
     border-top: 1px solid #edf0f5;
 }
 

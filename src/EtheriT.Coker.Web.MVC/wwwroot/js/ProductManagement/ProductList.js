@@ -1226,6 +1226,7 @@ function toolbarPreparing(e) {
         {
             location: "after",
             widget: "dxButton",
+            cssClass: "product-io-btn",
             options: {
                 icon: "fa-solid fa-file-excel",
                 text: "商品匯出",
@@ -1236,6 +1237,7 @@ function toolbarPreparing(e) {
         {
             location: "after",
             widget: "dxButton",
+            cssClass: "product-io-btn",
             options: {
                 icon: "fa-solid fa-file-arrow-up",
                 text: "商品資料匯入",
@@ -1554,6 +1556,10 @@ function LoadProductTagOptions() {
 
     return productTagOptionsPromise;
 }
+function isProductTagFilterCompact() {
+    return window.matchMedia("(max-width: 768px)").matches;
+}
+
 function ProductTagFilterInit() {
     var store = new DevExpress.data.CustomStore({
         key: "fK_TId",
@@ -1576,8 +1582,13 @@ function ProductTagFilterInit() {
         showMultiTagOnly: false,
 
         dropDownOptions: {
-            width: "auto",
-            minWidth: 520,
+            // 手機版跟輸入框同寬，避免下拉選單超出畫面；電腦版維持原寬度
+            width: function () {
+                return isProductTagFilterCompact() ? $("#ProductTagFilter").outerWidth() : "auto";
+            },
+            minWidth: function () {
+                return isProductTagFilterCompact() ? 0 : 520;
+            },
             maxWidth: 760,
             wrapperAttr: {
                 class: "product-tag-filter-dropdown"

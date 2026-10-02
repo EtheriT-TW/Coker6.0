@@ -375,15 +375,19 @@
                     <div class="titile lh-lg d-flex"></div>
                 </div>
                 <div class="d-flex flex-md-row flex-column">
-                    <a href="/" class="px-3 py-1 linkToF" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="前台瀏覽">
-                        <i class="material-symbols-outlined">
-                            captive_portal
-                        </i>
-                    </a>
-                    <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-md-3 text-nowrap my-2 my-md-0 btn" form="ProductForm">發　布</button>
+                    <div class="product-header-actions d-flex my-2 my-md-0 me-md-3 ms-auto me-auto">
+                        <a href="/" class="px-3 py-1 linkToF" target="_blank" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="前台瀏覽">
+                            <i class="material-symbols-outlined">
+                                captive_portal
+                            </i>
+                            <span class="d-md-none ms-2">預覽</span>
+                        </a>
+                        <button class="btn_done btn-primary border-0 px-3 py-1 text-white text-nowrap btn" form="ProductForm">發　布</button>
+                    </div>
                     <button class="btn_to_canvas btn-success border-0 px-3 py-1 text-white d-flex align-items-center text-nowrap justify-content-center btn" form="ProductForm">
                         進階編輯<span class="material-symbols-outlined ms-1">palette</span>
                     </button>
+                    <span class="fw-bold text-danger text-center fs-5 d-block d-sm-none">進階編輯僅提供平板與電腦版</span>
                 </div>
             </div>
 

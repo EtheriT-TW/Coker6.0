@@ -957,16 +957,29 @@ textarea.minHeight {
         width: 100%;
     }
 
-    #ProductContent > .card-header .linkToF {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 40px;
-    }
+        #ProductContent > .card-header .linkToF {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--bs-primary);
+            border-radius: var(--bs-border-radius);
+            color: var(--bs-primary);
+            text-decoration: none;
+        }
 
-    #ProductForm {
-        padding: 0.5rem;
-    }
+            #ProductContent > .card-header .linkToF:hover,
+            #ProductContent > .card-header .linkToF:focus-visible {
+                background-color: var(--bs-primary);
+                color: var(--bs-white);
+            }
+
+        #ProductContent > .card-header > div.flex-column .product-header-actions .btn{
+            margin-left:.5rem;
+        }
+
+        #ProductForm {
+            padding: 0.5rem;
+        }
 
     #ProductForm .product-main-column,
     #ProductForm .product-side-column {
@@ -1302,6 +1315,11 @@ textarea.minHeight {
     }
 
     #Spec_Frame.no-logistics-box .spec-compact-editor .packingPoint {
+        display: none !important;
+    }
+
+
+    .dx-toolbar-item.product-io-btn {
         display: none !important;
     }
 }

@@ -80,6 +80,7 @@
             ServiceStartDate: "",
             ServiceEndDate: "",
             Status: WebsiteStatus.正常,
+            SuspendedDate: "",
             TerminatedDate: "",
             IsDomainPending: false,
             Urls: [newWebsiteUrlItem(true)],
@@ -141,6 +142,14 @@
                 rules.custom<WebsiteForm>(value =>
                     !value ? "請選擇語系。" : null)
             ],
+            SuspendedDate: [
+                rules.custom<WebsiteForm>((value, model) => {
+                    const suspended = model.Status === WebsiteStatus.暫停;
+                    if (suspended && !value) return "網站狀態為「暫停」時，必須填寫暫停日期。";
+                    if (!suspended && value) return "只有網站狀態為「暫停」時才能填寫暫停日期。";
+                    return null;
+                })
+            ],
             TerminatedDate: [
                 rules.custom<WebsiteForm>((value, model) => {
                     const terminated = model.Status === WebsiteStatus.註銷;
@@ -183,19 +192,22 @@
                     title: "部分欄位有誤",
                     message: "請修正以下項目後再儲存：",
                     details: [...new Set(Object.values((error as ApiError).fieldErrors).flat())]
-                  }
+                }
                 : { title: "儲存失敗", message: "儲存失敗，請稍後再試。" });
         }
     });
 
-    // 依賴 form 的 computed 一律放在 form 宣告之後
+    // 依賴 form 的 computed 一律放在 form 宣告之後    const isSuspended = computed(() => form.model.value.Status === WebsiteStatus.暫停);
+    const isSuspended = computed(() => form.model.value.Status === WebsiteStatus.暫停);
     const isTerminated = computed(() => form.model.value.Status === WebsiteStatus.註銷);
     const isFormLocked = computed(() => loading.value || form.isSaving.value);
 
-    // 狀態切離「註銷」時清空註銷日期，前後端規則一致
+    // 暫停／註銷日期只在各自的狀態下有值，切走就清空，前後端規則一致。
+    // 只在真的有值時才指派，避免載入資料時就被標成「尚未儲存」
     watch(() => form.model.value.Status, status => {
-        if (status === WebsiteStatus.註銷) return;
-        form.model.value.TerminatedDate = "";
+        if (status !== WebsiteStatus.暫停 && form.model.value.SuspendedDate) form.model.value.SuspendedDate = "";
+        if (status !== WebsiteStatus.註銷 && form.model.value.TerminatedDate) form.model.value.TerminatedDate = "";
+        form.clearErrors("SuspendedDate");
         form.clearErrors("TerminatedDate");
     });
 
@@ -345,9 +357,6 @@
     <p v-if="isEdit" class="alert alert-info" role="status">
         網站名稱、版本、語系、開通／到期日與主要網址直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
     </p>
-    <p v-else class="alert alert-warning" role="status">
-        儲存後會在後台建立新站台，但目錄、商店設定與權限尚未建立，需由系統管理者在後台補齊後才能使用。
-    </p>
 
     <form class="form-stack" novalidate autocomplete="off" @submit.prevent="form.save('button')">
         <!-- ── 客戶與網站資料 ── -->
@@ -355,7 +364,7 @@
                   aria-labelledby="section-website-customer-title"
                   :disabled="isFormLocked">
             <div class="form-section-heading">
-                <span id="section-website-customer-title">客戶與網站資料</span>
+                <span id="section-website-customer-title">基本資料</span>
                 <RouterLink v-if="isEdit && customer && !isCustomerDeleted"
                             class="ui-button ui-button-secondary"
                             :to="{name:'company-edit', params:{id: customer.Id}, query: { returnTo: route.fullPath } }">
@@ -390,34 +399,21 @@
                     </div>
                     <FormFieldErrors :errors="form.getErrors('FK_CompanyId')" />
                     <p v-if="lookupError" class="field-note field-note-error" role="alert">{{ lookupError }}</p>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>公司名稱</span>
-                        <input :value="customer?.Name ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>主要聯絡人姓名</span>
-                        <input :value="customer?.PrimaryContactName ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>公司 Email</span>
-                        <input :value="customer?.Email ?? ''" type="text" readonly />
-                    </label>
-                </div>
-
-                <div class="form-field">
-                    <label>
-                        <span>公司電話</span>
-                        <input :value="customer?.Phone ?? ''" type="text" readonly />
-                    </label>
+                    <!-- 只放確認用的摘要；聯絡方式等完整資料請到客戶頁看 -->
+                    <div v-else-if="customer && !isCustomerDeleted" class="customer-summary" role="status">
+                        <span class="customer-summary-icon" aria-hidden="true">
+                            <span class="material-symbols-outlined">apartment</span>
+                        </span>
+                        <div class="customer-summary-body">
+                            <span class="customer-summary-name">
+                                <span>客戶名稱 </span>{{ customer.Name }}
+                            </span>
+                            <span v-if="customer.TaxId || customer.PrimaryContactName" class="customer-summary-meta">
+                                <span v-if="customer.TaxId">統編 {{ customer.TaxId }}</span>
+                                <span v-if="customer.PrimaryContactName">聯絡人 {{ customer.PrimaryContactName }}</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-field">
@@ -436,7 +432,7 @@
                     <p v-if="!isEdit" class="field-note">建立後不可修改；只能用小寫英文、數字、- 與 _。</p>
                 </div>
 
-                <div class="form-field form-field-wide">
+                <div class="form-field">
                     <label>
                         <span>網站名稱 <i class="form-required">*</i></span>
                         <input v-model="form.model.value.Name" type="text" maxlength="250" />
@@ -524,14 +520,20 @@
                     </div>
                     <FormFieldErrors :errors="form.getErrors('Status')" />
                 </div>
-
-                <div class="form-field">
+                <div v-if="isSuspended" class="form-field">
                     <label>
-                        <span>註銷日期 <i v-if="isTerminated" class="form-required">*</i></span>
-                        <DateField v-model="form.model.value.TerminatedDate" :disabled="!isTerminated" />
+                        <span>暫停日期 <i class="form-required">*</i></span>
+                        <DateField v-model="form.model.value.SuspendedDate" />
+                    </label>
+                    <FormFieldErrors :errors="form.getErrors('SuspendedDate')" />
+                </div>
+
+                <div v-if="isTerminated" class="form-field">
+                    <label>
+                        <span>註銷日期 <i class="form-required">*</i></span>
+                        <DateField v-model="form.model.value.TerminatedDate" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('TerminatedDate')" />
-                    <p v-if="!isTerminated" class="field-note">狀態為「註銷」時才可填寫。</p>
                 </div>
             </div>
         </fieldset>

@@ -96,7 +96,7 @@ export interface WebsiteCustomer {
 export interface WebsiteUrl {
     Url: string;
     IsPrimary: boolean;
-    /** null＝後台舊資料沒比對過網域 */
+    /** null＝網域管理中沒有對應的網域（或後台舊資料沒比對過） */
     Domain: DomainSummary | null;
 }
 
@@ -123,6 +123,7 @@ export interface WebsiteDetail {
     ServiceStartDate: string | null;
     ServiceEndDate: string | null;
     Status: WebsiteStatusValue;
+    SuspendedDate: string | null;
     TerminatedDate: string | null;
     IsDomainPending: boolean;
     /** 主要網址排第一；網域待申請時為空陣列 */
@@ -144,6 +145,7 @@ export interface WebsiteForm {
     ServiceStartDate: string;
     ServiceEndDate: string;
     Status: number;
+    SuspendedDate: string;
     TerminatedDate: string;
     IsDomainPending: boolean;
     Urls: WebsiteUrlFormItem[];

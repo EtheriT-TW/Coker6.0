@@ -39,8 +39,8 @@ public sealed class WebsitesController(
     /// </summary>
     private static readonly Regex OrgNamePattern = new("^[a-z0-9][a-z0-9_-]{1,99}$", RegexOptions.Compiled);
 
-    /// <summary>驗證通過的網址：已轉成根網址，並比對出網域。</summary>
-    private sealed record ResolvedUrl(string Url, long DomainId, bool IsPrimary);
+    /// <summary>驗證通過的網址：已轉成根網址；DomainId 為 null＝網域管理中還沒有對應的網域。</summary>
+    private sealed record ResolvedUrl(string Url, long? DomainId, bool IsPrimary);
 
     /// <summary>未被軟刪除的實際站台。沒有全域過濾器，每個查詢都得經過這裡。</summary>
     private IQueryable<Website> ActiveSites =>
@@ -258,6 +258,7 @@ public sealed class WebsitesController(
                 ServiceStartDate = site.StartDate,
                 ServiceEndDate = site.EndDate,
                 Status = site.ServiceStatus,
+                SuspendedDate = site.SuspendedDate,
                 TerminatedDate = site.TerminatedDate,
                 IsDomainPending = site.IsDomainPending,
                 Remark = site.PlatformRemark,
@@ -314,12 +315,14 @@ public sealed class WebsitesController(
             .Select(item => new WebsiteUrlDto(
                 item.Url,
                 false,
-                new DomainSummaryDto(
-                    item.PlatformDomain!.Id,
-                    item.PlatformDomain.DomainName,
-                    item.PlatformDomain.Registrar,
-                    item.PlatformDomain.EndDate,
-                    item.PlatformDomain.PasswordCipher != null)))
+                item.PlatformDomain == null
+                    ? null
+                    : new DomainSummaryDto(
+                        item.PlatformDomain.Id,
+                        item.PlatformDomain.DomainName,
+                        item.PlatformDomain.Registrar,
+                        item.PlatformDomain.EndDate,
+                        item.PlatformDomain.PasswordCipher != null)))
             .ToListAsync(cancellationToken);
 
         return [primary, .. alternates];
@@ -339,7 +342,13 @@ public sealed class WebsitesController(
         if (!string.IsNullOrWhiteSpace(request.Locale) && WebsiteLocales.Normalize(request.Locale) is null)
             ModelState.AddModelError(nameof(request.Locale), "語系不正確。");
 
-        // 註銷才准填註銷日期，且註銷時必填；前端 disabled 只是體驗，這裡才是真的擋
+        // 暫停／註銷才准填各自的日期，且該狀態時必填；前端隱藏欄位只是體驗，這裡才是真的擋
+        var isSuspended = request.Status == PlatformWebsiteStatusEnum.暫停;
+        if (isSuspended && request.SuspendedDate is null)
+            ModelState.AddModelError(nameof(request.SuspendedDate), "網站狀態為「暫停」時，必須填寫暫停日期。");
+        else if (!isSuspended && request.SuspendedDate is not null)
+            ModelState.AddModelError(nameof(request.SuspendedDate), "只有網站狀態為「暫停」時才能填寫暫停日期。");
+
         var isTerminated = request.Status == PlatformWebsiteStatusEnum.註銷;
         if (isTerminated && request.TerminatedDate is null)
             ModelState.AddModelError(nameof(request.TerminatedDate), "網站狀態為「註銷」時，必須填寫註銷日期。");
@@ -406,27 +415,25 @@ public sealed class WebsitesController(
         return resolved;
     }
 
-    /// <summary>單筆網址轉成根網址並比對網域。成功時 Error 為 null。</summary>
-    private async Task<(string? Url, long DomainId, string? Error)> ResolveUrlAsync(string? input)
+    /// <summary>單筆網址轉成根網址並比對網域。成功時 Error 為 null；比對不到網域時 DomainId 為 null，不算錯誤。</summary>
+    private async Task<(string? Url, long? DomainId, string? Error)> ResolveUrlAsync(string? input)
     {
         // 主要網址會寫進 Website.DefaultUrl，後台拿來組金流、物流回呼網址，所以一律只收根網址
         var root = ToSiteRoot(input);
         if (root is null)
-            return (null, 0, SiteRootMessage);
+            return (null, null, SiteRootMessage);
         if (root.Length > 255)
-            return (null, 0, "網址不可超過 255 個字元。");
+            return (null, null, "網址不可超過 255 個字元。");
 
-        // 網址 → 網域由後端比對，不相信前端
+        // 網址 → 網域由後端比對，不相信前端；網域還沒建立時照樣存檔，FK 留 null，下次存檔會重新比對
         var host = PlatformDomainName.ToHost(root);
         if (host is null)
-            return (null, 0, "網址格式不正確，例：https://www.example.com.tw");
+            return (null, null, "網址格式不正確，例：https://www.example.com.tw");
 
         var domain = await db.PlatformDomains
             .AsNoTracking()
             .FindBestMatchAsync(host, HttpContext.RequestAborted);
-        return domain is null
-            ? (null, 0, $"網域管理中沒有「{host}」對應的網域，請先建立網域資料。")
-            : (root, domain.Id, null);
+        return (root, domain?.Id, null);
     }
 
     private static void Apply(WebsiteSaveRequest request, IReadOnlyList<ResolvedUrl> urls, Website site)
@@ -437,6 +444,7 @@ public sealed class WebsitesController(
         site.StartDate = request.ServiceStartDate?.Date;
         site.EndDate = request.ServiceEndDate?.Date;
         site.ServiceStatus = request.Status;
+        site.SuspendedDate = request.SuspendedDate?.Date;
         site.TerminatedDate = request.TerminatedDate?.Date;
         site.HostLocation = Clean(request.HostLocation);
         site.IsDomainPending = request.IsDomainPending;

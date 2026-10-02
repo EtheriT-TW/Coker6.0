@@ -1087,6 +1087,18 @@ button, input, select, textarea {
     font-weight: 600;
 }
 
+
+/* 網址列右側的按鈕組（網域、移除）並排 */
+.repeater-action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+    /* RouterLink 會輸出 <a>，拿掉連結底線，外觀才會和 <button> 一致 */
+    .repeater-action-buttons a.outline-icon-button {
+        text-decoration: none;
+    }
+
 .repeater-empty {
     margin: 0;
     padding: 22px;
@@ -1285,6 +1297,63 @@ button, input, select, textarea {
         outline-offset: 2px;
         border-radius: 2px;
     }
+
+/* ── 網站編輯頁：帶出客戶後的摘要卡 ── */
+.customer-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 8px 14px;
+    background: var(--platform-primary-soft);
+    border: 1px solid #c9d6fb;
+    border-radius: 10px;
+}
+
+.customer-summary-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    color: var(--platform-primary);
+    background: #fff;
+    border-radius: 50%;
+}
+
+    .customer-summary-icon .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+/* 名稱與統編、聯絡人排同一行；寬度不夠時才換行 */
+.customer-summary-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 12px;
+    min-width: 0;
+}
+
+.customer-summary-name {
+    color: var(--platform-ink);
+    font-size: 15px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.customer-summary-meta {
+    display: flex;
+    flex-wrap: wrap;
+    color: var(--platform-muted);
+    font-size: 12px;
+}
+
+    /* 分隔點由 CSS 補，只有一項資料時就不會多出「·」 */
+    .customer-summary-meta > span + span::before {
+        content: "·";
+        margin: 0 6px;
+    }
+
 
 .visually-hidden {
     position: absolute;
@@ -1732,9 +1801,10 @@ button, input, select, textarea {
         }
 
     .choice-group {
-        flex-direction: column;
+        flex-direction: row;
         align-items: flex-start;
         gap: 12px;
+        min-height: 21px;
     }
 
     .choice-fill {

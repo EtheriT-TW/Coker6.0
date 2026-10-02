@@ -13,7 +13,7 @@ namespace EtheriT.Coker.Core.Models
         public long FK_WebsiteId { get; set; }
         [StringLength(255)]
         public string Url { get; set; } = string.Empty;     // 根網址，例：https://www.example.com.tw
-        public long FK_PlatformDomainId { get; set; }       // 依網址比對出的網域（存檔時必須比對得到）
+        public long? FK_PlatformDomainId { get; set; }      // 依網址比對出的網域；網域管理中還沒建立時為 null
         public int Sort { get; set; }                       // 排序
 
         public Website? Website { get; set; }

@@ -35,11 +35,12 @@ namespace EtheriT.Coker.Core.Models
         // ── 客戶管理平台（Web.Platform）維護的欄位 ──
         // 後台與前台都不讀寫這些欄位；不可加進 WebsiteEditDto，否則後台「網站資料」頁存檔會把它們洗掉。
         public PlatformWebsiteStatusEnum ServiceStatus { get; set; }    // 正常／暫停／註銷（目前僅為註記，不影響前後台）
+        public DateTime? SuspendedDate { get; set; }                    // 暫停日期
         public DateTime? TerminatedDate { get; set; }                   // 註銷日期
         [StringLength(200)]
         public string? HostLocation { get; set; }                       // 主機位置
         public bool IsDomainPending { get; set; }                       // 網域待申請
-        public long? FK_PlatformDomainId { get; set; }                  // 依網址比對出的網域；待申請或未填網址時為 null
+        public long? FK_PlatformDomainId { get; set; }                  // 依網址比對出的網域；待申請、未填網址或網域管理中還沒建立時為 null
         [StringLength(2000)]
         public string? PlatformRemark { get; set; }                     // 平台備註
         public PlatformDomain? PlatformDomain { get; set; }

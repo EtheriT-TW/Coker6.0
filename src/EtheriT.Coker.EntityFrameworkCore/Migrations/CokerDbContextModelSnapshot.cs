@@ -9489,6 +9489,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<string>("Statement")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("SuspendedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("TerminatedDate")
                         .HasColumnType("datetime2");
 
@@ -9565,7 +9568,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("FK_PlatformDomainId")
+                    b.Property<long?>("FK_PlatformDomainId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("FK_WebsiteId")
@@ -11232,8 +11235,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasOne("EtheriT.Coker.Core.Models.PlatformDomain", "PlatformDomain")
                         .WithMany()
                         .HasForeignKey("FK_PlatformDomainId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
                         .WithMany()

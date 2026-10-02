@@ -46,6 +46,8 @@ function toSaveRequest(form: WebsiteForm) {
         ServiceStartDate: fromDateInput(form.ServiceStartDate),
         ServiceEndDate: fromDateInput(form.ServiceEndDate),
         Status: form.Status,
+        Status: form.Status,
+        SuspendedDate: fromDateInput(form.SuspendedDate),
         TerminatedDate: fromDateInput(form.TerminatedDate),
         IsDomainPending: form.IsDomainPending,
         // 待申請時網址一律不送；Key、InitialDomain 只是畫面用
@@ -68,6 +70,7 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         ServiceStartDate: toDateInput(detail.ServiceStartDate),
         ServiceEndDate: toDateInput(detail.ServiceEndDate),
         Status: detail.Status,
+        SuspendedDate: toDateInput(detail.SuspendedDate),
         TerminatedDate: toDateInput(detail.TerminatedDate),
         IsDomainPending: detail.IsDomainPending,
         Urls: detail.Urls.map(item => newWebsiteUrlItem(item.IsPrimary, item.Url, item.Domain)),

@@ -44,7 +44,7 @@ public sealed record WebsiteCustomerDto(
 public sealed record WebsiteUrlDto(
     string Url,
     bool IsPrimary,
-    DomainSummaryDto? Domain);   // null＝後台舊資料沒比對過網域
+    DomainSummaryDto? Domain);   // null＝網域管理中沒有對應的網域（或後台舊資料沒比對過）
 
 public sealed record WebsiteDetailDto
 {
@@ -61,6 +61,7 @@ public sealed record WebsiteDetailDto
     public DateTime? ServiceStartDate { get; init; }
     public DateTime? ServiceEndDate { get; init; }
     public PlatformWebsiteStatusEnum Status { get; init; }
+    public DateTime? SuspendedDate { get; init; }
     public DateTime? TerminatedDate { get; init; }
     public bool IsDomainPending { get; init; }
 
@@ -100,6 +101,7 @@ public class WebsiteSaveRequest
     public DateTime? ServiceEndDate { get; set; }
 
     public PlatformWebsiteStatusEnum Status { get; set; }
+    public DateTime? SuspendedDate { get; set; }
     public DateTime? TerminatedDate { get; set; }
 
     public bool IsDomainPending { get; set; }

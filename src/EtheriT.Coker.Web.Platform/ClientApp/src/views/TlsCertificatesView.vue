@@ -27,7 +27,16 @@ const now = ref(Date.now());
 let timer: number | undefined;
 let requestVersion = 0;
 let disposed = false;
-const websites = computed(() => inventory.value?.Snapshot?.Websites ?? []);
+const websites = computed(() => (inventory.value?.Snapshot?.Websites ?? []).filter(site => site.State.toLowerCase() !== 'stopped'));
+const urlIssues = computed(() => (inventory.value?.UrlIssues ?? []).map((issue, index) => ({
+  ...issue, Id: index,
+  EscapedUrl: JSON.stringify(issue.OriginalUrl),
+  CharacterHints: [...issue.OriginalUrl].flatMap((character, position) => {
+    const code = character.codePointAt(0)!;
+    return code <= 32 || code >= 127
+      ? [`第 ${position + 1} 字元 ${JSON.stringify(character)}（U+${code.toString(16).toUpperCase().padStart(4, '0')}）`] : [];
+  }).join('、') || '未發現空白、控制或非 ASCII 字元；請檢查網址格式。'
+})));
 const centralStore = computed(() => inventory.value?.Snapshot?.CentralStore);
 const wacsLogs = computed(() => inventory.value?.Snapshot?.WacsLogs);
 const wacsSchedule = computed(() => inventory.value?.Snapshot?.WacsSchedule);
@@ -100,32 +109,40 @@ const gridRows = computed(() => rows.value.map(row => {
         || right.FileName.localeCompare(left.FileName) || right.EndLine - left.EndLine;
     });
   const latest = records[0];
+  const recordTime = latest?.CompletedAt ?? latest?.StartedAt;
+  const historical = !!recordTime && !!row.NotBefore && recordTime.getTime() < row.NotBefore.getTime();
+  // Site-level logs are not proof that the currently loaded certificate failed to install.
+  const current = historical ? undefined : latest;
   const attention = [
     ...(['已到期', '30 天內到期', '尚未生效'].includes(row.Status) ? [row.Status] : []),
     ...(row.Status === '無法確認' ? ['憑證待確認'] : []),
-    ...(latest?.Result === '失敗' ? ['自動更新失敗'] : []),
-    ...(latest?.Result === '成功但有錯誤' ? ['更新完成但有異常'] : []),
-    ...(latest?.Result === '無法確認' ? ['更新紀錄不完整'] : [])
+    ...(current?.Result === '失敗' ? ['自動更新作業失敗'] : []),
+    ...(current?.Result === '成功但有錯誤' ? ['更新完成但有異常'] : []),
+    ...(current?.Result === '無法確認' ? ['更新紀錄不完整'] : [])
   ];
   const explanations: string[] = [];
   if (row.Status === '已到期') explanations.push('憑證已到期，訪客可能看到安全警告。請立即通知管理員更換憑證。');
   if (row.Status === '30 天內到期') explanations.push(`憑證將在 ${row.RemainingDays} 天內到期。請管理員確認自動更新能在到期前完成。`);
   if (row.Status === '尚未生效') explanations.push('憑證尚未開始生效。請管理員確認生效日期與伺服器時間。');
   if (row.Status === '無法確認') explanations.push(certificateExplanation(row));
-  if (latest?.Result === '失敗' || latest?.Result === '成功但有錯誤') explanations.push(renewalExplanation(latest.Details, latest.Result === '失敗'));
-  if (latest?.Result === '無法確認') explanations.push('最近一次更新紀錄缺少完成結果，無法確認更新是否結束。請通知管理員確認更新作業。');
+  if (current?.Result === '失敗' || current?.Result === '成功但有錯誤') {
+    explanations.push(`更新作業紀錄：${formatTime(recordTime?.toISOString())}。${renewalExplanation(current.Details, current.Result === '失敗')}`);
+    if (row.Status === '有效期內') explanations.push('目前憑證有效期仍超過 30 天；此為網站更新作業異常，不代表目前憑證到期或安裝失敗。');
+  }
+  if (current?.Result === '無法確認') explanations.push('最近一次更新紀錄缺少完成結果，無法確認更新是否結束。請通知管理員確認更新作業。');
   if (!explanations.length) explanations.push(row.Status === '沒有 HTTPS' ? '網站尚未設定安全連線。' : '目前讀取的憑證有效期超過 30 天，暫無到期提醒。');
+  if (historical && latest?.Result !== '成功') explanations.push(`歷史更新紀錄（${formatTime(recordTime?.toISOString())}）早於目前憑證生效時間，未列入目前更新異常。`);
   return {
     ...row,
     Attention: attention.join('、'),
-    Overview: row.Status === '已到期' ? '已到期' : latest?.Result === '失敗' ? '更新失敗'
+    Overview: row.Status === '已到期' ? '已到期' : current?.Result === '失敗' ? '更新作業異常'
       : row.Status === '無法確認' ? '檢查異常' : row.Status === '30 天內到期' ? '即將到期'
-      : row.Status === '尚未生效' ? '尚未生效' : latest?.Result === '成功但有錯誤' ? '更新有異常'
-      : latest?.Result === '無法確認' ? '更新需確認'
+      : row.Status === '尚未生效' ? '尚未生效' : current?.Result === '成功但有錯誤' ? '更新有異常'
+      : current?.Result === '無法確認' ? '更新需確認'
       : row.Status === '沒有 HTTPS' ? '未設定安全連線' : '有效期正常',
     Explanation: explanations.join('\n'),
     SiteState: row.IisState === 'Started' ? '運作中' : row.IisState === 'Stopped' ? '已停止' : row.IisState,
-    RenewalResult: latest?.Result ?? (wacsLogs.value?.Error ? '日誌讀取失敗'
+    RenewalResult: historical ? `歷史紀錄：${latest?.Result}` : latest?.Result ?? (wacsLogs.value?.Error ? '日誌讀取失敗'
       : !wacsLogs.value?.Executions ? '尚無日誌解析資料' : '沒有可對應紀錄'),
     RenewalTime: latest?.CompletedAt ?? latest?.StartedAt ?? null,
     RenewalDetails: latest?.Details ?? '',
@@ -285,6 +302,22 @@ onBeforeUnmount(() => { disposed = true; ++requestVersion; if (timer !== undefin
   </section>
   <p v-if="error" class="alert alert-error" role="alert">{{ error }}</p>
   <p v-if="serviceNotice" class="alert alert-warning operator-notice" role="alert">{{ serviceNotice }}</p>
+  <section v-if="urlIssues.length" class="data-card tls-list">
+    <h3>有 {{ urlIssues.length }} 筆網址無法比對，需手動確認</h3>
+    <p class="scope-note">這些網址未能完成監控比對，請管理員核對原始設定。系統網站設定無法判定所屬伺服器時會另外標示；伺服器回報僅列未停止的網站。</p>
+    <DxDataGrid :data-source="urlIssues" key-expr="Id" :show-borders="true" :column-auto-width="true" :word-wrap-enabled="true">
+      <DxSearchPanel :visible="true" placeholder="搜尋網站或網址" />
+      <DxPaging :page-size="10" />
+      <DxPager :visible="true" :show-info="true" />
+      <DxColumn data-field="Website" caption="網站" />
+      <DxColumn data-field="Source" caption="設定來源" />
+      <DxColumn data-field="OriginalUrl" caption="原始網址" />
+      <DxColumn data-field="Reason" caption="無法比對原因" />
+      <DxColumn data-field="EscapedUrl" caption="隱藏字元檢視" />
+      <DxColumn data-field="CharacterHints" caption="字元位置與代碼" />
+    </DxDataGrid>
+    <p class="scope-note">字元位置從 1 開始。空白、控制與非 ASCII 字元列供核對；合法中文網域也含非 ASCII 字元，此清單不表示每個列出的字元都不合法。已停止網站不列入主要監測列表與摘要。</p>
+  </section>
   <section v-if="inventory?.Snapshot" class="data-card tls-list" aria-label="TLS 狀態摘要">
     <div class="tls-summary">
       <button type="button" class="summary-good" :class="{ selected: selectedFilter === 'valid' }" :aria-pressed="selectedFilter === 'valid'" @click="toggleSummaryFilter('valid')"><span>憑證有效期正常的網站</span><strong>{{ summary.valid }} <small>個網站</small></strong><small>所有已列出憑證皆超過 30 天</small></button>

@@ -75,6 +75,7 @@ export interface TlsCertificate {
 }
 
 export interface ServerTlsStatus {
+  UrlIssues?: { Source: string; Website: string; OriginalUrl: string; Reason: string }[] | null;
   ServerId: string;
   IsOnline: boolean;
   LastSeenAtUtc: string | null;

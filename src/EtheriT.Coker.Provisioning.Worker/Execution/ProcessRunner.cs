@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace EtheriT.Coker.Provisioning.Worker;
 
@@ -9,7 +11,8 @@ public sealed class ProcessRunner(ProvisioningWorkerOptions options)
         IReadOnlyList<string> arguments,
         IReadOnlyDictionary<string, string?>? environment,
         CancellationToken cancellationToken,
-        int maxOutputLength = 3500)
+        int maxOutputLength = 3500,
+        bool xmlOutput = false)
     {
         if (!File.Exists(executable)) throw new FileNotFoundException("Required executable was not found.", executable);
         var startInfo = new ProcessStartInfo(executable)
@@ -25,7 +28,10 @@ public sealed class ProcessRunner(ProvisioningWorkerOptions options)
 
         using var process = new Process { StartInfo = startInfo };
         if (!process.Start()) throw new InvalidOperationException($"Unable to start {Path.GetFileName(executable)}.");
-        var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        // XML must be decoded from bytes using its declaration/BOM, not the console code page.
+        var stdoutTask = xmlOutput
+            ? ReadXmlOutputAsync(process.StandardOutput.BaseStream, maxOutputLength, cancellationToken)
+            : process.StandardOutput.ReadToEndAsync(cancellationToken);
         var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(Math.Max(30, options.OperationTimeoutSeconds)));
@@ -44,5 +50,20 @@ public sealed class ProcessRunner(ProvisioningWorkerOptions options)
         if (process.ExitCode != 0)
             throw new InvalidOperationException($"{Path.GetFileName(executable)} exited with code {process.ExitCode}: {stderr}");
         return string.IsNullOrWhiteSpace(stdout) ? "操作完成。" : stdout[..Math.Min(stdout.Length, maxOutputLength)];
+    }
+
+    private static async Task<string> ReadXmlOutputAsync(Stream stream, int maxOutputLength,
+        CancellationToken cancellationToken)
+    {
+        using var reader = XmlReader.Create(stream, new XmlReaderSettings
+        {
+            Async = true,
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+            MaxCharactersInDocument = maxOutputLength,
+            CloseInput = false
+        });
+        var document = await XDocument.LoadAsync(reader, LoadOptions.None, cancellationToken);
+        return document.ToString(SaveOptions.DisableFormatting);
     }
 }

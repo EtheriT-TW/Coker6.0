@@ -26,26 +26,44 @@ public static partial class PlatformDomainName
 
     /// <summary>接受 example.com、https://www.example.com/path 等寫法；取不出合法主機名稱回 null（IP、localhost 也回 null）。</summary>
     public static string? ToHost(string? input)
+        => ToHost(input, out _);
+
+    public static string? ToHost(string? input, out string? error)
     {
+        error = null;
         var text = input?.Trim();
         if (string.IsNullOrEmpty(text))
+        {
+            error = "未填寫網址。";
             return null;
+        }
 
         if (!text.Contains("://", StringComparison.Ordinal))
             text = "http://" + text;
 
-        if (!Uri.TryCreate(text, UriKind.Absolute, out var uri) || uri.HostNameType != UriHostNameType.Dns)
+        if (!Uri.TryCreate(text, UriKind.Absolute, out var uri))
+        {
+            error = "網址格式無法解析。";
             return null;
+        }
+        if (uri.HostNameType != UriHostNameType.Dns)
+        {
+            error = "網址不是可供網域比對的主機名稱（例如 IP 位址或特殊綁定）。";
+            return null;
+        }
 
         try
         {
             // TryCreate 成功不代表主機名稱符合 IDN 規則；IdnHost 仍可能拋出例外。
             // 合法中文網域轉成 xn-- 形式，同一個網域才不會有兩種寫法。
             var host = uri.IdnHost.TrimEnd('.').ToLowerInvariant();
-            return HostPattern().IsMatch(host) ? host : null;
+            if (HostPattern().IsMatch(host)) return host;
+            error = "主機名稱不符合目前的網域比對格式（字元、長度或網域層級）。";
+            return null;
         }
         catch (UriFormatException)
         {
+            error = "主機名稱含不符合國際網域名稱規則的字元。";
             // 與其他不合法網址一致回傳 null，不讓單筆資料中斷整份網站清單。
             return null;
         }

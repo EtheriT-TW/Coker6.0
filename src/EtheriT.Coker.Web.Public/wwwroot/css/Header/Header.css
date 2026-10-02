@@ -53,6 +53,10 @@
     max-height: 90vh;
 }
 
+.swal2-container {
+    z-index: 1080;
+}
+
     #Car_Dropdown > ul {
         list-style: none;
         width: 100%;

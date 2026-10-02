@@ -85,7 +85,9 @@ public sealed record TlsCertificateDto(
     string Thumbprint, string StoreName, string? Subject, string? Issuer,
     IReadOnlyList<string> DnsNames, DateTime? NotBeforeUtc, DateTime? NotAfterUtc,
     bool HasPrivateKey, IReadOnlyList<string> IisBindings, string? Error);
-public sealed record ServerTlsStatusDto(string ServerId, bool IsOnline, DateTime? LastSeenAtUtc, TlsSnapshotDto? Snapshot);
+public sealed record ServerTlsStatusDto(string ServerId, bool IsOnline, DateTime? LastSeenAtUtc, TlsSnapshotDto? Snapshot,
+    IReadOnlyList<TlsUrlIssueDto>? UrlIssues = null);
+public sealed record TlsUrlIssueDto(string Source, string Website, string OriginalUrl, string Reason);
 
 public sealed record ProvisioningDiskMetricDto(
     string Name,

@@ -25,7 +25,7 @@ public sealed partial class TlsCertificateCollector(ProcessRunner runner, ILogge
                 "System32", "inetsrv", "appcmd.exe");
             const int outputLimit = 2_000_000;
             var output = await runner.RunAsync(appCmd, ["list", "site", "/xml"], null,
-                cancellationToken, maxOutputLength: outputLimit);
+                cancellationToken, maxOutputLength: outputLimit, xmlOutput: true);
             if (output.Length >= outputLimit) throw new InvalidOperationException("IIS website list exceeds the output limit.");
             var document = XDocument.Parse(output);
             if (document.Root?.Name.LocalName != "appcmd")

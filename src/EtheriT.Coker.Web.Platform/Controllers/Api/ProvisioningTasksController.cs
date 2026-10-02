@@ -31,15 +31,27 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
             .FirstOrDefaultAsync(x => x.ServerId == server.Id, HttpContext.RequestAborted);
         var snapshot = string.IsNullOrWhiteSpace(state?.TlsSnapshotJson)
             ? null : JsonSerializer.Deserialize<TlsSnapshotDto>(state.TlsSnapshotJson);
+        var urlIssues = new List<TlsUrlIssueDto>();
         if (snapshot?.Websites is not null)
         {
             // Match the monitoring page's system website scope, rather than IIS running state.
             var defaultUrls = await db.Websites.AsNoTracking()
                 .Where(x => !x.IsDeleted && x.DefaultUrl != null && x.DefaultUrl != "")
-                .Select(x => x.DefaultUrl)
+                .Select(x => new { x.Title, x.DefaultUrl })
                 .ToListAsync(HttpContext.RequestAborted);
-            var systemHosts = defaultUrls.Select(PlatformDomainName.ToHost)
-                .OfType<string>().ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var systemHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var website in defaultUrls)
+            {
+                var host = PlatformDomainName.ToHost(website.DefaultUrl, out var reason);
+                if (host is not null) systemHosts.Add(host);
+                else urlIssues.Add(new TlsUrlIssueDto("系統網站設定（尚無法確認所屬伺服器）", website.Title,
+                    website.DefaultUrl ?? "", reason ?? "無法解析網址。"));
+            }
+            var activeSites = snapshot.Websites.Where(site => !string.Equals(site.State, "Stopped", StringComparison.OrdinalIgnoreCase)).ToArray();
+            foreach (var site in activeSites)
+                foreach (var url in site.HttpsUrls)
+                    if (PlatformDomainName.ToHost(url, out var reason) is null)
+                        urlIssues.Add(new TlsUrlIssueDto("此伺服器網站回報", site.SiteName, url, reason ?? "無法解析網址。"));
             var additionalPools = (configuration
                 .GetSection($"Provisioning:Monitoring:AdditionalApplicationPools:{server.Id}")
                 .Get<string[]>() ?? [])
@@ -51,7 +63,7 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             snapshot = snapshot with
             {
-                Websites = snapshot.Websites.Select(site => additionalSites.Contains(site.SiteName)
+                Websites = activeSites.Select(site => additionalSites.Contains(site.SiteName)
                     ? site : site with
                     {
                         HttpsUrls = site.HttpsUrls.Where(url =>
@@ -64,7 +76,7 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
             };
         }
         var threshold = DateTime.UtcNow.AddSeconds(-Math.Max(15, configuration.GetValue("Provisioning:AgentOfflineSeconds", 45)));
-        return new ServerTlsStatusDto(server.Id, state?.LastSeenAtUtc >= threshold, state?.LastSeenAtUtc, snapshot);
+        return new ServerTlsStatusDto(server.Id, state?.LastSeenAtUtc >= threshold, state?.LastSeenAtUtc, snapshot, urlIssues);
     }
 
     [HttpGet("agents")]

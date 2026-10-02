@@ -107,7 +107,6 @@ body {
             height: 3rem;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         #Car_Dropdown > ul > li > figure > a > figcaption > .pro_spec {

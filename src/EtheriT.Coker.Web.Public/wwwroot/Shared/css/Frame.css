@@ -89,9 +89,11 @@ iframe {
     margin-bottom: 0.5rem;
 }
 
-    .imageList.layout-masonry > .imageItem > img {
-        width: 100%;
-        height: auto;
+    .imageList.layout-masonry > .imageItem .img_frame,
+    .imageList.layout-masonry > .imageItem img {
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
     }
 
 /* masonry 需要絕對定位，但 .imageItem 帶有 Bootstrap 的 position-relative（!important），

@@ -158,6 +158,7 @@ builder.Services.AddScoped<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
 
 builder.Services.AddScoped<AccountAppService>();
 builder.Services.AddScoped<FrontRegistrationService>();
+builder.Services.AddScoped<FrontAccountEventRecorder>();
 builder.Services.AddScoped<FrontMemberEmailValidationService>();
 builder.Services.AddScoped<IFrontAccountAppService, FrontAccountAppService>();
 builder.Services.AddScoped<IBackstageAccountAppService, BackstageAccountAppService>();

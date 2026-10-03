@@ -14,6 +14,7 @@ using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Shared.Member;
 using EtheriT.Coker.Application.Token;
 using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.Application.Member;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
@@ -43,6 +44,8 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly MailAppService mailAppService;
         private readonly IMailTemplateAppService mailTemplateAppService;
         private readonly IFrontRoleContextService frontRoleContextService;
+        private readonly FrontMemberEmailValidationService frontMemberEmailValidationService;
+        private readonly FrontAccountEventRecorder accountEvents;
 
         public FrontAccountAppService(
             AccountAppService core,
@@ -59,7 +62,9 @@ namespace EtheriT.Coker.Application.Authorization
             IMapper mapper,
             MailAppService mailAppService,
             IMailTemplateAppService mailTemplateAppService,
-            IFrontRoleContextService frontRoleContextService)
+            IFrontRoleContextService frontRoleContextService,
+            FrontMemberEmailValidationService frontMemberEmailValidationService,
+            FrontAccountEventRecorder accountEvents)
         {
             this.core = core;
             this.registrationService = registrationService;
@@ -76,6 +81,8 @@ namespace EtheriT.Coker.Application.Authorization
             this.mailAppService = mailAppService;
             this.mailTemplateAppService = mailTemplateAppService;
             this.frontRoleContextService = frontRoleContextService;
+            this.frontMemberEmailValidationService = frontMemberEmailValidationService;
+            this.accountEvents = accountEvents;
         }
 
         public async Task<LoginOutputDto> FrontLogin(FrontLoginInputDto dto)
@@ -243,6 +250,7 @@ namespace EtheriT.Coker.Application.Authorization
             }
 
             var id = Guid.NewGuid();
+            var previousStatus = user.u.Status;
             user.u.Status = (int)UserStatusEnum.開通;
             var loginToken = new Core.Models.Token
             {
@@ -276,6 +284,13 @@ namespace EtheriT.Coker.Application.Authorization
 
             output.Secret = id;
             output.Success = true;
+            await accountEvents.RecordAsync(new Account_Log
+            {
+                UUID = user.u.UUID, CreatorUserId = user.u.Id, WebsiteId = dto.FK_WebsiteId,
+                Status = (int)AccountStatusEnum.第三方開通, EventName = "ExternalLoginActivation",
+                VerificationMethod = "ExternalProvider", Success = true, OldEmail = user.u.Email,
+                PreviousStatus = previousStatus, CurrentStatus = user.u.Status
+            });
             return output;
         }
         public async Task<LoginOutputDto> FrontLogout()
@@ -321,26 +336,40 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<ResponseMessageDto> AccountOpening(Guid openId)
         {
             var response = new ResponseMessageDto();
+            var activity = new Account_Log { WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
+                Status = (int)AccountStatusEnum.帳號開通, EventName = "AccountActivation", VerificationMethod = "EmailActivationLink", Success = false, KeyFingerprint = FrontAccountEventRecorder.Fingerprint(openId) };
             try
             {
-                var frontUser = await db.FrontUsers.FirstOrDefaultAsync(e => e.OpenID == openId);
+                var currentWebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (openId == Guid.Empty) throw new Exception(L.get("LinkExpired"));
+                var frontUser = await db.FrontUsers.FirstOrDefaultAsync(e =>
+                    e.OpenID == openId && !e.IsDeleted && db.MappingFrontUserAndWebsite.Any(m =>
+                        m.FK_UserId == e.Id && m.FK_WebsiteId == currentWebsiteId && !m.IsDeleted));
                 if (frontUser == null)
                     throw new Exception(L.get("LinkExpired"));
+                activity.UUID = frontUser.UUID;
+                activity.CreatorUserId = frontUser.Id;
+                activity.OldEmail = frontUser.Email;
+                activity.PreviousStatus = frontUser.Status;
 
                 if (frontUser.Status == (int)UserStatusEnum.開通)
+                {
+                    activity.FailureReason = "AlreadyActivated";
                     throw new Exception(L.get("AccountActivated"));
+                }
 
                 if (frontUser.Status != (int)UserStatusEnum.未開通)
                     throw new Exception(L.get("LinkExpired"));
 
                 if (frontUser.OpenIDSendDate.AddDays(1) < DateTime.Now)
                 {
+                    activity.FailureReason = "ActivationLinkExpired";
                     response.Message = "ReSendOrNot";
                     throw new Exception(L.get("ActivationLinkExpiredResend"));
                 }
 
                 var websiteId = await db.MappingFrontUserAndWebsite
-                    .Where(e => e.FK_UserId == frontUser.Id)
+                    .Where(e => e.FK_UserId == frontUser.Id && e.FK_WebsiteId == currentWebsiteId && !e.IsDeleted)
                     .Select(e => e.FK_WebsiteId)
                     .FirstOrDefaultAsync();
                 if (websiteId == 0)
@@ -349,6 +378,8 @@ namespace EtheriT.Coker.Application.Authorization
                 frontUser.Status = (int)UserStatusEnum.開通;
                 frontUser.OpenDate = DateTime.Now;
                 await loginUserData.SaveChanges(frontUser);
+                activity.Success = true;
+                activity.CurrentStatus = frontUser.Status;
 
                 var loginResult = await NoPasswordLogin(frontUser, websiteId, null);
                 if (!loginResult.Success)
@@ -360,6 +391,11 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 response.Error = e.Message;
             }
+            finally
+            {
+                activity.FailureReason = activity.Success == true ? null : activity.FailureReason ?? "OperationRejectedOrFailed";
+                await accountEvents.RecordAsync(activity);
+            }
             return response;
         }
         public async Task<ResponseMessageDto> ReSendOpening(SendOpeningDto dto)
@@ -367,11 +403,17 @@ namespace EtheriT.Coker.Application.Authorization
             var response = new ResponseMessageDto();
             try
             {
+                var normalizedEmail = dto.Email?.Trim().ToUpperInvariant();
                 var frontUser = await (
                     from user in db.FrontUsers
                     join map in db.MappingFrontUserAndWebsite on user.Id equals map.FK_UserId
-                    where (dto.OpenId == null ? user.Email == dto.Email : user.OpenID == dto.OpenId)
+                    where !user.IsDeleted && !map.IsDeleted
+                       && user.Status == (int)UserStatusEnum.未開通
+                       && (dto.OpenId == null
+                           ? user.Email != null && user.Email.Trim().ToUpper() == normalizedEmail
+                           : user.OpenID == dto.OpenId)
                        && map.FK_WebsiteId == dto.WebsiteId
+                    orderby user.Id
                     select user).FirstOrDefaultAsync();
                 if (frontUser == null)
                     throw new Exception("發生未知錯誤");
@@ -395,30 +437,50 @@ namespace EtheriT.Coker.Application.Authorization
         public async Task<ResponseMessageDto> FrontUserEdit(FrontEditUserDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
+            var activity = new Account_Log { WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
+                Status = (int)AccountStatusEnum.會員資料修改, EventName = "MemberProfileChange", VerificationMethod = "AuthenticatedSession", Success = false };
             try
             {
+                var token = await tokenAppService.CheckToken(null);
+                if (token == null || !token.Success || !token.IsLogin)
+                    throw new Exception("登入狀態已失效，請重新登入");
                 Guid UUID = await tokenAppService.GetUUID();
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
 
                 var frontUser = await (from user in db.FrontUsers
                                        join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
                                        where user.UUID == UUID && mapuserweb.FK_WebsiteId == WebsiteID
+                                          && !user.IsDeleted && !mapuserweb.IsDeleted
                                        select user).FirstOrDefaultAsync();
                 if (frontUser != null)
                 {
-                    if (dto.Email != null) { }
-                    else dto.Email = frontUser.Email;
+                    activity.UUID = frontUser.UUID;
+                    activity.CreatorUserId = frontUser.Id;
+                    activity.OldEmail = frontUser.Email;
+                    var before = ProfileSnapshot(frontUser);
+                    // Email changes require password verification through EmailChage.
+                    if (dto.Email != null && !string.Equals(dto.Email.Trim(), frontUser.Email?.Trim(), StringComparison.OrdinalIgnoreCase))
+                        throw new Exception("請使用變更電子郵件功能修改信箱");
+                    dto.Email = frontUser.Email;
 
                     mapper.Map(dto, frontUser);
                     await loginUserData.SaveChanges(frontUser);
 
                     response.Success = true;
+                    activity.Success = true;
+                    activity.NewEmail = frontUser.Email;
+                    activity.DetailsJson = JsonConvert.SerializeObject(new { Before = before, After = ProfileSnapshot(frontUser) });
                 }
                 else throw new Exception("用戶不存在。");
             }
             catch (Exception ex)
             {
                 response.Error = ex.Message;
+            }
+            finally
+            {
+                activity.FailureReason = activity.Success == true ? null : "OperationRejectedOrFailed";
+                await accountEvents.RecordAsync(activity);
             }
             return response;
         }
@@ -485,16 +547,34 @@ namespace EtheriT.Coker.Application.Authorization
         }
 
 
-        public Task<ResponseMessageDto> SendForget(SendForgetDto dto) => core.SendForget(dto);
+        public async Task<ResponseMessageDto> SendForget(SendForgetDto dto)
+        {
+            var result = await core.SendForget(dto);
+            var user = await db.FrontUsers.AsNoTracking().FirstOrDefaultAsync(u =>
+                u.Email == dto.Email && !u.IsDeleted && db.MappingFrontUserAndWebsite.Any(m =>
+                    m.FK_UserId == u.Id && m.FK_WebsiteId == dto.WebsiteId && !m.IsDeleted));
+            await accountEvents.RecordAsync(new Account_Log
+            {
+                UUID = user?.UUID ?? Guid.Empty, CreatorUserId = user?.Id ?? 0, WebsiteId = dto.WebsiteId,
+                Status = (int)AccountStatusEnum.密碼重設信寄送, EventName = "PasswordResetMailSend",
+                VerificationMethod = "SmtpAcceptanceNotDelivery", Success = result.Success,
+                FailureReason = result.Success ? null : "MailNotSentOrMemberNotFound",
+                RecipientEmail = dto.Email, KeyFingerprint = FrontAccountEventRecorder.Fingerprint(user?.ForgetID)
+            });
+            return result;
+        }
         public async Task<ResponseMessageDto> ForgetIdCheck(Guid ForgetId)
         {
             ResponseMessageDto response = new ResponseMessageDto();
 
             try
             {
-                var frontUser = await db.FrontUsers.Where(e => e.ForgetID == ForgetId).FirstOrDefaultAsync();
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (ForgetId == Guid.Empty) throw new Exception(L.get("LinkExpired"));
+                var frontUser = await db.FrontUsers.Where(e => e.ForgetID == ForgetId && !e.IsDeleted &&
+                    db.MappingFrontUserAndWebsite.Any(m => m.FK_UserId == e.Id && m.FK_WebsiteId == websiteId && !m.IsDeleted)).FirstOrDefaultAsync();
 
-                if (frontUser != null && frontUser.ForgeIDSendDate != null && frontUser.ForgeIDSendDate.Value.Date.AddDays(1).CompareTo(DateTime.Now) > 0)
+                if (frontUser != null && frontUser.ForgeIDSendDate != null && frontUser.ForgeIDSendDate.Value.AddDays(1) > DateTime.Now)
                 {
                     response.Success = true;
                 }
@@ -511,20 +591,32 @@ namespace EtheriT.Coker.Application.Authorization
         {
             ResponseMessageDto response = new ResponseMessageDto();
 
+            var activity = new Account_Log { WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
+                Status = (int)AccountStatusEnum.密碼重置, EventName = "PasswordChange", VerificationMethod = "", Success = false, KeyFingerprint = FrontAccountEventRecorder.Fingerprint(dto.ForgetID) };
             try
             {
+                activity.VerificationMethod = dto.ForgetID != null ? "PasswordResetLink" : "CurrentPassword";
+                dto.WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password != dto.PasswordConfirm)
+                    throw new Exception("輸入的密碼不相符");
+                var passwordError = FrontRegistrationService.CheckPassword(dto.Password);
+                if (!string.IsNullOrEmpty(passwordError)) throw new Exception(passwordError);
+                if (dto.ForgetID == Guid.Empty || (dto.ForgetID == null && string.IsNullOrWhiteSpace(dto.OldPassword)))
+                    throw new Exception("請提供有效的重設連結或原密碼");
                 var tokenCheck = await tokenAppService.CheckToken(null);
                 Guid UUID = await tokenAppService.GetUUID();
 
-                FrontUser? frontUser = new FrontUser();
+                FrontUser? frontUser = null;
 
-                if (UUID != null)
+                if (dto.ForgetID != null || (tokenCheck != null && tokenCheck.Success && tokenCheck.IsLogin && UUID != Guid.Empty))
                 {
                     if (dto.ForgetID != null)
                     {
                         frontUser = await (from user in db.FrontUsers
                                            join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
                                            where user.ForgetID == dto.ForgetID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                              && !user.IsDeleted && !mapuserweb.IsDeleted
+                                              && user.ForgeIDSendDate != null && user.ForgeIDSendDate.Value.AddDays(1) > DateTime.Now
                                            select user).FirstOrDefaultAsync();
                     }
                     else if (dto.OldPassword != null)
@@ -532,6 +624,7 @@ namespace EtheriT.Coker.Application.Authorization
                         frontUser = await (from user in db.FrontUsers
                                            join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
                                            where user.UUID == UUID && mapuserweb.FK_WebsiteId == dto.WebsiteId
+                                              && !user.IsDeleted && !mapuserweb.IsDeleted
                                            select user).FirstOrDefaultAsync();
                         if (frontUser != null)
                         {
@@ -576,6 +669,10 @@ namespace EtheriT.Coker.Application.Authorization
 
                     if (frontUser != null)
                     {
+                        activity.UUID = frontUser.UUID;
+                        activity.CreatorUserId = frontUser.Id;
+                        activity.OldEmail = frontUser.Email;
+                        activity.PreviousStatus = frontUser.Status;
                         frontUser.Password = passwordHasher.HashPassword(dto.Password);
                         frontUser.LastModifierUserId = frontUser.Id;
                         frontUser.LastModificationTime = DateTime.Now;
@@ -585,20 +682,12 @@ namespace EtheriT.Coker.Application.Authorization
                         frontUser.LockTime = null;
                         frontUser.Status = (int)UserStatusEnum.開通;
                         await loginUserData.SaveChanges(frontUser);
-
-                        Account_Log account_Log = new Account_Log()
-                        {
-                            UUID = UUID,
-                            WebsiteId = dto.WebsiteId,
-                            Status = (int)AccountStatusEnum.密碼重置,
-                            CreatorUserId = frontUser.Id,
-                            CreationTime = DateTime.Now,
-                        };
-                        db.Account_Logs.Add(account_Log);
-                        db.SaveChanges();
+                        activity.Success = true;
+                        activity.CurrentStatus = frontUser.Status;
 
                         response.Success = true;
-                        await ClearFrontLoginState(tokenCheck.RefreshToken, dto.WebsiteId);
+                        await InvalidateFrontSessions(frontUser.UUID, frontUser.FK_User, dto.WebsiteId);
+                        await ClearFrontLoginState(tokenCheck?.RefreshToken, dto.WebsiteId);
                     }
                     else throw new Exception("會員不存在");
                 }
@@ -609,6 +698,11 @@ namespace EtheriT.Coker.Application.Authorization
                 response.Error = ex.Message;
             }
 
+            finally
+            {
+                activity.FailureReason = activity.Success == true ? null : "OperationRejectedOrFailed";
+                await accountEvents.RecordAsync(activity);
+            }
             return response;
         }
 
@@ -616,21 +710,35 @@ namespace EtheriT.Coker.Application.Authorization
         {
             ResponseMessageDto response = new ResponseMessageDto();
 
+            var activity = new Account_Log { WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
+                Status = (int)AccountStatusEnum.Email重置, EventName = "MemberEmailChange", VerificationMethod = "AuthenticatedSessionAndPassword", Success = false, NewEmail = dto.Email };
             try
             {
                 var tokenCheck = await tokenAppService.CheckToken(null);
+                if (tokenCheck == null || !tokenCheck.Success || !tokenCheck.IsLogin)
+                    throw new Exception("登入狀態已失效，請重新登入");
                 Guid UUID = await tokenAppService.GetUUID();
                 long WebsiteID = configuration.GetValue<long>("WebConfig:SiteId");
 
-                var frontuser = await db.FrontUsers.Where(e => e.UUID == UUID).FirstOrDefaultAsync();
+                var frontuser = await db.FrontUsers.Where(e => e.UUID == UUID && !e.IsDeleted &&
+                    db.MappingFrontUserAndWebsite.Any(m => m.FK_UserId == e.Id && m.FK_WebsiteId == WebsiteID && !m.IsDeleted)).FirstOrDefaultAsync();
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
                 if (frontuser != null && Website != null)
                 {
+                    activity.UUID = frontuser.UUID;
+                    activity.CreatorUserId = frontuser.Id;
+                    activity.OldEmail = frontuser.Email;
+                    if (frontuser.Status != (int)UserStatusEnum.開通) throw new Exception("目前帳號不可變更信箱");
+                    var emailValidation = await frontMemberEmailValidationService.ValidateAsync(WebsiteID, dto.Email, frontuser.Id);
+                    dto.Email = emailValidation.NormalizedEmail;
+                    if (string.Equals(frontuser.Email?.Trim(), dto.Email, StringComparison.OrdinalIgnoreCase))
+                        throw new Exception("新信箱與原信箱相同");
                     if (passwordHasher.VerifyHashedPassword(frontuser.Password, dto.Password))
                     {
                         var other_frontuser = await (from user in db.FrontUsers
                                                      join mapuserweb in db.MappingFrontUserAndWebsite on user.Id equals mapuserweb.FK_UserId
-                                                     where user.Email == dto.Email
+                                                     where user.Email != null && user.Email.Trim().ToUpper() == dto.Email.ToUpper()
+                                                        && !user.IsDeleted && !mapuserweb.IsDeleted
                                                      where mapuserweb.FK_WebsiteId == WebsiteID
                                                      select user.Id).ToListAsync();
 
@@ -641,21 +749,12 @@ namespace EtheriT.Coker.Application.Authorization
                         }
                         else
                         {
-                            var account_Log = new Account_Log()
-                            {
-                                UUID = frontuser.UUID,
-                                WebsiteId = WebsiteID,
-                                CreatorUserId = frontuser.Id,
-                                CreationTime = DateTime.Now,
-                                Status = (int)AccountStatusEnum.Email重置,
-                            };
-
                             var hidden_mail = dto.Email.Substring(0, 1) + "******" + dto.Email.Substring(dto.Email.IndexOf('@') - 1, 1) + dto.Email.Substring(dto.Email.IndexOf('@'));
 
                             ChangeEmailMailTemplateDto resultDto = new ChangeEmailMailTemplateDto
                             {
                                 Email = hidden_mail,
-                                CreationTime = account_Log.CreationTime,
+                                CreationTime = activity.CreationTime,
                                 Name = frontuser.Name,
                                 Title = Website.Title,
                                 Url = $"{Website.DefaultUrl}/{Website.OrgName}/Member"
@@ -692,7 +791,10 @@ namespace EtheriT.Coker.Application.Authorization
 
                             if (response.Success)
                             {
+                                var previousUserId = frontuser.FK_User;
                                 frontuser.Email = dto.Email;
+                                frontuser.ForgetID = null;
+                                frontuser.ForgeIDSendDate = null;
                                 var user = await db.Users.Where(e => e.Email == frontuser.Email).FirstOrDefaultAsync();
                                 if (user == null)
                                 {
@@ -703,9 +805,11 @@ namespace EtheriT.Coker.Application.Authorization
                                     await loginUserData.SaveChanges(user);
                                 }
                                 frontuser.FK_User = user.Id;
-                                db.Account_Logs.Add(account_Log);
                                 await loginUserData.SaveChanges(frontuser);
+                                activity.Success = true;
+                                activity.NewEmail = frontuser.Email;
 
+                                await InvalidateFrontSessions(frontuser.UUID, previousUserId, WebsiteID);
                                 await ClearFrontLoginState(tokenCheck.RefreshToken, WebsiteID);
                             }
                         }
@@ -760,6 +864,11 @@ namespace EtheriT.Coker.Application.Authorization
                 response.Error = ex.Message;
             }
 
+            finally
+            {
+                activity.FailureReason = activity.Success == true ? null : "OperationRejectedOrFailed";
+                await accountEvents.RecordAsync(activity);
+            }
             return response;
         }
 
@@ -922,6 +1031,23 @@ namespace EtheriT.Coker.Application.Authorization
             }
 
             ClearFrontCookies(websiteId);
+        }
+
+        private static object ProfileSnapshot(FrontUser user) => new
+        {
+            user.Name, user.Email, user.Sex, user.TelPhone, user.CellPhone, user.Address, user.Birthday
+        };
+
+        private async Task InvalidateFrontSessions(Guid uuid, long? userId, long websiteId)
+        {
+            var sessions = await db.Tokens.Where(t => t.websiteId == websiteId &&
+                (t.UUID == uuid || (userId != null && t.UserID == userId))).ToListAsync();
+            foreach (var session in sessions)
+            {
+                session.UserID = null;
+                session.EndTime = DateTime.Now;
+            }
+            await db.SaveChangesAsync();
         }
     }
 }

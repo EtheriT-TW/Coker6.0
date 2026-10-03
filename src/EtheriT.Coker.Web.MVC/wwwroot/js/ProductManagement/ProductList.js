@@ -24,6 +24,8 @@ let pendingProductImportIgnoredRows = [];
 let productImportConfirmInProgress = false;
 var elementReady = false;
 var pendingHashEdit = false;
+var productEditLoadVersion = 0;
+var productEditLoadingHash = null;
 var lastProductImportInfoLoaded = false;
 
 async function loadLastProductImportInfo(forceReload) {
@@ -1896,6 +1898,16 @@ function HashDataEdit() {
         // 手機的畫布網址改走一般商品編輯，不載入畫布內容。
         history.replaceState(history.state, "", window.location.pathname + window.location.search + window.location.hash.replace(/-1$/, ""));
     }
+    var requestedHash = window.location.hash;
+    if (productEditLoadingHash === requestedHash) return;
+    var loadVersion = ++productEditLoadVersion;
+    productEditLoadingHash = null;
+    function isCurrentLoad() {
+        return loadVersion === productEditLoadVersion && window.location.hash === requestedHash;
+    }
+    function finishLoad() {
+        if (loadVersion === productEditLoadVersion) productEditLoadingHash = null;
+    }
     FormDataClear();
     if (window.location.hash != "") {
         if (window.currentHash != window.location.hash) {
@@ -1904,28 +1916,37 @@ function HashDataEdit() {
                 if (hash.includes('-1')) {
                     MoveToCanvas();
                 } else {
+                    productEditLoadingHash = requestedHash;
                     co.Spec.GetPickSpecList().done(function (pick_result) {
+                        if (!isCurrentLoad()) return;
                         spec_pick_list = pick_result;
                         SpecAdd(null);
                         MoveToContent();
-                    });
+                    }).always(finishLoad);
                 }
             } else {
                 if (hash.includes('-1')) {
                     keyId = parseInt(hash);
                     MoveToCanvas();
                 } else {
+                    productEditLoadingHash = requestedHash;
                     co.Product.Get.ProdOne(parseInt(hash)).done(function (result) {
+                        if (!isCurrentLoad()) {
+                            finishLoad();
+                            return;
+                        }
                         if (result != null) {
                             co.Spec.GetPickSpecList().done(function (pick_result) {
+                                if (!isCurrentLoad()) return;
                                 spec_pick_list = pick_result;
                                 FormDataSet(result);
                                 MoveToContent();
-                            });
+                            }).always(finishLoad);
                         } else {
+                            finishLoad();
                             BackToList(false);
                         }
-                    })
+                    }).fail(finishLoad);
                 }
             }
         }

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+using Microsoft.AspNetCore.Authentication;
+
 namespace EtheriT.Coker.Web.Public.Authentication
 {
     public sealed class FrontCookieAuthenticationEvents : CookieAuthenticationEvents
@@ -25,6 +27,26 @@ namespace EtheriT.Coker.Web.Public.Authentication
 
             if (!validation.IsValid)
                 context.RejectPrincipal();
+        }
+
+        public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+            return base.RedirectToLogin(context);
+        }
+
+        public override Task RedirectToAccessDenied(RedirectContext<CookieAuthenticationOptions> context)
+        {
+            if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            }
+            return base.RedirectToAccessDenied(context);
         }
     }
 }

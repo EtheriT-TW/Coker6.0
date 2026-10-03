@@ -473,20 +473,13 @@ function ready() {
 
     $("#ResetModal .btn_resetforget").on("click", function () {
         Coker.sweet.confirm(local.ConfirmSendResetPasswordMailToEmail.format($("#ResetForm").data("Email")), "", local.Yes, local.No, function () {
-            Coker.sweet.loading();
-            var data = {};
-            data.Email = $("#ResetForm").data("Email");
-            data.WebsiteId = SiteId;
-            data.WebsiteLink = $(location).attr('origin');
-            data.WebsiteName = $("meta[property='og:site_name'").attr("content");
-            co.User.PasswordForget(data).done((result) => {
-                if (result.success) {
-                    Coker.sweet.success(local.InfoResetPasswordMailWillBeSent, null, false);
-                    registerModal.hide();
-                } else {
-                    Coker.sweet.error(result.error, null, true);
-                }
-            })
+            $("#InputForgetMail").val($("#ResetForm").data("Email"));
+            const resetElement = document.getElementById("ResetModal");
+            $(resetElement).one("hidden.bs.modal", function () {
+                NewCaptcha($ForgetImgCaptcha, $InputForgetVCode);
+                forgetModal.show();
+            });
+            resetModal.hide();
         })
     })
 

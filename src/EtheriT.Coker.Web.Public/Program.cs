@@ -165,6 +165,7 @@ builder.Services.AddMvc(options =>
 
 builder.Services.AddScoped<AccountAppService>();
 builder.Services.AddScoped<FrontRegistrationService>();
+builder.Services.AddScoped<FrontAccountEventRecorder>();
 builder.Services.AddScoped<FrontMemberEmailValidationService>();
 builder.Services.AddScoped<IFrontAccountAppService, FrontAccountAppService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -493,6 +494,27 @@ else {
 
 app.UseHttpsRedirection();
 app.UseMiddleware<ContentSecurityPolicyMiddleware>();
+
+// Existing images have already been served by the static-file middleware above.
+// Missing images must not fall through to PageController's home-page fallback,
+// including direct navigation to an image outside /upload (for example /test.jpg).
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+    if (!path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase)
+        && fileProvider.TryGetContentType(path.Value ?? "", out var contentType)
+        && contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        if (!HttpMethods.IsHead(context.Request.Method))
+        {
+            await context.Response.WriteAsync("404", context.RequestAborted);
+        }
+        return;
+    }
+    await next(context);
+});
 
 app.UseRouting();
 app.UseMiddleware<RedirectMiddleware>();

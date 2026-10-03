@@ -1,34 +1,77 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace EtheriT.Coker.Web.Public.Controllers
 {
     [Route("Error")]
     public class ErrorController : Controller
     {
-        [HttpGet("{statusCode:int}")]
+        [Route("{statusCode:int}")]
         public IActionResult HandleErrorCode(int statusCode)
         {
             if (!ModelState.IsValid)
             {
                 Response.StatusCode = StatusCodes.Status400BadRequest;
-                return View("~/Views/Error/404.cshtml");
+                PrepareErrorViewBag();
+                return View("Error");
             }
+            Response.StatusCode = statusCode >= 400 && statusCode <= 599
+                ? statusCode
+                : StatusCodes.Status500InternalServerError;
+            var resourceError = CreateResourceError();
+            if (resourceError != null) return resourceError;
             var viewName = statusCode switch
             {
                 404 => "NotFound",
+                401 or 403 => "Denied",
                 _ => "Error"
             };
             PrepareErrorViewBag();
-            ViewData["PageTagNameName"] = "頁面不存在";
+            ViewData["PageTagNameName"] = viewName == "NotFound" ? "頁面不存在" : "錯誤頁面";
             return View(viewName);
         }
 
-        [HttpGet("")]
+        [Route("")]
         public IActionResult HandleError()
         {
+            Response.StatusCode = StatusCodes.Status500InternalServerError;
+            var resourceError = CreateResourceError();
+            if (resourceError != null) return resourceError;
             PrepareErrorViewBag();
             return View("Error");
+        }
+        private IActionResult? CreateResourceError()
+        {
+            // Re-execution changes Request.Path; classify the original request.
+            var originalPath = HttpContext.Features.Get<IStatusCodeReExecuteFeature>()?.OriginalPath
+                ?? HttpContext.Features.Get<IExceptionHandlerPathFeature>()?.Path
+                ?? Request.Path.Value ?? "";
+            var path = new PathString(originalPath);
+            if (path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+            {
+                return new JsonResult(new { status = Response.StatusCode })
+                {
+                    StatusCode = Response.StatusCode
+                };
+            }
+            var destination = Request.Headers["Sec-Fetch-Dest"].ToString();
+            if (destination is "image" or "script" or "style" or "font" or "audio" or "video"
+                || path.StartsWithSegments("/upload", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWithSegments("/images", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWithSegments("/css", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWithSegments("/js", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWithSegments("/lib", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWithSegments("/Shared", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ContentResult
+                {
+                    StatusCode = Response.StatusCode,
+                    ContentType = "text/plain; charset=utf-8",
+                    Content = Response.StatusCode.ToString()
+                };
+            }
+            return null;
         }
         private void PrepareErrorViewBag()
         {
@@ -60,8 +103,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewData["SideName"] = "網站名稱";
             ViewData["Layout"] = "ErrorLayout";
             ViewData["bodyClass"] = "";
-            ViewData["VisibleHeader"] = "false";
-            ViewData["VisibleFooter"] = "false";
+            ViewData["VisibleHeader"] = "true";
+            ViewData["VisibleFooter"] = "true";
         }
     }
 }

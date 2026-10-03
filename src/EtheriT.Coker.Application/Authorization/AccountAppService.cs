@@ -205,7 +205,7 @@ namespace EtheriT.Coker.Application.Authorization
                     {
                         var content = mailTemp.First();
 
-                        await mailAppService.sendMail(new SenderDto
+                        var sendResult = await mailAppService.sendMail(new SenderDto
                         {
                             Recipients = new List<MailUserDataDto>(){
                                     new MailUserDataDto()
@@ -218,9 +218,11 @@ namespace EtheriT.Coker.Application.Authorization
                             Body = content?.Body ?? string.Empty,
                             Css = content?.Style ?? string.Empty,
                         }, website.Contact);
+                        response.Success = sendResult.Success;
+                        response.Message = sendResult.Message;
+                        response.Error = sendResult.Error;
                     }
-
-                    response.Success = true;
+                    else response.Error = "密碼重設信範本不存在";
                 }
                 else throw new Exception("會員不存在");
             }

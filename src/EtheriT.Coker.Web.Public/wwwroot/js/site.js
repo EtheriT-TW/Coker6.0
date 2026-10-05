@@ -882,7 +882,7 @@ function CaptchaVerify($self, $input, SuccessAction) {
                     $input.siblings("div").addClass("me-4 pe-2");
                     NewCaptcha($self, $input)
                     $input.val("");
-                    Coker.sweet.warning(local.AlertTitle, local.ErrorCaptchaInvalid, null);
+                    Coker.sweet.warning(local.AlertTitle, result.error || local.ErrorCaptchaInvalid, null);
                 }
             }
         })

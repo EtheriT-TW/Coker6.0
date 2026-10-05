@@ -3944,7 +3944,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebsiteId");
+                    b.HasIndex("FK_WebsiteId", "Url")
+                        .IsUnique();
 
                     b.ToTable("NotFoundImage");
                 });

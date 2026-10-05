@@ -772,6 +772,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             {
                 o.Property(t => t.CreateDate).HasDefaultValueSql("getdate()");
                 o.HasOne(f => f.Website).WithMany(w => w.NotFoundImages).HasForeignKey(e => e.FK_WebsiteId);
+                o.HasIndex(f => new { f.FK_WebsiteId, f.Url }).IsUnique();
             });
             modelBuilder.Entity<Core.Models.JsonObject>(o =>
             {

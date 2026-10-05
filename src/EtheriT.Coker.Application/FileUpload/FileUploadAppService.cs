@@ -2789,20 +2789,35 @@ namespace EtheriT.Coker.Application
         }
         public async Task<ResponseMessageDto> insertNotFondFile(InsertNotFoundFileDto dto)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
-            long websiteId = dto.FK_WebsiteID == 0 ? await loginUserData.GetWebsiteId() : dto.FK_WebsiteID;
-            bool haveUri = db.NotFoundImage.Where(e => e.FK_WebsiteId == websiteId && e.Url == dto.Url).Any();
-            if (!string.IsNullOrEmpty(dto.Url) && !haveUri)
+            ResponseMessageDto response = new ResponseMessageDto { Success = true };
+            if (string.IsNullOrWhiteSpace(dto?.Url))
+                return response;
+
+            // 站台一律由伺服器決定，不採用前端傳入的 FK_WebsiteID，避免寫到別站
+            long websiteId = await loginUserData.GetCommonWebsiteId();
+            if (websiteId == 0)
+                return response;
+
+            bool haveUri = await db.NotFoundImage.AnyAsync(e => e.FK_WebsiteId == websiteId && e.Url == dto.Url);
+            if (haveUri)
+                return response;
+
+            var entity = new NotFoundImage
             {
-                db.NotFoundImage.Add(new NotFoundImage
-                {
-                    FK_WebsiteId = websiteId,
-                    Url = dto.Url,
-                    From = dto.From
-                });
+                FK_WebsiteId = websiteId,
+                Url = dto.Url,
+                From = dto.From ?? ""
+            };
+            db.NotFoundImage.Add(entity);
+            try
+            {
                 await db.SaveChangesAsync();
             }
-            response.Success = true;
+            catch (DbUpdateException ex) when (ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 })
+            {
+                // 其他裝置同時回報同一張圖，被唯一索引擋下，視為已記錄
+                db.Entry(entity).State = EntityState.Detached;
+            }
             return response;
         }
         private class ProductListCompressedImageRow

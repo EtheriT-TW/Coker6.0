@@ -230,6 +230,7 @@ builder.Services.AddSingleton<RemoteTrackingTokenService>();
 builder.Services.AddScoped<CdnClientIpResolver>();
 
 builder.Services.AddSingleton<JumpRedirectCache>();
+builder.Services.AddSingleton<NotFoundImageVerifier>();
 
 if (!builder.Environment.IsDevelopment())
 {

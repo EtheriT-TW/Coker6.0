@@ -11,6 +11,6 @@ namespace EtheriT.Coker.Application.Authorization
 	public interface ICaptchaAppService
 	{
 		public MemoryStream Captcha(string id);
-		public ResponseMessageDto Validate(string id, string code);
+		public Task<ResponseMessageDto> ValidateAsync(string? id, string? code, string source);
 	}
 }

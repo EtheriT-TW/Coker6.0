@@ -3,7 +3,9 @@ using EtheriT.Coker.Application.Directory;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.Directory;
 using EtheriT.Coker.Application.Shared.Dto.Files;
+using EtheriT.Coker.Web.Public.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using System.Net.Http.Headers;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
@@ -12,15 +14,45 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     [ApiController]
     public class FileController : Controller
     {
+        private static readonly TimeSpan NotFoundImageCacheDuration = TimeSpan.FromHours(1);
         private readonly IFileUploadAppService fileUploadAppService;
-        public FileController(IFileUploadAppService fileUploadAppService)
+        private readonly NotFoundImageVerifier notFoundImageVerifier;
+        private readonly IMemoryCache memoryCache;
+        public FileController(IFileUploadAppService fileUploadAppService, NotFoundImageVerifier notFoundImageVerifier, IMemoryCache memoryCache)
         {
             this.fileUploadAppService = fileUploadAppService;
+            this.notFoundImageVerifier = notFoundImageVerifier;
+            this.memoryCache = memoryCache;
         }
         [HttpPost]
         public async Task<ResponseMessageDto> insertNotFondFile(InsertNotFoundFileDto dto)
         {
-            return await fileUploadAppService.insertNotFondFile(dto);
+            var check = notFoundImageVerifier.Verify(dto, Request.Headers.Referer.ToString());
+            if (!check.ShouldRecord)
+                return new ResponseMessageDto { Success = true };
+
+            // 跨裝置去重：同一張圖在快取期間內只處理一次，不論是哪台裝置回報
+            var cacheKey = $"NotFoundImage|{check.ImagePath}";
+            if (memoryCache.TryGetValue(cacheKey, out _))
+                return new ResponseMessageDto { Success = true };
+            memoryCache.Set(cacheKey, true, NotFoundImageCacheDuration);
+
+            try
+            {
+                var result = await fileUploadAppService.insertNotFondFile(new InsertNotFoundFileDto
+                {
+                    Url = check.ImagePath,
+                    From = check.PagePath
+                });
+                if (!result.Success)
+                    memoryCache.Remove(cacheKey);
+                return result;
+            }
+            catch
+            {
+                memoryCache.Remove(cacheKey);
+                throw;
+            }
         }
         [HttpGet]
         public async Task<IActionResult> DecryptFile(long fid)

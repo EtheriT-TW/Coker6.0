@@ -946,13 +946,7 @@ namespace EtheriT.Coker.Application.Authorization
                 output.Secret = token.id;
                 output.EndDateTime = DateTime.Now.AddMinutes(30);
                 if (dto != null) dto.Password = "******";
-                await loginUserData.SetLogs(
-                    frontUser.Id,
-                    websiteId,
-                    JsonConvert.SerializeObject(dto),
-                    JsonConvert.SerializeObject(output));
-
-                db.Account_Logs.Add(new Account_Log
+                await accountEvents.RecordAsync(new Account_Log
                 {
                     UUID = frontUser.UUID,
                     WebsiteId = websiteId,
@@ -960,8 +954,11 @@ namespace EtheriT.Coker.Application.Authorization
                     LastLoginTime = DateTime.Now,
                     CreatorUserId = frontUser.Id,
                     CreationTime = DateTime.Now,
+                    EventName = "MemberLogin",
+                    VerificationMethod = "FrontSessionEstablished",
+                    Success = true,
+                    OldEmail = frontUser.Email,
                 });
-                await db.SaveChangesAsync();
 
                 if (frontUser.UUID != tempUuid &&
                     tempUuid != Guid.Empty &&

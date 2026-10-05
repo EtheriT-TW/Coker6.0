@@ -1,8 +1,8 @@
 ﻿:root {
     /* Header Layout 8 可覆寫參數 */
-    --header-layout-bg-image: url("/upload/background.jpg");
+    --header-layout-bg-image: none;
     --header-layout-bg-position: center top;
-    --header-menu-bg-image: url("/upload/Menu.jpg");
+    --header-menu-bg-image: none;
     --header-menu-bg-size: cover;
     --header-menu-bg: #ffffff;
     --header-menu-overlap-bg: transparent;

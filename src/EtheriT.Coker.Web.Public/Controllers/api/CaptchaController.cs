@@ -18,21 +18,17 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             Response.Headers.CacheControl = "no-store";
             if (string.IsNullOrWhiteSpace(id) || id.Length > 128) return BadRequest();
+            if (AccountRequestGuard.CaptchaLocked(HttpContext)) return StatusCode(429);
             if (!AccountRequestGuard.Allow(HttpContext, "captcha-image", 60)) return StatusCode(429);
             AccountRequestGuard.Grant($"challenge:{id}", TimeSpan.FromMinutes(5));
             return File(captchaAppService.Captcha(id), "image/png");
         }
 
-        public ResponseMessageDto Validate(string id, string code)
+        public async Task<ResponseMessageDto> Validate(string id, string code)
         {
             Response.Headers.CacheControl = "no-store";
             var browser = AccountRequestGuard.Browser(HttpContext);
-            AccountRequestGuard.Consume($"verified:{browser}");
-            if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || string.IsNullOrWhiteSpace(code) || code.Length > 16 ||
-                !AccountRequestGuard.Allow(HttpContext, "captcha-validate", 60) ||
-                !AccountRequestGuard.Consume($"challenge:{id}"))
-                return new ResponseMessageDto { Error = "請重新取得驗證碼" };
-            var result = captchaAppService.Validate(id, code);
+            var result = await captchaAppService.ValidateAsync(id, code, "CaptchaApi");
             if (result.Success)
                 AccountRequestGuard.Grant($"verified:{browser}", TimeSpan.FromMinutes(2));
             return result;

@@ -21,6 +21,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         開通信寄送 = 10,
         密碼重設信寄送 = 11,
         第三方開通 = 12,
-        請求拒絕 = 13
+        請求拒絕 = 13,
+        圖形驗證 = 14
     }
 }

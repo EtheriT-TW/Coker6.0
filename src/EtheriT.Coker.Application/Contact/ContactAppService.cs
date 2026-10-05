@@ -86,14 +86,18 @@ namespace EtheriT.Coker.Application.Contact
             long siteId = configuration.GetValue<long>("WebConfig:SiteId");
             try
             {
-                var code = dto.forms.Find(e => e.Name == "captcha");
+                var code = dto.forms?.Find(e => e.Name == "captcha");
+                var codeId = dto.forms?.Find(e => e.Name == "captchaId");
+                var captchaResult = await captchaAppService.ValidateAsync(codeId?.Value, code?.Value, "ContactForm");
+                if (!captchaResult.Success)
+                {
+                    response.Error = captchaResult.Error;
+                    return response;
+                }
                 var StoreSetId = (await db.StoreSet.Where(e => e.key == "EmailNotificationType").FirstOrDefaultAsync())?.Id;
                 var StoreSet = StoreSetId != null ? await db.StoreSetDetail.Where(e => e.FK_WebsiteId == siteId && e.FK_StoreSetId == StoreSetId).FirstOrDefaultAsync() : null;
                 var EmailNotificationType = int.Parse(StoreSet?.value ?? "0");
 
-                var codeId = dto.forms.Find(e => e.Name == "captchaId");
-                if (codeId == null || code == null || !captchaAppService.Validate(codeId.Value, code.Value).Success) throw new Exception(L.get("VerificationCodeError"));
-                else
                 {
                     var site = await db.Websites.Where(e => !e.IsDeleted).Where(e => e.Id == siteId).FirstOrDefaultAsync();
                     if (site == null) throw new Exception(L.get("WebsiteDataError"));

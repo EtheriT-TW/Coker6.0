@@ -14,6 +14,9 @@ using EtheriT.Coker.Application.Shared.Dto.MailTemplate;
 using EtheriT.Coker.Application.Shared.Dto.User;
 using EtheriT.Coker.Application.Shared.i18n;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.StoreSet;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Member;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Core.Models;
@@ -25,6 +28,8 @@ namespace EtheriT.Coker.Application.Authorization
 {
     public sealed class FrontRegistrationService
     {
+        // Cover every caller, including third-party registration, in this process.
+        private static readonly SemaphoreSlim RegistrationLock = new(1, 1);
         private readonly CokerDbContext db;
         private readonly IPasswordHasher passwordHasher;
         private readonly ITokenAppService tokenAppService;
@@ -34,6 +39,8 @@ namespace EtheriT.Coker.Application.Authorization
         private readonly IMailTemplateAppService mailTemplateAppService;
         private readonly IBonusManagementAppService bonusManagementAppService;
         private readonly FrontMemberEmailValidationService frontMemberEmailValidationService;
+        private readonly IStoreSetAppService storeSetAppService;
+        private readonly FrontAccountEventRecorder accountEvents;
 
         public FrontRegistrationService(
             CokerDbContext db,
@@ -44,7 +51,9 @@ namespace EtheriT.Coker.Application.Authorization
             MailAppService mailAppService,
             IMailTemplateAppService mailTemplateAppService,
             IBonusManagementAppService bonusManagementAppService,
-            FrontMemberEmailValidationService frontMemberEmailValidationService)
+            FrontMemberEmailValidationService frontMemberEmailValidationService,
+            IStoreSetAppService storeSetAppService,
+            FrontAccountEventRecorder accountEvents)
         {
             this.db = db;
             this.passwordHasher = passwordHasher;
@@ -55,20 +64,53 @@ namespace EtheriT.Coker.Application.Authorization
             this.mailTemplateAppService = mailTemplateAppService;
             this.bonusManagementAppService = bonusManagementAppService;
             this.frontMemberEmailValidationService = frontMemberEmailValidationService;
+            this.storeSetAppService = storeSetAppService;
+            this.accountEvents = accountEvents;
         }
 
         public async Task<ResponseMessageDto> AddFrontUser(FrontAddUserDto dto)
         {
             var response = new ResponseMessageDto();
+            long eventWebsiteId = dto.WebsiteId;
+            await RegistrationLock.WaitAsync();
             try
             {
-                var uuid = await tokenAppService.GetUUID();
                 var websiteId = dto.WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.WebsiteId;
+                eventWebsiteId = websiteId;
                 long userId = 0;
+
+                // Read this website's effective value directly, without group/level filtering.
+                var registrationSetting = await storeSetAppService.getValues(new StoreSetGetValueInput
+                {
+                    SiteId = websiteId,
+                    key = "MemberRegister"
+                });
+                var values = registrationSetting.detailItem?.value;
+                if (!registrationSetting.Success || values == null || values.Count != 1 ||
+                    !int.TryParse(values[0], out var registrationType) ||
+                    (registrationType != (int)MemberRegisterTypeEnum.開放註冊 &&
+                     registrationType != (int)MemberRegisterTypeEnum.審核註冊 &&
+                     registrationType != (int)MemberRegisterTypeEnum.關閉註冊))
+                    throw new Exception("無法確認會員註冊設定，請稍後再試或聯絡客服。");
+                if (registrationType == (int)MemberRegisterTypeEnum.關閉註冊)
+                    throw new Exception("目前未開放會員註冊");
 
                 var emailValidation = await frontMemberEmailValidationService.ValidateAsync(websiteId, dto.Email);
                 dto.Email = emailValidation.NormalizedEmail;
                 var frontUser = emailValidation.ConflictingUser;
+                // Reserve the email regardless of activation or lock status.
+                if (frontUser != null)
+                {
+                    if (frontUser.Status == (int)UserStatusEnum.未開通)
+                    {
+                        response.Message = "重新寄送通知信";
+                        throw new Exception(frontUser.OpenIDSendDate.AddDays(1) < DateTime.Now
+                            ? "郵箱已存在且已過開通期限，是否重新寄送通知信？"
+                            : "郵箱已存在但尚未開通，請至郵箱確認或重新寄送通知信。");
+                    }
+                    response.Message = "郵箱已存在";
+                    throw new Exception("郵箱已存在，請更換一個郵箱或直接登入。");
+                }
                 var role = await db.Roles
                     .Where(e =>
                         e.FK_WebsiteId == websiteId &&
@@ -93,14 +135,12 @@ namespace EtheriT.Coker.Application.Authorization
                     frontUser.OpenIDSendDate = DateTime.Now;
 
                     var user = await db.Users.FirstOrDefaultAsync(e => e.Email == frontUser.Email);
-                    var newUser = new User();
                     if (user == null)
                     {
                         user = mapper.Map<User>(dto);
                         user.Password = frontUser.Password;
                         db.Users.Add(user);
                         await loginUserData.SaveChanges(user);
-                        newUser = user;
                     }
 
                     frontUser.FK_User = user.Id;
@@ -109,6 +149,24 @@ namespace EtheriT.Coker.Application.Authorization
                     db.FrontUsers.Add(frontUser);
                     await loginUserData.SaveChanges(frontUser);
                     userId = frontUser.Id;
+
+                    // Establish website ownership before bonus/mail work can fail.
+                    var userWebsite = new MappingFrontUserAndWebsite
+                    {
+                        FK_UserId = frontUser.Id,
+                        FK_WebsiteId = websiteId
+                    };
+                    db.MappingFrontUserAndWebsite.Add(userWebsite);
+                    await loginUserData.SaveChanges(userWebsite);
+
+                    var userRole = new MappingUserAndRole
+                    {
+                        UserId = user.Id,
+                        UUID = frontUser.UUID,
+                        RoleId = role.Id
+                    };
+                    db.MappingUserAndRoles.Add(userRole);
+                    await loginUserData.SaveChanges(userRole);
 
                     var bonusSetting = await bonusManagementAppService.GetBonusSettingForEdit(websiteId);
                     var bonusText = string.Empty;
@@ -126,33 +184,18 @@ namespace EtheriT.Coker.Application.Authorization
                         bonusText = $"歡迎加入會員！我們已為您準備加入會員紅利 {bonusSetting.SignupBonusPoints.Value} 點，立即前往會員中心查看。";
                     }
 
-                    var userRole = new MappingUserAndRole
-                    {
-                        UserId = user.Id,
-                        UUID = frontUser.UUID,
-                        RoleId = role.Id
-                    };
-                    db.MappingUserAndRoles.Add(userRole);
-                    await loginUserData.SaveChanges(userRole);
-
-                    var userWebsite = new MappingFrontUserAndWebsite
-                    {
-                        FK_UserId = frontUser.Id,
-                        FK_WebsiteId = websiteId
-                    };
-                    db.MappingFrontUserAndWebsite.Add(userWebsite);
-                    await loginUserData.SaveChanges(userWebsite);
-
                     var accountLog = new Account_Log
                     {
-                        UUID = uuid,
+                        UUID = frontUser.UUID,
                         WebsiteId = websiteId,
                         Status = (int)AccountStatusEnum.註冊,
                         CreatorUserId = frontUser.Id,
-                        CreationTime = DateTime.Now
+                        CreationTime = DateTime.Now,
+                        EventName = "MemberRegistration", VerificationMethod = "PublicOrExternalRegistration",
+                        Success = true, NewEmail = frontUser.Email, CurrentStatus = frontUser.Status,
+                        KeyFingerprint = FrontAccountEventRecorder.Fingerprint(frontUser.OpenID)
                     };
-                    db.Account_Logs.Add(accountLog);
-                    await db.SaveChangesAsync();
+                    await accountEvents.RecordAsync(accountLog);
 
                     var sendDto = mapper.Map<SendOpeningDto>(dto);
                     sendDto.OpenId = frontUser.OpenID;
@@ -163,15 +206,9 @@ namespace EtheriT.Coker.Application.Authorization
                         response = await SendOpening(sendDto);
                         if (!response.Success)
                         {
-                            userWebsite.IsDeleted = true;
-                            userWebsite.DeletionTime = DateTime.Now;
-                            userRole.IsDeleted = true;
-                            userRole.DeletionTime = DateTime.Now;
-                            newUser.IsDeleted = true;
-                            newUser.DeletionTime = DateTime.Now;
-                            frontUser.IsDeleted = true;
-                            frontUser.DeletionTime = DateTime.Now;
-                            await db.SaveChangesAsync();
+                            // Delivery failure must not release the registered email.
+                            response.Message = "重新寄送通知信";
+                            response.Error = "帳號已建立但開通信寄送失敗，請重新寄送通知信。";
                         }
                     }
                     else
@@ -179,20 +216,8 @@ namespace EtheriT.Coker.Application.Authorization
                         response.Success = true;
                     }
 
-                    if (dto.SendActivationMail)
+                    if (response.Success && dto.SendActivationMail)
                         await SendActivationMail(sendDto);
-                }
-                else if (frontUser.Status == (int)UserStatusEnum.未開通)
-                {
-                    response.Message = "重新寄送通知信";
-                    throw new Exception(frontUser.OpenIDSendDate.AddDays(1) < DateTime.Now
-                        ? "郵箱已存在且已過開通期限，是否重新寄送通知信？"
-                        : "郵箱已存在但尚未開通，請至郵箱確認或重新寄送通知信。");
-                }
-                else if (frontUser.Status == (int)UserStatusEnum.開通)
-                {
-                    response.Message = "郵箱已存在";
-                    throw new Exception("郵箱已存在，請更換一個郵箱或直接登入。");
                 }
 
                 dto.Password = "*********";
@@ -202,6 +227,17 @@ namespace EtheriT.Coker.Application.Authorization
             catch (Exception ex)
             {
                 response.Error = ex.Message;
+            }
+            finally
+            {
+                RegistrationLock.Release();
+                if (!response.Success)
+                    await accountEvents.RecordAsync(new Account_Log
+                    {
+                        WebsiteId = eventWebsiteId, Status = (int)AccountStatusEnum.請求拒絕,
+                        EventName = "RegistrationResult", VerificationMethod = "RegistrationService",
+                        Success = false, FailureReason = "RegistrationOrFollowupFailed", NewEmail = dto.Email
+                    });
             }
             return response;
         }
@@ -223,6 +259,9 @@ namespace EtheriT.Coker.Application.Authorization
 
             var websiteName = string.IsNullOrEmpty(dto.WebsiteName) ? website.Title : dto.WebsiteName;
             var websiteLink = string.IsNullOrEmpty(dto.WebsiteLink) ? website.DefaultUrl : dto.WebsiteLink;
+            var mailMember = await db.FrontUsers.AsNoTracking().FirstOrDefaultAsync(u => u.OpenID == dto.OpenId &&
+                !u.IsDeleted && db.MappingFrontUserAndWebsite.Any(m => m.FK_UserId == u.Id &&
+                    m.FK_WebsiteId == dto.WebsiteId && !m.IsDeleted));
             try
             {
                 var resultDto = new AccountActivationResultDto
@@ -262,6 +301,17 @@ namespace EtheriT.Coker.Application.Authorization
             catch (Exception ex)
             {
                 response.Error = ex.Message;
+            }
+            finally
+            {
+                await accountEvents.RecordAsync(new Account_Log
+                {
+                    UUID = mailMember?.UUID ?? Guid.Empty, CreatorUserId = mailMember?.Id ?? 0,
+                    WebsiteId = dto.WebsiteId, Status = (int)AccountStatusEnum.開通信寄送,
+                    EventName = "ActivationMailSend", VerificationMethod = "SmtpAcceptanceNotDelivery",
+                    Success = response.Success, FailureReason = response.Success ? null : "MailNotSent",
+                    RecipientEmail = dto.Email, KeyFingerprint = FrontAccountEventRecorder.Fingerprint(dto.OpenId)
+                });
             }
             return response;
         }
@@ -307,7 +357,7 @@ namespace EtheriT.Coker.Application.Authorization
             }, website.Contact);
         }
 
-        private static string CheckPassword(string password)
+        internal static string CheckPassword(string password)
         {
             try
             {

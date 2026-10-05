@@ -15,6 +15,12 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         密碼重置 = 4,
         登入失敗 = 5,
         Email重置 = 6,
-        鎖定 =7
+        鎖定 =7,
+        會員資料修改 = 8,
+        帳號開通 = 9,
+        開通信寄送 = 10,
+        密碼重設信寄送 = 11,
+        第三方開通 = 12,
+        請求拒絕 = 13
     }
 }

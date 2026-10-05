@@ -32,7 +32,7 @@ namespace EtheriT.Coker.Application.Member
             if (!new EmailAddressAttribute().IsValid(normalizedEmail))
                 throw new Exception("電子郵件格式不正確");
 
-            var normalizedEmailUpper = normalizedEmail.ToUpper();
+            var normalizedEmailUpper = normalizedEmail.ToUpperInvariant();
             var conflictingUser = await (
                 from user in db.FrontUsers
                 join map in db.MappingFrontUserAndWebsite on user.Id equals map.FK_UserId

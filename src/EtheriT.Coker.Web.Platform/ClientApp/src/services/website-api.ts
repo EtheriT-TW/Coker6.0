@@ -46,7 +46,6 @@ function toSaveRequest(form: WebsiteForm) {
         ServiceStartDate: fromDateInput(form.ServiceStartDate),
         ServiceEndDate: fromDateInput(form.ServiceEndDate),
         Status: form.Status,
-        Status: form.Status,
         SuspendedDate: fromDateInput(form.SuspendedDate),
         TerminatedDate: fromDateInput(form.TerminatedDate),
         IsDomainPending: form.IsDomainPending,

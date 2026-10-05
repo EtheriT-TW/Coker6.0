@@ -76,7 +76,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     $"'self' '{selfInline}' {ExternalStylesheetPolicy.CspSourceExpression}",
                     "AdditionalStyles");
                 var fontSrc = AppendAdditionalSources(
-                    "'self' data: fonts.gstatic.com cdnjs.cloudflare.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",
+                    "'self' data: fonts.gstatic.com cdnjs.cloudflare.com use.fontawesome.com https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",
                     "AdditionalFonts");
                 var imageSrc = AppendAdditionalSources(
                     "'self' *.ezsale.tw *.facebook.com https://static.xx.fbcdn.net https://usage.trackjs.com *.yahoo.com *.google.com *.google.com.tw *.google-analytics.com *.googletagmanager.com *.gstatic.com *.googleapis.com *.youtube.com i.ytimg.com *.cdninstagram.com pbs.twimg.com abs.twimg.com ton.twimg.com ad.doubleclick.net googleads.g.doubleclick.net tr.line.me cdn.ckeditor.com i.imgur.com lh3.googleusercontent.com cdn.discordapp.com githubusercontent.com images.unsplash.com cdn.pixabay.com res.cloudinary.com scaleflex.cloudimg.io data: blob: https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw",

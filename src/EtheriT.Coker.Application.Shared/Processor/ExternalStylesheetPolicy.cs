@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Processor
             "*.google.com",
             "*.gstatic.com",
             "cdnjs.cloudflare.com",
+            "use.fontawesome.com",
             "cdn.ckeditor.com",
             "https://ecpg-stage.ecpay.com.tw",
             "https://ecpg.ecpay.com.tw",

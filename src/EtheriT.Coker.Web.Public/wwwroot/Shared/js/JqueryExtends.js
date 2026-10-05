@@ -10,15 +10,83 @@
         });
     }
 }
+// Per-page diagnostics only: do not create extra image/HEAD requests.
+var imageCheckReported = new Set();
+var imageCheckSucceeded = new Set();
+function rememberImageCheck(cache, source) {
+    if (cache.has(source)) return;
+    if (cache.size >= 500) cache.delete(cache.values().next().value);
+    cache.add(source);
+}
 function jqueryExtend() {
     $.fn.extend({
         imgCheck: function () {
             var $self = $(this);
             $self.each(function (i, item) {
-                $(item).on("error", function () {
-                    FileApi.insertNotFondFile({ Url: $(item).attr("src"), FK_WebsiteID: typeof (SiteId) == "undefined" ? 0 : SiteId });
-                    $(item).attr("src", "/images/noImg.jpg");
-                })
+                var $image = $(item);
+                var previous = $image.data("cokerImageCheck");
+                if (previous) clearTimeout(previous.timer);
+                var state = { timer: null, pending: null };
+                $image.data("cokerImageCheck", state);
+                function sourceKey(source) {
+                    if (!source || /^(data|blob):/i.test(source)) return "";
+                    try {
+                        var url = new URL(source, document.baseURI);
+                        if (!/^https?:$/.test(url.protocol) ||
+                            /\/(noimg\.jpg|directory-loading\.svg)$/i.test(url.pathname)) return "";
+                        return url.href;
+                    } catch (_) { return ""; }
+                }
+                function cancel() {
+                    clearTimeout(state.timer);
+                    state.timer = null;
+                    state.pending = null;
+                }
+                function schedule(source, placeholder) {
+                    var key = sourceKey(source);
+                    cancel();
+                    if (!key || imageCheckReported.has(key) || imageCheckSucceeded.has(key)) return;
+                    var pending = { key: key, source: source, placeholder: placeholder };
+                    state.pending = pending;
+                    state.timer = setTimeout(function () {
+                        state.timer = null;
+                        if (state.pending !== pending || !item.isConnected || imageCheckSucceeded.has(key)) return;
+                        var current = sourceKey(item.currentSrc || item.getAttribute("src"));
+                        var displayed = item.getAttribute("src") || "";
+                        var isLazyFallback = placeholder != null && displayed === placeholder;
+                        if (current !== key && !isLazyFallback) return;
+                        if (current === key && item.naturalWidth > 0) return;
+                        if (!isLazyFallback && !item.complete) return;
+                        if (imageCheckReported.has(key)) return;
+                        rememberImageCheck(imageCheckReported, key);
+                        FileApi.insertNotFondFile({ Url: source, FK_WebsiteID: typeof (SiteId) == "undefined" ? 0 : SiteId });
+                        state.pending = null;
+                        if (!isLazyFallback && displayed === source) item.setAttribute("src", "/images/noImg.jpg");
+                    }, 3000);
+                }
+                // Namespaced handlers make repeated imgCheck calls idempotent.
+                $image.off(".cokerImageCheck")
+                    .on("coker:image-reset.cokerImageCheck", cancel)
+                    .on("coker:image-error.cokerImageCheck", function (event) {
+                        var failure = event.originalEvent.detail;
+                        schedule(failure.source, failure.placeholder);
+                    })
+                    .on("load.cokerImageCheck", function () {
+                        var key = sourceKey(item.currentSrc || item.getAttribute("src"));
+                        if (!key || item.naturalWidth <= 0) return;
+                        rememberImageCheck(imageCheckSucceeded, key);
+                        if (state.pending && state.pending.key === key) cancel();
+                    })
+                    .on("error.cokerImageCheck", function () {
+                        if (item.cokerLazyImageManaged) return;
+                        var declared = item.getAttribute("src") || "";
+                        var actual = item.currentSrc || declared;
+                        schedule(sourceKey(actual) === sourceKey(declared) ? declared : actual, null);
+                    });
+                if (item.complete && item.naturalWidth > 0) {
+                    var loaded = sourceKey(item.currentSrc || item.getAttribute("src"));
+                    if (loaded) rememberImageCheck(imageCheckSucceeded, loaded);
+                }
             });
             return $self;
         }, changeTagName: function (newTag) {

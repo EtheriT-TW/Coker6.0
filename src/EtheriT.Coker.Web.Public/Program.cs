@@ -286,6 +286,8 @@ builder.Host.UseSerilog();
 */
 
 var app = builder.Build();
+// Keep ahead of cookies, redirects, error-page re-execution and all MVC/DB work.
+app.UseMiddleware<ScanPathBlockMiddleware>();
 
 // 使用響應壓縮中間件
 //app.UseResponseCompression();

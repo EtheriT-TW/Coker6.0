@@ -416,6 +416,7 @@ launchSettings.json
 .codex-*/
 **/devextreme-license.js
 **/devextreme-license.ts
+docs/*.*
 
 # Frontend package build outputs
 packages/*/dist/

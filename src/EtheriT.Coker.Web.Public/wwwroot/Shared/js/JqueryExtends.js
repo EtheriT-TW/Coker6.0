@@ -1,23 +1,65 @@
-﻿var FileApi = {
-    insertNotFondFile: function (data) {
-        data.from = location.href;
-        return $.ajax({
-            url: "/api/File/insertNotFondFile",
-            type: "POST",
-            contentType: 'application/json; charset=utf-8',
-            data: JSON.stringify(data),
-            dataType: "json"
-        });
+﻿var FileApi = (function () {
+    const NOT_FOUND_IMG_STORAGE_KEY = "notFoundImgReported";
+    const reportedNotFoundImgs = new Set();
+
+    function getNotFoundImgKey(data){
+        return `${data.FK_WebsiteID}|${data.Url}`;
     }
-}
+
+    function readReportedNotFoundImgs(){
+        try{
+            const records = JSON.parse(localStorage.getItem(NOT_FOUND_IMG_STORAGE_KEY));
+            return Array.isArray(records) ? records : [];
+        }catch(e){
+            return [];
+        }
+    }
+
+    function hasReportedNotFound(key){
+        return reportedNotFoundImgs.has(key) || readReportedNotFoundImgs().includes(key);
+    }
+
+    function saveReportedNotFound(key){
+        try{
+            const records = readReportedNotFoundImgs();
+            if(records.includes(key))
+                return;
+
+            localStorage.setItem(NOT_FOUND_IMG_STORAGE_KEY, JSON.stringify([...records, key]));
+        }catch{
+            //localStorage無法使用時，僅靠記憶體去重
+        }
+    }
+
+    return {
+        insertNotFondFile: function(data){
+            const key = getNotFoundImgKey(data);
+            if(!data.Url || hasReportedNotFound(key)){
+                return $.Deferred().resolve().promise();
+            }
+            reportedNotFoundImgs.add(key);
+            return $.ajax({
+                url: "/api/File/insertNotFondFile",
+                type: "POST",
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({ ...data, from: location.href }),
+                dataType: "json"
+            }).done(function(){saveReportedNotFound(key)})
+              .fail(function(){reportedNotFoundImgs.delete(key)});
+        }
+    };
+})();
 function jqueryExtend() {
     $.fn.extend({
         imgCheck: function () {
             var $self = $(this);
             $self.each(function (i, item) {
-                $(item).on("error", function () {
-                    FileApi.insertNotFondFile({ Url: $(item).attr("src"), FK_WebsiteID: typeof (SiteId) == "undefined" ? 0 : SiteId });
-                    $(item).attr("src", "/images/noImg.jpg");
+                $(item).off("error.imgCheck").on("error.imgCheck", function () {
+                    var noImgPath = "/images/noImg.jpg";
+                    var src = $(item).attr("src");
+                    if (src === noImgPath) return;
+                    FileApi.insertNotFondFile({ Url: src, FK_WebsiteID: typeof (SiteId) == "undefined" ? 0 : SiteId });
+                    $(item).attr("src", noImgPath);
                 })
             });
             return $self;

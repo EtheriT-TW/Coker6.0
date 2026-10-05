@@ -9,6 +9,10 @@ const uploadOnlyAssetType = 'coker-image-list-batch-upload';
 const masonryPurposeCode = 'imglist-layout-change';
 const masonryLayoutClass = 'layout-masonry';
 const layoutTraitName = 'cokerLayout';
+// 瀑布式跨欄改由前台 Frame.js 依實際欄寬決定；這裡只記錄圖片高寬比，舊版寫入的尺寸 class 一併清掉
+const legacyMasonryClasses = ['masonry-span-1', 'masonry-span-2', 'masonry-size-s', 'masonry-size-m', 'masonry-size-l', 'masonry-size-xl'];
+const masonryRatioAttribute = 'data-ratio';
+
 
 // 往外層找最近的元件名稱（元件拖入時由 addBlockMetadata 蓋上），名稱不固定
 function findBlockName(component) {
@@ -215,6 +219,31 @@ function setOptionalAttribute(component, name, value) {
     else component.removeAttributes?.([name]);
 }
 
+// 記錄圖片高寬比給前台排版用；畫布裡的圖片還沒載入時，等載入完再補記
+function recordMasonryRatio(item) {
+    item.component.removeClass(legacyMasonryClasses);
+    const element = item.image?.getEl?.();
+    if (!element) {
+        return;
+    }
+
+    const record = () => {
+        if (element.naturalWidth) {
+            item.component.addAttributes({
+                [masonryRatioAttribute]: (element.naturalHeight / element.naturalWidth).toFixed(4)
+            });
+        }
+    };
+    if (element.complete) {
+        record();
+    } else {
+        element.addEventListener('load', record, { once: true });
+    }
+}
+
+function recordMasonryRatios(editor, imageList) {
+    getDirectImageItems(editor, imageList).forEach(recordMasonryRatio);
+}
 function getDirectImageItems(editor, imageList) {
     const templateId = String(
         imageList.getAttributes?.()['data-edit-template'] || ''
@@ -304,6 +333,9 @@ function applyImageListChanges(editor, imageList, items, originalItemComponents)
     });
 
     collection.reset(nextChildren);
+    if ((imageList.getClasses?.() || []).includes(masonryLayoutClass)) {
+        recordMasonryRatios(editor, imageList);
+    }
     editor.select?.(imageList);
     editor.refresh?.();
 }
@@ -675,6 +707,8 @@ function appendImageItem(imageList, template, asset) {
     if (template.component) {
         item = template.component.clone();
         revealTemplateClone(item, template.templateId);
+        // 樣板通常是第一張圖，複製時會連它的高寬比一起帶過來，清掉讓新圖重新記錄
+        item.removeAttributes([masonryRatioAttribute]);
         imageList.append(item);
     } else {
         item = imageList.append(defaultItemHtml)?.[0] || null;
@@ -715,6 +749,9 @@ function appendUploadedImages(editor, imageList, assets) {
     });
 
     if (addedCount) {
+        if ((imageList.getClasses?.() || []).includes(masonryLayoutClass)) {
+            recordMasonryRatios(editor, imageList);
+        }
         editor.select?.(imageList);
         editor.refresh?.();
     }
@@ -875,6 +912,7 @@ export function imageListPlugin(editor) {
                         handleLayoutChange() {
                 if (this.get(layoutTraitName) === 'masonry') {
                     this.addClass(masonryLayoutClass);
+                    recordMasonryRatios(editor, this);
                 } else {
                     this.removeClass(masonryLayoutClass);
                 }

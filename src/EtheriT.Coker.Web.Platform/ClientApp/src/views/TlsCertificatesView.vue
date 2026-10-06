@@ -1,22 +1,38 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { DxColumn, DxDataGrid, DxPaging, DxPager, DxSearchPanel, DxFilterRow, DxSorting, DxColumnChooser } from "devextreme-vue/data-grid";
+import { installWebsiteTls } from '@/services/site-tls';
+import { getPlatformContext } from '@/services/platform-context';
 import { useRoute } from "vue-router";
 import { fetchProvisioningServers, fetchServerTlsStatus } from "@/services/provisioning-api";
 import type { ProvisioningServer, ServerTlsStatus } from "@/types/provisioning";
 
+const canControlServers = ref(false);
+const installingSite = ref('');
+async function installTls(siteName: string): Promise<void> {
+  if (installingSite.value || !inventory.value?.IsOnline) return;
+  const serverId = selectedServer.value;
+  const site = websites.value.find(item => item.SiteName === siteName);
+  const hosts = site?.HostNames ?? (site?.HttpsUrls ?? []).flatMap(url => {
+    try { return [new URL(url).hostname]; } catch { return []; }
+  });
+  installingSite.value = siteName;
+  try { await installWebsiteTls(serverId, siteName, hosts); }
+  catch (cause) { error.value = cause instanceof Error ? cause.message : '無法送出 TLS 任務。'; }
+  finally { installingSite.value = ''; }
+}
 const route = useRoute();
 const servers = ref<ProvisioningServer[]>([]);
 const selectedServer = ref("");
 const inventory = ref<ServerTlsStatus | null>(null);
 const loading = ref(false);
 const error = ref("");
-type SummaryFilter = 'all' | 'attention' | 'valid' | 'expiring' | 'expired' | 'renewalFailed' | 'uncertain';
+type SummaryFilter = 'all' | 'attention' | 'valid' | 'expiring' | 'expired' | 'renewalFailed' | 'uncertain' | 'renewalMissing';
 const selectedFilter = ref<SummaryFilter>('all');
 const filterLabels: Record<SummaryFilter, string> = {
   all: '全部網站', attention: '需處理網站', valid: '憑證有效期正常的網站',
   expiring: '憑證即將到期的網站', expired: '憑證已到期的網站',
-  renewalFailed: '自動更新失敗網站', uncertain: '憑證檢查異常網站'
+  renewalFailed: '自動更新失敗網站', uncertain: '憑證檢查異常網站', renewalMissing: '未發現 renewal 的網站'
 };
 function toggleSummaryFilter(filter: SummaryFilter): void {
   selectedFilter.value = selectedFilter.value === filter ? 'all' : filter;
@@ -113,7 +129,9 @@ const gridRows = computed(() => rows.value.map(row => {
   const historical = !!recordTime && !!row.NotBefore && recordTime.getTime() < row.NotBefore.getTime();
   // Site-level logs are not proof that the currently loaded certificate failed to install.
   const current = historical ? undefined : latest;
+  const renewalMissing = row.Status !== '沒有 HTTPS' && websites.value.find(site => site.SiteName === row.Website)?.RenewalDetected === false;
   const attention = [
+    ...(renewalMissing ? ['未設定續期'] : []),
     ...(['已到期', '30 天內到期', '尚未生效'].includes(row.Status) ? [row.Status] : []),
     ...(row.Status === '無法確認' ? ['憑證待確認'] : []),
     ...(current?.Result === '失敗' ? ['自動更新作業失敗'] : []),
@@ -121,6 +139,8 @@ const gridRows = computed(() => rows.value.map(row => {
     ...(current?.Result === '無法確認' ? ['更新紀錄不完整'] : [])
   ];
   const explanations: string[] = [];
+  const renewalAdvice = websites.value.find(site => site.SiteName === row.Website)?.RenewalAdvice;
+  if (renewalAdvice) explanations.push(renewalAdvice);
   if (row.Status === '已到期') explanations.push('憑證已到期，訪客可能看到安全警告。請立即通知管理員更換憑證。');
   if (row.Status === '30 天內到期') explanations.push(`憑證將在 ${row.RemainingDays} 天內到期。請管理員確認自動更新能在到期前完成。`);
   if (row.Status === '尚未生效') explanations.push('憑證尚未開始生效。請管理員確認生效日期與伺服器時間。');
@@ -134,12 +154,13 @@ const gridRows = computed(() => rows.value.map(row => {
   if (historical && latest?.Result !== '成功') explanations.push(`歷史更新紀錄（${formatTime(recordTime?.toISOString())}）早於目前憑證生效時間，未列入目前更新異常。`);
   return {
     ...row,
+    RenewalMissing: renewalMissing,
     Attention: attention.join('、'),
     Overview: row.Status === '已到期' ? '已到期' : current?.Result === '失敗' ? '更新作業異常'
       : row.Status === '無法確認' ? '檢查異常' : row.Status === '30 天內到期' ? '即將到期'
       : row.Status === '尚未生效' ? '尚未生效' : current?.Result === '成功但有錯誤' ? '更新有異常'
       : current?.Result === '無法確認' ? '更新需確認'
-      : row.Status === '沒有 HTTPS' ? '未設定安全連線' : '有效期正常',
+      : renewalMissing ? '未設定續期' : row.Status === '沒有 HTTPS' ? '未設定安全連線' : '有效期正常',
     Explanation: explanations.join('\n'),
     SiteState: row.IisState === 'Started' ? '運作中' : row.IisState === 'Stopped' ? '已停止' : row.IisState,
     RenewalResult: historical ? `歷史紀錄：${latest?.Result}` : latest?.Result ?? (wacsLogs.value?.Error ? '日誌讀取失敗'
@@ -218,6 +239,7 @@ const websiteCategories = computed(() => {
     expired: sitesWithStatus('已到期'),
     expiring: sitesWithStatus('30 天內到期'),
     uncertain: sitesWithStatus('無法確認'),
+    renewalMissing: new Set(gridRows.value.filter(row => row.RenewalMissing).map(row => row.Website)),
     renewalFailed: new Set(gridRows.value.filter(row => row.RenewalResult === '失敗').map(row => row.Website)),
     attention: new Set(gridRows.value.filter(row => row.Attention).map(row => row.Website))
   };
@@ -229,6 +251,7 @@ const summary = computed(() => ({
     expired: websiteCategories.value.expired.size,
     expiring: websiteCategories.value.expiring.size,
     uncertain: websiteCategories.value.uncertain.size,
+    renewalMissing: websiteCategories.value.renewalMissing.size,
     renewalFailed: websiteCategories.value.renewalFailed.size,
     attention: websiteCategories.value.attention.size,
     scheduleNonzero: scheduleRows.value.filter(task => task.LastRun && task.LastResult !== 0 && task.State !== '執行中').length
@@ -274,7 +297,8 @@ watch(selectedServer, () => {
 });
 onMounted(async () => {
   try {
-    const result = await fetchProvisioningServers();
+    const [result, context] = await Promise.all([fetchProvisioningServers(), getPlatformContext()]);
+    canControlServers.value = context.CanControlServers;
     if (disposed) return;
     servers.value = result;
     const requested = typeof route.query.server === "string" ? route.query.server : "";
@@ -324,6 +348,7 @@ onBeforeUnmount(() => { disposed = true; ++requestVersion; if (timer !== undefin
       <button type="button" class="summary-warning" :class="{ selected: selectedFilter === 'expiring' }" :aria-pressed="selectedFilter === 'expiring'" @click="toggleSummaryFilter('expiring')"><span>憑證即將到期的網站</span><strong>{{ summary.expiring }} <small>個網站</small></strong><small>有憑證將於 30 天內到期</small></button>
       <button type="button" class="summary-danger" :class="{ selected: selectedFilter === 'expired' }" :aria-pressed="selectedFilter === 'expired'" @click="toggleSummaryFilter('expired')"><span>憑證已到期的網站</span><strong>{{ summary.expired }} <small>個網站</small></strong><small>有憑證已到期，需立即處理</small></button>
       <button type="button" class="summary-danger" :class="{ selected: selectedFilter === 'renewalFailed' }" :aria-pressed="selectedFilter === 'renewalFailed'" @click="toggleSummaryFilter('renewalFailed')"><span>自動更新失敗網站</span><strong>{{ summary.renewalFailed }} <small>個網站</small></strong><small>最近一次更新失敗</small></button>
+      <button type="button" class="summary-warning" :class="{ selected: selectedFilter === 'renewalMissing' }" :aria-pressed="selectedFilter === 'renewalMissing'" @click="toggleSummaryFilter('renewalMissing')"><span>未發現 renewal</span><strong>{{ summary.renewalMissing }} <small>個網站</small></strong><small>缺少對應續期設定</small></button>
       <button type="button" class="summary-warning" :class="{ selected: selectedFilter === 'uncertain' }" :aria-pressed="selectedFilter === 'uncertain'" @click="toggleSummaryFilter('uncertain')"><span>憑證檢查異常網站</span><strong>{{ summary.uncertain }} <small>個網站</small></strong><small>未能取得到期資訊</small></button>
     </div>
     <p class="scope-note">點擊卡片可查看對應網站。同一網站可能同時有更新失敗與檢查異常，請勿將各卡片數字相加；下方「需處理網站」已去除重複。此頁尚未驗證網站實際連線。</p>
@@ -348,6 +373,7 @@ onBeforeUnmount(() => { disposed = true; ++requestVersion; if (timer !== undefin
       <DxColumn data-field="Overview" caption="目前狀況" :width="120" cell-template="status" />
       <DxColumn data-field="NotAfter" caption="憑證到期日" data-type="datetime" format="yyyy/MM/dd" :width="115" />
       <DxColumn data-field="RemainingDays" caption="剩餘天數" data-type="number" :width="90" />
+      <DxColumn v-if="canControlServers" caption="TLS 安裝" :width="145" cell-template="install-tls" :allow-filtering="false" :allow-sorting="false" />
       <DxColumn data-field="Explanation" caption="問題說明與處理建議" :min-width="270" cell-template="multiline" />
       <DxColumn data-field="SiteState" caption="網站運作狀態" :visible="false" />
       <DxColumn data-field="Status" caption="憑證有效期狀態" :visible="false" />
@@ -365,6 +391,7 @@ onBeforeUnmount(() => { disposed = true; ++requestVersion; if (timer !== undefin
       <DxColumn data-field="Issuer" caption="發行者" :visible="false" />
       <DxColumn data-field="Thumbprint" caption="憑證指紋" :visible="false" />
       <DxColumn data-field="NotBefore" caption="生效時間" data-type="datetime" format="yyyy/MM/dd HH:mm" :visible="false" />
+      <template #install-tls="{ data }"><button type="button" :disabled="!inventory?.IsOnline || !!installingSite || !(websites.find(site => site.SiteName === data.data.Website)?.HostNames?.length || websites.find(site => site.SiteName === data.data.Website)?.HttpsUrls.length)" @click="installTls(data.data.Website)">安裝／更新 TLS</button></template>
       <template #multiline="{ data }"><span class="multiline">{{ data.value }}</span></template>
       <template #website="{ data }"><span>{{ data.value }}</span><small class="site-state">{{ data.data.SiteState }}</small></template>
       <template #status="{ data }"><span class="status-label" :class="{ 'status-good': data.value === '有效期正常', 'status-issue': data.data.Attention }">{{ data.value }}</span></template>
@@ -377,7 +404,7 @@ onBeforeUnmount(() => { disposed = true; ++requestVersion; if (timer !== undefin
       <p v-if="wacsSchedule?.Error">更新排程：{{ wacsSchedule.Error }}</p>
       <p>同網站相同指紋的憑證合併顯示。PFX 依網址檔名推定對應，尚未驗證網站實際使用的憑證。更新結果依最近日誌的明確網站名稱或網域對應；不推測 any site 或 +N other。沒有紀錄不代表從未更新，成功紀錄不代表已完成網站安裝驗證。</p>
       <p>集中式憑證：{{ centralStore?.Enabled === true ? '已啟用' : centralStore?.Enabled === false ? '未啟用' : '無法確認' }} · 目錄：{{ centralStore?.DirectoryPath || '—' }}</p>
-      <p>讀取 win-acme 本機日誌與工作排程；不啟動 win-acme、PowerShell 或讀取事件檢視器。每次 Worker 啟動採集一次，之後每日採集；重新整理只讀最近回報。</p>
+      <p>讀取 win-acme 續期設定、本機日誌與工作排程；不啟動 win-acme、PowerShell 或讀取事件檢視器。每次 Worker 啟動採集一次，之後每日採集；重新整理只讀最近回報。</p>
     </details>
   </section>
   <section class="data-card tls-list">

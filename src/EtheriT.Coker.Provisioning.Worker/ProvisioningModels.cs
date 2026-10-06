@@ -20,6 +20,10 @@ public sealed class ProvisioningWorkerOptions
     public bool SslEnabled { get; set; } = true;
     public string WacsPath { get; set; } = @"C:\Program Files\win-acme\wacs.exe";
     public string WacsTaskFolder { get; set; } = @"\";
+    // Must match the ConfigPath of the win-acme instance invoked by WacsPath.
+    public string WacsRenewalDirectory { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+        "win-acme", "acme-v02.api.letsencrypt.org");
     public string AcmeEmail { get; set; } = string.Empty;
 }
 

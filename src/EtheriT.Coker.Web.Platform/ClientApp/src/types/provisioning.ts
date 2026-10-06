@@ -87,7 +87,7 @@ export interface ServerTlsStatus {
       Executions?: { Id: string; StartedAtUtc: string | null; CompletedAtUtc: string | null;
         TaskName: string; Result: string; Details: string; FileName: string; StartLine: number; EndLine: number }[] | null;
       Files: { FileName: string; LastWriteAtUtc: string; ErrorEntries: number | null; WarningEntries: number | null; Error: string | null }[] } | null;
-    Websites?: { SiteName: string; State: string; HttpsBindings: string[]; HttpsUrls: string[] }[] | null;
+    Websites?: { SiteName: string; State: string; HttpsBindings: string[]; HttpsUrls: string[]; RenewalAdvice?: string | null; HostNames?: string[] | null; RenewalDetected?: boolean | null }[] | null;
     CentralStore?: { CollectedAtUtc: string | null; Enabled: boolean | null; DirectoryPath: string | null;
       PfxFileNames: string[]; Error: string | null;
       Certificates?: { FileName: string; Subject: string | null; Issuer: string | null; Thumbprint: string | null;

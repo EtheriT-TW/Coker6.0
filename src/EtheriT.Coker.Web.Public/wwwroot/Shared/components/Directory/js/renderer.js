@@ -216,7 +216,7 @@
         $content.find(".dirname").removeClass("d-none").text(data.dirname || "");
 
         const imglink = normalizeImagePath(data.orgName, data.mainImage);
-        $content.find("img").attr("src", imglink);
+        $content.find("img").attr("loading", "lazy").attr("src", imglink);
         $content.find("img").imgCheck().attr("alt", `${data.title}的主要圖片`);
 
         $content.find(".title").text(data.title || "");

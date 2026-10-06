@@ -6,7 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace EtheriT.Coker.Provisioning.Worker;
 
-/// <summary>Diagnostic step 1: IIS website/HTTPS binding list only; no certificate or renewal reads.</summary>
+/// <summary>Read IIS bindings, renewal sources, certificates and renewal diagnostics.</summary>
 public sealed partial class TlsCertificateCollector(ProcessRunner runner, ILogger<TlsCertificateCollector> logger,
     ProvisioningWorkerOptions options)
 {
@@ -30,6 +30,10 @@ public sealed partial class TlsCertificateCollector(ProcessRunner runner, ILogge
             var document = XDocument.Parse(output);
             if (document.Root?.Name.LocalName != "appcmd")
                 throw new InvalidOperationException("Unexpected IIS website list response.");
+            IReadOnlyList<WacsRenewalInventory.Renewal> renewals = [];
+            string? renewalError = null;
+            try { renewals = WacsRenewalInventory.Read(options); }
+            catch (Exception ex) { renewalError = "無法盤點續期設定，請確認 WacsRenewalDirectory 與設定格式：" + ex.Message; }
             var websites = document.Descendants("SITE").Select(site =>
             {
                 var name = (string?)site.Attribute("SITE.NAME")
@@ -48,7 +52,25 @@ public sealed partial class TlsCertificateCollector(ProcessRunner runner, ILogge
                     var port = binding[(portSeparator + 1)..hostSeparator];
                     return $"https://{host}{(port == "443" ? string.Empty : ":" + port)}";
                 }).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-                return new TlsWebsite(name, (string?)site.Attribute("state") ?? "Unknown", bindings, urls);
+                var matches = renewals.Where(renewal => WacsRenewalInventory.Matches(renewal, site)).ToArray();
+                bool? renewalDetected = renewalError is not null || renewals.Any(renewal => renewal.Filtered)
+                    ? null : matches.Length > 0;
+                var advice = new List<string>();
+                if (renewalError is not null) advice.Add(renewalError);
+                else
+                {
+                    if (bindings.Length > 0 && renewalDetected == false)
+                        advice.Add("未發現此網站綁定任何 renewal；目前憑證即使仍有效，也缺少已辨識的自動續期設定。請使用安裝／更新 TLS 建立。");
+                    if (renewalDetected is null) advice.Add("續期來源含進階篩選，無法確認是否存在對應 renewal，請人工核對。");
+                    if (matches.Length > 1) advice.Add("此站對應多筆 renewal，建議確認網域覆蓋後整理為每站一筆。");
+                    if (matches.Any(renewal => renewal.AllSites || renewal.SiteIds.Length > 1))
+                        advice.Add("此站使用多站共用 renewal；仍沿用共用設定續期。建議逐站拆分，接手成功後再取消舊設定。");
+                    if (matches.Any(renewal => renewal.Filtered)) advice.Add("續期來源含進階篩選，請人工確認網域覆蓋。");
+                    if (matches.Length > 0 && urls.Any(url => !matches.Any(renewal => renewal.Hosts.Length == 0
+                        || renewal.Hosts.Contains(new Uri(url).Host, StringComparer.OrdinalIgnoreCase))))
+                        advice.Add("部分 HTTPS 網域未被已辨識的續期設定涵蓋，請編輯既有設定確認。");
+                }
+                return new TlsWebsite(name, (string?)site.Attribute("state") ?? "Unknown", bindings, urls, string.Join(" ", advice), WacsRenewalInventory.Hosts(site), renewalDetected);
             }).OrderBy(site => site.SiteName, StringComparer.OrdinalIgnoreCase).ToArray();
             snapshot = new TlsSnapshot(DateTime.UtcNow, [], null, websites);
             logger.LogInformation("TLS step 1 completed at {TimeUtc}: {Count} websites; {ElapsedMs} ms",

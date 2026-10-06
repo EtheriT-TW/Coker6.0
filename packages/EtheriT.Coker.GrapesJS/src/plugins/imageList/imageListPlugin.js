@@ -8,6 +8,14 @@ const defaultItemHtml = '<a href="#" data-link-value="#" data-link-type="link" t
 const uploadOnlyAssetType = 'coker-image-list-batch-upload';
 const masonryPurposeCode = 'imglist-layout-change';
 const masonryLayoutClass = 'layout-masonry';
+// 瀑布式 2 倍圖片（寬度占兩欄）；格列不吃這個 class
+const masonryScaleClass = 'masonry-scale-2';
+const masonryScaleOptions = [1, 2];
+// 匯入時自動設 2 倍的條件：橫圖（寬 ÷ 高 ≥ 1.3）且寬度夠大，放大後才不會糊
+const masonryAutoScaleMinAspect = 1.3;
+const masonryAutoScaleMinWidth = 1200;
+// 一次匯入最多約 1/8 設成 2 倍：2 倍圖面積是 1 倍的 4 倍，張數太多會占掉大半版面而難以分開
+const masonryAutoScaleMaxShare = 0.125;
 const layoutTraitName = 'cokerLayout';
 // 自動排序要兼顧的欄數（對應 Frame.css 的 4／3／2 欄斷點）
 const masonryColumnCounts = [4, 3, 2];
@@ -18,6 +26,7 @@ const masonryMaxRounds = 3;
 const masonryMaxAutoArrangeItems = 150;
 const masonryRatioTimeout = 3000;
 const masonryConfirmMessage = '切換為瀑布式排版後，系統會依圖片比例自動調整圖片順序，讓各欄底部盡量對齊。\n目前的圖片順序將被取代，確定要切換嗎？';
+const masonryRearrangeMessage = '系統會依圖片比例與倍率重新調整圖片順序，讓各欄底部盡量對齊。\n目前的圖片順序將被取代，確定要重新排序嗎？';
 
 // 往外層找最近的元件名稱（元件拖入時由 addBlockMetadata 蓋上），名稱不固定
 function findBlockName(component) {
@@ -97,7 +106,9 @@ function normalizeAsset(asset) {
         mediumGuid: asset?.get?.('mediumGuid') || asset?.mediumGuid ||
             asset?.attributes?.mediumGuid || '',
         thumbnailGuid: asset?.get?.('thumbnailGuid') || asset?.thumbnailGuid ||
-            asset?.attributes?.thumbnailGuid || ''
+            asset?.attributes?.thumbnailGuid || '',
+        width: Number(asset?.get?.('width') || asset?.width || asset?.attributes?.width) || 0,
+        height: Number(asset?.get?.('height') || asset?.height || asset?.attributes?.height) || 0
     };
 }
 
@@ -259,6 +270,7 @@ function getDirectImageItems(editor, imageList) {
             guid: anchorAttributes['data-image-guid'] || '',
             mediumGuid: anchorAttributes['data-medium-guid'] || '',
             thumbnailGuid: anchorAttributes['data-thumbnail-guid'] || '',
+            scale: (component.getClasses?.() || []).includes(masonryScaleClass) ? 2 : 1,
             visible: !(component.getClasses?.() || []).some(className => (
                 className === 'backstageType' || className === 'd-none'
             )),
@@ -285,32 +297,52 @@ function loadImageRatio(src) {
     });
 }
 
-// 模擬 masonry：依序把每張圖放進目前最矮的欄（同高取最左），回傳最高與最矮欄的差距
-function measureMasonryImbalance(ratios, order, columnCount) {
+// 模擬 masonry 擺放：1 倍放進最矮的欄；2 倍找相鄰兩欄中「較高那欄」最低的位置（同高取最左），
+// 和 masonry 的規則相同。回傳各欄高低差＋2 倍圖下方被墊出來的空格，越小越整齊
+function measureMasonryLayoutCost(entries, order, columnCount) {
     const heights = new Array(columnCount).fill(0);
+    let gaps = 0;
     order.forEach(index => {
-        const shortest = heights.indexOf(Math.min(...heights));
-        heights[shortest] += ratios[index] + masonryItemGap;
+        const { ratio, scale } = entries[index];
+        const span = Math.min(scale, columnCount);
+        let column = 0;
+        let top = Infinity;
+        for (let start = 0; start + span <= columnCount; start += 1) {
+            let groupTop = heights[start];
+            for (let offset = 1; offset < span; offset += 1) {
+                groupTop = Math.max(groupTop, heights[start + offset]);
+            }
+            if (groupTop < top) {
+                top = groupTop;
+                column = start;
+            }
+        }
+        // 寬度變成 span 欄，高度跟著原比例放大 span 倍
+        const nextHeight = top + ratio * span + masonryItemGap;
+        for (let offset = 0; offset < span; offset += 1) {
+            gaps += top - heights[column + offset];
+            heights[column + offset] = nextHeight;
+        }
     });
-    return Math.max(...heights) - Math.min(...heights);
+    return Math.max(...heights) - Math.min(...heights) + gaps;
 }
 
-function measureMasonryCost(ratios, order) {
+function measureMasonryCost(entries, order) {
     return masonryColumnCounts.reduce(
-        (sum, columnCount) => sum + measureMasonryImbalance(ratios, order, columnCount), 0);
+        (sum, columnCount) => sum + measureMasonryLayoutCost(entries, order, columnCount), 0);
 }
 
 // 從原本順序出發兩兩交換，變整齊才保留，盡量少動使用者排好的順序
-function balanceMasonryOrder(ratios) {
-    const order = ratios.map((_, index) => index);
-    let bestCost = measureMasonryCost(ratios, order);
+function balanceMasonryOrder(entries) {
+    const order = entries.map((_, index) => index);
+    let bestCost = measureMasonryCost(entries, order);
     let isImproved = true;
     for (let round = 0; isImproved && round < masonryMaxRounds; round += 1) {
         isImproved = false;
         for (let i = 0; i < order.length - 1; i += 1) {
             for (let j = i + 1; j < order.length; j += 1) {
                 [order[i], order[j]] = [order[j], order[i]];
-                const nextCost = measureMasonryCost(ratios, order);
+                const nextCost = measureMasonryCost(entries, order);
                 if (nextCost < bestCost - 0.0001) {
                     bestCost = nextCost;
                     isImproved = true;
@@ -332,7 +364,8 @@ async function orderItemsForMasonry(items) {
     }
 
     const ratios = await Promise.all(visibleItems.map(item => loadImageRatio(item.src)));
-    const orderedVisibleItems = balanceMasonryOrder(ratios).map(index => visibleItems[index]);
+    const entries = visibleItems.map((item, index) => ({ ratio: ratios[index], scale: item.scale }));
+    const orderedVisibleItems = balanceMasonryOrder(entries).map(index => visibleItems[index]);
     let nextIndex = 0;
     return items.map(item => (item.visible ? orderedVisibleItems[nextIndex++] : item));
 }
@@ -342,7 +375,7 @@ async function arrangeMasonryOrder(editor, imageList) {
     const items = getDirectImageItems(editor, imageList);
     const orderedItems = await orderItemsForMasonry(items);
     // 等圖片載入期間使用者可能已切回格列，就不再動順序
-    if (imageList.get(layoutTraitName) !== 'masonry' ||
+    if (!isMasonryLayout(imageList) ||
         orderedItems.every((item, index) => item === items[index])) {
         return;
     }
@@ -359,12 +392,18 @@ async function arrangeMasonryOrder(editor, imageList) {
     editor.refresh?.();
 }
 
-function confirmMasonrySwitch(editor) {
+// 以畫布上的 class 判斷：從未選取過的相簿沒有 cokerLayout 屬性，但 class 一定在
+function isMasonryLayout(imageList) {
+    return (imageList.getClasses?.() || []).includes(masonryLayoutClass);
+}
+
+
+function confirmMasonrySwitch(editor, message = masonryConfirmMessage) {
     if (editor.AlertManager?.confirm) {
-        return editor.AlertManager.confirm(masonryConfirmMessage);
+        return editor.AlertManager.confirm(message);
     }
 
-    return Promise.resolve(Boolean(globalThis.confirm?.(masonryConfirmMessage)));
+    return Promise.resolve(Boolean(globalThis.confirm?.(message)));
 }
 
 function applyImageListChanges(editor, imageList, items, originalItemComponents) {
@@ -388,11 +427,13 @@ function applyImageListChanges(editor, imageList, items, originalItemComponents)
         setOptionalAttribute(item.anchor, 'data-medium-guid', item.mediumGuid);
         const classes = item.component.getClasses?.() || [];
         const normalizedClasses = classes.filter(className => (
-            className !== 'd-none' && className !== 'backstageType'
+            className !== 'd-none' && className !== 'backstageType' && className !== masonryScaleClass
         ));
-        item.component.setClass(item.visible
-            ? normalizedClasses
-            : [...normalizedClasses, 'backstageType']);
+        item.component.setClass([
+            ...normalizedClasses,
+            ...(item.scale === 2 ? [masonryScaleClass] : []),
+            ...(item.visible ? [] : ['backstageType'])
+        ]);
     });
 
     const orderedComponents = items.map(item => item.component);
@@ -488,7 +529,11 @@ export function openImageListEditor(editor, imageList) {
                 <div class="coker-image-list-layout" role="group" aria-label="排版方式">
                     <button type="button" data-layout="grid">格列</button>
                     <button type="button" data-layout="masonry">瀑布式</button>
-                </div>` : '';
+                </div>
+                <button type="button" data-action="rearrange" title="依圖片比例與倍率重新排列順序">
+                    <span class="material-symbols-outlined" aria-hidden="true">auto_awesome_mosaic</span>
+                    <span>重新排序</span>
+                </button>` : '';
     const root = document.createElement('div');
     root.className = 'coker-image-list-editor';
     root.innerHTML = `
@@ -543,6 +588,31 @@ export function openImageListEditor(editor, imageList) {
             const field = document.createElement('label');
             const label = document.createElement('span');
             const input = document.createElement('input');
+            // 倍率只在瀑布式生效，格列時不顯示（設定值保留）
+            const scaleField = document.createElement('div');
+            scaleField.className = 'coker-image-list-scale';
+            scaleField.setAttribute('role', 'group');
+            scaleField.setAttribute('aria-label', `圖片 ${index + 1} 的倍率`);
+            const scaleLabel = document.createElement('span');
+            scaleLabel.textContent = '倍率';
+            scaleField.append(scaleLabel);
+            masonryScaleOptions.forEach(scale => {
+                const scaleButton = document.createElement('button');
+                const isActive = item.scale === scale;
+                scaleButton.type = 'button';
+                scaleButton.textContent = `${scale} 倍`;
+                scaleButton.title = scale === 2 ? '寬度占兩欄，高度依原圖比例' : '寬度占一欄';
+                scaleButton.classList.toggle('is-active', isActive);
+                scaleButton.setAttribute('aria-pressed', String(isActive));
+                scaleButton.addEventListener('click', () => {
+                    if (item.scale === scale) {
+                        return;
+                    }
+                    item.scale = scale;
+                    render();
+                });
+                scaleField.append(scaleButton);
+            });
 
             card.className = 'coker-image-list-card';
             card.dataset.index = String(index);
@@ -664,7 +734,7 @@ export function openImageListEditor(editor, imageList) {
             orderField.append(orderLabel, orderInput);
             cardHeader.append(orderField, visibilityButton, handle, deleteButton);
             field.append(label, input);
-            card.append(cardHeader, preview, field);
+            card.append(cardHeader, preview, ...(layout === 'masonry' ? [scaleField] : []), field);
             handle.addEventListener('dragstart', event => {
                 draggedItem = item;
                 card.classList.add('is-dragging');
@@ -731,17 +801,38 @@ export function openImageListEditor(editor, imageList) {
         nameSortDirection = isAscending ? 'desc' : 'asc';
         render();
     });
-        const layoutButtons = Array.from(root.querySelectorAll('[data-layout]'));
+    const layoutButtons = Array.from(root.querySelectorAll('[data-layout]'));
+    const rearrangeButton = root.querySelector('[data-action="rearrange"]');
+    const arrangeButtons = rearrangeButton ? [...layoutButtons, rearrangeButton] : layoutButtons;
     const renderLayoutButtons = () => {
         layoutButtons.forEach(button => {
             const isActive = button.dataset.layout === layout;
             button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-pressed', String(isActive));
         });
+        rearrangeButton?.classList.toggle('is-hidden', layout !== 'masonry');
     };
-    // 切到瀑布式先確認，再把編輯視窗裡的圖片換成重排後的順序；按「完成」才會套用到畫布
+    // 先確認，再把編輯視窗裡的圖片換成瀑布式重排後的順序；按「完成」才會套用到畫布
+    const arrangeEditorItems = async message => {
+        if (!await confirmMasonrySwitch(editor, message)) {
+            return;
+        }
+
+        arrangeButtons.forEach(element => { element.disabled = true; });
+        try {
+            const orderedItems = await orderItemsForMasonry(items);
+            items.splice(0, items.length, ...orderedItems);
+            layout = 'masonry';
+            render();
+        } catch (error) {
+            editor.AlertManager?.error?.(error?.message || '瀑布式自動排序失敗。');
+        } finally {
+            arrangeButtons.forEach(element => { element.disabled = false; });
+            renderLayoutButtons();
+        }
+    };
     layoutButtons.forEach(button => {
-        button.addEventListener('click', async () => {
+        button.addEventListener('click', () => {
             const nextLayout = button.dataset.layout;
             if (nextLayout === layout) {
                 return;
@@ -749,26 +840,14 @@ export function openImageListEditor(editor, imageList) {
             if (nextLayout === 'grid') {
                 layout = 'grid';
                 renderLayoutButtons();
-                return;
-            }
-            if (!await confirmMasonrySwitch(editor)) {
-                return;
-            }
-
-            layoutButtons.forEach(element => { element.disabled = true; });
-            try {
-                const orderedItems = await orderItemsForMasonry(items);
-                items.splice(0, items.length, ...orderedItems);
-                layout = 'masonry';
                 render();
-            } catch (error) {
-                editor.AlertManager?.error?.(error?.message || '瀑布式自動排序失敗。');
-            } finally {
-                layoutButtons.forEach(element => { element.disabled = false; });
-                renderLayoutButtons();
+                return;
             }
+            arrangeEditorItems(masonryConfirmMessage);
         });
     });
+    // 調整倍率後原本的順序可能留下空格，讓使用者自己決定要不要再排一次
+    rearrangeButton?.addEventListener('click', () => arrangeEditorItems(masonryRearrangeMessage));
     renderLayoutButtons();
     // 相簿內容與排版一起套用；isArranged 讓元件不再跳確認、也不再重排一次
     const applyChanges = () => {
@@ -829,7 +908,7 @@ export function openImageListEditor(editor, imageList) {
     render();
 }
 
-function appendImageItem(imageList, template, asset) {
+function appendImageItem(imageList, template, asset, scale = 1) {
     let item;
     if (template.component) {
         item = template.component.clone();
@@ -843,6 +922,12 @@ function appendImageItem(imageList, template, asset) {
     if (!image) {
         item?.remove?.();
         return false;
+    }
+    // 沒有指定樣板時會複製第一張圖，不能連它的倍率一起帶過來
+    item.removeClass?.(masonryScaleClass);
+
+    if (scale === 2) {
+        item.addClass?.(masonryScaleClass);
     }
 
     image.addAttributes?.({
@@ -863,12 +948,28 @@ function appendImageItem(imageList, template, asset) {
     return true;
 }
 
+// 依上傳回傳的寬高挑出要設 2 倍的圖：符合條件的依像素由大到小，最多取這次匯入張數的 1/8（無條件進位）
+function pickAutoScaledSources(assets) {
+    const limit = Math.ceil(assets.length * masonryAutoScaleMaxShare);
+    const candidates = assets.filter(asset => (
+        asset.width >= masonryAutoScaleMinWidth &&
+        asset.height > 0 &&
+        asset.width / asset.height >= masonryAutoScaleMinAspect
+    ));
+    return new Set([...candidates]
+        .sort((left, right) => right.width * right.height - left.width * left.height)
+        .slice(0, limit)
+        .map(asset => asset.src));
+}
+
 function appendUploadedImages(editor, imageList, assets) {
     const template = resolveTemplate(editor, imageList);
+    const scaledSources = pickAutoScaledSources(assets);
     let addedCount = 0;
 
     assets.forEach(asset => {
-        if (asset.src && appendImageItem(imageList, template, asset)) {
+        const scale = scaledSources.has(asset.src) ? 2 : 1;
+        if (asset.src && appendImageItem(imageList, template, asset, scale)) {
             addedCount += 1;
         }
     });
@@ -953,12 +1054,18 @@ export function openImageListBatchUpload(editor, imageList, options = {}) {
         editor.off('asset:upload:end', collectUploadResult);
         editor.off('coker:asset-upload:complete', collectUploadResult);
 
-        appendUploadedImages(
+        const addedCount = appendUploadedImages(
             editor,
             imageList,
             Array.from(collectedAssets.values())
         );
-        options.onComplete?.();
+        // 瀑布式下匯入新圖後自動重新排序；排完才重開相簿編輯，否則編輯視窗會拿到舊順序，按「完成」又蓋回去
+        const arranged = addedCount && isMasonryLayout(imageList)
+            ? arrangeMasonryOrder(editor, imageList).catch(error => {
+                editor.AlertManager?.error?.(error?.message || '瀑布式自動排序失敗。');
+            })
+            : Promise.resolve();
+        arranged.then(() => options.onComplete?.());
     };
 
     editor.on('asset:add', collectAsset);

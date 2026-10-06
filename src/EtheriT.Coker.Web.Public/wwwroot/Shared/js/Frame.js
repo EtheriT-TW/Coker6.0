@@ -1,6 +1,17 @@
 ﻿// 與 Frame.css 的 0.5rem 欄距一致
 const ALBUM_MASONRY_GUTTER = 8;
 const ALBUM_MASONRY_SELECTOR = ".imageList.layout-masonry";
+const ALBUM_MASONRY_SIZER_CLASS = "masonry-sizer";
+// 2 倍圖若會在旁邊墊出超過「一欄寬 × 這個比例」的空白，就先讓後面的圖補位
+const ALBUM_GAP_TOLERANCE = 0.1;
+// 2 倍圖最多往後延幾個位置，避免和後台排的順序差太多
+const ALBUM_MAX_DEFER = 3;
+
+// masonry 以隱形的 .masonry-sizer 當作一欄寬；沒有它時會拿第一張圖的寬度，第一張是 2 倍就會算錯
+function ensureAlbumSizer($grid) {
+    if ($grid.children("." + ALBUM_MASONRY_SIZER_CLASS).length) return;
+    $grid.prepend('<div class="' + ALBUM_MASONRY_SIZER_CLASS + '" aria-hidden="true"></div>');
+}
 
 // 與格列共用同一張佔位圖；LazyImage 未載入時退回站內預設圖
 function showAlbumPlaceholder(image) {
@@ -9,6 +20,54 @@ function showAlbumPlaceholder(image) {
     // 佔位圖本身也失敗時不再重設，避免無限循環
     if (image.getAttribute("src") === placeholder) return;
     image.setAttribute("src", placeholder);
+}
+
+// 照 masonry 的規則算出格子會放在哪：1 欄放最矮的欄；跨欄找「範圍內最高那欄」最低的位置（同高取最左）。
+// gap 是放下去後，範圍內較矮的欄被墊出來的空白高度
+function measureAlbumPlacement(msnry, colYs, item) {
+    item.getSize();
+    var remainder = item.size.outerWidth % msnry.columnWidth;
+    var mathMethod = remainder && remainder < 1 ? "round" : "ceil";
+    var colSpan = Math.min(Math[mathMethod](item.size.outerWidth / msnry.columnWidth), msnry.cols);
+    var best = null;
+    for (var start = 0; start + colSpan <= colYs.length; start++) {
+        var top = Math.max.apply(null, colYs.slice(start, start + colSpan));
+        if (!best || top < best.top) best = { start: start, top: top };
+    }
+    var gap = 0;
+    for (var i = 0; i < colSpan; i++) gap += best.top - colYs[best.start + i];
+    return { start: best.start, top: best.top, colSpan: colSpan, gap: gap, height: item.size.outerHeight };
+}
+
+// 只調整 masonry 的擺放順序、不動 DOM：2 倍圖放下去會留空白時先往後延，
+// 讓後面不會留空白的圖先補進空位；每次排版都依當下欄數重算，所以 4／3／2 欄各自成立
+function orderAlbumItemsForGaps(msnry, items) {
+    if (!msnry.cols || msnry.cols < 2) return items;
+    var colYs = msnry.colYs.slice();
+    var tolerance = msnry.columnWidth * ALBUM_GAP_TOLERANCE;
+    var pending = items.map(function (item) { return { item: item, deferred: 0 }; });
+    var ordered = [];
+    while (pending.length) {
+        var first = pending[0];
+        var pick = 0;
+        var placement = measureAlbumPlacement(msnry, colYs, first.item);
+        if (placement.gap > tolerance && first.deferred < ALBUM_MAX_DEFER) {
+            for (var i = 1; i < pending.length; i++) {
+                var candidate = measureAlbumPlacement(msnry, colYs, pending[i].item);
+                if (candidate.gap <= tolerance) {
+                    pick = i;
+                    placement = candidate;
+                    break;
+                }
+            }
+        }
+        if (pick > 0) first.deferred += 1;
+        for (var c = 0; c < placement.colSpan; c++) {
+            colYs[placement.start + c] = placement.top + placement.height;
+        }
+        ordered.push(pending.splice(pick, 1)[0].item);
+    }
+    return ordered;
 }
 
 // 同一畫格內多次觸發只重排一次
@@ -32,8 +91,10 @@ function filterAlbumItems(elems) {
 function startAlbumMasonry($grid) {
     // 先加標記再初始化：CSS 需要這個 class 才會覆蓋 Bootstrap 的 position-relative
     $grid.addClass("is-masonry-ready");
+    ensureAlbumSizer($grid);
     $grid.masonry({
         itemSelector: ".imageItem",
+        columnWidth: "." + ALBUM_MASONRY_SIZER_CLASS,
         percentPosition: true,
         gutter: ALBUM_MASONRY_GUTTER,
         // 圖片陸續載入會多次重排，關閉滑動動畫避免畫面飄移
@@ -43,6 +104,11 @@ function startAlbumMasonry($grid) {
     });
     var msnry = $grid.data("masonry");
     msnry._filterFindItemElements = filterAlbumItems;
+    // 每次排版（含視窗縮放、圖片載入後重排）前先調整擺放順序，避免 2 倍圖旁邊留空白
+    var originalLayoutItems = msnry.layoutItems;
+    msnry.layoutItems = function (items, isInstant) {
+        return originalLayoutItems.call(this, orderAlbumItemsForGaps(this, this._getItemsForLayout(items)), isInstant);
+    };
     msnry.reloadItems();
     msnry.layout();
     // 綁定前就已經失敗的圖（complete 但沒有尺寸）也要補換
@@ -54,6 +120,7 @@ function startAlbumMasonry($grid) {
 function stopAlbumMasonry($grid) {
     // destroy 會清掉 masonry 寫在元素上的定位
     if ($grid.data("masonry")) $grid.masonry("destroy");
+    $grid.children("." + ALBUM_MASONRY_SIZER_CLASS).remove();
     $grid.removeClass("is-masonry-ready");
 }
 
@@ -72,7 +139,11 @@ function syncAlbumMasonry(grid, hasChildChange) {
         return;
     }
     if (!$grid.hasClass("is-masonry-ready")) $grid.addClass("is-masonry-ready");
-    if (hasChildChange) $grid.masonry("reloadItems");
+    if (hasChildChange) {
+        // GrapesJS 重畫子元素時會把 sizer 一起清掉，要補回來，否則 masonry 抓不到欄寬
+        ensureAlbumSizer($grid);
+        $grid.masonry("reloadItems");
+    }
     queueAlbumLayout($grid);
 }
 

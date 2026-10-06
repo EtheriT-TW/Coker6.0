@@ -71,9 +71,42 @@
         opacity: .6;
     }
 
+.coker-image-list-toolbar button.is-hidden {
+    display: none;
+}
+
+.coker-image-list-scale {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #d8d8d8;
+    font-size: 12px;
+}
+
+    .coker-image-list-scale > span {
+        margin-right: auto;
+    }
+
+    .coker-image-list-scale button {
+        min-width: 52px;
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid #666;
+        border-radius: 4px;
+        color: #f5f5f5;
+        background: #454545;
+        cursor: pointer;
+    }
+
+        .coker-image-list-scale button.is-active {
+            border-color: #2588d8;
+            background: #2588d8;
+        }
+
+
 .coker-image-list-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
     max-height: min(62vh, 650px);
     padding: 2px;
@@ -247,13 +280,28 @@
     background: #2588d8;
 }
 
+/* 卡片上排有排序、顯示、拖曳、刪除，至少要約 180px 寬才不會擠在一起，螢幕變窄時依序減少欄數 */
+@media (max-width: 899.98px) {
+    .coker-image-list-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 719.98px) {
+    .coker-image-list-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 640px) {
     .coker-image-list-toolbar {
         align-items: flex-start;
         flex-direction: column;
     }
+}
 
+@media (max-width: 479.98px) {
     .coker-image-list-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: minmax(0, 1fr);
     }
 }

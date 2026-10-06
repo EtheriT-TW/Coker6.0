@@ -9,6 +9,15 @@ const uploadOnlyAssetType = 'coker-image-list-batch-upload';
 const masonryPurposeCode = 'imglist-layout-change';
 const masonryLayoutClass = 'layout-masonry';
 const layoutTraitName = 'cokerLayout';
+// 自動排序要兼顧的欄數（對應 Frame.css 的 4／3／2 欄斷點）
+const masonryColumnCounts = [4, 3, 2];
+// 每格除了圖片以外的高度（間距＋內距），以「一欄寬」為單位的估計值
+const masonryItemGap = 0.06;
+const masonryMaxRounds = 3;
+// 張數太多時兩兩交換會卡住畫面，超過就不自動排序
+const masonryMaxAutoArrangeItems = 150;
+const masonryRatioTimeout = 3000;
+const masonryConfirmMessage = '切換為瀑布式排版後，系統會依圖片比例自動調整圖片順序，讓各欄底部盡量對齊。\n目前的圖片順序將被取代，確定要切換嗎？';
 
 // 往外層找最近的元件名稱（元件拖入時由 addBlockMetadata 蓋上），名稱不固定
 function findBlockName(component) {
@@ -261,6 +270,103 @@ function getDirectImageItems(editor, imageList) {
     }).filter(Boolean);
 }
 
+// 讀圖片的高寬比；用獨立的 Image 載入，相簿編輯中剛換掉、還沒套用到畫布的圖也讀得到，失敗或逾時當成正方形
+function loadImageRatio(src) {
+    return new Promise(resolve => {
+        const image = new Image();
+        const finish = () => {
+            globalThis.clearTimeout(timer);
+            resolve(image.naturalWidth ? image.naturalHeight / image.naturalWidth : 1);
+        };
+        const timer = globalThis.setTimeout(finish, masonryRatioTimeout);
+        image.addEventListener('load', finish, { once: true });
+        image.addEventListener('error', finish, { once: true });
+        image.src = src;
+    });
+}
+
+// 模擬 masonry：依序把每張圖放進目前最矮的欄（同高取最左），回傳最高與最矮欄的差距
+function measureMasonryImbalance(ratios, order, columnCount) {
+    const heights = new Array(columnCount).fill(0);
+    order.forEach(index => {
+        const shortest = heights.indexOf(Math.min(...heights));
+        heights[shortest] += ratios[index] + masonryItemGap;
+    });
+    return Math.max(...heights) - Math.min(...heights);
+}
+
+function measureMasonryCost(ratios, order) {
+    return masonryColumnCounts.reduce(
+        (sum, columnCount) => sum + measureMasonryImbalance(ratios, order, columnCount), 0);
+}
+
+// 從原本順序出發兩兩交換，變整齊才保留，盡量少動使用者排好的順序
+function balanceMasonryOrder(ratios) {
+    const order = ratios.map((_, index) => index);
+    let bestCost = measureMasonryCost(ratios, order);
+    let isImproved = true;
+    for (let round = 0; isImproved && round < masonryMaxRounds; round += 1) {
+        isImproved = false;
+        for (let i = 0; i < order.length - 1; i += 1) {
+            for (let j = i + 1; j < order.length; j += 1) {
+                [order[i], order[j]] = [order[j], order[i]];
+                const nextCost = measureMasonryCost(ratios, order);
+                if (nextCost < bestCost - 0.0001) {
+                    bestCost = nextCost;
+                    isImproved = true;
+                } else {
+                    [order[i], order[j]] = [order[j], order[i]];
+                }
+            }
+        }
+    }
+    return order;
+}
+
+// 回傳依瀑布式重排後的新陣列；只動顯示中的圖片，隱藏圖留在原本的位置
+async function orderItemsForMasonry(items) {
+    const visibleItems = items.filter(item => item.visible);
+    const minColumnCount = Math.min(...masonryColumnCounts);
+    if (visibleItems.length <= minColumnCount || visibleItems.length > masonryMaxAutoArrangeItems) {
+        return items;
+    }
+
+    const ratios = await Promise.all(visibleItems.map(item => loadImageRatio(item.src)));
+    const orderedVisibleItems = balanceMasonryOrder(ratios).map(index => visibleItems[index]);
+    let nextIndex = 0;
+    return items.map(item => (item.visible ? orderedVisibleItems[nextIndex++] : item));
+}
+
+// 元件設定切成瀑布式時，直接重排畫布內的相簿；樣板與非圖片子元件留在原位
+async function arrangeMasonryOrder(editor, imageList) {
+    const items = getDirectImageItems(editor, imageList);
+    const orderedItems = await orderItemsForMasonry(items);
+    // 等圖片載入期間使用者可能已切回格列，就不再動順序
+    if (imageList.get(layoutTraitName) !== 'masonry' ||
+        orderedItems.every((item, index) => item === items[index])) {
+        return;
+    }
+
+    const collection = imageList.components?.();
+    if (!collection) {
+        return;
+    }
+    const slots = new Set(items.map(item => item.component));
+    let nextIndex = 0;
+    collection.reset(Array.from(collection.models || collection).map(component => (
+        slots.has(component) ? orderedItems[nextIndex++].component : component
+    )));
+    editor.refresh?.();
+}
+
+function confirmMasonrySwitch(editor) {
+    if (editor.AlertManager?.confirm) {
+        return editor.AlertManager.confirm(masonryConfirmMessage);
+    }
+
+    return Promise.resolve(Boolean(globalThis.confirm?.(masonryConfirmMessage)));
+}
+
 function applyImageListChanges(editor, imageList, items, originalItemComponents) {
     const collection = imageList.components?.();
     if (!collection) {
@@ -376,6 +482,13 @@ export function openImageListEditor(editor, imageList) {
 
     const items = getDirectImageItems(editor, imageList);
     const originalItemComponents = new Set(items.map(item => item.component));
+    const canSwitchLayout = canSwitchToMasonry(editor, imageList);
+    let layout = (imageList.getClasses?.() || []).includes(masonryLayoutClass) ? 'masonry' : 'grid';
+    const layoutSwitchHtml = canSwitchLayout ? `
+                <div class="coker-image-list-layout" role="group" aria-label="排版方式">
+                    <button type="button" data-layout="grid">格列</button>
+                    <button type="button" data-layout="masonry">瀑布式</button>
+                </div>` : '';
     const root = document.createElement('div');
     root.className = 'coker-image-list-editor';
     root.innerHTML = `
@@ -388,7 +501,7 @@ export function openImageListEditor(editor, imageList) {
                 <button type="button" data-action="sort-name" aria-label="依名稱順序排序">
                     <span>依名稱排序</span>
                     <span class="material-symbols-outlined" data-role="sort-name-icon" aria-hidden="true">swap_vert</span>
-                </button>
+                </button>${layoutSwitchHtml}
             </div>
             <span>可拖曳或輸入排序號碼；點擊圖片可更換。</span>
         </div>
@@ -618,8 +731,54 @@ export function openImageListEditor(editor, imageList) {
         nameSortDirection = isAscending ? 'desc' : 'asc';
         render();
     });
-    root.querySelector('[data-action="upload"]').addEventListener('click', () => {
+        const layoutButtons = Array.from(root.querySelectorAll('[data-layout]'));
+    const renderLayoutButtons = () => {
+        layoutButtons.forEach(button => {
+            const isActive = button.dataset.layout === layout;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+    };
+    // 切到瀑布式先確認，再把編輯視窗裡的圖片換成重排後的順序；按「完成」才會套用到畫布
+    layoutButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const nextLayout = button.dataset.layout;
+            if (nextLayout === layout) {
+                return;
+            }
+            if (nextLayout === 'grid') {
+                layout = 'grid';
+                renderLayoutButtons();
+                return;
+            }
+            if (!await confirmMasonrySwitch(editor)) {
+                return;
+            }
+
+            layoutButtons.forEach(element => { element.disabled = true; });
+            try {
+                const orderedItems = await orderItemsForMasonry(items);
+                items.splice(0, items.length, ...orderedItems);
+                layout = 'masonry';
+                render();
+            } catch (error) {
+                editor.AlertManager?.error?.(error?.message || '瀑布式自動排序失敗。');
+            } finally {
+                layoutButtons.forEach(element => { element.disabled = false; });
+                renderLayoutButtons();
+            }
+        });
+    });
+    renderLayoutButtons();
+    // 相簿內容與排版一起套用；isArranged 讓元件不再跳確認、也不再重排一次
+    const applyChanges = () => {
         applyImageListChanges(editor, imageList, items, originalItemComponents);
+        if (canSwitchLayout) {
+            imageList.set(layoutTraitName, layout, { isArranged: true });
+        }
+    };
+    root.querySelector('[data-action="upload"]').addEventListener('click', () => {
+        applyChanges();
         editor.Modal.close();
         openImageListBatchUpload(editor, imageList, {
             onComplete() {
@@ -637,7 +796,7 @@ export function openImageListEditor(editor, imageList) {
             item.needsProcessing && String(item.fullSrc || '').includes('/upload/')
         ));
         if (!hasPendingImages) {
-            applyImageListChanges(editor, imageList, items, originalItemComponents);
+            applyChanges();
             editor.Modal.close();
             return;
         }
@@ -653,7 +812,7 @@ export function openImageListEditor(editor, imageList) {
                     ? `正在檢查並補齊相簿圖片：${completed} / ${total}`
                     : '圖片路徑與縮圖參數完整，不需要重新處理。');
             });
-            applyImageListChanges(editor, imageList, items, originalItemComponents);
+            applyChanges();
             editor.Modal.close();
         } catch (error) {
             editor.AlertManager?.error?.(error?.message || '圖片批次處理失敗。');
@@ -872,13 +1031,25 @@ export function imageListPlugin(editor) {
             init() {
                 this.on(`change:${layoutTraitName}`, this.handleLayoutChange);
             },
-                        handleLayoutChange() {
-                if (this.get(layoutTraitName) === 'masonry') {
-                    this.addClass(masonryLayoutClass);
-                } else {
+            async handleLayoutChange(model, value, options = {}) {
+                if (this.get(layoutTraitName) !== 'masonry') {
                     this.removeClass(masonryLayoutClass);
+                    refreshCanvasMasonry(editor, this);
+                    return;
                 }
+                // 相簿編輯已確認並排好順序時，只需要套用 class
+                if (!options.isArranged && !await confirmMasonrySwitch(editor)) {
+                    this.set(layoutTraitName, 'grid');
+                    return;
+                }
+
+                this.addClass(masonryLayoutClass);
                 refreshCanvasMasonry(editor, this);
+                if (!options.isArranged) {
+                    arrangeMasonryOrder(editor, this).catch(error => {
+                        console.error('瀑布式自動排序失敗', error);
+                    });
+                }
             }
         }
     });

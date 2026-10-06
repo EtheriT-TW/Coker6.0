@@ -43,6 +43,34 @@
     cursor: pointer;
 }
 
+/* 相簿編輯的排版切換：兩顆按鈕併成一組，目前選中的那顆亮起 */
+.coker-image-list-layout {
+    display: inline-flex;
+}
+
+.coker-image-list-toolbar .coker-image-list-layout button {
+    border-radius: 0;
+}
+
+    .coker-image-list-toolbar .coker-image-list-layout button:first-child {
+        border-radius: 5px 0 0 5px;
+    }
+
+    .coker-image-list-toolbar .coker-image-list-layout button:last-child {
+        margin-left: -1px;
+        border-radius: 0 5px 5px 0;
+    }
+
+    .coker-image-list-toolbar .coker-image-list-layout button.is-active {
+        border-color: #2588d8;
+        background: #2588d8;
+    }
+
+    .coker-image-list-toolbar .coker-image-list-layout button:disabled {
+        cursor: progress;
+        opacity: .6;
+    }
+
 .coker-image-list-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));

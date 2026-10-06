@@ -96,39 +96,6 @@ iframe {
         max-height: none !important;
     }
 
-/* 欄寬基準：masonry 以這個隱形元素的寬度當作一欄，大圖才能正確橫跨兩欄 */
-.imageList.layout-masonry > .masonry-sizer {
-    position: absolute;
-    visibility: hidden;
-    height: 0;
-    width: calc((100% - 1.5rem) / 4);
-}
-
-/* 跨欄由 Frame.js 排版時依欄寬判斷；只改寬度，高度跟著圖片原比例，完整顯示不裁切 */
-.imageList.layout-masonry > .imageItem.masonry-wide {
-    width: calc((100% - 1.5rem) / 4 * 2 + 0.5rem) !important;
-}
-
-@media only screen and (max-width: 991.98px) {
-    .imageList.layout-masonry > .masonry-sizer {
-        width: calc((100% - 1rem) / 3);
-    }
-
-    .imageList.layout-masonry > .imageItem.masonry-wide {
-        width: calc((100% - 1rem) / 3 * 2 + 0.5rem) !important;
-    }
-}
-
-@media only screen and (max-width: 767.98px) {
-    .imageList.layout-masonry > .masonry-sizer {
-        width: calc((100% - 0.5rem) / 2);
-    }
-
-    /* 手機只有兩欄，跨兩欄會變成整排滿版，改回一欄 */
-    .imageList.layout-masonry > .imageItem.masonry-wide {
-        width: calc((100% - 0.5rem) / 2) !important;
-    }
-}
 /* masonry 需要絕對定位，但 .imageItem 帶有 Bootstrap 的 position-relative（!important），
    只在 JS 啟動後覆蓋，避免尚未排版時所有圖片疊在左上角 */
 .imageList.layout-masonry.is-masonry-ready > .imageItem {

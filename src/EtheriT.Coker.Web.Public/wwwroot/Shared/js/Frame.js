@@ -29,94 +29,11 @@ function filterAlbumItems(elems) {
     });
 }
 
-// masonry 以隱形的 .masonry-sizer 當作一欄寬；沒有它時會拿第一張圖的寬度，第一張跨兩欄就會算錯
-function ensureAlbumSizer($grid) {
-    if ($grid.children(".masonry-sizer").length) return;
-    $grid.prepend('<div class="masonry-sizer" aria-hidden="true"></div>');
-}
-
-// 跨兩欄時，兩欄底部高度差在這個範圍內才放大，超過就會在旁邊留下空格
-const ALBUM_WIDE_TOLERANCE = 24;
-// 高÷寬達到這個值算直圖，直圖本來就夠高，不放大
-const ALBUM_TALL_RATIO = 1.2;
-const ALBUM_WIDE_CLASS = "masonry-wide";
-
-// 圖片高寬比：優先用 GrapesJS 存的 data-ratio（圖片還沒載入也拿得到），沒有才看已載入的原始尺寸
-function getAlbumItemRatio(item) {
-    var ratio = parseFloat(item.getAttribute("data-ratio"));
-    if (ratio > 0) return ratio;
-    var image = item.querySelector("img");
-    return image && image.naturalWidth ? image.naturalHeight / image.naturalWidth : 0;
-}
-
-// 先替圖片保留高度：圖片還沒載入時格子就是正確大小，不會載入後再跳動
-function reserveAlbumImageHeight(item, ratio) {
-    var image = item.querySelector("img");
-    if (image && ratio > 0) image.style.aspectRatio = String(1 / ratio);
-}
-
-// 找出 masonry 會放跨兩欄圖片的位置（兩欄中較高者最低、最靠左）；
-// 兩欄底部不齊，或比最矮的欄高太多時回傳 null，代表放下去會留空格
-function findAlbumWidePair(heights) {
-    var best = null;
-    for (var i = 0; i < heights.length - 1; i++) {
-        var top = Math.max(heights[i], heights[i + 1]);
-        if (!best || top < best.top) best = { index: i, top: top };
-    }
-    var isLevel = Math.abs(heights[best.index] - heights[best.index + 1]) <= ALBUM_WIDE_TOLERANCE;
-    var isLowest = best.top - Math.min.apply(null, heights) <= ALBUM_WIDE_TOLERANCE;
-    return isLevel && isLowest ? best : null;
-}
-
-// 照 masonry 的擺放順序先算一遍各欄高度（每張圖都落在最矮的欄），
-// 只有放得剛好、不會留空格的位置才讓圖片跨兩欄
-function assignAlbumWideItems($grid) {
-    var grid = $grid[0];
-    var sizer = $grid.children(".masonry-sizer")[0];
-    var items = filterAlbumItems(grid.children);
-    $(items).removeClass(ALBUM_WIDE_CLASS);
-    items = items.filter(function (item) { return item.offsetWidth > 0; });
-    if (!sizer || !items.length) return;
-
-    var columnWidth = sizer.getBoundingClientRect().width;
-    var columnCount = Math.round((grid.clientWidth + ALBUM_MASONRY_GUTTER) / (columnWidth + ALBUM_MASONRY_GUTTER));
-    var sampleImage = items[0].querySelector("img");
-    var paddingX = items[0].offsetWidth - (sampleImage ? sampleImage.offsetWidth : 0);
-    var paddingY = items[0].offsetHeight - (sampleImage ? sampleImage.offsetHeight : 0);
-    var marginBottom = parseFloat(getComputedStyle(items[0]).marginBottom) || 0;
-    var heights = new Array(columnCount).fill(0);
-    var isPreviousWide = false;
-
-    items.forEach(function (item) {
-        var ratio = getAlbumItemRatio(item);
-        reserveAlbumImageHeight(item, ratio);
-        // 只剩兩欄（手機）時跨兩欄會變整排滿版，不放大
-        var canWiden = columnCount >= 3 && !isPreviousWide && ratio > 0 && ratio < ALBUM_TALL_RATIO;
-        var pair = canWiden ? findAlbumWidePair(heights) : null;
-        if (pair) {
-            item.classList.add(ALBUM_WIDE_CLASS);
-            var wideHeight = ratio * (columnWidth * 2 + ALBUM_MASONRY_GUTTER - paddingX) + paddingY + marginBottom;
-            heights[pair.index] = heights[pair.index + 1] = pair.top + wideHeight;
-            isPreviousWide = true;
-            return;
-        }
-        var narrowHeight = ratio > 0
-            ? ratio * (columnWidth - paddingX) + paddingY + marginBottom
-            : item.offsetHeight + marginBottom;
-        var shortest = heights.indexOf(Math.min.apply(null, heights));
-        heights[shortest] += narrowHeight;
-        isPreviousWide = false;
-    });
-}
-
-
 function startAlbumMasonry($grid) {
     // 先加標記再初始化：CSS 需要這個 class 才會覆蓋 Bootstrap 的 position-relative
     $grid.addClass("is-masonry-ready");
-    ensureAlbumSizer($grid);
     $grid.masonry({
         itemSelector: ".imageItem",
-        columnWidth: ".masonry-sizer",
         percentPosition: true,
         gutter: ALBUM_MASONRY_GUTTER,
         // 圖片陸續載入會多次重排，關閉滑動動畫避免畫面飄移
@@ -126,12 +43,6 @@ function startAlbumMasonry($grid) {
     });
     var msnry = $grid.data("masonry");
     msnry._filterFindItemElements = filterAlbumItems;
-    // 每次排版（含視窗縮放、圖片載入後重排）前，先依當下欄寬決定哪些圖跨兩欄
-    var originalLayout = msnry.layout;
-    msnry.layout = function () {
-        assignAlbumWideItems($grid);
-        return originalLayout.apply(this, arguments);
-    };
     msnry.reloadItems();
     msnry.layout();
     // 綁定前就已經失敗的圖（complete 但沒有尺寸）也要補換
@@ -144,8 +55,6 @@ function stopAlbumMasonry($grid) {
     // destroy 會清掉 masonry 寫在元素上的定位
     if ($grid.data("masonry")) $grid.masonry("destroy");
     $grid.removeClass("is-masonry-ready");
-    $grid.children(".masonry-sizer").remove();
-    $grid.children(".imageItem").removeClass(ALBUM_WIDE_CLASS).find("img").css("aspect-ratio", "");
 }
 
 // 依目前 class 決定啟動、關閉或重排；後台切換排版、相簿編輯增刪圖片、
@@ -163,7 +72,6 @@ function syncAlbumMasonry(grid, hasChildChange) {
         return;
     }
     if (!$grid.hasClass("is-masonry-ready")) $grid.addClass("is-masonry-ready");
-    ensureAlbumSizer($grid);
     if (hasChildChange) $grid.masonry("reloadItems");
     queueAlbumLayout($grid);
 }

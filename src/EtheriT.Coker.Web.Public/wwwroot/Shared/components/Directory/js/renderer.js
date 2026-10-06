@@ -229,11 +229,11 @@
 
         if ($content.is("a")) {
             if ($content.find("img").length && $content.find("h3,h4,h5,h6,span,p").length) {
-                $content.find("img").imgCheck().attr("alt", " ");
+                $content.find("img").attr("alt", " ");
             }
         } else {
             if ($content.find("a img").length && $content.find("a").find("h3,h4,h5,h6,span,p").length) {
-                $content.find("img").imgCheck().attr("alt", " ");
+                $content.find("img").attr("alt", " ");
             }
         }
 

@@ -23,9 +23,10 @@
         var fadeDuration = Number(options.fadeDuration);
         if (!Number.isFinite(fadeDuration)) fadeDuration = 250;
 
-        function showPlaceholder(image) {
+        function showPlaceholder(image, failed) {
             var state = states.get(image);
             if (!state) return;
+            if (failed !== true) image.dispatchEvent(new CustomEvent("coker:image-reset"));
 
             image.style.transition = "none";
             image.style.opacity = "1";
@@ -41,6 +42,7 @@
         function load(image) {
             var state = states.get(image);
             if (!state || !state.source || image.getAttribute("src") === state.source) return;
+            image.dispatchEvent(new CustomEvent("coker:image-reset"));
 
             image.style.transition = "none";
             image.style.opacity = "0";
@@ -65,7 +67,12 @@
         function onError(event) {
             var image = event.currentTarget;
             var state = states.get(image);
-            if (state && image.getAttribute("src") === state.source) showPlaceholder(image);
+            if (state && image.getAttribute("src") === state.source) {
+                image.dispatchEvent(new CustomEvent("coker:image-error", {
+                    detail: { source: state.source, placeholder: state.placeholder }
+                }));
+                showPlaceholder(image, true);
+            }
         }
 
         images.forEach(function (image) {
@@ -75,6 +82,7 @@
             var placeholder = image.getAttribute("data-placeholder-src") ||
                 (declaredSource ? currentSource : (options.placeholder || defaultPlaceholder));
             states.set(image, { source: source, placeholder: placeholder });
+            image.cokerLazyImageManaged = true;
             image.addEventListener("load", onLoad);
             image.addEventListener("error", onError);
             showPlaceholder(image);
@@ -117,6 +125,8 @@
                 image.removeEventListener("load", onLoad);
                 image.removeEventListener("error", onError);
                 states.delete(image);
+                delete image.cokerLazyImageManaged;
+                image.dispatchEvent(new CustomEvent("coker:image-reset"));
             });
         }
 

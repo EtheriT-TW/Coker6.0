@@ -2,12 +2,14 @@ using EtheriT.Coker.Authentication.Backoffice;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Platform.Security;
 using EtheriT.Coker.Web.Platform.Services;
+using EtheriT.Coker.Web.Platform.Models.Websites;
 using EtheriT.Coker.Web.Platform.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,6 +92,10 @@ builder.Services.AddScoped<PlatformAuditor>();
 builder.Services.AddSingleton<PlatformDomainPasswordProtector>();
 builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddSingleton<ProvisioningAgentAuthenticator>();
+builder.Services.AddOptions<WebsiteHostingOptions>()
+    .BindConfiguration(WebsiteHostingOptions.SectionName)
+    .ValidateOnStart();
+builder.Services.AddSingleton<IValidateOptions<WebsiteHostingOptions>, WebsiteHostingOptionsValidator>();
 builder.Services.AddAuthorization(options =>
 {
     var platformAccessPolicy = new AuthorizationPolicyBuilder()

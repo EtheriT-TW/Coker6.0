@@ -10,7 +10,9 @@ public sealed record DomainListItemDto(
     string? Registrar,
     DateTime? StartDate,
     DateTime? EndDate,
-    int WebsiteCount);
+    int WebsiteCount,
+    int? RemainingDays
+);
 
 public sealed record DomainListResult(
     IReadOnlyList<DomainListItemDto> Items,

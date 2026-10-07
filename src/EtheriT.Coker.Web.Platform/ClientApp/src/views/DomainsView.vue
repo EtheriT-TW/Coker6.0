@@ -9,6 +9,8 @@
     } from "devextreme-vue/data-grid";
     import { fetchDomains } from "@/services/domain-api";
     import type { DomainListItem } from "@/types/domain";
+    import {domainStatusView} from "@/utils/domain-display";
+    import { remainingDaysClass } from "@/utils/website-display";
 
     const router = useRouter();
 
@@ -32,6 +34,10 @@
         finally {
             loading.value = false;
         }
+    }
+
+    function statusText(domain: DomainListItem):string {
+        return domainStatusView(domain.RemainingDays).Text;
     }
 
     function goCreate(): void {
@@ -74,7 +80,7 @@
             <DxSearchPanel :visible="true" :width="260" placeholder="搜尋網域、網域公司" />
             <DxPaging :page-size="20" />
 
-            <DxColumn data-field="DomainName" caption="網域" :min-width="200" :hiding-priority="5" />
+            <DxColumn data-field="DomainName" caption="網域" :min-width="200" :hiding-priority="7" />
             <DxColumn data-field="Registrar" caption="網域公司" :min-width="140" :hiding-priority="2" />
             <DxColumn data-field="StartDate"
                       caption="起始日"
@@ -93,6 +99,18 @@
                       data-type="number"
                       :min-width="90"
                       :hiding-priority="1" />
+            <DxColumn data-field="RemainingDays"
+                      caption="剩餘天數"
+                      data-type="number"
+                      alignment="right"
+                      :min-width="90"
+                      cell-template="remainingDaysCell"
+                      :hiding-priority="5" />
+            <DxColumn caption="狀態"
+                      :min-width="80"
+                      :calculate-cell-value="statusText"
+                      cell-template="statusCell"
+                      :hiding-priority="6" />
             <DxColumn caption="操作"
                       :width="80"
                       :fixed="true"
@@ -110,6 +128,21 @@
                         <span class="material-symbols-outlined">edit</span>
                     </button>
                 </div>
+            </template>
+
+            <template #remainingDaysCell="{ data }">
+                <span v-if="data.data.RemainingDays !== null && data.data.RemainingDays >= 0"
+                      class="days-value"
+                      :class="remainingDaysClass(data.data.RemainingDays)">
+                    {{ data.data.RemainingDays }} 天
+                </span>
+                <span v-else class="grid-muted">—</span>
+            </template>
+
+            <template #statusCell="{ data }">
+                <span class="status-pill" :class="domainStatusView(data.data.RemainingDays).CssClass">
+                    {{ domainStatusView(data.data.RemainingDays).Text }}
+                </span>
             </template>
         </DxDataGrid>
     </section>

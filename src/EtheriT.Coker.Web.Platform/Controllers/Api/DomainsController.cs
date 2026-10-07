@@ -21,24 +21,32 @@ public sealed class DomainsController(
     [HttpGet]
     public async Task<DomainListResult> GetList()
     {
+        var today = DateTime.Today;
         var rows = await db.PlatformDomains
             .AsNoTracking()
             .OrderBy(item => item.EndDate == null)
             .ThenBy(item => item.EndDate)
             .Select(item => new DomainListItemDto(
-                item.Id,
-                item.DomainName,
-                item.Registrar,
-                item.StartDate,
-                item.EndDate,
-                // 主要網址或其他網址用到這個網域都算，同一站台只算一次
-                db.Websites.Count(site => !site.IsDeleted &&
-                    (site.FK_PlatformDomainId == item.Id ||
-                     db.WebsiteAlternateUrls.Any(url => !url.IsDeleted && url.FK_WebsiteId == site.Id && url.FK_PlatformDomainId == item.Id)))))
+                    Id: item.Id,
+                    DomainName: item.DomainName,
+                    Registrar: item.Registrar,
+                    StartDate: item.StartDate,
+                    EndDate: item.EndDate,
+                    // 主要網址或其他網址用到這個網域都算，同一站台只算一次
+                    WebsiteCount: db.Websites.Count(site => !site.IsDeleted &&
+                        (site.FK_PlatformDomainId == item.Id ||
+                         db.WebsiteAlternateUrls.Any(url => !url.IsDeleted && url.FK_WebsiteId == site.Id && url.FK_PlatformDomainId == item.Id))),
+                    RemainingDays: ToRemainingDays(item.EndDate, today)
+                ))
             .Take(ListLimit + 1)   // 多拿一筆，用來判斷是否被截斷
             .ToListAsync(HttpContext.RequestAborted);
 
         return new DomainListResult(rows.Take(ListLimit).ToList(), rows.Count > ListLimit);
+    }
+
+    private static int? ToRemainingDays(DateTime? endDate, DateTime today)
+    {
+        return endDate is null ? null : (endDate.Value.Date - today).Days;
     }
 
     [HttpGet("{id:long}")]

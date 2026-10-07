@@ -5,6 +5,7 @@ export interface DomainListItem {
     StartDate: string | null;
     EndDate: string | null;
     WebsiteCount: number;
+    RemainingDays: number | null;
 }
 
 export interface DomainListResult {

@@ -435,7 +435,8 @@
                 <div class="form-field">
                     <label>
                         <span>網站名稱 <i class="form-required">*</i></span>
-                        <input v-model="form.model.value.Name" type="text" maxlength="250" />
+                        <input v-if="isEdit" :value="form.model.value.Name" type="text" readonly/>
+                        <input v-if="!isEdit" v-model="form.model.value.Name" type="text" maxlength="250" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('Name')" />
                 </div>

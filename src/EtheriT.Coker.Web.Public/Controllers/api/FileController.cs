@@ -7,6 +7,7 @@ using EtheriT.Coker.Web.Public.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Web.Public.Controllers.api
 {
@@ -15,6 +16,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
     public class FileController : Controller
     {
         private static readonly TimeSpan NotFoundImageCacheDuration = TimeSpan.FromHours(1);
+        // Keep explicit crawler identities aligned with Coker.util.device.isKnownBot().
+        private static readonly Regex KnownBotUserAgent = new Regex(
+            "PetalBot|AhrefsBot|AhrefsSiteAudit|Googlebot|GoogleOther|bingbot|BingPreview|Bytespider|Baiduspider|YandexBot|YandexImages|DuckDuckBot|Applebot|SemrushBot|DotBot|MJ12bot|meta-externalagent|meta-webindexer|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Pinterestbot|Amazonbot|GPTBot|OAI-SearchBot|ClaudeBot|CCBot|UptimeRobot",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+            TimeSpan.FromMilliseconds(50));
+
         private readonly IFileUploadAppService fileUploadAppService;
         private readonly NotFoundImageVerifier notFoundImageVerifier;
         private readonly IMemoryCache memoryCache;
@@ -27,6 +34,20 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpPost]
         public async Task<ResponseMessageDto> insertNotFondFile(InsertNotFoundFileDto dto)
         {
+            var userAgent = Request.Headers["User-Agent"].ToString();
+            try
+            {
+                if (KnownBotUserAgent.IsMatch(userAgent))
+                {
+                    return new ResponseMessageDto { Success = true };
+                }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                // Ignore abnormal diagnostic requests without accessing the database.
+                return new ResponseMessageDto { Success = true };
+            }
+
             var check = notFoundImageVerifier.Verify(dto, Request.Headers.Referer.ToString());
             if (!check.ShouldRecord)
                 return new ResponseMessageDto { Success = true };

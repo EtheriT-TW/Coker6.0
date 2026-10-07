@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
+import { installWebsiteTls } from '@/services/site-tls';
 import MetricLineChart from "@/components/MetricLineChart.vue";
 import { requestAlert, requestConfirm } from "@/core/coker";
 import { createProvisioningTask, fetchProvisioningAgents, fetchProvisioningMetricHistory, fetchProvisioningServers } from "@/services/provisioning-api";
@@ -136,44 +137,16 @@ function isSiteStarted(site: ProvisioningIisSiteBinding): boolean {
 }
 
 async function installSsl(siteName: string, hostNames: string[]): Promise<void> {
-  const serverId = selectedServer.value;
-  const hosts = [...new Set(hostNames.map(x => x.trim().toLowerCase()).filter(Boolean))];
-  if (!serverId || !siteName || hosts.length === 0 || submittingSite.value) return;
-
-  const confirmed = await requestConfirm({
-    title: "申請並安裝 SSL",
-    message: `確定要為 IIS 網站「${siteName}」處理以下主機名稱？ ${hosts.join("、")}${currentAgent.value?.DryRun ? " 目前 Worker 為 Dry Run，不會實際安裝憑證。" : ""}`,
-    icon: "lock",
-    confirmText: "安裝 SSL"
-  });
-  if (!confirmed) return;
-
+  if (submittingSite.value) return;
   submittingSite.value = siteName;
   try {
-    await createProvisioningTask({
-      TargetServerId: serverId,
-      Type: ProvisioningTaskType.InstallSsl,
-      HostNames: hosts
-    });
-    await requestAlert({
-      title: "已送出 SSL 安裝任務",
-      message: `「${siteName}」的 ${hosts.length} 個主機名稱將由 ${serverId} 的 Worker 處理。`,
-      icon: "task_alt",
-      tone: "primary"
-    });
+    await installWebsiteTls(selectedServer.value, siteName, hostNames, currentAgent.value?.DryRun);
   }
-  catch (error) {
-    console.error(error);
-    await requestAlert({
-      title: "無法送出 SSL 安裝任務",
-      message: error instanceof Error ? error.message : "請稍後再試。"
-    });
+  catch (cause) {
+    await requestAlert({ title: '無法送出 TLS 任務', message: cause instanceof Error ? cause.message : '請稍後再試。' });
   }
-  finally {
-    submittingSite.value = "";
-  }
+  finally { submittingSite.value = ''; }
 }
-
 function formatBytes(value: number | null | undefined): string {
   if (value === null || value === undefined || value < 0) return "—";
   const units = ["B", "KB", "MB", "GB", "TB"];

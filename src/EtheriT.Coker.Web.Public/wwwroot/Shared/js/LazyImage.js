@@ -23,10 +23,20 @@
         var fadeDuration = Number(options.fadeDuration);
         if (!Number.isFinite(fadeDuration)) fadeDuration = 250;
 
+        function cancelRetry(state) {
+            if (!state) return;
+            clearTimeout(state.retryTimer);
+            state.retryTimer = null;
+            state.retries = 0;
+        }
+
         function showPlaceholder(image, failed) {
             var state = states.get(image);
             if (!state) return;
-            if (failed !== true) image.dispatchEvent(new CustomEvent("coker:image-reset"));
+            if (failed !== true) {
+                cancelRetry(state);
+                image.dispatchEvent(new CustomEvent("coker:image-reset"));
+            }
 
             image.style.transition = "none";
             image.style.opacity = "1";
@@ -53,6 +63,7 @@
             var image = event.currentTarget;
             var state = states.get(image);
             if (!state || image.getAttribute("src") !== state.source) return;
+            cancelRetry(state);
 
             image.style.transition = "opacity " + fadeDuration + "ms ease";
             w.requestAnimationFrame(function () {
@@ -68,10 +79,28 @@
             var image = event.currentTarget;
             var state = states.get(image);
             if (state && image.getAttribute("src") === state.source) {
+                showPlaceholder(image, true);
+                if (state.retryTimer != null) return;
+                if (state.retries < 2) {
+                    var delay = (state.retries === 0 ? 3000 : 6000) + Math.floor(Math.random() * 500);
+                    function retry() {
+                        state.retryTimer = null;
+                        if (states.get(image) !== state || !image.isConnected ||
+                            image.getAttribute("src") !== state.placeholder) return;
+                        if (navigator.onLine === false) {
+                            state.retryTimer = w.setTimeout(retry, 3000);
+                            return;
+                        }
+                        state.retries++;
+                        // Keep the attempt count; load() resets only the reporting state.
+                        load(image);
+                    }
+                    state.retryTimer = w.setTimeout(retry, delay);
+                    return;
+                }
                 image.dispatchEvent(new CustomEvent("coker:image-error", {
                     detail: { source: state.source, placeholder: state.placeholder }
                 }));
-                showPlaceholder(image, true);
             }
         }
 
@@ -81,7 +110,7 @@
             var source = declaredSource || currentSource;
             var placeholder = image.getAttribute("data-placeholder-src") ||
                 (declaredSource ? currentSource : (options.placeholder || defaultPlaceholder));
-            states.set(image, { source: source, placeholder: placeholder });
+            states.set(image, { source: source, placeholder: placeholder, retries: 0, retryTimer: null });
             image.cokerLazyImageManaged = true;
             image.addEventListener("load", onLoad);
             image.addEventListener("error", onError);
@@ -114,6 +143,10 @@
 
         function pause() {
             if (observer) observer.disconnect();
+            images.forEach(function (image) {
+                cancelRetry(states.get(image));
+                image.dispatchEvent(new CustomEvent("coker:image-reset"));
+            });
             if (options.unloadOnPause !== false) {
                 images.forEach(showPlaceholder);
             }
@@ -122,6 +155,7 @@
         function destroy() {
             if (observer) observer.disconnect();
             images.forEach(function (image) {
+                cancelRetry(states.get(image));
                 image.removeEventListener("load", onLoad);
                 image.removeEventListener("error", onError);
                 states.delete(image);

@@ -38,7 +38,7 @@ public sealed record TlsCentralStore(DateTime? CollectedAtUtc, bool? Enabled, st
     IReadOnlyList<string> PfxFileNames, string? Error, IReadOnlyList<TlsPfxCertificate>? Certificates = null);
 public sealed record TlsPfxCertificate(string FileName, string? Subject, string? Issuer, string? Thumbprint,
     DateTime? NotBeforeUtc, DateTime? NotAfterUtc, string? Error);
-public sealed record TlsWebsite(string SiteName, string State, IReadOnlyList<string> HttpsBindings, IReadOnlyList<string> HttpsUrls);
+public sealed record TlsWebsite(string SiteName, string State, IReadOnlyList<string> HttpsBindings, IReadOnlyList<string> HttpsUrls, string? RenewalAdvice = null, IReadOnlyList<string>? HostNames = null, bool? RenewalDetected = null);
 public sealed record TlsCertificate(
     string Thumbprint, string StoreName, string? Subject, string? Issuer,
     IReadOnlyList<string> DnsNames, DateTime? NotBeforeUtc, DateTime? NotAfterUtc,

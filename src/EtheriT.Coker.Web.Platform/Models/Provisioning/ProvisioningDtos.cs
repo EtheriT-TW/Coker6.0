@@ -80,7 +80,7 @@ public sealed record TlsCentralStoreDto(DateTime? CollectedAtUtc, bool? Enabled,
     IReadOnlyList<string> PfxFileNames, string? Error, IReadOnlyList<TlsPfxCertificateDto>? Certificates = null);
 public sealed record TlsPfxCertificateDto(string FileName, string? Subject, string? Issuer, string? Thumbprint,
     DateTime? NotBeforeUtc, DateTime? NotAfterUtc, string? Error);
-public sealed record TlsWebsiteDto(string SiteName, string State, IReadOnlyList<string> HttpsBindings, IReadOnlyList<string> HttpsUrls);
+public sealed record TlsWebsiteDto(string SiteName, string State, IReadOnlyList<string> HttpsBindings, IReadOnlyList<string> HttpsUrls, string? RenewalAdvice = null, IReadOnlyList<string>? HostNames = null, bool? RenewalDetected = null);
 public sealed record TlsCertificateDto(
     string Thumbprint, string StoreName, string? Subject, string? Issuer,
     IReadOnlyList<string> DnsNames, DateTime? NotBeforeUtc, DateTime? NotAfterUtc,

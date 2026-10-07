@@ -1,6 +1,7 @@
-﻿var FileApi = (function () {
+var FileApi = (function () {
     const NOT_FOUND_IMG_STORAGE_KEY = "notFoundImgReported";
     const reportedNotFoundImgs = new Set();
+    let imageReportValidation = null;
 
     function getNotFoundImgKey(data){
         return `${data.FK_WebsiteID}|${data.Url}`;
@@ -31,25 +32,60 @@
         }
     }
 
+    function isKnownBot(){
+        const device = window.Coker && window.Coker.util && window.Coker.util.device;
+        return !!(device && typeof device.isKnownBot === "function" && device.isKnownBot());
+    }
+
+    function validateImageReporting(){
+        if (imageReportValidation) return imageReportValidation;
+        const deferred = $.Deferred();
+        // Share both the pending check and its result for the lifetime of this page.
+        imageReportValidation = deferred.promise();
+        const probe = new Image();
+        const timer = setTimeout(function () { finish(false); }, 5000);
+        function finish(allowed) {
+            if (deferred.state() !== "pending") return;
+            clearTimeout(timer);
+            probe.onload = probe.onerror = null;
+            deferred.resolve(allowed);
+        }
+        probe.onload = function () {
+            finish(probe.naturalWidth === 1 && probe.naturalHeight === 1);
+        };
+        probe.onerror = function () { finish(false); };
+        // Avoid treating a previous page's cached image as a connectivity check.
+        probe.src = "/images/image-check.gif?probe=" + Date.now() + "-" + Math.random().toString(36).slice(2);
+        return imageReportValidation;
+    }
+
     return {
+        validateImageReporting: validateImageReporting,
         insertNotFondFile: function(data){
             const key = getNotFoundImgKey(data);
-            if(!data.Url || hasReportedNotFound(key)){
-                return $.Deferred().resolve().promise();
+            if(isKnownBot() || !data.Url || hasReportedNotFound(key)){
+                return $.Deferred().resolve({ success: true, skipped: true }).promise();
             }
             reportedNotFoundImgs.add(key);
-            return $.ajax({
-                url: "/api/File/insertNotFondFile",
-                type: "POST",
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({ ...data, from: location.href }),
-                dataType: "json"
-            }).done(function(){saveReportedNotFound(key)})
-              .fail(function(){reportedNotFoundImgs.delete(key)});
+            const from = location.href;
+            return validateImageReporting().then(function(allowed){
+                if(!allowed){
+                    reportedNotFoundImgs.delete(key);
+                    return { success: true, skipped: true };
+                }
+                return $.ajax({
+                    url: "/api/File/insertNotFondFile",
+                    type: "POST",
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify({ ...data, from: from }),
+                    dataType: "json"
+                }).done(function(){saveReportedNotFound(key)})
+                  .fail(function(){reportedNotFoundImgs.delete(key)});
+            });
         }
     };
 })();
-// Per-page diagnostics only: do not create extra image/HEAD requests.
+// Suppress duplicate reports and remember successful images for this page.
 var imageCheckReported = new Set();
 var imageCheckSucceeded = new Set();
 function rememberImageCheck(cache, source) {
@@ -65,7 +101,7 @@ function jqueryExtend() {
                 var $image = $(item);
                 var previous = $image.data("cokerImageCheck");
                 if (previous) clearTimeout(previous.timer);
-                var state = { timer: null, pending: null };
+                var state = { timer: null, pending: null, retryKey: null, retries: 0 };
                 $image.data("cokerImageCheck", state);
                 function sourceKey(source) {
                     if (!source || /^(data|blob):/i.test(source)) return "";
@@ -80,14 +116,19 @@ function jqueryExtend() {
                     clearTimeout(state.timer);
                     state.timer = null;
                     state.pending = null;
+                    state.retryKey = null;
+                    state.retries = 0;
                 }
                 function schedule(source, placeholder) {
                     var key = sourceKey(source);
+                    var retries = state.retryKey === key ? state.retries : 0;
                     cancel();
                     if (!key || imageCheckReported.has(key) || imageCheckSucceeded.has(key)) return;
+                    state.retryKey = key;
+                    state.retries = retries;
                     var pending = { key: key, source: source, placeholder: placeholder };
                     state.pending = pending;
-                    state.timer = setTimeout(function () {
+                    function attempt() {
                         state.timer = null;
                         if (state.pending !== pending || !item.isConnected || imageCheckSucceeded.has(key)) return;
                         var current = sourceKey(item.currentSrc || item.getAttribute("src"));
@@ -96,12 +137,26 @@ function jqueryExtend() {
                         if (current !== key && !isLazyFallback) return;
                         if (current === key && item.naturalWidth > 0) return;
                         if (!isLazyFallback && !item.complete) return;
+                        if (navigator.onLine === false) {
+                            state.timer = setTimeout(attempt, 3000);
+                            return;
+                        }
+                        // LazyImage owns retries for managed images; ordinary images retry here.
+                        if (placeholder == null && state.retries < 2) {
+                            state.retries++;
+                            state.pending = null;
+                            item.removeAttribute("src");
+                            item.setAttribute("src", source);
+                            return;
+                        }
                         if (imageCheckReported.has(key)) return;
                         rememberImageCheck(imageCheckReported, key);
                         FileApi.insertNotFondFile({ Url: source, FK_WebsiteID: typeof (SiteId) == "undefined" ? 0 : SiteId });
                         state.pending = null;
                         if (!isLazyFallback && displayed === source) item.setAttribute("src", "/images/noImg.jpg");
-                    }, 3000);
+                    }
+                    state.timer = setTimeout(attempt,
+                        placeholder != null || retries >= 2 ? 0 : (retries === 0 ? 3000 : 6000) + Math.floor(Math.random() * 500));
                 }
                 // Namespaced handlers make repeated imgCheck calls idempotent.
                 $image.off(".cokerImageCheck")

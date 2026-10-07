@@ -6,6 +6,11 @@
     Coker.extend({
         util: {
             device: {
+                // Only explicit crawler identities; ordinary browser UAs remain eligible.
+                isKnownBot: function () {
+                    var ua = navigator.userAgent || "";
+                    return /PetalBot|AhrefsBot|AhrefsSiteAudit|Googlebot|GoogleOther|bingbot|BingPreview|Bytespider|Baiduspider|YandexBot|YandexImages|DuckDuckBot|Applebot|SemrushBot|DotBot|MJ12bot|meta-externalagent|meta-webindexer|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Pinterestbot|Amazonbot|GPTBot|OAI-SearchBot|ClaudeBot|CCBot|UptimeRobot/i.test(ua);
+                },
                 isTablet: function () {
                     var ua = navigator.userAgent || "";
                     var platform = navigator.platform || "";

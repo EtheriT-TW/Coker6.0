@@ -26,7 +26,7 @@ const dnsValueLabel = computed(() => dnsValueLabels[dnsRecordType.value] ?? "記
 const canSubmitDns = computed(() => allowedZones.value.includes(zoneName.value) && !!recordName.value &&
   !!dnsRecordValue.value.trim() && (dnsRecordType.value !== "MX" ||
     (Number.isInteger(mxPreference.value) && mxPreference.value >= 0 && mxPreference.value <= 65535)));
-const sslHostNames = ref("");
+
 const tasks = ref<ProvisioningTask[]>([]);
 const loading = ref(false);
 const submitting = ref(false);
@@ -117,11 +117,6 @@ function changeDns(deleteRecord: boolean): void {
   }, `確定要${deleteRecord ? "刪除" : "建立"} DNS ${dnsRecordType.value} 記錄 ${recordName.value}.${zoneName.value} → ${dnsRecordValue.value}${dnsRecordType.value === "MX" ? `（優先序 ${mxPreference.value}）` : ""}？`);
 }
 
-function installSsl(): void {
-  const hosts = sslHostNames.value.split(/[,;\r\n]+/).map(x => x.trim()).filter(Boolean);
-  void submit({ TargetServerId: targetServer.value, Type: ProvisioningTaskType.InstallSsl, HostNames: hosts },
-    `確定要在 ${targetServer.value} 依 IIS binding 搜尋站台，並一次申請／安裝以下 SSL？\n${hosts.join("\n")}`);
-}
 
 function formatTime(value: string | null): string {
   return value ? new Date(value).toLocaleString("zh-TW") : "—";
@@ -139,11 +134,11 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="page-heading">
-    <div><h1>主機操作測試</h1><p>此頁用於驗證 IIS、DNS 與 SSL 操作；伺服器狀態請至伺服器監控查看。</p></div>
+    <div><h1>主機操作測試</h1><p>此頁用於驗證 IIS 與 DNS 操作；伺服器狀態請至伺服器監控查看。</p></div>
     <button class="ui-button" type="button" :disabled="loading" @click="load()">重新整理</button>
   </section>
 
-  <p class="alert alert-warning" role="status">Worker 的 DryRun=false 時，此頁會執行真實的 IIS、DNS 與 SSL 操作；研發環境請先使用 DryRun=true。</p>
+  <p class="alert alert-warning" role="status">Worker 的 DryRun=false 時，此頁會執行真實的 IIS 與 DNS 操作；研發環境請先使用 DryRun=true。</p>
   <p v-if="errorMessage" class="alert alert-error" role="alert">{{ errorMessage }}</p>
 
   <section class="provisioning-target data-card">
@@ -173,12 +168,7 @@ onBeforeUnmount(() => {
       <div class="button-row"><button class="ui-button" type="button" :disabled="submitting || !canSubmitDns" @click="changeDns(false)">建立記錄</button><button class="ui-button danger-button" type="button" :disabled="submitting || !canSubmitDns" @click="changeDns(true)">刪除記錄</button></div>
     </article>
 
-    <article class="data-card operation-card">
-      <h2>win-acme SSL</h2>
-      <p>依 IIS 現有 binding 的主機名稱尋找站台，不需要輸入 Site ID；可用換行、逗號或分號一次輸入多個網域。</p>
-      <label><span>完整主機名稱（可多筆）</span><textarea v-model.trim="sslHostNames" rows="5" placeholder="example.com&#10;www.example.com"></textarea></label>
-      <button class="ui-button" type="button" :disabled="submitting || !targetServer || !sslHostNames.trim()" @click="installSsl">申請並安裝 SSL</button>
-    </article>
+
   </section>
 
   <section class="data-card task-card">

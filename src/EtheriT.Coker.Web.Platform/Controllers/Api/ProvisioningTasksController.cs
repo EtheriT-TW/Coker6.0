@@ -286,6 +286,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
 
         if (request.Type == ProvisioningTaskType.InstallSsl)
         {
+            if (string.IsNullOrWhiteSpace(request.SiteName))
+                ModelState.AddModelError(nameof(request.SiteName), "TLS 安裝必須指定單一 IIS 網站。");
             var hosts = NormalizeHosts(request.HostNames);
             if (hosts.Count == 0) ModelState.AddModelError(nameof(request.HostNames), "請至少輸入一個 SSL 主機名稱。");
             else if (hosts.Count > 100) ModelState.AddModelError(nameof(request.HostNames), "一次最多處理 100 個 SSL 主機名稱。");

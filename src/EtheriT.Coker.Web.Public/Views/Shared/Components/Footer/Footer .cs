@@ -116,10 +116,15 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Footer
 									"2022 隆昌窯業股份有限公司",
 									"版權所有"
 								}
-							};
-							break;
-				case 4:
-					footerViewModel = new FooterViewModel
+                            };
+                            break;
+                        default:
+                            footerViewModel = new FooterViewModel();
+                            break;
+                    }
+                    break;
+                case 4:
+                    footerViewModel = new FooterViewModel
 					{
 						Sitemap_Link = $"/{defaultData.OrgName}/Website",
 						Privacy_Link = $"/{defaultData.OrgName}/Privacy",

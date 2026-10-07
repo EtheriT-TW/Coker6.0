@@ -35,3 +35,8 @@ export function isSiteRoot(value: string): boolean {
         return false;
     }
 }
+
+/** 比對網址是否相同用：去空白、轉小寫、拿掉結尾斜線。"HTTPS://A.com/" → "https://a.com" */
+export function normalizeUrl(value: string): string {
+    return value.trim().toLowerCase().replace(/\/+$/, "");
+}

@@ -51,3 +51,21 @@ export function toDomainName(input: string): string {
     const stripped = stripSubdomain(host.startsWith("www.") ? host.slice(4) : host);
     return stripped.includes(".") ? stripped : host;
 }
+
+/**
+ * IIS 綁定查詢用的主機名稱：小寫、中文網域轉 xn--、去結尾的點；IP、localhost、格式不合回傳 ""。
+ * 與後端 iis-bindings 回傳的 Items[].Host 同一套正規化，兩邊才對得上。不去 www.、不去子網域。
+ */
+export function toBindingHost(input: string): string {
+    const text = input.trim();
+    if (text === "") return "";
+
+    const withScheme = text.includes("://") ? text : `http://${text}`;
+    try {
+        const host = new URL(withScheme).hostname.replace(/\.$/, "").toLowerCase();
+        return HOST_PATTERN.test(host) ? host : "";
+    }
+    catch {
+        return "";
+    }
+}

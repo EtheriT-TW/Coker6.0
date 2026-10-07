@@ -3,9 +3,11 @@ import { fromDateInput, toDateInput } from "@/utils/date-input";
 import type { DomainSummary } from "@/types/domain";
 import {
     websiteLocaleOptions,
+    type IisBindingResult,
     type WebsiteDetail,
     type WebsiteForm,
     type WebsiteListResult,
+    type WebsiteOptions,
     type WebsiteUrlFormItem
 } from "@/types/website";
 
@@ -27,13 +29,15 @@ export function toLocaleInput(value: string | null | undefined): string {
     return websiteLocaleOptions.some(option => option.Value === normalized) ? normalized : "";
 }
 
-/** 建立表單上的一筆網址；Key 遞增，在頁面存活期間不重複即可。 */
-export function newWebsiteUrlItem(
-    isPrimary: boolean,
-    url = "",
-    domain: DomainSummary | null = null
-): WebsiteUrlFormItem {
-    return { Key: nextUrlKey++, Url: url, IsPrimary: isPrimary, InitialDomain: domain };
+/** 建立表單上的一筆其他網址；Key 遞增，在頁面存活期間不重複即可。 */
+export function newWebsiteUrlItem(url = "", domain: DomainSummary | null = null): WebsiteUrlFormItem {
+    return { Key: nextUrlKey++, Url: url, InitialDomain: domain };
+}
+
+/** 與後端產生 DefaultUrl 的規則一致：https://{OrgName，_ 轉 -}{後綴}；站台代碼或後綴空白時回傳 ""。 */
+export function toDefaultUrl(orgName: string, suffix: string): string {
+    const name = orgName.trim().toLowerCase().replace(/_/g, "-");
+    return name && suffix ? `https://${name}${suffix}` : "";
 }
 
 function toSaveRequest(form: WebsiteForm) {
@@ -48,11 +52,8 @@ function toSaveRequest(form: WebsiteForm) {
         Status: form.Status,
         SuspendedDate: fromDateInput(form.SuspendedDate),
         TerminatedDate: fromDateInput(form.TerminatedDate),
-        IsDomainPending: form.IsDomainPending,
-        // 待申請時網址一律不送；Key、InitialDomain 只是畫面用
-        Urls: form.IsDomainPending
-            ? []
-            : form.Urls.map(item => ({ Url: item.Url.trim(), IsPrimary: item.IsPrimary })),
+        // 只送其他網址；主要網址由後台管理（新增時後端依 OrgName 產生）。Key、InitialDomain 只是畫面用
+        Urls: form.Urls.map(item => ({ Url: item.Url.trim() })),
         Remark: blankToNull(form.Remark)
     };
 }
@@ -71,8 +72,7 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         Status: detail.Status,
         SuspendedDate: toDateInput(detail.SuspendedDate),
         TerminatedDate: toDateInput(detail.TerminatedDate),
-        IsDomainPending: detail.IsDomainPending,
-        Urls: detail.Urls.map(item => newWebsiteUrlItem(item.IsPrimary, item.Url, item.Domain)),
+        Urls: detail.Urls.map(item => newWebsiteUrlItem(item.Url, item.Domain)),
         Remark: detail.Remark ?? ""
     };
 }
@@ -83,6 +83,15 @@ export function fetchWebsites(): Promise<WebsiteListResult> {
 
 export function fetchWebsite(id: number): Promise<WebsiteDetail> {
     return api.get<WebsiteDetail>(`${baseUrl}/${id}`);
+}
+
+export function fetchWebsiteOptions(): Promise<WebsiteOptions> {
+    return api.get<WebsiteOptions>(`${baseUrl}/options`);
+}
+
+/** hosts 會展開成重複的 query：?hostLocation=x&hosts=a&hosts=b */
+export function fetchIisBindings(hostLocation: string, hosts: string[]): Promise<IisBindingResult> {
+    return api.get<IisBindingResult>(`${baseUrl}/iis-bindings`, { query: { hostLocation, hosts } });
 }
 
 /** 新增站台：只有這裡會送 OrgName。 */

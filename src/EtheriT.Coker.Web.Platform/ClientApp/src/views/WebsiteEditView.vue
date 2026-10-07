@@ -3,35 +3,41 @@
     import { useRoute, useRouter } from "vue-router";
     import { ApiError, FormFieldErrors, requestAlert, rules, useManagedForm } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
+    import DateField from "@/components/DateField.vue";
+    import IisBindingNote from "@/components/IisBindingNote.vue";
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
     import WebsiteUrlItem from "@/components/WebsiteUrlItem.vue";
     import { lookupCustomer } from "@/services/customer-api";
-    import { isSiteRoot } from "@/utils/url-parts";
-
+    import { useIisBindingLookup } from "@/services/iis-binding-lookup";
     import {
         createWebsite,
         fetchWebsite,
+        fetchWebsiteOptions,
         newWebsiteUrlItem,
+        toDefaultUrl,
         toWebsiteForm,
         updateWebsite
     } from "@/services/website-api";
     import type { CustomerLookup } from "@/types/customer";
     import {
+        WebsiteLevel,
         WebsiteStatus,
         websiteLevelOptions,
         websiteLocaleOptions,
         websiteStatusOptions,
-        hostLocationOptions,
         type WebsiteDetail,
-        type WebsiteForm
+        type WebsiteForm,
+        type WebsiteOptions
     } from "@/types/website";
-    import DateField from "@/components/DateField.vue";
+    import { oneYearTermEnd, todayDateInput } from "@/utils/date-input";
+    import { isSiteRoot, normalizeUrl } from "@/utils/url-parts";
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
 
-    // 與後端 WebsitesController.MaxUrlCount 一致
+    // 與後端 WebsitesController.MaxUrlCount 一致（只算其他網址，主要網址另計）
     const MAX_URL_COUNT = 10;
-    const SITE_ROOT_MESSAGE = "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）；網域還沒申請請勾選「網域待申請」。";
+    const SITE_ROOT_MESSAGE = "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）。";
+    const DEFAULT_LOCALE = "zh-tw";
 
     const route = useRoute();
     const router = useRouter();
@@ -48,6 +54,15 @@
 
     const loading = ref(false);
     const pageError = ref("");
+
+    // options API：主機清單、各版本預設主機、預設網址後綴
+    const websiteOptions = ref<WebsiteOptions | null>(null);
+    // 編輯時的後台 Website.DefaultUrl，只顯示不修改
+    const savedDefaultUrl = ref("");
+    // 載入時 IsDomainPending 為 true，已自動在其他網址補一筆預設網址
+    const isPendingUrlAdded = ref(false);
+    // 新增時到期日被使用者手動改過，就不再跟著開通日重算
+    const isEndDateManual = ref(false);
 
     // ── 以統編或公司名稱帶出客戶（兩者都不可重複，最多一筆） ──
     const lookupKeyword = ref("");
@@ -69,46 +84,45 @@
     // 各網址列目前開著彈窗的 Key；只在 beforeSave 讀，不需要響應式
     const openUrlDialogKeys = new Set<number>();
 
+    /** 新增時的預設值：形象版、繁中、今天開通、一年期；主機等 options 載入後才帶入。 */
     function emptyForm(): WebsiteForm {
+        const start = todayDateInput();
         return {
             OrgName: "",
             FK_CompanyId: 0,
             Name: "",
-            Level: null,
-            Locale: "",
+            Level: WebsiteLevel.形象,
+            Locale: DEFAULT_LOCALE,
             HostLocation: "",
-            ServiceStartDate: "",
-            ServiceEndDate: "",
+            ServiceStartDate: start,
+            ServiceEndDate: oneYearTermEnd(start),
             Status: WebsiteStatus.正常,
             SuspendedDate: "",
             TerminatedDate: "",
-            IsDomainPending: false,
-            Urls: [newWebsiteUrlItem(true)],
+            Urls: [],
             Remark: ""
         };
     }
 
-    /** 網址是陣列，逐列驗證；錯誤 key 與後端一致（Urls[i].Url），才能掛到對的那一列。 */
+    /** 其他網址逐列驗證，可以 0 筆；錯誤 key 與後端一致（Urls[i].Url），才能掛到對的那一列。 */
     function validateUrls(values: WebsiteForm): Record<string, string[]> {
-        // 待申請時不寫後台網址，沿用站台原本的值
-        if (values.IsDomainPending) return {};
-        if (values.Urls.length === 0) {
-            return { Urls: ["請至少輸入一筆網址；網域還沒申請請勾選「網域待申請」。"] };
-        }
-
         const errors: Record<string, string[]> = {};
-        if (values.Urls.filter(item => item.IsPrimary).length !== 1) {
-            errors.Urls = ["請指定一筆主要網址。"];
+        if (values.Urls.length > MAX_URL_COUNT) {
+            errors.Urls = [`其他網址最多 ${MAX_URL_COUNT} 筆。`];
         }
 
+        const primary = normalizeUrl(primaryUrl.value);
         const seen = new Set<string>();
         for (const [index, item] of values.Urls.entries()) {
             const url = item.Url.trim();
+            const normalized = normalizeUrl(url);
             const key = `Urls[${index}].Url`;
             if (!isSiteRoot(url)) errors[key] = [SITE_ROOT_MESSAGE];
             else if (url.length > 255) errors[key] = ["網址不可超過 255 個字元。"];
-            else if (seen.has(url.toLowerCase())) errors[key] = ["這筆網址與前面的網址重複。"];
-            seen.add(url.toLowerCase());
+            // 訊息與後端一致
+            else if (primary && normalized === primary) errors[key] = [`網址「${url}」就是預設網址，不必再填。`];
+            else if (seen.has(normalized)) errors[key] = ["這筆網址與前面的網址重複。"];
+            seen.add(normalized);
         }
         return errors;
     }
@@ -141,6 +155,17 @@
             Locale: [
                 rules.custom<WebsiteForm>(value =>
                     !value ? "請選擇語系。" : null)
+            ],
+            // 新增時必填且必須是清單內的值；編輯時沿用原值（含空白或清單外舊值），與後端規則一致
+            HostLocation: [
+                rules.custom<WebsiteForm>(value => {
+                    if (isEdit.value) return null;
+                    const host = String(value ?? "");
+                    if (!host) return "請選擇主機位置。";
+                    return websiteOptions.value?.HostLocations.some(option => option.Value === host)
+                        ? null
+                        : "請從清單選擇主機位置。";
+                })
             ],
             SuspendedDate: [
                 rules.custom<WebsiteForm>((value, model) => {
@@ -197,10 +222,30 @@
         }
     });
 
-    // 依賴 form 的 computed 一律放在 form 宣告之後    const isSuspended = computed(() => form.model.value.Status === WebsiteStatus.暫停);
+    // 依賴 form 的 computed 一律放在 form 宣告之後
     const isSuspended = computed(() => form.model.value.Status === WebsiteStatus.暫停);
     const isTerminated = computed(() => form.model.value.Status === WebsiteStatus.註銷);
     const isFormLocked = computed(() => loading.value || form.isSaving.value);
+
+    // 主要網址：新增時跟著站台代碼即時產生（與後端規則一致）；編輯時是後台 DefaultUrl，這裡不能改
+    const primaryUrl = computed(() => isEdit.value
+        ? savedDefaultUrl.value
+        : toDefaultUrl(form.model.value.OrgName, websiteOptions.value?.DefaultUrlSuffix ?? ""));
+
+    // 主機下拉：舊資料的主機不在清單內時補一個選項，下拉才不會顯示空白
+    const hostLocationOptions = computed(() => {
+        const options = websiteOptions.value?.HostLocations ?? [];
+        const current = form.model.value.HostLocation;
+        return current && !options.some(option => option.Value === current)
+            ? [...options, { Value: current, Text: `${current}（不在主機清單）` }]
+            : options;
+    });
+
+    // IIS 綁定：主要網址＋所有其他網址一次查；主機或網址變更時重查
+    const iisLookup = useIisBindingLookup(() => ({
+        hostLocation: form.model.value.HostLocation,
+        urls: [primaryUrl.value, ...form.model.value.Urls.map(item => item.Url)]
+    }));
 
     // 暫停／註銷日期只在各自的狀態下有值，切走就清空，前後端規則一致。
     // 只在真的有值時才指派，避免載入資料時就被標成「尚未儲存」
@@ -211,40 +256,39 @@
         form.clearErrors("TerminatedDate");
     });
 
-    // 勾選「網域待申請」時清空所有網址（兩者互斥，後端也會擋）；取消勾選時補一列空白主要網址。
-    // 只在真的有變動時才指派，避免載入資料時就被標成「尚未儲存」
-    watch(() => form.model.value.IsDomainPending, pending => {
-        clearUrlErrors();
-        if (pending) {
-            if (form.model.value.Urls.length > 0) form.model.value.Urls = [];
-            return;
-        }
-        if (form.model.value.Urls.length === 0) form.model.value.Urls = [newWebsiteUrlItem(true)];
+    // 新增時改版本連帶換成該版本的預設主機；編輯舊網站時不動主機。改主機不會反過來改版本
+    watch(() => form.model.value.Level, level => {
+        if (isEdit.value || level === null) return;
+        const host = websiteOptions.value?.DefaultHostByLevel[String(level)];
+        if (host && host !== form.model.value.HostLocation) form.model.value.HostLocation = host;
     });
+
+    // 新增時改開通日自動重算到期日（＋1 年－1 天）；到期日手動改過就不再重算
+    watch(() => form.model.value.ServiceStartDate, start => {
+        if (isEdit.value || isEndDateManual.value) return;
+        const end = oneYearTermEnd(start);
+        if (end !== form.model.value.ServiceEndDate) form.model.value.ServiceEndDate = end;
+    });
+
+    function onServiceEndDateInput(value: string): void {
+        // 程式改值後 DxDateBox 可能回傳同一個值，只有真的不同才算使用者手動修改
+        if (value === form.model.value.ServiceEndDate) return;
+        form.model.value.ServiceEndDate = value;
+        if (!isEdit.value) isEndDateManual.value = true;
+        form.clearErrors("ServiceEndDate");
+    }
 
     function addUrl(): void {
         const urls = form.model.value.Urls;
         if (urls.length >= MAX_URL_COUNT) return;
-        // 清單空的時候，第一筆自動當主要網址
-        urls.push(newWebsiteUrlItem(urls.length === 0));
+        urls.push(newWebsiteUrlItem());
         form.clearErrors("Urls");
     }
 
     function removeUrl(index: number): void {
-        const urls = form.model.value.Urls;
-        const [removed] = urls.splice(index, 1);
-        // 刪掉主要網址時改由剩下的第一筆接手，存檔時才不會沒有主要網址
-        const first = urls[0];
-        if (removed?.IsPrimary && first) first.IsPrimary = true;
+        form.model.value.Urls.splice(index, 1);
         // 索引會位移，只清掉被刪那列的 key 會讓後面的錯誤訊息錯位到別列
         clearUrlErrors();
-    }
-
-    function setPrimaryUrl(index: number): void {
-        form.model.value.Urls.forEach((item, position) => {
-            item.IsPrimary = position === index;
-        });
-        form.clearErrors("Urls");
     }
 
     function updateUrl(index: number, value: string): void {
@@ -272,9 +316,33 @@
         form.clearErrors("FK_CompanyId");
     }
 
-    function applyDetail(detail: WebsiteDetail): void {
+    /** 新增時帶入預設主機；用 reset 才不會一進頁面就被標成「尚未儲存」（載入期間表單鎖住，使用者還沒輸入）。 */
+    function applyNewDefaults(options: WebsiteOptions): void {
+        const value = emptyForm();
+        form.reset({
+            ...value,
+            HostLocation: options.DefaultHostByLevel[String(value.Level)] ?? ""
+        });
+    }
+
+    function applyDetail(detail: WebsiteDetail, defaultUrlSuffix: string): void {
+        const value = toWebsiteForm(detail);
+        savedDefaultUrl.value = detail.DefaultUrl ?? "";
+
+        // 舊資料標記「網域待申請」：改成在其他網址補一筆預設網址；主要網址或其他網址已經有了就不補
+        const pendingUrl = detail.IsDomainPending ? toDefaultUrl(detail.OrgName, defaultUrlSuffix) : "";
+        const existingUrls = [savedDefaultUrl.value, ...value.Urls.map(item => item.Url)].map(normalizeUrl);
+        const shouldAddPendingUrl = pendingUrl !== ""
+            && !existingUrls.includes(normalizeUrl(pendingUrl))
+            && value.Urls.length < MAX_URL_COUNT;
+        if (shouldAddPendingUrl) value.Urls.push(newWebsiteUrlItem(pendingUrl));
+
         // 用 reset 載入而非逐欄指派，才不會一進頁面就被標成「尚未儲存」
-        form.reset(toWebsiteForm(detail));
+        form.reset(value);
+        // 補了網址就是有變更要存：reset 後手動標成「尚未儲存」，離開頁面時會提醒
+        if (shouldAddPendingUrl) form.isDirty.value = true;
+        isPendingUrlAdded.value = shouldAddPendingUrl;
+
         customer.value = detail.Customer;
         // FK_CompanyId 為 0＝後台還沒綁公司；有 Id 卻帶不出客戶才是客戶被刪除
         isCustomerDeleted.value = detail.FK_CompanyId > 0 && detail.Customer === null;
@@ -324,16 +392,17 @@
     }
 
     onMounted(async () => {
-        if (!isEdit.value) return;
-
         loading.value = true;
         try {
-            applyDetail(await fetchWebsite(websiteId.value));
+            const options = await fetchWebsiteOptions();
+            websiteOptions.value = options;
+            if (isEdit.value) applyDetail(await fetchWebsite(websiteId.value), options.DefaultUrlSuffix);
+            else applyNewDefaults(options);
         }
         catch (error) {
             console.error(error);
-            // 站台會記住最後位置，網站不存在時直接導回清單
-            if (error instanceof ApiError && error.status === 404) {
+            // 站台會記住最後位置，網站不存在時直接導回清單（options 已載入，404 才是網站本身不存在）
+            if (isEdit.value && websiteOptions.value && error instanceof ApiError && error.status === 404) {
                 void router.replace("/websites");
                 return;
             }
@@ -355,7 +424,7 @@
 
     <p v-if="pageError" class="alert alert-error" role="alert">{{ pageError }}</p>
     <p v-if="isEdit" class="alert alert-info" role="status">
-        網站名稱、版本、語系、開通／到期日與主要網址直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
+        網站名稱、版本、語系、開通／到期日直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
     </p>
 
     <form class="form-stack" novalidate autocomplete="off" @submit.prevent="form.save('button')">
@@ -463,6 +532,7 @@
                         </select>
                     </label>
                     <FormFieldErrors :errors="form.getErrors('Level')" />
+                    <p v-if="!isEdit" class="field-note">改版本會自動換成該版本的預設主機。</p>
                 </div>
 
                 <div class="form-field">
@@ -480,14 +550,15 @@
 
                 <div class="form-field">
                     <label>
-                        <span>主機位置</span>
+                        <span>主機位置 <i v-if="!isEdit" class="form-required">*</i></span>
                         <select v-model="form.model.value.HostLocation">
                             <option value="">未選擇</option>
                             <option v-for="option in hostLocationOptions" :key="option.Value" :value="option.Value">
-                                {{option.Text}}
+                                {{ option.Text }}
                             </option>
                         </select>
                     </label>
+                    <FormFieldErrors :errors="form.getErrors('HostLocation')" />
                 </div>
 
                 <div class="form-field">
@@ -500,7 +571,8 @@
                 <div class="form-field">
                     <label>
                         <span>網站到期日期</span>
-                        <DateField v-model="form.model.value.ServiceEndDate" />
+                        <DateField :model-value="form.model.value.ServiceEndDate"
+                                   @update:model-value="onServiceEndDateInput" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('ServiceEndDate')" />
                 </div>
@@ -545,46 +617,55 @@
                   :disabled="isFormLocked">
             <div class="form-section-heading">
                 <span id="section-website-url-title">網址</span>
-                <button v-if="!form.model.value.IsDomainPending"
-                        class="ui-button ui-button-ghost"
+                <button class="ui-button ui-button-ghost"
                         type="button"
                         :disabled="form.model.value.Urls.length >= MAX_URL_COUNT"
                         @click="addUrl">
                     <span class="material-symbols-outlined">add</span>
-                    <span>新增網址</span>
+                    <span>新增其他網址</span>
                 </button>
             </div>
 
+            <p v-if="isPendingUrlAdded" class="alert alert-warning" role="status">
+                這個網站原本標記為「網域待申請」，已自動在其他網址補上預設網址，請確認後儲存。
+            </p>
+
             <div class="form-grid">
+                <!-- 主要網址：後台 Website.DefaultUrl，Platform 只顯示 -->
                 <div class="form-field form-field-wide">
-                    <div class="choice-group">
-                        <label class="choice">
-                            <input type="checkbox" v-model="form.model.value.IsDomainPending" />
-                            <span class="choice-box" aria-hidden="true"></span>
-                            <span>網域待申請</span>
-                        </label>
-                    </div>
+                    <label>
+                        <span>主要網址</span>
+                        <input :value="primaryUrl"
+                               type="text"
+                               readonly
+                               :placeholder="isEdit ? '未設定' : '輸入站台代碼後自動產生'" />
+                    </label>
+                    <p class="field-note">
+                        {{ isEdit ? "主要網址請至後台修改。" : "依站台代碼自動產生，建立後請至後台修改。" }}
+                    </p>
+                    <IisBindingNote :hint="iisLookup.hintFor(primaryUrl)" />
+                </div>
+
+                <div class="form-field form-field-wide">
+                    <span class="form-label">其他網址</span>
                     <FormFieldErrors :errors="form.getErrors('Urls')" />
                     <p class="field-note">
-                        主要網址會寫入後台站台網址，金流、物流回呼與通知信都使用它；其他網址只記錄在客戶管理平台。最多 {{ MAX_URL_COUNT }} 筆。
+                        選填，最多 {{ MAX_URL_COUNT }} 筆，不可與主要網址重複；其他網址只記錄在客戶管理平台。
                     </p>
                 </div>
 
                 <div class="form-field form-field-wide">
-                    <p v-if="form.model.value.IsDomainPending" class="repeater-empty">網域待申請時不需填寫網址。</p>
-                    <p v-else-if="!form.model.value.Urls.length" class="repeater-empty">尚未新增網址。</p>
+                    <p v-if="!form.model.value.Urls.length" class="repeater-empty">尚未新增其他網址。</p>
                     <div v-else class="repeater">
                         <WebsiteUrlItem v-for="(item, index) in form.model.value.Urls"
                                         :key="item.Key"
                                         :url="item.Url"
                                         :index="index"
-                                        :is-primary="item.IsPrimary"
                                         :initial-domain="item.InitialDomain"
                                         :errors="form.getErrors(`Urls[${index}].Url`)"
-                                        :can-remove="form.model.value.Urls.length > 1"
                                         :can-edit-domain="isEdit"
+                                        :iis-hint="iisLookup.hintFor(item.Url)"
                                         @update:url="value => updateUrl(index, value)"
-                                        @set-primary="setPrimaryUrl(index)"
                                         @remove="removeUrl(index)"
                                         @dialog-change="open => onUrlDialogChange(item.Key, open)" />
                     </div>

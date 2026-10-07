@@ -19,15 +19,6 @@ export const WebsiteLevel = {
 
 export type WebsiteLevelValue = (typeof WebsiteLevel)[keyof typeof WebsiteLevel];
 
-export const HostLocation = {
-    主機28: "210.65.132.28",
-    主機30: "210.65.132.30",
-    主機31: "210.65.132.31",
-    NAS: "NAS封存"
-} as const;
-
-export type HostLocationValue = (typeof HostLocation)[keyof typeof HostLocation];
-
 export const websiteStatusOptions: Array<{ Value: WebsiteStatusValue; Text: string }> = [
     { Value: WebsiteStatus.正常, Text: "正常" },
     { Value: WebsiteStatus.暫停, Text: "暫停" },
@@ -41,18 +32,42 @@ export const websiteLevelOptions: Array<{ Value: WebsiteLevelValue; Text: string
     { Value: WebsiteLevel.購物, Text: "購物" }
 ];
 
-export const hostLocationOptions: Array<{ Value: HostLocationValue; Text: string }> = [
-    { Value: HostLocation.主機28, Text: "210.65.132.28" },
-    { Value: HostLocation.主機30, Text: "210.65.132.30" },
-    { Value: HostLocation.主機31, Text: "210.65.132.31" },
-    { Value: HostLocation.NAS, Text: "NAS封存" }
-];
-
 /** 值要與後端 WebsiteLocales.All、Website.Locale 一致（小寫文化代碼）。 */
 export const websiteLocaleOptions: Array<{ Value: string; Text: string }> = [
     { Value: "zh-tw", Text: "中文（繁體）" },
     { Value: "en", Text: "英文" }
 ];
+
+/** GET /api/websites/options：主機清單與新增網站時的預設值，由後端設定提供，前端不寫死。 */
+export interface WebsiteOptions {
+    HostLocations: Array<{ Value: string; Text: string }>;
+    /** key 是網站版本數值轉成的字串（JSON 物件的 key 一律是字串），value 是主機的 Value */
+    DefaultHostByLevel: Record<string, string>;
+    /** 例：".coker.ezsale.tw"；預設網址＝https://{OrgName 的 _ 轉 -}{後綴} */
+    DefaultUrlSuffix: string;
+}
+
+/** Ok＝有最新資料；NoAgent＝主機沒裝回報程式；Offline＝回報中斷、資料過期；Unavailable＝查詢失敗 */
+export type IisBindingStatus = "Ok" | "NoAgent" | "Offline" | "Unavailable";
+
+export interface IisBindingItem {
+    Host: string;
+    /** null＝主機上沒有這個綁定 */
+    SiteName: string | null;
+}
+
+/** GET /api/websites/iis-bindings */
+export interface IisBindingResult {
+    Status: IisBindingStatus;
+    LastSeenAtUtc: string | null;
+    Items: IisBindingItem[];
+}
+
+/** 一筆網址在畫面上的 IIS 綁定提示，只是參考資訊，不擋存檔。 */
+export interface IisBindingHint {
+    Tone: "ok" | "warning" | "muted";
+    Text: string;
+}
 
 /**
  * 網站管理清單的一列，一列＝一個後台站台（Websites）。
@@ -92,19 +107,17 @@ export interface WebsiteCustomer {
     PrimaryContactName: string | null;
 }
 
-/** 網站的一筆網址。IsPrimary＝後台 Website.DefaultUrl；其餘存在 WebsiteAlternateUrls。 */
+/** 網站的其他網址（存在 WebsiteAlternateUrls）；主要網址是 WebsiteDetail.DefaultUrl，不在這裡。 */
 export interface WebsiteUrl {
     Url: string;
-    IsPrimary: boolean;
     /** null＝網域管理中沒有對應的網域（或後台舊資料沒比對過） */
     Domain: DomainSummary | null;
 }
 
-/** 表單上的一筆網址。Key 只給 v-for 與彈窗追蹤用，不送後端。 */
+/** 表單上的一筆其他網址。Key 只給 v-for 與彈窗追蹤用，不送後端。 */
 export interface WebsiteUrlFormItem {
     Key: number;
     Url: string;
-    IsPrimary: boolean;
     /** 載入時後端比對出的網域，給列元件當初始顯示；新增的列為 null */
     InitialDomain: DomainSummary | null;
 }
@@ -125,8 +138,11 @@ export interface WebsiteDetail {
     Status: WebsiteStatusValue;
     SuspendedDate: string | null;
     TerminatedDate: string | null;
+    /** 後台 Website.DefaultUrl，Platform 只顯示不修改；null／""＝未設定 */
+    DefaultUrl: string | null;
+    /** 舊資料的「網域待申請」；載入時改成在其他網址補一筆預設網址 */
     IsDomainPending: boolean;
-    /** 主要網址排第一；網域待申請時為空陣列 */
+    /** 只有其他網址，可為空陣列 */
     Urls: WebsiteUrl[];
     Remark: string | null;
     /** null＝後台還沒綁公司 */
@@ -147,7 +163,7 @@ export interface WebsiteForm {
     Status: number;
     SuspendedDate: string;
     TerminatedDate: string;
-    IsDomainPending: boolean;
+    /** 只有其他網址；主要網址不在表單內 */
     Urls: WebsiteUrlFormItem[];
     Remark: string;
 }

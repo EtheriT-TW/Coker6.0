@@ -866,17 +866,30 @@ button, input, select, textarea {
             grid-column: 1 / -1;
         }
 
-/* ── UrlField：協定下拉＋網址輸入框併成一列 ── */
+/* ── UrlField：唯讀協定文字＋網址輸入框併成一列 ── */
 .url-field {
     display: flex;
 }
 
     .url-field .url-field-scheme {
+        display: flex;
         flex: 0 0 auto;
-        width: auto;
+        align-items: center;
+        height: 42px;
+        padding: 0 11px;
+        color: #64748b;
         background: #f8fafc;
+        border: 1px solid #cbd5e1;
         border-right: 0;
         border-radius: 9px 0 0 9px;
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+
+    /* 舊網址的 http:// 原樣保留，用警示色提醒不是 https */
+    .url-field .url-field-scheme-legacy {
+        color: #b45309;
+        background: #fffbeb;
     }
 
     .url-field .url-field-input {
@@ -1268,6 +1281,19 @@ button, input, select, textarea {
 
 .field-note-error {
     color: #c2413b;
+}
+
+/* IIS 綁定參考資訊：已綁定綠色、沒有綁定橘色；查不到資料沿用 .field-note 灰色。IIS 站台名稱可能很長，允許任意斷行 */
+.iis-binding-note {
+    overflow-wrap: anywhere;
+}
+
+.iis-binding-note-ok {
+    color: #15803d;
+}
+
+.iis-binding-note-warning {
+    color: #b45309;
 }
 
 .field-note-with-action {
@@ -1816,4 +1842,21 @@ button, input, select, textarea {
         flex: 1;
         width: auto;
     }
+}
+
+
+/* 手機寬度：其他網址的輸入框與右側按鈕改上下排，輸入框才有足夠寬度；按鈕靠右 */
+@media (max-width: 520px) {
+    .repeater-row-url {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        .repeater-row-url .repeater-action-spacer {
+            display: none;
+        }
+
+        .repeater-row-url .repeater-action-buttons {
+            justify-content: flex-end;
+        }
 }

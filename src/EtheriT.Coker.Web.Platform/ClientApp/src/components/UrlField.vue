@@ -1,7 +1,8 @@
 <script setup lang="ts">
-    import { computed, ref, watch } from "vue";
-    import { URL_SCHEMES, joinUrl, splitUrl, type UrlScheme } from "@/utils/url-parts";
+    import { computed, ref } from "vue";
+    import { joinUrl, splitUrl, type UrlScheme } from "@/utils/url-parts";
 
+    // 新網址一律 https://；載入的舊網址是 http:// 時協定唯讀顯示、原樣保留，不替使用者改掉
     const props = defineProps<{
         modelValue: string;
         inputId: string;
@@ -14,28 +15,18 @@
         enter: [];
     }>();
 
-    // 網址清空後沒地方記協定，另外存一份，重打時保留上次的選擇
-    const scheme = ref<UrlScheme>(splitUrl(props.modelValue).scheme ?? "https");
+    // 列元件用 Key 掛載，載入的網址在建立時就確定，之後不必再同步外部值
+    const scheme = ref<UrlScheme>(splitUrl(props.modelValue).scheme === "http" ? "http" : "https");
     const rest = computed(() => splitUrl(props.modelValue).rest);
-
-    // 外部改網址（載入資料、站台帶入預設網址）時，同步下拉選項
-    watch(() => props.modelValue, value => {
-        const parsed = splitUrl(value).scheme;
-        if (parsed) scheme.value = parsed;
-    });
-
-    function onSchemeChange(event: Event): void {
-        scheme.value = (event.target as HTMLSelectElement).value as UrlScheme;
-        emit("update:modelValue", joinUrl(scheme.value, rest.value));
-        emit("change");
-    }
+    const isLegacyScheme = computed(() => scheme.value === "http");
 
     function onInput(event: Event): void {
         const input = event.target as HTMLInputElement;
         const parsed = splitUrl(input.value);
         if (parsed.scheme) {
-            scheme.value = parsed.scheme;
-            // 畫面上的值沒變時 Vue 不會重畫，要手動把 https:// 拿掉
+            // 貼上 https:// 可把舊的 http 網址升級；貼上 http:// 不會把新網址降級
+            if (parsed.scheme === "https") scheme.value = "https";
+            // 畫面上的值沒變時 Vue 不會重畫，要手動把協定拿掉
             input.value = parsed.rest;
         }
         emit("update:modelValue", joinUrl(scheme.value, parsed.rest));
@@ -44,13 +35,9 @@
 
 <template>
     <div class="url-field">
-        <select class="url-field-scheme"
-                aria-label="通訊協定"
-                :value="scheme"
-                :disabled="props.disabled"
-                @change="onSchemeChange">
-            <option v-for="option in URL_SCHEMES" :key="option" :value="option">{{ option }}://</option>
-        </select>
+        <span class="url-field-scheme"
+              :class="{ 'url-field-scheme-legacy': isLegacyScheme }"
+              :title="isLegacyScheme ? '舊網址使用 http://，原樣保留' : undefined">{{ scheme }}://</span>
         <input :id="props.inputId"
                class="url-field-input"
                :value="rest"

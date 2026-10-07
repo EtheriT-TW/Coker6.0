@@ -17,19 +17,27 @@
     function onValueChanged(value: string | null): void {
         emit("update:modelValue", value ?? "");
     }
+
+    // use-mask-behavior 會讓滑鼠滾輪改日期：在外層 capture 階段攔下 wheel，事件到不了 DxDateBox 的輸入框。
+    // 只 stopPropagation、不 preventDefault，頁面照樣捲動；鍵盤的遮罩輸入不受影響。
+    function blockWheelChange(event: WheelEvent): void {
+        event.stopPropagation();
+    }
 </script>
 
 <template>
-    <DxDateBox class="date-field"
-               :value="props.modelValue || null"
-               type="date"
-               picker-type="calendar"
-               display-format="yyyy/MM/dd"
-               date-serialization-format="yyyy-MM-dd"
-               :use-mask-behavior="true"
-               :show-clear-button="true"
-               :min="DATE_MIN"
-               :max="DATE_MAX"
-               :disabled="props.disabled"
-               @update:value="onValueChanged" />
+    <div class="date-field-wheel-guard" @wheel.capture.passive="blockWheelChange">
+        <DxDateBox class="date-field"
+                   :value="props.modelValue || null"
+                   type="date"
+                   picker-type="calendar"
+                   display-format="yyyy/MM/dd"
+                   date-serialization-format="yyyy-MM-dd"
+                   :use-mask-behavior="true"
+                   :show-clear-button="true"
+                   :min="DATE_MIN"
+                   :max="DATE_MAX"
+                   :disabled="props.disabled"
+                   @update:value="onValueChanged" />
+    </div>
 </template>

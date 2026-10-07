@@ -2,14 +2,16 @@
     import { computed, onBeforeUnmount, ref, watch } from "vue";
     import { useRoute } from "vue-router";
     import { FormFieldErrors } from "@/core/coker";
+    import IisBindingNote from "@/components/IisBindingNote.vue";
     import QuickDomainDialog from "@/components/QuickDomainDialog.vue";
     import UrlField from "@/components/UrlField.vue";
     import { matchDomain } from "@/services/domain-api";
     import type { DomainSummary } from "@/types/domain";
+    import type { IisBindingHint } from "@/types/website";
     import { toDateInput } from "@/utils/date-input";
     import { toDomainName } from "@/utils/domain-name";
 
-    // 網站編輯頁的一筆網址：輸入網址、指定主要網址，並顯示比對到的網域。
+    // 網站編輯頁的一筆其他網址：輸入網址，並顯示比對到的網域與 IIS 綁定狀態。
     // 網域只是參考資訊：比對不到也能存檔；要補建或修改網域由使用者按右側按鈕自行處理，不自動登記。
     // 這裡的比對結果只給使用者看；存檔時後端會逐筆重新比對，不相信前端。
     // 停用狀態由外層 <fieldset disabled> 控制。
@@ -18,18 +20,17 @@
         url: string;
         /** 第幾筆（0 起算），用來組欄位 id 與標題 */
         index: number;
-        isPrimary: boolean;
         /** 載入時後端比對出的網域；新增的列為 null */
         initialDomain: DomainSummary | null;
         errors: string[];
-        canRemove: boolean;
         /** 新增網站時不顯示「編輯網域」：跳頁會丟掉還沒存的網站 */
         canEditDomain: boolean;
+        /** IIS 綁定提示，由外層統一查詢後傳入 */
+        iisHint: IisBindingHint | null;
     }>();
 
     const emit = defineEmits<{
         "update:url": [value: string];
-        setPrimary: [];
         remove: [];
         /** 本列的彈窗開關；外層據此擋住 Ctrl+S 偷偷送出網站表單 */
         dialogChange: [open: boolean];
@@ -110,19 +111,11 @@
 <template>
     <article class="repeater-item">
         <header class="repeater-item-heading">
-            <strong>網址 {{ props.index + 1 }}</strong>
-            <label class="choice">
-                <input type="radio"
-                       name="website-primary-url"
-                       :checked="props.isPrimary"
-                       @change="emit('setPrimary')" />
-                <span class="choice-box" aria-hidden="true"></span>
-                <span>主要網址</span>
-            </label>
+            <strong>其他網址 {{ props.index + 1 }}</strong>
         </header>
 
         <div class="repeater-item-body">
-            <div class="repeater-row">
+            <div class="repeater-row repeater-row-url">
                 <div class="form-grid">
                     <div class="form-field form-field-wide">
                         <label :for="inputId" class="form-label">網址 <i class="form-required">*</i></label>
@@ -143,17 +136,18 @@
                         <p v-else-if="isDomainMissing" class="field-note" role="status">
                             網域管理中還沒有這個網址的網域資料，仍可儲存；可按右側按鈕建立網域。
                         </p>
+                        <IisBindingNote :hint="props.iisHint" />
                     </div>
                 </div>
 
                 <!-- 空白標題佔位，讓按鈕與輸入框對齊在同一條線上 -->
                 <div class="repeater-action">
-                    <span aria-hidden="true">&nbsp;</span>
+                    <span class="repeater-action-spacer" aria-hidden="true">&nbsp;</span>
                     <div class="repeater-action-buttons">
                         <RouterLink v-if="matchedDomain && props.canEditDomain"
                                     class="outline-icon-button"
                                     title="編輯網域資料"
-                                    :aria-label="`編輯網址 ${props.index + 1} 的網域資料`"
+                                    :aria-label="`編輯其他網址 ${props.index + 1} 的網域資料`"
                                     :to="{ name: 'domain-edit', params: { id: matchedDomain.Id }, query: { returnTo: route.fullPath } }">
                             <span class="material-symbols-outlined" aria-hidden="true">edit</span>
                         </RouterLink>
@@ -161,15 +155,14 @@
                                 class="outline-icon-button"
                                 type="button"
                                 title="建立網域資料"
-                                :aria-label="`建立網址 ${props.index + 1} 的網域資料`"
+                                :aria-label="`建立其他網址 ${props.index + 1} 的網域資料`"
                                 @click="isQuickDomainOpen = true">
                             <span class="material-symbols-outlined" aria-hidden="true">dns</span>
                         </button>
                         <button class="outline-icon-button outline-icon-button-danger"
                                 type="button"
                                 title="移除這筆"
-                                :aria-label="`移除網址 ${props.index + 1}`"
-                                :disabled="!props.canRemove"
+                                :aria-label="`移除其他網址 ${props.index + 1}`"
                                 @click="emit('remove')">
                             <span class="material-symbols-outlined" aria-hidden="true">delete</span>
                         </button>

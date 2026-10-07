@@ -40,11 +40,10 @@ public sealed record WebsiteCustomerDto(
     string? Email,
     string? PrimaryContactName);
 
-/// <summary>網站的一筆網址。IsPrimary＝後台 Website.DefaultUrl；其餘存在 WebsiteAlternateUrls。</summary>
+/// <summary>網站的一筆其他網址（WebsiteAlternateUrls）。</summary>
 public sealed record WebsiteUrlDto(
     string Url,
-    bool IsPrimary,
-    DomainSummaryDto? Domain);   // null＝網域管理中沒有對應的網域（或後台舊資料沒比對過）
+    DomainSummaryDto? Domain);   // null＝網域管理中沒有對應的網域
 
 public sealed record WebsiteDetailDto
 {
@@ -52,6 +51,8 @@ public sealed record WebsiteDetailDto
     public long Id { get; init; }
     /// <summary>站台代碼，唯讀顯示用。</summary>
     public string OrgName { get; init; } = string.Empty;
+    /// <summary>後台 Website.DefaultUrl，唯讀顯示用；新增後由後台維護。</summary>
+    public string? DefaultUrl { get; init; }
     /// <summary>0＝後台還沒綁公司。</summary>
     public long FK_CompanyId { get; init; }
     public string Name { get; init; } = string.Empty;
@@ -63,9 +64,10 @@ public sealed record WebsiteDetailDto
     public PlatformWebsiteStatusEnum Status { get; init; }
     public DateTime? SuspendedDate { get; init; }
     public DateTime? TerminatedDate { get; init; }
+    /// <summary>舊資料的「網域待申請」；存檔後一律變 false，前端用來判斷要不要自動補網址。</summary>
     public bool IsDomainPending { get; init; }
 
-    /// <summary>主要網址排第一，其他網址依排序；網域待申請時為空清單。</summary>
+    /// <summary>其他網址（WebsiteAlternateUrls）依排序，不含預設網址。</summary>
     public IReadOnlyList<WebsiteUrlDto> Urls { get; init; } = [];
 
     public string? Remark { get; init; }
@@ -104,10 +106,9 @@ public class WebsiteSaveRequest
     public DateTime? SuspendedDate { get; set; }
     public DateTime? TerminatedDate { get; set; }
 
-    public bool IsDomainPending { get; set; }
-
     /// <summary>
-    /// 網站的所有網址，必須剛好一筆 IsPrimary；待申請時必須是空清單。
+    /// 只放「其他網址」（WebsiteAlternateUrls），可以是 0 筆，不可與預設網址重複。
+    /// 預設網址（Website.DefaultUrl）新增時由後端依 OrgName 組出，編輯時不寫入。
     /// 後端依每筆網址比對網域，前端不送 FK。
     /// </summary>
     public List<WebsiteUrlInput> Urls { get; set; } = [];
@@ -120,9 +121,6 @@ public sealed class WebsiteUrlInput
 {
     [StringLength(500, ErrorMessage = "網址不可超過 500 個字元。")]
     public string? Url { get; set; }
-
-    /// <summary>true＝寫入後台 Website.DefaultUrl。</summary>
-    public bool IsPrimary { get; set; }
 }
 
 /// <summary>
@@ -135,3 +133,26 @@ public sealed class WebsiteCreateRequest : WebsiteSaveRequest
     [StringLength(100, ErrorMessage = "站台代碼不可超過 100 個字元。")]
     public string OrgName { get; set; } = string.Empty;
 }
+
+
+// ───────────────────────── 選項與 IIS 綁定查詢 ─────────────────────────
+
+public sealed record WebsiteHostLocationDto(string Value, string Text);
+
+/// <summary>GET /api/websites/options。DefaultHostByLevel 的 key 是 WebsiteLevelEnum 的數值字串。</summary>
+public sealed record WebsiteOptionsDto(
+    IReadOnlyList<WebsiteHostLocationDto> HostLocations,
+    IReadOnlyDictionary<string, string> DefaultHostByLevel,
+    string DefaultUrlSuffix);
+
+/// <summary>SiteName 為 null＝這個主機名稱在該主機的 IIS 上沒有綁定。</summary>
+public sealed record IisBindingItemDto(string Host, string? SiteName);
+
+/// <summary>
+/// GET /api/websites/iis-bindings。Status：Ok／NoAgent／Offline／Unavailable；
+/// 不是 Ok 時 Items 為空清單，不可解讀成「沒綁定」。
+/// </summary>
+public sealed record IisBindingLookupResult(
+    string Status,
+    DateTime? LastSeenAtUtc,
+    IReadOnlyList<IisBindingItemDto> Items);

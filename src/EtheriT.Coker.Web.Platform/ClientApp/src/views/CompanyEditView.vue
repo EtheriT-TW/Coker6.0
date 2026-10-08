@@ -68,7 +68,8 @@
             PrimaryContactJobTitle: "",
             PrimaryContactPhone: "",
             PrimaryContactEmail: "",
-            SubContacts: []
+            SubContacts: [],
+            Remark: ""
         };
     }
 
@@ -84,7 +85,8 @@
             Address: [rules.maxLength(150, "公司地址不可超過 150 個字元。")],
             Email: [rules.email("公司 Email 格式不正確。")],
             PrimaryContactName: [rules.required("請輸入主要聯絡人姓名。")],
-            PrimaryContactEmail: [rules.email("主要聯絡人 Email 格式不正確。")]
+            PrimaryContactEmail: [rules.email("主要聯絡人 Email 格式不正確。")],
+            Remark: [rules.maxLength(2000, "備註總字數不可超過2000字元")]
         },
         validate: async values => {
             const errors: Record<string, string[]> = {};
@@ -191,6 +193,7 @@
                 Email: detail.Email ?? "",
                 Address: detail.Address ?? "",
                 InvoiceInfo: detail.InvoiceInfo ?? "",
+                Remark: detail.Remark ?? "",
                 SalesOwner: detail.SalesOwner ?? "",
                 CustomerType: detail.CustomerType,
                 CustomerTypeOther: detail.CustomerTypeOther ?? "",
@@ -346,7 +349,7 @@
                 <div class="form-field form-field-wide">
                     <label>
                         <span>發票資訊</span>
-                        <textarea v-model="form.model.value.InvoiceInfo" rows="2" maxlength="500"></textarea>
+                        <textarea v-model="form.model.value.InvoiceInfo" rows="3" maxlength="500"></textarea>
                     </label>
                     <FormFieldErrors :errors="form.getErrors('InvoiceInfo')" />
                 </div>
@@ -357,6 +360,14 @@
                         <input v-model="form.model.value.SalesOwner" type="text" maxlength="50" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('SalesOwner')" />
+                </div>
+                
+                <div class="form-field form-field-wide">
+                    <label>
+                        <span>備註</span>
+                        <textarea v-model="form.model.value.Remark" rows="4" maxlength="2000"></textarea>
+                    </label>
+                    <FormFieldErrors :errors="form.getErrors('Remark')" />
                 </div>
             </div>
         </fieldset>

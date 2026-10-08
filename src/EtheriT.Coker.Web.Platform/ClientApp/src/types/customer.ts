@@ -50,6 +50,7 @@ export interface CustomerDetail {
     PrimaryContactPhone: string | null;
     PrimaryContactEmail: string | null;
     SubContacts: CustomerContact[];
+    Remark: string | null;
 }
 
 export interface CustomerLookup {
@@ -86,6 +87,7 @@ export interface CustomerForm {
     PrimaryContactPhone: string;
     PrimaryContactEmail: string;
     SubContacts: CustomerContactForm[];
+    Remark: string;
 }
 
 /** 客戶底下的站台（唯讀）＝後台綁到這個客戶的站台。 */

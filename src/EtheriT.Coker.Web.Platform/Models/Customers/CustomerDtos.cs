@@ -60,6 +60,7 @@ public sealed record CustomerDetailDto
     public string? PrimaryContactJobTitle { get; init; }
     public string? PrimaryContactPhone { get; init; }
     public string? PrimaryContactEmail { get; init; }
+    public string? Remark { get; init; }
     public IReadOnlyList<CustomerContactDto> SubContacts { get; init; } = [];
 }
 
@@ -104,6 +105,8 @@ public sealed class CustomerSaveRequest : IValidatableObject
     [StringLength(150)]
     [OptionalEmail(ErrorMessage = "聯絡人 Email 格式不正確。")]
     public string? PrimaryContactEmail { get; set; }
+    [StringLength(2000, ErrorMessage  = "備註總字數不可超過2000字元")]
+    public string? Remark { get; set; }
 
     public List<CustomerContactSaveRequest> SubContacts { get; set; } = [];
 

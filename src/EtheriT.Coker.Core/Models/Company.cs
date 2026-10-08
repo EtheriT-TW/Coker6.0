@@ -36,6 +36,8 @@ namespace EtheriT.Coker.Core.Models
         public string? ContactPhone { get; set; }
         [StringLength(150)]
         public string? ContactEmail { get; set; }
+        [StringLength(2000)]
+        public string? Remark { get; set; }
         public List<SecondaryContact> SecondaryContacts { get; set; } = [];
     }
 }

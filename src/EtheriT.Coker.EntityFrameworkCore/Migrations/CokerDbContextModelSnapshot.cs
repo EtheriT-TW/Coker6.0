@@ -919,6 +919,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("Remark")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<string>("SalesOwner")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");

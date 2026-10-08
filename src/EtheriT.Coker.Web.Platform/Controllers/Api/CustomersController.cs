@@ -79,6 +79,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             PrimaryContactJobTitle = company.ContactJobTitle,
             PrimaryContactPhone = company.ContactPhone,
             PrimaryContactEmail = company.ContactEmail,
+            Remark = company.Remark,
             SubContacts = company.SecondaryContacts
                 .OrderBy(contact => contact.Sort)
                 .Select(contact => new CustomerContactDto(
@@ -274,6 +275,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
         company.ContactJobTitle = Clean(request.PrimaryContactJobTitle);
         company.ContactPhone = Clean(request.PrimaryContactPhone);
         company.ContactEmail = Clean(request.PrimaryContactEmail);
+        company.Remark = Clean(request.Remark);
     }
 
     /// <summary>統編（有填才檢查）與公司名稱不可和其他未刪除的公司重複。</summary>

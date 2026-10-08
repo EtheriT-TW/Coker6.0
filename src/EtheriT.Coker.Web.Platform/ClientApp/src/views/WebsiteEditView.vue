@@ -29,7 +29,7 @@
         type WebsiteForm,
         type WebsiteOptions
     } from "@/types/website";
-    import { oneYearTermEnd, todayDateInput } from "@/utils/date-input";
+    import { todayDateInput } from "@/utils/date-input";
     import { isSiteRoot, normalizeUrl } from "@/utils/url-parts";
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
@@ -61,8 +61,6 @@
     const savedDefaultUrl = ref("");
     // 載入時 IsDomainPending 為 true，已自動在其他網址補一筆預設網址
     const isPendingUrlAdded = ref(false);
-    // 新增時到期日被使用者手動改過，就不再跟著開通日重算
-    const isEndDateManual = ref(false);
 
     // ── 以統編或公司名稱帶出客戶（兩者都不可重複，最多一筆） ──
     const lookupKeyword = ref("");
@@ -84,7 +82,6 @@
     // 各網址列目前開著彈窗的 Key；只在 beforeSave 讀，不需要響應式
     const openUrlDialogKeys = new Set<number>();
 
-    /** 新增時的預設值：形象版、繁中、今天開通、一年期；主機等 options 載入後才帶入。 */
     function emptyForm(): WebsiteForm {
         const start = todayDateInput();
         return {
@@ -95,7 +92,7 @@
             Locale: DEFAULT_LOCALE,
             HostLocation: "",
             ServiceStartDate: start,
-            ServiceEndDate: oneYearTermEnd(start),
+            ServiceEndDate: "",
             Status: WebsiteStatus.正常,
             SuspendedDate: "",
             TerminatedDate: "",
@@ -262,21 +259,6 @@
         const host = websiteOptions.value?.DefaultHostByLevel[String(level)];
         if (host && host !== form.model.value.HostLocation) form.model.value.HostLocation = host;
     });
-
-    // 新增時改開通日自動重算到期日（＋1 年－1 天）；到期日手動改過就不再重算
-    watch(() => form.model.value.ServiceStartDate, start => {
-        if (isEdit.value || isEndDateManual.value) return;
-        const end = oneYearTermEnd(start);
-        if (end !== form.model.value.ServiceEndDate) form.model.value.ServiceEndDate = end;
-    });
-
-    function onServiceEndDateInput(value: string): void {
-        // 程式改值後 DxDateBox 可能回傳同一個值，只有真的不同才算使用者手動修改
-        if (value === form.model.value.ServiceEndDate) return;
-        form.model.value.ServiceEndDate = value;
-        if (!isEdit.value) isEndDateManual.value = true;
-        form.clearErrors("ServiceEndDate");
-    }
 
     function addUrl(): void {
         const urls = form.model.value.Urls;
@@ -571,8 +553,7 @@
                 <div class="form-field">
                     <label>
                         <span>網站到期日期</span>
-                        <DateField :model-value="form.model.value.ServiceEndDate"
-                                   @update:model-value="onServiceEndDateInput" />
+                        <DateField v-model="form.model.value.ServiceEndDate" />
                     </label>
                     <FormFieldErrors :errors="form.getErrors('ServiceEndDate')" />
                 </div>

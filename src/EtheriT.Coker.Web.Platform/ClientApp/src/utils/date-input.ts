@@ -29,11 +29,3 @@ function formatDateInput(date: Date): string {
 export function todayDateInput(): string {
     return formatDateInput(new Date());
 }
-
-/** 開通日＋1 年－1 天：2026-10-07 → 2027-10-06；格式不對回傳 ""。 */
-export function oneYearTermEnd(start: string): string {
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(start);
-    if (!match) return "";
-    // Date 會自動進位：日為 0 時退回上個月最後一天，例：2026-03-01 → 2027-02-28
-    return formatDateInput(new Date(Number(match[1]) + 1, Number(match[2]) - 1, Number(match[3]) - 1));
-}

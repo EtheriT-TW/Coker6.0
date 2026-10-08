@@ -44,7 +44,8 @@
             PrimaryContactJobTitle: "",
             PrimaryContactPhone: "",
             PrimaryContactEmail: "",
-            SubContacts: []
+            SubContacts: [],
+            Remark:""
         };
     }
 

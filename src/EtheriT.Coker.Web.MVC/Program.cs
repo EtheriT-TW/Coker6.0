@@ -206,6 +206,7 @@ builder.Services.AddScoped<INewsletterAppService, NewsletterAppService>();
 builder.Services.AddScoped<IPermissionsAppService, PermissionsAppService>();
 builder.Services.AddScoped<IRemoteAppService, RemoteAppService>();
 builder.Services.AddScoped<IDashboardAppService, DashboardAppService>();
+builder.Services.AddScoped<IRevenueReportAppService, RevenueReportAppService>();
 builder.Services.AddScoped<IJsonObjectAppService, JsonObjectAppService>();
 builder.Services.AddScoped<ICaptchaAppService, CaptchaAppService>();
 builder.Services.AddScoped<IContactAppService, ContactAppService>();

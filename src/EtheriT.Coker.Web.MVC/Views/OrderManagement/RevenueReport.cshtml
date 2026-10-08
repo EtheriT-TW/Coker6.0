@@ -1,0 +1,27 @@
+﻿@{
+    ViewData["Title"] = "RevenueReport";
+}
+
+<script src="~/js/OrderManagement/RevenueReport.min.js" asp-append-version="true"></script>
+
+<div class="revenue-report-page py-2 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="title fw-bold fs-4">營收報表</div>
+    </div>
+
+    <div class="card border-0">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <div id="RevenueGranularity"></div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div id="RevenueStartDate"></div>
+                    <span>～</span>
+                    <div id="RevenueEndDate"></div>
+                </div>
+                <div id="RevenueQuery"></div>
+            </div>
+            <p class="text-dark mb-3">統計方式為：訂單狀態為已付款、已出貨、已完成；金額含商品小計與運費；依下單日期歸屬。</p>
+            <div id="RevenueReportGrid"></div>
+        </div>
+    </div>
+</div>

@@ -1,5 +1,14 @@
 ﻿/** @type {typeof orderModel} */
 const orderModel = {
+    GetRevenueReport: function (granularity, startDate, endDate) {
+        return $.ajax({
+            url: "/api/RevenueReport/GetRevenue/",
+            type: "GET",
+            contentType: 'application/json; charset=utf-8',
+            headers: _c.Data.Header,
+            data: { granularity: granularity, startDate: startDate, endDate: endDate },
+        });
+    },
     GetDisplay: function (ohids) {
         return $.ajax({
             url: "/api/Order/GetOrderDisplay/",

@@ -8,5 +8,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         {
             return View("OrderList");
         }
+
+        public IActionResult RevenueReport()
+        {
+            return View();
+        }
     }
 }

@@ -56,6 +56,12 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Action="Index",
                                 Icon="",
                             },new JobMenu{
+                                PageName="RevenueReport",
+                                Title="營收報表",
+                                Controller="OrderManagement",
+                                Action="RevenueReport",
+                                Icon="",
+                            },new JobMenu{
                                 PageName="Report",
                                 Title="列印檢貨單",
                                 Controller="Report",
@@ -593,6 +599,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
             {
                 "OrderManagement",
                 "OrderList",
+                "RevenueReport",
                 "ManagerList",
                 "StoreSettings",
                 "CustSearch",

@@ -543,6 +543,36 @@ namespace EtheriT.Coker.Application.Dashboard
                 })
                 .ToListAsync();
 
+            var monthBeforeLastStart = previousMonthStart.AddMonths(-1);
+            var closedMonthTotals = await db.Order_Headers
+                .AsNoTracking()
+                .Where(order =>
+                    order.FK_WebsiteId == siteId
+                    && !order.IsDeleted
+                    && !order.IsTemp
+                    && paidOrderStates.Contains(order.State)
+                    && order.CreationTime >= monthBeforeLastStart
+                    && order.CreationTime < monthStart)
+                .GroupBy(order => new
+                {
+                    order.CreationTime.Year,
+                    order.CreationTime.Month
+                })
+                .Select(group => new
+                {
+                    group.Key.Year,
+                    group.Key.Month,
+                    Amount = group.Sum(order => order.Subtotal + order.Freight),
+                    Count = group.LongCount()
+                })
+                .ToListAsync();
+            var lastMonthTotal = closedMonthTotals.FirstOrDefault(item =>
+                item.Year == previousMonthStart.Year
+                && item.Month == previousMonthStart.Month);
+            var monthBeforeLastTotal = closedMonthTotals.FirstOrDefault(item =>
+                item.Year == monthBeforeLastStart.Year
+                && item.Month == monthBeforeLastStart.Month);
+
             var todayPaidOrders = paidOrders
                 .Where(order =>
                     order.CreationTime >= today
@@ -602,6 +632,9 @@ namespace EtheriT.Coker.Application.Dashboard
                     .Sum(order => order.Amount),
                 TodayPaidOrderCount = todayPaidOrders.LongCount(),
                 MonthPaidOrderCount = monthPaidOrders.LongCount(),
+                LastMonthOrderAmount = lastMonthTotal?.Amount ?? 0,
+                LastMonthPaidOrderCount = lastMonthTotal?.Count ?? 0,
+                MonthBeforeLastOrderAmount = monthBeforeLastTotal?.Amount ?? 0,
                 RecentOrders = recentOrderSource
                     .Select(order => new DashboardRecentOrderDto
                     {

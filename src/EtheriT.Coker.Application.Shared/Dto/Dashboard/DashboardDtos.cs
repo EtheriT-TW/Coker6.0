@@ -87,6 +87,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Dashboard
         public decimal PreviousMonthOrderAmount { get; set; }
         public long TodayPaidOrderCount { get; set; }
         public long MonthPaidOrderCount { get; set; }
+        public decimal LastMonthOrderAmount { get; set; }
+        public long LastMonthPaidOrderCount { get; set; }
+        public decimal MonthBeforeLastOrderAmount { get; set; }
         public List<DashboardRecentOrderDto> RecentOrders { get; set; } = new();
     }
 

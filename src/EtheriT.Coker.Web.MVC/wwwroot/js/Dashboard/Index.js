@@ -789,6 +789,9 @@ var PageReady = function () {
                 $(".previous-month-order-amount").text(money(result.previousMonthOrderAmount));
                 $(".today-paid-order-count").text(number(result.todayPaidOrderCount));
                 $(".month-paid-order-count").text(number(result.monthPaidOrderCount));
+                $(".last-month-order-amount").text(money(result.lastMonthOrderAmount));
+                $(".month-before-last-order-amount").text(money(result.monthBeforeLastOrderAmount));
+                $(".last-month-paid-order-count").text(number(result.lastMonthPaidOrderCount));
                 renderChange(
                     $(".today-order-change"),
                     result.todayOrderAmount,
@@ -798,6 +801,11 @@ var PageReady = function () {
                     $(".month-order-change"),
                     result.monthOrderAmount,
                     result.previousMonthOrderAmount
+                );
+                renderChange(
+                    $(".last-month-order-change"),
+                    result.lastMonthOrderAmount,
+                    result.monthBeforeLastOrderAmount
                 );
                 renderRecentOrders(result.recentOrders);
                 loadOrderTrend(30);

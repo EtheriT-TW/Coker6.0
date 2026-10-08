@@ -197,12 +197,20 @@
                         <FormFieldErrors :errors="fieldErrors('Phone')" />
                     </div>
 
-                    <div class="form-field form-field-wide">
+                    <div class="form-field">
                         <label>
                             <span>公司 Email</span>
                             <input v-model="model.Email" type="email" maxlength="150" />
                         </label>
                         <FormFieldErrors :errors="fieldErrors('Email')" />
+                    </div>
+
+                    <div class="form-field form-field-wide">
+                        <label>
+                            <span>公司地址</span>
+                            <input v-model="model.Address" type="text" maxlength="150" />
+                        </label>
+                        <FormFieldErrors :errors="fieldErrors('Address')" />
                     </div>
                 </div>
             </fieldset>

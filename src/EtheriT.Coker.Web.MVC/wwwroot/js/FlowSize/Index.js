@@ -1,8 +1,14 @@
-﻿let flowSizesType = "day";
+﻿const FLOW_SIZE_BUTTONS = { year: "#loadDataByYear", month: "#loadDataByMonth", day: "#loadDataByDay" };
+let flowSizesType = (function () {
+    const type = new URLSearchParams(window.location.search).get("type");
+    return Object.prototype.hasOwnProperty.call(FLOW_SIZE_BUTTONS, type) ? type : "day";
+})();
 var PageReady = function () {
     $("#loadDataByYear").on("click", loadDataByYear);
     $("#loadDataByMonth").on("click", loadDataByMonth);
     $("#loadDataByDay").on("click", loadDataByDay);
+    $("#loadDataByYear, #loadDataByMonth, #loadDataByDay").removeClass("btn-primary");
+    $(FLOW_SIZE_BUTTONS[flowSizesType]).addClass("btn-primary");
     function loadDataByYear() {
         var grid = $('#changeList').dxDataGrid('instance');
         $(".btn").removeClass("btn-primary");

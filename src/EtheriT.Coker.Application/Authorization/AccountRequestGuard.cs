@@ -72,35 +72,50 @@ public static class AccountRequestGuard
     private static bool IsLocked(string[] keys) => keys.Any(key =>
         Cache.TryGetValue(key, out FailureWindow? state) && state?.LockedUntil > DateTimeOffset.UtcNow);
 
+    /*驗證碼驗證功能暫時註解*/
     // The check, validation and counter update are atomic within this process.
+    //public static string ValidateCaptcha(HttpContext context, string? id, string? code, Func<bool> validate)
+    //{
+    //    var browser = Browser(context);
+    //    var keys = FailureKeys(context, browser);
+    //    lock (Sync)
+    //    {
+    //        Consume($"verified:{browser}");
+    //        if (IsLocked(keys)) return "CaptchaLocked";
+    //        if (!Allow(context, "captcha-validate", 60)) return "RateLimited";
+    //        var reason = string.IsNullOrWhiteSpace(id) || id.Length > 128 ||
+    //            string.IsNullOrWhiteSpace(code) || code.Length > 16 ? "InvalidInput" :
+    //            !Consume($"challenge:{id}") ? "ChallengeMissingExpiredOrReplayed" :
+    //            validate() ? "" : "IncorrectCode";
+    //        if (reason == "")
+    //        {
+    //            foreach (var key in keys) Cache.Remove(key);
+    //            return reason;
+    //        }
+    //        var now = DateTimeOffset.UtcNow;
+    //        foreach (var key in keys)
+    //        {
+    //            if (!Cache.TryGetValue(key, out FailureWindow? state) || state == null)
+    //                state = new FailureWindow { End = now.AddMinutes(15) };
+    //            state.Count++;
+    //            if (state.Count >= 5) state.End = state.LockedUntil = now.AddMinutes(15);
+    //            Cache.Set(key, state, new MemoryCacheEntryOptions().SetSize(1).SetAbsoluteExpiration(state.End));
+    //        }
+    //        return IsLocked(keys) ? "CaptchaLockedAfterFailures" : reason;
+    //    }
+    //}
+
+    /*暫時替代驗證碼驗證*/
     public static string ValidateCaptcha(HttpContext context, string? id, string? code, Func<bool> validate)
     {
         var browser = Browser(context);
-        var keys = FailureKeys(context, browser);
         lock (Sync)
         {
             Consume($"verified:{browser}");
-            if (IsLocked(keys)) return "CaptchaLocked";
-            if (!Allow(context, "captcha-validate", 60)) return "RateLimited";
-            var reason = string.IsNullOrWhiteSpace(id) || id.Length > 128 ||
+            return string.IsNullOrWhiteSpace(id) || id.Length > 128 ||
                 string.IsNullOrWhiteSpace(code) || code.Length > 16 ? "InvalidInput" :
                 !Consume($"challenge:{id}") ? "ChallengeMissingExpiredOrReplayed" :
                 validate() ? "" : "IncorrectCode";
-            if (reason == "")
-            {
-                foreach (var key in keys) Cache.Remove(key);
-                return reason;
-            }
-            var now = DateTimeOffset.UtcNow;
-            foreach (var key in keys)
-            {
-                if (!Cache.TryGetValue(key, out FailureWindow? state) || state == null)
-                    state = new FailureWindow { End = now.AddMinutes(15) };
-                state.Count++;
-                if (state.Count >= 5) state.End = state.LockedUntil = now.AddMinutes(15);
-                Cache.Set(key, state, new MemoryCacheEntryOptions().SetSize(1).SetAbsoluteExpiration(state.End));
-            }
-            return IsLocked(keys) ? "CaptchaLockedAfterFailures" : reason;
         }
     }
 

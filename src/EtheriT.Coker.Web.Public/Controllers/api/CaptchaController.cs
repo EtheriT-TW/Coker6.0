@@ -18,8 +18,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         {
             Response.Headers.CacheControl = "no-store";
             if (string.IsNullOrWhiteSpace(id) || id.Length > 128) return BadRequest();
-            if (AccountRequestGuard.CaptchaLocked(HttpContext)) return StatusCode(429);
-            if (!AccountRequestGuard.Allow(HttpContext, "captcha-image", 60)) return StatusCode(429);
+            /*驗證碼驗證功能暫時註解*/
+            //if (AccountRequestGuard.CaptchaLocked(HttpContext)) return StatusCode(429);
+            //if (!AccountRequestGuard.Allow(HttpContext, "captcha-image", 60)) return StatusCode(429);
             AccountRequestGuard.Grant($"challenge:{id}", TimeSpan.FromMinutes(5));
             return File(captchaAppService.Captcha(id), "image/png");
         }

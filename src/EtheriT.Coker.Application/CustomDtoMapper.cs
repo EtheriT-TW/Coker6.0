@@ -169,7 +169,8 @@ namespace EtheriT.Coker.Application
             CreateMap<Website, WebsiteEditDto>()
                 .ReverseMap()
                 .ForMember(dest => dest.StartDate, opt => opt.Ignore())
-                .ForMember(dest => dest.EndDate, opt => opt.Ignore());
+                .ForMember(dest => dest.EndDate, opt => opt.Ignore())
+                .ForMember(dest => dest.OrgName, opt => opt.Ignore());
 
             //Company
             CreateMap<Core.Models.Company, CompanyDto>()

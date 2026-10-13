@@ -3,6 +3,9 @@
 #CompanyInfo > .website_deadline > .deadline_date {
     background-color: #F5F7FA;
 }
+    #CompanyInfo > .website_deadline > .deadline_date > .org_name::before {
+        content: '\7db2\7ad9\4ee3\78bc\ff1a';
+    }
 
     #CompanyInfo > .website_deadline > .deadline_date > .start_date::before {
         content: '\7db2\7ad9\8d77\59cb\65e5\ff1a';

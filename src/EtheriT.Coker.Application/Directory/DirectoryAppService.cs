@@ -2486,6 +2486,16 @@ namespace EtheriT.Coker.Application.Directory
                         .Take(showNum)
                         .ToListAsync();
                 }
+                else if (sortBy == "random")
+                {
+                    pageIds = await query
+                        .OrderBy(x => Guid.NewGuid())
+                        .Select(x => x.Id)
+                        .Take(output.TotalCount)
+                        .Skip((page - 1) * showNum)
+                        .Take(showNum)
+                        .ToListAsync();
+                }
                 else
                 {
                     pageIds = await query
@@ -2570,6 +2580,16 @@ namespace EtheriT.Coker.Application.Directory
                         Array.Empty<long>(),
                         dto);
                     pageIds = await sortedQuery
+                        .Select(x => x.Id)
+                        .Take(output.TotalCount)
+                        .Skip((page - 1) * showNum)
+                        .Take(showNum)
+                        .ToListAsync();
+                }
+                else if (sortBy == "random")
+                {
+                    pageIds = await articleQuery
+                        .OrderBy(x => Guid.NewGuid())
                         .Select(x => x.Id)
                         .Take(output.TotalCount)
                         .Skip((page - 1) * showNum)

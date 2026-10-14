@@ -713,11 +713,6 @@ namespace EtheriT.Coker.Application.Directory
                 menuQ = ApplyFrontMenuViewPermission(menuQ, websiteId, currentFrontRoleId);
             }
 
-            if (articleQ != null)
-            {
-                articleQ = ApplyFrontArticleViewPermission(articleQ, websiteId, currentFrontRoleId);
-            }
-
             if (prodQ != null)
             {
                 prodQ = ApplyFrontProductViewPermission(prodQ, websiteId, currentFrontRoleId);
@@ -2256,7 +2251,6 @@ namespace EtheriT.Coker.Application.Directory
                                        .Where(e => e.Visible)
                                        .Where(e => siteIds.Contains(e.FK_WebsiteId))
                                        .Where(e => e.permanent || (DateTime.Now >= e.StartTime && DateTime.Now <= e.EndTime));
-                            articleQuery = ApplyFrontArticleViewPermission(articleQuery, WebsiteID, currentFrontRoleId);
                             if (!string.IsNullOrEmpty(dto.Facet) && db_d != null && db_d.Any())
                             {
                                 var dir = db_d.First();
@@ -2534,7 +2528,6 @@ namespace EtheriT.Coker.Application.Directory
                 .Where(x => !x.IsDeleted && x.Visible && !x.RemovedFromShelves)
                 .Where(x => siteIds.Contains(x.FK_WebsiteId))
                 .Where(x => x.permanent || (now >= x.StartTime && now <= x.EndTime));
-            articleQuery = ApplyFrontArticleViewPermission(articleQuery, websiteId, currentFrontRoleId);
 
             if (!string.IsNullOrEmpty(dto.Facet))
             {
@@ -4243,43 +4236,6 @@ namespace EtheriT.Coker.Application.Directory
             long? roleId)
         {
             var type = (int)PermissionDetailsTypeEnum.選單會員;
-
-            var restrictedIds = db.PermissionDetail
-                .AsNoTracking()
-                .Where(p => p.FK_WebsiteId == websiteId)
-                .Where(p => p.Type == type)
-                .Where(p => p.IsGranted)
-                .Where(p => p.FK_TargetId != null)
-                .Select(p => p.FK_TargetId!.Value)
-                .Distinct();
-
-            if (roleId == null || roleId <= 0)
-            {
-                return query.Where(x => !restrictedIds.Contains(x.Id));
-            }
-
-            var allowedIds = db.PermissionDetail
-                .AsNoTracking()
-                .Where(p => p.FK_WebsiteId == websiteId)
-                .Where(p => p.Type == type)
-                .Where(p => p.IsGranted)
-                .Where(p => p.FK_TargetId != null)
-                .Where(p => p.FK_RoleId == roleId)
-                .Select(p => p.FK_TargetId!.Value)
-                .Distinct();
-
-            return query.Where(x =>
-                !restrictedIds.Contains(x.Id) ||
-                allowedIds.Contains(x.Id)
-            );
-        }
-
-        private IQueryable<Core.Models.Article> ApplyFrontArticleViewPermission(
-            IQueryable<Core.Models.Article> query,
-            long websiteId,
-            long? roleId)
-        {
-            var type = (int)PermissionDetailsTypeEnum.文章會員;
 
             var restrictedIds = db.PermissionDetail
                 .AsNoTracking()

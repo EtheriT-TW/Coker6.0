@@ -44,6 +44,19 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             return await productAppService.GetDisplaySimple(id);
         }
         [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public async Task<ActionResult<ProductRecommendationsDto>> GetRecommendations(
+            [FromQuery] long id,
+            [FromQuery] int count = 8)
+        {
+            if (id <= 0 || count < 1 || count > 50)
+                return BadRequest(new { message = "id 必須大於 0，count 必須介於 1 到 50。" });
+
+            var result = await productAppService.GetRecommendations(id, count);
+            if (result == null) return NotFound();
+            return Ok(result);
+        }
+        [HttpGet]
         public async Task<ProdGetHistoryDisplayAllDto> GetHistoryDisplay(int page)
         {
             return await productAppService.GetHistoryDisplay(page);

@@ -23,6 +23,11 @@ namespace EtheriT.Coker.Application.BackgroundJob
         public void InitializeJobs()
         {
             _recurringJobManager.AddOrUpdate<UserHabitsWorking>("UserHabits", job => job.HabitCollection(), Cron.Daily(18,30));
+            _recurringJobManager.AddOrUpdate<TagProductIdfWorking>(
+                "TagProductIdf",
+                job => job.Recalculate(),
+                Cron.Daily(3, 15),
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Local });
             _recurringJobManager.AddOrUpdate<ProductExportBackgroundJob>(
                 "ProductBackgroundTaskCleanup",
                 job => job.CleanupExpiredFiles(),

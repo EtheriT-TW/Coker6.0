@@ -57,7 +57,7 @@ using static DevExpress.XtraPrinting.Native.ExportOptionsPropertiesNames;
 
 namespace EtheriT.Coker.Application.Product
 {
-    public class ProductAppService : IProductAppService
+    public partial class ProductAppService : IProductAppService
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;

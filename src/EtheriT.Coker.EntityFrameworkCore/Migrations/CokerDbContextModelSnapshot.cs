@@ -8138,6 +8138,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long?>("LastModifierUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("ProductIdfUpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("ProductIdfWeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(1.0);
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(50)

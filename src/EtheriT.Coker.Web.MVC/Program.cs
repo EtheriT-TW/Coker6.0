@@ -223,6 +223,7 @@ builder.Services.AddScoped<IReportingAppService, ReportingAppService>();
 builder.Services.AddTransient<IDashboardAuthorizationFilter, HangfireDashboardAuthorizationFilter>();
 builder.Services.AddTransient<ITemplatesApplicationService, TemplatesApplicationService>();
 builder.Services.AddScoped<UserHabitsWorking>();
+builder.Services.AddScoped<TagProductIdfWorking>();
 builder.Services.AddScoped<LogCleanupWorking>();
 builder.Services.AddScoped<DatabaseRetentionWorking>();
 builder.Services.AddScoped<RemoteRetentionWorking>();

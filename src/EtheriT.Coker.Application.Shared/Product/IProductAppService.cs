@@ -30,6 +30,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ProdGetOneDto> GetDisplayOne(long id);
         public Task<List<ProductStockDto>> GetDisplayStock(long id);
         public Task<ProdGetDisplayDto> GetDisplaySimple(long id);
+        public Task<ProductRecommendationsDto?> GetRecommendations(long id, int count = 8);
         public Task<JsonResult> GetRandomDIsplay(long webid, int num);
         public Task<ProdGetHistoryDisplayAllDto> GetHistoryDisplay(int page);
         public Task<ResponseMessageDto> ProdDelete(long Id);

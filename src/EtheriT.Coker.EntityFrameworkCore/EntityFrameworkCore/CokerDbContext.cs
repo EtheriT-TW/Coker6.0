@@ -604,6 +604,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.HasIndex(t => new { t.Title, t.FK_WebsiteId }).HasFilter("[IsDeleted] = 0").IsUnique();
                 o.HasOne(u => u.Website).WithMany(u => u.Tags).HasForeignKey(f => f.FK_WebsiteId);
                 o.Property(t => t.IsTemporary).HasDefaultValue(false);
+                o.Property(t => t.ProductIdfWeight).HasDefaultValue(1d);
                 o.HasQueryFilter("TemporaryFilter", e => !e.IsTemporary);
             });
             modelBuilder.Entity<Tag_Associate>(o =>

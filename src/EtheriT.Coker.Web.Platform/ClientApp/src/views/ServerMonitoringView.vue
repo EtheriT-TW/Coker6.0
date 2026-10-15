@@ -140,7 +140,7 @@ async function installSsl(siteName: string, hostNames: string[]): Promise<void> 
   if (submittingSite.value) return;
   submittingSite.value = siteName;
   try {
-    await installWebsiteTls(selectedServer.value, siteName, hostNames, currentAgent.value?.DryRun);
+    await installWebsiteTls(selectedServer.value, siteName, hostNames, currentAgent.value?.DryRun ?? false);
   }
   catch (cause) {
     await requestAlert({ title: '無法送出 TLS 任務', message: cause instanceof Error ? cause.message : '請稍後再試。' });

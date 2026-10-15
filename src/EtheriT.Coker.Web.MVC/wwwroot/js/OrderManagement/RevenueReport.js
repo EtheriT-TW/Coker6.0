@@ -35,6 +35,18 @@
         };
     }
 
+    function getInitialRange(){
+        var period = new URLSearchParams(window.location.search).get("period");
+        if(period!=="lastMonth")
+            return getDefaultRange(GRANULARITY_DAY);
+
+        var today = new Date();
+        return{
+            start: new Date(today.getFullYear(), today.getMonth() -1, 1),
+            end: new Date(today.getFullYear(), today.getMonth(), 0)
+        }
+    }
+
     function getDateBoxOptions(type) {
         if (type === GRANULARITY_MONTH) {
             return {
@@ -111,7 +123,7 @@
     }
 
     $(function () {
-        var range = getDefaultRange(GRANULARITY_DAY);
+        var range = getInitialRange();
 
         $("#RevenueGranularity").dxButtonGroup({
             items: [

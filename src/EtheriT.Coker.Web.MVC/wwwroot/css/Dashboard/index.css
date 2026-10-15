@@ -855,6 +855,10 @@ hr.horizontal.gray-light {
   color: inherit !important;
 }
 
+.text-red {
+    color: #E53935;
+}
+
 .letter-wider {
   letter-spacing: 0.05rem;
 }

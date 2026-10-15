@@ -9713,6 +9713,66 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("WebsiteCacheStates");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteEnterpriseEmail", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AccountType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpirationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OtherType")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Remark")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("TotalAccounts")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_WebsiteId");
+
+                    b.ToTable("WebsiteEnterpriseEmails");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>
                 {
                     b.Property<long>("Id")
@@ -11314,6 +11374,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired();
 
                     b.Navigation("Website");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteEnterpriseEmail", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", null)
+                        .WithMany()
+                        .HasForeignKey("FK_WebsiteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>

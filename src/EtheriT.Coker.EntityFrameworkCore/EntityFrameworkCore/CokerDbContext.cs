@@ -132,6 +132,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<PlatformWebsite> PlatformWebsites { get; set; }
         public DbSet<PlatformDomain> PlatformDomains { get; set; }
         public DbSet<WebsiteAlternateUrl> WebsiteAlternateUrls { get; set; }
+        public DbSet<WebsiteEnterpriseEmail> WebsiteEnterpriseEmails { get; set; }
         public DbSet<ProvisioningTask> ProvisioningTasks { get; set; }
         public DbSet<ProvisioningAgentStatus> ProvisioningAgentStatuses { get; set; }
         public DbSet<ProvisioningMetricSample> ProvisioningMetricSamples { get; set; }
@@ -1040,6 +1041,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                  .OnDelete(DeleteBehavior.Restrict);
                 o.HasIndex(x => new { x.FK_WebsiteId, x.Sort });
                 o.HasIndex(x => x.FK_PlatformDomainId);
+            });
+
+            modelBuilder.Entity<WebsiteEnterpriseEmail>(o =>
+            {
+                o.HasOne<Website>().WithMany()
+                 .HasForeignKey(x => x.FK_WebsiteId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                o.HasIndex(x => x.FK_WebsiteId);
             });
 
             modelBuilder.Entity<ProvisioningTask>(o =>

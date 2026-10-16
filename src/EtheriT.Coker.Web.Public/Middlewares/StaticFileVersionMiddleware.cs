@@ -10,6 +10,9 @@ namespace EtheriT.Coker.Web.Public.Middlewares
         private readonly RequestDelegate _next;
         private readonly IConfiguration _config;
         private static readonly ConcurrentDictionary<string, string> _fileHashCache = new();
+        private static readonly Regex InlineScriptRegex = new(
+            @"<script(?![^>]*\bnonce=)(?![^>]*\bsrc=)([^>]*)>",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public StaticFileVersionMiddleware(RequestDelegate next, IConfiguration config)
         {
@@ -19,8 +22,15 @@ namespace EtheriT.Coker.Web.Public.Middlewares
 
         public async Task InvokeAsync(HttpContext context)
         {
+            if (context.Request.Path.StartsWithSegments("/api/File/DecryptFile"))
+            {
+                await _next(context);
+                return;
+            }
+
             var originalBody = context.Response.Body;
-            using (var newBody = new MemoryStream())
+            using var newBody = new MemoryStream();
+            try
             {
                 context.Response.Body = newBody;
 
@@ -29,17 +39,32 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 if (context.Response.ContentType?.Contains("text/html") == true)
                 {
                     newBody.Seek(0, SeekOrigin.Begin);
-                    var responseBody = await new StreamReader(newBody).ReadToEndAsync();
-                    newBody.Seek(0, SeekOrigin.Begin);
+                    using var reader = new StreamReader(newBody, Encoding.UTF8,
+                        detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+                    var responseBody = await reader.ReadToEndAsync();
+
+                    if (context.Items.TryGetValue(ContentSecurityPolicyMiddleware.RewriteNonceKey, out var value)
+                        && value is string nonce)
+                    {
+                        responseBody = InlineScriptRegex.Replace(responseBody,
+                            $"<script nonce=\"{nonce}\">");
+                    }
 
                     // 替換靜態文件 URL
                     var modifiedHtml = await ReplaceStaticFileUrlsAsync(responseBody);
 
-                    await context.Response.WriteAsync(modifiedHtml);
+                    context.Response.Body = originalBody;
+                    context.Response.ContentLength = Encoding.UTF8.GetByteCount(modifiedHtml);
+                    await context.Response.WriteAsync(modifiedHtml, context.RequestAborted);
+                    return;
                 }
 
                 newBody.Seek(0, SeekOrigin.Begin);
-                await newBody.CopyToAsync(originalBody);
+                await newBody.CopyToAsync(originalBody, context.RequestAborted);
+            }
+            finally
+            {
+                context.Response.Body = originalBody;
             }
         }
 

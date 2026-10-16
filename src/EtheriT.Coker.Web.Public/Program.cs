@@ -335,7 +335,6 @@ app.UseCookiePolicy(
     }
 );
 app.UseMiddleware<CookieHandlingMiddleware>();
-app.UseMiddleware<StaticFileVersionMiddleware>();
 
 //禁用X-HTTP-Method-Override
 app.Use(async (context, next) =>
@@ -474,6 +473,10 @@ app.UseStaticFiles(new StaticFileOptions
     ContentTypeProvider = fileProvider,
     OnPrepareResponse = ConfigureStaticFileHeaders
 });
+
+// 靜態檔案先直接輸出，避免版本號處理將圖片、PDF 等完整緩衝到記憶體。
+// 必須位於 ContentSecurityPolicyMiddleware 外層，共用一次 HTML 緩衝處理版本號與 nonce。
+app.UseMiddleware<StaticFileVersionMiddleware>();
 
 app.UseMiddleware<PreventHttpRequestSmugglingMiddleware>();
 app.UseMiddleware<CdnTrustedProxyMiddleware>();

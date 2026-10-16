@@ -33,8 +33,11 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             // ------------------------------
             // 2) Route 跳頁（302）
             // ------------------------------
-            await cache.ReloadRouteRulesAsync();
             var routeName = context.GetRouteData()?.Values["key"]?.ToString();
+            if (!string.IsNullOrWhiteSpace(routeName))
+            {
+                await cache.EnsureRouteRulesLoadedAsync();
+            }
             var routeUrl = cache.EvaluateRouteRedirect(routeName);
             if (routeUrl != null)
             {

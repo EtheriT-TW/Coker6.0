@@ -1,11 +1,11 @@
 ﻿using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
-using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Shared.Processor;
 
 namespace EtheriT.Coker.Web.Public.Middlewares
 {
     public class ContentSecurityPolicyMiddleware
     {
+        internal static readonly object RewriteNonceKey = new();
         private readonly RequestDelegate _next;
         private readonly IServiceProvider _serviceProvider;
         private readonly IWebHostEnvironment _env;
@@ -111,36 +111,12 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 //防止瀏覽器進行 MIME 嗅探
                 context.Response.Headers["X-Content-Type-Options"] = "nosniff";
             }
-            var originalBodyStream = context.Response.Body;
-            using (var newBodyStream = new MemoryStream())
-            {
-                bool bypassBodyRewrite = context.Request.Path.HasValue &&
-                        (
-                            context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||
-                            context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase)
-                        );
-                if (bypassBodyRewrite) await _next(context); // 執行後續的管道（包括 Razor 渲染）
-                else
-                {
-                    context.Response.Body = newBodyStream;
-
-                    await _next(context); // 執行後續的管道（包括 Razor 渲染）
-
-                    newBodyStream.Seek(0, SeekOrigin.Begin);
-                    var responseBody = await new StreamReader(newBodyStream).ReadToEndAsync();
-
-                    // 只替換不含 nonce 的 <script> 標籤
-                    var modifiedBody = Regex.Replace(
-                        responseBody,
-                        @"<script(?![^>]*\bnonce=)(?![^>]*\bsrc=)([^>]*)>",
-                        $"<script nonce=\"{nonce}\">",
-                        RegexOptions.IgnoreCase
-                    );
-
-                    context.Response.Body = originalBodyStream;
-                    await context.Response.WriteAsync(modifiedBody);
-                }
-            }
+            bool bypassBodyRewrite = context.Request.Path.HasValue &&
+                (context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||
+                 context.Request.Path.Value.EndsWith("/ShoppingCar", StringComparison.OrdinalIgnoreCase));
+            // 由外層版本號 middleware 共用一次 HTML 緩衝，亦涵蓋動態 HTML 中的 script。
+            context.Items[RewriteNonceKey] = bypassBodyRewrite ? null : nonce;
+            await _next(context);
         }
 
         private static bool IsCrawlerMetadataRequest(PathString path)

@@ -1671,6 +1671,23 @@ button, input, select, textarea {
     font-weight: 600;
 }
 
+/* 客戶編輯頁「所屬站台」：有企業信箱的站台才顯示 */
+.site-email-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    color: #28785c;
+    background: #e9f8f2;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+    .site-email-tag .material-symbols-outlined {
+        font-size: 13px;
+    }
+
 .site-list-side {
     display: flex;
     flex: none;

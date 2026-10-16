@@ -44,6 +44,25 @@
         void router.push(`/companies/${id}`);
     }
 
+    type PresenceField = "HasEnterpriseEmail" | "Urls" | "Domains";
+
+    /** 清單上這三欄只分有無；欄位的 name 就是 CustomerListItem 的屬性名稱。 */
+    function hasValue(row: CustomerListItem, field: PresenceField): boolean {
+        return Boolean(row[field]);
+    }
+
+    function enterpriseEmailText(row: CustomerListItem): string {
+        return row.HasEnterpriseEmail ? "已設定" : "未設定";
+    }
+
+    function urlText(row: CustomerListItem): string {
+        return row.Urls ? "已設定" : "未設定";
+    }
+
+    function domainText(row: CustomerListItem): string {
+        return row.Domains ? "已設定" : "未設定";
+    }
+
     async function confirmDelete(): Promise<void> {
         if (!pendingDelete.value) return;
 
@@ -91,15 +110,32 @@
                     :hover-state-enabled="true"
                     :allow-column-resizing="true"
                     no-data-text="目前沒有客戶資料">
-            <DxSearchPanel :visible="true" :width="260" placeholder="搜尋公司名稱、統編、業務" />
+            <DxSearchPanel :visible="true" :width="260" placeholder="搜尋公司名稱、統編" />
             <DxPaging :page-size="20" />
 
-            <DxColumn data-field="Name" caption="公司名稱" :min-width="300" />
-            <DxColumn data-field="TaxId" caption="統一編號" :min-width="120" />
-            <DxColumn data-field="CustomerTypeText" caption="客戶屬性" :min-width="110" />
-            <DxColumn data-field="PrimaryContactName" caption="主要聯絡人" :min-width="120" />
-            <DxColumn data-field="Phone" caption="公司電話" :min-width="130" />
-            <DxColumn data-field="SalesOwner" caption="負責業務" :min-width="100" />
+            <DxColumn data-field="Name" caption="公司名稱" :min-width="220" />
+            <DxColumn data-field="TaxId" caption="統一編號" :min-width="120" :hiding-priority="3" />
+            <DxColumn data-field="CustomerTypeText" caption="客戶屬性" :min-width="110" :hiding-priority="2" />
+            <DxColumn data-field="PrimaryContactName" caption="主要聯絡人" :min-width="120" :hiding-priority="1" />
+            <DxColumn data-field="Phone" caption="公司電話" :min-width="130" :hiding-priority="0" />
+            <DxColumn name="HasEnterpriseEmail"
+                      caption="企業信箱"
+                      :width="110"
+                      :hiding-priority="5"
+                      :calculate-cell-value="enterpriseEmailText"
+                      cell-template="presenceCell" />
+            <DxColumn name="Urls"
+                      caption="網址"
+                      :width="110"
+                      :hiding-priority="6"
+                      :calculate-cell-value="urlText"
+                      cell-template="presenceCell" />
+            <DxColumn name="Domains"
+                      caption="網域"
+                      :width="110"
+                      :hiding-priority="4"
+                      :calculate-cell-value="domainText"
+                      cell-template="presenceCell" />
             <DxColumn caption="操作"
                       :width="120"
                       :fixed="true"
@@ -123,6 +159,13 @@
                         <span class="material-symbols-outlined">delete</span>
                     </button>
                 </div>
+            </template>
+
+            <template #presenceCell="{ data }">
+                <span class="status-pill"
+                      :class="hasValue(data.data, data.column.name) ? 'status-pill-0' : 'status-pill-2'">
+                    {{ data.value }}
+                </span>
             </template>
         </DxDataGrid>
     </section>

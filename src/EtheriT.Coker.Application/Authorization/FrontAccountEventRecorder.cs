@@ -45,8 +45,11 @@ public sealed class FrontAccountEventRecorder
         catch (Exception)
         {
             // Do not change an already-completed business result, or print secrets from an exception.
-            logger.LogError("Front account event could not be persisted. Event={Event} Trace={Trace}",
-                entry.EventName, entry.CorrelationId);
+            logger.LogError("Front account event could not be persisted. Event={Event} Site={Site} IP={IP} Success={Success} Reason={Reason} Details={Details} Trace={Trace}",
+                entry.EventName, entry.WebsiteId, entry.ClientIpAddress, entry.Success,
+                entry.FailureReason,
+                entry.EventName == "CaptchaImage" || entry.EventName == "CaptchaValidation" ? entry.DetailsJson : null,
+                entry.CorrelationId);
         }
     }
 

@@ -37,7 +37,8 @@ namespace EtheriT.Coker.Application.Authorization
             {
                 WebsiteId = configuration.GetValue<long>("WebConfig:SiteId"),
                 Status = (int)AccountStatusEnum.圖形驗證, EventName = "CaptchaValidation",
-                VerificationMethod = source, Success = success, FailureReason = success ? null : reason
+                VerificationMethod = source, Success = success, FailureReason = success ? null : reason,
+                DetailsJson = context == null ? null : AccountRequestGuard.Details(context)
             });
             return new ResponseMessageDto
             {

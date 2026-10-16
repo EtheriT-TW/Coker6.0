@@ -166,10 +166,11 @@ namespace EtheriT.Coker.Application.Search
                 var lastInsertTime = await resultQuery.MaxAsync(log => log.CreationTime);
 
                 var filteredResults = resultQuery
-                    .AsEnumerable() // 客戶端處理細節篩選
-                    .Where(log => !log.Key.All(char.IsDigit))
-                    .Where(log => !log.Key.All(ch => char.IsSymbol(ch) || char.IsPunctuation(ch)))
-                    .GroupBy(log => log.Key.ToUpper())
+                    .Select(log => log.Key) // 僅讀取關鍵字，不載入或追蹤完整 SearchLog 實體。
+                    .AsEnumerable() // 客戶端處理細節篩選，保留原有字元與大小寫規則。
+                    .Where(key => !key.All(char.IsDigit))
+                    .Where(key => !key.All(ch => char.IsSymbol(ch) || char.IsPunctuation(ch)))
+                    .GroupBy(key => key.ToUpper())
                     .Select(group => new SearchKeyDto
                     {
                         Key = group.Key,

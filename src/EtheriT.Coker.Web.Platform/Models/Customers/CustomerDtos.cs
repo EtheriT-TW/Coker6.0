@@ -46,8 +46,18 @@ public sealed record CustomerWebsiteDto(
     string? Url,
     DateTime? ServiceStartDate,
     DateTime? ServiceEndDate,
-    int? RemainingDays,
-    DateTime? EnterpriseEmailExpirationDate);   // null＝這個站台沒有設定企業信箱
+    int? RemainingDays);
+
+/// <summary>客戶的企業信箱（WebsiteEnterpriseEmails），一個客戶最多一筆。</summary>
+public sealed record EnterpriseEmailDto
+{
+    public EnterpriseEmailTypeEnum AccountType { get; init; }
+    public int TotalAccounts { get; init; }
+    public string? OtherType { get; init; }
+    public DateTime ExpirationDate { get; init; }
+    public string? Remark { get; init; }
+}
+
 public sealed record CustomerDetailDto
 {
     public long Id { get; init; }
@@ -65,6 +75,8 @@ public sealed record CustomerDetailDto
     public string? PrimaryContactPhone { get; init; }
     public string? PrimaryContactEmail { get; init; }
     public string? Remark { get; init; }
+    /// <summary>null＝未使用企業信箱。</summary>
+    public EnterpriseEmailDto? EnterpriseEmail { get; init; }
     public IReadOnlyList<CustomerContactDto> SubContacts { get; init; } = [];
 }
 
@@ -114,6 +126,9 @@ public sealed class CustomerSaveRequest : IValidatableObject
 
     public List<CustomerContactSaveRequest> SubContacts { get; set; } = [];
 
+    /// <summary>null＝未使用；原本有的會被軟刪除。</summary>
+    public EnterpriseEmailInput? EnterpriseEmail { get; set; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (CustomerType == PlatformCustomerTypeEnum.未設定)
@@ -148,4 +163,34 @@ public sealed class CustomerContactSaveRequest
     [StringLength(150)]
     [OptionalEmail(ErrorMessage = "聯絡人 Email 格式不正確。")]
     public string? Email { get; set; }
+}
+
+/// <summary>錯誤 key 會是 EnterpriseEmail.xxx，前端 getErrors('EnterpriseEmail.xxx') 對得上。</summary>
+public sealed class EnterpriseEmailInput : IValidatableObject
+{
+    [Required(ErrorMessage = "請選擇帳號版本。")]
+    public EnterpriseEmailTypeEnum? AccountType { get; set; }
+
+    [Required(ErrorMessage = "請輸入帳號總數。")]
+    [Range(1, int.MaxValue, ErrorMessage = "帳號總數至少為 1。")]
+    public int? TotalAccounts { get; set; }
+
+    [StringLength(200, ErrorMessage = "不可超過 200 個字元。")]
+    public string? OtherType { get; set; }
+
+    [Required(ErrorMessage = "請輸入到期日期。")]
+    public DateTime? ExpirationDate { get; set; }
+
+    [StringLength(2000, ErrorMessage = "備註不可超過 2000 個字元。")]
+    public string? Remark { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        // ASP.NET 預設不驗 enum 範圍，99 會原樣寫進資料庫
+        if (AccountType.HasValue && !Enum.IsDefined(AccountType.Value))
+            yield return new ValidationResult("帳號版本不正確。", [nameof(AccountType)]);
+
+        if (AccountType == EnterpriseEmailTypeEnum.Other && string.IsNullOrWhiteSpace(OtherType))
+            yield return new ValidationResult("請輸入自訂版本名稱。", [nameof(OtherType)]);
+    }
 }

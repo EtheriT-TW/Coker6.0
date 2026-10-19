@@ -314,9 +314,6 @@ public sealed class WebsitesController(
                 await auditor.SaveChangesAsync(cancellationToken);
             }
 
-            SyncEnterpriseEmail(site.Id, request.EnterpriseEmail, null);
-            await auditor.SaveChangesAsync(cancellationToken);
-
             await transaction.CommitAsync(cancellationToken);
             return (long?)site.Id;
         });
@@ -347,11 +344,6 @@ public sealed class WebsitesController(
             .Where(item => !item.IsDeleted && item.FK_WebsiteId == site.Id)
             .ToListAsync(HttpContext.RequestAborted);
 
-        var email = await db.WebsiteEnterpriseEmails
-            .Where(item => !item.IsDeleted && item.FK_WebsiteId == site.Id)
-            .OrderBy(item => item.Id)
-            .FirstOrDefaultAsync(HttpContext.RequestAborted);
-
         // 編輯不寫 DefaultUrl／FK_PlatformDomainId；DefaultUrl 只用來擋其他網址重複
         var urls = await ValidateRequestAsync(request, site.DefaultUrl, site, alternates);
         if (!ModelState.IsValid)
@@ -359,7 +351,6 @@ public sealed class WebsitesController(
 
         Apply(request, site);
         SyncAlternateUrls(site, urls, alternates);
-        SyncEnterpriseEmail(site.Id, request.EnterpriseEmail, email);
 
         if (!await SyncCompanyMappingAsync(site.Id, request.FK_CompanyId))
             return ValidationProblem(ModelState);
@@ -419,24 +410,7 @@ public sealed class WebsitesController(
         if (detail is null)
             return null;
 
-        return detail with { Urls = await LoadUrlsAsync(id), EnterpriseEmail = await LoadEnterpriseEmailAsync(id) };
-    }
-
-    private async Task<WebsiteEnterpriseEmailDto?> LoadEnterpriseEmailAsync(long id)
-    {
-        var result = await db.WebsiteEnterpriseEmails
-            .AsNoTracking()
-            .Where(item => !item.IsDeleted && item.FK_WebsiteId == id)
-            .OrderBy(item => item.Id)
-            .Select(item => new WebsiteEnterpriseEmailDto {
-                AccountType = item.AccountType,
-                TotalAccounts = item.TotalAccounts,
-                OtherType = item.OtherType,
-                ExpirationDate = item.ExpirationDate,
-                Remark = item.Remark})
-            .FirstOrDefaultAsync(HttpContext.RequestAborted);
-
-        return result;
+        return detail with { Urls = await LoadUrlsAsync(id) };
     }
 
     /// <summary>其他網址（WebsiteAlternateUrls）依排序；預設網址另放在 WebsiteDetailDto.DefaultUrl。</summary>
@@ -506,16 +480,6 @@ public sealed class WebsitesController(
                 company => company.Id == request.FK_CompanyId,
                 HttpContext.RequestAborted))
             ModelState.AddModelError(nameof(request.FK_CompanyId), "找不到對應的客戶資料，請重新帶出客戶。");
-
-        var email = request.EnterpriseEmail;
-
-        if (email is not null)
-        {
-            if (email.AccountType.HasValue && !Enum.IsDefined(email.AccountType.Value))
-                ModelState.AddModelError($"{nameof(request.EnterpriseEmail)}.{nameof(email.AccountType)}", "帳號版本不正確。");
-            if (email.AccountType == EnterpriseEmailTypeEnum.Other && string.IsNullOrWhiteSpace(email.OtherType))
-                ModelState.AddModelError($"{nameof(request.EnterpriseEmail)}.{nameof(email.OtherType)}", "請輸入自訂版本名稱。");
-        }
 
         // 這個站台原本就有的 http 網址才放行；新網址只收 https
         var allowedHttpUrls = existingAlternates
@@ -691,31 +655,6 @@ public sealed class WebsitesController(
         // PlatformAuditor 會把 Remove 轉成軟刪除
         foreach (var orphan in existing.Where(row => !keptIds.Contains(row.Id)))
             db.WebsiteAlternateUrls.Remove(orphan);
-    }
-
-    private void SyncEnterpriseEmail(long id, WebsiteEnterpriseEmailInput? email, WebsiteEnterpriseEmail? existing)
-    {
-        if(email is null )
-        {
-            if(existing is not null)
-                db.WebsiteEnterpriseEmails.Remove(existing);
-            return;
-        }
-
-        var target = existing;
-
-        if(target is null)
-        {
-            target = new WebsiteEnterpriseEmail { FK_WebsiteId = id };
-            db.WebsiteEnterpriseEmails.Add(target);
-        }
-
-        target.AccountType = email.AccountType!.Value;
-        target.TotalAccounts = email.TotalAccounts!.Value;
-        target.OtherType = email.AccountType == EnterpriseEmailTypeEnum.Other ? Clean(email.OtherType) : null;
-        target.ExpirationDate = email.ExpirationDate!.Value.Date;
-        target.Remark = Clean(email.Remark);
-
     }
 
     /// <summary>

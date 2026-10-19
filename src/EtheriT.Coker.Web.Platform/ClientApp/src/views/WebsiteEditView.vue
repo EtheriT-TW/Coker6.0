@@ -22,11 +22,9 @@
     import {
         WebsiteLevel,
         WebsiteStatus,
-        EnterpriseEmail,
         websiteLevelOptions,
         websiteLocaleOptions,
         websiteStatusOptions,
-        enterpriseEmailOption,
         type WebsiteDetail,
         type WebsiteForm,
         type WebsiteOptions
@@ -81,11 +79,6 @@
     const quickCustomerName = computed(() =>
         quickCustomerTaxId.value ? "" : lookupKeyword.value.trim());
 
-        /** 「其他」要跟填空框綁在一起單獨渲染，不走迴圈。 */
-    const plainTypeOption = enterpriseEmailOption.filter(
-        option => option.Value !== EnterpriseEmail.Other
-    );
-
     // 各網址列目前開著彈窗的 Key；只在 beforeSave 讀，不需要響應式
     const openUrlDialogKeys = new Set<number>();
 
@@ -104,12 +97,7 @@
             SuspendedDate: "",
             TerminatedDate: "",
             Urls: [],
-            Remark: "",
-            EnterpriseEmailAccountType: null,
-            EnterpriseEmailTotalAccounts: "",
-            EnterpriseEmailOtherType: "",
-            EnterpriseEmailExpirationDate: "",
-            EnterpriseEmailRemark: ""
+            Remark: ""
         };
     }
 
@@ -197,33 +185,6 @@
                     value && model.ServiceStartDate && String(value) < model.ServiceStartDate
                         ? "網站到期日期不可早於開通日期。"
                         : null)
-            ],
-            EnterpriseEmailTotalAccounts:[
-                rules.custom<WebsiteForm>((value, model) => {
-                    if(!model.EnterpriseEmailAccountType) return null;
-                    const number = String(value ?? "").trim();
-                    if(!number) return "請輸入帳號總數。";
-                    if(Number(value) < 1 || !Number.isInteger(Number(value))) return "帳號總數至少為1。"
-                    return null;
-                })
-            ],
-            EnterpriseEmailOtherType:[
-                rules.custom<WebsiteForm>((value, model) => {
-                    if(!model.EnterpriseEmailAccountType) return null;
-                    if(model.EnterpriseEmailAccountType === EnterpriseEmail.Other){
-                        const text = String(value ?? "").trim();
-                        if(!text) return "請輸入自訂版本名稱。"
-                        return null;
-                    }
-                    return null;
-                })
-            ],
-            EnterpriseEmailExpirationDate:[
-                rules.custom<WebsiteForm>((value, model) => {
-                    if(model.EnterpriseEmailAccountType === null) return null;
-                    if(!value) return "請輸入到期日期。";
-                    return null;
-                })
             ]
         },
         validate: values => validateUrls(values),
@@ -262,8 +223,6 @@
     const isSuspended = computed(() => form.model.value.Status === WebsiteStatus.暫停);
     const isTerminated = computed(() => form.model.value.Status === WebsiteStatus.註銷);
     const isFormLocked = computed(() => loading.value || form.isSaving.value);
-    const hasEnterpriseEmail = computed(() => form.model.value.EnterpriseEmailAccountType !== null);
-    const isOtherEmailType = computed (() => form.model.value.EnterpriseEmailAccountType === EnterpriseEmail.Other);
 
     // 主要網址：新增時跟著站台代碼即時產生（與後端規則一致）；編輯時是後台 DefaultUrl，這裡不能改
     const primaryUrl = computed(() => isEdit.value
@@ -293,11 +252,6 @@
         form.clearErrors("SuspendedDate");
         form.clearErrors("TerminatedDate");
     });
-
-    watch(() => form.model.value.EnterpriseEmailAccountType, accountType => {
-        if(accountType !== EnterpriseEmail.Other && form.model.value.EnterpriseEmailOtherType) form.model.value.EnterpriseEmailOtherType = "";
-        form.clearErrors("EnterpriseEmailOtherType");
-    })
 
     // 新增時改版本連帶換成該版本的預設主機；編輯舊網站時不動主機。改主機不會反過來改版本
     watch(() => form.model.value.Level, level => {
@@ -700,80 +654,6 @@
             </div>
         </fieldset>
         
-        <!-- ── 企業信箱 ── -->
-        <fieldset class="form-card form-section"
-                  aria-labelledby="section-website-email-title"
-                  :disabled="isFormLocked">
-            <div class="form-section-heading">
-                <span id="section-website-email-title">企業信箱</span>
-            </div>
-            <div class="form-grid">
-                <div class="form-field form-field-wide">
-                    <span id="account-type-label" class="form-label">帳號版本</span>
-                    <div class="choice-group" role="radiogroup" aria-labelledby="account-type-label">
-                        <label class="choice">
-                            <input type="radio"
-                                   name="account-type"
-                                   :value=null
-                                   v-model="form.model.value.EnterpriseEmailAccountType" />
-                            <span class="choice-box" aria-hidden="true"></span>
-                            <span>未使用</span>
-                        </label>
-                        <label v-for="option in plainTypeOption" :key="option.Value" class="choice">
-                            <input type="radio"
-                                   name="account-type"
-                                   :value="option.Value"
-                                   v-model="form.model.value.EnterpriseEmailAccountType" />
-                            <span class="choice-box" aria-hidden="true"></span>
-                            <span>{{ option.Text }}</span>
-                        </label>
-
-                        <span class="choice-fill">
-                            <label class="choice">
-                                <input type="radio"
-                                       name="account-type"
-                                       :value="EnterpriseEmail.Other"
-                                       v-model="form.model.value.EnterpriseEmailAccountType"/>
-                                <span class="choice-box" aria-hidden="true"></span>
-                                <span>其他</span>
-                            </label>
-                            <input v-model="form.model.value.EnterpriseEmailOtherType"
-                                   class="choice-blank"
-                                   type="text"
-                                   maxlength="200"
-                                   aria-label="自訂版本名稱"
-                                   :disabled="!isOtherEmailType" />
-                        </span>
-                    </div>
-                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailAccountType'), ...form.getErrors('EnterpriseEmail.AccountType')]"/>
-                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailOtherType'), ...form.getErrors('EnterpriseEmail.OtherType')]"/>
-                </div>
-
-                <div class="form-field" v-if="hasEnterpriseEmail">
-                    <label>
-                        <span>帳號總數<i class="form-required">*</i></span>
-                        <input type="number" min="1" v-model="form.model.value.EnterpriseEmailTotalAccounts"/>
-                    </label>
-                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailTotalAccounts'), ...form.getErrors('EnterpriseEmail.TotalAccounts')]"/>
-                </div>
-
-                <div class="form-field" v-if="hasEnterpriseEmail">
-                    <label>
-                        <span>到期日期<i class="form-required">*</i></span>
-                        <DateField v-model="form.model.value.EnterpriseEmailExpirationDate" />
-                    </label>
-                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailExpirationDate'), ...form.getErrors('EnterpriseEmail.ExpirationDate')]" />
-                </div>
-
-                <div class="form-field form-field-wide" v-if="hasEnterpriseEmail">
-                    <label>
-                        <span>備註</span>
-                        <textarea rows="4" maxlength="2000" v-model="form.model.value.EnterpriseEmailRemark"></textarea>
-                    </label>
-                </div>
-            </div>
-        </fieldset>
-
         <!-- ── 備註 ── -->
         <fieldset class="form-card form-section"
                   aria-labelledby="section-website-remark-title"

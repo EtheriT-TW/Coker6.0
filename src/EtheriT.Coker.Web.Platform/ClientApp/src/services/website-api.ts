@@ -3,7 +3,6 @@ import { fromDateInput, toDateInput } from "@/utils/date-input";
 import type { DomainSummary } from "@/types/domain";
 import {
     websiteLocaleOptions,
-    EnterpriseEmail,
     type IisBindingResult,
     type WebsiteDetail,
     type WebsiteForm,
@@ -19,19 +18,6 @@ let nextUrlKey = 1;
 function blankToNull(value: string): string | null {
     const trimmed = value.trim();
     return trimmed === "" ? null : trimmed;
-}
-
-function toEnterpriseEmailRequest(form: WebsiteForm){
-    if(form.EnterpriseEmailAccountType === null)
-        return null;
-
-        return{
-            AccountType: form.EnterpriseEmailAccountType,
-            TotalAccounts: Number(form.EnterpriseEmailTotalAccounts),
-            OtherType: form.EnterpriseEmailAccountType === EnterpriseEmail.Other ? blankToNull(form.EnterpriseEmailOtherType) : null,
-            ExpirationDate: fromDateInput(form.EnterpriseEmailExpirationDate),
-            Remark: blankToNull(form.EnterpriseEmailRemark)
-        }
 }
 
 /**
@@ -68,8 +54,7 @@ function toSaveRequest(form: WebsiteForm) {
         TerminatedDate: fromDateInput(form.TerminatedDate),
         // 只送其他網址；主要網址由後台管理（新增時後端依 OrgName 產生）。Key、InitialDomain 只是畫面用
         Urls: form.Urls.map(item => ({ Url: item.Url.trim() })),
-        Remark: blankToNull(form.Remark),
-        EnterpriseEmail: toEnterpriseEmailRequest(form)
+        Remark: blankToNull(form.Remark)
     };
 }
 
@@ -88,12 +73,7 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         SuspendedDate: toDateInput(detail.SuspendedDate),
         TerminatedDate: toDateInput(detail.TerminatedDate),
         Urls: detail.Urls.map(item => newWebsiteUrlItem(item.Url, item.Domain)),
-        Remark: detail.Remark ?? "",
-        EnterpriseEmailAccountType: detail.EnterpriseEmail?.AccountType ?? null,
-        EnterpriseEmailTotalAccounts: detail.EnterpriseEmail?.TotalAccounts.toString() ?? "",
-        EnterpriseEmailOtherType: detail.EnterpriseEmail?.OtherType ?? "",
-        EnterpriseEmailExpirationDate: toDateInput(detail.EnterpriseEmail?.ExpirationDate),
-        EnterpriseEmailRemark: detail.EnterpriseEmail?.Remark ?? ""
+        Remark: detail.Remark ?? ""
     };
 }
 

@@ -6,6 +6,7 @@ export interface DomainListItem {
     EndDate: string | null;
     WebsiteCount: number;
     RemainingDays: number | null;
+    IsProxyPurchase: boolean;
 }
 
 export interface DomainListResult {
@@ -20,6 +21,7 @@ export interface DomainDetail {
     StartDate: string | null;
     EndDate: string | null;
     HasPassword: boolean;
+    IsProxyPurchase: boolean;
     Remark: string | null;
     /** 大於 0 時後端不允許修改網域名稱。 */
     WebsiteCount: number;
@@ -31,6 +33,7 @@ export interface DomainSummary {
     Registrar: string | null;
     EndDate: string | null;
     HasPassword: boolean;
+    IsProxyPurchase: boolean;
 }
 
 /** Host＝null：網址格式不正確；Domain＝null：網域尚未建立。 */
@@ -48,6 +51,7 @@ export interface DomainForm {
     EndDate: string;
     Password: string;
     ClearPassword: boolean;
+    IsProxyPurchase: boolean;
     Remark: string;
 }
 

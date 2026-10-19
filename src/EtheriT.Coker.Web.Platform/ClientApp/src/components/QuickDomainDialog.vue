@@ -107,6 +107,31 @@
         <form novalidate @submit.prevent="submit">
             <fieldset class="dialog-fieldset" :disabled="busy">
                 <div class="form-grid">
+
+                    <div class="form-field form-field-wide">
+                        <span id="quick-domain-proxy-purchase-label" class="form-label">
+                            是否代購 <i class="form-required">*</i>
+                        </span>
+                        <div class="choice-group" role="radiogroup" aria-labelledby="quick-domain-proxy-purchase-label">
+                            <label class="choice">
+                                <input type="radio"
+                                       name="quick-domain-proxy-purchase"
+                                       :value="false"
+                                       v-model="model.IsProxyPurchase" />
+                                <span class="choice-box" aria-hidden="true"></span>
+                                <span>否</span>
+                            </label>
+                            <label class="choice">
+                                <input type="radio"
+                                       name="quick-domain-proxy-purchase"
+                                       :value="true"
+                                       v-model="model.IsProxyPurchase" />
+                                <span class="choice-box" aria-hidden="true"></span>
+                                <span>是</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="form-field form-field-wide">
                         <label>
                             <span>網域 <i class="form-required">*</i></span>

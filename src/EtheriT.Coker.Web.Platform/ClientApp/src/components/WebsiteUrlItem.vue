@@ -132,6 +132,9 @@
                             <template v-if="matchedDomain.EndDate">
                                 （到期 {{ toDateInput(matchedDomain.EndDate) }}）
                             </template>
+                            <template v-if="matchedDomain.IsProxyPurchase">
+                                （代購）
+                            </template>
                         </p>
                         <p v-else-if="isDomainMissing" class="field-note" role="status">
                             網域管理中還沒有這個網址的網域資料，仍可儲存；可按右側按鈕建立網域。

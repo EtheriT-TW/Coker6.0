@@ -1013,7 +1013,7 @@ button, input, select, textarea {
     display: grid;
     place-items: center;
     background: #fff;
-    border: 1px solid #cbd5e1;
+    border: 1.5px solid #64748b;
     border-radius: 5px;
     transition: background .15s, border-color .15s;
 }
@@ -1030,7 +1030,7 @@ button, input, select, textarea {
     }
 
 .choice:hover .choice-box {
-    border-color: #94a3b8;
+    border-color: var(--platform-primary);
 }
 
 .choice input:checked + .choice-box {

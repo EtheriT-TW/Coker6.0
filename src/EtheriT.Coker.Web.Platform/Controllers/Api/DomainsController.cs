@@ -36,7 +36,8 @@ public sealed class DomainsController(
                     WebsiteCount: db.Websites.Count(site => !site.IsDeleted &&
                         (site.FK_PlatformDomainId == item.Id ||
                          db.WebsiteAlternateUrls.Any(url => !url.IsDeleted && url.FK_WebsiteId == site.Id && url.FK_PlatformDomainId == item.Id))),
-                    RemainingDays: ToRemainingDays(item.EndDate, today)
+                    RemainingDays: ToRemainingDays(item.EndDate, today),
+                    IsProxyPurchase: item.IsProxyPurchase
                 ))
             .Take(ListLimit + 1)   // 多拿一筆，用來判斷是否被截斷
             .ToListAsync(HttpContext.RequestAborted);
@@ -73,7 +74,7 @@ public sealed class DomainsController(
             PlatformDomainName.Suggest(host),
             domain is null
                 ? null
-                : new DomainSummaryDto(domain.Id, domain.DomainName, domain.Registrar, domain.EndDate, domain.PasswordCipher != null));
+                : new DomainSummaryDto(domain.Id, domain.DomainName, domain.Registrar, domain.EndDate, domain.PasswordCipher != null, domain.IsProxyPurchase));
     }
 
     [HttpPost]
@@ -145,6 +146,7 @@ public sealed class DomainsController(
                 item.StartDate,
                 item.EndDate,
                 item.PasswordCipher != null,
+                item.IsProxyPurchase,
                 item.Remark,
                 // 主要網址或其他網址用到這個網域都算，同一站台只算一次
                 db.Websites.Count(site => !site.IsDeleted &&
@@ -191,6 +193,7 @@ public sealed class DomainsController(
         domain.Registrar = Clean(request.Registrar);
         domain.StartDate = request.StartDate?.Date;
         domain.EndDate = request.EndDate?.Date;
+        domain.IsProxyPurchase = request.IsProxyPurchase;
         domain.Remark = Clean(request.Remark);
 
         if (request.ClearPassword)

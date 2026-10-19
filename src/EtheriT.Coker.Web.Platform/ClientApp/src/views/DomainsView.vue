@@ -99,6 +99,11 @@
                       data-type="number"
                       :min-width="90"
                       :hiding-priority="1" />
+            <DxColumn data-field="IsProxyPurchase"
+                      caption="是否代購"
+                      data-type="boolean"
+                      :min-width="90"
+                      :hiding-priority="3" />
             <DxColumn data-field="RemainingDays"
                       caption="剩餘天數"
                       data-type="number"

@@ -455,7 +455,8 @@ public sealed class WebsitesController(
                         item.PlatformDomain.DomainName,
                         item.PlatformDomain.Registrar,
                         item.PlatformDomain.EndDate,
-                        item.PlatformDomain.PasswordCipher != null)))
+                        item.PlatformDomain.PasswordCipher != null,
+                        item.PlatformDomain.IsProxyPurchase)))
             .ToListAsync(HttpContext.RequestAborted);
 
     /// <summary>

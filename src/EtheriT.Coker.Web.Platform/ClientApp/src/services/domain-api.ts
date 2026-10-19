@@ -23,6 +23,7 @@ export function emptyDomainForm(domainName = ""): DomainForm {
         EndDate: "",
         Password: "",
         ClearPassword: false,
+        IsProxyPurchase: false,
         Remark: ""
     };
 }
@@ -47,6 +48,7 @@ function toSaveRequest(form: DomainForm) {
         EndDate: fromDateInput(form.EndDate),
         Password: form.ClearPassword ? null : blankToNull(form.Password),
         ClearPassword: form.ClearPassword,
+        IsProxyPurchase: form.IsProxyPurchase,
         Remark: blankToNull(form.Remark)
     };
 }
@@ -59,6 +61,7 @@ export function toDomainForm(detail: DomainDetail): DomainForm {
         EndDate: toDateInput(detail.EndDate),
         Password: "",
         ClearPassword: false,
+        IsProxyPurchase: detail.IsProxyPurchase,
         Remark: detail.Remark ?? ""
     };
 }

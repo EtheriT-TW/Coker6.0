@@ -11,7 +11,8 @@ public sealed record DomainListItemDto(
     DateTime? StartDate,
     DateTime? EndDate,
     int WebsiteCount,
-    int? RemainingDays
+    int? RemainingDays,
+    bool IsProxyPurchase
 );
 
 public sealed record DomainListResult(
@@ -26,6 +27,7 @@ public sealed record DomainDetailDto(
     DateTime? StartDate,
     DateTime? EndDate,
     bool HasPassword,
+    bool IsProxyPurchase,
     string? Remark,
     int WebsiteCount);
 
@@ -35,7 +37,8 @@ public sealed record DomainSummaryDto(
     string DomainName,
     string? Registrar,
     DateTime? EndDate,
-    bool HasPassword);
+    bool HasPassword,
+    bool IsProxyPurchase);
 
 /// <summary>Host＝null：網址格式不正確；Domain＝null：網域尚未建立。</summary>
 public sealed record DomainMatchDto(
@@ -64,6 +67,7 @@ public sealed class DomainSaveRequest
 
     /// <summary>true＝清空既有密碼。與 Password 互斥。</summary>
     public bool ClearPassword { get; set; }
+    public bool IsProxyPurchase { get; set; }
 
     [StringLength(2000)]
     public string? Remark { get; set; }

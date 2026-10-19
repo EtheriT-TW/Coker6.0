@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Core.Models
         public DateTime? EndDate { get; set; }                          // 網域到期日期
         [StringLength(1000)]
         public string? PasswordCipher { get; set; }                     // 網域密碼（密文）
+        public bool IsProxyPurchase { get; set; }                      //是否代購
         [StringLength(2000)]
         public string? Remark { get; set; }
     }

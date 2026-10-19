@@ -5490,6 +5490,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("IsProxyPurchase")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
 

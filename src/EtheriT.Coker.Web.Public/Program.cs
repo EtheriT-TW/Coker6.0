@@ -223,6 +223,8 @@ builder.Services.AddScoped<IFrontRoleContextService, FrontRoleContextService>();
 builder.Services.AddScoped<IProductDisplayPriceService, ProductDisplayPriceService>();
 builder.Services.AddScoped<IHtmlSanitizeService, HtmlSanitizeService>();
 builder.Services.AddScoped<IHtmlSanitizer, HtmlSanitizer>();
+builder.Services.AddScoped<PageArtifactStore>();
+builder.Services.AddScoped<EtheriT.Coker.Web.Public.Helpers.PreparedHtmlContent>();
 builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<CustomDtoMapper>();});
 builder.Services.AddScoped<IMarketingAppService, MarketingAppService>();
 builder.Services.AddScoped<ICheckoutDiscountService, CheckoutDiscountService>();
@@ -472,6 +474,23 @@ app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = fileProvider,
     OnPrepareResponse = ConfigureStaticFileHeaders
+});
+
+// 所有 upload provider 都未提供的資源直接回 404，包含 PDF／影片／無副檔名檔案。
+// 不進入 HTML 緩衝、CSP 資料庫查詢或 PageController 的頁面回退。
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/upload", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        context.Response.Headers["Cache-Control"] = "no-store";
+        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        if (!HttpMethods.IsHead(context.Request.Method))
+            await context.Response.WriteAsync("404", context.RequestAborted);
+        return;
+    }
+    await next(context);
 });
 
 // 靜態檔案先直接輸出，避免版本號處理將圖片、PDF 等完整緩衝到記憶體。

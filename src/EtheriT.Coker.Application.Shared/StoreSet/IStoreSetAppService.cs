@@ -15,6 +15,8 @@ namespace EtheriT.Coker.Application.StoreSet
         public Task<StoreSetResponseMessageDto> getAll(List<long> StoreSetGroupId);
         public Task<StoreSetResponseMessageDto> find(string key);
         public Task<StoreSetResponseMessageDto> getValues(StoreSetGetValueInput dto);
+        Task<Dictionary<long, StoreSetResponseMessageDto>> GetValuesByGroupsAsync(long websiteId,
+            IReadOnlyCollection<long> groups, IReadOnlyCollection<long> htmlGroups);
         public Task<StoreSetResponseMessageDto> getGroupStructure(StoreSetGetValueInput dto);
         public Task<ResponseMessageDto> CreateOrUpdate(List<StoreSetDetailOutputDto> datas);
         string RenderMarkdownToHtml(string? markdown);

@@ -86,6 +86,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly RemoteTrackingTokenService remoteTrackingTokenService;
         private readonly IHtmlProcessor htmlProcessor;
         private readonly IWebHostEnvironment _env;
+        private readonly PageArtifactStore pageArtifacts;
+        private readonly PreparedHtmlContent preparedHtml;
 
         public PageController(
             ILogger<PageController> logger,
@@ -113,7 +115,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
             LoginUserData loginUserData,
             RemoteTrackingTokenService remoteTrackingTokenService,
             IHtmlProcessor htmlProcessor,
-            IWebHostEnvironment env
+            IWebHostEnvironment env,
+            PageArtifactStore pageArtifacts,
+            PreparedHtmlContent preparedHtml
         )
         {
             this._logger = logger;
@@ -142,6 +146,8 @@ namespace EtheriT.Coker.Web.Public.Controllers
             this.remoteTrackingTokenService = remoteTrackingTokenService;
             this.htmlProcessor = htmlProcessor;
             this._env = env;
+            this.pageArtifacts = pageArtifacts;
+            this.preparedHtml = preparedHtml;
         }
         private bool UseLegacyPathHandling(string website, string key, string option)
         {
@@ -186,9 +192,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var freight = JsonConvert.DeserializeObject<List<FreightDisplayDto>>(JsonConvert.SerializeObject((await freightAppService.GetDisplay()).Value));
             var payment = JsonConvert.DeserializeObject<List<PaymentTypeItemOutputDto>>(JsonConvert.SerializeObject((await thirdPartyAppService.GetDisplayPayment()).Value));
             var enterAds = JsonConvert.DeserializeObject<List<AdvertiseDisplayDto>>(JsonConvert.SerializeObject((await advertiseAppService.GetDisplay(defaultData.Id, 1, 1)).Value));
-            var SEO = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 1, SiteId = siteId });
-            var SystemSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 5, SiteId = siteId });
-            var MemberSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 7, SiteId = siteId, RenderTextareaAsHtml = true });
+            var settings = await storeSetAppService.GetValuesByGroupsAsync(siteId, new long[] { 1, 2, 5, 7 }, new long[] { 7 });
+            var SEO = settings[1];
+            var SystemSet = settings[5];
+            var MemberSet = settings[7];
             var GA4 = SEO.storeSetDetails?.Find(e => e.key == "GA4");
             var GoogleTranslate = SEO.storeSetDetails?.Find(e => e.key == "google.translate");
             var GTM = SEO.storeSetDetails?.Find(e => e.key == "GTM");
@@ -198,7 +205,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
             var membershipTerms = MemberSet.storeSetDetails?.Find(e => e.key == "membershipTerms");
             var privacyPolicy = MemberSet.storeSetDetails?.Find(e => e.key == "PrivacyPolicy");
 
-            var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { StoreSetGroupId = 2, SiteId = siteId });
+            var StoreSet = settings[2];
             var storeBuyState = StoreSet.storeSetDetails?.Find(e => e.key == "storeBuyState");
             var storeMemo = StoreSet.storeSetDetails?.Find(e => e.key == "storeMemo");
             var linkMore = StoreSet.storeSetDetails?.Find(e => e.key == "linkMore");
@@ -690,15 +697,15 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     view,
                     "ShoppingCar",
                     StringComparison.OrdinalIgnoreCase);
-            var renderedContentHtml = rendersInheritedHtml
-                ? MainHeadingHtml.PrepareInheritedContent(
-                    htmlProcessor,
-                    model.SafeHtml,
-                    model.ParentSafeHtml)
-                : string.Empty;
-            var contentMainHeadingCount = MainHeadingHtml.CountMainHeadings(
-                htmlProcessor,
-                renderedContentHtml);
+            // 權限／登入檢查已完成；命中時讀取合併與 H1 分析產物，不再解析 HTML。
+            var contentMainHeadingCount = 0;
+            if (rendersInheritedHtml && !view.Contains("Error/", StringComparison.OrdinalIgnoreCase))
+            {
+                var prepared = await preparedHtml.GetAsync(model.UploadOrgName, siteId,
+                    $"heading/{(int)model.HtmlSanitizeSourceType}/{model.HtmlSanitizeSourceId}/{model.ParentHtmlSanitizeSourceId}",
+                    model.SafeHtml, model.ParentSafeHtml);
+                contentMainHeadingCount = prepared.MainHeadingCount;
+            }
             var viewHasOwnMainHeading = isProductPage ||
                 view.Contains("Error/", StringComparison.OrdinalIgnoreCase);
 
@@ -738,7 +745,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 model.locale,
                 directoryIds => directoryAppService.GetSeoData(
                     directoryIds,
-                    siteId));
+                    siteId),
+                analyze => view.Contains("Error/", StringComparison.OrdinalIgnoreCase)
+                    ? Task.FromResult(analyze()) : pageArtifacts.GetAsync(model.UploadOrgName, siteId,
+                    $"seo/{(int)model.HtmlSanitizeSourceType}/{model.HtmlSanitizeSourceId}/{model.locale}",
+                    [model.SafeHtml, resolvedPageTitle, model.locale], () => Task.FromResult(analyze()),
+                    cached => cached.TextParts != null && cached.DirectoryIds != null));
             ViewData["Description"] = seoDescription;
             ViewBag.GA4 = model.storeSet.GA4;
             ViewBag.GTM = model.storeSet.GTM;
@@ -873,21 +885,23 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 // appear on many child pages and would create duplicate FAQ markup.
                 ? model.SafeHtml
                 : string.Empty;
-            var faqStructuredData = BuildFaqStructuredData(
-                htmlProcessor,
-                faqContentHtml,
-                canonicalPageUrl);
-            if (faqStructuredData != null)
+            var faqJson = string.IsNullOrWhiteSpace(faqContentHtml) ? string.Empty
+                : await pageArtifacts.GetAsync(model.UploadOrgName, siteId,
+                    $"faq/{(int)model.HtmlSanitizeSourceType}/{model.HtmlSanitizeSourceId}/{model.locale}",
+                    [faqContentHtml, canonicalPageUrl], () =>
+                    {
+                        var faq = BuildFaqStructuredData(htmlProcessor, faqContentHtml, canonicalPageUrl);
+                        return Task.FromResult(faq == null ? string.Empty : JsonConvert.SerializeObject(
+                            faq, Formatting.None, new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore,
+                                StringEscapeHandling = StringEscapeHandling.EscapeHtml
+                            }));
+                    });
+            if (!string.IsNullOrEmpty(faqJson))
             {
                 ViewBag.FaqStructuredDataPageId = model.PageData.Id;
-                ViewBag.FaqStructuredDataJson = JsonConvert.SerializeObject(
-                    faqStructuredData,
-                    Formatting.None,
-                    new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore,
-                        StringEscapeHandling = StringEscapeHandling.EscapeHtml
-                    });
+                ViewBag.FaqStructuredDataJson = faqJson;
             }
             ViewBag.NoCopy = _env.IsProduction() && NoCopyItem != null && NoCopyItem.value != null && NoCopyItem.value.Count > 0 && NoCopyItem.value[0] == "1" ? "no-right-click" : "";
             ViewData["google.translate"] = model.storeSet.GoogleTranslate;

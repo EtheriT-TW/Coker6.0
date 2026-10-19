@@ -51,36 +51,21 @@ namespace EtheriT.Coker.Web.Public.Helpers
 
             if (!string.IsNullOrWhiteSpace(ParentContent) && ParentSourceId > 0)
             {
-                var isParentCurrent = await htmlSanitizeService.IsCurrentAsync(
-                    WebsiteId,
-                    HtmlSanitizeSourceType.選單,
-                    ParentSourceId,
-                    ParentContent,
-                    ParentCss,
-                    "Published",
-                    SanitizePolicy
-                );
-
-                var verifiedParentContent = ParentContent;
-                if (!isParentCurrent)
+                var initializedParent = await htmlSanitizeService.EnsurePublicContentAsync(new()
                 {
-                    var initializedParent = await htmlSanitizeService.EnsurePublicContentAsync(new()
-                    {
-                        WebsiteId = WebsiteId,
-                        SourceType = HtmlSanitizeSourceType.選單,
-                        SourceId = ParentSourceId,
-                        Html = ParentContent,
-                        Css = ParentCss,
-                        ContentKey = "Published",
-                        SanitizePolicy = SanitizePolicy
-                    });
-                    verifiedParentContent = initializedParent.Html;
-                }
+                    WebsiteId = WebsiteId,
+                    SourceType = HtmlSanitizeSourceType.選單,
+                    SourceId = ParentSourceId,
+                    Html = ParentContent,
+                    Css = ParentCss,
+                    ContentKey = "Published",
+                    SanitizePolicy = SanitizePolicy
+                });
+                var verifiedParentContent = initializedParent.PublishedHtml ?? initializedParent.Html;
 
+                // 商品 childContent 含即時價格與會員狀態，維持逐次組合，不落入共用產物。
                 renderedHtml = MainHeadingHtml.PrepareInheritedContent(
-                    htmlProcessor,
-                    renderedHtml,
-                    verifiedParentContent);
+                    htmlProcessor, renderedHtml, verifiedParentContent);
             }
             else
             {

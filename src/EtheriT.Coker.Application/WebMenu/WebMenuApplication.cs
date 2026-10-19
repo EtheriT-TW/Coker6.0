@@ -932,11 +932,16 @@ namespace EtheriT.Coker.Application
                         result.CurrentUrl = $"/{menu.RouterName}";
                         result.VisibleFooter = menu.VisibleFooter;
                         result.VisibleHeader = menu.VisibleHeader;
-                        var html = stringHandler.HtmlDecode(result.Html);
-                        var images = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "img");
-                        if (images != null && images.Any())
+                        if (sanitized.HasImageMetadata)
                         {
-                            result.ImageUrl = images[0].Attributes["src"].Value;
+                            result.ImageUrl = sanitized.FirstImageUrl;
+                        }
+                        else
+                        {
+                            // 只有產物路徑／儲存異常而沒有 metadata 時才使用原解析回退。
+                            var html = stringHandler.HtmlDecode(result.Html);
+                            result.ImageUrl = htmlProcessor.Find(htmlProcessor.LoadHtml(html), "img")
+                                .FirstOrDefault()?.Attributes["src"]?.Value;
                         }
                     }
                 }
@@ -1021,7 +1026,7 @@ namespace EtheriT.Coker.Application
             });
         }
 
-        private async Task<(string Html, string Css)> EnsureMenuDisplayContentSanitizedAsync(WebMenu menu)
+        private async Task<HtmlSanitizeResult> EnsureMenuDisplayContentSanitizedAsync(WebMenu menu)
         {
             var publishedHtml = stringHandler.HtmlDecode(menu.Html ?? "");
             var restoredHtml = htmlSanitizeService.RepairLegacyPublishedHtml(
@@ -1050,7 +1055,7 @@ namespace EtheriT.Coker.Application
                 await loginUserData.SaveChanges(menu);
             }
 
-            return (sanitized.Html, sanitized.Css);
+            return sanitized;
         }
         public Task<ResponseMessageDto> saveConten(MenuSaveContenDto dto)
         {

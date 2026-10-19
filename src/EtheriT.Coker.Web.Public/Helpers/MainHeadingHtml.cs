@@ -10,16 +10,38 @@ namespace EtheriT.Coker.Web.Public.Helpers
             string? contentHtml,
             string? parentHtml)
         {
-            var normalizedContent = ConvertEmptyMainHeadingsToDiv(
-                htmlProcessor,
-                contentHtml);
-            var normalizedParent = ConvertAllMainHeadingsToDiv(
-                htmlProcessor,
-                parentHtml);
+            return PrepareWithHeadingCount(htmlProcessor, contentHtml, parentHtml).Html;
+        }
 
-            return htmlProcessor.ComposeInheritedHtml(
-                normalizedContent,
-                normalizedParent);
+        // 冷建置時子內容／父層各解析一次，同一份 DOM 完成合併與 H1 統計。
+        public static (string Html, int MainHeadingCount) PrepareWithHeadingCount(
+            IHtmlProcessor htmlProcessor, string? contentHtml, string? parentHtml)
+        {
+            var prepared = PrepareDocument(htmlProcessor, contentHtml, parentHtml);
+            var root = prepared.BodyOnly
+                ? prepared.Document.DocumentNode.SelectSingleNode("//body")! : prepared.Document.DocumentNode;
+            return (prepared.BodyOnly ? root.InnerHtml : root.OuterHtml, root.Descendants("h1").Count(HasText));
+        }
+
+        public static (HtmlAgilityPack.HtmlDocument Document, bool BodyOnly) PrepareDocument(
+            IHtmlProcessor htmlProcessor, string? contentHtml, string? parentHtml)
+        {
+            var content = htmlProcessor.LoadHtml(contentHtml ?? "");
+            foreach (var heading in htmlProcessor.Find(content, "h1").Where(e => !HasText(e)))
+                heading.Name = "div";
+            if (string.IsNullOrWhiteSpace(parentHtml))
+                return (content, false);
+
+            var parent = htmlProcessor.LoadHtml(parentHtml);
+            foreach (var heading in htmlProcessor.Find(parent, "h1")) heading.Name = "div";
+            foreach (var node in htmlProcessor.Find(parent, ".catalog_frame,.noInherit").ToList()) node.Remove();
+            var slot = htmlProcessor.Find(parent, ".subpage_content").FirstOrDefault();
+            if (slot?.ParentNode == null)
+                return (content, false);
+            foreach (var node in content.DocumentNode.ChildNodes.ToList()) slot.ParentNode.InsertBefore(node, slot);
+            slot.Remove();
+            var body = parent.DocumentNode.SelectSingleNode("//body");
+            return (parent, body != null);
         }
 
         public static int CountMainHeadings(
@@ -35,43 +57,8 @@ namespace EtheriT.Coker.Web.Public.Helpers
             return htmlProcessor.Find(document, "h1").Count(HasText);
         }
 
-        private static string ConvertEmptyMainHeadingsToDiv(
-            IHtmlProcessor htmlProcessor,
-            string? html)
-        {
-            if (string.IsNullOrWhiteSpace(html))
-            {
-                return string.Empty;
-            }
 
-            var document = htmlProcessor.LoadHtml(html);
-            foreach (var heading in htmlProcessor.Find(document, "h1").Where(e => !HasText(e)))
-            {
-                heading.Name = "div";
-            }
-
-            return document.DocumentNode.OuterHtml;
-        }
-
-        private static string ConvertAllMainHeadingsToDiv(
-            IHtmlProcessor htmlProcessor,
-            string? html)
-        {
-            if (string.IsNullOrWhiteSpace(html))
-            {
-                return string.Empty;
-            }
-
-            var document = htmlProcessor.LoadHtml(html);
-            foreach (var heading in htmlProcessor.Find(document, "h1"))
-            {
-                heading.Name = "div";
-            }
-
-            return document.DocumentNode.OuterHtml;
-        }
-
-        private static bool HasText(HtmlAgilityPack.HtmlNode heading)
+        public static bool HasText(HtmlAgilityPack.HtmlNode heading)
         {
             return !string.IsNullOrWhiteSpace(
                 WebUtility.HtmlDecode(heading.InnerText));

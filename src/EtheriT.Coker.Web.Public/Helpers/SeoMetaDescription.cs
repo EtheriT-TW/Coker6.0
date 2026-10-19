@@ -21,7 +21,8 @@ namespace EtheriT.Coker.Web.Public.Helpers
             string? siteDescription,
             string? pageTitle,
             string? locale,
-            Func<IReadOnlyCollection<long>, Task<List<DirectoryGetDataDto>>> getDirectories)
+            Func<IReadOnlyCollection<long>, Task<List<DirectoryGetDataDto>>> getDirectories,
+            Func<Func<ContentAnalysis>, Task<ContentAnalysis>>? getAnalysis = null)
         {
             var normalizedTitle = NormalizePlainText(pageTitle);
             var normalizedDescription = NormalizePlainText(description);
@@ -32,11 +33,8 @@ namespace EtheriT.Coker.Web.Public.Helpers
                 return Truncate(normalizedDescription);
             }
 
-            var analysis = AnalyzeContent(
-                htmlProcessor,
-                contentHtml,
-                normalizedTitle,
-                locale);
+            ContentAnalysis Analyze() => AnalyzeContent(htmlProcessor, contentHtml, normalizedTitle, locale);
+            var analysis = getAnalysis == null ? Analyze() : await getAnalysis(Analyze);
 
             if (analysis.TextParts.Count > 0)
             {
@@ -360,10 +358,10 @@ namespace EtheriT.Coker.Web.Public.Helpers
             return truncated;
         }
 
-        private sealed class ContentAnalysis
+        public sealed class ContentAnalysis
         {
-            public List<string> TextParts { get; } = new();
-            public List<long> DirectoryIds { get; } = new();
+            public List<string> TextParts { get; set; } = new();
+            public List<long> DirectoryIds { get; set; } = new();
         }
 
         private sealed record TextCandidate(int Index, string Text, int Score);

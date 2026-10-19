@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -8,16 +7,31 @@ namespace EtheriT.Coker.Web.Public.Middlewares
     public class StaticFileVersionMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IConfiguration _config;
-        private static readonly ConcurrentDictionary<string, string> _fileHashCache = new();
+        private readonly (string Prefix, string Root)[] _uploadRoots;
+        private readonly ILogger<StaticFileVersionMiddleware> _logger;
+        private static readonly Regex UploadFileRegex = new(
+            @"""(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|pdf|svg|avif|webp))""|&amp;amp;quot;(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|pdf|svg|avif|webp))&amp;amp;quot;",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
         private static readonly Regex InlineScriptRegex = new(
             @"<script(?![^>]*\bnonce=)(?![^>]*\bsrc=)([^>]*)>",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        public StaticFileVersionMiddleware(RequestDelegate next, IConfiguration config)
+        public StaticFileVersionMiddleware(RequestDelegate next, IConfiguration config,
+            ILogger<StaticFileVersionMiddleware> logger)
         {
             _next = next;
-            _config = config;
+            var roots = new List<(string Prefix, string Root)>();
+            var names = config.GetSection("WebConfig:childSiteOrgName").Get<string[]>() ?? [];
+            var paths = config.GetSection("WebConfig:childPath").Get<string[]>() ?? [];
+            for (var i = 0; i < Math.Min(names.Length, paths.Length); i++)
+            {
+                if (!string.IsNullOrWhiteSpace(names[i]) && !string.IsNullOrWhiteSpace(paths[i]))
+                    roots.Add(($"/upload/{names[i]}/", paths[i]));
+            }
+            var mainRoot = config.GetValue<string>("VirtualDirectory:upload");
+            if (!string.IsNullOrWhiteSpace(mainRoot)) roots.Add(("/upload/", mainRoot));
+            _uploadRoots = roots.OrderByDescending(root => root.Prefix.Length).ToArray();
+            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -51,7 +65,7 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     }
 
                     // 替換靜態文件 URL
-                    var modifiedHtml = await ReplaceStaticFileUrlsAsync(responseBody);
+                    var modifiedHtml = ReplaceStaticFileUrls(responseBody);
 
                     context.Response.Body = originalBody;
                     context.Response.ContentLength = Encoding.UTF8.GetByteCount(modifiedHtml);
@@ -68,63 +82,66 @@ namespace EtheriT.Coker.Web.Public.Middlewares
             }
         }
 
-        private async Task<string> ReplaceStaticFileUrlsAsync(string html)
+        private string ReplaceStaticFileUrls(string html)
         {
-            // 匹配原生雙引號和被編碼的雙引號
-            var regex = new Regex(@"""(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|pdf|svg|avif|webp))""|&amp;amp;quot;(/upload/[^""'?#]+\.(?:jpg|jpeg|png|gif|pdf|svg|avif|webp))&amp;amp;quot;", RegexOptions.Compiled);
-            var matches = regex.Matches(html);
-
-            var replacements = new Dictionary<string, string>();
-            foreach (Match match in matches)
+            // 已帶 ?v= 的產物不會命中，只補上舊／動態內容尚無版本的網址。
+            // 僅在本次回應內去重，方法結束後即可回收；不跨頁／跨請求累積。
+            var versions = new Dictionary<string, string?>(StringComparer.Ordinal);
+            try
             {
-                // 判斷是哪一種情況
-                var filePath = !string.IsNullOrEmpty(match.Groups[1].Value) ? match.Groups[1].Value : match.Groups[2].Value;
-                if (!replacements.ContainsKey(filePath))
+                return UploadFileRegex.Replace(html, match =>
                 {
-                    var fullPath = Path.Combine(_config.GetValue<string>("VirtualDirectory:upload"), filePath.Substring("/upload".Length).TrimStart('/'));
-                    if (File.Exists(fullPath))
+                    var filePath = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+                    if (!versions.TryGetValue(filePath, out var hash))
                     {
-                        var hash = await GetFileHashAsync(fullPath);
-
-                        // 根據匹配的情況生成替換字串
-                        if (!string.IsNullOrEmpty(match.Groups[1].Value))
-                        {
-                            // 原生雙引號
-                            replacements[filePath] = $@"""{filePath}?v={hash}""";
-                        }
-                        else
-                        {
-                            // 被編碼的雙引號
-                            replacements[filePath] = $@"&amp;amp;quot;{filePath}?v={hash}&amp;amp;quot;";
-                        }
+                        hash = TryGetFileHash(filePath);
+                        versions[filePath] = hash;
                     }
-                }
+                    if (hash == null) return match.Value;
+                    return match.Groups[1].Success
+                        ? $"\"{filePath}?v={hash}\""
+                        : $"&amp;amp;quot;{filePath}?v={hash}&amp;amp;quot;";
+                });
             }
-
-            // 替換 URL
-            return regex.Replace(html, match =>
+            catch (RegexMatchTimeoutException ex)
             {
-                var filePath = !string.IsNullOrEmpty(match.Groups[1].Value) ? match.Groups[1].Value : match.Groups[2].Value;
-                return replacements.TryGetValue(filePath, out var replacement) ? replacement : match.Value;
-            });
+                _logger.LogWarning(ex, "HTML 資源版本替換逾時，保留原回應內容");
+                return html;
+            }
         }
 
-        private async Task<string> GetFileHashAsync(string filePath)
+        private string? TryGetFileHash(string url)
         {
-            if (_fileHashCache.TryGetValue(filePath, out var cachedHash))
+            try
             {
-                return cachedHash;
+                var decoded = Uri.UnescapeDataString(url).Replace('\\', '/');
+                var binding = _uploadRoots.FirstOrDefault(item => decoded.StartsWith(item.Prefix, StringComparison.OrdinalIgnoreCase));
+                var root = binding.Root;
+                if (string.IsNullOrWhiteSpace(root)) return null;
+                var relative = decoded[binding.Prefix.Length..];
+                if (relative.Split('/').Any(part => part.StartsWith('_') || part is "." or "..")) return null;
+                var safeRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                var filePath = Path.GetFullPath(Path.Combine(safeRoot, relative.Replace('/', Path.DirectorySeparatorChar)));
+                if (!filePath.StartsWith(safeRoot, StringComparison.OrdinalIgnoreCase)) return null;
+
+                var info = new FileInfo(filePath);
+                if (!info.Exists) return null;
+                var length = info.Length;
+                var ticks = info.LastWriteTimeUtc.Ticks;
+                // 相容舊內容的版本語意，已發布片段則使用內容 SHA-256。
+                // 只計算時間與大小的短字串，不讀取圖片內容，也不保存常駐版本快取。
+                return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{ticks}_{length}")))
+                    .ToLowerInvariant();
             }
-
-            var fileInfo = new FileInfo(filePath);
-
-            // 使用檔案的最後修改時間和檔案大小來生成哈希值
-            var hashInput = $"{fileInfo.LastWriteTimeUtc.Ticks}_{fileInfo.Length}";
-
-            using (var sha256 = SHA256.Create())
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
             {
-                var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(hashInput));
-                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                return null;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException
+                or NotSupportedException or System.Security.SecurityException)
+            {
+                _logger.LogWarning(ex, "無法取得前台資源版本，保留原網址：{Url}", url);
+                return null;
             }
         }
     }

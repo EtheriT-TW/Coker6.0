@@ -1,8 +1,6 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType.Processor;
 using EtheriT.Coker.Application.Shared.Processor;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using System.Text.Encodings.Web;
-using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Web.Public.Helpers
 {
@@ -10,14 +8,14 @@ namespace EtheriT.Coker.Web.Public.Helpers
     public class CokerSafeHtmlTagHelper : TagHelper
     {
         private readonly IHtmlSanitizeService htmlSanitizeService;
-        private readonly IHtmlProcessor htmlProcessor;
+        private readonly PreparedHtmlContent preparedHtml;
 
         public CokerSafeHtmlTagHelper(
             IHtmlSanitizeService htmlSanitizeService,
-            IHtmlProcessor htmlProcessor)
+            PreparedHtmlContent preparedHtml)
         {
             this.htmlSanitizeService = htmlSanitizeService;
-            this.htmlProcessor = htmlProcessor;
+            this.preparedHtml = preparedHtml;
         }
 
         [HtmlAttributeName("content")]
@@ -88,109 +86,40 @@ namespace EtheriT.Coker.Web.Public.Helpers
                 return;
             }
 
-            var isCurrent = await htmlSanitizeService.IsCurrentAsync(
-                WebsiteId,
-                SourceType,
-                SourceId,
-                Content,
-                Css,
-                ContentKey,
-                SanitizePolicy
-            );
+            // 新舊頁面共用：缺檔／資源變更時重建，命中時直接讀取私有產物。
+            var initialized = await htmlSanitizeService.EnsurePublicContentAsync(new()
+            {
+                WebsiteId = WebsiteId,
+                SourceType = SourceType,
+                SourceId = SourceId,
+                Html = Content,
+                Css = Css,
+                ContentKey = ContentKey,
+                SanitizePolicy = SanitizePolicy
+            });
+            var verifiedContent = initialized.PublishedHtml ?? initialized.Html;
 
-            var verifiedContent = Content;
-            if (!isCurrent)
-            {
-                // 相容舊資料：第一次前台讀取時清洗並建立／更新 hash state。
-                var initialized = await htmlSanitizeService.EnsurePublicContentAsync(new()
-                {
-                    WebsiteId = WebsiteId,
-                    SourceType = SourceType,
-                    SourceId = SourceId,
-                    Html = Content,
-                    Css = Css,
-                    ContentKey = ContentKey,
-                    SanitizePolicy = SanitizePolicy
-                });
-                verifiedContent = initialized.Html;
-            }
-
-            var renderedHtml = verifiedContent;
-            if (!string.IsNullOrWhiteSpace(GeneratedHtmlSuffix))
-            {
-                renderedHtml = htmlProcessor.ExtractBodyInnerHtml(renderedHtml ?? "") + GeneratedHtmlSuffix;
-            }
-            if (!string.IsNullOrWhiteSpace(ContentWrapperClass))
-            {
-                renderedHtml = $"<div class=\"{HtmlEncoder.Default.Encode(ContentWrapperClass)}\">{renderedHtml}</div>";
-            }
+            string? verifiedParentContent = null;
             if (!string.IsNullOrWhiteSpace(ParentContent) && ParentSourceId > 0)
             {
-                var isParentCurrent = await htmlSanitizeService.IsCurrentAsync(
-                    WebsiteId,
-                    HtmlSanitizeSourceType.選單,
-                    ParentSourceId,
-                    ParentContent,
-                    ParentCss,
-                    "Published",
-                    SanitizePolicy
-                );
-
-                var verifiedParentContent = ParentContent;
-                if (!isParentCurrent)
+                var initializedParent = await htmlSanitizeService.EnsurePublicContentAsync(new()
                 {
-                    var initializedParent = await htmlSanitizeService.EnsurePublicContentAsync(new()
-                    {
-                        WebsiteId = WebsiteId,
-                        SourceType = HtmlSanitizeSourceType.選單,
-                        SourceId = ParentSourceId,
-                        Html = ParentContent,
-                        Css = ParentCss,
-                        ContentKey = "Published",
-                        SanitizePolicy = SanitizePolicy
-                    });
-                    verifiedParentContent = initializedParent.Html;
-                }
-
-                renderedHtml = MainHeadingHtml.PrepareInheritedContent(
-                    htmlProcessor,
-                    renderedHtml,
-                    verifiedParentContent);
+                    WebsiteId = WebsiteId,
+                    SourceType = HtmlSanitizeSourceType.選單,
+                    SourceId = ParentSourceId,
+                    Html = ParentContent,
+                    Css = ParentCss,
+                    ContentKey = "Published",
+                    SanitizePolicy = SanitizePolicy
+                });
+                verifiedParentContent = initializedParent.PublishedHtml ?? initializedParent.Html;
             }
-            else
-            {
-                renderedHtml = MainHeadingHtml.PrepareInheritedContent(
-                    htmlProcessor,
-                    renderedHtml,
-                    null);
-            }
-
-            if (RewriteUploadPaths && !string.IsNullOrWhiteSpace(UploadOrgName))
-            {
-                var parentOrgNames = Regex.Escape(UploadParentOrgNames ?? string.Empty);
-                renderedHtml = Regex.Replace(
-                    renderedHtml,
-                    $"(?<attr>src|href|data-pdf-url)=([\"'])/upload/(?!{parentOrgNames})",
-                    $"${{attr}}=$2/upload/{UploadOrgName}/",
-                    RegexOptions.IgnoreCase
-                );
-            }
-
-            // 清洗完成後才注入麵包屑：注入的是後端可信 markup，
-            // 且不影響前面用原始 Content 計算的 hash 驗證。
-            renderedHtml = BreadcrumbBlockHtml.Inject(
-                htmlProcessor,
-                renderedHtml,
-                BreadcrumbHtml);
-
-            // 僅調整驗證後的輸出，不回寫內容或改變 hash 驗證來源。
-            if (LazyLoadImages)
-            {
-                renderedHtml = ContentImageLoadingHtml.Prepare(htmlProcessor, renderedHtml);
-            }
-
+            var rendered = await preparedHtml.GetAsync(UploadOrgName, WebsiteId,
+                $"tag/{(int)SourceType}/{SourceId}/{ContentKey}/{SanitizePolicy}/{ParentSourceId}",
+                verifiedContent, verifiedParentContent, ContentWrapperClass, LazyLoadImages, BreadcrumbHtml,
+                RewriteUploadPaths, UploadParentOrgNames, GeneratedHtmlSuffix);
             // 子內容與父選單都在後端完成 hash 驗證後，才組合並輸出 HTML。
-            output.Content.SetHtmlContent(renderedHtml);
+            output.Content.SetHtmlContent(rendered.Html);
         }
     }
 }

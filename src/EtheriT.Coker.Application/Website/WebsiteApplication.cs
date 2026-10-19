@@ -57,6 +57,13 @@ namespace EtheriT.Coker.Application
         }
         public async Task<DefaultDataDto> GetDefaultData(long siteId, string? website)
         {
+            var items = ReadOnlyRequestItems();
+            var requestKey = (typeof(WebsiteApplication), "default", siteId, website);
+            if (items != null && items.TryGetValue(requestKey, out var cached) && cached is DefaultDataDto snapshot)
+            {
+                if (snapshot.Id > 0) L.local = snapshot.locale;
+                return CopyDefaultData(snapshot);
+            }
             DefaultDataDto defaultData = new DefaultDataDto();
 
             long fid = siteId;
@@ -92,8 +99,29 @@ namespace EtheriT.Coker.Application
                 defaultData.OrgName = (defaultData.OrgName == null || defaultData.OrgName == "") ? "Page" : defaultData.OrgName;
 
             }
+            if (items != null) items[requestKey] = CopyDefaultData(defaultData);
             return defaultData;
         }
+
+        private IDictionary<object, object?>? ReadOnlyRequestItems()
+        {
+            var context = httpContextAccessor.HttpContext;
+            return context != null && (HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))
+                ? context.Items : null;
+        }
+
+        private static DefaultDataDto CopyDefaultData(DefaultDataDto value) => new()
+        {
+            Id = value.Id, OrgName = value.OrgName, ParntOrgNames = value.ParntOrgNames,
+            Layout_Type = value.Layout_Type, Level = value.Level, locale = value.locale,
+            Root = value.Root, Description = value.Description, Css = value.Css, View = value.View
+        };
+
+        private static List<WebsiteDataDto> CopyWebsiteData(List<WebsiteDataDto> values) => values.Select(value => new WebsiteDataDto
+        {
+            Id = value.Id, Title = value.Title, OrgName = value.OrgName, Logo = value.Logo,
+            Contact = value.Contact, ContactMail = value.ContactMail, isSubsite = value.isSubsite
+        }).ToList();
         public async Task<int> GetLayoutType(long Id)
         {
             var data = await (from w in db.Websites
@@ -352,6 +380,10 @@ namespace EtheriT.Coker.Application
         }
         public async Task<List<WebsiteDataDto>> GetAllData(long SiteId)
         {
+            var items = ReadOnlyRequestItems();
+            var requestKey = (typeof(WebsiteApplication), "all", SiteId);
+            if (items != null && items.TryGetValue(requestKey, out var cached) && cached is List<WebsiteDataDto> snapshot)
+                return CopyWebsiteData(snapshot);
             var issubsite = await (from w in db.MappingWebsiteRelationship
                                    where w.WebsiteId == SiteId
                                    where w.IsDeleted != true
@@ -382,6 +414,7 @@ namespace EtheriT.Coker.Application
                     }
                 }
             }
+            if (items != null) items[requestKey] = CopyWebsiteData(date);
             return date;
         }
         public async Task<Company.CompanyDto?> GetCompanyData(long siteId)

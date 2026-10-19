@@ -31,6 +31,12 @@ namespace EtheriT.Coker.Web.Public.Helpers
             }
 
             var document = htmlProcessor.LoadHtml(html);
+            Inject(htmlProcessor, document, breadcrumbHtml);
+            return document.DocumentNode.OuterHtml;
+        }
+
+        public static void Inject(IHtmlProcessor htmlProcessor, HtmlAgilityPack.HtmlDocument document, string? breadcrumbHtml)
+        {
             var filled = false;
 
             foreach (var slot in htmlProcessor.Find(document, BlockSelector))
@@ -48,7 +54,6 @@ namespace EtheriT.Coker.Web.Public.Helpers
                 }
             }
 
-            return document.DocumentNode.OuterHtml;
         }
     }
 }

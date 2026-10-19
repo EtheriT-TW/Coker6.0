@@ -109,6 +109,45 @@ namespace EtheriT.Coker.Application.StoreSet
             }
             return output;
         }
+        public async Task<Dictionary<long, StoreSetResponseMessageDto>> GetValuesByGroupsAsync(
+            long websiteId, IReadOnlyCollection<long> groups, IReadOnlyCollection<long> htmlGroups)
+        {
+            var ids = groups.Distinct().ToArray();
+            var output = ids.ToDictionary(id => id, _ => new StoreSetResponseMessageDto());
+            try
+            {
+                // 沿用原本的網站等級限制；整批查詢，不跨 request 保存資料。
+                var level = await loginUserData.GetWebsiteLevel();
+                var definitions = await db.StoreSet.AsNoTracking().Include(s => s.storeSetItems)
+                    .Where(s => !s.IsDeleted && ids.Contains(s.FK_StoreSetGroupId))
+                    .Where(s => s.Level == null || level >= s.Level)
+                    .OrderBy(s => s.jobID).ToListAsync();
+                var definitionIds = definitions.Select(s => s.Id).ToArray();
+                var details = await db.StoreSetDetail.AsNoTracking()
+                    .Where(d => !d.IsDeleted && d.FK_WebsiteId == websiteId && definitionIds.Contains(d.FK_StoreSetId))
+                    .ToListAsync();
+                var latest = details.GroupBy(d => d.FK_StoreSetId)
+                    .ToDictionary(g => g.Key, g => g.OrderByDescending(d => d.CreationTime).First());
+                foreach (var id in ids)
+                {
+                    output[id].storeSetDetails = definitions.Where(s => s.FK_StoreSetGroupId == id)
+                        .Select(s => new StoreSetDetailOutputDto
+                        {
+                            key = s.key,
+                            value = ResolveEffectiveValues(s, latest.GetValueOrDefault(s.Id), htmlGroups.Contains(id))
+                        }).ToList();
+                    output[id].Success = true;
+                }
+            }
+            catch (Exception)
+            {
+                // 批次遇到個別欄位／資料異常時沿用舊路徑，避免一組失敗連帶清空其他組。
+                foreach (var id in ids)
+                    output[id] = await getValuesByGroupId(id, websiteId, htmlGroups.Contains(id));
+            }
+            return output;
+        }
+
         public async Task<StoreSetResponseMessageDto> getGroupStructure(StoreSetGetValueInput dto) {
             StoreSetResponseMessageDto output = new StoreSetResponseMessageDto();
             try {

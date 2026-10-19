@@ -11,6 +11,12 @@ namespace EtheriT.Coker.Web.Public.Helpers
         public static string Prepare(IHtmlProcessor htmlProcessor, string html)
         {
             var document = htmlProcessor.LoadHtml(html);
+            Prepare(htmlProcessor, document);
+            return document.DocumentNode.OuterHtml;
+        }
+
+        public static void Prepare(IHtmlProcessor htmlProcessor, HtmlDocument document)
+        {
             var imageIndex = 0;
             foreach (var image in htmlProcessor.Find(document, "img"))
             {
@@ -55,7 +61,6 @@ namespace EtheriT.Coker.Web.Public.Helpers
                 image.SetAttributeValue("loading", "lazy");
             }
 
-            return document.DocumentNode.OuterHtml;
         }
 
         private static bool IsPictureGalleryImage(HtmlNode image)

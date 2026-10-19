@@ -45,6 +45,15 @@ public sealed record WebsiteUrlDto(
     string Url,
     DomainSummaryDto? Domain);   // null＝網域管理中沒有對應的網域
 
+public sealed record WebsiteEnterpriseEmailDto
+{
+    public EnterpriseEmailTypeEnum AccountType { get; init; }
+    public int TotalAccounts { get; init; }
+    public string? OtherType { get; init; }
+    public DateTime ExpirationDate { get; init; }
+    public string? Remark { get; init; }
+}
+
 public sealed record WebsiteDetailDto
 {
     /// <summary>後台 Websites.Id。</summary>
@@ -74,6 +83,7 @@ public sealed record WebsiteDetailDto
 
     /// <summary>null＝後台還沒綁公司。</summary>
     public WebsiteCustomerDto? Customer { get; init; }
+    public WebsiteEnterpriseEmailDto? EnterpriseEmail { get; init; }
 }
 
 
@@ -113,6 +123,8 @@ public class WebsiteSaveRequest
     /// </summary>
     public List<WebsiteUrlInput> Urls { get; set; } = [];
 
+    public WebsiteEnterpriseEmailInput? EnterpriseEmail { get; set; }
+
     [StringLength(2000)]
     public string? Remark { get; set; }
 }
@@ -134,6 +146,19 @@ public sealed class WebsiteCreateRequest : WebsiteSaveRequest
     public string OrgName { get; set; } = string.Empty;
 }
 
+public sealed class WebsiteEnterpriseEmailInput {
+    [Required(ErrorMessage= "請選擇帳號版本。")]
+    public EnterpriseEmailTypeEnum? AccountType { get; set; }
+    [Required(ErrorMessage = "請輸入帳號總數。")]
+    [Range(1, long.MaxValue, ErrorMessage= "帳號總數至少為 1。")]
+    public int? TotalAccounts { get; set; }
+    [StringLength(200, ErrorMessage= "不可超過 200 個字元。")]
+    public string? OtherType { get; set; }
+    [Required(ErrorMessage = "請輸入到期日期。")]
+    public DateTime? ExpirationDate { get; set; }
+    [StringLength(2000, ErrorMessage = "備註不可超過 2000 個字元。")]
+    public string? Remark { get; set; }
+}
 
 // ───────────────────────── 選項與 IIS 綁定查詢 ─────────────────────────
 

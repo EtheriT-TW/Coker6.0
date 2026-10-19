@@ -39,7 +39,12 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             })
             .ToListAsync(HttpContext.RequestAborted);
 
-        return rows.Select(row => new CustomerListItemDto(
+        var sites = await LoadSiteSummariesAsync();
+
+        return rows.Select(row =>
+        {
+            var owned = sites[row.Id].ToList();
+            return new CustomerListItemDto(
                 row.Id,
                 row.Name,
                 row.TaxID,
@@ -47,9 +52,45 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 Clean(row.Email),
                 row.SalesOwner,
                 DescribeCustomerType(row.CustomerType, row.CustomerTypeOther),
-                Clean(row.Contact)
-            ))
+                Clean(row.Contact),
+                HasEnterpriseEmail: owned.Any(site => site.HasEnterpriseEmail),
+                Urls: JoinDistinct(owned.Select(site => site.DefaultUrl)),
+                Domains: JoinDistinct(owned.Select(site => site.DomainName)));
+        })
             .ToList();
+    }
+
+
+    private sealed record CompanySiteSummary(long CompanyId, string? DefaultUrl, string? DomainName, bool HasEnterpriseEmail);
+
+    /// <summary>清單用：每家公司綁定站台的網址、網域、有無企業信箱。一次撈全部再分組，避免每列各查一次。</summary>
+    private async Task<ILookup<long, CompanySiteSummary>> LoadSiteSummariesAsync()
+    {
+        var rows = await db.MappingCompanyAndWebsites
+            .AsNoTracking()
+            .Where(mapping => !mapping.IsDeleted && mapping.Website != null && !mapping.Website.IsDeleted)
+            .Select(mapping => new CompanySiteSummary(
+                mapping.FK_CompanyId,
+                mapping.Website!.DefaultUrl,
+                mapping.Website.PlatformDomain != null && !mapping.Website.PlatformDomain.IsDeleted
+                    ? mapping.Website.PlatformDomain.DomainName
+                    : null,
+                db.WebsiteEnterpriseEmails.Any(email => !email.IsDeleted && email.FK_WebsiteId == mapping.FK_WebsiteId)))
+            .ToListAsync(HttpContext.RequestAborted);
+
+        return rows.ToLookup(row => row.CompanyId);
+    }
+
+    /// <summary>去空白、去重複（不分大小寫）後用逗號串起；全部空白回 null。</summary>
+    private static string? JoinDistinct(IEnumerable<string?> values)
+    {
+        var list = values
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return list.Count == 0 ? null : string.Join(", ", list);
     }
 
     [HttpGet("{id:long}")]
@@ -119,7 +160,13 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 site.Level,
                 site.ServiceStatus,
                 site.StartDate,
-                site.EndDate
+                site.EndDate,
+                // 與網站編輯頁 LoadEnterpriseEmailAsync 相同：取 Id 最小的那筆
+                EnterpriseEmailExpirationDate = db.WebsiteEnterpriseEmails
+                    .Where(email => !email.IsDeleted && email.FK_WebsiteId == site.Id)
+                    .OrderBy(email => email.Id)
+                    .Select(email => (DateTime?)email.ExpirationDate)
+                    .FirstOrDefault()
             })
             .ToListAsync(HttpContext.RequestAborted);
 
@@ -138,7 +185,8 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 Url: row.DefaultUrl,
                 ServiceStartDate: row.StartDate,
                 ServiceEndDate: row.EndDate,
-                RemainingDays: ToRemainingDays(row.EndDate, today)))
+                RemainingDays: ToRemainingDays(row.EndDate, today),
+                EnterpriseEmailExpirationDate: row.EnterpriseEmailExpirationDate))
             .ToList();
     }
 

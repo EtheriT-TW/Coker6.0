@@ -13,7 +13,10 @@ public sealed record CustomerListItemDto(
     string? Email,
     string? SalesOwner,
     string CustomerTypeText,
-    string? PrimaryContactName);
+    string? PrimaryContactName,
+    bool HasEnterpriseEmail,
+    string? Urls,
+    string? Domains);
 
 public sealed record CustomerContactDto(
     long Id,
@@ -43,7 +46,8 @@ public sealed record CustomerWebsiteDto(
     string? Url,
     DateTime? ServiceStartDate,
     DateTime? ServiceEndDate,
-    int? RemainingDays);
+    int? RemainingDays,
+    DateTime? EnterpriseEmailExpirationDate);   // null＝這個站台沒有設定企業信箱
 public sealed record CustomerDetailDto
 {
     public long Id { get; init; }

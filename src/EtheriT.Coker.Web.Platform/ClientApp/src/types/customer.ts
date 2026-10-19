@@ -24,6 +24,9 @@ export interface CustomerListItem {
     SalesOwner: string | null;
     CustomerTypeText: string;
     PrimaryContactName: string | null;
+    HasEnterpriseEmail: boolean;
+    Urls: string | null;
+    Domains: string | null;
 }
 export interface CustomerContact {
     Id: number;
@@ -104,4 +107,6 @@ export interface CustomerWebsite {
     ServiceStartDate: string | null;
     ServiceEndDate: string | null;
     RemainingDays: number | null;
+    /** null＝這個站台沒有設定企業信箱 */
+    EnterpriseEmailExpirationDate: string | null;
 }

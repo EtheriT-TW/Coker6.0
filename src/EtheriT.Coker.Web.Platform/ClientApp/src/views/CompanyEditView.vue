@@ -403,6 +403,10 @@
                         <div class="site-list-meta">
                             <span v-if="site.OrgName">{{ site.OrgName }}</span>
                             <span v-if="site.LevelText">{{ site.LevelText }}版</span>
+                            <span v-if="site.EnterpriseEmailExpirationDate" class="site-email-tag">
+                                <span class="material-symbols-outlined">mail</span>
+                                企業信箱・{{ site.EnterpriseEmailExpirationDate.slice(0, 10).replaceAll("-", "/") }} 到期
+                            </span>
                             <a v-if="toHref(site.Url)"
                                class="grid-link"
                                :href="toHref(site.Url)!"

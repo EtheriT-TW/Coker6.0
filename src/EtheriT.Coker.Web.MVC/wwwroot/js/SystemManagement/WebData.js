@@ -141,8 +141,8 @@ function LookupCompany(taxId, companyName) {
         if (result.success) {
             companyLookupComplete = true;
             FillCompanyDetailFields(result.company);
-            SetCompanyDetailFieldsEnabled(false);
-            SetCompanyLookupFeedback("已帶入既有公司資料，確認後即可儲存。", "text-success");
+            SetCompanyDetailFieldsEnabled(true);
+            SetCompanyLookupFeedback("已帶入既有公司資料，可確認或修改後儲存。", "text-success");
         } else if (matchStatus === "notfound") {
             companyLookupComplete = true;
             SetCompanyDetailFieldsEnabled(true);

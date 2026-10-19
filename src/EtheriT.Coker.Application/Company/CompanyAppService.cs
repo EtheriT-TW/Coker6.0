@@ -192,12 +192,38 @@ namespace EtheriT.Coker.Application.Company
 						throw new Exception("找到多筆同名公司／機構資料，無法自動建立關聯，請由系統管理者確認");
 					existingCompany = sameNameCompanies.SingleOrDefault();
 				}
-				if (existingCompany != null)
-				{
-					await WebsiteMapping(existingCompany.Id, siteId);
-					responseMessageDto.Message = existingCompany.Id.ToString();
-				}
-				else
+                    if (existingCompany != null)
+                    {
+                        var contact = (dto.Contact ?? string.Empty).Trim();
+                        var email = (dto.Email ?? string.Empty).Trim();
+                        var address = (dto.Address ?? string.Empty).Trim();
+                        var isDetailChanged =
+                            !string.Equals((existingCompany.Contact ?? string.Empty).Trim(), contact, StringComparison.Ordinal) ||
+                            !string.Equals((existingCompany.Email ?? string.Empty).Trim(), email, StringComparison.Ordinal) ||
+                            !string.Equals((existingCompany.Address ?? string.Empty).Trim(), address, StringComparison.Ordinal);
+                        if (isDetailChanged)
+                        {
+                            if (string.IsNullOrWhiteSpace(contact) ||
+                                string.IsNullOrWhiteSpace(email) ||
+                                string.IsNullOrWhiteSpace(address))
+                                throw new Exception("請填寫完整公司資訊");
+
+                            // 公司資料各站共用；已被其他網站綁定時不可從這裡改，避免影響他站前台與訂單通知信
+                            var isBoundToOtherWebsite = await db.MappingCompanyAndWebsites.AnyAsync(e =>
+                                !e.IsDeleted && e.FK_CompanyId == existingCompany.Id && e.FK_WebsiteId != siteId);
+                            if (isBoundToOtherWebsite)
+                                throw new Exception("此公司已被其他網站使用，聯絡資料請至客戶管理平台修改");
+
+                            // 不用 mapper：dto.Id 是 0，ReverseMap 會連 Id 一起覆蓋
+                            existingCompany.Contact = contact;
+                            existingCompany.Email = email;
+                            existingCompany.Address = address;
+                            await loginUserData.SaveChanges(existingCompany);
+                        }
+                        await WebsiteMapping(existingCompany.Id, siteId);
+                        responseMessageDto.Message = existingCompany.Id.ToString();
+                    }
+                    else
 				{
 					if (string.IsNullOrWhiteSpace(dto.Name) ||
 						string.IsNullOrWhiteSpace(dto.Contact) ||

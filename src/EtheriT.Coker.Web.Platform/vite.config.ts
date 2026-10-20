@@ -29,6 +29,15 @@ export default defineConfig(({ mode }) => ({
     manifest: true,
     minify: mode === "production",
     sourcemap: mode !== "production",
-    cssCodeSplit: true
+    cssCodeSplit: true,
+    // Keep published filenames stable for the deployment repository.
+    // Program.cs requires clients to revalidate /dist responses before reuse.
+    rolldownOptions: {
+      output: {
+        entryFileNames: "assets/[name].js",
+        chunkFileNames: "assets/[name].js",
+        assetFileNames: "assets/[name][extname]"
+      }
+    }
   }
 }));

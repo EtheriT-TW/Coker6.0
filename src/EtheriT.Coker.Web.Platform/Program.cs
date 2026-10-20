@@ -132,6 +132,21 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+// Vite uses stable filenames in /dist. Revalidate every asset (including
+// lazy-loaded chunks and compressed responses) while retaining ETag support.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/dist"))
+    {
+        context.Response.OnStarting(() =>
+        {
+            context.Response.Headers.CacheControl = "no-cache";
+            return Task.CompletedTask;
+        });
+    }
+
+    await next();
+});
 app.UseRouting();
 app.UseRateLimiter();
 app.UseMiddleware<PlatformApiControlMiddleware>();

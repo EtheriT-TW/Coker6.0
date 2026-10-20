@@ -31,6 +31,7 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.SameSite = SameSiteMode.Strict;
 });
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SiteMetricRecorder>();
 builder.Services.AddHttpClient();
 builder.Services.AddRateLimiter(options =>
 {

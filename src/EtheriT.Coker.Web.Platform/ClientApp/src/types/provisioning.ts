@@ -149,6 +149,27 @@ export interface ProvisioningMetricHistory {
   Disks: ProvisioningDiskMetricSeries[];
 }
 
+export interface ProvisioningSiteMetricHistory {
+  Enabled: boolean;
+  ServerId: string;
+  ApplicationPoolName: string;
+  FromUtc: string;
+  ToUtc: string;
+  SampleSeconds: number;
+  Points: ProvisioningSiteMetricPoint[];
+}
+
+export interface ProvisioningSiteMetricPoint {
+  SampledAtUtc: string;
+  PrivateMemoryBytes: number;
+  WorkingSetBytes: number;
+  CpuUsagePercent: number | null;
+  OnlineVisitors: number | null;
+  ProcessIds: number[];
+  WebsiteIds: number[];
+  WebsiteNames: string[];
+}
+
 export interface ProvisioningServerMetricPoint {
   SampledAtUtc: string;
   CpuUsagePercent: number | null;

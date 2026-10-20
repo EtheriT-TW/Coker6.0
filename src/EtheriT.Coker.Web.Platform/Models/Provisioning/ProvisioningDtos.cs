@@ -146,6 +146,15 @@ public sealed record ProvisioningServerMetricPointDto(
     long? MemoryUsedBytes,
     long? MemoryTotalBytes);
 
+public sealed record ProvisioningSiteMetricHistoryDto(
+    bool Enabled, string ServerId, string ApplicationPoolName, DateTime FromUtc, DateTime ToUtc,
+    int SampleSeconds, IReadOnlyList<ProvisioningSiteMetricPointDto> Points);
+
+public sealed record ProvisioningSiteMetricPointDto(
+    DateTime SampledAtUtc, long PrivateMemoryBytes, long WorkingSetBytes, double? CpuUsagePercent,
+    long? OnlineVisitors, IReadOnlyList<int> ProcessIds,
+    IReadOnlyList<long> WebsiteIds, IReadOnlyList<string> WebsiteNames);
+
 public sealed record ProvisioningDiskMetricSeriesDto(
     string Name,
     string VolumeLabel,

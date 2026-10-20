@@ -1,4 +1,5 @@
 import { api } from "@/core/api/api-client";
+import type { ProvisioningSiteMetricHistory } from "@/types/provisioning";
 import type { CreateProvisioningTaskRequest, ProvisioningAgentStatus, ProvisioningMetricHistory, ProvisioningServer, ProvisioningTask, ServerTlsStatus } from "@/types/provisioning";
 
 export function fetchServerTlsStatus(serverId: string): Promise<ServerTlsStatus> {
@@ -22,6 +23,13 @@ export function fetchProvisioningMetricHistory(serverId: string, days: number): 
 
 export function fetchProvisioningTasks(): Promise<ProvisioningTask[]> {
   return api.get<ProvisioningTask[]>("/api/provisioning/tasks");
+}
+
+export function fetchSiteMetricHistory(serverId: string, applicationPoolName: string, hours: number): Promise<ProvisioningSiteMetricHistory> {
+  return api.get<ProvisioningSiteMetricHistory>(
+    `/api/provisioning/tasks/agents/${encodeURIComponent(serverId)}/site-metrics`,
+    { query: { applicationPoolName, hours } }
+  );
 }
 
 export function createProvisioningTask(request: CreateProvisioningTaskRequest): Promise<ProvisioningTask> {

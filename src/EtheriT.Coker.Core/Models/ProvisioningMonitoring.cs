@@ -36,3 +36,19 @@ public sealed class ProvisioningMetricSample
     public double? MemoryUsagePercent { get; set; }
     public string DiskMetricsJson { get; set; } = "[]";
 }
+
+/// <summary>同一取樣時間的 IIS 集區資源與對應網站在線人數。</summary>
+public sealed class ProvisioningSiteMetricSample
+{
+    public long Id { get; set; }
+    [StringLength(100)] public string ServerId { get; set; } = "";
+    [StringLength(200)] public string ApplicationPoolName { get; set; } = "";
+    public DateTime SampledAtUtc { get; set; }
+    public long PrivateMemoryBytes { get; set; }
+    public long WorkingSetBytes { get; set; }
+    public double? CpuUsagePercent { get; set; }
+    public long? OnlineVisitors { get; set; }
+    public string WebsiteIdsJson { get; set; } = "[]";
+    public string WebsiteNamesJson { get; set; } = "[]";
+    public string ProcessIdsJson { get; set; } = "[]";
+}

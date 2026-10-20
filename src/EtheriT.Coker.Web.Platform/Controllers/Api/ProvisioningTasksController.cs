@@ -13,7 +13,8 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 
 [ApiController]
 [Route("api/provisioning/tasks")]
-public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguration configuration) : ControllerBase
+public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguration configuration,
+    SiteMetricRecorder siteMetricRecorder) : ControllerBase
 {
     [HttpGet("servers")]
     public IReadOnlyList<ProvisioningServerDto> GetServers() => GetConfiguredServers()
@@ -146,6 +147,29 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
                 applicationPools,
                 state?.LastSeenAtUtc);
         }).ToList();
+    }
+
+    [HttpGet("agents/{serverId}/site-metrics")]
+    public async Task<ActionResult<ProvisioningSiteMetricHistoryDto>> GetSiteMetrics(string serverId,
+        [FromQuery] string applicationPoolName, [FromQuery] int hours = 1)
+    {
+        var server = GetConfiguredServers().FirstOrDefault(x => string.Equals(x.Id, serverId, StringComparison.OrdinalIgnoreCase));
+        if (server == null) return NotFound();
+        if (string.IsNullOrWhiteSpace(applicationPoolName) || applicationPoolName.Length > 200) return BadRequest();
+        var to = DateTime.UtcNow;
+        var from = to.AddHours(-Math.Clamp(hours, 1, 24));
+        var seconds = Math.Max(30, configuration.GetValue("Provisioning:HistorySampleSeconds", 60));
+        if (!siteMetricRecorder.Enabled)
+            return new ProvisioningSiteMetricHistoryDto(false, server.Id, applicationPoolName, from, to, seconds, []);
+        var samples = await db.ProvisioningSiteMetricSamples.AsNoTracking()
+            .Where(s => s.ServerId == server.Id && s.ApplicationPoolName == applicationPoolName
+                && s.SampledAtUtc >= from && s.SampledAtUtc <= to)
+            .OrderByDescending(s => s.SampledAtUtc).Take(5000).ToListAsync(HttpContext.RequestAborted);
+        return new ProvisioningSiteMetricHistoryDto(true, server.Id, applicationPoolName, from, to, seconds,
+            samples.OrderBy(s => s.SampledAtUtc).Select(s => new ProvisioningSiteMetricPointDto(
+                DateTime.SpecifyKind(s.SampledAtUtc, DateTimeKind.Utc), s.PrivateMemoryBytes, s.WorkingSetBytes,
+                s.CpuUsagePercent, s.OnlineVisitors, DeserializeList<int>(s.ProcessIdsJson),
+                DeserializeList<long>(s.WebsiteIdsJson), DeserializeList<string>(s.WebsiteNamesJson))).ToArray());
     }
 
     [HttpGet("agents/{serverId}/metrics")]
@@ -355,7 +379,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
 public sealed class ProvisioningAgentTasksController(
     CokerDbContext db,
     ProvisioningAgentAuthenticator authenticator,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    SiteMetricRecorder siteMetricRecorder) : ControllerBase
 {
     private const string ApiKeyHeader = "X-Provisioning-Key";
 
@@ -407,7 +432,8 @@ public sealed class ProvisioningAgentTasksController(
         var lastSampleAt = await db.ProvisioningMetricSamples
             .Where(x => x.ServerId == serverId)
             .MaxAsync(x => (DateTime?)x.SampledAtUtc, HttpContext.RequestAborted);
-        if (lastSampleAt is null || lastSampleAt <= now.AddSeconds(-sampleSeconds))
+        var takeSample = lastSampleAt is null || lastSampleAt <= now.AddSeconds(-sampleSeconds);
+        if (takeSample)
         {
             db.ProvisioningMetricSamples.Add(new ProvisioningMetricSample
             {
@@ -426,6 +452,9 @@ public sealed class ProvisioningAgentTasksController(
                 .ExecuteDeleteAsync(HttpContext.RequestAborted);
         }
         await db.SaveChangesAsync(HttpContext.RequestAborted);
+        // 現有心跳已先提交；歷史取樣失敗不阻斷目前狀態回報。
+        if (takeSample)
+            await siteMetricRecorder.RecordAsync(serverId, now, applicationPools, HttpContext.RequestAborted);
         return NoContent();
     }
 

@@ -6611,6 +6611,60 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("ProvisioningMetricSamples", (string)null);
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ProvisioningSiteMetricSample", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ApplicationPoolName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<double?>("CpuUsagePercent")
+                        .HasColumnType("float");
+
+                    b.Property<long?>("OnlineVisitors")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PrivateMemoryBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ProcessIdsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SampledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ServerId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("WebsiteIdsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("WebsiteNamesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("WorkingSetBytes")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SampledAtUtc");
+
+                    b.HasIndex("ServerId", "ApplicationPoolName", "SampledAtUtc");
+
+                    b.ToTable("ProvisioningSiteMetricSamples", (string)null);
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.ProvisioningTask", b =>
                 {
                     b.Property<long>("Id")

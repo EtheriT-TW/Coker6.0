@@ -17,17 +17,23 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
             "System32", "inetsrv", "appcmd.exe");
         if (!File.Exists(appCmd)) return [];
 
+        var hostIpAddresses = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
+                    .SelectMany(n => n.GetIPProperties().UnicastAddresses).Select(a => a.Address)
+                    .Where(a => !System.Net.IPAddress.IsLoopback(a)).Select(a => a.ToString()).Distinct().ToArray();
+
         var applicationXml = await RunAppCmdAsync(appCmd, ["list", "app", "/xml"], cancellationToken);
         var siteXml = await RunAppCmdAsync(appCmd, ["list", "site", "/xml"], cancellationToken);
         var workerXml = await RunAppCmdAsync(appCmd, ["list", "wp", "/xml"], cancellationToken);
         var poolXml = await RunAppCmdAsync(appCmd, ["list", "apppool", "/xml"], cancellationToken);
         var vdirXml = await RunAppCmdAsync(appCmd, ["list", "vdir", "/xml"], cancellationToken);
         var rootsByApplication = ParseElements(vdirXml, "VDIR")
-            .Where(x => Attribute(x, "path") == "/")
-            .ToLookup(x => Attribute(x, "APP.NAME"),
+            .Where(x => Attribute(x, "path") == "/" || (Attribute(x, "path").Length == 0
+                && Attribute(x, "VDIR.NAME").TrimEnd('/') == Attribute(x, "APP.NAME").TrimEnd('/')))
+            .ToLookup(x => Attribute(x, "APP.NAME").Trim().TrimEnd('/'),
                 x => Environment.ExpandEnvironmentVariables(Attribute(x, "physicalPath")), StringComparer.OrdinalIgnoreCase);
         var rootsByPool = ParseElements(applicationXml, "APP")
-            .ToLookup(x => Attribute(x, "APPPOOL.NAME"), x => Attribute(x, "APP.NAME"), StringComparer.OrdinalIgnoreCase);
+            .ToLookup(x => Attribute(x, "APPPOOL.NAME"), x => Attribute(x, "APP.NAME").Trim().TrimEnd('/'), StringComparer.OrdinalIgnoreCase);
 
         var sitesByPool = ParseElements(applicationXml, "APP")
             .Select(x => new { Pool = Attribute(x, "APPPOOL.NAME"), Site = Attribute(x, "SITE.NAME") })
@@ -122,6 +128,8 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
                 catch (System.ComponentModel.Win32Exception) { }
             }
 
+            var runtime = await ReadRuntimeMetricsAsync(rootsByPool[poolName].SelectMany(app => rootsByApplication[app]),
+                processIds, now, cancellationToken);
             output.Add(new IisApplicationPoolMetrics(
                 poolName,
                 siteNames,
@@ -132,8 +140,8 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
                 workingSet,
                 privateMemory,
                 siteBindings,
-                await ReadRuntimeMetricsAsync(rootsByPool[poolName].SelectMany(app => rootsByApplication[app]),
-                    processIds, now, cancellationToken)));
+                runtime.Snapshots,
+                runtime.Error, hostIpAddresses));
         }
 
         foreach (var stalePid in previousCpu.Keys.Where(x => !currentPids.Contains(x)).ToList())
@@ -141,35 +149,61 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
         return output;
     }
 
-    private async Task<IReadOnlyList<RuntimeMetricSnapshot>?> ReadRuntimeMetricsAsync(IEnumerable<string> roots,
+    private sealed record RuntimeReadResult(IReadOnlyList<RuntimeMetricSnapshot>? Snapshots, string? Error);
+
+    private async Task<RuntimeReadResult> ReadRuntimeMetricsAsync(IEnumerable<string> roots,
         IReadOnlyList<int> pids, DateTime now, CancellationToken cancellationToken)
     {
-        if (pids.Count == 0) return null;
+        if (pids.Count == 0) return new(null, "集區目前沒有執行程序；請先開啟網站，等待下一次回報。");
+        var directories = roots.Where(root => !string.IsNullOrWhiteSpace(root) && Path.IsPathFullyQualified(root))
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        if (directories.Length == 0) return new(null, "Worker 無法從 IIS 取得網站實體根目錄，無法定位診斷快照。");
         var found = new Dictionary<int, RuntimeMetricSnapshot>();
-        foreach (var root in roots.Where(Path.IsPathFullyQualified).Distinct(StringComparer.OrdinalIgnoreCase))
+        var errors = new Dictionary<int, string>();
+        foreach (var root in directories)
         foreach (var pid in pids)
         {
             if (found.ContainsKey(pid)) continue;
             var file = Path.Combine(root, "App_Data", "runtime-diagnostics", $"{pid}.json");
             try
             {
-                if (!File.Exists(file) || new FileInfo(file).Length > 16384) continue;
+                // 直接開檔才能區分不存在與權限不足；File.Exists會把部分權限錯誤也當成false。
                 await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read,
                     FileShare.Read | FileShare.Delete, 4096, FileOptions.Asynchronous);
+                if (stream.Length > 16384) { errors[pid] = $"PID {pid}：診斷檔超過16 KiB上限。"; continue; }
                 var sample = await JsonSerializer.DeserializeAsync<RuntimeMetricSnapshot>(stream, cancellationToken: cancellationToken);
-                if (sample == null || sample.SchemaVersion != 1 || sample.ProcessId != pid
-                    || sample.SampledAtUtc < now.AddSeconds(-90) || sample.SampledAtUtc > now.AddSeconds(5)
-                    || sample.RequestCount < 0 || sample.ManagedBytes < 0 || sample.Gen2 < 0) continue;
+                if (sample == null || sample.SchemaVersion != 1 || sample.RequestCount < 0 || sample.ManagedBytes < 0 || sample.Gen2 < 0)
+                { errors[pid] = $"PID {pid}：診斷檔內容或版本無效，請確認Public與Worker版本。"; continue; }
+                if (sample.ProcessId != pid)
+                { errors[pid] = $"PID {pid}：檔案內PID為{sample.ProcessId}，與IIS程序不一致。"; continue; }
+                if (sample.SampledAtUtc < now.AddSeconds(-90) || sample.SampledAtUtc > now.AddSeconds(5))
+                { errors[pid] = $"PID {pid}：診斷檔過期或時間異常，快照時間{sample.SampledAtUtc:O}，Worker時間{now:O}。"; continue; }
                 using var process = Process.GetProcessById(pid);
-                if (Math.Abs((sample.StartedAtUtc - process.StartTime.ToUniversalTime()).TotalSeconds) > 1) continue;
+                if (Math.Abs((sample.StartedAtUtc - process.StartTime.ToUniversalTime()).TotalSeconds) > 1)
+                { errors[pid] = $"PID {pid}：程序啟動時間不符，可能是舊快照或PID已重用。"; continue; }
                 found[pid] = sample;
+                errors.Remove(pid);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException
-                or ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
-            { logger.LogDebug(ex, "Runtime snapshot unavailable for PID {Pid}", pid); }
+            catch (FileNotFoundException)
+            { errors.TryAdd(pid, $"PID {pid}：找不到 {file}。請確認Public已啟用採樣；若產生的是不同PID檔案，請確認IIS hostingModel是否為inprocess。"); }
+            catch (DirectoryNotFoundException)
+            { errors.TryAdd(pid, $"PID {pid}：診斷目錄不存在，預期檔案為 {file}。請確認Public版本、採樣開關與寫入權限。"); }
+            catch (UnauthorizedAccessException)
+            { errors[pid] = $"PID {pid}：Worker沒有讀取 {file} 的權限。"; }
+            catch (JsonException)
+            { errors[pid] = $"PID {pid}：診斷JSON無法解析，請確認檔案內容與版本。"; }
+            catch (System.ComponentModel.Win32Exception)
+            { errors[pid] = $"PID {pid}：Worker無法讀取程序啟動時間，請確認程序讀取權限。"; }
+            catch (Exception ex) when (ex is IOException or ArgumentException or InvalidOperationException)
+            {
+                errors[pid] = $"PID {pid}：診斷檔或程序暫時無法讀取（{ex.GetType().Name}）。";
+                logger.LogDebug(ex, "Runtime snapshot unavailable for PID {Pid}", pid);
+            }
         }
         // 不把只有部分程序的數字當成整個集區總量。
-        return found.Count == pids.Count ? found.Values.OrderBy(x => x.ProcessId).ToArray() : null;
+        return found.Count == pids.Count
+            ? new(found.Values.OrderBy(x => x.ProcessId).ToArray(), null)
+            : new(null, string.Join("\n", errors.OrderBy(x => x.Key).Take(8).Select(x => x.Value)));
     }
 
     private static IEnumerable<XElement> ParseElements(string xml, string elementName)

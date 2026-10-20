@@ -4,15 +4,14 @@ using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using EtheriT.Coker.Web.Platform.Models.Provisioning;
 using EtheriT.Coker.Web.Platform.Models.Websites;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace EtheriT.Coker.Web.Platform.Services;
 
-public sealed class WebsiteBindingTasks(CokerDbContext db, IOptions<WebsiteHostingOptions> hosting, IConfiguration configuration)
+public sealed class WebsiteBindingTasks(CokerDbContext db, IConfiguration configuration)
 {
-    public async Task<WebsiteBindingComparison> ImportExistingUrlsAsync(Website site, CancellationToken cancellationToken)
+    public async Task<WebsiteBindingComparison> ImportExistingUrlsAsync(Website site, CancellationToken cancellationToken, string? target = null)
     {
-        var snapshot = await LoadSnapshotAsync(site, cancellationToken);
+        var snapshot = await LoadSnapshotAsync(site, cancellationToken, target);
         // 等已送出的網址變更完成並取得新快照，避免把剛刪除的網址補回來。
         var unsettled = await db.ProvisioningTasks.AsNoTracking().Where(x => x.TargetServerId == snapshot.ServerId
             && x.Type == ProvisioningTaskType.SyncWebsiteBindings
@@ -46,12 +45,16 @@ public sealed class WebsiteBindingTasks(CokerDbContext db, IOptions<WebsiteHosti
         return ToComparison(snapshot);
     }
 
-    public async Task<WebsiteBindingComparison> CompareAsync(Website site, CancellationToken cancellationToken)
+    public async Task<WebsiteBindingComparison> CompareAsync(Website site, CancellationToken cancellationToken, string? target = null)
     {
         try
         {
-            var snapshot = await LoadSnapshotAsync(site, cancellationToken);
+            var snapshot = await LoadSnapshotAsync(site, cancellationToken, target);
             return ToComparison(snapshot);
+        }
+        catch (SelectionRequiredException ex)
+        {
+            return new WebsiteBindingComparison("SelectionRequired", ex.Message, null, null, [], [], ex.Candidates);
         }
         catch (Exception ex) when (ex is InvalidOperationException or JsonException)
         {
@@ -61,11 +64,11 @@ public sealed class WebsiteBindingTasks(CokerDbContext db, IOptions<WebsiteHosti
     }
 
     public async Task<ProvisioningTask> CreateAsync(Website site, string? newLocation,
-        IReadOnlyList<string> previous, IReadOnlyList<string> desired, CancellationToken cancellationToken)
+        IReadOnlyList<string> previous, IReadOnlyList<string> desired, CancellationToken cancellationToken, string? target = null)
     {
         if (site.HostLocation != newLocation?.Trim())
             throw new InvalidOperationException("網址與主機位置不能同時變更；請先完成網站搬移，再同步網址。");
-        var snapshot = await LoadSnapshotAsync(site, cancellationToken);
+        var snapshot = await LoadSnapshotAsync(site, cancellationToken, target);
         var serverId = snapshot.ServerId;
         if (snapshot.Bindings.Any(x => !string.Equals(x.SiteName, snapshot.SiteName, StringComparison.OrdinalIgnoreCase)
             && x.HostNames.Any(h => desired.Contains(h, StringComparer.OrdinalIgnoreCase))))
@@ -86,7 +89,12 @@ public sealed class WebsiteBindingTasks(CokerDbContext db, IOptions<WebsiteHosti
     }
 
     private sealed record Snapshot(string ServerId, string Primary, string SiteName, DateTime LastSeenAtUtc,
-        ProvisioningIisSiteBindingDto[] Bindings);
+        ProvisioningIisSiteBindingDto[] Bindings, string State, string[] IpAddresses);
+
+    public sealed class SelectionRequiredException(IReadOnlyList<WebsiteBindingCandidate> candidates) : InvalidOperationException("請選擇目前提供服務的主機與網站。")
+    {
+        public IReadOnlyList<WebsiteBindingCandidate> Candidates { get; } = candidates;
+    }
 
     private static WebsiteBindingComparison ToComparison(Snapshot snapshot) =>
         new("Ok", null, snapshot.SiteName, snapshot.LastSeenAtUtc,
@@ -95,21 +103,65 @@ public sealed class WebsiteBindingTasks(CokerDbContext db, IOptions<WebsiteHosti
             snapshot.Bindings.Where(x => !string.Equals(x.SiteName, snapshot.SiteName, StringComparison.OrdinalIgnoreCase))
                 .SelectMany(x => x.HostNames.Select(host => new IisBindingItemDto(host, x.SiteName))).ToArray());
 
-    private async Task<Snapshot> LoadSnapshotAsync(Website site, CancellationToken cancellationToken)
+    private async Task<Snapshot> LoadSnapshotAsync(Website site, CancellationToken cancellationToken, string? target = null)
     {
-        var host = hosting.Value.HostLocations.SingleOrDefault(x => x.Value == site.HostLocation);
-        if (host is not { HasWorker: true }) throw new InvalidOperationException("此主機位置未提供網址管理服務，請聯絡管理員。");
-        var serverId = host.ServerId!.Trim();
-        var state = await db.ProvisioningAgentStatuses.AsNoTracking().SingleOrDefaultAsync(x => x.ServerId == serverId, cancellationToken);
-        if (state == null || state.LastSeenAtUtc < DateTime.UtcNow.AddSeconds(-Math.Max(15, configuration.GetValue("Provisioning:AgentOfflineSeconds", 45))))
-            throw new InvalidOperationException("目前無法取得主機的最新狀態，請稍後再儲存網址。");
         var primary = PlatformDomainName.ToHost(site.DefaultUrl)
             ?? throw new InvalidOperationException("無法確認主要網址所屬的網站，請聯絡管理員。");
-        var pools = JsonSerializer.Deserialize<List<ProvisioningAppPoolMetricDto>>(state.AppPoolMetricsJson) ?? [];
-        var bindings = pools.SelectMany(x => x.SiteBindings ?? []).ToArray();
-        var targets = bindings.Where(x => x.HostNames.Contains(primary, StringComparer.OrdinalIgnoreCase))
-            .Select(x => x.SiteName).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-        if (targets.Length != 1) throw new InvalidOperationException("無法確認此網站在主機上的網址設定，請聯絡管理員。");
-        return new Snapshot(serverId, primary, targets[0], DateTime.SpecifyKind(state.LastSeenAtUtc, DateTimeKind.Utc), bindings);
+        // 網站歸屬取自受信任Worker的實際回報，不要求每個網站／主機位置再維護一份ServerId對應。
+        var serverIds = (configuration.GetSection("Provisioning:Servers").Get<List<ProvisioningServerOptions>>() ?? [])
+            .Where(x => !string.IsNullOrWhiteSpace(x.Id)).Select(x => x.Id.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var threshold = DateTime.UtcNow.AddSeconds(-Math.Max(15, configuration.GetValue("Provisioning:AgentOfflineSeconds", 45)));
+        var states = await db.ProvisioningAgentStatuses.AsNoTracking()
+            .Where(x => serverIds.Contains(x.ServerId) && x.LastSeenAtUtc >= threshold)
+            .Select(x => new { x.ServerId, x.LastSeenAtUtc, x.AppPoolMetricsJson }).ToListAsync(cancellationToken);
+        var matches = new List<Snapshot>();
+        foreach (var state in states)
+        {
+            var pools = JsonSerializer.Deserialize<List<ProvisioningAppPoolMetricDto>>(state.AppPoolMetricsJson) ?? [];
+            var bindings = pools.SelectMany(x => x.SiteBindings ?? []).Select(binding => binding with
+            {
+                HostNames = binding.HostNames.Select(PlatformDomainName.ToHost).OfType<string>()
+                    .Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
+            }).ToArray();
+            var names = bindings.Where(x => x.HostNames.Any(host => string.Equals(
+                    PlatformDomainName.ToHost(host), primary, StringComparison.OrdinalIgnoreCase)))
+                .Select(x => x.SiteName).Distinct(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in names)
+                matches.Add(new Snapshot(state.ServerId, primary, name,
+                    DateTime.SpecifyKind(state.LastSeenAtUtc, DateTimeKind.Utc), bindings,
+                    bindings.First(x => x.SiteName == name).State,
+                    pools.SelectMany(x => x.HostIpAddresses ?? []).Distinct().ToArray()));
+        }
+        if (!string.IsNullOrWhiteSpace(site.HostLocation))
+        {
+            if (!System.Net.IPAddress.TryParse(site.HostLocation.Trim(), out var configuredIp))
+                throw new InvalidOperationException("目前主機位置不是 IP，無法同步網址。");
+            matches = matches.Where(x => x.IpAddresses.Any(ip => System.Net.IPAddress.TryParse(ip, out var address)
+                && address.MapToIPv6().Equals(configuredIp.MapToIPv6()))).ToList();
+        }
+        if (matches.Count == 0)
+            throw new InvalidOperationException("主機回報中尚未找到主要網址；請確認主機位置、Worker IP 回報及網址設定。");
+        if (string.IsNullOrWhiteSpace(site.HostLocation))
+        {
+            var started = matches.Where(x => string.Equals(x.State, "Started", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (started.Count == 1) matches = started;
+        }
+        if (!string.IsNullOrEmpty(target))
+        {
+            var selected = matches.SingleOrDefault(x => Target(x) == target);
+            if (selected == null) throw new InvalidOperationException("選擇的主機狀態已改變，請重新整理後選擇。");
+            return selected;
+        }
+        if (matches.Count > 1)
+        {
+            var servers = configuration.GetSection("Provisioning:Servers").Get<List<ProvisioningServerOptions>>() ?? [];
+            throw new SelectionRequiredException(matches.Select(x => new WebsiteBindingCandidate(Target(x),
+                servers.FirstOrDefault(server => server.Id == x.ServerId)?.DisplayName ?? x.ServerId,
+                x.SiteName, x.State, x.IpAddresses)).ToArray());
+        }
+        return matches[0];
     }
+
+    private static string Target(Snapshot snapshot) => $"{snapshot.ServerId}\n{snapshot.SiteName}";
 }

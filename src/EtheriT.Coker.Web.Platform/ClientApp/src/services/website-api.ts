@@ -135,14 +135,14 @@ export function createWebsite(form: WebsiteForm): Promise<WebsiteDetail> {
     });
 }
 
-export function updateWebsite(id: number, form: WebsiteForm, synchronizeBindings = false): Promise<WebsiteDetail> {
-    return api.put<WebsiteDetail>(`${baseUrl}/${id}`, { ...toSaveRequest(form), SynchronizeBindings: synchronizeBindings });
+export function updateWebsite(id: number, form: WebsiteForm, synchronizeBindings = false, bindingTarget?: string): Promise<WebsiteDetail> {
+    return api.put<WebsiteDetail>(`${baseUrl}/${id}`, { ...toSaveRequest(form), SynchronizeBindings: synchronizeBindings, BindingTarget: bindingTarget });
 }
 
-export function fetchWebsiteBindingComparison(id: number): Promise<WebsiteBindingComparison> {
-    return api.get<WebsiteBindingComparison>(`${baseUrl}/${id}/iis-comparison`);
+export function fetchWebsiteBindingComparison(id: number, target?: string): Promise<WebsiteBindingComparison> {
+    return api.get<WebsiteBindingComparison>(`${baseUrl}/${id}/iis-comparison${target ? `?target=${encodeURIComponent(target)}` : ""}`);
 }
 
-export function refreshWebsiteUrls(id: number): Promise<WebsiteBindingComparison> {
-    return api.post<WebsiteBindingComparison>(`${baseUrl}/${id}/refresh-urls`, {});
+export function refreshWebsiteUrls(id: number, target?: string): Promise<WebsiteBindingComparison> {
+    return api.post<WebsiteBindingComparison>(`${baseUrl}/${id}/refresh-urls`, { Target: target });
 }

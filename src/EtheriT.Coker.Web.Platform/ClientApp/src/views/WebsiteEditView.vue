@@ -8,7 +8,6 @@
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
     import WebsiteUrlItem from "@/components/WebsiteUrlItem.vue";
     import { lookupCustomer } from "@/services/customer-api";
-    import { useIisBindingLookup } from "@/services/iis-binding-lookup";
     import {
         createWebsite,
         fetchWebsite,
@@ -33,7 +32,7 @@
         type WebsiteForm,
         type WebsiteOptions
     } from "@/types/website";
-    import type { WebsiteBindingComparison } from "@/types/website";
+    import type { WebsiteBindingComparison, IisBindingHint } from "@/types/website";
     import { toBindingHost } from "@/utils/domain-name";
     import { todayDateInput } from "@/utils/date-input";
     import { isSiteRoot } from "@/utils/url-parts";
@@ -46,6 +45,11 @@
     const SITE_ROOT_MESSAGE = "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）。";
     const DEFAULT_LOCALE = "zh-tw";
     const bindingComparison = ref<WebsiteBindingComparison | null>(null);
+    const bindingTarget = ref<string>();
+    const choosingTarget = ref(false);
+    const targetError = ref("");
+    const candidateTarget = ref("");
+    const targetBusy = ref(false);
     const comparisonLoading = ref(false);
     const comparisonError = ref("");
     const savedHostLocation = ref("");
@@ -246,9 +250,10 @@
             saveConfirmation.message = defaultSaveMessage;
             pageError.value = "";
             // 任一彈窗開著時，Ctrl+S 不能偷偷送出底下的網站表單
-            if (isNotFoundDialogOpen.value || isQuickCustomerOpen.value || openUrlDialogKeys.size > 0) return false;
+            if (choosingTarget.value || isNotFoundDialogOpen.value || isQuickCustomerOpen.value || openUrlDialogKeys.size > 0) return false;
             if (isEdit.value && savedHostLocation.value === values.HostLocation) {
                 await refreshComparison();
+                if (choosingTarget.value) return false;
                 if (comparisonUsable.value) {
                     const missing = values.Urls.filter(item => {
                         const host = toBindingHost(item.Url);
@@ -263,7 +268,7 @@
             return await requestConfirm(saveConfirmation);
         },
         save: values => isEdit.value
-            ? updateWebsite(websiteId.value, values, synchronizeRequested.value)
+            ? updateWebsite(websiteId.value, values, synchronizeRequested.value, bindingTarget.value)
             : createWebsite(values),
         afterSave: () => {
             synchronizeRequested.value = false;
@@ -306,11 +311,20 @@
             : options;
     });
 
-    // IIS 綁定：主要網址＋所有其他網址一次查；主機或網址變更時重查
-    const iisLookup = useIisBindingLookup(() => ({
-        hostLocation: form.model.value.HostLocation,
-        urls: [primaryUrl.value, ...form.model.value.Urls.map(item => item.Url)]
-    }));
+    // 各列沿用主要網址自動定位後的同一份快照，不再按人工主機位置查詢。
+    const iisLookup = {
+        hintFor(url: string): IisBindingHint | null {
+            if (!isEdit.value || !toBindingHost(url)) return null;
+            if (comparisonLoading.value) return { Tone: 'muted', Text: '查詢網址狀態中…' };
+            if (!comparisonUsable.value) return { Tone: 'muted', Text: '目前無法確認網址狀態' };
+            const host = toBindingHost(url);
+            if (bindingComparison.value!.OtherBindings.some(item => item.Host === host))
+                return { Tone: 'warning', Text: '此網址已由其他網站使用，請先確認' };
+            return bindingComparison.value!.SiteHosts.includes(host)
+                ? { Tone: 'ok', Text: '主機已設定此網址' }
+                : { Tone: 'warning', Text: '此網址尚未在主機啟用' };
+        }
+    };
 
     const comparisonUsable = computed(() => bindingComparison.value?.Status === 'Ok'
         && savedHostLocation.value === form.model.value.HostLocation && !comparisonLoading.value);
@@ -328,11 +342,36 @@
         bindingComparison.value = null;
         comparisonError.value = '';
         try {
-            const result = await fetchWebsiteBindingComparison(websiteId.value);
-            if (sequence === comparisonSequence && !comparisonDisposed) bindingComparison.value = result;
+            const result = await fetchWebsiteBindingComparison(websiteId.value, bindingTarget.value);
+            if (sequence === comparisonSequence && !comparisonDisposed) {
+                bindingComparison.value = result;
+                choosingTarget.value = result.Status === "SelectionRequired";
+            }
         } catch {
             if (sequence === comparisonSequence && !comparisonDisposed) comparisonError.value = '無法取得網址狀態，仍可編輯一般資料；網址變更需待主機回報後儲存。';
         } finally { if (sequence === comparisonSequence && !comparisonDisposed) comparisonLoading.value = false; }
+    }
+    async function chooseBindingTarget(target: string): Promise<void> {
+        targetBusy.value = true;
+        targetError.value = '';
+        try {
+            const result = await refreshWebsiteUrls(websiteId.value, target);
+            bindingComparison.value = result;
+            if (result.Status !== 'Ok') { targetError.value = result.Message ?? '無法確認主機'; return; }
+            bindingTarget.value = target;
+            const detail = await fetchWebsite(websiteId.value);
+            if (!form.isDirty.value) applyDetail(detail, websiteOptions.value!.DefaultUrlSuffix);
+            else {
+                const known = new Set([savedDefaultUrl.value, ...form.model.value.Urls.map(item => item.Url)].map(toBindingHost));
+                for (const item of toWebsiteForm(detail).Urls) {
+                    const host = toBindingHost(item.Url);
+                    if (!known.has(host)) { form.model.value.Urls.push(item); known.add(host); }
+                }
+                urlLimit.value = Math.max(urlLimit.value, detail.Urls.length, form.model.value.Urls.length);
+            }
+            choosingTarget.value = false;
+        } catch { targetError.value = '無法確認主機，請稍後再試。'; }
+        finally { targetBusy.value = false; }
     }
     onBeforeUnmount(() => { comparisonDisposed = true; ++comparisonSequence; });
 
@@ -478,7 +517,8 @@
             const options = await fetchWebsiteOptions();
             websiteOptions.value = options;
             if (isEdit.value) {
-                try { bindingComparison.value = await refreshWebsiteUrls(websiteId.value); }
+                try { bindingComparison.value = await refreshWebsiteUrls(websiteId.value);
+                    choosingTarget.value = bindingComparison.value.Status === "SelectionRequired"; }
                 catch { comparisonError.value = '目前無法更新網址清單，仍可編輯一般資料；請稍後重新開啟此頁。'; }
                 applyDetail(await fetchWebsite(websiteId.value), options.DefaultUrlSuffix);
             }
@@ -890,4 +930,17 @@
                          :initial-name="quickCustomerName"
                          @cancel="isQuickCustomerOpen = false"
                          @created="onCustomerCreated" />
+    <ConfirmDialog :open="choosingTarget" title="確認網站所在主機"
+                   message="主要網址出現在多個站台，請選擇目前提供服務的位置。"
+                   :busy="targetBusy" confirm-text="使用此主機" cancel-text="稍後處理"
+                   @cancel="choosingTarget = false"
+                   @confirm="candidateTarget ? chooseBindingTarget(candidateTarget) : targetError = '請先選擇主機。'">
+        <p v-if="targetError" role="alert">{{ targetError }}</p>
+        <label v-for="candidate in bindingComparison?.Candidates ?? []" :key="candidate.Target"
+               style="display:block;margin:12px 0;text-align:left">
+            <input v-model="candidateTarget" type="radio" name="binding-target" :value="candidate.Target" :disabled="targetBusy">
+            {{ candidate.ServerName }} — {{ candidate.IpAddresses.join('、') || '尚無 IP 回報' }}<br>
+            {{ candidate.SiteName }}（{{ candidate.State === 'Started' ? '已啟動' : candidate.State === 'Stopped' ? '未啟動' : '狀態不明' }}）
+        </label>
+    </ConfirmDialog>
 </template>

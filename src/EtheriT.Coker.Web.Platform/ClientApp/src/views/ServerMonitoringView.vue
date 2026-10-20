@@ -96,6 +96,15 @@ const requestMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p =
 const allocationMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Allocations ?? 0) / 1048576 * 1.1)));
 const gen2Maximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Gen2 ?? 0) * 1.1)));
 const latestRuntime = computed(() => runtimePoints.value.at(-1));
+const runtimeStatusMessage = computed(() => {
+  if (!currentAgent.value?.IsOnline) return 'Worker 目前離線，無法取得最新診斷狀態。';
+  const pool = applicationPools.value.find(p => p.ApplicationPoolName === selectedPool.value);
+  if (!pool) return '目前的集區回報中沒有此站，請確認網站／集區狀態。';
+  if (pool.RuntimeMetricsError) return pool.RuntimeMetricsError;
+  if (latestRuntime.value?.Managed != null) return '';
+  if (pool.RuntimeMetrics?.length) return 'Worker 已取得目前的診斷快照，請等待下一次歷史取樣（通常約一分鐘）後重新整理。';
+  return 'Worker 尚未回報診斷資料或失敗原因。請確認已更新正在執行的 Worker 服務及 Platform 後端；Public 也需啟用採樣。';
+});
 
 async function loadPoolHistory(silent = false): Promise<void> {
   if (!selectedPool.value || !selectedServer.value || (silent && (poolLoading.value || Date.now() - lastPoolRefresh < 60000))) return;
@@ -358,8 +367,8 @@ onBeforeUnmount(() => { closePoolHistory(); if (refreshTimer !== undefined) wind
         <article><h3>在線訪客</h3><MetricLineChart :series="visitorsSeries" :maximum="visitorsMaximum" unit=" 人" :decimals="0" aria-label="在線訪客趨勢" :empty-text="poolLoading ? '讀取中…' : '尚無可用人數資料'" /></article>
         <article><h3>CPU</h3><MetricLineChart :series="poolCpuSeries" aria-label="網站 CPU 趨勢" :empty-text="poolLoading ? '讀取中…' : '尚無可用 CPU 資料'" /></article>
         <p class="history-note">GC Heap／Committed／碎片是上次 GC 的結果，Managed 是目前估計，均不代表完整的存活物件大小。請求量包含爬蟲、API、靜態檔案及被阻擋的請求；不含 IIS／CDN 在進入應用程式前處理的請求。速率為兩次快照間平均，至少需要兩筆有效資料。</p>
-        <p v-if="latestRuntime?.Managed == null" class="history-note">尚無完整的執行階段診斷：請確認 Public 已啟用採樣、Worker 已更新，且能讀取未過期的程序快照。缺值不代表 0。</p>
-        <p v-else class="history-note">採樣當下處理中請求：{{ latestRuntime.Active }}；GC 模式：{{ poolPoints.at(-1)?.RuntimeMetrics?.map(p => `${p.ProcessId}: ${p.ServerGc ? 'Server' : 'Workstation'}`).join('、') }}。</p>
+        <p v-if="runtimeStatusMessage" class="history-note runtime-status" role="status">診斷採集狀態（目前 Worker 回報）：{{ runtimeStatusMessage }}</p>
+        <p v-if="latestRuntime?.Managed != null" class="history-note">採樣當下處理中請求：{{ latestRuntime.Active }}；GC 模式：{{ poolPoints.at(-1)?.RuntimeMetrics?.map(p => `${p.ProcessId}: ${p.ServerGc ? 'Server' : 'Workstation'}`).join('、') }}。</p>
         <article><h3>GC 記憶體（MiB）</h3><MetricLineChart :series="gcSeries" :maximum="gcMaximum" unit=" MiB" empty-text="尚無 GC 診斷資料" /></article>
         <article><h3>實際請求速率</h3><MetricLineChart :series="requestSeries" :maximum="requestMaximum" unit=" 次/秒" empty-text="尚無連續請求計數資料" /></article>
         <article><h3>記憶體配置速率</h3><MetricLineChart :series="allocationSeries" :maximum="allocationMaximum" unit=" MiB/秒" empty-text="尚無連續配置計數資料" /></article>
@@ -373,6 +382,7 @@ onBeforeUnmount(() => { closePoolHistory(); if (refreshTimer !== undefined) wind
 </template>
 
 <style scoped>
+.runtime-status { white-space: pre-line; overflow-wrap: anywhere; padding: .8rem; background: #fff8e8; border: 1px solid #ead4a0; border-radius: 6px; }
 .pool-history { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(960px, 94vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; padding: 0; border: 0; border-left: 1px solid #dce3ee; border-radius: 0; box-sizing: border-box; background: #fff; color: #234; box-shadow: -8px 0 32px #16243a26; overflow: hidden; }
 .pool-history[open] { display: flex; flex-direction: column; }
 .pool-history::backdrop { background: #13213970; }

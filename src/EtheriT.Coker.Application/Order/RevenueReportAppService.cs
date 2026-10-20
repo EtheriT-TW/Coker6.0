@@ -116,11 +116,20 @@ namespace EtheriT.Coker.Application.Order
                     OrderCount = total?.OrderCount ?? 0,
                     Amount = total?.Amount ?? 0,
                     InvalidOrderCount = total?.InvalidOrderCount ?? 0,
-                    InvalidAmount = total?.InvalidAmount ?? 0
+                    InvalidAmount = total?.InvalidAmount ?? 0,
+                    AverageOrderValue = CalculateAverageOrderValue(total?.Amount ?? 0, total?.OrderCount ?? 0)
                 });
             }
 
             return items;
+        }
+
+        private static decimal CalculateAverageOrderValue(decimal amount, long orderCount)
+        {
+            if (orderCount == 0)
+                return 0;
+
+            return Math.Round(amount / orderCount, 0, MidpointRounding.AwayFromZero);
         }
     }
 }

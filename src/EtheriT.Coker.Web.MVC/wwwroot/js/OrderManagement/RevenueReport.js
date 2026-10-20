@@ -21,6 +21,29 @@
         return "$" + Number(info.value || 0).toLocaleString();
     }
 
+    var summaryAmount = 0;
+    var summaryOrderCount = 0;
+
+    function calculateAverageOrderSummary(options){
+                if (options.name !== "averageOrderValue") return;
+
+        if (options.summaryProcess === "start") {
+            summaryAmount = 0;
+            summaryOrderCount = 0;
+            return;
+        }
+
+        if (options.summaryProcess === "calculate") {
+            summaryAmount += options.value.amount || 0;
+            summaryOrderCount += options.value.orderCount || 0;
+            return;
+        }
+
+        if (options.summaryProcess === "finalize") {
+            options.totalValue = summaryOrderCount === 0 ? 0 : Math.round(summaryAmount / summaryOrderCount);
+        }
+    }
+
     function getDefaultRange(type) {
         var today = new Date();
         if (type === GRANULARITY_MONTH) {
@@ -111,6 +134,7 @@
                 { dataField: "periodLabel", caption: "日期", sortOrder: "asc" },
                 { dataField: "orderCount", caption: "有效訂單筆數", dataType: "number", hidingPriority: 2 },
                 { dataField: "amount", caption: "有效訂單金額", dataType: "number", customizeText: formatMoney },
+                { dataField: "averageOrderValue", caption: "客單價", dataType: "number", customizeText: formatMoney, hidingPriority: 3 },
                 { dataField: "invalidOrderCount", caption: "無效訂單筆數", dataType: "number", hidingPriority: 0 },
                 { dataField: "invalidAmount", caption: "無效訂單金額", dataType: "number", customizeText: formatMoney, hidingPriority: 1 }
             ],
@@ -120,8 +144,10 @@
                     { column: "orderCount", summaryType: "sum", displayFormat: "{0} 筆" },
                     { column: "amount", summaryType: "sum", customizeText: formatMoney },
                     { column: "invalidOrderCount", summaryType: "sum", displayFormat: "{0} 筆" },
-                    { column: "invalidAmount", summaryType: "sum", customizeText: formatMoney }
-                ]
+                    { column: "invalidAmount", summaryType: "sum", customizeText: formatMoney },
+                    { name: "averageOrderValue", showInColumn: "averageOrderValue", summaryType: "custom", customizeText: formatMoney }
+                ],
+                calculateCustomSummary: calculateAverageOrderSummary
             }
         }).dxDataGrid("instance");
     }

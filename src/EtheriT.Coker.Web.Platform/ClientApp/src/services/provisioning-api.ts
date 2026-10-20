@@ -21,8 +21,8 @@ export function fetchProvisioningMetricHistory(serverId: string, days: number): 
   );
 }
 
-export function fetchProvisioningTasks(): Promise<ProvisioningTask[]> {
-  return api.get<ProvisioningTask[]>("/api/provisioning/tasks");
+export function fetchProvisioningTasks(query: { serverId?: string; status?: number } = {}): Promise<ProvisioningTask[]> {
+  return api.get<ProvisioningTask[]>("/api/provisioning/tasks", { query });
 }
 
 export function fetchSiteMetricHistory(serverId: string, applicationPoolName: string, hours: number): Promise<ProvisioningSiteMetricHistory> {

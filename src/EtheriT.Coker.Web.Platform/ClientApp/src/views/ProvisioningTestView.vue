@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
-import { createProvisioningTask, fetchProvisioningServers, fetchProvisioningTasks } from "@/services/provisioning-api";
+import { computed, onMounted, ref } from "vue";
+import { RouterLink, useRoute } from "vue-router";
+import { createProvisioningTask, fetchProvisioningServers } from "@/services/provisioning-api";
 import {
-  ProvisioningTaskStatus,
   ProvisioningTaskType,
   type CreateProvisioningTaskRequest,
   type ProvisioningServer,
-  type ProvisioningTask
 } from "@/types/provisioning";
 
 const servers = ref<ProvisioningServer[]>([]);
@@ -27,37 +25,15 @@ const canSubmitDns = computed(() => allowedZones.value.includes(zoneName.value) 
   !!dnsRecordValue.value.trim() && (dnsRecordType.value !== "MX" ||
     (Number.isInteger(mxPreference.value) && mxPreference.value >= 0 && mxPreference.value <= 65535)));
 
-const tasks = ref<ProvisioningTask[]>([]);
 const loading = ref(false);
 const submitting = ref(false);
 const errorMessage = ref("");
-let refreshTimer: number | undefined;
-
-const typeText: Record<ProvisioningTaskType, string> = {
-  [ProvisioningTaskType.RestartIis]: "重新啟動 IIS",
-  [ProvisioningTaskType.SetIisSiteState]: "IIS 單站操作",
-  [ProvisioningTaskType.CreateDnsARecord]: "建立 DNS A 記錄",
-  [ProvisioningTaskType.DeleteDnsARecord]: "刪除 DNS A 記錄",
-  [ProvisioningTaskType.InstallSsl]: "安裝 SSL",
-  [ProvisioningTaskType.CreateDnsRecord]: "建立 DNS 記錄",
-  [ProvisioningTaskType.DeleteDnsRecord]: "刪除 DNS 記錄"
-};
-
-const statusText: Record<ProvisioningTaskStatus, string> = {
-  [ProvisioningTaskStatus.Pending]: "等待中",
-  [ProvisioningTaskStatus.Running]: "執行中",
-  [ProvisioningTaskStatus.Succeeded]: "成功",
-  [ProvisioningTaskStatus.Failed]: "失敗"
-};
 
 async function load(silent = false): Promise<void> {
   if (!silent) loading.value = true;
   try {
-    const [serverResult, taskResult] = await Promise.all([
-      fetchProvisioningServers(), fetchProvisioningTasks()
-    ]);
+    const serverResult = await fetchProvisioningServers();
     servers.value = serverResult;
-    tasks.value = taskResult;
     if (!servers.value.some(x => x.Id === targetServer.value))
       targetServer.value = servers.value[0]?.Id ?? "";
     if (!allowedZones.value.includes(zoneName.value))
@@ -66,7 +42,7 @@ async function load(silent = false): Promise<void> {
   }
   catch (error) {
     console.error(error);
-    if (!silent) errorMessage.value = "無法讀取任務清單。";
+    if (!silent) errorMessage.value = "無法讀取伺服器選項。";
   }
   finally {
     if (!silent) loading.value = false;
@@ -118,24 +94,17 @@ function changeDns(deleteRecord: boolean): void {
 }
 
 
-function formatTime(value: string | null): string {
-  return value ? new Date(value).toLocaleString("zh-TW") : "—";
-}
 
 onMounted(() => {
   if (typeof route.query.server === "string") targetServer.value = route.query.server;
   void load();
-  refreshTimer = window.setInterval(() => void load(true), 5000);
-});
-onBeforeUnmount(() => {
-  if (refreshTimer !== undefined) window.clearInterval(refreshTimer);
 });
 </script>
 
 <template>
   <section class="page-heading">
     <div><h1>主機操作測試</h1><p>此頁用於驗證 IIS 與 DNS 操作；伺服器狀態請至伺服器監控查看。</p></div>
-    <button class="ui-button" type="button" :disabled="loading" @click="load()">重新整理</button>
+    <RouterLink class="ui-button" :to="{ path: '/provisioning-tasks', query: { server: targetServer } }">任務紀錄</RouterLink>
   </section>
 
   <p class="alert alert-warning" role="status">Worker 的 DryRun=false 時，此頁會執行真實的 IIS 與 DNS 操作；研發環境請先使用 DryRun=true。</p>
@@ -171,12 +140,7 @@ onBeforeUnmount(() => {
 
   </section>
 
-  <section class="data-card task-card">
-    <h2>最近任務</h2>
-    <div class="task-table-wrap"><table><thead><tr><th>ID</th><th>伺服器</th><th>操作</th><th>狀態</th><th>建立時間</th><th>嘗試</th><th>結果</th></tr></thead>
-      <tbody><tr v-for="task in tasks" :key="task.Id"><td>{{ task.Id }}</td><td>{{ task.TargetServerId }}</td><td>{{ typeText[task.Type] }}</td><td><span class="task-status" :class="`status-${task.Status}`">{{ statusText[task.Status] }}</span></td><td>{{ formatTime(task.CreatedAtUtc) }}</td><td>{{ task.AttemptCount }}</td><td class="result-cell">{{ task.ResultMessage ?? "—" }}</td></tr><tr v-if="!tasks.length"><td colspan="7">{{ loading ? "載入中…" : "目前沒有任務" }}</td></tr></tbody>
-    </table></div>
-  </section>
+
 </template>
 
 <style scoped>
@@ -184,18 +148,11 @@ onBeforeUnmount(() => {
 .provisioning-target label { max-width: 320px; }
 .operation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: stretch; }
 .operation-card { min-height: 0; padding: 1.25rem; display: flex; flex-direction: column; gap: .8rem; }
-.operation-card h2, .task-card h2 { margin: 0; font-size: 1.1rem; }
+.operation-card h2 { margin: 0; font-size: 1.1rem; }
 .operation-card p { margin: 0; color: #687386; }
 label { display: grid; gap: .35rem; font-size: .9rem; font-weight: 600; }
 input, select, textarea { width: 100%; min-width: 0; min-height: 40px; padding: .5rem .7rem; border: 1px solid #cfd6e2; border-radius: 6px; background: #fff; font: inherit; }
 .button-row { display: flex; flex-wrap: wrap; gap: .6rem; }
 .danger-button { color: #b42318; border-color: #f0aaa5; }
-.task-card { min-height: 0; margin-top: 1rem; padding: 1.25rem; }
-.task-table-wrap { overflow-x: auto; margin-top: 1rem; }
-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-th, td { padding: .65rem; text-align: left; border-bottom: 1px solid #e8ebf0; vertical-align: top; }
-.task-status { display: inline-block; padding: .15rem .5rem; border-radius: 999px; background: #eef1f5; white-space: nowrap; }
-.status-1 { background: #fff2cc; }.status-2 { background: #d9f4e5; color: #17633a; }.status-3 { background: #fde2e0; color: #9d241d; }
-.result-cell { min-width: 240px; max-width: 480px; white-space: pre-wrap; word-break: break-word; }
 @media (max-width: 900px) { .operation-grid { grid-template-columns: 1fr; } }
 </style>

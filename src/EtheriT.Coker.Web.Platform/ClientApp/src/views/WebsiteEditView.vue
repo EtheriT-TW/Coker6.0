@@ -1,7 +1,7 @@
 <script setup lang="ts">
-    import { computed, onMounted, ref, watch } from "vue";
+    import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
     import { useRoute, useRouter } from "vue-router";
-    import { ApiError, FormFieldErrors, requestAlert, rules, useManagedForm } from "@/core/coker";
+    import { ApiError, FormFieldErrors, requestAlert, requestConfirm, rules, useManagedForm } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import DateField from "@/components/DateField.vue";
     import IisBindingNote from "@/components/IisBindingNote.vue";
@@ -13,6 +13,8 @@
         createWebsite,
         fetchWebsite,
         fetchWebsiteOptions,
+        fetchWebsiteBindingComparison,
+        refreshWebsiteUrls,
         newWebsiteUrlItem,
         toDefaultUrl,
         toWebsiteForm,
@@ -31,15 +33,27 @@
         type WebsiteForm,
         type WebsiteOptions
     } from "@/types/website";
+    import type { WebsiteBindingComparison } from "@/types/website";
+    import { toBindingHost } from "@/utils/domain-name";
     import { todayDateInput } from "@/utils/date-input";
-    import { isSiteRoot, normalizeUrl } from "@/utils/url-parts";
+    import { isSiteRoot } from "@/utils/url-parts";
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
 
     // 與後端 WebsitesController.MaxUrlCount 一致（只算其他網址，主要網址另計）
     const MAX_URL_COUNT = 10;
+    const urlLimit = ref(MAX_URL_COUNT);
     const SITE_ROOT_MESSAGE = "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）。";
     const DEFAULT_LOCALE = "zh-tw";
+    const bindingComparison = ref<WebsiteBindingComparison | null>(null);
+    const comparisonLoading = ref(false);
+    const comparisonError = ref("");
+    const savedHostLocation = ref("");
+    const synchronizeRequested = ref(false);
+    const defaultSaveMessage = '確定要儲存這筆網站資料嗎？網址的新增、修改與刪除會一併套用；完成狀態可至任務紀錄查看。';
+    const saveConfirmation = { icon: 'save', title: '確認儲存', message: defaultSaveMessage };
+    let comparisonSequence = 0;
+    let comparisonDisposed = false;
 
     const route = useRoute();
     const router = useRouter();
@@ -116,15 +130,15 @@
     /** 其他網址逐列驗證，可以 0 筆；錯誤 key 與後端一致（Urls[i].Url），才能掛到對的那一列。 */
     function validateUrls(values: WebsiteForm): Record<string, string[]> {
         const errors: Record<string, string[]> = {};
-        if (values.Urls.length > MAX_URL_COUNT) {
-            errors.Urls = [`其他網址最多 ${MAX_URL_COUNT} 筆。`];
+        if (values.Urls.length > urlLimit.value) {
+            errors.Urls = [`其他網址最多 ${urlLimit.value} 筆。`];
         }
 
-        const primary = normalizeUrl(primaryUrl.value);
+        const primary = toBindingHost(primaryUrl.value);
         const seen = new Set<string>();
         for (const [index, item] of values.Urls.entries()) {
             const url = item.Url.trim();
-            const normalized = normalizeUrl(url);
+            const normalized = toBindingHost(url);
             const key = `Urls[${index}].Url`;
             if (!isSiteRoot(url)) errors[key] = [SITE_ROOT_MESSAGE];
             else if (url.length > 255) errors[key] = ["網址不可超過 255 個字元。"];
@@ -227,24 +241,37 @@
             ]
         },
         validate: values => validateUrls(values),
-        confirmSave: {
-            icon: "save",
-            title: "確認儲存",
-            message: "確定要儲存這筆網站資料嗎？新增時會在後台建立站台，站台代碼建立後不可修改。儲存後會返回網站清單。"
-        },
-        beforeSave: () => {
+        beforeSave: async values => {
+            synchronizeRequested.value = false;
+            saveConfirmation.message = defaultSaveMessage;
             pageError.value = "";
             // 任一彈窗開著時，Ctrl+S 不能偷偷送出底下的網站表單
-            return !isNotFoundDialogOpen.value && !isQuickCustomerOpen.value && openUrlDialogKeys.size === 0;
+            if (isNotFoundDialogOpen.value || isQuickCustomerOpen.value || openUrlDialogKeys.size > 0) return false;
+            if (isEdit.value && savedHostLocation.value === values.HostLocation) {
+                await refreshComparison();
+                if (comparisonUsable.value) {
+                    const missing = values.Urls.filter(item => {
+                        const host = toBindingHost(item.Url);
+                        return host && !bindingComparison.value!.SiteHosts.includes(host);
+                    });
+                    if (missing.length) {
+                        saveConfirmation.message = `以下網址尚未在主機啟用。是否儲存本次修改，並一併啟用這些網址？\n${missing.map(item => item.Url).join('\n')}`;
+                        synchronizeRequested.value = true;
+                    }
+                }
+            }
+            return await requestConfirm(saveConfirmation);
         },
         save: values => isEdit.value
-            ? updateWebsite(websiteId.value, values)
+            ? updateWebsite(websiteId.value, values, synchronizeRequested.value)
             : createWebsite(values),
         afterSave: () => {
+            synchronizeRequested.value = false;
             // 與客戶頁一致：存檔後返回清單
             void router.push("/websites");
         },
         onError: async error => {
+            synchronizeRequested.value = false;
             console.error(error);
             const hasFieldErrors = error instanceof ApiError &&
                 Object.keys(error.fieldErrors).length > 0;
@@ -285,6 +312,30 @@
         urls: [primaryUrl.value, ...form.model.value.Urls.map(item => item.Url)]
     }));
 
+    const comparisonUsable = computed(() => bindingComparison.value?.Status === 'Ok'
+        && savedHostLocation.value === form.model.value.HostLocation && !comparisonLoading.value);
+    const comparisonRows = computed(() => comparisonUsable.value ? form.model.value.Urls.map(item => {
+        const host = toBindingHost(item.Url);
+        const other = bindingComparison.value!.OtherBindings.find(x => x.Host === host);
+        return { key: item.Key, url: item.Url, state: !host ? '網址待填寫／格式待確認'
+            : other ? '此網址已由其他網站使用，請先確認'
+            : bindingComparison.value!.SiteHosts.includes(host) ? '主機已設定此網址' : '尚未啟用，儲存時將請您確認' };
+    }) : []);
+    async function refreshComparison(): Promise<void> {
+        if (!isEdit.value || comparisonDisposed) return;
+        const sequence = ++comparisonSequence;
+        comparisonLoading.value = true;
+        bindingComparison.value = null;
+        comparisonError.value = '';
+        try {
+            const result = await fetchWebsiteBindingComparison(websiteId.value);
+            if (sequence === comparisonSequence && !comparisonDisposed) bindingComparison.value = result;
+        } catch {
+            if (sequence === comparisonSequence && !comparisonDisposed) comparisonError.value = '無法取得網址狀態，仍可編輯一般資料；網址變更需待主機回報後儲存。';
+        } finally { if (sequence === comparisonSequence && !comparisonDisposed) comparisonLoading.value = false; }
+    }
+    onBeforeUnmount(() => { comparisonDisposed = true; ++comparisonSequence; });
+
     // 暫停／註銷日期只在各自的狀態下有值，切走就清空，前後端規則一致。
     // 只在真的有值時才指派，避免載入資料時就被標成「尚未儲存」
     watch(() => form.model.value.Status, status => {
@@ -308,7 +359,7 @@
 
     function addUrl(): void {
         const urls = form.model.value.Urls;
-        if (urls.length >= MAX_URL_COUNT) return;
+        if (urls.length >= urlLimit.value) return;
         urls.push(newWebsiteUrlItem());
         form.clearErrors("Urls");
     }
@@ -356,13 +407,15 @@
     function applyDetail(detail: WebsiteDetail, defaultUrlSuffix: string): void {
         const value = toWebsiteForm(detail);
         savedDefaultUrl.value = detail.DefaultUrl ?? "";
+        urlLimit.value = Math.max(MAX_URL_COUNT, detail.Urls.length);
+        savedHostLocation.value = detail.HostLocation ?? "";
 
         // 舊資料標記「網域待申請」：改成在其他網址補一筆預設網址；主要網址或其他網址已經有了就不補
         const pendingUrl = detail.IsDomainPending ? toDefaultUrl(detail.OrgName, defaultUrlSuffix) : "";
-        const existingUrls = [savedDefaultUrl.value, ...value.Urls.map(item => item.Url)].map(normalizeUrl);
+        const existingUrls = [savedDefaultUrl.value, ...value.Urls.map(item => item.Url)].map(toBindingHost);
         const shouldAddPendingUrl = pendingUrl !== ""
-            && !existingUrls.includes(normalizeUrl(pendingUrl))
-            && value.Urls.length < MAX_URL_COUNT;
+            && !existingUrls.includes(toBindingHost(pendingUrl))
+            && value.Urls.length < urlLimit.value;
         if (shouldAddPendingUrl) value.Urls.push(newWebsiteUrlItem(pendingUrl));
 
         // 用 reset 載入而非逐欄指派，才不會一進頁面就被標成「尚未儲存」
@@ -424,7 +477,11 @@
         try {
             const options = await fetchWebsiteOptions();
             websiteOptions.value = options;
-            if (isEdit.value) applyDetail(await fetchWebsite(websiteId.value), options.DefaultUrlSuffix);
+            if (isEdit.value) {
+                try { bindingComparison.value = await refreshWebsiteUrls(websiteId.value); }
+                catch { comparisonError.value = '目前無法更新網址清單，仍可編輯一般資料；請稍後重新開啟此頁。'; }
+                applyDetail(await fetchWebsite(websiteId.value), options.DefaultUrlSuffix);
+            }
             else applyNewDefaults(options);
         }
         catch (error) {
@@ -646,7 +703,7 @@
                 <span id="section-website-url-title">網址</span>
                 <button class="ui-button ui-button-ghost"
                         type="button"
-                        :disabled="form.model.value.Urls.length >= MAX_URL_COUNT"
+                        :disabled="form.model.value.Urls.length >= urlLimit"
                         @click="addUrl">
                     <span class="material-symbols-outlined">add</span>
                     <span>新增其他網址</span>
@@ -659,6 +716,22 @@
 
             <div class="form-grid">
                 <!-- 主要網址：後台 Website.DefaultUrl，Platform 只顯示 -->
+                <div v-if="isEdit" class="form-field form-field-wide" aria-live="polite">
+                    <span class="form-label">網址狀態</span>
+                    <p class="field-note">主機已有的網址會自動加入清單。新增、修改或刪除網址後，按「儲存」即可套用。</p>
+                    <div class="form-section-heading">
+                        <button class="ui-button ui-button-ghost" type="button" :disabled="comparisonLoading" @click="refreshComparison">{{ comparisonLoading ? '讀取中…' : '更新狀態' }}</button>
+                    </div>
+                    <p v-if="comparisonError" class="field-note" role="alert">{{ comparisonError }}</p>
+                    <p v-else-if="savedHostLocation !== form.model.value.HostLocation" class="field-note">主機位置已變更，請先完成網站搬移，再重新開啟此頁修改網址。</p>
+                    <p v-else-if="bindingComparison && bindingComparison.Status !== 'Ok'" class="field-note">{{ bindingComparison.Message }}一般資料仍可編輯。</p>
+                    <template v-if="comparisonUsable">
+                        <p class="field-note">最後更新：{{ bindingComparison?.LastSeenAtUtc ? new Date(bindingComparison.LastSeenAtUtc).toLocaleString('zh-TW') : '—' }}。</p>
+                        <ul v-if="comparisonRows.length"><li v-for="row in comparisonRows" :key="row.key">{{ row.url || '尚未填寫網址' }}：{{ row.state }}</li></ul>
+                        <p v-else class="field-note">目前沒有其他網址。</p>
+                        <p class="field-note">尚未啟用的網址會在儲存時請您確認。儲存後需等待系統完成設定，可至「任務紀錄」查看結果。</p>
+                    </template>
+                </div>
                 <div class="form-field form-field-wide">
                     <label>
                         <span>主要網址</span>
@@ -677,7 +750,7 @@
                     <span class="form-label">其他網址</span>
                     <FormFieldErrors :errors="form.getErrors('Urls')" />
                     <p class="field-note">
-                        選填，最多 {{ MAX_URL_COUNT }} 筆，不可與主要網址重複；其他網址只記錄在客戶管理平台。
+                        選填，最多 {{ urlLimit }} 筆，不可與主要網址重複。新增、修改或刪除後按「儲存」，系統會更新網站的網址設定；結果可至「任務紀錄」查看。
                     </p>
                 </div>
 

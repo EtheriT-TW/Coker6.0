@@ -1,5 +1,6 @@
 import { api } from "@/core/coker";
 import { fromDateInput, toDateInput } from "@/utils/date-input";
+import { toBindingHost } from "@/utils/domain-name";
 import type { DomainSummary } from "@/types/domain";
 import {
     websiteLocaleOptions,
@@ -11,6 +12,7 @@ import {
     type WebsiteOptions,
     type WebsiteUrlFormItem
 } from "@/types/website";
+import type { WebsiteBindingComparison } from "@/types/website";
 
 const baseUrl = "/api/websites";
 
@@ -75,6 +77,17 @@ function toSaveRequest(form: WebsiteForm) {
 
 /** API 回應轉成表單模型，日期欄位都要經過 toDateInput。 */
 export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
+    // 同一主機的HTTP／HTTPS僅顯示一列；舊資料有兩列時優先顯示HTTPS。
+    const primaryHost = toBindingHost(detail.DefaultUrl ?? '');
+    const urls = new Map<string, WebsiteDetail['Urls'][number]>();
+    for (const item of detail.Urls) {
+        const host = toBindingHost(item.Url);
+        if (host && host === primaryHost) continue;
+        const key = host || item.Url.trim().toLowerCase();
+        const previous = urls.get(key);
+        if (!previous || (item.Url.toLowerCase().startsWith('https://') && !previous.Url.toLowerCase().startsWith('https://')))
+            urls.set(key, item);
+    }
     return {
         OrgName: detail.OrgName,
         FK_CompanyId: detail.FK_CompanyId,
@@ -87,7 +100,7 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         Status: detail.Status,
         SuspendedDate: toDateInput(detail.SuspendedDate),
         TerminatedDate: toDateInput(detail.TerminatedDate),
-        Urls: detail.Urls.map(item => newWebsiteUrlItem(item.Url, item.Domain)),
+        Urls: [...urls.values()].map(item => newWebsiteUrlItem(item.Url, item.Domain)),
         Remark: detail.Remark ?? "",
         EnterpriseEmailAccountType: detail.EnterpriseEmail?.AccountType ?? null,
         EnterpriseEmailTotalAccounts: detail.EnterpriseEmail?.TotalAccounts.toString() ?? "",
@@ -122,6 +135,14 @@ export function createWebsite(form: WebsiteForm): Promise<WebsiteDetail> {
     });
 }
 
-export function updateWebsite(id: number, form: WebsiteForm): Promise<WebsiteDetail> {
-    return api.put<WebsiteDetail>(`${baseUrl}/${id}`, toSaveRequest(form));
+export function updateWebsite(id: number, form: WebsiteForm, synchronizeBindings = false): Promise<WebsiteDetail> {
+    return api.put<WebsiteDetail>(`${baseUrl}/${id}`, { ...toSaveRequest(form), SynchronizeBindings: synchronizeBindings });
+}
+
+export function fetchWebsiteBindingComparison(id: number): Promise<WebsiteBindingComparison> {
+    return api.get<WebsiteBindingComparison>(`${baseUrl}/${id}/iis-comparison`);
+}
+
+export function refreshWebsiteUrls(id: number): Promise<WebsiteBindingComparison> {
+    return api.post<WebsiteBindingComparison>(`${baseUrl}/${id}/refresh-urls`, {});
 }

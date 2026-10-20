@@ -145,7 +145,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
                 state?.MemoryUsagePercent,
                 DeserializeList<ProvisioningDiskMetricDto>(state?.DiskMetricsJson),
                 applicationPools,
-                state?.LastSeenAtUtc);
+                state?.LastSeenAtUtc,
+                siteMetricRecorder.Enabled);
         }).ToList();
     }
 
@@ -222,9 +223,14 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
     }
 
     [HttpGet]
-    public async Task<IReadOnlyList<ProvisioningTaskDto>> GetList()
+    public async Task<ActionResult<IReadOnlyList<ProvisioningTaskDto>>> GetList(
+        [FromQuery] string? serverId = null, [FromQuery] ProvisioningTaskStatus? status = null)
     {
-        var tasks = await db.ProvisioningTasks.AsNoTracking()
+        if (status.HasValue && !Enum.IsDefined(status.Value)) return BadRequest();
+        var query = db.ProvisioningTasks.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(serverId)) query = query.Where(x => x.TargetServerId == serverId);
+        if (status.HasValue) query = query.Where(x => x.Status == status.Value);
+        var tasks = await query
             .OrderByDescending(x => x.Id)
             .Take(100)
             .ToListAsync(HttpContext.RequestAborted);
@@ -265,6 +271,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
 
         if (!Enum.IsDefined(request.Type))
             ModelState.AddModelError(nameof(request.Type), "不支援的任務類型。");
+        if (request.Type == ProvisioningTaskType.SyncWebsiteBindings)
+            ModelState.AddModelError(nameof(request.Type), "網址同步任務只能由網站管理儲存時建立。");
 
         if (request.Type == ProvisioningTaskType.SetIisSiteState && string.IsNullOrWhiteSpace(request.SiteName))
             ModelState.AddModelError(nameof(request.SiteName), "請輸入 IIS 網站名稱。");

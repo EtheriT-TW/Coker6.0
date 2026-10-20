@@ -24,7 +24,9 @@ public sealed record ProvisioningTaskPayload(
     IReadOnlyList<string>? HostNames,
     string? DnsRecordType = null,
     string? DnsRecordValue = null,
-    int? MxPreference = null);
+    int? MxPreference = null,
+    IReadOnlyList<string>? PreviousHostNames = null,
+    string? PrimaryHostName = null);
 
 public sealed class ProvisioningServerOptions
 {
@@ -134,7 +136,8 @@ public sealed record ProvisioningAgentStatusDto(
     double? MemoryUsagePercent,
     IReadOnlyList<ProvisioningDiskMetricDto> Disks,
     IReadOnlyList<ProvisioningAppPoolMetricDto> ApplicationPools,
-    DateTime? LastSeenAtUtc);
+    DateTime? LastSeenAtUtc,
+    bool SiteHistoryEnabled = false);
 
 public sealed record ProvisioningMetricHistoryDto(
     string ServerId,

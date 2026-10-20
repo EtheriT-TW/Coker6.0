@@ -32,6 +32,7 @@ builder.Services.AddAntiforgery(options =>
 });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<SiteMetricRecorder>();
+builder.Services.AddScoped<WebsiteBindingTasks>();
 builder.Services.AddHttpClient();
 builder.Services.AddRateLimiter(options =>
 {

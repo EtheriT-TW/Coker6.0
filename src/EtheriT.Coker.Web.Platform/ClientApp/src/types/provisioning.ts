@@ -5,7 +5,8 @@ export enum ProvisioningTaskType {
   DeleteDnsARecord = 4,
   InstallSsl = 5,
   CreateDnsRecord = 6,
-  DeleteDnsRecord = 7
+  DeleteDnsRecord = 7,
+  SyncWebsiteBindings = 8
 }
 
 export enum ProvisioningTaskStatus {
@@ -25,6 +26,8 @@ export interface ProvisioningTaskPayload {
   DnsRecordType?: string | null;
   DnsRecordValue?: string | null;
   MxPreference?: number | null;
+  PreviousHostNames?: string[] | null;
+  PrimaryHostName?: string | null;
 }
 
 export interface ProvisioningTask {
@@ -95,6 +98,7 @@ export interface ServerTlsStatus {
 }
 
 export interface ProvisioningAgentStatus {
+  SiteHistoryEnabled?: boolean;
   ServerId: string;
   DisplayName: string;
   IsDnsServer: boolean;

@@ -83,7 +83,8 @@
         ...(canControlServers.value ? [
             { to: "/server-monitoring", icon: "speed", label: "伺服器監控" },
             { to: "/tls-certificates", icon: "verified_user", label: "TLS 憑證管理" },
-            { to: "/provisioning-test", icon: "dns", label: "主機操作測試" }
+            { to: "/provisioning-test", icon: "dns", label: "主機操作測試" },
+            { to: "/provisioning-tasks", icon: "task", label: "任務紀錄" }
         ] : []),
         ...(canManagePlatformRoles.value ? [
             { to: "/system-administrators", icon: "admin_panel_settings", label: "系統管理者" },

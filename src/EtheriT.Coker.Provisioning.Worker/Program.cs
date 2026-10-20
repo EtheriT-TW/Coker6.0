@@ -15,6 +15,7 @@ builder.Services.AddSingleton<TlsCertificateCollector>();
 builder.Services.AddSingleton<IProvisioningTaskHandler, IisTaskHandler>();
 builder.Services.AddSingleton<IProvisioningTaskHandler, DnsTaskHandler>();
 builder.Services.AddSingleton<IProvisioningTaskHandler, SslTaskHandler>();
+builder.Services.AddSingleton<IProvisioningTaskHandler, WebsiteBindingsTaskHandler>();
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddHostedService<SystemMonitoringWorker>();
 builder.Services.AddHostedService<TlsMonitoringWorker>();

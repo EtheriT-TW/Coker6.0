@@ -67,7 +67,8 @@ public sealed record IisApplicationPoolMetrics(
     long WorkingSetBytes,
     long PrivateMemoryBytes,
     IReadOnlyList<IisSiteBindingMetrics>? SiteBindings = null,
-    IReadOnlyList<RuntimeMetricSnapshot>? RuntimeMetrics = null);
+    IReadOnlyList<RuntimeMetricSnapshot>? RuntimeMetrics = null,
+    string? RuntimeMetricsError = null, IReadOnlyList<string>? HostIpAddresses = null);
 
 public sealed record RuntimeMetricSnapshot(int SchemaVersion, int ProcessId, DateTime StartedAtUtc,
     DateTime SampledAtUtc, bool ServerGc, long ManagedBytes, long HeapSizeBytes, long CommittedBytes,

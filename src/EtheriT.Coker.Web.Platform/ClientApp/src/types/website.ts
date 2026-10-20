@@ -168,7 +168,12 @@ export interface WebsiteForm {
     Remark: string;
 }
 
+export interface WebsiteBindingCandidate {
+    Target: string; ServerName: string; SiteName: string; State: string; IpAddresses: string[];
+}
+
 export interface WebsiteBindingComparison {
+    Candidates?: WebsiteBindingCandidate[] | null;
     Status: string;
     Message: string | null;
     SiteName: string | null;

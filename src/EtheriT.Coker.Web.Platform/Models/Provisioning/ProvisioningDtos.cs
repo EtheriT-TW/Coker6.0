@@ -115,7 +115,8 @@ public sealed record ProvisioningAppPoolMetricDto(
     long PrivateMemoryBytes,
     IReadOnlyList<string>? WebsiteNames = null,
     IReadOnlyList<ProvisioningIisSiteBindingDto>? SiteBindings = null,
-    IReadOnlyList<RuntimeMetricSnapshotDto>? RuntimeMetrics = null);
+    IReadOnlyList<RuntimeMetricSnapshotDto>? RuntimeMetrics = null,
+    string? RuntimeMetricsError = null, IReadOnlyList<string>? HostIpAddresses = null);
 
 public sealed record RuntimeMetricSnapshotDto(int SchemaVersion, int ProcessId, DateTime StartedAtUtc,
     DateTime SampledAtUtc, bool ServerGc, long ManagedBytes, long HeapSizeBytes, long CommittedBytes,

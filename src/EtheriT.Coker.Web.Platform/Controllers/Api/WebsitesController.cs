@@ -373,7 +373,7 @@ public sealed class WebsitesController(
             try
             {
                 db.ProvisioningTasks.Add(await bindingTasks.CreateAsync(site, request.HostLocation,
-                    previousHosts, desiredHosts, HttpContext.RequestAborted));
+                    previousHosts, desiredHosts, HttpContext.RequestAborted, request.BindingTarget));
             }
             catch (Exception ex) when (ex is InvalidOperationException or JsonException)
             {
@@ -400,15 +400,15 @@ public sealed class WebsitesController(
     }
 
     [HttpGet("{id:long}/iis-comparison")]
-    public async Task<ActionResult<WebsiteBindingComparison>> GetBindingComparison(long id)
+    public async Task<ActionResult<WebsiteBindingComparison>> GetBindingComparison(long id, [FromQuery] string? target = null)
     {
         var site = await db.Websites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, HttpContext.RequestAborted);
         if (site == null) return NotFound();
-        return await bindingTasks.CompareAsync(site, HttpContext.RequestAborted);
+        return await bindingTasks.CompareAsync(site, HttpContext.RequestAborted, target);
     }
 
     [HttpPost("{id:long}/refresh-urls")]
-    public async Task<ActionResult<WebsiteBindingComparison>> RefreshUrls(long id)
+    public async Task<ActionResult<WebsiteBindingComparison>> RefreshUrls(long id, [FromBody] WebsiteBindingSelection selection)
     {
         return await db.Database.CreateExecutionStrategy().ExecuteAsync<ActionResult<WebsiteBindingComparison>>(async () =>
         {
@@ -418,10 +418,14 @@ public sealed class WebsitesController(
             if (site == null) return NotFound();
             try
             {
-                var comparison = await bindingTasks.ImportExistingUrlsAsync(site, HttpContext.RequestAborted);
+                var comparison = await bindingTasks.ImportExistingUrlsAsync(site, HttpContext.RequestAborted, selection.Target);
                 await auditor.SaveChangesAsync(HttpContext.RequestAborted);
                 await transaction.CommitAsync(HttpContext.RequestAborted);
                 return comparison;
+            }
+            catch (WebsiteBindingTasks.SelectionRequiredException ex)
+            {
+                return new WebsiteBindingComparison("SelectionRequired", ex.Message, null, null, [], [], ex.Candidates);
             }
             catch (Exception ex) when (ex is InvalidOperationException or JsonException)
             {

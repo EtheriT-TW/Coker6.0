@@ -143,6 +143,7 @@ export interface ProvisioningAppPoolMetric {
   WebsiteNames: string[] | null;
   SiteBindings?: ProvisioningIisSiteBinding[] | null;
   RuntimeMetrics?: RuntimeMetricSnapshot[] | null;
+  RuntimeMetricsError?: string | null;
 }
 
 export interface ProvisioningMetricHistory {

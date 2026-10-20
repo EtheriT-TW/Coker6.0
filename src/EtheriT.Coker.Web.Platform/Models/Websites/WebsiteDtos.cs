@@ -82,6 +82,7 @@ public sealed record WebsiteDetailDto
 public class WebsiteSaveRequest
 {
     public bool SynchronizeBindings { get; set; }
+    public string? BindingTarget { get; set; }
     [Range(1, long.MaxValue, ErrorMessage = "請先以統一編號或公司名稱帶出客戶。")]
     public long FK_CompanyId { get; set; }
 
@@ -158,4 +159,8 @@ public sealed record IisBindingLookupResult(
     IReadOnlyList<IisBindingItemDto> Items);
 
 public sealed record WebsiteBindingComparison(string Status, string? Message, string? SiteName,
-    DateTime? LastSeenAtUtc, IReadOnlyList<string> SiteHosts, IReadOnlyList<IisBindingItemDto> OtherBindings);
+    DateTime? LastSeenAtUtc, IReadOnlyList<string> SiteHosts, IReadOnlyList<IisBindingItemDto> OtherBindings,
+    IReadOnlyList<WebsiteBindingCandidate>? Candidates = null);
+
+public sealed record WebsiteBindingCandidate(string Target, string ServerName, string SiteName, string State, IReadOnlyList<string> IpAddresses);
+public sealed record WebsiteBindingSelection(string? Target);

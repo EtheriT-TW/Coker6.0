@@ -10,7 +10,8 @@ public enum ProvisioningTaskType
     DeleteDnsARecord = 4,
     InstallSsl = 5,
     CreateDnsRecord = 6,
-    DeleteDnsRecord = 7
+    DeleteDnsRecord = 7,
+    SyncWebsiteBindings = 8
 }
 
 public enum ProvisioningTaskStatus

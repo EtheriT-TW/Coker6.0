@@ -233,6 +233,8 @@ builder.Services.AddScoped<CdnClientIpResolver>();
 
 builder.Services.AddSingleton<JumpRedirectCache>();
 builder.Services.AddSingleton<NotFoundImageVerifier>();
+builder.Services.AddSingleton<RuntimeMetricsReporter>();
+builder.Services.AddHostedService<RuntimeMetricsReporter>(services => services.GetRequiredService<RuntimeMetricsReporter>());
 
 if (!builder.Environment.IsDevelopment())
 {
@@ -289,6 +291,25 @@ builder.Host.UseSerilog();
 */
 
 var app = builder.Build();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/App_Data", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+    await next(context);
+});
+var runtimeMetrics = app.Services.GetRequiredService<RuntimeMetricsReporter>();
+if (runtimeMetrics.Enabled)
+{
+    app.Use(async (context, next) =>
+    {
+        runtimeMetrics.BeginRequest();
+        try { await next(context); }
+        finally { runtimeMetrics.EndRequest(); }
+    });
+}
 // Keep ahead of cookies, redirects, error-page re-execution and all MVC/DB work.
 app.UseMiddleware<ScanPathBlockMiddleware>();
 

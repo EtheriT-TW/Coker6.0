@@ -26,7 +26,9 @@ public sealed class WebsitesController(
     CokerDbContext db,
     PlatformAuditor auditor,
     IOptions<WebsiteHostingOptions> hostingOptions,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    WebsiteBindingTasks bindingTasks,
+    Microsoft.AspNetCore.Authorization.IAuthorizationService authorization) : ControllerBase
 {
     private const int ListLimit = 1000;
 
@@ -334,6 +336,11 @@ public sealed class WebsitesController(
     [HttpPut("{id:long}")]
     public async Task<ActionResult<WebsiteDetailDto>> Update(long id, WebsiteSaveRequest request)
     {
+        var strategy = db.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync<ActionResult<WebsiteDetailDto>>(async () =>
+        {
+        db.ChangeTracker.Clear();
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, HttpContext.RequestAborted);
         var site = await db.Websites
             .FirstOrDefaultAsync(item => item.Id == id && !item.IsDeleted, HttpContext.RequestAborted);
         if (site is null)
@@ -349,6 +356,32 @@ public sealed class WebsitesController(
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
+        string[] Hosts(IEnumerable<string> values) => values.Select(PlatformDomainName.ToHost).OfType<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+        var previousHosts = Hosts(alternates.Select(x => x.Url).Append(site.DefaultUrl ?? ""));
+        var desiredHosts = Hosts(urls.Select(x => x.Url).Append(site.DefaultUrl ?? ""));
+        var urlsChanged = !alternates.Select(x => x.Url).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .SequenceEqual(urls.Select(x => x.Url).OrderBy(x => x, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+        if (urlsChanged || request.SynchronizeBindings)
+        {
+            if (!(await authorization.AuthorizeAsync(User, null,
+                EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformServerControl)).Succeeded)
+            {
+                ModelState.AddModelError(nameof(request.Urls), "您沒有變更網站網址的權限，請聯絡管理員。");
+                return ValidationProblem(ModelState);
+            }
+            try
+            {
+                db.ProvisioningTasks.Add(await bindingTasks.CreateAsync(site, request.HostLocation,
+                    previousHosts, desiredHosts, HttpContext.RequestAborted));
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or JsonException)
+            {
+                ModelState.AddModelError(nameof(request.Urls), ex is JsonException ? "Worker 繫結資料無法辨識，請稍後重試。" : ex.Message);
+                return ValidationProblem(ModelState);
+            }
+        }
+
         Apply(request, site);
         SyncAlternateUrls(site, urls, alternates);
 
@@ -361,7 +394,41 @@ public sealed class WebsitesController(
         if (detail is null)
             return NotFound();
 
+        await transaction.CommitAsync(HttpContext.RequestAborted);
         return detail;
+        });
+    }
+
+    [HttpGet("{id:long}/iis-comparison")]
+    public async Task<ActionResult<WebsiteBindingComparison>> GetBindingComparison(long id)
+    {
+        var site = await db.Websites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, HttpContext.RequestAborted);
+        if (site == null) return NotFound();
+        return await bindingTasks.CompareAsync(site, HttpContext.RequestAborted);
+    }
+
+    [HttpPost("{id:long}/refresh-urls")]
+    public async Task<ActionResult<WebsiteBindingComparison>> RefreshUrls(long id)
+    {
+        return await db.Database.CreateExecutionStrategy().ExecuteAsync<ActionResult<WebsiteBindingComparison>>(async () =>
+        {
+            db.ChangeTracker.Clear();
+            await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, HttpContext.RequestAborted);
+            var site = await db.Websites.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, HttpContext.RequestAborted);
+            if (site == null) return NotFound();
+            try
+            {
+                var comparison = await bindingTasks.ImportExistingUrlsAsync(site, HttpContext.RequestAborted);
+                await auditor.SaveChangesAsync(HttpContext.RequestAborted);
+                await transaction.CommitAsync(HttpContext.RequestAborted);
+                return comparison;
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or JsonException)
+            {
+                return new WebsiteBindingComparison("Unavailable", ex is JsonException ? "目前無法取得網址狀態，請稍後再試。" : ex.Message,
+                    null, null, [], []);
+            }
+        });
     }
 
     private async Task<WebsiteDetailDto?> LoadDetailAsync(long id)
@@ -488,7 +555,7 @@ public sealed class WebsitesController(
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         // JSON 送 "Urls": null 時不會套用屬性預設值
-        return await ResolveUrlsAsync(request.Urls ?? [], defaultUrl, allowedHttpUrls);
+        return await ResolveUrlsAsync(request.Urls ?? [], defaultUrl, allowedHttpUrls, Math.Max(MaxUrlCount, existingAlternates.Count));
     }
 
     /// <summary>
@@ -544,26 +611,28 @@ public sealed class WebsitesController(
     private async Task<IReadOnlyList<ResolvedUrl>> ResolveUrlsAsync(
         IReadOnlyList<WebsiteUrlInput> inputs,
         string? defaultUrl,
-        IReadOnlySet<string> allowedHttpUrls)
+        IReadOnlySet<string> allowedHttpUrls,
+        int maximum = MaxUrlCount)
     {
         const string listKey = nameof(WebsiteSaveRequest.Urls);
-        if (inputs.Count > MaxUrlCount)
+        if (inputs.Count > maximum)
         {
-            ModelState.AddModelError(listKey, $"其他網址最多 {MaxUrlCount} 筆。");
+            ModelState.AddModelError(listKey, $"其他網址最多 {maximum} 筆。");
             return [];
         }
 
         // 舊資料的 DefaultUrl 可能帶結尾斜線，先轉成根網址再比
-        var defaultRoot = ToSiteRoot(defaultUrl);
+        var defaultHost = PlatformDomainName.ToHost(defaultUrl);
         var resolved = new List<ResolvedUrl>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (var index = 0; index < inputs.Count; index++)
         {
             var key = $"{listKey}[{index}].{nameof(WebsiteUrlInput.Url)}";
             var (url, domainId, error) = await ResolveUrlAsync(inputs[index].Url, allowedHttpUrls);
-            if (error is null && string.Equals(url, defaultRoot, StringComparison.OrdinalIgnoreCase))
+            var host = PlatformDomainName.ToHost(url);
+            if (error is null && string.Equals(host, defaultHost, StringComparison.OrdinalIgnoreCase))
                 error = $"網址「{url}」就是預設網址，不必再填。";
-            else if (error is null && !seen.Add(url!))
+            else if (error is null && !seen.Add(host!))
                 error = $"網址「{url}」重複輸入。";
 
             if (error is not null)

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 
-interface MetricChartPoint { At: string; Value: number | null }
+interface MetricChartPoint { At: string; Value: number | null; BreakBefore?: boolean }
 interface MetricChartSeries { Name: string; Color: string; Points: MetricChartPoint[] }
 
-const props = defineProps<{ series: MetricChartSeries[]; emptyText?: string }>();
+const props = defineProps<{ series: MetricChartSeries[]; emptyText?: string; maximum?: number; unit?: string; decimals?: number; ariaLabel?: string }>();
+const maximum = computed(() => Math.max(1, props.maximum ?? 100));
+const unit = computed(() => props.unit ?? "%");
 const width = 1000;
 const height = 250;
 const left = 46;
@@ -57,13 +59,21 @@ function xPosition(at: string): number {
 }
 
 function yPosition(value: number): number {
-  return top + (100 - Math.max(0, Math.min(100, value))) / 100 * (height - top - bottom);
+  return top + (maximum.value - Math.max(0, Math.min(maximum.value, value))) / maximum.value * (height - top - bottom);
 }
 
-function points(series: MetricChartSeries): string {
-  return series.Points.filter(x => x.Value !== null)
-    .map(x => `${xPosition(x.At).toFixed(1)},${yPosition(x.Value!).toFixed(1)}`)
-    .join(" ");
+function segments(series: MetricChartSeries): string[] {
+  const result: string[] = [];
+  let current: string[] = [];
+  for (const point of series.Points) {
+    if (point.BreakBefore || point.Value === null) {
+      if (current.length) result.push(current.join(" "));
+      current = [];
+    }
+    if (point.Value !== null) current.push(`${xPosition(point.At).toFixed(1)},${yPosition(point.Value).toFixed(1)}`);
+  }
+  if (current.length) result.push(current.join(" "));
+  return result;
 }
 
 function formatEdgeTime(value: number): string {
@@ -75,14 +85,17 @@ function formatEdgeTime(value: number): string {
   <div class="metric-chart">
     <div class="chart-legend"><span v-for="item in series" :key="item.Name"><i :style="{ backgroundColor: item.Color }"></i>{{ item.Name }}</span></div>
     <div v-if="hasData" class="chart-plot">
-    <svg :viewBox="`0 0 ${width} ${height}`" role="img" aria-label="使用率趨勢圖" @pointermove="updateHover" @pointerleave="hoveredTime = null" @pointercancel="hoveredTime = null">
+    <svg :viewBox="`0 0 ${width} ${height}`" role="img" :aria-label="ariaLabel ?? '使用率趨勢圖'" @pointermove="updateHover" @pointerleave="hoveredTime = null" @pointercancel="hoveredTime = null">
       <g class="grid">
-        <template v-for="value in [0, 25, 50, 75, 100]" :key="value">
+        <template v-for="value in [0, .25, .5, .75, 1].map(x => x * maximum)" :key="value">
           <line :x1="left" :x2="width - right" :y1="yPosition(value)" :y2="yPosition(value)" />
-          <text :x="left - 8" :y="yPosition(value) + 4" text-anchor="end">{{ value }}%</text>
+          <text :x="left - 8" :y="yPosition(value) + 4" text-anchor="end">{{ Number(value.toFixed(1)) }}{{ unit }}</text>
         </template>
       </g>
-      <polyline v-for="item in series" :key="item.Name" :points="points(item)" :stroke="item.Color" />
+      <g v-for="item in series" :key="item.Name">
+        <polyline v-for="(path, index) in segments(item)" :key="index" :points="path" :stroke="item.Color" />
+        <circle v-if="item.Points.length === 1 && item.Points[0].Value !== null" :cx="xPosition(item.Points[0].At)" :cy="yPosition(item.Points[0].Value!)" r="3" :fill="item.Color" />
+      </g>
       <g v-if="hoveredSample" class="hover-markers">
         <line :x1="hoverX" :x2="hoverX" :y1="top" :y2="height - bottom" />
         <circle v-for="item in hoveredSample[1]" :key="item.Name" :cx="hoverX" :cy="yPosition(item.Value)" r="5" :fill="item.Color" />
@@ -92,7 +105,7 @@ function formatEdgeTime(value: number): string {
     </svg>
     <div v-if="hoveredSample" class="chart-tooltip" :style="{ left: `${hoverX / width * 100}%`, transform: hoverX > width / 2 ? 'translateX(-100%)' : 'none' }" role="tooltip">
       <strong>{{ new Date(hoveredSample[0]).toLocaleString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) }}</strong>
-      <span v-for="item in hoveredSample[1]" :key="item.Name"><i :style="{ backgroundColor: item.Color }"></i>{{ item.Name }}：{{ item.Value.toFixed(1) }}%</span>
+      <span v-for="item in hoveredSample[1]" :key="item.Name"><i :style="{ backgroundColor: item.Color }"></i>{{ item.Name }}：{{ item.Value.toFixed(decimals ?? 1) }}{{ unit }}</span>
     </div>
     </div>
     <p v-else class="empty-chart">{{ emptyText ?? "目前還沒有歷史資料" }}</p>

@@ -5,7 +5,8 @@ export enum ProvisioningTaskType {
   DeleteDnsARecord = 4,
   InstallSsl = 5,
   CreateDnsRecord = 6,
-  DeleteDnsRecord = 7
+  DeleteDnsRecord = 7,
+  SyncWebsiteBindings = 8
 }
 
 export enum ProvisioningTaskStatus {
@@ -25,6 +26,8 @@ export interface ProvisioningTaskPayload {
   DnsRecordType?: string | null;
   DnsRecordValue?: string | null;
   MxPreference?: number | null;
+  PreviousHostNames?: string[] | null;
+  PrimaryHostName?: string | null;
 }
 
 export interface ProvisioningTask {
@@ -95,6 +98,7 @@ export interface ServerTlsStatus {
 }
 
 export interface ProvisioningAgentStatus {
+  SiteHistoryEnabled?: boolean;
   ServerId: string;
   DisplayName: string;
   IsDnsServer: boolean;
@@ -138,6 +142,7 @@ export interface ProvisioningAppPoolMetric {
   PrivateMemoryBytes: number;
   WebsiteNames: string[] | null;
   SiteBindings?: ProvisioningIisSiteBinding[] | null;
+  RuntimeMetrics?: RuntimeMetricSnapshot[] | null;
 }
 
 export interface ProvisioningMetricHistory {
@@ -147,6 +152,46 @@ export interface ProvisioningMetricHistory {
   BucketMinutes: number;
   ServerMetrics: ProvisioningServerMetricPoint[];
   Disks: ProvisioningDiskMetricSeries[];
+}
+
+export interface ProvisioningSiteMetricHistory {
+  Enabled: boolean;
+  ServerId: string;
+  ApplicationPoolName: string;
+  FromUtc: string;
+  ToUtc: string;
+  SampleSeconds: number;
+  Points: ProvisioningSiteMetricPoint[];
+}
+
+export interface ProvisioningSiteMetricPoint {
+  SampledAtUtc: string;
+  PrivateMemoryBytes: number;
+  WorkingSetBytes: number;
+  CpuUsagePercent: number | null;
+  OnlineVisitors: number | null;
+  ProcessIds: number[];
+  WebsiteIds: number[];
+  WebsiteNames: string[];
+  RuntimeMetrics?: RuntimeMetricSnapshot[] | null;
+}
+
+export interface RuntimeMetricSnapshot {
+  SchemaVersion: number;
+  ProcessId: number;
+  StartedAtUtc: string;
+  SampledAtUtc: string;
+  ServerGc: boolean;
+  ManagedBytes: number;
+  HeapSizeBytes: number;
+  CommittedBytes: number;
+  FragmentedBytes: number;
+  AllocatedBytes: number;
+  Gen0: number;
+  Gen1: number;
+  Gen2: number;
+  RequestCount: number;
+  ActiveRequests: number;
 }
 
 export interface ProvisioningServerMetricPoint {

@@ -136,6 +136,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<ProvisioningTask> ProvisioningTasks { get; set; }
         public DbSet<ProvisioningAgentStatus> ProvisioningAgentStatuses { get; set; }
         public DbSet<ProvisioningMetricSample> ProvisioningMetricSamples { get; set; }
+        public DbSet<ProvisioningSiteMetricSample> ProvisioningSiteMetricSamples { get; set; }
 
         public CokerDbContext(DbContextOptions<CokerDbContext> options) : base(options)
         {
@@ -1077,6 +1078,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.ToTable("ProvisioningMetricSamples");
                 o.Property(x => x.DiskMetricsJson).HasColumnType("nvarchar(max)");
                 o.HasIndex(x => new { x.ServerId, x.SampledAtUtc });
+                o.HasIndex(x => x.SampledAtUtc);
+            });
+
+            modelBuilder.Entity<ProvisioningSiteMetricSample>(o =>
+            {
+                o.ToTable("ProvisioningSiteMetricSamples");
+                o.HasIndex(x => new { x.ServerId, x.ApplicationPoolName, x.SampledAtUtc });
                 o.HasIndex(x => x.SampledAtUtc);
             });
 

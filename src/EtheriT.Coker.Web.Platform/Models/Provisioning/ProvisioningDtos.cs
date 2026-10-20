@@ -24,7 +24,9 @@ public sealed record ProvisioningTaskPayload(
     IReadOnlyList<string>? HostNames,
     string? DnsRecordType = null,
     string? DnsRecordValue = null,
-    int? MxPreference = null);
+    int? MxPreference = null,
+    IReadOnlyList<string>? PreviousHostNames = null,
+    string? PrimaryHostName = null);
 
 public sealed class ProvisioningServerOptions
 {
@@ -112,7 +114,12 @@ public sealed record ProvisioningAppPoolMetricDto(
     long WorkingSetBytes,
     long PrivateMemoryBytes,
     IReadOnlyList<string>? WebsiteNames = null,
-    IReadOnlyList<ProvisioningIisSiteBindingDto>? SiteBindings = null);
+    IReadOnlyList<ProvisioningIisSiteBindingDto>? SiteBindings = null,
+    IReadOnlyList<RuntimeMetricSnapshotDto>? RuntimeMetrics = null);
+
+public sealed record RuntimeMetricSnapshotDto(int SchemaVersion, int ProcessId, DateTime StartedAtUtc,
+    DateTime SampledAtUtc, bool ServerGc, long ManagedBytes, long HeapSizeBytes, long CommittedBytes,
+    long FragmentedBytes, long AllocatedBytes, int Gen0, int Gen1, int Gen2, long RequestCount, long ActiveRequests);
 
 public sealed record ProvisioningAgentStatusDto(
     string ServerId,
@@ -129,7 +136,8 @@ public sealed record ProvisioningAgentStatusDto(
     double? MemoryUsagePercent,
     IReadOnlyList<ProvisioningDiskMetricDto> Disks,
     IReadOnlyList<ProvisioningAppPoolMetricDto> ApplicationPools,
-    DateTime? LastSeenAtUtc);
+    DateTime? LastSeenAtUtc,
+    bool SiteHistoryEnabled = false);
 
 public sealed record ProvisioningMetricHistoryDto(
     string ServerId,
@@ -145,6 +153,16 @@ public sealed record ProvisioningServerMetricPointDto(
     double? MemoryUsagePercent,
     long? MemoryUsedBytes,
     long? MemoryTotalBytes);
+
+public sealed record ProvisioningSiteMetricHistoryDto(
+    bool Enabled, string ServerId, string ApplicationPoolName, DateTime FromUtc, DateTime ToUtc,
+    int SampleSeconds, IReadOnlyList<ProvisioningSiteMetricPointDto> Points);
+
+public sealed record ProvisioningSiteMetricPointDto(
+    DateTime SampledAtUtc, long PrivateMemoryBytes, long WorkingSetBytes, double? CpuUsagePercent,
+    long? OnlineVisitors, IReadOnlyList<int> ProcessIds,
+    IReadOnlyList<long> WebsiteIds, IReadOnlyList<string> WebsiteNames,
+    IReadOnlyList<RuntimeMetricSnapshotDto>? RuntimeMetrics = null);
 
 public sealed record ProvisioningDiskMetricSeriesDto(
     string Name,

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Xml.Linq;
+using System.Text.Json;
 
 namespace EtheriT.Coker.Provisioning.Worker;
 
@@ -20,6 +21,13 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
         var siteXml = await RunAppCmdAsync(appCmd, ["list", "site", "/xml"], cancellationToken);
         var workerXml = await RunAppCmdAsync(appCmd, ["list", "wp", "/xml"], cancellationToken);
         var poolXml = await RunAppCmdAsync(appCmd, ["list", "apppool", "/xml"], cancellationToken);
+        var vdirXml = await RunAppCmdAsync(appCmd, ["list", "vdir", "/xml"], cancellationToken);
+        var rootsByApplication = ParseElements(vdirXml, "VDIR")
+            .Where(x => Attribute(x, "path") == "/")
+            .ToLookup(x => Attribute(x, "APP.NAME"),
+                x => Environment.ExpandEnvironmentVariables(Attribute(x, "physicalPath")), StringComparer.OrdinalIgnoreCase);
+        var rootsByPool = ParseElements(applicationXml, "APP")
+            .ToLookup(x => Attribute(x, "APPPOOL.NAME"), x => Attribute(x, "APP.NAME"), StringComparer.OrdinalIgnoreCase);
 
         var sitesByPool = ParseElements(applicationXml, "APP")
             .Select(x => new { Pool = Attribute(x, "APPPOOL.NAME"), Site = Attribute(x, "SITE.NAME") })
@@ -123,12 +131,45 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
                 hasCpu ? Math.Round(Math.Clamp(cpu, 0, 100), 1) : null,
                 workingSet,
                 privateMemory,
-                siteBindings));
+                siteBindings,
+                await ReadRuntimeMetricsAsync(rootsByPool[poolName].SelectMany(app => rootsByApplication[app]),
+                    processIds, now, cancellationToken)));
         }
 
         foreach (var stalePid in previousCpu.Keys.Where(x => !currentPids.Contains(x)).ToList())
             previousCpu.Remove(stalePid);
         return output;
+    }
+
+    private async Task<IReadOnlyList<RuntimeMetricSnapshot>?> ReadRuntimeMetricsAsync(IEnumerable<string> roots,
+        IReadOnlyList<int> pids, DateTime now, CancellationToken cancellationToken)
+    {
+        if (pids.Count == 0) return null;
+        var found = new Dictionary<int, RuntimeMetricSnapshot>();
+        foreach (var root in roots.Where(Path.IsPathFullyQualified).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var pid in pids)
+        {
+            if (found.ContainsKey(pid)) continue;
+            var file = Path.Combine(root, "App_Data", "runtime-diagnostics", $"{pid}.json");
+            try
+            {
+                if (!File.Exists(file) || new FileInfo(file).Length > 16384) continue;
+                await using var stream = new FileStream(file, FileMode.Open, FileAccess.Read,
+                    FileShare.Read | FileShare.Delete, 4096, FileOptions.Asynchronous);
+                var sample = await JsonSerializer.DeserializeAsync<RuntimeMetricSnapshot>(stream, cancellationToken: cancellationToken);
+                if (sample == null || sample.SchemaVersion != 1 || sample.ProcessId != pid
+                    || sample.SampledAtUtc < now.AddSeconds(-90) || sample.SampledAtUtc > now.AddSeconds(5)
+                    || sample.RequestCount < 0 || sample.ManagedBytes < 0 || sample.Gen2 < 0) continue;
+                using var process = Process.GetProcessById(pid);
+                if (Math.Abs((sample.StartedAtUtc - process.StartTime.ToUniversalTime()).TotalSeconds) > 1) continue;
+                found[pid] = sample;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException
+                or ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
+            { logger.LogDebug(ex, "Runtime snapshot unavailable for PID {Pid}", pid); }
+        }
+        // 不把只有部分程序的數字當成整個集區總量。
+        return found.Count == pids.Count ? found.Values.OrderBy(x => x.ProcessId).ToArray() : null;
     }
 
     private static IEnumerable<XElement> ParseElements(string xml, string elementName)

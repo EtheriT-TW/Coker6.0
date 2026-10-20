@@ -75,8 +75,8 @@ export function useIisBindingLookup(source: () => { hostLocation: string; urls: 
     function hintFor(url: string): IisBindingHint | null {
         const host = toBindingHost(url);
         if (!host || !source().hostLocation) return null;
-        if (pending.value) return { Tone: "muted", Text: "查詢 IIS 綁定中…" };
-        if (failed.value) return { Tone: "muted", Text: "無法取得該主機 IIS 資料" };
+        if (pending.value) return { Tone: "muted", Text: "查詢網址狀態中…" };
+        if (failed.value) return { Tone: "muted", Text: "目前無法取得網址狀態" };
 
         const response = result.value;
         if (!response) return null;
@@ -84,13 +84,13 @@ export function useIisBindingLookup(source: () => { hostLocation: string; urls: 
         if (response.Status === "Offline") {
             return { Tone: "muted", Text: `資料已過期${formatLastSeen(response.LastSeenAtUtc)}` };
         }
-        if (response.Status !== "Ok") return { Tone: "muted", Text: "無法取得該主機 IIS 資料" };
+        if (response.Status !== "Ok") return { Tone: "muted", Text: "目前無法取得網址狀態" };
 
         const item = response.Items.find(binding => binding.Host === host);
         if (!item) return null;
         return item.SiteName
-            ? { Tone: "ok", Text: `已綁定在 IIS 站台 ${item.SiteName}` }
-            : { Tone: "warning", Text: "⚠ 主機上沒有這個綁定" };
+            ? { Tone: "ok", Text: "主機已設定此網址" }
+            : { Tone: "warning", Text: "此網址尚未在主機啟用" };
     }
 
     return { hintFor };

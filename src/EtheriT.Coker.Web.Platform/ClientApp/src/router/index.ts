@@ -100,6 +100,12 @@ export const router = createRouter({
             meta: { title: "主機操作測試" }
         },
         {
+            path: "/provisioning-tasks",
+            name: "provisioning-tasks",
+            component: () => import("@/views/ProvisioningTasksView.vue"),
+            meta: { title: "任務紀錄" }
+        },
+        {
             path: "/settings",
             name: "settings",
             component: () => import("@/views/SystemSettingsView.vue"),

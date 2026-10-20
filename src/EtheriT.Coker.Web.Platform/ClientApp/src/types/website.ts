@@ -167,3 +167,12 @@ export interface WebsiteForm {
     Urls: WebsiteUrlFormItem[];
     Remark: string;
 }
+
+export interface WebsiteBindingComparison {
+    Status: string;
+    Message: string | null;
+    SiteName: string | null;
+    LastSeenAtUtc: string | null;
+    SiteHosts: string[];
+    OtherBindings: { Host: string; SiteName: string | null }[];
+}

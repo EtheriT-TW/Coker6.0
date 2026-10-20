@@ -35,7 +35,8 @@ public enum ProvisioningTaskType
     DeleteDnsARecord = 4,
     InstallSsl = 5,
     CreateDnsRecord = 6,
-    DeleteDnsRecord = 7
+    DeleteDnsRecord = 7,
+    SyncWebsiteBindings = 8
 }
 
 public sealed record ProvisioningTaskPayload(
@@ -47,7 +48,9 @@ public sealed record ProvisioningTaskPayload(
     IReadOnlyList<string>? HostNames,
     string? DnsRecordType = null,
     string? DnsRecordValue = null,
-    int? MxPreference = null);
+    int? MxPreference = null,
+    IReadOnlyList<string>? PreviousHostNames = null,
+    string? PrimaryHostName = null);
 
 public sealed record ProvisioningTaskDto(long Id, ProvisioningTaskType Type, ProvisioningTaskPayload Payload);
 public sealed record ClaimRequest(string ServerId, string WorkerId);

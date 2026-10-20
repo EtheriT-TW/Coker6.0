@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { installWebsiteTls } from '@/services/site-tls';
 import MetricLineChart from "@/components/MetricLineChart.vue";
+import { fetchSiteMetricHistory } from "@/services/provisioning-api";
+import type { ProvisioningSiteMetricHistory } from "@/types/provisioning";
 import { requestAlert, requestConfirm } from "@/core/coker";
 import { createProvisioningTask, fetchProvisioningAgents, fetchProvisioningMetricHistory, fetchProvisioningServers } from "@/services/provisioning-api";
 import { getPlatformContext } from "@/services/platform-context";
@@ -18,11 +20,137 @@ const historyLoading = ref(false);
 const submittingSite = ref("");
 const errorMessage = ref("");
 const canControlServers = ref(false);
+const selectedPool = ref("");
+const poolDialog = ref<HTMLDialogElement | null>(null);
+let previousBodyOverflow: string | null = null;
+const poolHours = ref(1);
+const poolHistory = ref<ProvisioningSiteMetricHistory | null>(null);
+const poolLoading = ref(false);
+const poolError = ref("");
+let poolRequest = 0;
+let lastPoolRefresh = 0;
 let refreshTimer: number | undefined;
 
 const currentAgent = computed(() => agents.value.find(x => x.ServerId === selectedServer.value) ?? null);
+const siteHistoryEnabled = computed(() => currentAgent.value?.SiteHistoryEnabled === true);
 const applicationPools = computed(() => [...(currentAgent.value?.ApplicationPools ?? [])]
   .sort((a, b) => b.PrivateMemoryBytes - a.PrivateMemoryBytes));
+const poolPoints = computed(() => (poolHistory.value?.Points ?? []).map((point, index, points) => {
+  const previous = points[index - 1];
+  return { ...point, BreakBefore: !!previous && (point.ProcessIds.join(",") !== previous.ProcessIds.join(",")
+    || new Date(point.SampledAtUtc).getTime() - new Date(previous.SampledAtUtc).getTime() > (poolHistory.value?.SampleSeconds ?? 60) * 2500) };
+}));
+const memorySeries = computed(() => [
+  { Name: "Private Memory", Color: "#2563eb", Points: poolPoints.value.map(p => ({ At: p.SampledAtUtc, Value: p.PrivateMemoryBytes / 1048576, BreakBefore: p.BreakBefore })) },
+  { Name: "Working Set", Color: "#d97706", Points: poolPoints.value.map(p => ({ At: p.SampledAtUtc, Value: p.WorkingSetBytes / 1048576, BreakBefore: p.BreakBefore })) }
+]);
+const visitorsSeries = computed(() => [{ Name: "在線訪客", Color: "#059669", Points: poolPoints.value.map(p => ({ At: p.SampledAtUtc, Value: p.OnlineVisitors, BreakBefore: p.BreakBefore })) }]);
+const poolCpuSeries = computed(() => [{ Name: "CPU", Color: "#7c3aed", Points: poolPoints.value.map(p => ({ At: p.SampledAtUtc, Value: p.CpuUsagePercent, BreakBefore: p.BreakBefore })) }]);
+const memoryMaximum = computed(() => Math.max(1, Math.ceil(Math.max(0, ...poolPoints.value.map(p => p.WorkingSetBytes / 1048576), ...poolPoints.value.map(p => p.PrivateMemoryBytes / 1048576)) * 1.1)));
+const visitorsMaximum = computed(() => Math.max(1, Math.ceil(Math.max(0, ...poolPoints.value.map(p => p.OnlineVisitors ?? 0)) * 1.1)));
+const pidChanges = computed(() => poolPoints.value.filter((point, index, points) => index > 0 && point.ProcessIds.join(",") !== points[index - 1].ProcessIds.join(",")));
+const poolWebsiteNames = computed(() => [...new Set(poolPoints.value.flatMap(p => p.WebsiteNames))]);
+const sharedPool = computed(() => poolPoints.value.some(p => p.WebsiteIds.length > 1));
+// 速率使用 Public 快照時間；Worker可能在相鄰心跳讀到同一份快照。
+const runtimePoints = computed(() => poolPoints.value.map((point, index, points) => {
+  const current = point.RuntimeMetrics;
+  const previous = points[index - 1]?.RuntimeMetrics;
+  const complete = !!current?.length && current.length === point.ProcessIds.length
+    && point.ProcessIds.every(pid => current.some(p => p.ProcessId === pid));
+  const validPrevious = complete && !point.BreakBefore && !!previous?.length && previous.length === current!.length;
+  function rate(field: 'RequestCount' | 'AllocatedBytes'): number | null {
+    if (!validPrevious) return null;
+    let total = 0;
+    for (const sample of current!) {
+      const prior = previous!.find(p => p.ProcessId === sample.ProcessId && p.StartedAtUtc === sample.StartedAtUtc);
+      if (!prior) return null;
+      const elapsed = (Date.parse(sample.SampledAtUtc) - Date.parse(prior.SampledAtUtc)) / 1000;
+      const delta = sample[field] - prior[field];
+      if (elapsed <= 0 || elapsed > (poolHistory.value?.SampleSeconds ?? 60) * 2.5 || delta < 0) return null;
+      total += delta / elapsed;
+    }
+    return total;
+  }
+  const restarted = !!current && !!previous && current.some(sample => previous.some(prior =>
+    prior.ProcessId === sample.ProcessId && prior.StartedAtUtc !== sample.StartedAtUtc));
+  return { At: point.SampledAtUtc, BreakBefore: point.BreakBefore || restarted,
+    Managed: complete ? current!.reduce((sum, p) => sum + p.ManagedBytes, 0) / 1048576 : null,
+    Heap: complete ? current!.reduce((sum, p) => sum + p.HeapSizeBytes, 0) / 1048576 : null,
+    Committed: complete ? current!.reduce((sum, p) => sum + p.CommittedBytes, 0) / 1048576 : null,
+    Fragmented: complete ? current!.reduce((sum, p) => sum + p.FragmentedBytes, 0) / 1048576 : null,
+    Gen2: complete ? current!.reduce((sum, p) => sum + p.Gen2, 0) : null,
+    Requests: rate('RequestCount'), Allocations: rate('AllocatedBytes'),
+    Active: complete ? current!.reduce((sum, p) => sum + p.ActiveRequests, 0) : null };
+}));
+const gcSeries = computed(() => [
+  { Name: 'Managed（估計）', Color: '#059669', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Managed })) },
+  { Name: 'GC Heap（上次回收）', Color: '#2563eb', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Heap })) },
+  { Name: 'GC Committed（上次回收）', Color: '#d97706', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Committed })) },
+  { Name: '碎片（上次回收）', Color: '#dc2626', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Fragmented })) }
+]);
+const requestSeries = computed(() => [{ Name: 'HTTP 請求／秒', Color: '#2563eb', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Requests })) }]);
+const allocationSeries = computed(() => [{ Name: '配置／秒', Color: '#d97706', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Allocations === null ? null : p.Allocations / 1048576 })) }]);
+const gen2Series = computed(() => [{ Name: 'Gen 2 累計回收', Color: '#7c3aed', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Gen2 })) }]);
+const gcMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Committed ?? 0) * 1.1), ...runtimePoints.value.map(p => (p.Managed ?? 0) * 1.1), ...runtimePoints.value.map(p => (p.Heap ?? 0) * 1.1)));
+const requestMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Requests ?? 0) * 1.1)));
+const allocationMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Allocations ?? 0) / 1048576 * 1.1)));
+const gen2Maximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Gen2 ?? 0) * 1.1)));
+const latestRuntime = computed(() => runtimePoints.value.at(-1));
+
+async function loadPoolHistory(silent = false): Promise<void> {
+  if (!selectedPool.value || !selectedServer.value || (silent && (poolLoading.value || Date.now() - lastPoolRefresh < 60000))) return;
+  const request = ++poolRequest;
+  const server = selectedServer.value;
+  const pool = selectedPool.value;
+  poolLoading.value = true;
+  try {
+    const result = await fetchSiteMetricHistory(server, pool, poolHours.value);
+    if (request !== poolRequest || server !== selectedServer.value || pool !== selectedPool.value) return;
+    poolHistory.value = result;
+    poolError.value = "";
+    lastPoolRefresh = Date.now();
+  }
+  catch (error) {
+    if (request === poolRequest) poolError.value = "無法讀取網站資源歷史，請稍後重新整理。";
+    console.error(error);
+  }
+  finally { if (request === poolRequest) poolLoading.value = false; }
+}
+
+async function openPoolHistory(pool: ProvisioningAppPoolMetric): Promise<void> {
+  if (!siteHistoryEnabled.value) return;
+  selectedPool.value = pool.ApplicationPoolName;
+  poolHistory.value = null;
+  poolError.value = "";
+  await nextTick();
+  if (!selectedPool.value || !poolDialog.value) return;
+  if (!poolDialog.value.open) {
+    previousBodyOverflow = document.body.style.overflow;
+    poolDialog.value.showModal();
+    document.body.style.overflow = "hidden";
+  }
+  void loadPoolHistory();
+}
+
+function closePoolHistory(): void {
+  ++poolRequest;
+  poolDialog.value?.close();
+  if (previousBodyOverflow !== null) {
+    document.body.style.overflow = previousBodyOverflow;
+    previousBodyOverflow = null;
+  }
+  selectedPool.value = "";
+  poolHistory.value = null;
+  poolLoading.value = false;
+  poolError.value = "";
+}
+
+function closeOnBackdrop(event: MouseEvent): void {
+  if (event.target !== poolDialog.value) return;
+  const bounds = poolDialog.value!.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right
+    || event.clientY < bounds.top || event.clientY > bounds.bottom) closePoolHistory();
+}
 const alerts = computed(() => {
   const agent = currentAgent.value;
   if (!agent) return [] as string[];
@@ -78,7 +206,7 @@ async function loadHistory(): Promise<void> {
 
 async function refreshAll(): Promise<void> {
   await loadOverview();
-  await loadHistory();
+  await Promise.all([loadHistory(), loadPoolHistory()]);
 }
 
 async function setSiteState(siteName: string, start: boolean): Promise<void> {
@@ -165,6 +293,9 @@ function formatTime(value: string | null | undefined): string {
 }
 
 watch([selectedServer, selectedDays], () => void loadHistory());
+watch(selectedServer, closePoolHistory);
+watch(siteHistoryEnabled, enabled => { if (!enabled) closePoolHistory(); });
+watch(poolHours, () => { poolHistory.value = null; void loadPoolHistory(); });
 onMounted(async () => {
   try {
     canControlServers.value = (await getPlatformContext()).CanControlServers;
@@ -173,9 +304,9 @@ onMounted(async () => {
     console.error(error);
   }
   void loadOverview();
-  refreshTimer = window.setInterval(() => void loadOverview(true), 15_000);
+  refreshTimer = window.setInterval(() => { void loadOverview(true); void loadPoolHistory(true); }, 15_000);
 });
-onBeforeUnmount(() => { if (refreshTimer !== undefined) window.clearInterval(refreshTimer); });
+onBeforeUnmount(() => { closePoolHistory(); if (refreshTimer !== undefined) window.clearInterval(refreshTimer); });
 </script>
 
 <template>
@@ -205,12 +336,53 @@ onBeforeUnmount(() => { if (refreshTimer !== undefined) window.clearInterval(ref
 
   <section class="data-card pool-card">
     <header><div><h2>IIS 網站資源使用量</h2><p>依 Private Memory 由高至低排序；回收期間會加總同一 Application Pool 的所有 PID。</p></div><span>{{ applicationPools.length }} 個網站集區</span></header>
-    <div class="table-wrap"><table><thead><tr><th>IIS 網站／綁定網址</th><th>Application Pool</th><th>集區狀態</th><th>PID</th><th>CPU</th><th>Private Memory</th><th>Working Set</th><th>操作</th></tr></thead>
-      <tbody><tr v-for="pool in applicationPools" :key="pool.ApplicationPoolName"><td><strong>{{ pool.WebsiteNames?.join("、") || pool.SiteNames.join("、") || "未綁定網站" }}</strong><small v-if="pool.WebsiteNames?.length && pool.SiteNames.length" class="binding-hosts">IIS：{{ pool.SiteNames.join("、") }}</small><small v-if="pool.HostNames?.length" class="binding-hosts">{{ pool.HostNames.join("、") }}</small></td><td>{{ pool.ApplicationPoolName }}</td><td><span class="pool-state" :class="pool.State.toLowerCase() === 'started' ? 'started' : ''">{{ pool.State }}</span></td><td>{{ pool.ProcessIds.join(", ") || "—" }}</td><td>{{ formatPercent(pool.CpuUsagePercent) }}</td><td><strong>{{ formatBytes(pool.PrivateMemoryBytes) }}</strong></td><td>{{ formatBytes(pool.WorkingSetBytes) }}</td><td><div v-if="canControlServers && getSiteBindings(pool).length" class="site-controls"><div v-for="site in getSiteBindings(pool)" :key="site.SiteName" class="site-control"><small v-if="getSiteBindings(pool).length > 1">{{ site.SiteName }}</small><div><button v-if="!isSiteStarted(site)" class="table-action icon-action" type="button" title="啟動 IIS 網站" :aria-label="`啟動 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, true)"><span class="material-symbols-outlined">play_arrow</span></button><button v-else class="table-action icon-action danger-action" type="button" title="停止 IIS 網站" :aria-label="`停止 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, false)"><span class="material-symbols-outlined">stop</span></button><button class="table-action icon-action ssl-action" type="button" :title="site.HostNames.length ? `安裝 SSL：${site.HostNames.join('、')}` : '此 IIS 網站沒有可申請 SSL 的主機名稱綁定'" :aria-label="`為 IIS 網站 ${site.SiteName} 安裝 SSL`" :disabled="!currentAgent?.IsOnline || !!submittingSite || !site.HostNames.length" @click="installSsl(site.SiteName, site.HostNames)"><span class="material-symbols-outlined">lock</span></button></div></div></div><span v-else>—</span></td></tr><tr v-if="!applicationPools.length"><td colspan="8">{{ currentAgent?.IsOnline ? "Worker 未回報 IIS Application Pool；請檢查執行帳號是否有權限讀取 IIS 設定" : "Worker 離線，無法取得 IIS 資料" }}</td></tr></tbody>
+    <div class="table-wrap"><table><thead><tr><th>IIS 網站／綁定網址</th><th>Application Pool</th><th>集區狀態</th><th>PID</th><th>CPU</th><th>Private Memory</th><th>Working Set</th><th v-if="siteHistoryEnabled">趨勢</th><th>操作</th></tr></thead>
+      <tbody><tr v-for="pool in applicationPools" :key="pool.ApplicationPoolName"><td><strong>{{ pool.WebsiteNames?.join("、") || pool.SiteNames.join("、") || "未綁定網站" }}</strong><small v-if="pool.WebsiteNames?.length && pool.SiteNames.length" class="binding-hosts">IIS：{{ pool.SiteNames.join("、") }}</small><small v-if="pool.HostNames?.length" class="binding-hosts">{{ pool.HostNames.join("、") }}</small></td><td>{{ pool.ApplicationPoolName }}</td><td><span class="pool-state" :class="pool.State.toLowerCase() === 'started' ? 'started' : ''">{{ pool.State }}</span></td><td>{{ pool.ProcessIds.join(", ") || "—" }}</td><td>{{ formatPercent(pool.CpuUsagePercent) }}</td><td><strong>{{ formatBytes(pool.PrivateMemoryBytes) }}</strong></td><td>{{ formatBytes(pool.WorkingSetBytes) }}</td><td v-if="siteHistoryEnabled"><button class="table-action trend-action" type="button" :aria-label="`${pool.ApplicationPoolName} 資源趨勢`" @click="openPoolHistory(pool)">資源趨勢</button></td><td><div v-if="canControlServers && getSiteBindings(pool).length" class="site-controls"><div v-for="site in getSiteBindings(pool)" :key="site.SiteName" class="site-control"><small v-if="getSiteBindings(pool).length > 1">{{ site.SiteName }}</small><div><button v-if="!isSiteStarted(site)" class="table-action icon-action" type="button" title="啟動 IIS 網站" :aria-label="`啟動 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, true)"><span class="material-symbols-outlined">play_arrow</span></button><button v-else class="table-action icon-action danger-action" type="button" title="停止 IIS 網站" :aria-label="`停止 IIS 網站 ${site.SiteName}`" :disabled="!currentAgent?.IsOnline || !!submittingSite" @click="setSiteState(site.SiteName, false)"><span class="material-symbols-outlined">stop</span></button><button class="table-action icon-action ssl-action" type="button" :title="site.HostNames.length ? `安裝 SSL：${site.HostNames.join('、')}` : '此 IIS 網站沒有可申請 SSL 的主機名稱綁定'" :aria-label="`為 IIS 網站 ${site.SiteName} 安裝 SSL`" :disabled="!currentAgent?.IsOnline || !!submittingSite || !site.HostNames.length" @click="installSsl(site.SiteName, site.HostNames)"><span class="material-symbols-outlined">lock</span></button></div></div></div><span v-else>—</span></td></tr><tr v-if="!applicationPools.length"><td :colspan="siteHistoryEnabled ? 9 : 8">{{ currentAgent?.IsOnline ? "Worker 未回報 IIS Application Pool；請檢查執行帳號是否有權限讀取 IIS 設定" : "Worker 離線，無法取得 IIS 資料" }}</td></tr></tbody>
     </table></div>
   </section>
+
+  <Teleport to="body">
+  <dialog v-if="selectedPool" ref="poolDialog" id="pool-resource-history" class="pool-history" aria-modal="true" aria-labelledby="pool-history-title" @cancel.prevent="closePoolHistory" @click="closeOnBackdrop">
+    <header><div><h2 id="pool-history-title">{{ selectedPool }} 資源趨勢</h2><p>{{ poolWebsiteNames.join('、') }}</p></div><button class="ui-button" type="button" autofocus @click="closePoolHistory">關閉</button></header>
+    <div class="pool-history-body" :aria-busy="poolLoading">
+    <div class="history-actions"><label>歷史範圍 <select v-model.number="poolHours"><option :value="1">近 1 小時</option><option :value="6">近 6 小時</option><option :value="24">近 24 小時</option></select></label><button class="ui-button" type="button" :disabled="poolLoading" @click="loadPoolHistory()">重新整理</button><small>每 {{ poolHistory?.SampleSeconds ?? 60 }} 秒取樣；約每分鐘更新圖表。</small></div>
+    <p v-if="poolError" class="alert alert-error" role="alert">{{ poolError }}</p>
+    <p v-if="poolHistory && !poolHistory.Enabled" class="history-note">網站歷史取樣尚未啟用，目前只能查看即時資源。</p>
+    <template v-else>
+      <p class="history-note">圖表使用相同時間軸、各自刻度。在線人數為最近兩分鐘有心跳的去重訪客；不等於當下請求數。中斷回報或 PID 改變時曲線斷開。</p>
+      <p v-if="poolPoints.length" class="history-note">最新取樣 {{ formatTime(poolPoints[poolPoints.length - 1].SampledAtUtc) }}；PID：{{ poolPoints[poolPoints.length - 1].ProcessIds.join(', ') || '無執行程序' }}。</p>
+      <p v-if="sharedPool" class="history-note">此集區對應多個網站：資源為集區總量，人數為已對應網站合計，無法將記憶體拆分到個別網站。</p>
+      <p v-if="poolHistory?.Points.some(p => p.OnlineVisitors === null)" class="history-note">部分時段無法對應網站或取得人數，該處留白，不以 0 人替代。</p>
+      <div class="pool-history-charts">
+        <article><h3>記憶體（MiB）</h3><MetricLineChart :series="memorySeries" :maximum="memoryMaximum" unit=" MiB" aria-label="網站記憶體趨勢" :empty-text="poolLoading ? '讀取中…' : '尚未累積網站歷史資料'" /></article>
+        <article><h3>在線訪客</h3><MetricLineChart :series="visitorsSeries" :maximum="visitorsMaximum" unit=" 人" :decimals="0" aria-label="在線訪客趨勢" :empty-text="poolLoading ? '讀取中…' : '尚無可用人數資料'" /></article>
+        <article><h3>CPU</h3><MetricLineChart :series="poolCpuSeries" aria-label="網站 CPU 趨勢" :empty-text="poolLoading ? '讀取中…' : '尚無可用 CPU 資料'" /></article>
+        <p class="history-note">GC Heap／Committed／碎片是上次 GC 的結果，Managed 是目前估計，均不代表完整的存活物件大小。請求量包含爬蟲、API、靜態檔案及被阻擋的請求；不含 IIS／CDN 在進入應用程式前處理的請求。速率為兩次快照間平均，至少需要兩筆有效資料。</p>
+        <p v-if="latestRuntime?.Managed == null" class="history-note">尚無完整的執行階段診斷：請確認 Public 已啟用採樣、Worker 已更新，且能讀取未過期的程序快照。缺值不代表 0。</p>
+        <p v-else class="history-note">採樣當下處理中請求：{{ latestRuntime.Active }}；GC 模式：{{ poolPoints.at(-1)?.RuntimeMetrics?.map(p => `${p.ProcessId}: ${p.ServerGc ? 'Server' : 'Workstation'}`).join('、') }}。</p>
+        <article><h3>GC 記憶體（MiB）</h3><MetricLineChart :series="gcSeries" :maximum="gcMaximum" unit=" MiB" empty-text="尚無 GC 診斷資料" /></article>
+        <article><h3>實際請求速率</h3><MetricLineChart :series="requestSeries" :maximum="requestMaximum" unit=" 次/秒" empty-text="尚無連續請求計數資料" /></article>
+        <article><h3>記憶體配置速率</h3><MetricLineChart :series="allocationSeries" :maximum="allocationMaximum" unit=" MiB/秒" empty-text="尚無連續配置計數資料" /></article>
+        <article><h3>Gen 2 回收次數（程序啟動後累計）</h3><MetricLineChart :series="gen2Series" :maximum="gen2Maximum" unit=" 次" :decimals="0" empty-text="尚無 GC 回收資料" /></article>
+      </div>
+      <details v-if="pidChanges.length"><summary>PID 變化（{{ pidChanges.length }} 次）</summary><ul><li v-for="point in pidChanges" :key="point.SampledAtUtc">{{ formatTime(point.SampledAtUtc) }}：{{ point.ProcessIds.join(', ') || '無執行程序' }}</li></ul></details>
+    </template>
+    </div>
+  </dialog>
+  </Teleport>
 </template>
 
 <style scoped>
+.pool-history { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(960px, 94vw); max-width: 100vw; height: 100dvh; max-height: 100dvh; padding: 0; border: 0; border-left: 1px solid #dce3ee; border-radius: 0; box-sizing: border-box; background: #fff; color: #234; box-shadow: -8px 0 32px #16243a26; overflow: hidden; }
+.pool-history[open] { display: flex; flex-direction: column; }
+.pool-history::backdrop { background: #13213970; }
+.pool-history > header { flex: none; padding: 1.1rem 1.25rem; border-bottom: 1px solid #e8ebf0; background: #fff; }
+.pool-history > header > div { min-width: 0; }
+.pool-history > header h2, .pool-history > header p { overflow-wrap: anywhere; }
+.pool-history > header p { margin: .35rem 0 0; color: #687386; font-size: .85rem; }
+.pool-history > header button { flex: none; align-self: flex-start; }
+.pool-history-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 1.25rem 1.25rem; }
+@media (max-width: 640px) { .pool-history { width: 100vw; border-left: 0; } }
+.pool-history header { display: flex; justify-content: space-between; gap: 1rem; }.pool-history h2 { margin: 0; font-size: 1.05rem; }.pool-history h3 { margin: 1rem 0 .5rem; font-size: .95rem; }.history-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin: 1rem 0; }.history-actions select { padding: .4rem; border: 1px solid #cfd6e2; border-radius: 6px; }.history-note, .history-actions small { color: #687386; font-size: .85rem; }.trend-action { padding: .35rem .5rem; white-space: nowrap; }.pool-history-charts { display: grid; gap: 1rem; }
 .heading-actions { display: flex; gap: .6rem; }.monitor-alert ul { margin: .4rem 0 0 1.1rem; }.monitor-toolbar { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: end; min-height: 0; padding: 1rem 1.25rem; margin-bottom: 1rem; }.monitor-toolbar label { display: grid; gap: .35rem; min-width: 250px; font-size: .85rem; font-weight: 600; }.monitor-toolbar select { min-height: 40px; padding: .45rem .65rem; border: 1px solid #cfd6e2; border-radius: 6px; background: white; }.connection-state { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .15rem .5rem; margin-left: auto; }.connection-state span { width: .65rem; height: .65rem; border-radius: 50%; background: #b42318; }.connection-state span.online { background: #159455; }.connection-state small { grid-column: 2; color: #718096; }.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1rem; }.summary-card { display: grid; align-content: center; gap: .45rem; min-height: 145px; padding: 1rem 1.2rem; }.summary-card.critical { border-color: #e76f68; background: #fff7f6; }.summary-card small, .summary-card span { color: #687386; }.summary-card strong { font-size: 1.7rem; }.chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }.chart-card { padding: 1.2rem; }.chart-card header, .pool-card > header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }.chart-card h2, .pool-card h2 { margin: 0; font-size: 1.05rem; }.chart-card header small { color: #718096; }.pool-card { min-height: 0; margin-top: 1rem; padding: 1.2rem; }.pool-card p { margin: .35rem 0 0; color: #687386; }.binding-hosts { display: block; margin-top: .25rem; color: #687386; }.table-wrap { overflow-x: auto; margin-top: 1rem; }table { width: 100%; border-collapse: collapse; font-size: .87rem; }th, td { padding: .65rem; text-align: left; border-bottom: 1px solid #e8ebf0; vertical-align: top; }th { white-space: nowrap; }.pool-state { display: inline-block; padding: .15rem .5rem; border-radius: 999px; background: #eef1f5; }.pool-state.started { color: #17633a; background: #d9f4e5; }.site-controls, .site-control { display: grid; gap: .35rem; }.site-control > div { display: flex; gap: .35rem; }.table-action { border: 1px solid #b9c4d3; border-radius: 6px; background: #fff; color: #234; cursor: pointer; }.icon-action { display: inline-grid; width: 31px; height: 31px; padding: 0; place-items: center; }.icon-action .material-symbols-outlined { font-size: 19px; }.table-action:hover:not(:disabled) { background: #f4f7fb; }.table-action:disabled { opacity: .55; cursor: not-allowed; }.danger-action { color: #b42318; border-color: #efaaa5; }.ssl-action { color: #17633a; border-color: #9acfb3; }@media (max-width: 1000px) { .chart-grid { grid-template-columns: 1fr; }.connection-state { margin-left: 0; } }
 </style>

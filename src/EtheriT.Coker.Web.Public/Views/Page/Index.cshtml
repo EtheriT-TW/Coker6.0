@@ -134,6 +134,18 @@
 }
 
 @{
+    var eventStartDate = Model.PageData.EventStartDate;
+    var eventEndDate = Model.PageData.EventEndDate;
+    var eventDateText = eventStartDate.HasValue && eventEndDate.HasValue
+        ? $"{eventStartDate.Value.ToString("yyyy/MM/dd")} ~ {eventEndDate.Value.ToString("yyyy/MM/dd")}"
+        : (eventStartDate ?? eventEndDate)?.ToString("yyyy/MM/dd") ?? "";
+
+    if (Model.GlobalSettings.Visibility.ShowPublishDate &&
+        Model.PageData.PageView == "Article" &&
+        !string.IsNullOrEmpty(eventDateText))
+    {
+        <div class="container editTime eventDate font_small text-end">@L.get("EventDate")：@eventDateText</div>
+    }
     if (Model.GlobalSettings.Visibility.ShowPublishDate &&
         Model.PageData.PageView == "Article" &&
         Model.PageData.LastModificationTime != null)

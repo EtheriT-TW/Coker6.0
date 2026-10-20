@@ -4,9 +4,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EtheriT.Coker.Core.Models
 {
+    /// <summary>企業信箱，綁客戶（Companies），一個客戶最多一筆未刪除的。</summary>
     public class WebsiteEnterpriseEmail : FullAuditedEntity
     {
-        public long FK_WebsiteId { get; set; }
+        public long FK_CompanyId { get; set; }
+        public virtual Company? Company { get; set; }
         public EnterpriseEmailTypeEnum AccountType { get; set; }    //帳號類型存Enum
         public int TotalAccounts { get; set; }                      //帳號總數
         [StringLength(200)]

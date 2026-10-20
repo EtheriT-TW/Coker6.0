@@ -303,6 +303,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("EventEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EventStartDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
 
@@ -9809,7 +9815,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<long>("FK_WebsiteId")
+                    b.Property<long>("FK_CompanyId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
@@ -9836,7 +9842,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebsiteId");
+                    b.HasIndex("FK_CompanyId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
 
                     b.ToTable("WebsiteEnterpriseEmails");
                 });
@@ -11446,11 +11454,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.WebsiteEnterpriseEmail", b =>
                 {
-                    b.HasOne("EtheriT.Coker.Core.Models.Website", null)
+                    b.HasOne("EtheriT.Coker.Core.Models.Company", "Company")
                         .WithMany()
-                        .HasForeignKey("FK_WebsiteId")
+                        .HasForeignKey("FK_CompanyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.storeSetItem", b =>

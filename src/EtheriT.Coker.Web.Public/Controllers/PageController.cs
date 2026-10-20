@@ -1123,7 +1123,7 @@ namespace EtheriT.Coker.Web.Public.Controllers
                     }
             };
 
-            return new Dictionary<string, object?>
+            var articleData = new Dictionary<string, object?>
             {
                 ["@context"] = "https://schema.org",
                 ["@type"] = "Article",
@@ -1143,6 +1143,34 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 ["author"] = organization,
                 ["publisher"] = publisher,
                 ["inLanguage"] = NormalizeStructuredDataLocale(locale)
+            };
+
+            // schema.org 的 Event 必須有 startDate，只有結束日期時不輸出活動資料
+            if (!article.EventStartDate.HasValue)
+            {
+                return articleData;
+            }
+
+            var eventData = new Dictionary<string, object?>
+            {
+                ["@type"] = "Event",
+                ["@id"] = $"{canonicalUrl}#event",
+                ["name"] = article.Title,
+                ["description"] = description,
+                ["image"] = articleImageUrl == null ? null : new[] { articleImageUrl },
+                ["url"] = canonicalUrl,
+                ["startDate"] = article.EventStartDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ["endDate"] = article.EventEndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                ["eventStatus"] = "https://schema.org/EventScheduled",
+                ["organizer"] = organization,
+                ["inLanguage"] = NormalizeStructuredDataLocale(locale)
+            };
+
+            articleData.Remove("@context");
+            return new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@graph"] = new object[] { articleData, eventData }
             };
         }
 

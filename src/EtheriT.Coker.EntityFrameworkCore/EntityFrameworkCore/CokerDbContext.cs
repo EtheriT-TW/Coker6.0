@@ -1047,11 +1047,14 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
 
             modelBuilder.Entity<WebsiteEnterpriseEmail>(o =>
             {
-                o.HasOne<Website>().WithMany()
-                 .HasForeignKey(x => x.FK_WebsiteId)
+                o.HasOne(x => x.Company).WithMany()
+                 .HasForeignKey(x => x.FK_CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
 
-                o.HasIndex(x => x.FK_WebsiteId);
+                // 一個客戶只能有一筆未刪除的企業信箱
+                o.HasIndex(x => x.FK_CompanyId)
+                 .IsUnique()
+                 .HasFilter("[IsDeleted] = 0");
             });
 
             modelBuilder.Entity<ProvisioningTask>(o =>

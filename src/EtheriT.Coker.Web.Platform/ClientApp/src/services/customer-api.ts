@@ -1,4 +1,6 @@
 import { api, ApiError } from "@/core/coker";
+import { EnterpriseEmail } from "@/types/enterprise-email";
+import { fromDateInput } from "@/utils/date-input";
 import type {
     CustomerDetail,
     CustomerForm,
@@ -8,6 +10,36 @@ import type {
 } from "@/types/customer";
 
 const baseUrl = "/api/companies";
+
+function blankToNull(value: string): string | null {
+    const trimmed = value.trim();
+    return trimmed === "" ? null : trimmed;
+}
+
+/** 企業信箱五個欄位攤平在表單上，送出時收成一個物件；未使用＝null，後端會軟刪除既有那筆。 */
+function toSaveRequest(form: CustomerForm) {
+    const {
+        EnterpriseEmailAccountType: accountType,
+        EnterpriseEmailTotalAccounts: totalAccounts,
+        EnterpriseEmailOtherType: otherType,
+        EnterpriseEmailExpirationDate: expirationDate,
+        EnterpriseEmailRemark: remark,
+        ...customer
+    } = form;
+
+    return {
+        ...customer,
+        EnterpriseEmail: accountType === null
+            ? null
+            : {
+                AccountType: accountType,
+                TotalAccounts: Number(totalAccounts),
+                OtherType: accountType === EnterpriseEmail.Other ? blankToNull(otherType) : null,
+                ExpirationDate: fromDateInput(expirationDate),
+                Remark: blankToNull(remark)
+            }
+    };
+}
 
 export function fetchCustomers(): Promise<CustomerListItem[]> {
     return api.get<CustomerListItem[]>(baseUrl);
@@ -23,11 +55,11 @@ export function fetchCustomerWebsites(id: number): Promise<CustomerWebsite[]> {
 }
 
 export function createCustomer(form: CustomerForm): Promise<{ Id: number }> {
-    return api.post<{ Id: number }>(baseUrl, form);
+    return api.post<{ Id: number }>(baseUrl, toSaveRequest(form));
 }
 
 export function updateCustomer(id: number, form: CustomerForm): Promise<void> {
-    return api.put<void>(`${baseUrl}/${id}`, form);
+    return api.put<void>(`${baseUrl}/${id}`, toSaveRequest(form));
 }
 
 export function deleteCustomer(id: number): Promise<void> {

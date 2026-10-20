@@ -860,6 +860,8 @@ namespace EtheriT.Coker.Application.Directory
                         NodeDate = a.NodeDate,
                         StartTime = a.StartTime,
                         EndTime = a.EndTime,
+                        EventStartDate = a.EventStartDate,
+                        EventEndDate = a.EventEndDate,
                         Description = string.IsNullOrEmpty(a.Description)
                             ? getSearchDescription(a.Html, dto.SearchText)
                             : getSearchDescription(a.Description, dto.SearchText),
@@ -3165,6 +3167,8 @@ namespace EtheriT.Coker.Application.Directory
                                             Description = a.Description,
                                             SerNo = a.SerNO,
                                             NodeDate = a.NodeDate,
+                                            EventStartDate = a.EventStartDate,
+                                            EventEndDate = a.EventEndDate,
                                             LastModificationTime = a.LastModificationTime ?? a.CreationTime,
                                             CanEdit = !hasDirectoryPermission ||
                                               isPowerUser ||

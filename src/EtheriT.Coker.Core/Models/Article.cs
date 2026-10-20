@@ -40,6 +40,8 @@ namespace EtheriT.Coker.Core.Models
 		[MaxLength]
         public string? DataJson { get; set; }
         public virtual DateTime? NodeDate { get; set; }
+        public virtual DateTime? EventStartDate{ get; set; }
+        public virtual DateTime? EventEndDate { get; set; }
         public virtual DateTime? StartTime { get; set; }
         public virtual DateTime? EndTime { get; set; }
         public bool permanent { get; set; }

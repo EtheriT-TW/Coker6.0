@@ -19,14 +19,6 @@ export const WebsiteLevel = {
 
 export type WebsiteLevelValue = (typeof WebsiteLevel)[keyof typeof WebsiteLevel];
 
-export const EnterpriseEmail = {
-    Starter: 1,
-    Standard: 2,
-    Other: 3
-} as const;
-
-export type EnterpriseEmailValue = (typeof EnterpriseEmail)[keyof typeof EnterpriseEmail];
-
 export const websiteStatusOptions: Array<{ Value: WebsiteStatusValue; Text: string }> = [
     { Value: WebsiteStatus.正常, Text: "正常" },
     { Value: WebsiteStatus.暫停, Text: "暫停" },
@@ -45,12 +37,6 @@ export const websiteLocaleOptions: Array<{ Value: string; Text: string }> = [
     { Value: "zh-tw", Text: "中文（繁體）" },
     { Value: "en", Text: "英文" }
 ];
-
-export const enterpriseEmailOption: Array<{ Value: EnterpriseEmailValue; Text: string }> = [
-    {Value: EnterpriseEmail.Starter, Text:"Google Workspace Business Starter"},
-    {Value: EnterpriseEmail.Standard, Text:"Google Workspace Business Standard"},
-    {Value: EnterpriseEmail.Other, Text:"其他"}
-]
 
 /** GET /api/websites/options：主機清單與新增網站時的預設值，由後端設定提供，前端不寫死。 */
 export interface WebsiteOptions {
@@ -161,7 +147,6 @@ export interface WebsiteDetail {
     Remark: string | null;
     /** null＝後台還沒綁公司 */
     Customer: WebsiteCustomer | null;
-    EnterpriseEmail: WebsiteEnterpriseEmail | null;
 }
 
 /** 表單模型：字串與日期一律用 ""；Status／Level 用 number，避免 v-model 在 vue-tsc 報型別錯。 */
@@ -181,19 +166,6 @@ export interface WebsiteForm {
     /** 只有其他網址；主要網址不在表單內 */
     Urls: WebsiteUrlFormItem[];
     Remark: string;
-    EnterpriseEmailAccountType: number | null;
-    EnterpriseEmailTotalAccounts: string;
-    EnterpriseEmailOtherType: string;
-    EnterpriseEmailExpirationDate: string;
-    EnterpriseEmailRemark: string;
-}
-
-export interface WebsiteEnterpriseEmail{
-    AccountType: EnterpriseEmailValue;
-    TotalAccounts: number;
-    OtherType: string | null;
-    ExpirationDate: string;
-    Remark: string | null;
 }
 
 export interface WebsiteBindingCandidate {

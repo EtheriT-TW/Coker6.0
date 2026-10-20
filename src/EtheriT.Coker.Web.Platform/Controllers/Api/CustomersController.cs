@@ -35,7 +35,9 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 company.SalesOwner,
                 company.CustomerType,
                 company.CustomerTypeOther,
-                company.Contact
+                company.Contact,
+                HasEnterpriseEmail = db.WebsiteEnterpriseEmails
+                    .Any(email => !email.IsDeleted && email.FK_CompanyId == company.Id)
             })
             .ToListAsync(HttpContext.RequestAborted);
 
@@ -53,7 +55,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 row.SalesOwner,
                 DescribeCustomerType(row.CustomerType, row.CustomerTypeOther),
                 Clean(row.Contact),
-                HasEnterpriseEmail: owned.Any(site => site.HasEnterpriseEmail),
+                HasEnterpriseEmail: row.HasEnterpriseEmail,
                 Urls: JoinDistinct(owned.Select(site => site.DefaultUrl)),
                 Domains: JoinDistinct(owned.Select(site => site.DomainName)));
         })
@@ -61,9 +63,9 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
     }
 
 
-    private sealed record CompanySiteSummary(long CompanyId, string? DefaultUrl, string? DomainName, bool HasEnterpriseEmail);
+    private sealed record CompanySiteSummary(long CompanyId, string? DefaultUrl, string? DomainName);
 
-    /// <summary>清單用：每家公司綁定站台的網址、網域、有無企業信箱。一次撈全部再分組，避免每列各查一次。</summary>
+    /// <summary>清單用：每家公司綁定站台的網址、網域。一次撈全部再分組，避免每列各查一次。</summary>
     private async Task<ILookup<long, CompanySiteSummary>> LoadSiteSummariesAsync()
     {
         var rows = await db.MappingCompanyAndWebsites
@@ -74,8 +76,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 mapping.Website!.DefaultUrl,
                 mapping.Website.PlatformDomain != null && !mapping.Website.PlatformDomain.IsDeleted
                     ? mapping.Website.PlatformDomain.DomainName
-                    : null,
-                db.WebsiteEnterpriseEmails.Any(email => !email.IsDeleted && email.FK_WebsiteId == mapping.FK_WebsiteId)))
+                    : null))
             .ToListAsync(HttpContext.RequestAborted);
 
         return rows.ToLookup(row => row.CompanyId);
@@ -121,6 +122,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             PrimaryContactPhone = company.ContactPhone,
             PrimaryContactEmail = company.ContactEmail,
             Remark = company.Remark,
+            EnterpriseEmail = await LoadEnterpriseEmailAsync(company.Id),
             SubContacts = company.SecondaryContacts
                 .OrderBy(contact => contact.Sort)
                 .Select(contact => new CustomerContactDto(
@@ -133,6 +135,21 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 .ToList()
         };
     }
+
+    /// <summary>唯一索引保證未刪除的最多一筆。</summary>
+    private Task<EnterpriseEmailDto?> LoadEnterpriseEmailAsync(long companyId) =>
+        db.WebsiteEnterpriseEmails
+            .AsNoTracking()
+            .Where(item => !item.IsDeleted && item.FK_CompanyId == companyId)
+            .Select(item => new EnterpriseEmailDto
+            {
+                AccountType = item.AccountType,
+                TotalAccounts = item.TotalAccounts,
+                OtherType = item.OtherType,
+                ExpirationDate = item.ExpirationDate,
+                Remark = item.Remark
+            })
+            .FirstOrDefaultAsync(HttpContext.RequestAborted);
 
     /// <summary>未被軟刪除的後台站台。本專案沒有全域查詢過濾器，每個查詢都得自己排除。</summary>
     private IQueryable<Website> ActiveSites =>
@@ -160,13 +177,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 site.Level,
                 site.ServiceStatus,
                 site.StartDate,
-                site.EndDate,
-                // 與網站編輯頁 LoadEnterpriseEmailAsync 相同：取 Id 最小的那筆
-                EnterpriseEmailExpirationDate = db.WebsiteEnterpriseEmails
-                    .Where(email => !email.IsDeleted && email.FK_WebsiteId == site.Id)
-                    .OrderBy(email => email.Id)
-                    .Select(email => (DateTime?)email.ExpirationDate)
-                    .FirstOrDefault()
+                site.EndDate
             })
             .ToListAsync(HttpContext.RequestAborted);
 
@@ -185,8 +196,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
                 Url: row.DefaultUrl,
                 ServiceStartDate: row.StartDate,
                 ServiceEndDate: row.EndDate,
-                RemainingDays: ToRemainingDays(row.EndDate, today),
-                EnterpriseEmailExpirationDate: row.EnterpriseEmailExpirationDate))
+                RemainingDays: ToRemainingDays(row.EndDate, today)))
             .ToList();
     }
 
@@ -241,6 +251,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
             .ToList();
 
         db.Companies.Add(company);
+        SyncEnterpriseEmail(company, request.EnterpriseEmail, existing: null);
         var failure = await TrySaveAsync();
         if (failure is not null)
             return failure;
@@ -261,8 +272,12 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
         if (!await ValidateUniqueAsync(request, id))
             return ValidationProblem(ModelState);
 
+        var email = await db.WebsiteEnterpriseEmails
+            .FirstOrDefaultAsync(item => !item.IsDeleted && item.FK_CompanyId == id, HttpContext.RequestAborted);
+
         Apply(request, company);
         SyncSecondaryContacts(request, company);
+        SyncEnterpriseEmail(company, request.EnterpriseEmail, email);
 
         return await TrySaveAsync() ?? NoContent();
     }
@@ -290,6 +305,12 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
         {
             db.SecondaryContacts.Remove(contact);
         }
+
+        var emails = await db.WebsiteEnterpriseEmails
+            .Where(item => !item.IsDeleted && item.FK_CompanyId == id)
+            .ToListAsync(HttpContext.RequestAborted);
+        db.WebsiteEnterpriseEmails.RemoveRange(emails);
+
         db.Companies.Remove(company);
 
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
@@ -395,6 +416,34 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
         {
             db.SecondaryContacts.Remove(orphan);
         }
+    }
+
+    /// <summary>
+    /// 企業信箱：null＝未使用，原本有的軟刪除；否則沿用既有那筆或新增。
+    /// 新增時掛 Company 導覽屬性，新客戶還沒有 Id 也能在同一次 SaveChanges 寫入。
+    /// </summary>
+    private void SyncEnterpriseEmail(Company company, EnterpriseEmailInput? input, WebsiteEnterpriseEmail? existing)
+    {
+        if (input is null)
+        {
+            // PlatformAuditor 會把 Remove 轉成軟刪除
+            if (existing is not null)
+                db.WebsiteEnterpriseEmails.Remove(existing);
+            return;
+        }
+
+        var target = existing;
+        if (target is null)
+        {
+            target = new WebsiteEnterpriseEmail { Company = company };
+            db.WebsiteEnterpriseEmails.Add(target);
+        }
+
+        target.AccountType = input.AccountType!.Value;          // [Required] 已擋
+        target.TotalAccounts = input.TotalAccounts!.Value;
+        target.OtherType = input.AccountType == EnterpriseEmailTypeEnum.Other ? Clean(input.OtherType) : null;
+        target.ExpirationDate = input.ExpirationDate!.Value.Date;
+        target.Remark = Clean(input.Remark);
     }
 
     private static string DescribeCustomerType(PlatformCustomerTypeEnum type, string? other) => type switch

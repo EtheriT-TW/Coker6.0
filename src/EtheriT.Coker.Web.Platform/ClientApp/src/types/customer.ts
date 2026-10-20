@@ -1,4 +1,5 @@
 ﻿import type { WebsiteLevelValue, WebsiteStatusValue } from "@/types/website";
+import type { EnterpriseEmailDetail } from "@/types/enterprise-email";
 
 export const CustomerType = {
     未設定: 0,
@@ -54,6 +55,8 @@ export interface CustomerDetail {
     PrimaryContactEmail: string | null;
     SubContacts: CustomerContact[];
     Remark: string | null;
+    /** null＝未使用企業信箱 */
+    EnterpriseEmail: EnterpriseEmailDetail | null;
 }
 
 export interface CustomerLookup {
@@ -91,6 +94,12 @@ export interface CustomerForm {
     PrimaryContactEmail: string;
     SubContacts: CustomerContactForm[];
     Remark: string;
+    /** 企業信箱攤平在表單上；null＝未使用。送出時由 customer-api 收成 EnterpriseEmail 物件 */
+    EnterpriseEmailAccountType: number | null;
+    EnterpriseEmailTotalAccounts: string;
+    EnterpriseEmailOtherType: string;
+    EnterpriseEmailExpirationDate: string;
+    EnterpriseEmailRemark: string;
 }
 
 /** 客戶底下的站台（唯讀）＝後台綁到這個客戶的站台。 */
@@ -107,6 +116,4 @@ export interface CustomerWebsite {
     ServiceStartDate: string | null;
     ServiceEndDate: string | null;
     RemainingDays: number | null;
-    /** null＝這個站台沒有設定企業信箱 */
-    EnterpriseEmailExpirationDate: string | null;
 }

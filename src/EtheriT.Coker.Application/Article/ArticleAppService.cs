@@ -91,6 +91,11 @@ namespace EtheriT.Coker.Application.Article
                     throw new Exception("此目錄已設定權限，您目前僅能檢視，不能儲存修改。");
                 }
 
+                if (dto.EventStartDate.HasValue && dto.EventEndDate.HasValue && dto.EventEndDate.Value < dto.EventStartDate.Value)
+                {
+                    throw new Exception("活動結束日期不可早於開始日期");
+                }
+
                 if (dto.Id == null || dto.Id == 0)
                 {
                     Core.Models.Article a = mapper.Map<Core.Models.Article>(dto);
@@ -181,6 +186,8 @@ namespace EtheriT.Coker.Application.Article
                                                EndTime = e.EndTime,
                                                permanent = e.permanent,
                                                NodeDate = e.NodeDate,
+                                               EventStartDate = e.EventStartDate,
+                                               EventEndDate = e.EventEndDate,
                                                LastModificationTime = e.LastModificationTime ?? e.CreationTime,
                                            }).ToListAsync();
                     var output = DataSourceLoader.Load(dataQuery, loadOptions);
@@ -234,6 +241,8 @@ namespace EtheriT.Coker.Application.Article
                                           EndTime = e.EndTime,
                                           permanent = e.permanent,
                                           NodeDate = e.NodeDate,
+                                          EventStartDate = e.EventStartDate,
+                                          EventEndDate = e.EventEndDate,
                                       }).ToListAsync();
                     var dataQuery = data.Where(e => e.Tags.Contains("電子報")).ToList();
 
@@ -357,6 +366,8 @@ namespace EtheriT.Coker.Application.Article
                         StartTime = result.StartTime,
                         EndTime = result.EndTime,
                         NodeDate = result.NodeDate,
+                        EventStartDate = result.EventStartDate,
+                        EventEndDate = result.EventEndDate,
                         RemovedFromShelves = !result.RemovedFromShelves,
                         permanent = result.permanent,
                         DataJson = string.IsNullOrEmpty(result.DataJson) ? null : JsonConvert.DeserializeObject<NewsletterFrameDto>(result.DataJson),
@@ -867,6 +878,8 @@ namespace EtheriT.Coker.Application.Article
                         result.Css = sanitized.Css;
                         result.Html = result.Html != null ? result.Html.Replace("&lt;body&gt;", "").Replace("&lt;/body&gt;", "") : result.Html;
                         result.CreationTime = articl.CreationTime;
+                        result.EventStartDate = articl.EventStartDate;
+                        result.EventEndDate = articl.EventEndDate;
                         result.LastModificationTime = articl.LastModificationTime ?? articl.CreationTime;
                         result.PopularVisible = articl.PopularVisible;
                         result.Popular = articl.PopularVisible ? articl.Popular : null;

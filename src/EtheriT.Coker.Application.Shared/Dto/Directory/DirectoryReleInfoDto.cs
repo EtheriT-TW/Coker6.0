@@ -15,6 +15,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public int? MediaType { get; set; }
         public string? Link { get; set; }
         public DateTime? NodeDate { get; set; }
+        public DateTime? EventStartDate { get; set; }
+        public DateTime? EventEndDate { get; set; }
         public DateTime? StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public DateTime? LastModificationTime { get; set; }

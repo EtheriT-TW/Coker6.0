@@ -16,6 +16,9 @@
 
     } from "@/types/customer";
 
+    import DateField from "@/components/DateField.vue";
+    import { EnterpriseEmail, enterpriseEmailOption } from "@/types/enterprise-email";
+    import { toDateInput } from "@/utils/date-input";
     import { remainingDaysClass, statusView, toHref } from "@/utils/website-display";
     import { safeReturnTo } from "@/utils/return-to";
 
@@ -23,6 +26,11 @@
     /** 「其他」要跟填空框綁在一起單獨渲染，不走迴圈。 */
     const plainTypeOptions = customerTypeOptions.filter(
         option => option.Value !== CustomerType.其他
+    );
+
+    /** 企業信箱的「其他」同樣跟填空框綁在一起單獨渲染。 */
+    const plainEmailTypeOptions = enterpriseEmailOption.filter(
+        option => option.Value !== EnterpriseEmail.Other
     );
 
     const route = useRoute();
@@ -69,7 +77,12 @@
             PrimaryContactPhone: "",
             PrimaryContactEmail: "",
             SubContacts: [],
-            Remark: ""
+            Remark: "",
+            EnterpriseEmailAccountType: null,
+            EnterpriseEmailTotalAccounts: "",
+            EnterpriseEmailOtherType: "",
+            EnterpriseEmailExpirationDate: "",
+            EnterpriseEmailRemark: ""
         };
     }
 
@@ -86,7 +99,27 @@
             Email: [rules.email("公司 Email 格式不正確。")],
             PrimaryContactName: [rules.required("請輸入主要聯絡人姓名。")],
             PrimaryContactEmail: [rules.email("主要聯絡人 Email 格式不正確。")],
-            Remark: [rules.maxLength(2000, "備註總字數不可超過2000字元")]
+            Remark: [rules.maxLength(2000, "備註總字數不可超過2000字元")],
+            // 企業信箱「未使用」時其餘欄位都不驗；規則與後端 EnterpriseEmailInput 一致
+            EnterpriseEmailTotalAccounts: [
+                rules.custom<CustomerForm>((value, model) => {
+                    if (model.EnterpriseEmailAccountType === null) return null;
+                    const text = String(value ?? "").trim();
+                    if (!text) return "請輸入帳號總數。";
+                    const count = Number(text);
+                    return Number.isInteger(count) && count >= 1 ? null : "帳號總數至少為 1。";
+                })
+            ],
+            EnterpriseEmailOtherType: [
+                rules.custom<CustomerForm>((value, model) =>
+                    model.EnterpriseEmailAccountType === EnterpriseEmail.Other && !String(value ?? "").trim()
+                        ? "請輸入自訂版本名稱。"
+                        : null)
+            ],
+            EnterpriseEmailExpirationDate: [
+                rules.custom<CustomerForm>((value, model) =>
+                    model.EnterpriseEmailAccountType !== null && !value ? "請輸入到期日期。" : null)
+            ]
         },
         validate: async values => {
             const errors: Record<string, string[]> = {};
@@ -152,6 +185,17 @@
         if (!isOther) form.clearErrors("CustomerTypeOther");
     });
 
+    const hasEnterpriseEmail = computed(() => form.model.value.EnterpriseEmailAccountType !== null);
+    const isOtherEmailType = computed(
+        () => form.model.value.EnterpriseEmailAccountType === EnterpriseEmail.Other
+    );
+
+    // 切離「其他」就清掉自填版本；只在真的有值時才指派，避免載入資料就被標成「尚未儲存」
+    watch(isOtherEmailType, (isOther) => {
+        if (!isOther && form.model.value.EnterpriseEmailOtherType) form.model.value.EnterpriseEmailOtherType = "";
+        form.clearErrors("EnterpriseEmailOtherType");
+    });
+
     function addSubContact(): void {
         form.model.value.SubContacts.push({
             Id: nextTempContactId--,
@@ -201,6 +245,11 @@
                 PrimaryContactJobTitle: detail.PrimaryContactJobTitle ?? "",
                 PrimaryContactPhone: detail.PrimaryContactPhone ?? "",
                 PrimaryContactEmail: detail.PrimaryContactEmail ?? "",
+                EnterpriseEmailAccountType: detail.EnterpriseEmail?.AccountType ?? null,
+                EnterpriseEmailTotalAccounts: detail.EnterpriseEmail?.TotalAccounts.toString() ?? "",
+                EnterpriseEmailOtherType: detail.EnterpriseEmail?.OtherType ?? "",
+                EnterpriseEmailExpirationDate: toDateInput(detail.EnterpriseEmail?.ExpirationDate),
+                EnterpriseEmailRemark: detail.EnterpriseEmail?.Remark ?? "",
                 SubContacts: detail.SubContacts.map(contact => ({
                     Id: contact.Id,
                     Name: contact.Name,
@@ -372,6 +421,81 @@
             </div>
         </fieldset>
 
+        <fieldset class="form-card form-section"
+                  aria-labelledby="section-email-title"
+                  :disabled="loading || form.isSaving.value">
+            <div class="form-section-heading">
+                <span id="section-email-title">企業信箱</span>
+            </div>
+            <div class="form-grid">
+                <div class="form-field form-field-wide">
+                    <span id="email-type-label" class="form-label">帳號版本</span>
+                    <div class="choice-group" role="radiogroup" aria-labelledby="email-type-label">
+                        <label class="choice">
+                            <input type="radio"
+                                   name="email-type"
+                                   :value="null"
+                                   v-model="form.model.value.EnterpriseEmailAccountType" />
+                            <span class="choice-box" aria-hidden="true"></span>
+                            <span>未使用</span>
+                        </label>
+                        <label v-for="option in plainEmailTypeOptions" :key="option.Value" class="choice">
+                            <input type="radio"
+                                   name="email-type"
+                                   :value="option.Value"
+                                   v-model="form.model.value.EnterpriseEmailAccountType" />
+                            <span class="choice-box" aria-hidden="true"></span>
+                            <span>{{ option.Text }}</span>
+                        </label>
+
+                        <!-- 其他 ＋ 填空線綁在同一個容器，換行時不會被拆開 -->
+                        <span class="choice-fill">
+                            <label class="choice">
+                                <input type="radio"
+                                       name="email-type"
+                                       :value="EnterpriseEmail.Other"
+                                       v-model="form.model.value.EnterpriseEmailAccountType" />
+                                <span class="choice-box" aria-hidden="true"></span>
+                                <span>其他</span>
+                            </label>
+                            <input v-model="form.model.value.EnterpriseEmailOtherType"
+                                   class="choice-blank"
+                                   type="text"
+                                   maxlength="200"
+                                   aria-label="自訂版本名稱"
+                                   :disabled="!isOtherEmailType" />
+                        </span>
+                    </div>
+                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailAccountType'), ...form.getErrors('EnterpriseEmail.AccountType')]" />
+                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailOtherType'), ...form.getErrors('EnterpriseEmail.OtherType')]" />
+                </div>
+
+                <div v-if="hasEnterpriseEmail" class="form-field">
+                    <label>
+                        <span>帳號總數 <i class="form-required">*</i></span>
+                        <input v-model="form.model.value.EnterpriseEmailTotalAccounts" type="number" min="1" />
+                    </label>
+                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailTotalAccounts'), ...form.getErrors('EnterpriseEmail.TotalAccounts')]" />
+                </div>
+
+                <div v-if="hasEnterpriseEmail" class="form-field">
+                    <label>
+                        <span>到期日期 <i class="form-required">*</i></span>
+                        <DateField v-model="form.model.value.EnterpriseEmailExpirationDate" />
+                    </label>
+                    <FormFieldErrors :errors="[...form.getErrors('EnterpriseEmailExpirationDate'), ...form.getErrors('EnterpriseEmail.ExpirationDate')]" />
+                </div>
+
+                <div v-if="hasEnterpriseEmail" class="form-field form-field-wide">
+                    <label>
+                        <span>備註</span>
+                        <textarea v-model="form.model.value.EnterpriseEmailRemark" rows="4" maxlength="2000"></textarea>
+                    </label>
+                    <FormFieldErrors :errors="form.getErrors('EnterpriseEmail.Remark')" />
+                </div>
+            </div>
+        </fieldset>
+
         <!-- 唯讀區塊：用 section 不用 fieldset，才不會被表單的 disabled 一起關掉 -->
         <section v-if="isEdit"
                  class="form-card form-section"
@@ -403,10 +527,6 @@
                         <div class="site-list-meta">
                             <span v-if="site.OrgName">{{ site.OrgName }}</span>
                             <span v-if="site.LevelText">{{ site.LevelText }}版</span>
-                            <span v-if="site.EnterpriseEmailExpirationDate" class="site-email-tag">
-                                <span class="material-symbols-outlined">mail</span>
-                                企業信箱・{{ site.EnterpriseEmailExpirationDate.slice(0, 10).replaceAll("-", "/") }} 到期
-                            </span>
                             <a v-if="toHref(site.Url)"
                                class="grid-link"
                                :href="toHref(site.Url)!"

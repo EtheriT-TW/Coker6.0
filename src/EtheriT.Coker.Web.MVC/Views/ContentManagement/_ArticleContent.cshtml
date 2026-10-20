@@ -70,6 +70,8 @@
                             .Width(150)
                             .AllowHiding(false);
                         c.AddFor(e => e.NodeDate).Caption("發布日期").Width(90).HidingPriority(5);
+                        c.AddFor(e => e.EventStartDate).Caption("活動開始日期").Width(90).HidingPriority(0);
+                        c.AddFor(e => e.EventEndDate).Caption("活動結束日期").Width(90).HidingPriority(6);
                         c.AddFor(e => e.StartTime).Caption("起始時間").Width(90).Visible(false);
                         c.AddFor(e => e.EndTime).Caption("結束時間").Width(90).Visible(false);
                         c.Add().DataField(Model.ArticleOnly ? "SerNO" : "SerNo").Caption("排序").Width(90).HidingPriority(4);

@@ -22,6 +22,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
         public int Popular { get; set; }
         public bool PopularVisible { get; set; }
         public DateTime? NodeDate { get; set; }
+        public DateTime? EventStartDate { get; set; }
+        public DateTime? EventEndDate { get; set; }
         public string? SaveHtml { get; set; }
         public string? SaveCss { get; set; }
         public string? Html { get; set; }

@@ -285,6 +285,24 @@
                 else $(e).remove();
             });
         }
+
+        const hasEventStart = data.eventStartDate != null && data.eventStartDate !== "";
+        const hasEventEnd = data.eventEndDate != null && data.eventEndDate !== "";
+        if (hasEventStart || hasEventEnd) {
+            const formatEventDate = function (value) {
+                const eventDate = new Date(value);
+                return `${eventDate.getFullYear()}/${String(eventDate.getMonth() + 1).padStart(2, "0")}/${String(eventDate.getDate()).padStart(2, "0")}`;
+            };
+            const eventDateText = hasEventStart && hasEventEnd
+                ? `${formatEventDate(data.eventStartDate)} ~ ${formatEventDate(data.eventEndDate)}`
+                : formatEventDate(hasEventStart ? data.eventStartDate : data.eventEndDate);
+            $content.find(".eventDate").text(eventDateText);
+        } else {
+            $content.find(".eventDate").each(function (i, e) {
+                if (e.tagName.toLowerCase() === "span") $(e).parent().remove();
+                else $(e).remove();
+            });
+        }
     }
 
     function applyLoginSensitiveUi($item, result) {

@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string Next { get; } = "Next";
         public static string BackToList { get; } = "Back to List";
         public static string LastModifiedTime { get; } = "Last Modified";
+        public static string EventDate { get; } = "Event Date";
         public static string ViewCount { get; } = "Views";
         public static string Detail { get; } = "Details";
         public static string DirectoryFallback { get; } = "A category page for {0}, bringing together related content and the latest updates.";

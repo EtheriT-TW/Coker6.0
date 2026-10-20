@@ -26,6 +26,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string Next { get; } = "下一則";
         public static string BackToList { get; } = "回列表頁";
         public static string LastModifiedTime { get; } = "最後編輯時間";
+        public static string EventDate { get; } = "活動日期";
         public static string ViewCount { get; } = "人氣值";
         public static string Detail { get; } = "詳細介紹";
         public static string DirectoryFallback { get; } = "{0}分類頁，彙整相關內容與最新更新。";

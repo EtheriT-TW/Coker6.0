@@ -138,6 +138,7 @@ export interface ProvisioningAppPoolMetric {
   PrivateMemoryBytes: number;
   WebsiteNames: string[] | null;
   SiteBindings?: ProvisioningIisSiteBinding[] | null;
+  RuntimeMetrics?: RuntimeMetricSnapshot[] | null;
 }
 
 export interface ProvisioningMetricHistory {
@@ -168,6 +169,25 @@ export interface ProvisioningSiteMetricPoint {
   ProcessIds: number[];
   WebsiteIds: number[];
   WebsiteNames: string[];
+  RuntimeMetrics?: RuntimeMetricSnapshot[] | null;
+}
+
+export interface RuntimeMetricSnapshot {
+  SchemaVersion: number;
+  ProcessId: number;
+  StartedAtUtc: string;
+  SampledAtUtc: string;
+  ServerGc: boolean;
+  ManagedBytes: number;
+  HeapSizeBytes: number;
+  CommittedBytes: number;
+  FragmentedBytes: number;
+  AllocatedBytes: number;
+  Gen0: number;
+  Gen1: number;
+  Gen2: number;
+  RequestCount: number;
+  ActiveRequests: number;
 }
 
 export interface ProvisioningServerMetricPoint {

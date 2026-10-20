@@ -6637,6 +6637,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RuntimeMetricsJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("SampledAtUtc")
                         .HasColumnType("datetime2");
 

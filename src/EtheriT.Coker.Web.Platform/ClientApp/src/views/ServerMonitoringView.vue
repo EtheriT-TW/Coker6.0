@@ -48,6 +48,51 @@ const visitorsMaximum = computed(() => Math.max(1, Math.ceil(Math.max(0, ...pool
 const pidChanges = computed(() => poolPoints.value.filter((point, index, points) => index > 0 && point.ProcessIds.join(",") !== points[index - 1].ProcessIds.join(",")));
 const poolWebsiteNames = computed(() => [...new Set(poolPoints.value.flatMap(p => p.WebsiteNames))]);
 const sharedPool = computed(() => poolPoints.value.some(p => p.WebsiteIds.length > 1));
+// 速率使用 Public 快照時間；Worker可能在相鄰心跳讀到同一份快照。
+const runtimePoints = computed(() => poolPoints.value.map((point, index, points) => {
+  const current = point.RuntimeMetrics;
+  const previous = points[index - 1]?.RuntimeMetrics;
+  const complete = !!current?.length && current.length === point.ProcessIds.length
+    && point.ProcessIds.every(pid => current.some(p => p.ProcessId === pid));
+  const validPrevious = complete && !point.BreakBefore && !!previous?.length && previous.length === current!.length;
+  function rate(field: 'RequestCount' | 'AllocatedBytes'): number | null {
+    if (!validPrevious) return null;
+    let total = 0;
+    for (const sample of current!) {
+      const prior = previous!.find(p => p.ProcessId === sample.ProcessId && p.StartedAtUtc === sample.StartedAtUtc);
+      if (!prior) return null;
+      const elapsed = (Date.parse(sample.SampledAtUtc) - Date.parse(prior.SampledAtUtc)) / 1000;
+      const delta = sample[field] - prior[field];
+      if (elapsed <= 0 || elapsed > (poolHistory.value?.SampleSeconds ?? 60) * 2.5 || delta < 0) return null;
+      total += delta / elapsed;
+    }
+    return total;
+  }
+  const restarted = !!current && !!previous && current.some(sample => previous.some(prior =>
+    prior.ProcessId === sample.ProcessId && prior.StartedAtUtc !== sample.StartedAtUtc));
+  return { At: point.SampledAtUtc, BreakBefore: point.BreakBefore || restarted,
+    Managed: complete ? current!.reduce((sum, p) => sum + p.ManagedBytes, 0) / 1048576 : null,
+    Heap: complete ? current!.reduce((sum, p) => sum + p.HeapSizeBytes, 0) / 1048576 : null,
+    Committed: complete ? current!.reduce((sum, p) => sum + p.CommittedBytes, 0) / 1048576 : null,
+    Fragmented: complete ? current!.reduce((sum, p) => sum + p.FragmentedBytes, 0) / 1048576 : null,
+    Gen2: complete ? current!.reduce((sum, p) => sum + p.Gen2, 0) : null,
+    Requests: rate('RequestCount'), Allocations: rate('AllocatedBytes'),
+    Active: complete ? current!.reduce((sum, p) => sum + p.ActiveRequests, 0) : null };
+}));
+const gcSeries = computed(() => [
+  { Name: 'Managed（估計）', Color: '#059669', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Managed })) },
+  { Name: 'GC Heap（上次回收）', Color: '#2563eb', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Heap })) },
+  { Name: 'GC Committed（上次回收）', Color: '#d97706', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Committed })) },
+  { Name: '碎片（上次回收）', Color: '#dc2626', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Fragmented })) }
+]);
+const requestSeries = computed(() => [{ Name: 'HTTP 請求／秒', Color: '#2563eb', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Requests })) }]);
+const allocationSeries = computed(() => [{ Name: '配置／秒', Color: '#d97706', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Allocations === null ? null : p.Allocations / 1048576 })) }]);
+const gen2Series = computed(() => [{ Name: 'Gen 2 累計回收', Color: '#7c3aed', Points: runtimePoints.value.map(p => ({ ...p, Value: p.Gen2 })) }]);
+const gcMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Committed ?? 0) * 1.1), ...runtimePoints.value.map(p => (p.Managed ?? 0) * 1.1), ...runtimePoints.value.map(p => (p.Heap ?? 0) * 1.1)));
+const requestMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Requests ?? 0) * 1.1)));
+const allocationMaximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Allocations ?? 0) / 1048576 * 1.1)));
+const gen2Maximum = computed(() => Math.max(1, ...runtimePoints.value.map(p => (p.Gen2 ?? 0) * 1.1)));
+const latestRuntime = computed(() => runtimePoints.value.at(-1));
 
 async function loadPoolHistory(silent = false): Promise<void> {
   if (!selectedPool.value || !selectedServer.value || (silent && (poolLoading.value || Date.now() - lastPoolRefresh < 60000))) return;
@@ -278,7 +323,7 @@ onBeforeUnmount(() => { ++poolRequest; if (refreshTimer !== undefined) window.cl
     <p v-if="poolError" class="alert alert-error" role="alert">{{ poolError }}</p>
     <p v-if="poolHistory && !poolHistory.Enabled" class="history-note">網站歷史取樣尚未啟用，目前只能查看即時資源。</p>
     <template v-else>
-      <p class="history-note">三張圖使用相同時間軸、各自刻度。在線人數為最近兩分鐘有心跳的去重訪客；不等於當下請求數。中斷回報或 PID 改變時曲線斷開。</p>
+      <p class="history-note">圖表使用相同時間軸、各自刻度。在線人數為最近兩分鐘有心跳的去重訪客；不等於當下請求數。中斷回報或 PID 改變時曲線斷開。</p>
       <p v-if="poolPoints.length" class="history-note">最新取樣 {{ formatTime(poolPoints[poolPoints.length - 1].SampledAtUtc) }}；PID：{{ poolPoints[poolPoints.length - 1].ProcessIds.join(', ') || '無執行程序' }}。</p>
       <p v-if="sharedPool" class="history-note">此集區對應多個網站：資源為集區總量，人數為已對應網站合計，無法將記憶體拆分到個別網站。</p>
       <p v-if="poolHistory?.Points.some(p => p.OnlineVisitors === null)" class="history-note">部分時段無法對應網站或取得人數，該處留白，不以 0 人替代。</p>
@@ -286,6 +331,13 @@ onBeforeUnmount(() => { ++poolRequest; if (refreshTimer !== undefined) window.cl
         <article><h3>記憶體（MiB）</h3><MetricLineChart :series="memorySeries" :maximum="memoryMaximum" unit=" MiB" aria-label="網站記憶體趨勢" :empty-text="poolLoading ? '讀取中…' : '尚未累積網站歷史資料'" /></article>
         <article><h3>在線訪客</h3><MetricLineChart :series="visitorsSeries" :maximum="visitorsMaximum" unit=" 人" :decimals="0" aria-label="在線訪客趨勢" :empty-text="poolLoading ? '讀取中…' : '尚無可用人數資料'" /></article>
         <article><h3>CPU</h3><MetricLineChart :series="poolCpuSeries" aria-label="網站 CPU 趨勢" :empty-text="poolLoading ? '讀取中…' : '尚無可用 CPU 資料'" /></article>
+        <p class="history-note">GC Heap／Committed／碎片是上次 GC 的結果，Managed 是目前估計，均不代表完整的存活物件大小。請求量包含爬蟲、API、靜態檔案及被阻擋的請求；不含 IIS／CDN 在進入應用程式前處理的請求。速率為兩次快照間平均，至少需要兩筆有效資料。</p>
+        <p v-if="latestRuntime?.Managed == null" class="history-note">尚無完整的執行階段診斷：請確認 Public 已啟用採樣、Worker 已更新，且能讀取未過期的程序快照。缺值不代表 0。</p>
+        <p v-else class="history-note">採樣當下處理中請求：{{ latestRuntime.Active }}；GC 模式：{{ poolPoints.at(-1)?.RuntimeMetrics?.map(p => `${p.ProcessId}: ${p.ServerGc ? 'Server' : 'Workstation'}`).join('、') }}。</p>
+        <article><h3>GC 記憶體（MiB）</h3><MetricLineChart :series="gcSeries" :maximum="gcMaximum" unit=" MiB" empty-text="尚無 GC 診斷資料" /></article>
+        <article><h3>實際請求速率</h3><MetricLineChart :series="requestSeries" :maximum="requestMaximum" unit=" 次/秒" empty-text="尚無連續請求計數資料" /></article>
+        <article><h3>記憶體配置速率</h3><MetricLineChart :series="allocationSeries" :maximum="allocationMaximum" unit=" MiB/秒" empty-text="尚無連續配置計數資料" /></article>
+        <article><h3>Gen 2 回收次數（程序啟動後累計）</h3><MetricLineChart :series="gen2Series" :maximum="gen2Maximum" unit=" 次" :decimals="0" empty-text="尚無 GC 回收資料" /></article>
       </div>
       <details v-if="pidChanges.length"><summary>PID 變化（{{ pidChanges.length }} 次）</summary><ul><li v-for="point in pidChanges" :key="point.SampledAtUtc">{{ formatTime(point.SampledAtUtc) }}：{{ point.ProcessIds.join(', ') || '無執行程序' }}</li></ul></details>
     </template>

@@ -51,4 +51,5 @@ public sealed class ProvisioningSiteMetricSample
     public string WebsiteIdsJson { get; set; } = "[]";
     public string WebsiteNamesJson { get; set; } = "[]";
     public string ProcessIdsJson { get; set; } = "[]";
+    public string? RuntimeMetricsJson { get; set; }
 }

@@ -61,7 +61,8 @@ public sealed class SiteMetricRecorder(CokerDbContext db, IConfiguration configu
                         ? item.Sites.Sum(site => online.GetValueOrDefault(site.Id)) : null,
                     WebsiteIdsJson = JsonSerializer.Serialize(item.Sites.Select(w => w.Id)),
                     WebsiteNamesJson = JsonSerializer.Serialize(item.Sites.Select(w => $"{w.OrgName}｜{w.Title}")),
-                    ProcessIdsJson = JsonSerializer.Serialize(pool.ProcessIds.OrderBy(id => id))
+                    ProcessIdsJson = JsonSerializer.Serialize(pool.ProcessIds.OrderBy(id => id)),
+                    RuntimeMetricsJson = pool.RuntimeMetrics == null ? null : JsonSerializer.Serialize(pool.RuntimeMetrics)
                 });
             }
             db.ProvisioningSiteMetricSamples.AddRange(added);

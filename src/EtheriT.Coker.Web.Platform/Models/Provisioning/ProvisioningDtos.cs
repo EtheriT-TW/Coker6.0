@@ -112,7 +112,12 @@ public sealed record ProvisioningAppPoolMetricDto(
     long WorkingSetBytes,
     long PrivateMemoryBytes,
     IReadOnlyList<string>? WebsiteNames = null,
-    IReadOnlyList<ProvisioningIisSiteBindingDto>? SiteBindings = null);
+    IReadOnlyList<ProvisioningIisSiteBindingDto>? SiteBindings = null,
+    IReadOnlyList<RuntimeMetricSnapshotDto>? RuntimeMetrics = null);
+
+public sealed record RuntimeMetricSnapshotDto(int SchemaVersion, int ProcessId, DateTime StartedAtUtc,
+    DateTime SampledAtUtc, bool ServerGc, long ManagedBytes, long HeapSizeBytes, long CommittedBytes,
+    long FragmentedBytes, long AllocatedBytes, int Gen0, int Gen1, int Gen2, long RequestCount, long ActiveRequests);
 
 public sealed record ProvisioningAgentStatusDto(
     string ServerId,
@@ -153,7 +158,8 @@ public sealed record ProvisioningSiteMetricHistoryDto(
 public sealed record ProvisioningSiteMetricPointDto(
     DateTime SampledAtUtc, long PrivateMemoryBytes, long WorkingSetBytes, double? CpuUsagePercent,
     long? OnlineVisitors, IReadOnlyList<int> ProcessIds,
-    IReadOnlyList<long> WebsiteIds, IReadOnlyList<string> WebsiteNames);
+    IReadOnlyList<long> WebsiteIds, IReadOnlyList<string> WebsiteNames,
+    IReadOnlyList<RuntimeMetricSnapshotDto>? RuntimeMetrics = null);
 
 public sealed record ProvisioningDiskMetricSeriesDto(
     string Name,

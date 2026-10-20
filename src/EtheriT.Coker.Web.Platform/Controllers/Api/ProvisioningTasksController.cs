@@ -169,7 +169,8 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
             samples.OrderBy(s => s.SampledAtUtc).Select(s => new ProvisioningSiteMetricPointDto(
                 DateTime.SpecifyKind(s.SampledAtUtc, DateTimeKind.Utc), s.PrivateMemoryBytes, s.WorkingSetBytes,
                 s.CpuUsagePercent, s.OnlineVisitors, DeserializeList<int>(s.ProcessIdsJson),
-                DeserializeList<long>(s.WebsiteIdsJson), DeserializeList<string>(s.WebsiteNamesJson))).ToArray());
+                DeserializeList<long>(s.WebsiteIdsJson), DeserializeList<string>(s.WebsiteNamesJson),
+                s.RuntimeMetricsJson == null ? null : DeserializeList<RuntimeMetricSnapshotDto>(s.RuntimeMetricsJson))).ToArray());
     }
 
     [HttpGet("agents/{serverId}/metrics")]

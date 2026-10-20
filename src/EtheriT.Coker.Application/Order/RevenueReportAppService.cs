@@ -10,12 +10,17 @@ namespace EtheriT.Coker.Application.Order
 {
     public sealed class RevenueReportAppService : IRevenueReportAppService
     {
-        // 與儀表板「有效訂單金額」同一套定義，兩邊數字才對得起來。
         private static readonly OrderStatusEnum[] RevenueOrderStates =
         {
             OrderStatusEnum.已付款,
             OrderStatusEnum.已出貨,
             OrderStatusEnum.已完成
+        };
+
+        private static readonly OrderStatusEnum[] RevenueInvalidOrderStatus =
+        {
+            OrderStatusEnum.付款失敗,
+            OrderStatusEnum.已取消
         };
 
         private readonly CokerDbContext db;
@@ -47,7 +52,7 @@ namespace EtheriT.Coker.Application.Order
                     order.FK_WebsiteId == siteId
                     && !order.IsDeleted
                     && !order.IsTemp
-                    && RevenueOrderStates.Contains(order.State)
+                    && (RevenueOrderStates.Contains(order.State) || RevenueInvalidOrderStatus.Contains(order.State))
                     && order.CreationTime >= rangeStart
                     && order.CreationTime < rangeEnd)
                 .GroupBy(order => new
@@ -59,8 +64,11 @@ namespace EtheriT.Coker.Application.Order
                 .Select(group => new RevenueReportItemDto
                 {
                     PeriodStart = new DateTime(group.Key.Year, group.Key.Month, group.Key.Day),
-                    OrderCount = group.LongCount(),
-                    Amount = group.Sum(order => order.Subtotal + order.Freight)
+                    OrderCount = group.LongCount(order => RevenueOrderStates.Contains(order.State)),
+                    Amount = group.Sum(order => RevenueOrderStates.Contains(order.State) ? order.Subtotal + order.Freight : 0),
+                    InvalidOrderCount = group.LongCount(order => RevenueInvalidOrderStatus.Contains(order.State)),
+                    InvalidAmount = group.Sum(order => RevenueInvalidOrderStatus.Contains(order.State) ? order.Subtotal + order.Freight : 0)
+
                 })
                 .ToListAsync();
 
@@ -89,7 +97,9 @@ namespace EtheriT.Coker.Application.Order
                     group => new
                     {
                         OrderCount = group.Sum(item => item.OrderCount),
-                        Amount = group.Sum(item => item.Amount)
+                        Amount = group.Sum(item => item.Amount),
+                        InvalidOrderCount = group.Sum(item => item.InvalidOrderCount),
+                        InvalidAmount = group.Sum(item => item.InvalidAmount)
                     });
 
             var labelFormat = isMonthly ? "yyyy/MM" : "yyyy/MM/dd";
@@ -104,7 +114,9 @@ namespace EtheriT.Coker.Application.Order
                     PeriodStart = period,
                     PeriodLabel = period.ToString(labelFormat, CultureInfo.InvariantCulture),
                     OrderCount = total?.OrderCount ?? 0,
-                    Amount = total?.Amount ?? 0
+                    Amount = total?.Amount ?? 0,
+                    InvalidOrderCount = total?.InvalidOrderCount ?? 0,
+                    InvalidAmount = total?.InvalidAmount ?? 0
                 });
             }
 

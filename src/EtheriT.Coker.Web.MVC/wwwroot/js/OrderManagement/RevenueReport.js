@@ -109,14 +109,18 @@
             },
             columns: [
                 { dataField: "periodLabel", caption: "日期", sortOrder: "asc" },
-                { dataField: "orderCount", caption: "有效訂單筆數", dataType: "number", hidingPriority: 0 },
-                { dataField: "amount", caption: "有效訂單金額", dataType: "number", customizeText: formatMoney }
+                { dataField: "orderCount", caption: "有效訂單筆數", dataType: "number", hidingPriority: 2 },
+                { dataField: "amount", caption: "有效訂單金額", dataType: "number", customizeText: formatMoney },
+                { dataField: "invalidOrderCount", caption: "無效訂單筆數", dataType: "number", hidingPriority: 0 },
+                { dataField: "invalidAmount", caption: "無效訂單金額", dataType: "number", customizeText: formatMoney, hidingPriority: 1 }
             ],
             summary: {
                 totalItems: [
                     { column: "periodLabel", summaryType: "count", displayFormat: "共 {0} 期" },
                     { column: "orderCount", summaryType: "sum", displayFormat: "{0} 筆" },
-                    { column: "amount", summaryType: "sum", customizeText: formatMoney }
+                    { column: "amount", summaryType: "sum", customizeText: formatMoney },
+                    { column: "invalidOrderCount", summaryType: "sum", displayFormat: "{0} 筆" },
+                    { column: "invalidAmount", summaryType: "sum", customizeText: formatMoney }
                 ]
             }
         }).dxDataGrid("instance");

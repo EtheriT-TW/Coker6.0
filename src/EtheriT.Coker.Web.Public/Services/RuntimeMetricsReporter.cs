@@ -16,10 +16,13 @@ public sealed class RuntimeMetricsReporter(IWebHostEnvironment environment, ICon
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!Enabled) return;
         var directory = Path.Combine(environment.ContentRootPath, "App_Data", "runtime-diagnostics");
         var file = Path.Combine(directory, $"{Environment.ProcessId}.json");
+        logger.LogInformation("Runtime diagnostics startup: Enabled={Enabled}, Environment={Environment}, PID={ProcessId}, SnapshotPath={SnapshotPath}",
+            Enabled, environment.EnvironmentName, Environment.ProcessId, file);
+        if (!Enabled) return;
         var temporary = file + ".tmp";
+        var firstSnapshotWritten = false;
         using var process = Process.GetCurrentProcess();
         var startedAt = process.StartTime.ToUniversalTime();
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
@@ -43,10 +46,17 @@ public sealed class RuntimeMetricsReporter(IWebHostEnvironment environment, ICon
                     Directory.CreateDirectory(directory);
                     await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(snapshot), stoppingToken);
                     File.Move(temporary, file, true);
+                    if (!firstSnapshotWritten)
+                    {
+                        logger.LogInformation("Runtime diagnostics first snapshot written: PID={ProcessId}, SnapshotPath={SnapshotPath}",
+                            Environment.ProcessId, file);
+                        firstSnapshotWritten = true;
+                    }
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    logger.LogWarning(ex, "Unable to write runtime diagnostics snapshot");
+                    logger.LogWarning(ex, "Unable to write runtime diagnostics snapshot: PID={ProcessId}, SnapshotPath={SnapshotPath}",
+                        Environment.ProcessId, file);
                 }
             } while (await timer.WaitForNextTickAsync(stoppingToken));
         }

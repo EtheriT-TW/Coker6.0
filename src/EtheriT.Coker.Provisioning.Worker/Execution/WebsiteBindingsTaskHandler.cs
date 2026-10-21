@@ -20,7 +20,14 @@ public sealed class WebsiteBindingsTaskHandler(ProcessRunner runner, Provisionin
             || desired.Concat(previous).Any(host => Uri.CheckHostName(host) != UriHostNameType.Dns))
             throw new InvalidOperationException("網址繫結同步參數無效。");
         var ssl = new SslTaskHandler(runner, options);
-        await ssl.ValidateBindingChangeAsync(task, cancellationToken);
+        try
+        {
+            await ssl.ValidateBindingChangeAsync(task, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new InvalidOperationException($"TLS 前置檢查失敗，尚未執行 IIS 繫結變更。\n{ex.Message}", ex);
+        }
         var powershell = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),
             "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
         // 固定程式碼；所有站名與網址都以JSON環境變數傳入，不插入PowerShell原始碼。

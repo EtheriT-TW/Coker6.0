@@ -36,7 +36,7 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
             .ToLookup(x => Attribute(x, "APPPOOL.NAME"), x => Attribute(x, "APP.NAME").Trim().TrimEnd('/'), StringComparer.OrdinalIgnoreCase);
 
         var sitesByPool = ParseElements(applicationXml, "APP")
-            .Select(x => new { Pool = Attribute(x, "APPPOOL.NAME"), Site = Attribute(x, "SITE.NAME") })
+            .Select(x => new { Pool = Attribute(x, "APPPOOL.NAME"), Site = ApplicationSiteName(x) })
             .Where(x => x.Pool.Length > 0 && x.Site.Length > 0)
             .GroupBy(x => x.Pool, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -226,6 +226,16 @@ public sealed class IisMetricsCollector(ILogger<IisMetricsCollector> logger)
 
     private static string FirstAttribute(XElement element, params string[] names) =>
         names.Select(name => Attribute(element, name)).FirstOrDefault(x => x.Length > 0) ?? string.Empty;
+
+    private static string ApplicationSiteName(XElement application)
+    {
+        var site = Attribute(application, "SITE.NAME");
+        if (!string.IsNullOrWhiteSpace(site)) return site;
+        // appcmd APP entries can identify the site only through APP.NAME (Site/ or Site/application).
+        var name = Attribute(application, "APP.NAME");
+        var separator = name.IndexOf('/');
+        return separator > 0 ? name[..separator] : string.Empty;
+    }
 
     private static int ParseInt(string value) => int.TryParse(value, out var result) ? result : 0;
 

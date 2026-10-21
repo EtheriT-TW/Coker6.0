@@ -10,7 +10,9 @@ Worker 重新讀取 IIS，確認網域屬於指定網站，再唯讀盤點 renew
 - 沒有設定：建立固定 ID `coker-site-{siteId}`，僅包含該站來源，使用 CentralSsl。
 - 既有設定限定部分網域：沿用它續期，提示人工編輯來源加入缺少網域。不另建重複設定。
 
-目前只辨識包含 SourcePluginOptions.SiteIds（可為 null）與 IncludeHosts 的 IIS 來源格式。進階篩選只提供人工確認建議；若來源格式不能辨識或讀取失敗，阻止安裝以避免重複建立。這不是完整的網域覆蓋證明。
+支援 SourcePluginOptions.SiteIds 與 TargetPluginOptions.IncludeSiteIds（站台清單可為 null）兩種 IIS 來源格式，以及 IncludeHosts 網域限制。IncludeTypes 為 http 或同時包含 http／https 可供網址同步使用；僅 https 或未知類型仍需人工確認。更新時沿用原來源區塊、renewal ID 與驗證／儲存／安裝設定，不寫死個別站台 ID。進階篩選只提供人工確認建議；若來源格式不能辨識或讀取失敗，阻止安裝以避免重複建立。這不是完整的網域覆蓋證明。
+
+網址同步在修改 IIS 前先檢查 renewal；失敗訊息會指出尚未變更 IIS，來源區塊不明或缺少站台欄位時也會列出檔名。若 IIS 已同步後 TLS 才失敗，不自動回復繫結。
 
 ## 主機設定
 
@@ -31,6 +33,7 @@ Worker 重新讀取 IIS，確認網域屬於指定網站，再唯讀盤點 renew
    在測試主機取消某站唯一的 renewal 後重新採樣，確認「未發現 renewal」卡片計入該站、可篩選且列入需處理網站；目前憑證仍有效也應提醒。讀取失敗或進階篩選不能判定時，不應誤列為缺少 renewal。
 7. 無設定時只建立該站固定 ID；再次執行沿用 ID，PFX 可由中央存放區讀取。
 8. HTTP-only 網站有 HostNames 時可從 TLS 頁安裝，新增 binding 後沿用沒有網域限制的 IIS 來源。
+9. 使用 TargetPluginOptions.IncludeSiteIds 加上 IncludeTypes: ["http"] 的單站設定，同步新增網址後應沿用原 renewal ID，原來源區塊與安裝設定保留，且不新增第二份 renewal。SourcePluginOptions.SiteIds 格式亦應正常運作；來源不明、多筆、共用或特殊篩選應在變更 IIS 前停止。
 
 下列命令由使用者決定執行，尚未執行：
 

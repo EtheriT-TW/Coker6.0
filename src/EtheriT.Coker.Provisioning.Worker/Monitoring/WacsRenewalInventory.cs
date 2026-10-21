@@ -6,7 +6,8 @@ namespace EtheriT.Coker.Provisioning.Worker;
 // Read only the public source fields; never report passwords or raw renewal JSON.
 internal static class WacsRenewalInventory
 {
-    internal sealed record Renewal(string Id, string[] SiteIds, string[] Hosts, bool AllSites, bool Filtered);
+    internal sealed record Renewal(string Id, string[] SiteIds, string[] Hosts, bool AllSites, bool Filtered,
+        string SourceProperty);
 
     internal static IReadOnlyList<Renewal> Read(ProvisioningWorkerOptions options)
     {
@@ -24,18 +25,27 @@ internal static class WacsRenewalInventory
             if (string.IsNullOrWhiteSpace(id)) throw new InvalidOperationException("續期設定缺少 ID。");
             if (!string.Equals(Path.GetFileName(path), id + ".renewal.json", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("續期 ID 與檔名不一致，停止盤點。");
-            if (!root.TryGetProperty("SourcePluginOptions", out var source))
-                throw new InvalidOperationException("無法辨識續期來源，請確認 win-acme 設定格式。");
-            if (!source.TryGetProperty("SiteIds", out _))
-                throw new InvalidOperationException("存在無法辨識為 IIS 的續期來源，請先人工確認，避免建立重複設定。");
-            var sites = Values(source, "SiteIds");
+            var sourceProperty = root.TryGetProperty("SourcePluginOptions", out _) ? "SourcePluginOptions" : "TargetPluginOptions";
+            if (!root.TryGetProperty(sourceProperty, out var source) || source.ValueKind != JsonValueKind.Object
+                || (root.TryGetProperty("SourcePluginOptions", out _) && root.TryGetProperty("TargetPluginOptions", out _)))
+                throw new InvalidOperationException($"續期檔 {Path.GetFileName(path)} 無法辨識唯一來源區塊（SourcePluginOptions／TargetPluginOptions）。");
+            var siteProperty = sourceProperty == "TargetPluginOptions" ? "IncludeSiteIds" : "SiteIds";
+            if (!source.TryGetProperty(siteProperty, out _))
+                throw new InvalidOperationException($"續期檔 {Path.GetFileName(path)} 的 {sourceProperty} 缺少 {siteProperty}，無法確認 IIS 站台；停止操作以避免重複建立。");
+            var sites = Values(source, siteProperty);
             var hosts = Values(source, "IncludeHosts");
+            var types = Values(source, "IncludeTypes");
             // Pattern/exclusion filters need manual review before creating overlapping settings.
             var filtered = source.EnumerateObject().Any(property =>
-                property.Name is not ("Plugin" or "SiteIds" or "IncludeHosts" or "CommonName")
+                property.Name != siteProperty
+                && property.Name is not ("Plugin" or "IncludeHosts" or "CommonName" or "IncludeTypes")
                 && property.Value.ValueKind is not (JsonValueKind.Null or JsonValueKind.False)
                 && property.Value.ToString() is not ("" or "[]"));
-            result.Add(new Renewal(id, sites, hosts, sites.Length == 0, filtered));
+            // HTTP-only IIS sources are normal: binding synchronization adds HTTP for every desired host.
+            filtered |= types.Length > 0 && (!types.Contains("http", StringComparer.OrdinalIgnoreCase)
+                || types.Any(type => !string.Equals(type, "http", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(type, "https", StringComparison.OrdinalIgnoreCase)));
+            result.Add(new Renewal(id, sites, hosts, sites.Length == 0, filtered, sourceProperty));
         }
         return result;
     }

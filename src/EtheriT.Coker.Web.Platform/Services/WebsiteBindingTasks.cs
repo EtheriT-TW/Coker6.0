@@ -115,6 +115,8 @@ public sealed class WebsiteBindingTasks(CokerDbContext db, IConfiguration config
         var states = await db.ProvisioningAgentStatuses.AsNoTracking()
             .Where(x => serverIds.Contains(x.ServerId) && x.LastSeenAtUtc >= threshold)
             .Select(x => new { x.ServerId, x.LastSeenAtUtc, x.AppPoolMetricsJson }).ToListAsync(cancellationToken);
+        if (states.Count == 0)
+            throw new InvalidOperationException("目前沒有已設定且在線的 Worker 回報，無法確認 IIS 繫結；請檢查 Worker 連線及伺服器設定。");
         var matches = new List<Snapshot>();
         foreach (var state in states)
         {
@@ -133,15 +135,17 @@ public sealed class WebsiteBindingTasks(CokerDbContext db, IConfiguration config
                     bindings.First(x => x.SiteName == name).State,
                     pools.SelectMany(x => x.HostIpAddresses ?? []).Distinct().ToArray()));
         }
+        if (matches.Count == 0)
+            throw new InvalidOperationException($"在線 Worker 的 IIS 繫結回報中找不到主要網址 {primary}；請確認 Worker 版本、站台與應用程式集區關聯及網址設定。");
         if (!string.IsNullOrWhiteSpace(site.HostLocation))
         {
             if (!System.Net.IPAddress.TryParse(site.HostLocation.Trim(), out var configuredIp))
                 throw new InvalidOperationException("目前主機位置不是 IP，無法同步網址。");
             matches = matches.Where(x => x.IpAddresses.Any(ip => System.Net.IPAddress.TryParse(ip, out var address)
                 && address.MapToIPv6().Equals(configuredIp.MapToIPv6()))).ToList();
+            if (matches.Count == 0)
+                throw new InvalidOperationException($"已找到主要網址 {primary} 的 IIS 繫結，但 Worker 回報的主機 IP 不符合網站主機位置 {site.HostLocation.Trim()}；請確認主機位置與 Worker IP 回報（含 NAT 對應）。");
         }
-        if (matches.Count == 0)
-            throw new InvalidOperationException("主機回報中尚未找到主要網址；請確認主機位置、Worker IP 回報及網址設定。");
         if (string.IsNullOrWhiteSpace(site.HostLocation))
         {
             var started = matches.Where(x => string.Equals(x.State, "Started", StringComparison.OrdinalIgnoreCase)).ToList();

@@ -59,7 +59,8 @@ public sealed class SslTaskHandler(ProcessRunner runner, ProvisioningWorkerOptio
                     var path = Path.Combine(options.WacsRenewalDirectory, renewal.Id + ".renewal.json");
                     var original = await File.ReadAllTextAsync(path, cancellationToken);
                     var document = JsonNode.Parse(original) ?? throw new InvalidOperationException("TLS renewal 格式無效。");
-                    var source = document["SourcePluginOptions"]!.AsObject();
+                    var source = document[renewal.SourceProperty]?.AsObject()
+                        ?? throw new InvalidOperationException("TLS renewal 來源區塊已變更，請重新確認設定。");
                     var currentHosts = WacsRenewalInventory.Hosts(site).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
                     if (renewal.Hosts.Length > 0)
                         source["IncludeHosts"] = new JsonArray(currentHosts.Select(host => (JsonNode?)JsonValue.Create(host)).ToArray());

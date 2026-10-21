@@ -45,7 +45,12 @@
             PrimaryContactPhone: "",
             PrimaryContactEmail: "",
             SubContacts: [],
-            Remark:""
+            Remark: "",
+            EnterpriseEmailAccountType: null,
+            EnterpriseEmailTotalAccounts: "",
+            EnterpriseEmailOtherType: "",
+            EnterpriseEmailExpirationDate: "",
+            EnterpriseEmailRemark: ""
         };
     }
 

@@ -5,12 +5,14 @@
     import {
         DxColumn,
         DxDataGrid,
+        DxHeaderFilter,
         DxPaging,
         DxSearchPanel
     } from "devextreme-vue/data-grid";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import { deleteCustomer, fetchCustomers } from "@/services/customer-api";
     import type { CustomerListItem } from "@/types/customer";
+    import type { CellClickEvent } from "devextreme/ui/data_grid";
 
     const router = useRouter();
 
@@ -52,7 +54,7 @@
     }
 
     function enterpriseEmailText(row: CustomerListItem): string {
-        return row.HasEnterpriseEmail ? "已設定" : "未設定";
+        return row.HasEnterpriseEmail ? "已購買" : "未購買";
     }
 
     function urlText(row: CustomerListItem): string {
@@ -61,6 +63,21 @@
 
     function domainText(row: CustomerListItem): string {
         return row.Domains ? "已設定" : "未設定";
+    }
+
+    const presenceFields: readonly string[] = ["HasEnterpriseEmail", "Urls", "Domains"];
+
+    interface HeaderFilterController{
+        showHeaderFilterMenu(columnIndex: number, isGroupPanel: boolean): void;
+    }
+
+    function onCellClick(e: CellClickEvent<CustomerListItem, number>): void{
+        const name = e.column?.name ?? "";
+        if(e.rowType !== "header" || !presenceFields.includes(name)) return;
+
+        const columnIndex = e.component.columnOption(name, "index") as number;
+        const grid = e.component as unknown as {getController(name:"headerFilter"): HeaderFilterController};
+        grid.getController("headerFilter").showHeaderFilterMenu(columnIndex, false);
     }
 
     async function confirmDelete(): Promise<void> {
@@ -109,32 +126,40 @@
                     :column-hiding-enabled="true"
                     :hover-state-enabled="true"
                     :allow-column-resizing="true"
-                    no-data-text="目前沒有客戶資料">
+                    no-data-text="目前沒有客戶資料"
+                    @cell-click="onCellClick">
             <DxSearchPanel :visible="true" :width="260" placeholder="搜尋公司名稱、統編" />
             <DxPaging :page-size="20" />
+            <DxHeaderFilter :visible="true" />
 
-            <DxColumn data-field="Name" caption="公司名稱" :min-width="220" />
-            <DxColumn data-field="TaxId" caption="統一編號" :min-width="120" :hiding-priority="3" />
-            <DxColumn data-field="CustomerTypeText" caption="客戶屬性" :min-width="110" :hiding-priority="2" />
-            <DxColumn data-field="PrimaryContactName" caption="主要聯絡人" :min-width="120" :hiding-priority="1" />
-            <DxColumn data-field="Phone" caption="公司電話" :min-width="130" :hiding-priority="0" />
+            <DxColumn data-field="Name" caption="公司名稱" :min-width="220" :allow-header-filtering="false" />
+            <DxColumn data-field="TaxId" caption="統一編號" :min-width="120" :hiding-priority="3" :allow-header-filtering="false" />
+            <DxColumn data-field="CustomerTypeText" caption="客戶屬性" :min-width="110" :hiding-priority="2" :allow-header-filtering="false" />
+            <DxColumn data-field="PrimaryContactName" caption="主要聯絡人" :min-width="120" :hiding-priority="1" :allow-header-filtering="false" />
+            <DxColumn data-field="Phone" caption="公司電話" :min-width="130" :hiding-priority="0" :allow-header-filtering="false" />
             <DxColumn name="HasEnterpriseEmail"
                       caption="企業信箱"
                       :width="110"
                       :hiding-priority="5"
                       :calculate-cell-value="enterpriseEmailText"
+                      :allow-filtering="true"
+                      css-class="presence-filter-column"
                       cell-template="presenceCell" />
             <DxColumn name="Urls"
                       caption="網址"
                       :width="110"
                       :hiding-priority="6"
                       :calculate-cell-value="urlText"
+                      :allow-filtering="true"
+                      css-class="presence-filter-column"
                       cell-template="presenceCell" />
             <DxColumn name="Domains"
                       caption="網域"
                       :width="110"
                       :hiding-priority="4"
                       :calculate-cell-value="domainText"
+                      :allow-filtering="true"
+                      css-class="presence-filter-column"
                       cell-template="presenceCell" />
             <DxColumn caption="操作"
                       :width="120"
@@ -142,6 +167,7 @@
                       fixed-position="right"
                       :allow-sorting="false"
                       :allow-hiding="false"
+                      :allow-header-filtering="false"
                       cell-template="rowActions" />
 
             <template #rowActions="{ data }">

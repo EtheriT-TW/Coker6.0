@@ -1069,11 +1069,33 @@
                     </div>
                 </div>
             </div>
-            <div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center">
-                <p class="cookie_text my-3 pe-3">@L.get("cookieDeclare")</p>
-                <div id="Cookie_button">
-                    <div class="btn_cookie_accept m-2 p-1 px-4 rounded-2 text-center">@L.get("accept")</div>
-                    <div class="btn_cookie_reject m-2 p-1 px-4 rounded-2 text-center">@L.get("reject")</div>
+            <div id="Cookie" class="cookie position-fixed text-white w-100 bottom-0 justify-content-center align-items-center flex-column flex-sm-row">
+                <p class="cookie_text my-3 pe-3 d-none d-sm-block">
+                    @L.get("cookieDeclare")
+                    @if (!string.IsNullOrEmpty(ViewBag.PrivacyPolicy))
+                    {
+                        <button type="button" class="btn_cookie_privacy border-0 bg-transparent p-0 text-white text-decoration-underline" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal">@L.get("cookiePrivacyLink")</button>@L.get("cookieDeclareEnd")
+                    }
+                    else
+                    {
+                        @L.get("cookiePrivacyLink")@L.get("cookieDeclareEnd")
+                    }
+                </p>
+                <p class="cookie_text w-100 small mt-2 mb-0 px-3 d-sm-none">
+                    <strong class="d-block">@L.get("cookieDeclareMobileTitle")</strong>
+                    @L.get("cookieDeclareMobile")
+                    @if (!string.IsNullOrEmpty(ViewBag.PrivacyPolicy))
+                    {
+                        <button type="button" class="btn_cookie_privacy border-0 bg-transparent p-0 text-white text-decoration-underline" data-bs-toggle="modal" data-bs-target="#PrivacyStatementModal">@L.get("cookiePrivacyLink")</button>
+                    }
+                    else
+                    {
+                        @L.get("cookiePrivacyLink")
+                    }
+                </p>
+                <div id="Cookie_button" class="d-flex justify-content-center d-sm-block">
+                    <div class="btn_cookie_accept m-2 p-1 px-5 px-sm-4 rounded-2 text-center">@L.get("accept")</div>
+                    <div class="btn_cookie_reject m-2 p-1 px-5 px-sm-4 rounded-2 text-center">@L.get("reject")</div>
                 </div>
             </div>
             @if (ViewBag.IsProductDetail != true)

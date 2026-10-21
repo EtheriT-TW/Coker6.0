@@ -12,7 +12,11 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string shareTo { get; } = "share To";
         public static string LinkTo { get; } = "Link To：{0}";
         public static string LinkToAndBlank { get; } = "Link To：{0}(open new window)";
-        public static string cookieDeclare { get; } = "We use cookies to make your experience of our websites better. By using and further navigating this website, you accepted the use of cookie according to this policy. Detailed information about the use of cookies on this website is available by clicking on more information.";
+        public static string cookieDeclare { get; } = "We use cookies to make your experience of our websites better. By using and further navigating this website, you accepted the use of cookie according to this policy. Detailed information about the use of cookies on this website is available in our";
+        public static string cookieDeclareEnd { get; } = ".";
+        public static string cookieDeclareMobileTitle { get; } = "This website uses cookies";
+        public static string cookieDeclareMobile { get; } = "We use cookies to keep our website running properly and, with your consent, to analyze traffic and improve your browsing experience. Learn more in our";
+        public static string cookiePrivacyLink { get; } = "Privacy Policy";
         public static string accept { get; } = "accept";
         public static string reject { get; } = "reject";
         public static string HomePage { get; } = "Home Page";

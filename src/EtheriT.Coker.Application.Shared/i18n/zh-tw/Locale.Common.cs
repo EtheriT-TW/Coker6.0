@@ -12,7 +12,11 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string shareTo { get; } = "分享至：{0} (另開新視窗)";
         public static string LinkTo { get; } = "連結至：{0}";
         public static string LinkToAndBlank { get; } = "連結至：{0}(另開新視窗)";
-        public static string cookieDeclare { get; } = "本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見 隱私權政策。";
+        public static string cookieDeclare { get; } = "本網站使用cookies。使用我們的網站並同意隱私權政策，即表示您同意我們根據本政策內的條款使用cookie。如果您不同意，請按照說明停用，本網站的cookie即不會安裝於您的裝置上。了解更多請見";
+        public static string cookieDeclareEnd { get; } = "。";
+        public static string cookieDeclareMobileTitle { get; } = "本網站使用 Cookies";
+        public static string cookieDeclareMobile { get; } = "我們使用Cookies維持網站正常運作，並在您同意的情況下，用於分析網站流量及改善瀏覽體驗。了解更多請參閱";
+        public static string cookiePrivacyLink { get; } = "隱私權政策";
         public static string accept { get; } = "接受";
         public static string reject { get; } = "拒絕";
         public static string HomePage { get; } = "首頁";

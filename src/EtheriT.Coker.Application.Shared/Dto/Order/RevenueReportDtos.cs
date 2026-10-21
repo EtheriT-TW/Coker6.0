@@ -12,6 +12,9 @@
         public string PeriodLabel { get; set; } = string.Empty;
         public long OrderCount { get; set; }
         public decimal Amount { get; set; }
+        public long InvalidOrderCount { get; set; }
+        public decimal InvalidAmount { get; set; }
+        public decimal AverageOrderValue { get; set; }
     }
 
     public sealed class RevenueReportOutputDto

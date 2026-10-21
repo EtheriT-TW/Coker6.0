@@ -1487,6 +1487,11 @@ button, input, select, textarea {
     background: #fdecea;
 }
 
+.proxy-purchase-cell .dx-checkbox-checked.dx-state-readonly .dx-checkbox-icon {
+    color: #28785c;
+    border-color: #28785c;
+    background-color: #e9f8f2;
+}
 
 /* ── 網站管理：摘要卡與剩餘天數 ── */
 .website-metrics {

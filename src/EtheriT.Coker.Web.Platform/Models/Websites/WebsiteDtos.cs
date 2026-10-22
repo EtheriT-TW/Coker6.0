@@ -51,8 +51,10 @@ public sealed record WebsiteDetailDto
     public long Id { get; init; }
     /// <summary>站台代碼，唯讀顯示用。</summary>
     public string OrgName { get; init; } = string.Empty;
-    /// <summary>後台 Website.DefaultUrl，唯讀顯示用；新增後由後台維護。</summary>
+    /// <summary>後台 Website.DefaultUrl（主要網址）；Platform 編輯時可改勾別筆網址當主要網址。</summary>
     public string? DefaultUrl { get; init; }
+    /// <summary>主要網址比對到的網域（Website.FK_PlatformDomainId）；null＝沒有對應的網域。</summary>
+    public DomainSummaryDto? DefaultDomain { get; init; }
     /// <summary>0＝後台還沒綁公司。</summary>
     public long FK_CompanyId { get; init; }
     public string Name { get; init; } = string.Empty;
@@ -109,9 +111,9 @@ public class WebsiteSaveRequest
     public DateTime? TerminatedDate { get; set; }
 
     /// <summary>
-    /// 只放「其他網址」（WebsiteAlternateUrls），可以是 0 筆，不可與預設網址重複。
-    /// 預設網址（Website.DefaultUrl）新增時由後端依 OrgName 組出，編輯時不寫入。
-    /// 後端依每筆網址比對網域，前端不送 FK。
+    /// 主要網址＋其他網址一起送，最多 10 筆（含主要網址），不可重複。
+    /// 有網址時必須剛好一筆 IsPrimary：它寫入 Website.DefaultUrl，其餘寫入 WebsiteAlternateUrls。
+    /// 新增時至少一筆；後端依每筆網址比對網域，前端不送 FK。
     /// </summary>
     public List<WebsiteUrlInput> Urls { get; set; } = [];
 
@@ -123,6 +125,8 @@ public sealed class WebsiteUrlInput
 {
     [StringLength(500, ErrorMessage = "網址不可超過 500 個字元。")]
     public string? Url { get; set; }
+    /// <summary>true＝這筆是主要網址（寫入 Website.DefaultUrl），整份清單剛好一筆。</summary>
+    public bool IsPrimary { get; set; }
 }
 
 /// <summary>

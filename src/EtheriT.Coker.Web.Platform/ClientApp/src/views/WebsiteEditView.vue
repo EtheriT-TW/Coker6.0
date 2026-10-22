@@ -4,7 +4,6 @@
     import { ApiError, FormFieldErrors, requestAlert, requestConfirm, rules, useManagedForm } from "@/core/coker";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import DateField from "@/components/DateField.vue";
-    import IisBindingNote from "@/components/IisBindingNote.vue";
     import QuickCustomerDialog from "@/components/QuickCustomerDialog.vue";
     import WebsiteUrlItem from "@/components/WebsiteUrlItem.vue";
     import { lookupCustomer } from "@/services/customer-api";
@@ -37,7 +36,7 @@
 
     const TAX_ID_PATTERN = /^\d{8,10}$/;
 
-    // 與後端 WebsitesController.MaxUrlCount 一致（只算其他網址，主要網址另計）
+    // 與後端 WebsitesController.MaxUrlCount 一致（含主要網址）
     const MAX_URL_COUNT = 10;
     const urlLimit = ref(MAX_URL_COUNT);
     const SITE_ROOT_MESSAGE = "請輸入網站根網址，例：https://www.example.com.tw（不可包含路徑）。";
@@ -75,10 +74,12 @@
 
     // options API：主機清單、各版本預設主機、預設網址後綴
     const websiteOptions = ref<WebsiteOptions | null>(null);
-    // 編輯時的後台 Website.DefaultUrl，只顯示不修改
+    // 編輯時載入的後台 Website.DefaultUrl：判斷「換主要網址時原網址有沒有留著」用
     const savedDefaultUrl = ref("");
     // 載入時 IsDomainPending 為 true，已自動在其他網址補一筆預設網址
     const isPendingUrlAdded = ref(false);
+    // 新增時第一列跟著站台代碼自動產生；使用者改過那一列就變 null，不再跟著改
+    const autoUrlKey = ref<number | null>(null);
 
     // ── 以統編或公司名稱帶出客戶（兩者都不可重複，最多一筆） ──
     const lookupKeyword = ref("");
@@ -99,6 +100,8 @@
 
     // 各網址列目前開著彈窗的 Key；只在 beforeSave 讀，不需要響應式
     const openUrlDialogKeys = new Set<number>();
+    // 比對不到網域的網址列（記 Key）；存檔確認時提醒，不擋存檔
+    const domainMissingKeys = new Set<number>();
 
     function emptyForm(): WebsiteForm {
         const start = todayDateInput();
@@ -119,14 +122,27 @@
         };
     }
 
-    /** 其他網址逐列驗證，可以 0 筆；錯誤 key 與後端一致（Urls[i].Url），才能掛到對的那一列。 */
+    /** 網址逐列驗證（含主要網址）；錯誤 key 與後端一致（Urls[i].Url），才能掛到對的那一列。訊息與後端一致。 */
     function validateUrls(values: WebsiteForm): Record<string, string[]> {
         const errors: Record<string, string[]> = {};
+        const savedPrimaryHost = toBindingHost(savedDefaultUrl.value);
+        const primary = values.Urls.find(item => item.IsPrimary);
         if (values.Urls.length > urlLimit.value) {
-            errors.Urls = [`其他網址最多 ${urlLimit.value} 筆。`];
+            errors.Urls = [`網址最多 ${urlLimit.value} 筆（含主要網址）。`];
+        }
+        else if (!isEdit.value && !values.Urls.length) {
+            errors.Urls = ["請至少輸入一筆網址。"];
+        }
+        else if (values.Urls.length && values.Urls.filter(item => item.IsPrimary).length !== 1) {
+            errors.Urls = ["請勾選一筆主要網址。"];
+        }
+        // 繫結同步靠原本的主要網址找主機上的網站，換主要網址的那次不能同時刪掉它
+        else if (savedPrimaryHost
+            && toBindingHost(primary?.Url ?? "") !== savedPrimaryHost
+            && !values.Urls.some(item => toBindingHost(item.Url) === savedPrimaryHost)) {
+            errors.Urls = [`更換主要網址時，原主要網址「${savedDefaultUrl.value}」要先留在清單中；換好並儲存後，下次再刪除。`];
         }
 
-        const primary = toBindingHost(primaryUrl.value);
         const seen = new Set<string>();
         for (const [index, item] of values.Urls.entries()) {
             const url = item.Url.trim();
@@ -134,8 +150,6 @@
             const key = `Urls[${index}].Url`;
             if (!isSiteRoot(url)) errors[key] = [SITE_ROOT_MESSAGE];
             else if (url.length > 255) errors[key] = ["網址不可超過 255 個字元。"];
-            // 訊息與後端一致
-            else if (primary && normalized === primary) errors[key] = [`網址「${url}」就是預設網址，不必再填。`];
             else if (seen.has(normalized)) errors[key] = ["這筆網址與前面的網址重複。"];
             seen.add(normalized);
         }
@@ -220,12 +234,18 @@
                         const host = toBindingHost(item.Url);
                         return host && !bindingComparison.value!.SiteHosts.includes(host);
                     });
-                    if (missing.length) {
-                        saveConfirmation.message = `以下網址尚未在主機啟用。是否儲存本次修改，並一併啟用這些網址？\n${missing.map(item => item.Url).join('\n')}`;
-                        synchronizeRequested.value = true;
-                    }
+                    // 主機還沒綁定的網址，存檔時一併啟用，不另外詢問
+                    if (missing.length) synchronizeRequested.value = true;
                 }
             }
+            
+            const domainMissingUrls = values.Urls
+                .filter(item => domainMissingKeys.has(item.Key))
+                .map(item => item.Url);
+            if (domainMissingUrls.length) {
+                saveConfirmation.message += `\n\n以下網址尚未建立網域資料，仍可儲存，之後可到「網域管理」補建：\n${domainMissingUrls.join('\n')}`;
+            }
+
             return await requestConfirm(saveConfirmation);
         },
         save: values => isEdit.value
@@ -256,10 +276,12 @@
     const isTerminated = computed(() => form.model.value.Status === WebsiteStatus.註銷);
     const isFormLocked = computed(() => loading.value || form.isSaving.value);
 
-    // 主要網址：新增時跟著站台代碼即時產生（與後端規則一致）；編輯時是後台 DefaultUrl，這裡不能改
-    const primaryUrl = computed(() => isEdit.value
-        ? savedDefaultUrl.value
-        : toDefaultUrl(form.model.value.OrgName, websiteOptions.value?.DefaultUrlSuffix ?? ""));
+    // 新增時第一列跟著站台代碼即時產生（與後端預設網址規則一致）；使用者改過那一列後就不再跟
+    watch(() => form.model.value.OrgName, orgName => {
+        const item = form.model.value.Urls.find(url => url.Key === autoUrlKey.value);
+        if (isEdit.value || !item) return;
+        item.Url = toDefaultUrl(orgName, websiteOptions.value?.DefaultUrlSuffix ?? "");
+    });
 
     // 主機下拉：舊資料的主機不在清單內時補一個選項，下拉才不會顯示空白
     const hostLocationOptions = computed(() => {
@@ -287,13 +309,6 @@
 
     const comparisonUsable = computed(() => bindingComparison.value?.Status === 'Ok'
         && savedHostLocation.value === form.model.value.HostLocation && !comparisonLoading.value);
-    const comparisonRows = computed(() => comparisonUsable.value ? form.model.value.Urls.map(item => {
-        const host = toBindingHost(item.Url);
-        const other = bindingComparison.value!.OtherBindings.find(x => x.Host === host);
-        return { key: item.Key, url: item.Url, state: !host ? '網址待填寫／格式待確認'
-            : other ? '此網址已由其他網站使用，請先確認'
-            : bindingComparison.value!.SiteHosts.includes(host) ? '主機已設定此網址' : '尚未啟用，儲存時將請您確認' };
-    }) : []);
     async function refreshComparison(): Promise<void> {
         if (!isEdit.value || comparisonDisposed) return;
         const sequence = ++comparisonSequence;
@@ -353,12 +368,17 @@
     function addUrl(): void {
         const urls = form.model.value.Urls;
         if (urls.length >= urlLimit.value) return;
-        urls.push(newWebsiteUrlItem());
+        // 清單空的時候，第一筆自動當主要網址
+        urls.push(newWebsiteUrlItem("", null, urls.length === 0));
         form.clearErrors("Urls");
     }
 
     function removeUrl(index: number): void {
-        form.model.value.Urls.splice(index, 1);
+        const urls = form.model.value.Urls;
+        const [removed] = urls.splice(index, 1);
+        // 刪掉主要網址時由剩下的第一筆接手，存檔時才不會沒有主要網址
+        const first = urls[0];
+        if (removed?.IsPrimary && first) first.IsPrimary = true;
         // 索引會位移，只清掉被刪那列的 key 會讓後面的錯誤訊息錯位到別列
         clearUrlErrors();
     }
@@ -367,7 +387,16 @@
         const item = form.model.value.Urls[index];
         if (!item) return;
         item.Url = value;
+        // 使用者自己改過自動產生的那一列，之後改站台代碼就不再覆蓋
+        if (item.Key === autoUrlKey.value) autoUrlKey.value = null;
         form.clearErrors(`Urls[${index}].Url`);
+    }
+
+    function setPrimaryUrl(index: number): void {
+        form.model.value.Urls.forEach((item, position) => {
+            item.IsPrimary = position === index;
+        });
+        form.clearErrors("Urls");
     }
 
     function clearUrlErrors(): void {
@@ -380,6 +409,11 @@
         if (open) openUrlDialogKeys.add(key);
         else openUrlDialogKeys.delete(key);
     }
+    
+    function onUrlDomainMissingChange(key: number, missing: boolean): void {
+        if (missing) domainMissingKeys.add(key);
+        else domainMissingKeys.delete(key);
+    }
 
     function setCustomer(value: CustomerLookup | null): void {
         customer.value = value;
@@ -388,19 +422,26 @@
         form.clearErrors("FK_CompanyId");
     }
 
-    /** 新增時帶入預設主機；用 reset 才不會一進頁面就被標成「尚未儲存」（載入期間表單鎖住，使用者還沒輸入）。 */
+    /**
+     * 新增時帶入預設主機，並放一列勾選為主要網址的預設網址（跟著站台代碼產生）；
+     * 用 reset 才不會一進頁面就被標成「尚未儲存」（載入期間表單鎖住，使用者還沒輸入）。
+     */
     function applyNewDefaults(options: WebsiteOptions): void {
         const value = emptyForm();
+        const defaultUrlItem = newWebsiteUrlItem("", null, true);
+        autoUrlKey.value = defaultUrlItem.Key;
         form.reset({
             ...value,
-            HostLocation: options.DefaultHostByLevel[String(value.Level)] ?? ""
+            HostLocation: options.DefaultHostByLevel[String(value.Level)] ?? "",
+            Urls: [defaultUrlItem]
         });
     }
 
     function applyDetail(detail: WebsiteDetail, defaultUrlSuffix: string): void {
         const value = toWebsiteForm(detail);
         savedDefaultUrl.value = detail.DefaultUrl ?? "";
-        urlLimit.value = Math.max(MAX_URL_COUNT, detail.Urls.length);
+        // 舊資料超過上限時以原本筆數（含主要網址）為上限，與後端一致
+        urlLimit.value = Math.max(MAX_URL_COUNT, value.Urls.length);
         savedHostLocation.value = detail.HostLocation ?? "";
 
         // 舊資料標記「網域待申請」：改成在其他網址補一筆預設網址；主要網址或其他網址已經有了就不補
@@ -409,7 +450,8 @@
         const shouldAddPendingUrl = pendingUrl !== ""
             && !existingUrls.includes(toBindingHost(pendingUrl))
             && value.Urls.length < urlLimit.value;
-        if (shouldAddPendingUrl) value.Urls.push(newWebsiteUrlItem(pendingUrl));
+        // 清單原本是空的（後台沒有主要網址），補的這筆直接當主要網址
+        if (shouldAddPendingUrl) value.Urls.push(newWebsiteUrlItem(pendingUrl, null, value.Urls.length === 0));
 
         // 用 reset 載入而非逐欄指派，才不會一進頁面就被標成「尚未儲存」
         form.reset(value);
@@ -503,7 +545,7 @@
 
     <p v-if="pageError" class="alert alert-error" role="alert">{{ pageError }}</p>
     <p v-if="isEdit" class="alert alert-info" role="status">
-        網站名稱、版本、語系、開通／到期日直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
+        網站名稱、版本、語系、開通／到期日與主要網址直接寫入後台站台「{{ form.model.value.OrgName || "—" }}」，儲存後立即生效。
     </p>
 
     <form class="form-stack" novalidate autocomplete="off" @submit.prevent="form.save('button')">
@@ -700,7 +742,7 @@
                         :disabled="form.model.value.Urls.length >= urlLimit"
                         @click="addUrl">
                     <span class="material-symbols-outlined">add</span>
-                    <span>新增其他網址</span>
+                    <span>新增網址</span>
                 </button>
             </div>
 
@@ -709,59 +751,41 @@
             </p>
 
             <div class="form-grid">
-                <!-- 主要網址：後台 Website.DefaultUrl，Platform 只顯示 -->
+                <!-- 各列的主機狀態顯示在該列右側，這裡只放共用說明與「更新狀態」 -->
                 <div v-if="isEdit" class="form-field form-field-wide" aria-live="polite">
-                    <span class="form-label">網址狀態</span>
-                    <p class="field-note">主機已有的網址會自動加入清單。新增、修改或刪除網址後，按「儲存」即可套用。</p>
-                    <div class="form-section-heading">
+                    <div class="url-status-heading">
+                        <span class="form-label">網址狀態</span>
                         <button class="ui-button ui-button-ghost" type="button" :disabled="comparisonLoading" @click="refreshComparison">{{ comparisonLoading ? '讀取中…' : '更新狀態' }}</button>
                     </div>
                     <p v-if="comparisonError" class="field-note" role="alert">{{ comparisonError }}</p>
                     <p v-else-if="savedHostLocation !== form.model.value.HostLocation" class="field-note">主機位置已變更，請先完成網站搬移，再重新開啟此頁修改網址。</p>
                     <p v-else-if="bindingComparison && bindingComparison.Status !== 'Ok'" class="field-note">{{ bindingComparison.Message }}一般資料仍可編輯。</p>
-                    <template v-if="comparisonUsable">
-                        <p class="field-note">最後更新：{{ bindingComparison?.LastSeenAtUtc ? new Date(bindingComparison.LastSeenAtUtc).toLocaleString('zh-TW') : '—' }}。</p>
-                        <ul v-if="comparisonRows.length"><li v-for="row in comparisonRows" :key="row.key">{{ row.url || '尚未填寫網址' }}：{{ row.state }}</li></ul>
-                        <p v-else class="field-note">目前沒有其他網址。</p>
-                        <p class="field-note">尚未啟用的網址會在儲存時請您確認。儲存後需等待系統完成設定，可至「任務紀錄」查看結果。</p>
-                    </template>
-                </div>
-                <div class="form-field form-field-wide">
-                    <label>
-                        <span>主要網址</span>
-                        <input :value="primaryUrl"
-                               type="text"
-                               readonly
-                               :placeholder="isEdit ? '未設定' : '輸入站台代碼後自動產生'" />
-                    </label>
-                    <p class="field-note">
-                        {{ isEdit ? "主要網址請至後台修改。" : "依站台代碼自動產生，建立後請至後台修改。" }}
+                    <p v-else-if="comparisonUsable" class="field-note">
+                        最後更新：{{ bindingComparison?.LastSeenAtUtc ? new Date(bindingComparison.LastSeenAtUtc).toLocaleString('zh-TW') : '—' }}。主機已有的網址會自動加入清單；尚未啟用的網址會在儲存時請您確認，結果可至「任務紀錄」查看。
                     </p>
-                    <IisBindingNote :hint="iisLookup.hintFor(primaryUrl)" />
+                    <p class="field-note">
+                        最多 {{ urlLimit }} 筆（含主要網址），不可重複。<template v-if="!isEdit">；第一列依站台代碼自動產生。</template>
+                    </p>
                 </div>
 
                 <div class="form-field form-field-wide">
-                    <span class="form-label">其他網址</span>
                     <FormFieldErrors :errors="form.getErrors('Urls')" />
-                    <p class="field-note">
-                        選填，最多 {{ urlLimit }} 筆，不可與主要網址重複。新增、修改或刪除後按「儲存」，系統會更新網站的網址設定；結果可至「任務紀錄」查看。
-                    </p>
-                </div>
-
-                <div class="form-field form-field-wide">
-                    <p v-if="!form.model.value.Urls.length" class="repeater-empty">尚未新增其他網址。</p>
-                    <div v-else class="repeater">
+                    <p v-if="!form.model.value.Urls.length" class="repeater-empty">尚未新增網址。</p>
+                    <div v-else class="url-list">
                         <WebsiteUrlItem v-for="(item, index) in form.model.value.Urls"
                                         :key="item.Key"
                                         :url="item.Url"
                                         :index="index"
+                                        :is-primary="item.IsPrimary"
                                         :initial-domain="item.InitialDomain"
                                         :errors="form.getErrors(`Urls[${index}].Url`)"
                                         :can-edit-domain="isEdit"
                                         :iis-hint="iisLookup.hintFor(item.Url)"
                                         @update:url="value => updateUrl(index, value)"
+                                        @set-primary="setPrimaryUrl(index)"
                                         @remove="removeUrl(index)"
-                                        @dialog-change="open => onUrlDialogChange(item.Key, open)" />
+                                        @dialog-change="open => onUrlDialogChange(item.Key, open)"
+                                        @domain-missing-change="missing => onUrlDomainMissingChange(item.Key, missing)" />
                     </div>
                 </div>
             </div>

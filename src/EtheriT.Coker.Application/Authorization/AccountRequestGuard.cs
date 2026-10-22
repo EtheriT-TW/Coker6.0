@@ -15,6 +15,8 @@ public static class AccountRequestGuard
     private static readonly MemoryCache Cache = new(new MemoryCacheOptions { SizeLimit = 10000 });
     private static readonly MemoryCache RateCache = new(new MemoryCacheOptions { SizeLimit = 10000 });
     private static readonly MemoryCache FailureCache = new(new MemoryCacheOptions { SizeLimit = 10000 });
+    private static readonly CacheEvictions RateEvictions = new();
+    private static readonly CacheEvictions FailureEvictions = new();
     private static readonly object Sync = new();
     private const string CookieName = "Coker.CaptchaBrowser";
     private const string DiagnosticsKey = "Coker.CaptchaDiagnostics";
@@ -48,7 +50,8 @@ public static class AccountRequestGuard
         lock (Sync)
         {
             var now = DateTimeOffset.UtcNow;
-            if (!RateCache.TryGetValue(key, out Window? window) || window == null || window.End <= now)
+            var existed = RateCache.TryGetValue(key, out Window? window);
+            if (!existed || window == null || window.End <= now)
                 window = new Window { End = now.AddMinutes(10) };
             if (window.Count >= limit)
             {
@@ -56,17 +59,23 @@ public static class AccountRequestGuard
                 return false;
             }
             window.Count++;
-            RateCache.Set(key, window, new MemoryCacheEntryOptions().SetSize(1).SetAbsoluteExpiration(window.End));
-            var stored = RateCache.TryGetValue(key, out Window? saved) && ReferenceEquals(window, saved);
+            var entriesBeforeWrite = RateCache.Count;
+            RateCache.Set(key, window, CounterOptions(window.End, RateEvictions));
+            var foundAfterWrite = RateCache.TryGetValue(key, out Window? saved);
+            var stored = foundAfterWrite && ReferenceEquals(window, saved);
             Diagnose(context, operation, new
             {
                 Outcome = stored ? "Allowed" : "CounterNotStoredAllowed",
-                window.Count, Limit = limit, WindowEndUtc = window.End
+                window.Count, Limit = limit, WindowEndUtc = window.End,
+                CounterExisted = existed, FoundAfterWrite = foundAfterWrite,
+                SameInstanceAfterWrite = stored, EntriesBeforeWrite = entriesBeforeWrite,
+                EntriesAfterWrite = RateCache.Count, ObservedAtUtc = now
             });
             if (!stored)
                 context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(AccountRequestGuard))
-                    .LogWarning("Rate counter was not retained; request allowed. Operation={Operation} Site={Site} Trace={Trace}",
-                        operation, Site(context), context.TraceIdentifier);
+                    .LogWarning("Rate counter was not retained; request allowed. Operation={Operation} Site={Site} Process={Process} Count={Count} EntriesBefore={EntriesBefore} EntriesAfter={EntriesAfter} FoundAfterWrite={FoundAfterWrite} Trace={Trace}",
+                        operation, Site(context), Environment.ProcessId, window.Count,
+                        entriesBeforeWrite, RateCache.Count, foundAfterWrite, context.TraceIdentifier);
             // Cache capacity does not mean this visitor exceeded the limit.
             return true;
         }
@@ -127,7 +136,7 @@ public static class AccountRequestGuard
 
     public static string Details(HttpContext context) => JsonSerializer.Serialize(new
     {
-        Version = 3,
+        Version = 4,
         ProtectionEnabled = CaptchaProtectionEnabled(context),
         Mode = ObserveOnly(context) ? "ObserveOnly" : CaptchaProtectionEnabled(context) ? "Enforce" : "Disabled",
         WouldBlock = context.Items.ContainsKey(WouldBlockKey),
@@ -136,6 +145,11 @@ public static class AccountRequestGuard
         BrowserFingerprint = BrowserFingerprint(context),
         Path = context.Request.Path.Value,
         ProcessId = Environment.ProcessId,
+        MachineName = Environment.MachineName,
+        ObservedAtUtc = DateTimeOffset.UtcNow,
+        CacheSizeLimit = 10000,
+        RateCacheEvictions = RateEvictions.Snapshot(),
+        FailureCacheEvictions = FailureEvictions.Snapshot(),
         RateCacheEntries = RateCache.Count,
         FailureCacheEntries = FailureCache.Count,
         GrantCacheEntries = Cache.Count,
@@ -212,12 +226,17 @@ public static class AccountRequestGuard
                     state.End = now.AddMinutes(15);
                     state.LockedUntil = state.End;
                 }
-                FailureCache.Set(key, state, new MemoryCacheEntryOptions().SetSize(1).SetAbsoluteExpiration(state.End));
-                var stored = FailureCache.TryGetValue(key, out FailureWindow? saved) && ReferenceEquals(state, saved);
+                var entriesBeforeWrite = FailureCache.Count;
+                FailureCache.Set(key, state, CounterOptions(state.End, FailureEvictions));
+                var foundAfterWrite = FailureCache.TryGetValue(key, out FailureWindow? saved);
+                var stored = foundAfterWrite && ReferenceEquals(state, saved);
                 Diagnose(context, "captcha-failure", new
                 {
                     Outcome = stored ? "IncorrectCodeCounted" : "FailureCounterNotStored",
-                    state.Count, Limit = 5, WindowEndUtc = state.End, LockedUntilUtc = state.LockedUntil
+                    state.Count, Limit = 5, WindowEndUtc = state.End, LockedUntilUtc = state.LockedUntil,
+                    FoundAfterWrite = foundAfterWrite, SameInstanceAfterWrite = stored,
+                    EntriesBeforeWrite = entriesBeforeWrite, EntriesAfterWrite = FailureCache.Count,
+                    ObservedAtUtc = now
                 });
                 if (stored && state.LockedUntil > now)
                 {
@@ -227,6 +246,37 @@ public static class AccountRequestGuard
             }
             return reason;
         }
+    }
+
+    private static MemoryCacheEntryOptions CounterOptions(DateTimeOffset end, CacheEvictions evictions) =>
+        new MemoryCacheEntryOptions().SetSize(1).SetAbsoluteExpiration(end)
+            .RegisterPostEvictionCallback(static (_, _, reason, state) =>
+                ((CacheEvictions)state!).Record(reason), evictions);
+
+    // Callbacks run asynchronously. These are cumulative process-local diagnostics,
+    // not proof that a particular request caused an eviction. Never retain request data.
+    private sealed class CacheEvictions
+    {
+        private long capacity, expired, replaced, removed, other;
+
+        public void Record(EvictionReason reason)
+        {
+            switch (reason)
+            {
+                case EvictionReason.Capacity: Interlocked.Increment(ref capacity); break;
+                case EvictionReason.Expired: Interlocked.Increment(ref expired); break;
+                case EvictionReason.Replaced: Interlocked.Increment(ref replaced); break;
+                case EvictionReason.Removed: Interlocked.Increment(ref removed); break;
+                default: Interlocked.Increment(ref other); break;
+            }
+        }
+
+        public object Snapshot() => new
+        {
+            Capacity = Interlocked.Read(ref capacity), Expired = Interlocked.Read(ref expired),
+            Replaced = Interlocked.Read(ref replaced), Removed = Interlocked.Read(ref removed),
+            Other = Interlocked.Read(ref other)
+        };
     }
 
     private sealed class FailureWindow

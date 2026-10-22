@@ -32,6 +32,18 @@ public sealed class PreparedHtmlContent(PageArtifactStore store, IHtmlProcessor 
             var headings = root.Descendants("h1").Count(MainHeadingHtml.HasText);
             BreadcrumbBlockHtml.Inject(processor, combined.Document,
                 string.IsNullOrWhiteSpace(breadcrumb) ? null : BreadcrumbSlot);
+            // Stored form HTML may contain a bare CAPTCHA URL. Only NewCaptcha should
+            // load the image, after assigning the challenge id and hidden form field.
+            foreach (var image in root.Descendants("img"))
+            {
+                foreach (var attribute in new[] { "src", "data-src" })
+                {
+                    var source = image.GetAttributeValue(attribute, "").Trim();
+                    if (source.TrimEnd('?').Equals("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||
+                        source.TrimEnd('?').Equals("api/Captcha/index", StringComparison.OrdinalIgnoreCase))
+                        image.Attributes.Remove(attribute);
+                }
+            }
             if (lazy) ContentImageLoadingHtml.Prepare(processor, combined.Document);
             content = combined.BodyOnly ? root.InnerHtml : root.OuterHtml;
             if (rewriteUploads && !string.IsNullOrWhiteSpace(orgName))
@@ -45,7 +57,7 @@ public sealed class PreparedHtmlContent(PageArtifactStore store, IHtmlProcessor 
         var result = !string.IsNullOrWhiteSpace(generatedSuffix)
             ? Create()
             : await store.GetAsync(orgName, siteId,
-                $"render/{slot}/{wrapper}/{lazy}/{!string.IsNullOrWhiteSpace(breadcrumb)}/{rewriteUploads}",
+                $"render/captcha-init-v2/{slot}/{wrapper}/{lazy}/{!string.IsNullOrWhiteSpace(breadcrumb)}/{rewriteUploads}",
                 [html, parent, orgName, parentOrgNames], () => Task.FromResult(Create()),
                 cached => cached.Html != null && cached.MainHeadingCount >= 0);
         return new Result

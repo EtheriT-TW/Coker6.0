@@ -107,17 +107,19 @@ export interface WebsiteCustomer {
     PrimaryContactName: string | null;
 }
 
-/** 網站的其他網址（存在 WebsiteAlternateUrls）；主要網址是 WebsiteDetail.DefaultUrl，不在這裡。 */
+/** 後端回傳的其他網址（存在 WebsiteAlternateUrls）；主要網址另放在 WebsiteDetail.DefaultUrl，載入表單時才併進清單。 */
 export interface WebsiteUrl {
     Url: string;
     /** null＝網域管理中沒有對應的網域（或後台舊資料沒比對過） */
     Domain: DomainSummary | null;
 }
 
-/** 表單上的一筆其他網址。Key 只給 v-for 與彈窗追蹤用，不送後端。 */
+/** 表單上的一筆網址（主要網址也在清單裡）。Key 只給 v-for 與彈窗追蹤用，不送後端。 */
 export interface WebsiteUrlFormItem {
     Key: number;
     Url: string;
+    /** true＝主要網址（寫入後台 Website.DefaultUrl），整份清單剛好一筆 */
+    IsPrimary: boolean;
     /** 載入時後端比對出的網域，給列元件當初始顯示；新增的列為 null */
     InitialDomain: DomainSummary | null;
 }
@@ -138,8 +140,10 @@ export interface WebsiteDetail {
     Status: WebsiteStatusValue;
     SuspendedDate: string | null;
     TerminatedDate: string | null;
-    /** 後台 Website.DefaultUrl，Platform 只顯示不修改；null／""＝未設定 */
+    /** 後台 Website.DefaultUrl（主要網址）；null／""＝未設定 */
     DefaultUrl: string | null;
+    /** 主要網址比對到的網域；null＝沒有對應的網域 */
+    DefaultDomain: DomainSummary | null;
     /** 舊資料的「網域待申請」；載入時改成在其他網址補一筆預設網址 */
     IsDomainPending: boolean;
     /** 只有其他網址，可為空陣列 */
@@ -163,7 +167,7 @@ export interface WebsiteForm {
     Status: number;
     SuspendedDate: string;
     TerminatedDate: string;
-    /** 只有其他網址；主要網址不在表單內 */
+    /** 主要網址＋其他網址，IsPrimary 標出主要網址 */
     Urls: WebsiteUrlFormItem[];
     Remark: string;
 }

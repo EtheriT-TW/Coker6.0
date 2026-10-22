@@ -11,7 +11,7 @@
     import { toDateInput } from "@/utils/date-input";
     import { toDomainName } from "@/utils/domain-name";
 
-    // 網站編輯頁的一筆其他網址：輸入網址，並顯示比對到的網域與 IIS 綁定狀態。
+    // 網站編輯頁的一筆網址（一行）：勾選主要網址、輸入網址，並顯示比對到的網域與 IIS 綁定狀態。
     // 網域只是參考資訊：比對不到也能存檔；要補建或修改網域由使用者按右側按鈕自行處理，不自動登記。
     // 這裡的比對結果只給使用者看；存檔時後端會逐筆重新比對，不相信前端。
     // 停用狀態由外層 <fieldset disabled> 控制。
@@ -20,6 +20,8 @@
         url: string;
         /** 第幾筆（0 起算），用來組欄位 id 與標題 */
         index: number;
+        /** 這筆是不是主要網址；同一頁的勾選共用 name，只會有一筆被選 */
+        isPrimary: boolean;
         /** 載入時後端比對出的網域；新增的列為 null */
         initialDomain: DomainSummary | null;
         errors: string[];
@@ -31,13 +33,17 @@
 
     const emit = defineEmits<{
         "update:url": [value: string];
+        /** 使用者勾選這筆當主要網址；取消其他列由外層處理 */
+        setPrimary: [];
         remove: [];
-        /** 本列的彈窗開關；外層據此擋住 Ctrl+S 偷偷送出網站表單 */
         dialogChange: [open: boolean];
+        /** 本列是否比對不到網域；外層存檔確認時據此提醒 */
+        domainMissingChange: [missing: boolean];
     }>();
 
     const route = useRoute();
     const inputId = computed(() => `website-url-${props.index}`);
+    const rowLabel = computed(() => `網址 ${props.index + 1}`);
 
     // ── 網址 → 網域比對 ──
     const matchedDomain = ref<DomainSummary | null>(props.initialDomain);
@@ -59,7 +65,13 @@
     const suggestedDomainName = computed(() => toDomainName(props.url.trim()));
 
     watch(isQuickDomainOpen, open => emit("dialogChange", open));
-    onBeforeUnmount(() => emit("dialogChange", false));
+    // immediate：載入時就沒有網域的列也要通知外層
+    watch(isDomainMissing, missing => emit("domainMissingChange", missing), { immediate: true });
+    onBeforeUnmount(() => {
+        emit("dialogChange", false);
+        // 刪掉這列時，外層的記錄也要清掉
+        emit("domainMissingChange", false);
+    });
 
     function resetDomainMatch(): void {
         matchSequence += 1;   // 讓還在路上的舊回應作廢
@@ -109,69 +121,69 @@
 </script>
 
 <template>
-    <article class="repeater-item">
-        <header class="repeater-item-heading">
-            <strong>其他網址 {{ props.index + 1 }}</strong>
-        </header>
+    <article class="url-row" :class="{ 'url-row-primary': props.isPrimary }">
+        <label class="choice url-row-choice" title="設為主要網址">
+            <input type="radio"
+                   name="website-primary-url"
+                   :checked="props.isPrimary"
+                   @change="emit('setPrimary')" />
+            <span class="choice-box" aria-hidden="true"></span>
+            <span>主要</span>
+        </label>
 
-        <div class="repeater-item-body">
-            <div class="repeater-row repeater-row-url">
-                <div class="form-grid">
-                    <div class="form-field form-field-wide">
-                        <label :for="inputId" class="form-label">網址 <i class="form-required">*</i></label>
-                        <UrlField :model-value="props.url"
-                                  :input-id="inputId"
-                                  @update:model-value="value => emit('update:url', value)"
-                                  @change="checkDomain()"
-                                  @enter="checkDomain(true)" />
-                        <FormFieldErrors :errors="props.errors" />
-                        <p v-if="matchingDomain" class="field-note" role="status">比對網域中…</p>
-                        <p v-else-if="domainMatchError" class="field-note field-note-error" role="alert">{{ domainMatchError }}</p>
-                        <p v-else-if="matchedDomain" class="field-note">
-                            對應網域：{{ matchedDomain.DomainName }}
-                            <template v-if="matchedDomain.EndDate">
-                                （到期 {{ toDateInput(matchedDomain.EndDate) }}）
-                            </template>
-                            <template v-if="matchedDomain.IsProxyPurchase">
-                                （代購）
-                            </template>
-                        </p>
-                        <p v-else-if="isDomainMissing" class="field-note" role="status">
-                            網域管理中還沒有這個網址的網域資料，仍可儲存；可按右側按鈕建立網域。
-                        </p>
-                        <IisBindingNote :hint="props.iisHint" />
-                    </div>
-                </div>
+        <div class="url-row-field">
+            <label :for="inputId" class="visually-hidden">{{ rowLabel }}</label>
+            <UrlField :model-value="props.url"
+                      :input-id="inputId"
+                      @update:model-value="value => emit('update:url', value)"
+                      @change="checkDomain()"
+                      @enter="checkDomain(true)" />
+        </div>
 
-                <!-- 空白標題佔位，讓按鈕與輸入框對齊在同一條線上 -->
-                <div class="repeater-action">
-                    <span class="repeater-action-spacer" aria-hidden="true">&nbsp;</span>
-                    <div class="repeater-action-buttons">
-                        <RouterLink v-if="matchedDomain && props.canEditDomain"
-                                    class="outline-icon-button"
-                                    title="編輯網域資料"
-                                    :aria-label="`編輯其他網址 ${props.index + 1} 的網域資料`"
-                                    :to="{ name: 'domain-edit', params: { id: matchedDomain.Id }, query: { returnTo: route.fullPath } }">
-                            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
-                        </RouterLink>
-                        <button v-else-if="isDomainMissing"
-                                class="outline-icon-button"
-                                type="button"
-                                title="建立網域資料"
-                                :aria-label="`建立其他網址 ${props.index + 1} 的網域資料`"
-                                @click="isQuickDomainOpen = true">
-                            <span class="material-symbols-outlined" aria-hidden="true">dns</span>
-                        </button>
-                        <button class="outline-icon-button outline-icon-button-danger"
-                                type="button"
-                                title="移除這筆"
-                                :aria-label="`移除其他網址 ${props.index + 1}`"
-                                @click="emit('remove')">
-                            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <!-- 網域與主機狀態放網址右側；平板以下移到下一行 -->
+        <div class="url-row-meta">
+            <p v-if="matchingDomain" class="field-note" role="status">比對網域中…</p>
+            <p v-else-if="matchedDomain" class="field-note">
+                網域 {{ matchedDomain.DomainName }}
+                <template v-if="matchedDomain.EndDate">（到期 {{ toDateInput(matchedDomain.EndDate) }}）</template>
+                <template v-if="matchedDomain.IsProxyPurchase">（代購）</template>
+            </p>
+            <p v-else-if="isDomainMissing" class="field-note domain-missing-note" role="status">
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                尚無網域資料，請按右側按鈕建立
+            </p>
+            <IisBindingNote :hint="props.iisHint" />
+        </div>
+
+        <div class="repeater-action-buttons url-row-actions">
+            <RouterLink v-if="matchedDomain && props.canEditDomain"
+                        class="outline-icon-button"
+                        title="編輯網域資料"
+                        :aria-label="`編輯${rowLabel}的網域資料`"
+                        :to="{ name: 'domain-edit', params: { id: matchedDomain.Id }, query: { returnTo: route.fullPath } }">
+                <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            </RouterLink>
+            <button v-else-if="isDomainMissing"
+                    class="outline-icon-button outline-icon-button-attention"
+                    type="button"
+                    title="建立網域資料"
+                    :aria-label="`建立${rowLabel}的網域資料`"
+                    @click="isQuickDomainOpen = true">
+                <span class="material-symbols-outlined" aria-hidden="true">dns</span>
+            </button>
+            <button class="outline-icon-button outline-icon-button-danger"
+                    type="button"
+                    title="移除這筆"
+                    :aria-label="`移除${rowLabel}`"
+                    @click="emit('remove')">
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+            </button>
+        </div>
+
+        <!-- 只有出錯時才多一行 -->
+        <div v-if="props.errors.length || domainMatchError" class="url-row-errors">
+            <FormFieldErrors :errors="props.errors" />
+            <p v-if="domainMatchError" class="field-note field-note-error" role="alert">{{ domainMatchError }}</p>
         </div>
     </article>
 

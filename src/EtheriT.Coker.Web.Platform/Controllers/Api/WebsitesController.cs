@@ -16,8 +16,9 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 
 // 網站資料直接讀寫後台 Websites；PlatformWebsites 已停用，僅保留作為搬移備份。
 // 新增只建立 Website 與客戶綁定；目錄、商店設定、權限仍由後台人工補齊。
-// 網址：預設網址（Website.DefaultUrl）只在新增時由後端依 OrgName 組出，之後歸後台維護；
-//       Platform 只讀寫其他網址（WebsiteAlternateUrls，只有 Platform 用）。
+// 網址：前端把主要網址與其他網址放在同一份清單，勾選的那筆寫入 Website.DefaultUrl，
+//       其餘寫入 WebsiteAlternateUrls（只有 Platform 用）。DefaultUrl 會拿來組金流／物流回呼網址，
+//       編輯時只能換成主機已啟用的既有網址，見 ValidatePrimaryChangeAsync。
 // 不提供 DELETE：網站以「註銷」取代刪除。
 [ApiController]
 [Route("api/websites")]
@@ -32,7 +33,7 @@ public sealed class WebsitesController(
 {
     private const int ListLimit = 1000;
 
-    /// <summary>一個站台最多幾筆「其他網址」（不含預設網址），前端 MAX_URL_COUNT 要一致。</summary>
+    /// <summary>一個站台最多幾筆網址（含主要網址），前端 MAX_URL_COUNT 要一致。</summary>
     private const int MaxUrlCount = 10;
 
     /// <summary>IIS 綁定查詢一次最多幾個主機名稱：預設網址＋其他網址上限，再留一點餘裕。</summary>
@@ -50,11 +51,8 @@ public sealed class WebsitesController(
     /// </summary>
     private static readonly Regex OrgNamePattern = new("^[a-z0-9][a-z0-9_-]{1,99}$", RegexOptions.Compiled);
 
-    /// <summary>驗證通過的其他網址：已轉成根網址；DomainId 為 null＝網域管理中還沒有對應的網域。</summary>
-    private sealed record ResolvedUrl(string Url, long? DomainId);
-
-    /// <summary>組預設網址時用：不放行任何 http 網址。</summary>
-    private static readonly IReadOnlySet<string> NoHttpUrls = new HashSet<string>();
+    /// <summary>驗證通過的網址：已轉成根網址；DomainId 為 null＝網域管理中還沒有對應的網域；IsPrimary＝主要網址。</summary>
+    private sealed record ResolvedUrl(string Url, long? DomainId, bool IsPrimary);
 
     /// <summary>iis-bindings 回傳的 Status，前端依字串判斷。</summary>
     private static class IisBindingStatus
@@ -265,17 +263,21 @@ public sealed class WebsitesController(
     public async Task<ActionResult<WebsiteDetailDto>> Create(WebsiteCreateRequest request)
     {
         var orgName = request.OrgName.Trim().ToLowerInvariant();
-        string? defaultUrl = null;
-        long? defaultDomainId = null;
         if (!OrgNamePattern.IsMatch(orgName))
             ModelState.AddModelError(nameof(request.OrgName),
                 "站台代碼只能使用小寫英文、數字、- 與 _，長度 2～100 字，且須以英文或數字開頭。");
-        else
-            (defaultUrl, defaultDomainId) = await ResolveDefaultUrlAsync(orgName);
 
-        var urls = await ValidateRequestAsync(request, defaultUrl, site: null, existingAlternates: []);
+        // 前端第一列預設是依站台代碼組出的網址，使用者可改勾別筆；新站台至少要有一筆主要網址
+        if ((request.Urls ?? []).Count == 0)
+            ModelState.AddModelError(nameof(request.Urls), "請至少輸入一筆網址。");
+
+        var urls = await ValidateRequestAsync(request, site: null, existingAlternates: []);
+        if (ModelState.IsValid)
+            await ValidateUrlsNotTakenAsync(urls);
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
+
+        var primary = urls.Single(url => url.IsPrimary);
 
         var cancellationToken = HttpContext.RequestAborted;
         var strategy = db.Database.CreateExecutionStrategy();
@@ -294,13 +296,13 @@ public sealed class WebsitesController(
             {
                 OrgName = orgName,
                 Type = DefaultWebsiteType,
-                // 預設網址由後端依站台代碼組出；之後歸後台維護，Platform 編輯不再寫入
-                DefaultUrl = defaultUrl,
-                FK_PlatformDomainId = defaultDomainId
+                // 勾選的那筆是主要網址，其餘是其他網址
+                DefaultUrl = primary.Url,
+                FK_PlatformDomainId = primary.DomainId
             };
             Apply(request, site);
             db.Websites.Add(site);
-            SyncAlternateUrls(site, urls, existing: []);
+            SyncAlternateUrls(site, urls.Where(url => !url.IsPrimary).ToList(), existing: []);
             db.MappingCompanyAndWebsites.Add(new MappingCompanyAndWebsites
             {
                 FK_CompanyId = request.FK_CompanyId,
@@ -351,18 +353,30 @@ public sealed class WebsitesController(
             .Where(item => !item.IsDeleted && item.FK_WebsiteId == site.Id)
             .ToListAsync(HttpContext.RequestAborted);
 
-        // 編輯不寫 DefaultUrl／FK_PlatformDomainId；DefaultUrl 只用來擋其他網址重複
-        var urls = await ValidateRequestAsync(request, site.DefaultUrl, site, alternates);
-        if (!ModelState.IsValid)
-            return ValidationProblem(ModelState);
+            var urls = await ValidateRequestAsync(request, site, alternates);
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
 
-        string[] Hosts(IEnumerable<string> values) => values.Select(PlatformDomainName.ToHost).OfType<string>()
-            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
-        var previousHosts = Hosts(alternates.Select(x => x.Url).Append(site.DefaultUrl ?? ""));
-        var desiredHosts = Hosts(urls.Select(x => x.Url).Append(site.DefaultUrl ?? ""));
-        var urlsChanged = !alternates.Select(x => x.Url).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
-            .SequenceEqual(urls.Select(x => x.Url).OrderBy(x => x, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
-        if (urlsChanged || request.SynchronizeBindings)
+            // 勾選的寫 DefaultUrl、其餘寫其他網址；舊資料的 DefaultUrl 可能帶結尾斜線，轉成根網址再比
+            var primary = urls.FirstOrDefault(url => url.IsPrimary);
+            var others = urls.Where(url => !url.IsPrimary).ToList();
+            var primaryChanged = !string.Equals(primary?.Url, ToSiteRoot(site.DefaultUrl), StringComparison.OrdinalIgnoreCase);
+            if (primaryChanged)
+            {
+                await ValidatePrimaryChangeAsync(site, primary, urls, alternates, request.BindingTarget);
+                if (!ModelState.IsValid)
+                    return ValidationProblem(ModelState);
+            }
+
+            string[] Hosts(IEnumerable<string> values) => values.Select(PlatformDomainName.ToHost).OfType<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
+            var previousHosts = Hosts(alternates.Select(x => x.Url).Append(site.DefaultUrl ?? ""));
+            var desiredHosts = Hosts(urls.Select(x => x.Url));
+            // 換主要網址也算網址變更（要有主機權限、送一次繫結同步）；原本沒有主要網址的舊資料找不到 IIS 站台，不送
+            var urlsChanged = (primaryChanged && site.DefaultUrl is not null)
+                || !alternates.Select(x => x.Url).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                    .SequenceEqual(others.Select(x => x.Url).OrderBy(x => x, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+            if (urlsChanged || request.SynchronizeBindings)
         {
             if (!(await authorization.AuthorizeAsync(User, null,
                 EtheriT.Coker.Authentication.Backoffice.BackofficeAuthorizationPolicies.PlatformServerControl)).Succeeded)
@@ -382,10 +396,18 @@ public sealed class WebsitesController(
             }
         }
 
-        Apply(request, site);
-        SyncAlternateUrls(site, urls, alternates);
+            Apply(request, site);
+            if (primary is not null)
+            {
+                // 一定要在 bindingTasks.CreateAsync 之後才改：它用原本的 DefaultUrl 找 IIS 站台
+                if (primaryChanged)
+                    site.DefaultUrl = primary.Url;
+                // 與其他網址一致，每次存檔重新比對網域
+                site.FK_PlatformDomainId = primary.DomainId;
+            }
+            SyncAlternateUrls(site, others, alternates);
 
-        if (!await SyncCompanyMappingAsync(site.Id, request.FK_CompanyId))
+            if (!await SyncCompanyMappingAsync(site.Id, request.FK_CompanyId))
             return ValidationProblem(ModelState);
 
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
@@ -454,6 +476,15 @@ public sealed class WebsitesController(
                 Id = site.Id,
                 OrgName = site.OrgName,
                 DefaultUrl = site.DefaultUrl,
+                DefaultDomain = site.PlatformDomain == null
+                    ? null
+                    : new DomainSummaryDto(
+                        site.PlatformDomain.Id,
+                        site.PlatformDomain.DomainName,
+                        site.PlatformDomain.Registrar,
+                        site.PlatformDomain.EndDate,
+                        site.PlatformDomain.PasswordCipher != null,
+                        site.PlatformDomain.IsProxyPurchase),
                 FK_CompanyId = companyId ?? 0,
                 Name = site.Title,
                 Level = site.Level,
@@ -505,14 +536,12 @@ public sealed class WebsitesController(
             .ToListAsync(HttpContext.RequestAborted);
 
     /// <summary>
-    /// 回傳驗證通過的其他網址，錯誤一律寫進 ModelState。
-    /// defaultUrl：新增時是剛組出的預設網址、編輯時是資料庫的 DefaultUrl；其他網址不可與它重複。
+    /// 回傳驗證通過的網址（含主要網址），錯誤一律寫進 ModelState。
     /// site：編輯中的站台（新增時為 null），主機位置等於它原本的值時放行。
-    /// existingAlternates：這個站台原本的其他網址，其中的 http 網址可原樣保留。
+    /// existingAlternates：這個站台原本的其他網址；它們與原本的主要網址若是 http 可原樣保留。
     /// </summary>
     private async Task<IReadOnlyList<ResolvedUrl>> ValidateRequestAsync(
         WebsiteSaveRequest request,
-        string? defaultUrl,
         Website? site,
         IReadOnlyList<WebsiteAlternateUrl> existingAlternates)
     {
@@ -552,14 +581,18 @@ public sealed class WebsitesController(
                 HttpContext.RequestAborted))
             ModelState.AddModelError(nameof(request.FK_CompanyId), "找不到對應的客戶資料，請重新帶出客戶。");
 
-        // 這個站台原本就有的 http 網址才放行；新網址只收 https
-        var allowedHttpUrls = existingAlternates
+        // 這個站台原本就有的 http 網址才放行（含原本的主要網址）；新網址只收 https
+        var savedUrls = existingAlternates
             .Select(item => item.Url)
+            .Append(ToSiteRoot(site?.DefaultUrl))
+            .OfType<string>()
+            .ToList();
+        var allowedHttpUrls = savedUrls
             .Where(url => url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // JSON 送 "Urls": null 時不會套用屬性預設值
-        return await ResolveUrlsAsync(request.Urls ?? [], defaultUrl, allowedHttpUrls, Math.Max(MaxUrlCount, existingAlternates.Count));
+        // JSON 送 "Urls": null 時不會套用屬性預設值；舊資料超過上限時以原本筆數為上限
+        return await ResolveUrlsAsync(request.Urls ?? [], allowedHttpUrls, Math.Max(MaxUrlCount, savedUrls.Count));
     }
 
     /// <summary>
@@ -579,70 +612,99 @@ public sealed class WebsitesController(
     }
 
     /// <summary>
-    /// 新站台的預設網址：https://{OrgName 的 _ 換成 -}{DefaultUrlSuffix}，不採用前端送來的值。
-    /// 底線不是合法主機名稱字元才要換；a_b 與 a-b 會組成同一個網址，所以要查有沒有別的站台已在用。
-    /// DefaultUrlSuffix 的格式由啟動驗證保證（以 . 開頭）。錯誤掛在 OrgName，失敗時回傳 (null, null)。
+    /// 新增站台用：網址不可已被其他站台的主要網址或其他網址使用
+    /// （站台代碼 a_b 與 a-b 會組出同一個預設網址）。錯誤掛在 Urls[i].Url；只在其他驗證都通過後呼叫，索引才對得上。
     /// </summary>
-    private async Task<(string? Url, long? DomainId)> ResolveDefaultUrlAsync(string orgName)
+    private async Task ValidateUrlsNotTakenAsync(IReadOnlyList<ResolvedUrl> urls)
     {
-        const string key = nameof(WebsiteCreateRequest.OrgName);
-        var candidate = "https://" + orgName.Replace('_', '-') + hostingOptions.Value.DefaultUrlSuffix;
-        var (url, domainId, error) = await ResolveUrlAsync(candidate, NoHttpUrls);
-        if (error is not null)
-        {
-            // 常見原因：代碼超過 63 字，或以 - / _ 結尾，組不出合法主機名稱
-            ModelState.AddModelError(key, $"站台代碼無法組成合法的預設網址「{candidate}」（不可超過 63 字、不可以 - 或 _ 結尾）。");
-            return (null, null);
-        }
-
         var cancellationToken = HttpContext.RequestAborted;
-        var isTaken =
-            await db.Websites.AnyAsync(site => !site.IsDeleted && site.DefaultUrl == url, cancellationToken) ||
-            await db.WebsiteAlternateUrls.AnyAsync(item => !item.IsDeleted && item.Url == url, cancellationToken);
-        if (isTaken)
+        for (var index = 0; index < urls.Count; index++)
         {
-            ModelState.AddModelError(key, $"預設網址「{url}」已被其他站台使用，請換一個站台代碼。");
-            return (null, null);
+            var url = urls[index].Url;
+            var isTaken =
+                await db.Websites.AnyAsync(site => !site.IsDeleted && site.DefaultUrl == url, cancellationToken) ||
+                await db.WebsiteAlternateUrls.AnyAsync(item => !item.IsDeleted && item.Url == url, cancellationToken);
+            if (isTaken)
+                ModelState.AddModelError($"{nameof(WebsiteSaveRequest.Urls)}[{index}].{nameof(WebsiteUrlInput.Url)}",
+                    $"網址「{url}」已被其他站台使用。");
         }
-
-        return (url, domainId);
     }
 
     /// <summary>
-    /// 其他網址逐筆轉成根網址、檢查重複（含與預設網址重複）、比對網域；可以是 0 筆。
+    /// 編輯時換主要網址（Website.DefaultUrl）的額外規則，錯誤寫進 ModelState：
+    /// 1. IIS 繫結同步靠「原本的主要網址」找站台，所以換的這次原主要網址要留在清單（降為其他網址），下次存檔才能刪。
+    /// 2. DefaultUrl 會拿來組金流／物流回呼網址，新的主要網址必須是已存過、且主機已啟用的網址。
+    /// 原本沒有主要網址的舊資料沒有可比對的主機，直接放行。只在其他驗證都通過後呼叫，索引才對得上。
+    /// </summary>
+    private async Task ValidatePrimaryChangeAsync(
+        Website site,
+        ResolvedUrl? primary,
+        IReadOnlyList<ResolvedUrl> urls,
+        IReadOnlyList<WebsiteAlternateUrl> existingAlternates,
+        string? bindingTarget)
+    {
+        const string listKey = nameof(WebsiteSaveRequest.Urls);
+        var previousHost = PlatformDomainName.ToHost(site.DefaultUrl);
+        if (previousHost is null)
+            return;
+
+        if (!urls.Any(url => string.Equals(PlatformDomainName.ToHost(url.Url), previousHost, StringComparison.OrdinalIgnoreCase)))
+        {
+            ModelState.AddModelError(listKey,
+                $"更換主要網址時，原主要網址「{site.DefaultUrl}」要先留在清單中；換好並儲存後，下次再刪除。");
+            return;
+        }
+
+        if (primary is null)
+            return;
+
+        var key = $"{listKey}[{urls.ToList().IndexOf(primary)}].{nameof(WebsiteUrlInput.Url)}";
+        if (!existingAlternates.Any(item => string.Equals(item.Url, primary.Url, StringComparison.OrdinalIgnoreCase)))
+        {
+            ModelState.AddModelError(key, "新加入的網址要先儲存、在主機啟用後，才能設為主要網址。");
+            return;
+        }
+
+        var comparison = await bindingTasks.CompareAsync(site, HttpContext.RequestAborted, bindingTarget);
+        var primaryHost = PlatformDomainName.ToHost(primary.Url)!;
+        if (comparison.Status != IisBindingStatus.Ok ||
+            !comparison.SiteHosts.Contains(primaryHost, StringComparer.OrdinalIgnoreCase))
+            ModelState.AddModelError(key,
+                $"網址「{primary.Url}」尚未在主機啟用，不能設為主要網址；請等網址狀態顯示「主機已設定此網址」後再換。");
+    }
+
+    /// <summary>
+    /// 網址逐筆轉成根網址、檢查重複、比對網域；可以是 0 筆，有網址時必須剛好一筆主要網址。
     /// 單筆錯誤掛在 Urls[i].Url，前端才能對到那一列；整體錯誤掛在 Urls。
     /// </summary>
     private async Task<IReadOnlyList<ResolvedUrl>> ResolveUrlsAsync(
         IReadOnlyList<WebsiteUrlInput> inputs,
-        string? defaultUrl,
         IReadOnlySet<string> allowedHttpUrls,
         int maximum = MaxUrlCount)
     {
         const string listKey = nameof(WebsiteSaveRequest.Urls);
         if (inputs.Count > maximum)
         {
-            ModelState.AddModelError(listKey, $"其他網址最多 {maximum} 筆。");
+            ModelState.AddModelError(listKey, $"網址最多 {maximum} 筆（含主要網址）。");
             return [];
         }
 
-        // 舊資料的 DefaultUrl 可能帶結尾斜線，先轉成根網址再比
-        var defaultHost = PlatformDomainName.ToHost(defaultUrl);
+        if (inputs.Count > 0 && inputs.Count(input => input.IsPrimary) != 1)
+            ModelState.AddModelError(listKey, "請勾選一筆主要網址。");
+
         var resolved = new List<ResolvedUrl>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (var index = 0; index < inputs.Count; index++)
         {
             var key = $"{listKey}[{index}].{nameof(WebsiteUrlInput.Url)}";
             var (url, domainId, error) = await ResolveUrlAsync(inputs[index].Url, allowedHttpUrls);
-            var host = PlatformDomainName.ToHost(url);
-            if (error is null && string.Equals(host, defaultHost, StringComparison.OrdinalIgnoreCase))
-                error = $"網址「{url}」就是預設網址，不必再填。";
-            else if (error is null && !seen.Add(host!))
+            if (error is null && !seen.Add(PlatformDomainName.ToHost(url)!))
                 error = $"網址「{url}」重複輸入。";
 
             if (error is not null)
                 ModelState.AddModelError(key, error);
             else
-                resolved.Add(new ResolvedUrl(url!, domainId));
+                resolved.Add(new ResolvedUrl(url!, domainId, inputs[index].IsPrimary));
         }
 
         return resolved;
@@ -676,8 +738,8 @@ public sealed class WebsitesController(
     }
 
     /// <summary>
-    /// 只寫 Platform 管的欄位。DefaultUrl 與 FK_PlatformDomainId 不在這裡：
-    /// 新增時由 Create 依站台代碼組出，之後歸後台維護（後台網站資料可改 DefaultUrl），Platform 編輯不覆蓋。
+    /// 只寫一般欄位。DefaultUrl 與 FK_PlatformDomainId 不在這裡：Create／Update 依勾選的主要網址另外寫，
+    /// Update 必須等 IIS 繫結任務建立後才改（後台網站資料也能改 DefaultUrl，以最後存檔的為準）。
     /// </summary>
     private static void Apply(WebsiteSaveRequest request, Website site)
     {

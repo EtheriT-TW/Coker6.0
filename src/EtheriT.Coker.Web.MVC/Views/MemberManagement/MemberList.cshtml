@@ -68,21 +68,21 @@
                 .ShowRowLines(true)
                 .Columns(c =>
                 {
-                    c.AddFor(e => e.Name).Caption("會員名稱");
-                    c.AddFor(e => e.CellPhone).Caption("手機");
-                    c.AddFor(e => e.TelPhone).Caption("電話");
-                    c.AddFor(e => e.Address).Caption("地址");
-                    c.AddFor(e => e.Email).Caption("Email");
+                    c.AddFor(e => e.Name).Caption("會員名稱").HidingPriority(8);
+                    c.AddFor(e => e.CellPhone).Caption("手機").HidingPriority(5);
+                    c.AddFor(e => e.TelPhone).Caption("電話").HidingPriority(3);
+                    c.AddFor(e => e.Address).Caption("地址").HidingPriority(4);
+                    c.AddFor(e => e.Email).Caption("Email").HidingPriority(2);
                     if(bonusPerm.CanExe){
-                        c.AddFor(e => e.Bonus).Caption("紅利");
+                        c.AddFor(e => e.Bonus).Caption("紅利").HidingPriority(0);
                     }
-                    c.AddFor(e => e.Total).Caption("訂購總金額");
+                    c.AddFor(e => e.Total).Caption("訂購總金額").HidingPriority(1);
                     c.AddFor(e => e.RoleId).Caption("會員等級").Lookup(lookup =>
                         lookup.DataSource("getMemberLevel")
                             .ValueExpr("id")
                             .DisplayExpr("name")
-                    );
-                    c.AddFor(e => e.CreationTime).Caption("註冊日期");
+                    ).HidingPriority(7);
+                    c.AddFor(e => e.CreationTime).Format("yyyy/MM/dd HH:mm").Caption("註冊日期").SortOrder(SortOrder.Desc).HidingPriority(6);
                     c.Add()
                     .Type(GridCommandColumnType.Buttons)
                     .Buttons(b =>

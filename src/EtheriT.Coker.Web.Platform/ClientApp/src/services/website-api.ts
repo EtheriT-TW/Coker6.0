@@ -31,9 +31,9 @@ export function toLocaleInput(value: string | null | undefined): string {
     return websiteLocaleOptions.some(option => option.Value === normalized) ? normalized : "";
 }
 
-/** 建立表單上的一筆其他網址；Key 遞增，在頁面存活期間不重複即可。 */
-export function newWebsiteUrlItem(url = "", domain: DomainSummary | null = null): WebsiteUrlFormItem {
-    return { Key: nextUrlKey++, Url: url, InitialDomain: domain };
+/** 建立表單上的一筆網址；Key 遞增，在頁面存活期間不重複即可。 */
+export function newWebsiteUrlItem(url = "", domain: DomainSummary | null = null, isPrimary = false): WebsiteUrlFormItem {
+    return { Key: nextUrlKey++, Url: url, IsPrimary: isPrimary, InitialDomain: domain };
 }
 
 /** 與後端產生 DefaultUrl 的規則一致：https://{OrgName，_ 轉 -}{後綴}；站台代碼或後綴空白時回傳 ""。 */
@@ -54,8 +54,8 @@ function toSaveRequest(form: WebsiteForm) {
         Status: form.Status,
         SuspendedDate: fromDateInput(form.SuspendedDate),
         TerminatedDate: fromDateInput(form.TerminatedDate),
-        // 只送其他網址；主要網址由後台管理（新增時後端依 OrgName 產生）。Key、InitialDomain 只是畫面用
-        Urls: form.Urls.map(item => ({ Url: item.Url.trim() })),
+        // 主要網址與其他網址一起送，後端依 IsPrimary 分開寫。Key、InitialDomain 只是畫面用
+        Urls: form.Urls.map(item => ({ Url: item.Url.trim(), IsPrimary: item.IsPrimary })),
         Remark: blankToNull(form.Remark)
     };
 }
@@ -85,7 +85,11 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
         Status: detail.Status,
         SuspendedDate: toDateInput(detail.SuspendedDate),
         TerminatedDate: toDateInput(detail.TerminatedDate),
-        Urls: [...urls.values()].map(item => newWebsiteUrlItem(item.Url, item.Domain)),
+        // 主要網址排第一列並勾選；其他網址裡與它同主機的舊資料上面已略過
+        Urls: [
+            ...(detail.DefaultUrl ? [newWebsiteUrlItem(detail.DefaultUrl, detail.DefaultDomain, true)] : []),
+            ...[...urls.values()].map(item => newWebsiteUrlItem(item.Url, item.Domain))
+        ],
         Remark: detail.Remark ?? ""
     };
 }

@@ -730,6 +730,24 @@ button, input, select, textarea {
     border-color: #c2413b;
 }
 
+
+/* 需要使用者處理的按鈕（例：網址還沒有網域資料）：平常就用橘色標出來 */
+.outline-icon-button-attention {
+    color: #b45309;
+    background: #fff7e0;
+    border-color: #e5b454;
+}
+
+    .outline-icon-button-attention:hover {
+        color: #fff;
+        background: #b45309;
+        border-color: #b45309;
+    }
+
+    .outline-icon-button-attention:focus-visible {
+        outline-color: #b45309;
+    }
+
 .grid-actions {
     display: flex;
     align-items: center;
@@ -1184,6 +1202,9 @@ button, input, select, textarea {
     color: #64748b;
     font-size: 14px;
     line-height: 1.7;
+    /* 訊息裡的 \n 要換行（例：列出多筆網址）；網址很長時允許任意斷行 */
+    white-space: pre-line;
+    overflow-wrap: anywhere;
 }
 
 .app-dialog-actions {
@@ -1295,6 +1316,20 @@ button, input, select, textarea {
 .iis-binding-note-warning {
     color: #b45309;
 }
+
+/* 網址比對不到網域：橘色加警示圖示，與 IIS 提醒（純文字）區分 */
+.domain-missing-note {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #b45309;
+    font-weight: 600;
+}
+
+    .domain-missing-note .material-symbols-outlined {
+        flex: none;
+        font-size: 16px;
+    }
 
 .field-note-with-action {
     display: flex;
@@ -1854,18 +1889,106 @@ button, input, select, textarea {
 }
 
 
-/* 手機寬度：其他網址的輸入框與右側按鈕改上下排，輸入框才有足夠寬度；按鈕靠右 */
-@media (max-width: 520px) {
-    .repeater-row-url {
-        flex-direction: column;
-        align-items: stretch;
+/* ── 網站網址清單：一筆一行（主要勾選｜網址｜網域與主機狀態｜按鈕），有錯誤時才多一行 ── */
+.url-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 狀態欄、按鈕欄固定寬度：每列是各自的 grid，欄寬隨內容伸縮會讓網址框長短不一 */
+.url-row {
+    --url-row-actions-width: calc(42px * 2 + 8px);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 15rem var(--url-row-actions-width);
+    align-items: center;
+    gap: 6px 12px;
+    padding: 8px 12px;
+    background: #fafbfd;
+    border: 1px solid var(--platform-line);
+    border-radius: 12px;
+}
+
+/* 只有一顆刪除按鈕時也靠右，與兩顆按鈕的列對齊 */
+.url-row-actions {
+    justify-content: flex-end;
+}
+
+/* 主要網址那一列用主色框起來，一眼看出是哪筆 */
+.url-row-primary {
+    background: var(--platform-primary-soft);
+    border-color: var(--platform-primary);
+}
+
+.url-row-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+    .url-row-meta .field-note,
+    .url-row-errors .field-note {
+        margin: 0;
     }
 
-        .repeater-row-url .repeater-action-spacer {
-            display: none;
-        }
+.url-row-errors {
+    grid-column: 2 / -1;
+}
 
-        .repeater-row-url .repeater-action-buttons {
-            justify-content: flex-end;
-        }
+/* 「網址狀態」標題與「更新狀態」按鈕同一行 */
+.url-status-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* 平板：網域與主機狀態移到網址下方，勾選、網址、按鈕仍在第一行 */
+@media (max-width: 800px) {
+    .url-row {
+        grid-template-columns: auto minmax(0, 1fr) var(--url-row-actions-width);
+    }
+
+    .url-row-actions {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .url-row-meta {
+        grid-column: 2 / -1;
+        grid-row: 2;
+    }
+}
+
+/* 手機：網址獨佔第一行（輸入框才夠寬），第二行左邊勾選、右邊按鈕，狀態放第三行 */
+@media (max-width: 520px) {
+    .url-row {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .url-row-field {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    .url-row-choice {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .url-row-actions {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: end;
+    }
+
+    .url-row-meta {
+        grid-column: 1 / -1;
+        grid-row: 3;
+    }
+
+    .url-row-errors {
+        grid-column: 1 / -1;
+    }
 }

@@ -79,7 +79,7 @@ function CompanyInfoEdit() {
         }
         $this_form_btn.removeClass("d-none").addClass("d-flex");
     } else {
-        $("#TaxID").removeAttr("readonly");
+        $("#TaxID, #Name").removeAttr("readonly");
         $this_form_input.attr('disabled', 'disabled');
         $this_form_select.attr('disabled', 'disabled');
         $this_form_btn.removeClass("d-flex").addClass("d-none");
@@ -97,11 +97,15 @@ function CompanyIdentityChanged() {
 
     const isTaxIdInput = this.id === "TaxID";
     const taxId = String($("#TaxID").val() || "").replace(/\D/g, "").substring(0, 10);
+    // 有統編時以統編為準，改名稱不重新查詢，避免查詢結果把名稱蓋回去
+    if (!isTaxIdInput && taxId.length > 0) return;
     $("#TaxID").val(taxId);
     companyLookupComplete = false;
     window.clearTimeout(companyLookupTimer);
     if (companyLookupRequest) companyLookupRequest.abort();
-    ClearCompanyDetailFields(isTaxIdInput && taxId.length > 0);
+    // 改統編（含清空）時一併清掉並解鎖名稱，才不會又用舊名稱查回原公司
+    if (isTaxIdInput) $("#Name").removeAttr("readonly");
+    ClearCompanyDetailFields(isTaxIdInput);
     SetCompanyDetailFieldsEnabled(false);
     const companyName = String($("#Name").val() || "").trim();
 
@@ -142,7 +146,15 @@ function LookupCompany(taxId, companyName) {
             companyLookupComplete = true;
             FillCompanyDetailFields(result.company);
             SetCompanyDetailFieldsEnabled(true);
-            SetCompanyLookupFeedback("已帶入既有公司資料，可確認或修改後儲存。", "text-success");
+            // 統編對應到既有公司時名稱跟著統編走；要換公司請改統編
+            const isLockedByTaxId = String($("#TaxID").val() || "").length > 0;
+            if (isLockedByTaxId) $("#Name").attr("readonly", "readonly");
+            SetCompanyLookupFeedback(
+                isLockedByTaxId
+                    ? "已帶入既有公司資料，可確認或修改後儲存；若要換其他公司，請修改或清空統編。"
+                    : "已帶入既有公司資料，可確認或修改後儲存。",
+                "text-success"
+            );
         } else if (matchStatus === "notfound") {
             companyLookupComplete = true;
             SetCompanyDetailFieldsEnabled(true);

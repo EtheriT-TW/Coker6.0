@@ -1,9 +1,10 @@
 using EtheriT.Coker.Authentication.Backoffice;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Platform.Middleware;
+using EtheriT.Coker.Web.Platform.Models.Provisioning;
+using EtheriT.Coker.Web.Platform.Models.Websites;
 using EtheriT.Coker.Web.Platform.Security;
 using EtheriT.Coker.Web.Platform.Services;
-using EtheriT.Coker.Web.Platform.Models.Websites;
-using EtheriT.Coker.Web.Platform.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -96,6 +97,8 @@ builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddSingleton<ProvisioningAgentAuthenticator>();
 builder.Services.AddOptions<WebsiteHostingOptions>()
     .BindConfiguration(WebsiteHostingOptions.SectionName)
+    .PostConfigure<IConfiguration>((options, configuration) => options.LoadHostLocations(
+        configuration.GetSection("Provisioning:Servers").Get<List<ProvisioningServerOptions>>() ?? []))
     .ValidateOnStart();
 builder.Services.AddSingleton<IValidateOptions<WebsiteHostingOptions>, WebsiteHostingOptionsValidator>();
 builder.Services.AddAuthorization(options =>

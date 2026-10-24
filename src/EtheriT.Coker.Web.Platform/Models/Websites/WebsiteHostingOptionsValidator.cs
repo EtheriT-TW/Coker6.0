@@ -1,10 +1,9 @@
 ﻿using EtheriT.Coker.Application.Shared.Dto.enumType;
-using EtheriT.Coker.Web.Platform.Models.Provisioning;
 using Microsoft.Extensions.Options;
 
 namespace EtheriT.Coker.Web.Platform.Models.Websites;
 
-/// <summary>啟動時檢查 WebsiteHosting；設定錯就讓網站起不來，不要等到存檔才出錯。</summary>
+/// <summary>啟動時檢查 WebsiteHosting 與 Provisioning:Servers 組出的主機位置；設定錯就讓網站起不來，不要等到存檔才出錯。</summary>
 public sealed class WebsiteHostingOptionsValidator(IConfiguration configuration) : IValidateOptions<WebsiteHostingOptions>
 {
     private const string Section = WebsiteHostingOptions.SectionName;
@@ -12,35 +11,31 @@ public sealed class WebsiteHostingOptionsValidator(IConfiguration configuration)
     public ValidateOptionsResult Validate(string? name, WebsiteHostingOptions options)
     {
         var errors = new List<string>();
-        ValidateHostLocations(options.HostLocations, errors);
+        ValidateHostLocations(options.AllHostLocations, errors);
         ValidateDefaultHostByLevel(options, errors);
         ValidateDefaultUrlSuffix(options.DefaultUrlSuffix, errors);
         return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);
     }
 
-    private void ValidateHostLocations(List<WebsiteHostLocationOption> hosts, List<string> errors)
+    private void ValidateHostLocations(IReadOnlyList<WebsiteHostLocationOption> hosts, List<string> errors)
     {
+        // 舊設定留著會被默默忽略，直接擋下，避免以為改了有效
+        if (configuration.GetSection($"{Section}:HostLocations").Exists())
+            errors.Add($"{Section}:HostLocations 已停用：有 Worker 的主機改填 Provisioning:Servers 的 HostLocation，沒有 Worker 的放 {Section}:ArchiveLocations。");
+
         if (hosts.Count == 0)
         {
-            errors.Add($"{Section}:HostLocations 至少要有一筆。");
+            errors.Add($"Provisioning:Servers 的 HostLocation 與 {Section}:ArchiveLocations 合計至少要有一筆主機位置。");
             return;
         }
 
-        var serverIds = (configuration.GetSection("Provisioning:Servers").Get<List<ProvisioningServerOptions>>() ?? [])
-            .Select(x => x.Id)
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        for (var i = 0; i < hosts.Count; i++)
+        foreach (var host in hosts)
         {
-            var host = hosts[i];
-            var path = $"{Section}:HostLocations:{i}";
+            var source = host.HasWorker
+                ? $"Provisioning:Servers（{host.ServerId}）的 HostLocation"
+                : $"{Section}:ArchiveLocations";
             if (string.IsNullOrWhiteSpace(host.Value) || host.Value != host.Value.Trim())
-                errors.Add($"{path}:Value 不可空白，前後也不能有空白。");
-            if (string.IsNullOrWhiteSpace(host.Text))
-                errors.Add($"{path}:Text 不可空白。");
-            if (host.HasWorker && !serverIds.Contains(host.ServerId!))
-                errors.Add($"{path}:ServerId「{host.ServerId}」不在 Provisioning:Servers 裡；沒有 Worker 請填 null。");
+                errors.Add($"{source}「{host.Value}」不可空白，前後也不能有空白。");
         }
 
         var duplicates = hosts
@@ -48,12 +43,12 @@ public sealed class WebsiteHostingOptionsValidator(IConfiguration configuration)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key);
         foreach (var value in duplicates)
-            errors.Add($"{Section}:HostLocations 的 Value「{value}」重複。");
+            errors.Add($"主機位置「{value}」重複（Provisioning:Servers 的 HostLocation 與 {Section}:ArchiveLocations 不可重複）。");
     }
 
     private static void ValidateDefaultHostByLevel(WebsiteHostingOptions options, List<string> errors)
     {
-        var hostValues = options.HostLocations.Select(x => x.Value).ToHashSet(StringComparer.Ordinal);
+        var hostValues = options.AllHostLocations.Select(x => x.Value).ToHashSet(StringComparer.Ordinal);
 
         foreach (var (key, host) in options.DefaultHostByLevel)
         {
@@ -63,7 +58,7 @@ public sealed class WebsiteHostingOptionsValidator(IConfiguration configuration)
             if (!isLevelName)
                 errors.Add($"{Section}:DefaultHostByLevel 的 key「{key}」不是版本名稱（簡約／形象／會員／購物）。");
             else if (!hostValues.Contains(host))
-                errors.Add($"{Section}:DefaultHostByLevel:{key} 的「{host}」不在 HostLocations 的 Value 裡。");
+                errors.Add($"{Section}:DefaultHostByLevel:{key} 的「{host}」不是可選主機位置（Servers 的 HostLocation 或 ArchiveLocations）。");
         }
 
         foreach (var level in Enum.GetValues<WebsiteLevelEnum>())

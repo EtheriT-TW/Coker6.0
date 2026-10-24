@@ -208,11 +208,7 @@ namespace EtheriT.Coker.Application.Company
                                 string.IsNullOrWhiteSpace(address))
                                 throw new Exception("請填寫完整公司資訊");
 
-                            // 公司資料各站共用；已被其他網站綁定時不可從這裡改，避免影響他站前台與訂單通知信
-                            var isBoundToOtherWebsite = await db.MappingCompanyAndWebsites.AnyAsync(e =>
-                                !e.IsDeleted && e.FK_CompanyId == existingCompany.Id && e.FK_WebsiteId != siteId);
-                            if (isBoundToOtherWebsite)
-                                throw new Exception("此公司已被其他網站使用，聯絡資料請至客戶管理平台修改");
+                            // 公司資料各站共用，這裡修改會同步影響其他綁定此公司的網站（與綁定後編輯的行為一致）
 
                             // 不用 mapper：dto.Id 是 0，ReverseMap 會連 Id 一起覆蓋
                             existingCompany.Contact = contact;

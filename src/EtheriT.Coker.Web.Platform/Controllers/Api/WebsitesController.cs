@@ -169,7 +169,7 @@ public sealed class WebsitesController(
             .ToDictionary(item => item.Key, item => item.Host!);
 
         return new WebsiteOptionsDto(
-            hosting.HostLocations.Select(item => new WebsiteHostLocationDto(item.Value, item.Text)).ToList(),
+            hosting.AllHostLocations.Select(item => new WebsiteHostLocationDto(item.Value, item.Text)).ToList(),
             defaultHostByLevel,
             hosting.DefaultUrlSuffix);
     }
@@ -201,7 +201,7 @@ public sealed class WebsitesController(
             .ToList();
 
         // 清單外的舊值、或沒有 Worker 的位置（NAS封存）都查不到 IIS
-        var hostOption = hostingOptions.Value.HostLocations.FirstOrDefault(item => item.Value == location);
+        var hostOption = hostingOptions.Value.AllHostLocations.FirstOrDefault(item => item.Value == location);
         if (hostOption is not { HasWorker: true })
             return new IisBindingLookupResult(IisBindingStatus.NoAgent, null, []);
 
@@ -596,7 +596,7 @@ public sealed class WebsitesController(
     }
 
     /// <summary>
-    /// 主機位置必須是 WebsiteHosting:HostLocations 的 Value（Ordinal 完全比對，DB 存的就是這串字）；
+    /// 主機位置必須是 Provisioning:Servers 的 HostLocation 或 WebsiteHosting:ArchiveLocations（Ordinal 完全比對，DB 存的就是這串字）；
     /// 編輯時等於原本的值（舊資料是 null 或清單外字串）也放行，不擋存檔。
     /// </summary>
     private void ValidateHostLocation(string? input, Website? site)
@@ -607,7 +607,7 @@ public sealed class WebsitesController(
 
         if (value is null)
             ModelState.AddModelError(nameof(WebsiteSaveRequest.HostLocation), "請選擇主機位置。");
-        else if (!hostingOptions.Value.HostLocations.Any(item => item.Value == value))
+        else if (!hostingOptions.Value.AllHostLocations.Any(item => item.Value == value))
             ModelState.AddModelError(nameof(WebsiteSaveRequest.HostLocation), "主機位置不在可選清單中。");
     }
 

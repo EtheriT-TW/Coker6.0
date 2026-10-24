@@ -84,11 +84,23 @@ public sealed class DomainsController(
         if (!ModelState.IsValid || domainName is null)
             return ValidationProblem(ModelState);
 
-        var domain = new PlatformDomain();
-        Apply(request, domainName, domain);
+        var strategy = db.Database.CreateExecutionStrategy();
+        var domain = await strategy.ExecuteAsync(async () =>
+        {
+            db.ChangeTracker.Clear();
 
-        db.PlatformDomains.Add(domain);
-        await auditor.SaveChangesAsync(HttpContext.RequestAborted);
+            var created = new PlatformDomain();
+            Apply(request, domainName, created);
+
+            await using var transaction = await db.Database.BeginTransactionAsync(HttpContext.RequestAborted);
+            db.PlatformDomains.Add(created);
+            await auditor.SaveChangesAsync(HttpContext.RequestAborted);
+
+            await LinkUnmatchedUrlAsync(created, HttpContext.RequestAborted);
+            await auditor.SaveChangesAsync(HttpContext.RequestAborted);
+            await transaction.CommitAsync(HttpContext.RequestAborted);
+            return created;
+        });
 
         var detail = await LoadDetailAsync(domain.Id);
         return detail is null ? NotFound() : detail;
@@ -132,6 +144,44 @@ public sealed class DomainsController(
         // 解不開也回 200 + State=Unreadable，前端顯示提示而不是整頁失敗
         var result = passwordProtector.Unprotect(domain.PasswordCipher);
         return new DomainPasswordDto(result.State, result.Password);
+    }
+
+    /// <summary>
+    /// 新建網域後，把「網站存檔時比對不到網域」的網址補連到這個網域，使用網站數才會正確。
+    /// 只補 FK 為 null 的；已連到其他網域的不動（例如已連 example.com.tw，又新建 shop.example.com.tw），要改連請重新存網站。
+    /// </summary>
+    private async Task LinkUnmatchedUrlAsync(PlatformDomain domain, CancellationToken cancellationToken)
+    {
+        var keyword = domain.DomainName;
+        var sites = await db.Websites
+            .Where(site => !site.IsDeleted &&
+                            site.FK_PlatformDomainId == null &&
+                            site.DefaultUrl != null &&
+                            site.DefaultUrl.Contains(keyword))
+            .ToListAsync(cancellationToken);
+
+        foreach(var site in sites.Where(site => BelongsToDomain(site.DefaultUrl)))
+        {
+            site.FK_PlatformDomainId = domain.Id;
+        }
+
+        var urls = await db.WebsiteAlternateUrls
+            .Where(url => !url.IsDeleted &&
+                           url.FK_PlatformDomainId == null &&
+                           url.Url != null &&
+                           url.Url.Contains(keyword))
+            .ToListAsync(cancellationToken);
+
+        foreach(var url in urls.Where(url => BelongsToDomain(url.Url)))
+        {
+            url.FK_PlatformDomainId = domain.Id;
+        }
+
+        bool BelongsToDomain(string? url)
+        {
+            var host = PlatformDomainName.ToHost(url);
+            return host is not null && PlatformDomainName.Candidates(host).Contains(domain.DomainName);
+        }
     }
 
     private Task<DomainDetailDto?> LoadDetailAsync(long id)

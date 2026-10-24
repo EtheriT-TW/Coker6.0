@@ -34,6 +34,9 @@ public sealed class ProvisioningServerOptions
     public string DisplayName { get; set; } = string.Empty;
     public bool IsDnsServer { get; set; }
     public string[] AllowedDnsZones { get; set; } = [];
+
+    /// <summary>網站編輯頁主機位置的值，會存進 Website.HostLocation，舊資料用的字串不能改；不放網站的伺服器（例如只做 DNS）留 null。</summary>
+    public string? HostLocation { get; set; }
 }
 
 public sealed record ProvisioningServerDto(string Id, string DisplayName, bool IsDnsServer, IReadOnlyList<string> AllowedDnsZones);

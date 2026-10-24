@@ -441,6 +441,11 @@ const ArticleManager = {
                                     fileId: null,
                                     tempId: null
                                 })), co.Articles.AddUp(data).done((result => {
+                                    if (!result || !result.success) {
+                                        co.sweet.error(result && result.error ? result.error : "文章儲存發生錯誤");
+                                        saveDeferred.reject();
+                                        return;
+                                    }
                                     co.sweet.loading();
                                     var requests = pendingRequests;
                                     const imageFileData = $("#ImageUpload .img_input").data("file");

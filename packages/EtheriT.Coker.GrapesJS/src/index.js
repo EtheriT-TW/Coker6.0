@@ -29,8 +29,10 @@ import './styles/imageListEditor.css';
 import './styles/swiperEditor.css';
 import './styles/componentInsert/Modal.css';
 import './styles/richText/Index.css';
+import './styles/aiAssistant.css';
 
 export { createEditorAdapter };
+export { aiAssistantPlugin } from './plugins/aiAssistant/aiAssistantPlugin.js';
 export { AlertManager, attachAlertManager };
 export { registerCokerPlugins };
 export { registerBasePlugins };

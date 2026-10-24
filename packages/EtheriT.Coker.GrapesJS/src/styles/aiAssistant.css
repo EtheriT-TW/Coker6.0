@@ -1,0 +1,44 @@
+.coker-canvas-ai {
+    position: absolute;
+    right: 0;
+    top: 40px;
+    bottom: 0;
+    width: min(360px, 100%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    background: var(--gjs-primary-color, #444);
+    color: var(--gjs-secondary-color, #ddd);
+    border-left: 1px solid #0005;
+    box-shadow: -6px 0 18px #0003;
+    font: 13px/1.6 Helvetica, Arial, sans-serif;
+    text-align: left;
+    color-scheme: dark;
+}
+.coker-canvas-ai[hidden] { display: none; }
+.coker-canvas-ai *, .coker-canvas-ai *::before, .coker-canvas-ai *::after { box-sizing: border-box; }
+.coker-canvas-ai-header { display: flex; align-items: center; justify-content: space-between; flex: 0 0 auto; min-height: 50px; padding: 8px 16px; border-bottom: 1px solid #0004; background: #0001; }
+.coker-canvas-ai-header strong { font-size: 14px; font-weight: 600; }
+.coker-canvas-ai-body { flex: 1; min-height: 0; padding: 16px; overflow: auto; }
+.coker-canvas-ai-note { margin: 0 0 18px; font-size: 12px; opacity: .65; }
+.coker-canvas-ai label { display: block; margin: 0 0 16px; font-size: 12px; }
+.coker-canvas-ai textarea, .coker-canvas-ai select { display: block; width: 100%; margin-top: 6px; padding: 9px 10px; border: 1px solid #ffffff12; border-radius: 4px; background: #0003; color: inherit; font: inherit; }
+.coker-canvas-ai textarea { min-height: 112px; resize: vertical; line-height: 1.6; }
+.coker-canvas-ai textarea::placeholder { color: #ffffff60; }
+.coker-canvas-ai select option { background: var(--gjs-primary-color, #444); color: var(--gjs-secondary-color, #ddd); }
+.coker-canvas-ai textarea:focus-visible, .coker-canvas-ai select:focus-visible, .coker-canvas-ai button:focus-visible { outline: 2px solid var(--gjs-quaternary-color, #d278c9); outline-offset: 2px; }
+.coker-canvas-ai button { margin: 0; padding: 8px 12px; border: 1px solid #ffffff18; border-radius: 4px; background: #ffffff08; color: inherit; font: inherit; line-height: 1.4; cursor: pointer; transition: background .15s; }
+.coker-canvas-ai button:hover:not(:disabled) { background: #ffffff15; }
+.coker-canvas-ai button:disabled { cursor: default; opacity: .35; }
+.coker-canvas-ai button[data-close] { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; background: transparent; font-size: 23px; font-weight: 300; }
+.coker-canvas-ai-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.coker-canvas-ai button[data-send] { background: var(--gjs-tertiary-color, #804f7b); border-color: transparent; color: #fff; }
+.coker-canvas-ai button[data-send]:hover:not(:disabled) { background: #9b6194; }
+.coker-canvas-ai button[data-clear], .coker-canvas-ai button[data-delete] { border-color: transparent; background: transparent; font-size: 12px; }
+.coker-canvas-ai button[data-delete] { margin-top: 12px; padding-left: 0; opacity: .65; }
+.coker-canvas-ai-log { white-space: pre-wrap; max-height: 200px; overflow: auto; margin-bottom: 16px; padding: 12px; border-radius: 4px; background: #0002; }
+.coker-canvas-ai-log:empty, .coker-canvas-ai-status:empty { display: none; }
+.coker-canvas-ai-status { white-space: pre-wrap; margin: 14px 0 0; font-size: 12px; color: #e8cc91; }
+.coker-canvas-ai-history { margin-top: 24px; padding-top: 20px; border-top: 1px solid #ffffff14; }
+.coker-canvas-ai-section-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.coker-canvas-ai-section-title span { font-size: 11px; opacity: .5; }

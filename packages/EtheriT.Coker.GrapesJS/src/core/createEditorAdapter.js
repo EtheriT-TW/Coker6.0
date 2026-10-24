@@ -21,6 +21,10 @@ export function createEditorAdapter(options = {}) {
             }
         },
 
+        ai: {
+            generate: null
+        },
+
         content: {
             save: null,
             import: null,
@@ -34,6 +38,10 @@ export function createEditorAdapter(options = {}) {
         ui: {
             ...adapter.ui,
             ...(options.ui || {})
+        },
+        ai: {
+            ...adapter.ai,
+            ...(options.ai || {})
         },
         content: {
             ...adapter.content,

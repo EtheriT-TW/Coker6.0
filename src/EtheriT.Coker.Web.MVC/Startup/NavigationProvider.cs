@@ -129,6 +129,15 @@ namespace EtheriT.Coker.Web.MVC.Startup
                             }
                         }
                     },
+                    // Canvas assistance is shared by Page, Product and other editors.
+                    // It must not inherit the ContentManagement feature switch.
+                    new JobMenu{
+                        PageName="AiAssistant",
+                        Title = "AI 輔助",
+                        IsView = false,
+                        Enable = false,
+                        PermissionMode = PermissionMode.Execute
+                    },
                     new JobMenu{
                         PageName="ContentManagement",
                         Title="內容管理",

@@ -317,6 +317,13 @@ if (builder.Configuration.GetValue<bool>("Verify:HttpOnly"))
 }
 
 //註冊HttpClient
+builder.Services.AddHttpClient("ParallelAi", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(Math.Clamp(configuration.GetValue<int?>("ParallelAi:TimeoutSeconds") ?? 300, 10, 600));
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddScoped<EtheriT.Coker.Web.MVC.Services.Ai.CanvasAiService>();
+builder.Services.AddSingleton<EtheriT.Coker.Web.MVC.Services.Ai.CanvasAiAvailability>();
+
 builder.Services.AddHttpClient("ThirdPartyClient_Front", client =>
 {
     client.BaseAddress = new Uri("https://defaultFrontApi.com");

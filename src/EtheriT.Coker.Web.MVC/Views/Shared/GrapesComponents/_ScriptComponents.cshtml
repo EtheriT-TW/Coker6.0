@@ -1,6 +1,10 @@
 ﻿<!--導入grapesjs-->
 @inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersionProvider
 @inject EtheriT.Coker.Application.LoginUserData LoginUserData
+@using EtheriT.Coker.Web.MVC.Extensions
+@using EtheriT.Coker.Web.MVC.Common
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject EtheriT.Coker.Web.MVC.Services.Ai.CanvasAiAvailability AiAvailability
 @{
     var grapesModuleUrl = FileVersionProvider.AddFileVersionToPath(
         Context.Request.PathBase,
@@ -9,6 +13,12 @@
         Context.Request.PathBase,
         "/modules/grapesjs/etherit-coker-grapesjs-image-editor.min.js");
     var siteLocale = await LoginUserData.GetWebsiteLocal();
+    var canEditPage = Context.GetPermission().CanUpdate;
+    var canExecuteAi = Context.HasPermission(CokerContextKeys.AiAssistant);
+    var aiReadiness = canEditPage && canExecuteAi
+        ? await AiAvailability.CheckAsync(Context.RequestAborted) : null;
+    bool? aiServiceReady = aiReadiness?.Available;
+    var canUseAi = canEditPage && canExecuteAi && aiServiceReady == true;
 }
 
 <link rel="stylesheet" href="/modules/grapesjs/etherit-coker-grapesjs.min.css" asp-append-version="true">
@@ -29,6 +39,21 @@
             createCokerGrapesEditor,
             grapesjs: viteGrapesjs
         } = grapesModule;
+
+        // Safe diagnostics: never include credentials, HTML or conversation content.
+        window.CokerCanvasAiStatus = {
+            canEditPage: @Json.Serialize(canEditPage),
+            canExecuteAi: @Json.Serialize(canExecuteAi),
+            serviceReady: @Json.Serialize(aiServiceReady),
+            serviceReason: @Json.Serialize(aiReadiness?.Reason ?? "PermissionCheckFailed"),
+            serviceHttpStatus: @Json.Serialize(aiReadiness?.HttpStatus),
+            serviceResultCached: @Json.Serialize(aiReadiness?.Cached ?? false),
+            enabled: @Json.Serialize(canUseAi),
+            pluginAvailable: typeof grapesModule.aiAssistantPlugin === 'function'
+        };
+        if (!window.CokerCanvasAiStatus.enabled || !window.CokerCanvasAiStatus.pluginAvailable) {
+            console.info('[Coker AI] 入口檢查', window.CokerCanvasAiStatus);
+        }
 
         // Preserve the legacy global API while using the Vite-managed instance.
         window.grapesjs = viteGrapesjs;
@@ -79,14 +104,63 @@
                         );
                     });
                 }
+            },
+            ai: {
+                async generate(request, { signal } = {}) {
+                    const response = await fetch(@Json.Serialize(Url.Content("~/api/CanvasAi/Chat")), {
+                        method: 'POST', credentials: 'same-origin', signal,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-xsrf-token': @Json.Serialize(Antiforgery.GetAndStoreTokens(Context).RequestToken)
+                        },
+                        body: JSON.stringify({
+                            ...request,
+                            websiteId: @Json.Serialize(await LoginUserData.GetWebsiteId()),
+                            controller: @Json.Serialize(Context.Request.RouteValues["controller"]?.ToString()),
+                            action: @Json.Serialize(Context.Request.RouteValues["action"]?.ToString())
+                        })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        const error = new Error(result.message || 'AI 請求失敗，請重新登入或稍後重試。');
+                        error.serviceUnavailable = result.serviceUnavailable === true || [401, 403, 429].includes(response.status) || response.status >= 500;
+                        throw error;
+                    }
+                    return result;
+                }
             }
         });
 
         library.createEditor = function (options = {}) {
+            let unsavedIdentity;
+            const adapter = options.adapter ? {
+                ...options.adapter,
+                ai: { ...library.adapter.ai, ...(options.adapter.ai || {}) }
+            } : library.adapter;
             return createCokerGrapesEditor({
                 siteLocale: @Json.Serialize(siteLocale),
                 ...options,
-                adapter: options.adapter || library.adapter
+                adapter,
+                aiAssistant: {
+                    ...(options.aiAssistant || {}),
+                    enabled: @Json.Serialize(canUseAi) && options.aiAssistant?.enabled !== false,
+                    draftKey(editor) {
+                        const container = editor.getContainer();
+                        const id = window.jQuery ? window.jQuery(container).data('id') : container.dataset.id;
+                        if (!id && !unsavedIdentity) {
+                            let hash = 2166136261;
+                            for (const c of editor.getHtml()) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
+                            unsavedIdentity = `new-${hash >>> 0}`;
+                        }
+                        return JSON.stringify([
+                            @Json.Serialize(await LoginUserData.GetUserId()),
+                            @Json.Serialize(await LoginUserData.GetWebsiteId()),
+                            @Json.Serialize(Context.Request.RouteValues["controller"]?.ToString()),
+                            @Json.Serialize(Context.Request.RouteValues["action"]?.ToString()),
+                            location.pathname, container.id, id || unsavedIdentity
+                        ]);
+                    }
+                }
             });
         };
         window.EtheriTCokerGrapesJS = library;

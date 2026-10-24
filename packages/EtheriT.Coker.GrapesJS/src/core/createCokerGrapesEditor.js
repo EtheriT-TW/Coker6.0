@@ -12,6 +12,7 @@ import { externalAssetImportPlugin } from '../plugins/externalAssets/externalAss
 import { richTextProviderPlugin } from '../plugins/richText/Index.js';
 import { createOfficialPlugins } from '../plugins/officialPlugins.js';
 import { grapesZhTw } from '../locales/zhTw.js';
+import { aiAssistantPlugin } from '../plugins/aiAssistant/aiAssistantPlugin.js';
 
 export function createCokerGrapesEditor(options = {}) {
     const adapter = options.adapter || createEditorAdapter(options);
@@ -90,6 +91,10 @@ export function createCokerGrapesEditor(options = {}) {
                 adapter
             }),
             grapesjs.usePlugin(componentInsertPlugin, {
+                adapter
+            }),
+            grapesjs.usePlugin(aiAssistantPlugin, {
+                ...(options.aiAssistant || {}),
                 adapter
             }),
             grapesjs.usePlugin(externalAssetImportPlugin, {

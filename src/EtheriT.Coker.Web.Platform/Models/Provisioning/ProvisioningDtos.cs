@@ -32,6 +32,16 @@ public sealed class ProvisioningServerOptions
 {
     public string Id { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>監控及 Worker 操作開關；沒有 Worker 的位置設為 false。</summary>
+    public bool ShowInMonitoring { get; set; } = true;
+
+    /// <summary>支援的版本名稱；唯一支援主機會成為新增網站的預選值。</summary>
+    public string[] SupportedLevels { get; set; } = [];
+
+    /// <summary>此 Worker 的驗證金鑰；由環境變數或機密設定提供，不回傳前端。</summary>
+    public string ApiKey { get; set; } = string.Empty;
+
     public bool IsDnsServer { get; set; }
     public string[] AllowedDnsZones { get; set; } = [];
 

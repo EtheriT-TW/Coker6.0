@@ -109,7 +109,7 @@ public sealed class WebsiteBindingTasks(CokerDbContext db, IConfiguration config
             ?? throw new InvalidOperationException("無法確認主要網址所屬的網站，請聯絡管理員。");
         // 網站歸屬取自受信任Worker的實際回報，不要求每個網站／主機位置再維護一份ServerId對應。
         var serverIds = (configuration.GetSection("Provisioning:Servers").Get<List<ProvisioningServerOptions>>() ?? [])
-            .Where(x => !string.IsNullOrWhiteSpace(x.Id)).Select(x => x.Id.Trim())
+            .Where(x => x.ShowInMonitoring && !string.IsNullOrWhiteSpace(x.Id)).Select(x => x.Id.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var threshold = DateTime.UtcNow.AddSeconds(-Math.Max(15, configuration.GetValue("Provisioning:AgentOfflineSeconds", 45)));
         var states = await db.ProvisioningAgentStatuses.AsNoTracking()

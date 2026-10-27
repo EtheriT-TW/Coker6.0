@@ -361,8 +361,8 @@
     // 新增時改版本連帶換成該版本的預設主機；編輯舊網站時不動主機。改主機不會反過來改版本
     watch(() => form.model.value.Level, level => {
         if (isEdit.value || level === null) return;
-        const host = websiteOptions.value?.DefaultHostByLevel[String(level)];
-        if (host && host !== form.model.value.HostLocation) form.model.value.HostLocation = host;
+        // 沒有唯一支援主機時清空，交由使用者選擇，避免留下上一個版本的預選值。
+        form.model.value.HostLocation = websiteOptions.value?.DefaultHostByLevel[String(level)] ?? "";
     });
 
     function addUrl(): void {

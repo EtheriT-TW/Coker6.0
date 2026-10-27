@@ -95,12 +95,10 @@ builder.Services.AddScoped<PlatformAuditor>();
 builder.Services.AddSingleton<PlatformDomainPasswordProtector>();
 builder.Services.AddSingleton<ViteManifestService>();
 builder.Services.AddSingleton<ProvisioningAgentAuthenticator>();
-builder.Services.AddOptions<WebsiteHostingOptions>()
-    .BindConfiguration(WebsiteHostingOptions.SectionName)
-    .PostConfigure<IConfiguration>((options, configuration) => options.LoadHostLocations(
-        configuration.GetSection("Provisioning:Servers").Get<List<ProvisioningServerOptions>>() ?? []))
+builder.Services.AddOptions<ProvisioningOptions>()
+    .BindConfiguration(ProvisioningOptions.SectionName)
     .ValidateOnStart();
-builder.Services.AddSingleton<IValidateOptions<WebsiteHostingOptions>, WebsiteHostingOptionsValidator>();
+builder.Services.AddSingleton<IValidateOptions<ProvisioningOptions>, ProvisioningOptionsValidator>();
 builder.Services.AddAuthorization(options =>
 {
     var platformAccessPolicy = new AuthorizationPolicyBuilder()

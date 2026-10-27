@@ -26,7 +26,7 @@ namespace EtheriT.Coker.Web.Platform.Controllers.Api;
 public sealed class WebsitesController(
     CokerDbContext db,
     PlatformAuditor auditor,
-    IOptions<WebsiteHostingOptions> hostingOptions,
+    IOptions<ProvisioningOptions> hostingOptions,
     IConfiguration configuration,
     WebsiteBindingTasks bindingTasks,
     Microsoft.AspNetCore.Authorization.IAuthorizationService authorization) : ControllerBase
@@ -162,7 +162,7 @@ public sealed class WebsitesController(
     public WebsiteOptionsDto GetOptions()
     {
         var hosting = hostingOptions.Value;
-        // 設定檔的 key 是版本名稱（啟動驗證保證四個版本都有），回傳改成數值字串，前端直接用 Level 查
+        // 從 Servers.SupportedLevels 推導唯一預設主機；回傳數值字串供前端用 Level 查詢。
         var defaultHostByLevel = Enum.GetValues<WebsiteLevelEnum>()
             .Select(level => (Key: ((int)level).ToString(), Host: hosting.GetDefaultHost(level)))
             .Where(item => item.Host is not null)
@@ -596,7 +596,7 @@ public sealed class WebsitesController(
     }
 
     /// <summary>
-    /// 主機位置必須是 Provisioning:Servers 的 HostLocation 或 WebsiteHosting:ArchiveLocations（Ordinal 完全比對，DB 存的就是這串字）；
+    /// 主機位置必須是 Provisioning:Servers 的 HostLocation（Ordinal 完全比對，DB 存的就是這串字）；
     /// 編輯時等於原本的值（舊資料是 null 或清單外字串）也放行，不擋存檔。
     /// </summary>
     private void ValidateHostLocation(string? input, Website? site)

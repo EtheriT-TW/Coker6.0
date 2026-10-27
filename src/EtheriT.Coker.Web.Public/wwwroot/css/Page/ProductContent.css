@@ -792,23 +792,25 @@ i.fa-chevron-right {
         }
 
 #Product > .content > .specification {
+    --spec-collapsed-height: 6rem;
     color: var(--gray-text);
     font-size: 1rem;
 }
 
     #Product > .content > .specification > .collapsing {
-        height: 6rem;
+        min-height: var(--spec-collapsed-height);
     }
 
     #Product > .content > .specification > .collapse:not(.show) {
         display: block;
-        height: 6rem;
+        height: var(--spec-collapsed-height);
         overflow: hidden;
     }
 
     #Product > .content > .specification > div > ul {
         list-style: none;
         padding-left: 0;
+        margin-block: 0;
     }
 
         #Product > .content > .specification > div > ul > li {
@@ -1095,8 +1097,8 @@ i.fa-chevron-right {
         margin-right: auto;
     }
 
-    #Product > .content > .specification > .collapse:not(.show) {
-        height: 3rem;
+    #Product > .content > .specification {
+        --spec-collapsed-height: 3rem;
     }
 }
 

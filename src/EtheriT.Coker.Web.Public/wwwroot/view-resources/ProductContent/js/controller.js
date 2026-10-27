@@ -140,6 +140,15 @@
 
         init() {
             this.bindStaticEvents();
+
+            const specList = this.$root.find(this.options.selectors.specList)[0];
+            if (specList) {
+                this.specDetailObserver?.disconnect();
+                this.specDetailObserver = new ResizeObserver(() => {
+                    this.toggleSpecDetailButton();
+                });
+                this.specDetailObserver.observe(specList);
+            }
             $(document)
                 .off('coker:cart-cleared.productContent')
                 .on('coker:cart-cleared.productContent', () => this.resetPurchaseQuantity());
@@ -334,18 +343,17 @@
 
         toggleSpecDetailButton() {
             const $btn = this.$root.find(this.options.selectors.detailedButton);
-            const $list = this.$root.find(this.options.selectors.specList);
-            let specHeight = 0;
+            const list = this.$root.find(this.options.selectors.specList)[0];
+            if (!list) return;
 
-            $list.children('li').each(function () {
-                specHeight += $(this).outerHeight(true) || 0;
-            });
+            const rootFontSize = parseFloat(
+                window.getComputedStyle(document.documentElement).fontSize
+            );
+            const collapsedRem = window.matchMedia('(max-width: 992px)').matches ? 3 : 6;
+            const collapsedHeight = rootFontSize * collapsedRem;
+            const contentHeight = list.getBoundingClientRect().height;
 
-            if (specHeight > 96) {
-                $btn.removeClass('d-none');
-            } else {
-                $btn.addClass('d-none');
-            }
+            $btn.toggleClass('d-none', contentHeight <= collapsedHeight);
         }
 
         renderHtmlContent() {

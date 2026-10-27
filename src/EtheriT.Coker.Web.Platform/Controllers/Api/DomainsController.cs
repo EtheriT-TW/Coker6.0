@@ -152,15 +152,13 @@ public sealed class DomainsController(
     /// </summary>
     private async Task LinkUnmatchedUrlAsync(PlatformDomain domain, CancellationToken cancellationToken)
     {
-        var keyword = domain.DomainName;
         var sites = await db.Websites
             .Where(site => !site.IsDeleted &&
                             site.FK_PlatformDomainId == null &&
-                            site.DefaultUrl != null &&
-                            site.DefaultUrl.Contains(keyword))
+                            site.DefaultUrl != null)
             .ToListAsync(cancellationToken);
 
-        foreach(var site in sites.Where(site => BelongsToDomain(site.DefaultUrl)))
+        foreach (var site in sites.Where(site => BelongsToDomain(site.DefaultUrl)))
         {
             site.FK_PlatformDomainId = domain.Id;
         }
@@ -168,11 +166,10 @@ public sealed class DomainsController(
         var urls = await db.WebsiteAlternateUrls
             .Where(url => !url.IsDeleted &&
                            url.FK_PlatformDomainId == null &&
-                           url.Url != null &&
-                           url.Url.Contains(keyword))
+                           url.Url != null)
             .ToListAsync(cancellationToken);
 
-        foreach(var url in urls.Where(url => BelongsToDomain(url.Url)))
+        foreach (var url in urls.Where(url => BelongsToDomain(url.Url)))
         {
             url.FK_PlatformDomainId = domain.Id;
         }
@@ -180,7 +177,8 @@ public sealed class DomainsController(
         bool BelongsToDomain(string? url)
         {
             var host = PlatformDomainName.ToHost(url);
-            return host is not null && PlatformDomainName.Candidates(host).Contains(domain.DomainName);
+            return host is not null &&
+                   PlatformDomainName.Candidates(host).Contains(domain.DomainName);
         }
     }
 

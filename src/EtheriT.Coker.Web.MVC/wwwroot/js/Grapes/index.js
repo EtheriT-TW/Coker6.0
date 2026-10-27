@@ -79,7 +79,8 @@ var grapesInit = function (options) {
         fromElement: true,
 
         storageManager: {
-            autoload: false
+            autoload: false,
+            autosave: false
         },
 
         baseBlocksOptions: {

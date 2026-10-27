@@ -41,7 +41,8 @@ export function createCokerGrapesEditor(options = {}) {
         avoidInlineStyle: true,
 
         storageManager: options.storageManager || {
-            autoload: false
+            autoload: false,
+            autosave: false
         },
 
         i18n: {

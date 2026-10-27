@@ -340,7 +340,7 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
 
     private List<ProvisioningServerOptions> GetConfiguredServers() =>
         (configuration.GetSection("Provisioning:Servers").Get<List<ProvisioningServerOptions>>() ?? [])
-            .Where(x => !string.IsNullOrWhiteSpace(x.Id))
+            .Where(x => x.ShowInMonitoring && !string.IsNullOrWhiteSpace(x.Id))
             .ToList();
 
     private static IReadOnlyList<string> NormalizeHosts(IReadOnlyList<string>? hosts) =>

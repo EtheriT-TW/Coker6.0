@@ -158,14 +158,15 @@ public sealed class ProvisioningTasksController(CokerDbContext db, IConfiguratio
         if (server == null) return NotFound();
         if (string.IsNullOrWhiteSpace(applicationPoolName) || applicationPoolName.Length > 200) return BadRequest();
         var to = DateTime.UtcNow;
-        var from = to.AddHours(-Math.Clamp(hours, 1, 24));
+        var from = to.AddHours(-Math.Clamp(hours, 1, 168));
         var seconds = Math.Max(30, configuration.GetValue("Provisioning:HistorySampleSeconds", 60));
         if (!siteMetricRecorder.Enabled)
             return new ProvisioningSiteMetricHistoryDto(false, server.Id, applicationPoolName, from, to, seconds, []);
         var samples = await db.ProvisioningSiteMetricSamples.AsNoTracking()
             .Where(s => s.ServerId == server.Id && s.ApplicationPoolName == applicationPoolName
                 && s.SampledAtUtc >= from && s.SampledAtUtc <= to)
-            .OrderByDescending(s => s.SampledAtUtc).Take(5000).ToListAsync(HttpContext.RequestAborted);
+            // 七天、最短 30 秒取樣共 20,160 個間隔，另保留一筆邊界樣本。
+            .OrderByDescending(s => s.SampledAtUtc).Take(20161).ToListAsync(HttpContext.RequestAborted);
         return new ProvisioningSiteMetricHistoryDto(true, server.Id, applicationPoolName, from, to, seconds,
             samples.OrderBy(s => s.SampledAtUtc).Select(s => new ProvisioningSiteMetricPointDto(
                 DateTime.SpecifyKind(s.SampledAtUtc, DateTimeKind.Utc), s.PrivateMemoryBytes, s.WorkingSetBytes,

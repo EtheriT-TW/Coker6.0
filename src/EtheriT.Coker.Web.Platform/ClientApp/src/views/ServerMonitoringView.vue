@@ -354,7 +354,7 @@ onBeforeUnmount(() => { closePoolHistory(); if (refreshTimer !== undefined) wind
   <dialog v-if="selectedPool" ref="poolDialog" id="pool-resource-history" class="pool-history" aria-modal="true" aria-labelledby="pool-history-title" @cancel.prevent="closePoolHistory" @click="closeOnBackdrop">
     <header><div><h2 id="pool-history-title">{{ selectedPool }} 資源趨勢</h2><p>{{ poolWebsiteNames.join('、') }}</p></div><button class="ui-button" type="button" autofocus @click="closePoolHistory">關閉</button></header>
     <div class="pool-history-body" :aria-busy="poolLoading">
-    <div class="history-actions"><label>歷史範圍 <select v-model.number="poolHours"><option :value="1">近 1 小時</option><option :value="6">近 6 小時</option><option :value="24">近 24 小時</option></select></label><button class="ui-button" type="button" :disabled="poolLoading" @click="loadPoolHistory()">重新整理</button><small>每 {{ poolHistory?.SampleSeconds ?? 60 }} 秒取樣；約每分鐘更新圖表。</small></div>
+    <div class="history-actions"><label>歷史範圍 <select v-model.number="poolHours"><option :value="1">近 1 小時</option><option :value="6">近 6 小時</option><option :value="24">近 24 小時</option><option :value="72">近 3 天</option><option :value="168">近 7 天</option></select></label><button class="ui-button" type="button" :disabled="poolLoading" @click="loadPoolHistory()">重新整理</button><small>每 {{ poolHistory?.SampleSeconds ?? 60 }} 秒取樣；約每分鐘更新圖表。</small></div>
     <p v-if="poolError" class="alert alert-error" role="alert">{{ poolError }}</p>
     <p v-if="poolHistory && !poolHistory.Enabled" class="history-note">網站歷史取樣尚未啟用，目前只能查看即時資源。</p>
     <template v-else>

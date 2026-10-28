@@ -189,6 +189,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     case "CreditInstallment":
                                     case "UnionPay":
                                     case "ApplePay":
+                                    case "TWQR":
                                         if (DateTimeNow > tradeDate.AddMinutes(30))
                                         {
                                             message = "交易失敗";
@@ -212,6 +213,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                                                 ohdata.State = OrderStatusEnum.付款失敗;
                                         }
                                         break;
+                                    case "BARCODE":
                                     case "Barcode":
                                         if (DateTimeNow > tradeDate.AddDays(double.Parse(ThirdPartyData.StoreExpireDate_Barcode)))
                                         {
@@ -535,15 +537,22 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (ResponseData.RtnCode != 1)
                 {
-                    ohdata.State = OrderStatusEnum.付款失敗;
-                    db.SaveChanges();
+                    await TryMarkECPayFailedAsync(ohdata.Id);
                 }
 
                 return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?{("000000000" + ohdata.Id).Substring(ohdata.Id.ToString().Length)}");
             }
             catch (Exception ex)
             {
-                return new LocalRedirectResult($"/{Website.OrgName}/ShoppingCar?PaymentError=ECPay");
+                Console.Error.WriteLine(
+                    $"[ECPayOrderResult] SiteId={WebsiteId}, " +
+                    $"ExceptionType={ex.GetType().FullName}, " +
+                    $"Message={ex.Message}");
+
+                Console.Error.WriteLine(ex.StackTrace);
+
+                return new LocalRedirectResult(
+                    $"/{Website.OrgName}/ShoppingCar?PaymentError=ECPay");
             }
         }
         public async Task<String> ECPayReturn(ECPayReturnResponseDto ResultResponseData)
@@ -1044,6 +1053,20 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         break;
                                     case "ApplePay":
                                         PaymentBody.ChoosePaymentList += "7";
+                                        break;
+                                    case "URICH":
+                                        PaymentBody.ChoosePaymentList += "9";
+                                        break;
+                                    case "ZINGALA":
+                                        PaymentBody.ChoosePaymentList += "10";
+                                        break;
+                                    case "TWQR":
+                                        PaymentBody.ChoosePaymentList += "11";
+                                        PaymentBody.EPaymentInfo =
+                                            new ECPayGetTokenDataDto.EPaymentInfoDto
+                                            {
+                                                OrderResultURL = orderResultUrl
+                                            };
                                         break;
                                 }
                             }

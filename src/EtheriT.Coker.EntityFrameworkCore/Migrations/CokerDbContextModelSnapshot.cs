@@ -5238,6 +5238,63 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             SerNo = 1,
                             Title = "郵政劃撥",
                             Used = false
+                        },
+                        new
+                        {
+                            Id = 31L,
+                            CanRefund = false,
+                            Code = "ECPayURICH",
+                            CreationTime = new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
+                            FK_ThirdPartyId = 4L,
+                            Icons = "",
+                            IsDeleted = false,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
+                            RefundWorkDay = -1,
+                            RepayAfterMinutes = 10,
+                            SerNo = 27,
+                            Title = "URICH 裕富無卡分期",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 32L,
+                            CanRefund = false,
+                            Code = "ECPayZINGALA",
+                            CreationTime = new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
+                            FK_ThirdPartyId = 4L,
+                            Icons = "",
+                            IsDeleted = false,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
+                            RefundWorkDay = -1,
+                            RepayAfterMinutes = 10,
+                            SerNo = 28,
+                            Title = "ZINGALA 中租銀角零卡",
+                            Used = false
+                        },
+                        new
+                        {
+                            Id = 33L,
+                            CanRefund = false,
+                            Code = "ECPayTWQR",
+                            CreationTime = new DateTime(2026, 10, 22, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            CvsStoreSelectionMode = 0,
+                            FK_ThirdPartyId = 4L,
+                            Icons = "",
+                            IsDeleted = false,
+                            MaxAmount = 199999m,
+                            MinAmount = 6m,
+                            RefundWorkDay = -1,
+                            RepayAfterMinutes = 10,
+                            SerNo = 29,
+                            Title = "TWQR",
+                            Used = false
                         });
                 });
 

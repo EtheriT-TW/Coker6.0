@@ -14,6 +14,16 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto
         public ECPayATMInfoDto ATMInfo { get; set; }
         public ECPayCVSInfoDto CVSInfo { get; set; }
         public ECPayBarcodeInfoDto BarcodeInfo { get; set; }
+
+        public class EPaymentInfoDto
+        {
+            public string OrderResultURL { get; set; } = "";
+        }
+
+        [Newtonsoft.Json.JsonProperty(
+            NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public EPaymentInfoDto? EPaymentInfo { get; set; }
+
         public ECPayConsumerInfoDto ConsumerInfo { get; set; }
         public string CustomField { get; set; }
     }

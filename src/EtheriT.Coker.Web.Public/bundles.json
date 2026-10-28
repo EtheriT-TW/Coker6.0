@@ -157,6 +157,7 @@
     {
       "output": "js/Payment/providers/ECPay.min.js",
       "input": [
+        "wwwroot/view-resources/Payment/embedded/ecpay/qrcode.js",
         "wwwroot/view-resources/Payment/embedded/ecpay/provider.js",
         "wwwroot/view-resources/Payment/embedded/ecpay/member.js",
         "wwwroot/view-resources/Payment/embedded/ecpay/shopping-cart.js"

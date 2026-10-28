@@ -158,6 +158,106 @@
                     }
                 },
 
+                showTwqrPayment: function (info, onClose) {
+                    info = info || {};
+
+                    var isPhone = provider.isPhoneDevice();
+                    var qrText = String(info.QRcode || "").trim();
+                    var redirectUrl = "";
+
+                    try {
+                        var url = new URL(String(info.RedirectURL || ""));
+
+                        if (url.protocol === "https:") {
+                            redirectUrl = url.href;
+                        }
+                    } catch (ex) {
+                        // 由下方檢查並顯示錯誤。
+                    }
+
+                    if (isPhone && !redirectUrl) {
+                        return w.Swal.fire({
+                            icon: "error",
+                            title: "無法取得 TWQR 付款連結",
+                            text: "請保留訂單編號，聯絡客服確認，請勿重複下單。"
+                        });
+                    }
+
+                    if (!isPhone &&
+                        (!qrText || typeof w.QRCode !== "function")) {
+                        return w.Swal.fire({
+                            icon: "error",
+                            title: "無法顯示 TWQR QR Code",
+                            text: "付款資料或 QR Code 元件未完整載入，請勿重複下單。"
+                        });
+                    }
+
+                    var content = w.document.createElement("div");
+                    var description = w.document.createElement("p");
+
+                    description.textContent = isPhone
+                        ? "請點選下方按鈕，前往 TWQR 付款頁面。"
+                        : "請使用支援 TWQR 的手機 App 掃描付款。";
+
+                    content.appendChild(description);
+
+                    var qrHost = null;
+
+                    if (!isPhone) {
+                        qrHost = w.document.createElement("div");
+                        qrHost.className =
+                            "d-flex justify-content-center bg-white p-3";
+
+                        content.appendChild(qrHost);
+                    }
+
+                    if (redirectUrl) {
+                        var link = w.document.createElement("a");
+
+                        link.href = redirectUrl;
+                        link.target = "_blank";
+                        link.rel = "noopener noreferrer";
+                        link.className = "btn btn-primary my-3";
+                        link.textContent = "開啟 TWQR 付款頁面";
+
+                        content.appendChild(link);
+                    }
+
+                    var notice = w.document.createElement("p");
+
+                    notice.className = "small text-muted";
+                    notice.textContent =
+                        "付款資料有效期限為 10 分鐘；完成操作後，請確認訂單付款狀態。";
+
+                    content.appendChild(notice);
+
+                    return w.Swal.fire({
+                        title: "TWQR 付款",
+                        html: content,
+                        confirmButtonText: "關閉付款資訊",
+                        allowOutsideClick: false,
+                        didOpen: function () {
+                            if (!qrHost) return;
+
+                            try {
+                                new w.QRCode(qrHost, {
+                                    text: qrText,
+                                    width: 256,
+                                    height: 256,
+                                    correctLevel: w.QRCode.CorrectLevel.M
+                                });
+                            } catch (ex) {
+                                qrHost.textContent =
+                                    "QR Code 產生失敗，請聯絡客服確認。";
+                            }
+                        }
+                    }).then(function () {
+                        if (typeof onClose === "function") {
+                            onClose();
+                        }
+                    });
+                },
+
                 canUseApplePay: function () {
                     // 桌機由綠界顯示 QR Code，不需要本機具備 ApplePaySession。
                     if (!provider.isPhoneDevice()) return true;

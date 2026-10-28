@@ -33,7 +33,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
             if (reason != "")
             {
                 await RecordImageAsync(reason);
-                return StatusCode(429);
+                return StatusCode(StatusCodes.Status429TooManyRequests, new
+                {
+                    error = reason == "CaptchaLocked"
+                        ? "驗證失敗次數過多，請於 15 分鐘後再試"
+                        : "操作過於頻繁，請稍後再試"
+                });
             }
             MemoryStream image;
             try
@@ -45,7 +50,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                 await RecordImageAsync("ImageGenerationFailed");
                 throw;
             }
-            if (!AccountRequestGuard.Grant($"challenge:{id}", TimeSpan.FromMinutes(5)))
+            if (!AccountRequestGuard.GrantCaptchaChallenge(HttpContext, id))
             {
                 image.Dispose();
                 await RecordImageAsync("ChallengeStoreUnavailable");

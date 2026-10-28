@@ -1029,6 +1029,8 @@ function ResetAction(forgetid) {
     })
 }
 function NewCaptcha($self, $input, name = "") {
+    if (!$self.length) return;
+
     if (!$self.data("id")) {
         $self.data("id", createCaptchaId(name));
     }
@@ -1045,8 +1047,70 @@ function NewCaptcha($self, $input, name = "") {
 
     $captchaId.val(captchaKey);
 
-    $self.attr("src", `/api/Captcha/index?id=${encodeURIComponent(captchaKey)}&v=${Date.now()}`);
     $input.val("");
+
+    // Fetch first so HTTP errors never become a broken image. Keep state local
+    // to this image; another visitor's CAPTCHA is independent on the server.
+    const request = {};
+    $self.data("captchaRequest", request);
+    let $notice = $self.data("captchaNotice");
+    if (!$notice) {
+        $notice = $('<span class="captcha-notice"><span role="status" aria-live="polite"></span> <button type="button" class="btn btn-link p-0">重新取得驗證碼</button></span>');
+        $notice.find("button").on("click", function () {
+            NewCaptcha($self, $input, name);
+        });
+        $self.after($notice);
+        $self.data("captchaNotice", $notice);
+    }
+
+    function showNotice(message, retry) {
+        $self.hide();
+        $notice.find('[role="status"]').text(message);
+        $notice.find("button").toggle(retry);
+        $notice.show();
+    }
+
+    const oldUrl = $self.data("captchaObjectUrl");
+    $self.off("load.captchaImage error.captchaImage").hide().removeAttr("src");
+    if (oldUrl) {
+        URL.revokeObjectURL(oldUrl);
+        $self.removeData("captchaObjectUrl");
+    }
+    showNotice("驗證碼載入中…", false);
+
+    fetch(`/api/Captcha/index?id=${encodeURIComponent(captchaKey)}&v=${Date.now()}`, {
+        credentials: "same-origin",
+        cache: "no-store"
+    }).then(async response => {
+        if (!response.ok) {
+            let message = "驗證碼暫時無法載入，請重新取得驗證碼";
+            if (response.status === 429) {
+                const result = await response.json().catch(() => null);
+                message = result?.error || "操作過於頻繁，請稍後再試";
+            }
+            const error = new Error(message);
+            error.captchaMessage = message;
+            throw error;
+        }
+        return response.blob();
+    }).then(blob => {
+        if ($self.data("captchaRequest") !== request) return;
+        const objectUrl = URL.createObjectURL(blob);
+        $self.data("captchaObjectUrl", objectUrl);
+        $self.one("load.captchaImage", function () {
+            URL.revokeObjectURL(objectUrl);
+            $self.removeData("captchaObjectUrl");
+            $notice.hide();
+            $self.show();
+        }).one("error.captchaImage", function () {
+            URL.revokeObjectURL(objectUrl);
+            $self.removeData("captchaObjectUrl");
+            showNotice("驗證碼暫時無法載入，請重新取得驗證碼", true);
+        }).attr("src", objectUrl);
+    }).catch(error => {
+        if ($self.data("captchaRequest") !== request) return;
+        showNotice(error.captchaMessage || "驗證碼暫時無法載入，請重新取得驗證碼", true);
+    });
 }
 
 function createCaptchaId(name) {

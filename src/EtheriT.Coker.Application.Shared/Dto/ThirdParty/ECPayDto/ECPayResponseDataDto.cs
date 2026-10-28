@@ -88,6 +88,14 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto
             public string? Barcode3 { get; set; }
         }
         public BarcodeInfoDto BarcodeInfo { get; set; }
+        public class TWQRInfoDto
+        {
+            public string? QRcode { get; set; }
+            public string? RedirectURL { get; set; }
+        }
+        public TWQRInfoDto TWQRInfo { get; set; }
+        [Newtonsoft.Json.JsonProperty("TWQRlInfo")]
+        private TWQRInfoDto TWQRlInfo { set => TWQRInfo ??= value; }
         public string? CustomField { get; set; }
         public int? SimulatePaid { get; set; }
     }

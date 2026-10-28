@@ -2284,7 +2284,8 @@ body > .popover.bs-popover-auto.fade {
         width: 5rem;
     }
 
-    #Form_Orderer > div:nth-child(5) > div:nth-child(3) {
+    #Form_Orderer > div:nth-child(5) > div:nth-child(3),
+    #Form_Recipient > div:nth-child(5) > div:nth-child(3) {
         width: 100%;
     }
 
@@ -3173,8 +3174,7 @@ body > .popover.bs-popover-auto.fade {
 }
 
 .recipient-active-panel > #Form_Recipient {
-    padding-right: 1rem !important;
-    padding-left: 1rem !important;
+    padding: 1.15rem 1.5rem !important;
 }
 
 .recipient-copy-actions > .text-muted {
@@ -3435,8 +3435,7 @@ button.recipient-source-option {
     }
 
     .recipient-active-panel > #Form_Recipient {
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
+        padding: 1.15rem 1.5rem !important;
     }
 
     .shipping-option-row {
@@ -3598,9 +3597,8 @@ button.recipient-source-option {
             font-size: .9rem;
         }
 
-    #Form_Recipient {
-        padding-right: .5rem !important;
-        padding-left: .5rem !important;
+    .recipient-active-panel > #Form_Recipient {
+        padding: 1rem .85rem !important;
     }
 
     .recipient-copy-actions {

@@ -156,7 +156,7 @@
 
         if ($("[name='RecipientRadio']:checked").val() === "order") {
             cart.Utils.ShoppingCartDataInsert(S.recipient_data, $("#RecipientActivePanel > .default_data"));
-            $("#RecipientActivePanel > .default_data").removeClass("d-none");
+            $("#RecipientActivePanel > .default_data").addClass("d-none");
             if (cart.Recipients && typeof cart.Recipients.RefreshDisplay === "function") {
                 cart.Recipients.RefreshDisplay();
             }

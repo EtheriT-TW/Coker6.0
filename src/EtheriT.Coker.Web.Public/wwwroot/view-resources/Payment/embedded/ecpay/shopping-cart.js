@@ -456,6 +456,21 @@
                 payment = 27;
                 $("#Step4 .payment_method").text("Apple Pay");
                 break;
+
+            case "URICH":
+                payment = 31;
+                $("#Step4 .payment_method").text("URICH 裕富無卡分期");
+                break;
+
+            case "ZINGALA":
+                payment = 32;
+                $("#Step4 .payment_method").text("ZINGALA 中租銀角零卡");
+                break;
+
+            case "TWQR":
+                payment = 33;
+                $("#Step4 .payment_method").text("TWQR");
+                break;
         }
 
         if (payment != null) {
@@ -602,7 +617,21 @@
                     var result_obj = JSON.parse(result.message);
                     var SwalClose = false;
 
-                    switch (result_obj.OrderInfo.PaymentType) {
+                    var twqrInfo = result_obj.TWQRInfo || result_obj.TWQRlInfo;
+
+                    var hasTwqrData = Boolean(
+                        twqrInfo &&
+                        (
+                            String(twqrInfo.QRcode || "").trim() ||
+                            String(twqrInfo.RedirectURL || "").trim()
+                        )
+                    );
+
+                    var paymentType = hasTwqrData
+                        ? "TWQR"
+                        : (result_obj.OrderInfo?.PaymentType ?? null);
+
+                    switch (paymentType) {
                         case null:
                         case "Credit":
                         case "UnionPay":
@@ -661,8 +690,20 @@
                             });
                             break;
 
+                        case "TWQR":
+                            localStorage.setItem("lastSaveTime", new Date().toISOString());
+                            localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
+
+                            cart.CheckoutResult.setStatus(
+                                "訂單已成立，請完成 TWQR 付款，付款結果待確認。"
+                            );
+
+                            SwalClose = false;
+                            ecpayProvider.showTwqrPayment(twqrInfo);
+                            break;
+
                         default:
-                            co.sweet.confirm(`回傳的PaymentType：${result_obj.OrderInfo.PaymentType}`, "此為測試訊息", "確認", "", null);
+                            co.sweet.confirm(`回傳的PaymentType：${paymentType}`, "此為測試訊息", "確認", "", null);
                             break;
                     }
 

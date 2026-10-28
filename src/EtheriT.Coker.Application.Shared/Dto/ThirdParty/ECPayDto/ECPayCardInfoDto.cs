@@ -11,6 +11,5 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayDto
         public string OrderResultURL { get; set; }
         public string PeriodReturnURL { get; set; }
         public string CreditInstallment { get; set; } = "";
-        public string FlexibleInstallment { get; set; }
     }
 }

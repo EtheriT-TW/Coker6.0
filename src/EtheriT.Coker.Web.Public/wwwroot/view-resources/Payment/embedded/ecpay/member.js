@@ -22,7 +22,21 @@
             function handleCreateResult(createResult) {
                 var resultObj = JSON.parse(createResult.message);
 
-                switch (resultObj.OrderInfo.PaymentType) {
+                var twqrInfo = resultObj.TWQRInfo || resultObj.TWQRlInfo;
+
+                var hasTwqrData = Boolean(
+                    twqrInfo &&
+                    (
+                        String(twqrInfo.QRcode || "").trim() ||
+                        String(twqrInfo.RedirectURL || "").trim()
+                    )
+                );
+
+                var paymentType = hasTwqrData
+                    ? "TWQR"
+                    : (resultObj.OrderInfo?.PaymentType ?? null);
+
+                switch (paymentType) {
                     case null:
                         localStorage.setItem("lastSaveTime", new Date().toISOString());
                         localStorage.setItem("lastSaveToken", localStorage.getItem("token"));
@@ -60,6 +74,12 @@
 
                     case "ApplePay":
                         C.sweet.confirm("訂單已成立，謝謝您的訂購！", "", "確定", "", function () {
+                            location.reload();
+                        });
+                        break;
+
+                    case "TWQR":
+                        provider.showTwqrPayment(twqrInfo, function () {
                             location.reload();
                         });
                         break;

@@ -179,6 +179,7 @@
             MaxLen: maxlen,
             Type: typeof $self.data("type") === "undefined" ? null : $self.data("type"),
             SearchText: typeof $self.data("searchText") === "undefined" ? null : ($self.data("searchText") || "").toString().trim(),
+            ProductNameFilter: String($self.data("productNameFilter") || "").trim(),
             SearchSortBy: typeof $self.data("searchSortBy") === "undefined" ? null : $self.data("searchSortBy"),
             SearchSortDirection: typeof $self.data("searchSortDirection") === "undefined" ? null : $self.data("searchSortDirection"),
             Filters: $self.data("filtered"),

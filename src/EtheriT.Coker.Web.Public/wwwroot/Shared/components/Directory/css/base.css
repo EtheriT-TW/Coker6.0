@@ -110,6 +110,23 @@
 }
 
 @media (max-width: 576px) {
+    .catalog_frame .switch_control:has(.directory-product-filter) {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 0 .75rem .5rem;
+        align-items: center;
+        justify-content: flex-start;
+        gap: .5rem;
+    }
+
+    .catalog_frame .switch_control .directory-product-filter {
+        order: 1;
+        flex: 1 0 100%;
+        width: 100%;
+        margin: 0;
+    }
+
     .directory-sort-control {
         flex: 0 1 auto;
         width: auto;

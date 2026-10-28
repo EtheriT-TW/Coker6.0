@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string GridImageAndText { get; } = "Gallery";
         public static string GridText { get; } = "Texts";
         public static string SearchProdPlaceholder { get; } = "please enter product name or number";
+        public static string ProductNameFilterPlaceholder { get; } = "Filter products by name";
         public static string SearchAllPlaceholder { get; } = "search website infomation";
         public static string FindEmpty { get; } = "find empty";
         public static string SiteSearch { get; } = "Site search";

@@ -1015,6 +1015,7 @@ namespace EtheriT.Coker.Application.Directory
 
         private IQueryable<Prod> ApplyProdFilters(IQueryable<Prod> prods, DirectoryReleInfoInputDto dto, long websiteId)
         {
+            prods = ApplyProductNameFilter(prods, dto.ProductNameFilter);
             // ✅ DirectoryType（你目前用 long；0 = 不限制）
             // 你說不能只用 !=0 判斷語意，但現階段 input 就是 0/目錄id，我們仍採 0=all
             if (dto.DirectoryType > 0)
@@ -2393,6 +2394,14 @@ namespace EtheriT.Coker.Application.Directory
             return output;
         }
 
+        private static IQueryable<Prod> ApplyProductNameFilter(IQueryable<Prod> query, string? keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword)) return query;
+
+            var name = keyword.Trim().ToLower();
+            return query.Where(x => (x.Title ?? "").ToLower().Contains(name));
+        }
+
         private async Task<DirectoryReleInfoGetDto> GetReleInfoFromDirectorySnapshotsAsync(
             DirectoryReleInfoInputDto dto,
             long websiteId,
@@ -2437,6 +2446,8 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(x => siteIds.Contains(x.FK_WebsiteId))
                     .Where(x => x.permanent || (now >= x.StartTime && now <= x.EndTime));
                 query = ApplyFrontProductViewPermission(query, websiteId, currentFrontRoleId);
+
+                query = ApplyProductNameFilter(query, dto.ProductNameFilter);
 
                 var total = await query.CountAsync();
                 output.TotalCount = maxLen > 0 ? Math.Min(total, maxLen) : total;

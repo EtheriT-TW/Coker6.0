@@ -23,10 +23,6 @@
         ]
     };
 
-    function text(key, fallback) {
-        return w.local && w.local[key] ? w.local[key] : fallback;
-    }
-
     function normalizeContentType(value) {
         const normalized = String(value == null ? "" : value).trim().toLowerCase();
 
@@ -109,14 +105,14 @@
         const $group = $("<div>", {
             class: "btn-group btn-group-sm",
             role: "group",
-            "aria-label": text("SortBy", "排序")
+            "aria-label": w.CokerI18n.get("SortBy", "排序")
         });
         const $direction = $("<button>", {
             type: "button",
             class: "directory-sort-direction btn btn-outline-secondary",
             "aria-disabled": "false",
-            "data-ascending-label": text("SortAscending", "升序"),
-            "data-descending-label": text("SortDescending", "降序")
+            "data-ascending-label": w.CokerI18n.get("SortAscending", "升序"),
+            "data-descending-label": w.CokerI18n.get("SortDescending", "降序")
         }).append($icon, $("<span>", { class: "directory-sort-label" }));
         const $toggle = $("<button>", {
             type: "button",
@@ -124,11 +120,11 @@
             "data-bs-toggle": "dropdown",
             "data-bs-auto-close": "true",
             "aria-expanded": "false",
-            "aria-label": text("SortOptions", "選擇排序方式"),
-            title: text("SortOptions", "選擇排序方式")
+            "aria-label": w.CokerI18n.get("SortOptions", "選擇排序方式"),
+            title: w.CokerI18n.get("SortOptions", "選擇排序方式")
         }).append($("<span>", {
             class: "visually-hidden",
-            text: text("SortOptions", "選擇排序方式")
+            text: w.CokerI18n.get("SortOptions", "選擇排序方式")
         }));
         const $menu = $("<ul>", { class: "directory-sort-menu dropdown-menu dropdown-menu-end" });
 
@@ -138,7 +134,7 @@
                     type: "button",
                     class: "dropdown-item",
                     "data-sort": option.value,
-                    text: text(option.labelKey, option.fallback)
+                    text: w.CokerI18n.get(option.labelKey, option.fallback)
                 }))
             );
         });
@@ -177,7 +173,7 @@
         const $direction = $control.find(".directory-sort-direction");
         const $selected = $control.find(`[data-sort="${sortBy}"]`).first();
         const label = isDefault
-            ? text("SortOptions", "選擇排序方式")
+            ? w.CokerI18n.get("SortOptions", "選擇排序方式")
             : $direction.data(direction === "desc" ? "descendingLabel" : "ascendingLabel");
 
         $direction
@@ -240,48 +236,38 @@
         let $filter = $switchControl.children(".directory-product-filter").first();
         if (contentType !== contentTypes.product) {
             $filter.remove();
-            $frame.children(".directory-product-filter-status").remove();
-            $frame.off("catalog:rendered.directoryProductFilter");
+            w.clearTimeout($frame.data("productFilterTimer"));
+            $frame.removeData("productNameFilter productFilterTimer");
             return;
         }
 
         if (!$filter.length) {
-            const label = "篩選本頁商品名稱";
             $filter = $("<input>", {
                 type: "search",
                 class: "directory-product-filter form-control form-control-sm",
-                placeholder: label,
-                "aria-label": label
+                "data-i18n-attr": "placeholder:ProductNameFilterPlaceholder;aria-label:ProductNameFilterPlaceholder"
             });
             $switchControl.children(".directory-sort-control").after($filter);
         }
-        let $status = $frame.children(".directory-product-filter-status").first();
-        if (!$status.length) {
-            $status = $("<div>", {
-                class: "directory-product-filter-status text-muted py-2",
-                role: "status",
-                "aria-live": "polite"
-            }).hide().appendTo($frame);
-        }
-
-        function applyFilter() {
-            const keyword = String($filter.val() || "").trim().toLocaleLowerCase();
-            const $cards = $frame.find(".catalog").children("[data-id]");
-            let matched = 0;
-            $cards.each(function () {
-                const $card = $(this);
-                const name = $card.find(".title").text().toLocaleLowerCase();
-                const visible = !keyword || name.includes(keyword);
-                $card.toggleClass("d-none", !visible);
-                if (visible) matched++;
+        w.CokerI18n.apply($switchControl[0]);
+        $filter.off("input.directoryProductFilter compositionstart.directoryProductFilter compositionend.directoryProductFilter")
+            .on("compositionstart.directoryProductFilter", function () {
+                $filter.data("composing", true);
+                w.clearTimeout($frame.data("productFilterTimer"));
+            })
+            .on("compositionend.directoryProductFilter", function () {
+                $filter.data("composing", false).trigger("input");
+            })
+            .on("input.directoryProductFilter", function () {
+                w.clearTimeout($frame.data("productFilterTimer"));
+                if ($filter.data("composing")) return;
+                $frame.data("productFilterTimer", w.setTimeout(function () {
+                    const keyword = String($filter.val() || "").trim();
+                    if (keyword === String($frame.data("productNameFilter") || "")) return;
+                    $frame.data("productNameFilter", keyword);
+                    reload($frame);
+                }, 300));
             });
-            $status.text(keyword ? `本頁符合 ${matched} 項商品` : "").toggle(Boolean(keyword));
-        }
-
-        $filter.off("input.directoryProductFilter").on("input.directoryProductFilter", applyFilter);
-        $frame.off("catalog:rendered.directoryProductFilter")
-            .on("catalog:rendered.directoryProductFilter", applyFilter);
-        applyFilter();
     }
 
     DirectorySortControl.init = function ($frame, result) {

@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string GridImageAndText { get; } = "圖文";
         public static string GridText { get; } = "文字";
         public static string SearchProdPlaceholder { get; } = "請輸入商品名稱/型號";
+        public static string ProductNameFilterPlaceholder { get; } = "篩選商品名稱";
         public static string SearchAllPlaceholder { get; } = "尋找全站資訊";
         public static string FindEmpty { get; } = "查無資料";
         public static string SiteSearch { get; } = "站內搜尋";

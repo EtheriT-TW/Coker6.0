@@ -25,7 +25,9 @@
         <div class="col">
             <h1>@L.get("NoPermission")</h1>
             <p>
-                @L.get("NoPermissionDescription")
+                @L.get("NoPermissionDescriptionPrefix")
+                <a href="#LoginModal" data-bs-toggle="modal" data-bs-target="#LoginModal" role="button">@L.get("NoPermissionLoginLinkText")</a>
+                @L.get("NoPermissionDescriptionSuffix")
                 <a href="/" title="{@L.get("LinkTo", L.get("HomePage"))}">@L.get("returnHomePage")</a>
             </p>
         </div>

@@ -79,6 +79,7 @@
         if (!$panel.length || !GetSourceOption(value).length) return;
 
         $panel.appendTo(".recipient-source-options");
+        $panel.children(".checkout-orderer-section").toggleClass("d-none", value === "edit");
         $panel.append($("#RecipientForm > .default_data, #RecipientActivePanel > .default_data"));
         $panel.append($(".recipient-copy-actions"));
         $panel.append($("#Form_Recipient"));
@@ -134,7 +135,17 @@
         if (source === "edit") return;
 
         var recipient = $.extend({}, S.recipient_data || {});
-        if (!recipient.recipient) return;
+        var ordererIncomplete = false;
+        if (source === "order") {
+            var ordererForm = $("#Form_Orderer")[0];
+            var hasPhoneArea = $.trim($("#OrdererInputTelPhoneArea").val() || "") !== "";
+            var hasPhoneNumber = $.trim($("#OrdererInputTelPhone").val() || "") !== "";
+            ordererIncomplete = !ordererForm || !ordererForm.checkValidity() || hasPhoneArea !== hasPhoneNumber;
+        }
+        if (ordererIncomplete || !$.trim(recipient.recipient || "")) {
+            $("#RecipientActivePanel > .default_data").addClass("d-none");
+            return;
+        }
 
         var $shipping = $("[name='RadioShipping']:checked");
         var isCvs = String($shipping.attr("data-is-cvs") || "").toLowerCase() === "true";
@@ -155,7 +166,7 @@
         }
 
         cart.Utils.ShoppingCartDataInsert(recipient, $("#RecipientActivePanel > .default_data"));
-        $("#RecipientActivePanel > .default_data").removeClass("d-none");
+        $("#RecipientActivePanel > .default_data").addClass("d-none");
     }
 
     function Apply(data, closeModal) {
@@ -169,7 +180,7 @@
 
         $("#radio_recipient_choose").prop("checked", true);
         $("#Form_Recipient").addClass("d-none");
-        $("#RecipientActivePanel > .default_data").removeClass("d-none");
+        $("#RecipientActivePanel > .default_data").addClass("d-none");
         SetSourceSelected("choose");
         SetCopyActionVisibility();
         ApplyShipping(recipient);

@@ -334,103 +334,6 @@
 
             <div id="Step3" class="card text-center swiper-slide">
                 <div class="card-body px-0">
-                    <section class="checkout-section-card checkout-orderer-section">
-                        <div class="checkout-section-heading d-flex align-items-center">
-                            <div>
-                                <div class="fs-5">訂購人資料</div>
-                                <div class="small text-muted">確認訂購人的聯絡資料</div>
-                            </div>
-                            <button class="btn_edit_data checkout-heading-action bg-transparent border-0 fs-4 ms-2" title="編輯訂購人資料">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                                <span class="d-none">編輯</span>
-                            </button>
-                            <button class="btn_inituser checkout-restore-button border-0 ms-auto">恢復預設資料</button>
-                        </div>
-
-                        <div id="OrdererForm" class="checkout-section-body">
-                            <div class="default_data checkout-data-panel">
-                                <div class="checkout-data-row">
-                                    <div class="checkout-data-label">姓名</div>
-                                    <div data-key="orderer" class="checkout-data-value"></div>
-                                </div>
-                                <div class="checkout-data-row">
-                                    <div class="checkout-data-label">電子郵件</div>
-                                    <div data-key="ordererEmail" class="checkout-data-value"></div>
-                                </div>
-                                <div class="checkout-data-row">
-                                    <div class="checkout-data-label">手機號碼</div>
-                                    <div data-key="ordererCellPhone" class="checkout-data-value"></div>
-                                </div>
-                                <div class="checkout-data-row">
-                                    <div class="checkout-data-label">地址</div>
-                                    <div data-key="ordererAddress" class="checkout-data-value"></div>
-                                </div>
-                            </div>
-
-                            <form id="Form_Orderer" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
-                            <input type="hidden" name="authentiity_token" value="@Model.token" />
-                            <div class="row mx-0">
-                                <div class="form-floating mb-3 col-12 col-sm-6 px-0">
-                                    <input id="OrdererInputName" class="orderer_name form-control" name="orderer" type="text" placeholder="name" value="" minlength="2" required>
-                                    <label class="required" for="OrdererInputName">姓　　名</label>
-                                </div>
-                                <div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
-                                    <div class="form-check pe-3">
-                                        <input id="OrdererRadioSir" class="form-check-input" type="radio" name="ordererSex" value="1">
-                                        <label class="form-check-label" for="OrdererRadioSir">男</label>
-                                    </div>
-                                    <div class="form-check pe-3">
-                                        <input id="OrdererRadioMiss" class="form-check-input" type="radio" name="ordererSex" value="2">
-                                        <label class="form-check-label" for="OrdererRadioMiss">女</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input id="OrdererRadioElse" class="form-check-input" type="radio" name="ordererSex" value="3">
-                                        <label class="form-check-label" for="OrdererRadioElse">其他</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-floating mb-3 col-12 col-sm-6 e-mail">
-                                <input id="OrdererInputMail" class="orderer_mail form-control" name="ordererEmail" type="email" placeholder="name@example.com" value="" required>
-                                <label class="required" for="OrdererInputMail">E-mail</label>
-                            </div>
-                            <div class="form-floating mb-3 col-12 col-sm-6 cell-phone">
-                                <input id="OrdererInputCellPhone" class="orderer_phone form-control" name="ordererCellPhone" type="tel" placeholder="請輸入手機號碼" value="" pattern="[0][9]\d{8}" maxlength="10" required>
-                                <label class="required" for="OrdererInputCellPhone">手機號碼</label>
-                            </div>
-                            <div class="row">
-                                <div class="form-floating mb-3 col-4 col-sm-2 tel-area">
-                                    <input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" name="zone" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
-                                    <label class="px-4" for="OrdererInputTelPhoneArea">電話區碼</label>
-                                </div>
-                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0 tel-phone">
-                                    <input id="OrdererInputTelPhone" class="orderer_cellphone form-control" name="ordererTelePhone" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{8}" maxlength="8">
-                                    <label for="OrdererInputTelPhone">聯絡電話</label>
-                                </div>
-                                <div class="form-floating mb-3 col-6 col-sm-3 phone-ext">
-                                    <input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" name="ext" type="tel" placeholder="請輸入分機號碼" value="" pattern="\d*">
-                                    <label class="px-4" for="OrdererInputTelPhoneExt">分機</label>
-                                </div>
-                            </div>
-                            <div id="Orderer_TWzipcode" class="row">
-                                <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
-                                <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
-                                <div class="form-floating mb-3 col-12 col-sm-6">
-                                    <input id="OrdererInputAddress" class="orderer_address form-control" name="ordererAddress" type="text" placeholder="請輸入地址" value="" required>
-                                    <label class="px-4 required" for="OrdererInputAddress">地址</label>
-                                </div>
-                            </div>
-                            @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable && ViewBag.isLogin)
-                            {
-                                <div class="form-check memberUpdate">
-                                    <input id="MemberUpdate" class="form-check-input" type="checkbox">
-                                    <label class="form-check-label" for="MemberUpdate">同時更新會員資料<span class="ps-2 text-danger">*Email為登入帳號，不會回存</span></label>
-                                </div>
-                            }
-                            </form>
-
-                        </div>
-                    </section>
-
                     <div id="RecipientForm" class="recipient-delivery-panel checkout-section-card">
                         <div class="recipient-panel-heading checkout-section-heading d-flex align-items-center">
                             <div>
@@ -473,25 +376,103 @@
                                 </span>
                             </label>
 
-                            <div id="RecipientActivePanel" class="recipient-active-panel" aria-live="polite"></div>
-                        </div>
+                            <div id="RecipientActivePanel" class="recipient-active-panel" aria-live="polite">
+                                <section class="checkout-orderer-section">
+                                    <div class="checkout-subsection-heading px-3 py-3 d-flex align-items-center">
+                                        <div>
+                                            <div class="fs-5">訂購人資料</div>
+                                            <div class="small text-muted">確認訂購人的聯絡資料</div>
+                                        </div>
+                                        <button class="btn_edit_data checkout-heading-action bg-transparent border-0 fs-4 ms-2" title="編輯訂購人資料">
+                                            <i class="fa-regular fa-pen-to-square"></i>
+                                            <span class="d-none">編輯</span>
+                                        </button>
+                                        <button class="btn_inituser checkout-restore-button border-0 ms-auto">恢復預設資料</button>
+                                    </div>
 
-                        <div class="default_data d-none">
-                            <div class="recipient-summary-row">
-                                <div class="recipient-summary-label">姓名</div>
-                                <div data-key="recipient" class="recipient-summary-value"></div>
-                            </div>
-                            <div class="recipient-summary-row">
-                                <div class="recipient-summary-label">電子郵件</div>
-                                <div data-key="recipientEmail" class="recipient-summary-value"></div>
-                            </div>
-                            <div class="recipient-summary-row">
-                                <div class="recipient-summary-label">手機號碼</div>
-                                <div data-key="recipientCellPhone" class="recipient-summary-value"></div>
-                            </div>
-                            <div class="recipient-summary-row">
-                                <div class="recipient-display-address-label recipient-summary-label">收件地址</div>
-                                <div data-key="recipientAddress" class="recipient-summary-value"></div>
+                                    <div id="OrdererForm" class="checkout-section-body">
+                                        <div class="default_data checkout-data-panel">
+                                            <div class="checkout-data-row">
+                                                <div class="checkout-data-label">姓名</div>
+                                                <div data-key="orderer" class="checkout-data-value"></div>
+                                            </div>
+                                            <div class="checkout-data-row">
+                                                <div class="checkout-data-label">電子郵件</div>
+                                                <div data-key="ordererEmail" class="checkout-data-value"></div>
+                                            </div>
+                                            <div class="checkout-data-row">
+                                                <div class="checkout-data-label">手機號碼</div>
+                                                <div data-key="ordererCellPhone" class="checkout-data-value"></div>
+                                            </div>
+                                            <div class="checkout-data-row">
+                                                <div class="checkout-data-label">地址</div>
+                                                <div data-key="ordererAddress" class="checkout-data-value"></div>
+                                            </div>
+                                        </div>
+
+                                        <form id="Form_Orderer" class="px-3 px-sm-5 d-none needs-validation" method="post" novalidate>
+                                        <input type="hidden" name="authentiity_token" value="@Model.token" />
+                                        <div class="row mx-0">
+                                            <div class="form-floating mb-3 col-12 col-sm-6 px-0">
+                                                <input id="OrdererInputName" class="orderer_name form-control" name="orderer" type="text" placeholder="name" value="" minlength="2" required>
+                                                <label class="required" for="OrdererInputName">姓　　名</label>
+                                            </div>
+                                            <div class="gender d-flex align-self-center col-12 col-sm-6 mb-3">
+                                                <div class="form-check pe-3">
+                                                    <input id="OrdererRadioSir" class="form-check-input" type="radio" name="ordererSex" value="1">
+                                                    <label class="form-check-label" for="OrdererRadioSir">男</label>
+                                                </div>
+                                                <div class="form-check pe-3">
+                                                    <input id="OrdererRadioMiss" class="form-check-input" type="radio" name="ordererSex" value="2">
+                                                    <label class="form-check-label" for="OrdererRadioMiss">女</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input id="OrdererRadioElse" class="form-check-input" type="radio" name="ordererSex" value="3">
+                                                    <label class="form-check-label" for="OrdererRadioElse">其他</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-floating mb-3 col-12 col-sm-6 e-mail">
+                                            <input id="OrdererInputMail" class="orderer_mail form-control" name="ordererEmail" type="email" placeholder="name@example.com" value="" required>
+                                            <label class="required" for="OrdererInputMail">E-mail</label>
+                                        </div>
+                                        <div class="form-floating mb-3 col-12 col-sm-6 cell-phone">
+                                            <input id="OrdererInputCellPhone" class="orderer_phone form-control" name="ordererCellPhone" type="tel" placeholder="請輸入手機號碼" value="" pattern="[0][9]\d{8}" maxlength="10" required>
+                                            <label class="required" for="OrdererInputCellPhone">手機號碼</label>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-floating mb-3 col-4 col-sm-2 tel-area">
+                                                <input id="OrdererInputTelPhoneArea" class="orderer_areacode form-control" name="zone" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
+                                                <label class="px-4" for="OrdererInputTelPhoneArea">電話區碼</label>
+                                            </div>
+                                            <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0 tel-phone">
+                                                <input id="OrdererInputTelPhone" class="orderer_cellphone form-control" name="ordererTelePhone" type="tel" placeholder="請輸入聯繫電話" value="" pattern="\d{8}" maxlength="8">
+                                                <label for="OrdererInputTelPhone">聯絡電話</label>
+                                            </div>
+                                            <div class="form-floating mb-3 col-6 col-sm-3 phone-ext">
+                                                <input id="OrdererInputTelPhoneExt" class="orderer_extension form-control" name="ext" type="tel" placeholder="請輸入分機號碼" value="" pattern="\d*">
+                                                <label class="px-4" for="OrdererInputTelPhoneExt">分機</label>
+                                            </div>
+                                        </div>
+                                        <div id="Orderer_TWzipcode" class="row">
+                                            <div class="county form-floating mb-3 col-6 col-sm-3" data-role="county"></div>
+                                            <div class="district form-floating mb-3 col-6 col-sm-3 pe-sm-0 ps-0" data-role="district"></div>
+                                            <div class="form-floating mb-3 col-12 col-sm-6">
+                                                <input id="OrdererInputAddress" class="orderer_address form-control" name="ordererAddress" type="text" placeholder="請輸入地址" value="" required>
+                                                <label class="px-4 required" for="OrdererInputAddress">地址</label>
+                                            </div>
+                                        </div>
+                                        @if (ViewBag.LoginEnable != null && ViewBag.LoginEnable && ViewBag.isLogin)
+                                        {
+                                            <div class="form-check memberUpdate">
+                                                <input id="MemberUpdate" class="form-check-input" type="checkbox">
+                                                <label class="form-check-label" for="MemberUpdate">同時更新會員資料<span class="ps-2 text-danger">*Email為登入帳號，不會回存</span></label>
+                                            </div>
+                                        }
+                                        </form>
+
+                                    </div>
+                                </section>
                             </div>
                         </div>
 
@@ -524,24 +505,24 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-floating mb-3 col-12 col-sm-6">
+                            <div class="form-floating mb-3 col-12 col-sm-6 e-mail">
                                 <input id="RecipientInputMail" name="recipientEmail" class="recipient_mail form-control" type="email" placeholder="請輸入E-mail" value="">
                                 <label for="RecipientInputMail">E-mail</label>
                             </div>
-                            <div class="form-floating mb-3 col-12 col-sm-6">
+                            <div class="form-floating mb-3 col-12 col-sm-6 cell-phone">
                                 <input id="RecipientInputCellPhone" name="recipientCellPhone" class="recipient_phone form-control" type="tel" placeholder="請輸入手機號罵" value="" pattern="[0][9]\d{8}" maxlength="10" required>
                                 <label class="required" for="RecipientInputCellPhone">手機號碼</label>
                             </div>
                             <div class="row">
-                                <div class="form-floating mb-3 col-4 col-sm-2">
+                                <div class="form-floating mb-3 col-4 col-sm-2 tel-area">
                                     <input id="RecipientInputTelPhoneArea" name="zone" class="recipient_areacode form-control" type="tel" placeholder="請輸入區碼" value="" pattern="[0]\d{1,3}" maxlength="4">
                                     <label class="px-4" for="RecipientInputTelPhoneArea">區碼</label>
                                 </div>
-                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0">
+                                <div class="form-floating mb-3 col-8 col-sm-4 pe-sm-0 ps-0 tel-phone">
                                     <input id="RecipientInputTelPhone" name="recipientTelePhone" class="recipient_cellphone form-control" type="tel" placeholder="請輸入連絡電話" value="" pattern="\d{7}" maxlength="7">
                                     <label for="RecipientInputTelPhone">聯絡電話</label>
                                 </div>
-                                <div class="form-floating mb-3 col-6 col-sm-3">
+                                <div class="form-floating mb-3 col-6 col-sm-3 phone-ext">
                                     <input id="RecipientInputTelPhoneExt" name="ext" class="recipient_extension form-control" type="tel" placeholder="請輸入分機" value="" pattern="\d*">
                                     <label class="px-4" for="RecipientInputTelPhoneExt">分機</label>
                                 </div>

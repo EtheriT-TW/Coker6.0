@@ -100,6 +100,39 @@ public static class AccountRequestGuard
         }
     }
 
+    public static bool GrantCaptchaChallenge(HttpContext context, string id)
+    {
+        var key = $"challenge:{Site(context)}:{id}";
+        var fingerprint = BrowserFingerprint(context);
+        lock (Sync)
+        {
+            Cache.Set(key, fingerprint, new MemoryCacheEntryOptions()
+                .SetSize(1).SetAbsoluteExpiration(TimeSpan.FromMinutes(5)));
+            return Cache.TryGetValue(key, out string? saved) && saved == fingerprint;
+        }
+    }
+
+    private static string ConsumeCaptchaChallenge(HttpContext context, string id)
+    {
+        // Read the incoming cookie directly: Browser() may have created a new
+        // response cookie, which does not prove the client sent the original.
+        var browser = context.Request.Cookies[CookieName];
+        if (!Guid.TryParseExact(browser, "N", out _)) return "CaptchaBrowserCookieMissingOrInvalid";
+
+        var key = $"challenge:{Site(context)}:{id}";
+        lock (Sync)
+        {
+            if (!Cache.TryGetValue(key, out string? owner) || owner == null)
+                return "ChallengeMissingExpiredOrReplayed";
+            if (!string.Equals(owner, Fingerprint(browser!), StringComparison.Ordinal))
+                return "CaptchaBrowserMismatch";
+
+            // A different browser must not consume the owner's challenge.
+            Cache.Remove(key);
+            return "";
+        }
+    }
+
     private static IConfiguration Configuration(HttpContext context) =>
         context.RequestServices.GetRequiredService<IConfiguration>();
 
@@ -125,7 +158,10 @@ public static class AccountRequestGuard
         Configuration(context).GetValue<long>("WebConfig:SiteId").ToString();
 
     private static string BrowserFingerprint(HttpContext context) =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Browser(context))));
+        Fingerprint(Browser(context));
+
+    private static string Fingerprint(string browser) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(browser)));
 
     private static void Diagnose(HttpContext context, string operation, object decision)
     {
@@ -136,7 +172,7 @@ public static class AccountRequestGuard
 
     public static string Details(HttpContext context) => JsonSerializer.Serialize(new
     {
-        Version = 4,
+        Version = 5,
         ProtectionEnabled = CaptchaProtectionEnabled(context),
         Mode = ObserveOnly(context) ? "ObserveOnly" : CaptchaProtectionEnabled(context) ? "Enforce" : "Disabled",
         WouldBlock = context.Items.ContainsKey(WouldBlockKey),
@@ -203,8 +239,8 @@ public static class AccountRequestGuard
             }
             var reason = string.IsNullOrWhiteSpace(id) || id.Length > 128 ||
                 string.IsNullOrWhiteSpace(code) || code.Length > 16 ? "InvalidInput" :
-                !Consume($"challenge:{id}") ? "ChallengeMissingExpiredOrReplayed" :
-                validate() ? "" : "IncorrectCode";
+                ConsumeCaptchaChallenge(context, id!);
+            if (reason == "") reason = validate() ? "" : "IncorrectCode";
             // In observation mode still validate the answer, but preserve the simulated lock.
             // Enforced requests would not reach validation while locked or rate-limited.
             if (!monitoring || locked || limited) return reason;

@@ -3,6 +3,18 @@
 }
 
 /* ===== Directory Sort Control ===== */
+.catalog_frame .switch_control:has(.directory-product-filter) {
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.directory-product-filter {
+    flex: 0 1 15rem;
+    width: 15rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
 .directory-sort-control {
     min-width: 0;
 }

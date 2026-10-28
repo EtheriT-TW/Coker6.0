@@ -236,6 +236,54 @@
         }
     }
 
+    function initProductFilter($frame, $switchControl, contentType) {
+        let $filter = $switchControl.children(".directory-product-filter").first();
+        if (contentType !== contentTypes.product) {
+            $filter.remove();
+            $frame.children(".directory-product-filter-status").remove();
+            $frame.off("catalog:rendered.directoryProductFilter");
+            return;
+        }
+
+        if (!$filter.length) {
+            const label = "篩選本頁商品名稱";
+            $filter = $("<input>", {
+                type: "search",
+                class: "directory-product-filter form-control form-control-sm",
+                placeholder: label,
+                "aria-label": label
+            });
+            $switchControl.children(".directory-sort-control").after($filter);
+        }
+        let $status = $frame.children(".directory-product-filter-status").first();
+        if (!$status.length) {
+            $status = $("<div>", {
+                class: "directory-product-filter-status text-muted py-2",
+                role: "status",
+                "aria-live": "polite"
+            }).hide().appendTo($frame);
+        }
+
+        function applyFilter() {
+            const keyword = String($filter.val() || "").trim().toLocaleLowerCase();
+            const $cards = $frame.find(".catalog").children("[data-id]");
+            let matched = 0;
+            $cards.each(function () {
+                const $card = $(this);
+                const name = $card.find(".title").text().toLocaleLowerCase();
+                const visible = !keyword || name.includes(keyword);
+                $card.toggleClass("d-none", !visible);
+                if (visible) matched++;
+            });
+            $status.text(keyword ? `本頁符合 ${matched} 項商品` : "").toggle(Boolean(keyword));
+        }
+
+        $filter.off("input.directoryProductFilter").on("input.directoryProductFilter", applyFilter);
+        $frame.off("catalog:rendered.directoryProductFilter")
+            .on("catalog:rendered.directoryProductFilter", applyFilter);
+        applyFilter();
+    }
+
     DirectorySortControl.init = function ($frame, result) {
         if (!$frame || !$frame.length) return null;
 
@@ -270,6 +318,7 @@
 
         bind($frame, $control, contentType);
         updateControl($frame, $control);
+        initProductFilter($frame, $switchControl, contentType);
         return {
             contentType: contentType,
             // 一般目錄要等首次回應才能得知類型。若已有非預設偏好，重新請求一次，

@@ -61,8 +61,20 @@
                     }
                 }
                 S.buy_step_swiper.enable();
-                S.buy_step_swiper.slideTo(4);
+                S.buy_step_swiper.slideTo(4, 0);
                 S.buy_step_swiper.disable();
+
+                requestAnimationFrame(function () {
+                    S.buy_step_swiper.updateAutoHeight(0);
+
+                    var $target = $("#BuyStepSwiper");
+                    var menuHeight = $("#Mega_Menu").outerHeight() || 0;
+
+                    window.scrollTo({
+                        top: Math.max(0, $target.offset().top - menuHeight - 90),
+                        behavior: "smooth"
+                    });
+                });
             });
         } else if (window.location.search.substring(1).startsWith("reorder")) {
             var ohid = parseInt(window.location.search.substring("reorder".length + 1));

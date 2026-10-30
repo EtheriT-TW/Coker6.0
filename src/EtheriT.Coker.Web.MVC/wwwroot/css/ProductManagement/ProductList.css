@@ -728,53 +728,89 @@ textarea.minHeight {
 
 /* 桌面版規格列的欄位會依版型、物流設定動態顯示，改用 flex 避免固定表格留下空欄。 */
 @media only screen and (min-width: 769px) {
+    /* 欄位全部縮到下限仍放不下時，改由規格區塊自己橫向捲動，不再擠壓規格欄。 */
     #Spec_Frame > .specList {
         display: block;
+        overflow-x: auto;
     }
 
-    #Spec_Frame > .specList > .specHeader,
-    #Spec_Frame > .specList > .spec_list {
-        display: flex;
-        align-items: center;
-        width: 100%;
-    }
+        /* 捲動時新增按鈕固定在左側，不會被捲出畫面。 */
+        #Spec_Frame > .specList > .btn_spec_add {
+            position: sticky;
+            left: 0;
+        }
 
-    #Spec_Frame > .specList > .specHeader > div,
-    #Spec_Frame > .specList > .spec_list > div {
-        display: flex;
-        flex: 0 0 100px;
-        align-items: center;
-        box-sizing: border-box;
-        min-width: 0;
-    }
+        #Spec_Frame > .specList > .specHeader,
+        #Spec_Frame > .specList > .spec_list {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
 
-    #Spec_Frame > .specList > .specHeader > .spec,
-    #Spec_Frame > .specList > .spec_list > .specs {
-        flex: 1 1 320px;
-    }
+        /* 標題列補上與規格列相同的左右內距，兩列縮放時欄位才會對齊。 */
+        #Spec_Frame > .specList > .specHeader {
+            padding-left: 0.25rem;
+            padding-right: 0.25rem;
+        }
 
-    #Spec_Frame > .specList > .spec_list > .specs > div {
-        width: 100%;
-    }
+            /* 數字欄可以一起縮，但保留能完整顯示 5 位數與 5 字標題的寬度。 */
+            #Spec_Frame > .specList > .specHeader > div,
+            #Spec_Frame > .specList > .spec_list > div {
+                display: flex;
+                flex: 0 1 100px;
+                align-items: center;
+                box-sizing: border-box;
+                min-width: 88px;
+                padding-left: 0.25rem;
+                padding-right: 0.25rem;
+            }
 
-    #Spec_Frame > .specList > .specHeader > .specVisible,
-    #Spec_Frame > .specList > .specHeader > .specd_desc,
-    #Spec_Frame > .specList > .specHeader > .del,
-    #Spec_Frame > .specList > .spec_list > .specVisible,
-    #Spec_Frame > .specList > .spec_list > .specDesc,
-    #Spec_Frame > .specList > .spec_list > .del {
-        flex-basis: 52px;
-    }
+            #Spec_Frame input.ser_no {
+                width: 3.25rem;
+            }
 
-    #Spec_Frame > .specList > .specHeader > .spec_img,
-    #Spec_Frame > .specList > .spec_list > .specImg {
-        flex-basis: 90px;
-    }
+            #Spec_Frame > .specList > .specHeader > .serNo,
+            #Spec_Frame > .specList > .spec_list > .upload_list {
+                min-width: 96px;
+            }
 
-    #Spec_Frame > .specList > .specHeader > .price,
-    #Spec_Frame > .specList > .spec_list > .price {
-        flex-basis: 200px;
-    }
+            #Spec_Frame > .specList > .specHeader > .spec,
+            #Spec_Frame > .specList > .spec_list > .specs {
+                flex: 1 1 320px;
+                min-width: 204px;
+            }
+
+                #Spec_Frame > .specList > .spec_list > .specs > div {
+                    width: 100%;
+                }
+
+            #Spec_Frame > .specList > .specHeader > .specVisible,
+            #Spec_Frame > .specList > .specHeader > .specd_desc,
+            #Spec_Frame > .specList > .specHeader > .del,
+            #Spec_Frame > .specList > .spec_list > .specVisible,
+            #Spec_Frame > .specList > .spec_list > .specDesc,
+            #Spec_Frame > .specList > .spec_list > .del {
+                flex: 0 0 40px;
+                min-width: 0;
+            }
+
+            #Spec_Frame > .specList > .specHeader > .spec_img,
+            #Spec_Frame > .specList > .spec_list > .specImg {
+                flex: 0 0 72px;
+                min-width: 0;
+            }
+
+            #Spec_Frame > .specList > .specHeader > .price,
+            #Spec_Frame > .specList > .spec_list > .price {
+                flex: 0 1 200px;
+                min-width: 150px;
+            }
+
+            /* 銷售警示量前面有警示圖示，需要比其他數字欄多一點空間。 */
+            #Spec_Frame > .specList > .specHeader > .alertNumber,
+            #Spec_Frame > .specList > .spec_list > .alert_number {
+                min-width: 96px;
+            }
 }
 
 @media only screen and (max-width: 1400px) {
@@ -791,6 +827,7 @@ textarea.minHeight {
     .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .spec_list > .upload_list {
         flex-basis: 50px;
         width: 50px;
+        min-width: 50px;
     }
 
     .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader > div.price,
@@ -801,6 +838,35 @@ textarea.minHeight {
 
     .sidebar:not(.collapsed) + .content-area #Spec_Frame input.ser_no {
         display: none;
+    }
+}
+
+/* 單列排版（1200 以上）：min-width 等於各欄 min-width 加總（含左右內距），
+   捲動時標題列與規格列的灰底會一起延伸到最右欄，且兩列欄位對齊。
+   調整任一欄的 min-width 時要同步更新這裡。1199 以下是卡片排版，不能套用。 */
+@media only screen and (min-width: 1200px) {
+    #Spec_Frame > .specList > .specHeader,
+    #Spec_Frame > .specList > .spec_list {
+        min-width: 1058px;
+    }
+
+    /* 版型二多一欄規格說明（40px）。 */
+    #Spec_Frame > .specList:has(> .specHeader > .specd_desc:not(.d-none)) > .specHeader,
+    #Spec_Frame > .specList:has(> .specHeader > .specd_desc:not(.d-none)) > .spec_list {
+        min-width: 1098px;
+    }
+}
+
+@media only screen and (min-width: 1200px) and (max-width: 1400px) {
+    /* 排序欄縮成 50px，列的下限同步減少 46px。 */
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .specHeader,
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList > .spec_list {
+        min-width: 1012px;
+    }
+
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList:has(> .specHeader > .specd_desc:not(.d-none)) > .specHeader,
+    .sidebar:not(.collapsed) + .content-area #Spec_Frame > .specList:has(> .specHeader > .specd_desc:not(.d-none)) > .spec_list {
+        min-width: 1052px;
     }
 }
 
@@ -949,12 +1015,16 @@ textarea.minHeight {
         display: none !important;
     }
 
+    /* 標題與右側按鈕同一列；按鈕區只佔自身寬度，標題才不會被擠到換行。
+       576 以下另有「進階編輯僅提供平板與電腦版」提示，改回直排（見 576 斷點）。 */
     #ProductContent > .card-header {
         padding: 0.5rem;
+        flex-direction: row !important;
+        align-items: center;
     }
 
     #ProductContent > .card-header > div:last-child {
-        width: 100%;
+        width: auto;
     }
 
         #ProductContent > .card-header .linkToF {
@@ -1029,7 +1099,11 @@ textarea.minHeight {
         min-width: 0;
         padding-left: 0.75rem;
     }
+}
 
+/* 規格設定在手機與平板（1199 以下）都改用卡片＋側邊編輯面板；
+   ProductList.js 的 SPEC_COMPACT_QUERY 要與這裡的斷點一致。 */
+@media only screen and (max-width: 1199px) {
     #Spec_Frame {
         margin: 0.75rem 0;
         padding: 1rem 0.5rem 0.5rem;
@@ -1152,6 +1226,18 @@ textarea.minHeight {
     }
 }
 
+/* 與 Bootstrap d-sm-none 同斷點：手機會多一行進階編輯提示，標題與按鈕改回直排。 */
+@media only screen and (max-width: 575.98px) {
+    #ProductContent > .card-header {
+        flex-direction: column !important;
+        align-items: stretch;
+    }
+
+    #ProductContent > .card-header > div:last-child {
+        width: 100%;
+    }
+}
+
 @media only screen and (max-width: 576px) {
     .data_upload > ul:not(.specList) {
         max-height: 200px;
@@ -1180,7 +1266,7 @@ textarea.minHeight {
     text-align: left;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1199px) {
     #Spec_Frame > .specList > .spec_list {
         display: block;
         padding: 0.75rem !important;
@@ -1317,8 +1403,9 @@ textarea.minHeight {
     #Spec_Frame.no-logistics-box .spec-compact-editor .packingPoint {
         display: none !important;
     }
+}
 
-
+@media (max-width: 768px) {
     .dx-toolbar-item.product-io-btn {
         display: none !important;
     }

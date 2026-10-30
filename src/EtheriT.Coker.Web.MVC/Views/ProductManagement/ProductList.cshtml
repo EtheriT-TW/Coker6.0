@@ -258,9 +258,9 @@
                     .ShowRowLines(true)
                     .Columns(c =>
                     {
-                        c.AddFor(e => e.Id).Caption("id").Width(80).HidingPriority(8);
-                        c.AddFor(e => e.MinsizeImage).Caption("圖片").Width(68).Alignment(HorizontalAlignment.Center)
-                            .HidingPriority(1)
+                        c.AddFor(e => e.Id).Caption("id").Width(80).HidingPriority(0);
+                        c.AddFor(e => e.MinsizeImage).Caption("圖片").Width(80).Alignment(HorizontalAlignment.Center)
+                            .HidingPriority(5)
                             .AllowSearch(false).AllowFiltering(false).AllowSorting(false)
                             .CellTemplate(
                                 @<text>
@@ -269,8 +269,8 @@
                                          src="<%- data.MinsizeImage || '/images/noImg.jpg' %>"
                                          alt="<%- data.Title || '' %>" />
                                 </text>);
-                        c.AddFor(e => e.Ser_No).Caption("排序").Width(75).HidingPriority(7);
-                        c.AddFor(e => e.Title).Caption("商品名稱").HidingPriority(0)
+                        c.AddFor(e => e.Ser_No).Caption("排序").Width(75).HidingPriority(1);
+                        c.AddFor(e => e.Title).Caption("商品名稱").HidingPriority(9)
                             .CellTemplate(@<text>
                                 <div class="product-list-title-cell">
                                     <div class="product-list-title"><%- data.Title || '-' %></div>
@@ -284,7 +284,7 @@
                             .DataField("TagNames")
                             .Caption("商品標籤")
                             .Width(220)
-                            .HidingPriority(6)
+                            .HidingPriority(3)
                             .AllowSearch(false)
                             .AllowFiltering(false)
                             .AllowSorting(false)
@@ -308,9 +308,9 @@
                             <% } %>
                         </text>);
                         if(Model.HasAnyItemNo){
-                            c.AddFor(e => e.ItemNo).Caption("產品型號").Width(150).HidingPriority(5);
+                            c.AddFor(e => e.ItemNo).Caption("產品型號").Width(150).HidingPriority(2);
                         }
-                        c.AddFor(e => e.Price).Caption("價格").HidingPriority(9).AllowSearch(false).AllowFiltering(false).AllowSorting(false);
+                        c.AddFor(e => e.Price).Caption("價格").MinWidth(90).HidingPriority(6).AllowSearch(false).AllowFiltering(false).AllowSorting(false);
                         c.AddFor(e => e.EndTime) // 用 EndTime 當基底即可
                             .Caption("結束日期")
                             .AllowSearch(false)
@@ -329,9 +329,9 @@
                             </text>
                                 );
 
-                                        c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc).HidingPriority(1);
-                                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(90).HidingPriority(3) ;
-                                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(90).HidingPriority(2);
+                                        c.AddFor(e => e.LastModificationTime).Caption("最後編輯日期").Visible(false).SortOrder(SortOrder.Desc);
+                                        c.AddFor(e => e.Visible).Caption("顯示").AllowSearch(false).Width(80).HidingPriority(7) ;
+                                        c.AddFor(e => e.Available).Caption("上架").AllowSearch(false).Width(80).HidingPriority(8);
                         c.Add().Type(GridCommandColumnType.Buttons).Width(120)
                         .Buttons(b =>
                         {
@@ -395,7 +395,7 @@
                 <div class="row m-0">
                     <div class="col-12 col-xl-9 card p-2 me-xl-3 product-main-column">
                         <div class="row g-2 align-items-start">
-                            <div class="col-12 col-lg-4 col-xl-3">
+                            <div class="col-12 col-lg-4">
                                 <div class="form-check px-1 d-flex align-items-baseline">
                                     <label for="ProdStatus" class="col-6 col-xxl-4 col-xl-5 form-label">商品狀態</label>
                                     <select name="ProdStatus" id="ProdStatus" class="form-select item-menu">
@@ -406,7 +406,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-4 col-xl-3">
+                            <div class="col-12 col-lg-4">
                                 <div class="sort input-group mb-3">
                                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                         <span class="material-symbols-outlined me-1 required_sign">sort_by_alpha</span>排序
@@ -418,7 +418,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-4 col-xl-2">
+                            <div class="col-12 col-lg-4">
                                 <div class="stock input-group mb-3">
                                     <div class="position-absolute ps-2 top-50 d-flex translate-middle-y z-index-up">
                                         可銷售量
@@ -430,7 +430,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 col-xl-4">
+                            <div class="col-12">
                                 <div class="d-flex flex-row-reverse flex-nowrap justify-content-start align-items-center gap-1 my-1">
                                     <div class="flex-shrink-0 align-self-center border-0 btn d-flex pb-0 pt-0">
                                         <input id="RemovedFromShelves" type="checkbox" name="RemovedFromShelves" class="selectedItem" checked value="true" />
@@ -639,7 +639,7 @@
                                 <div class="packingPoint">容積點數</div>
                                 <div>可銷售量</div>
                                 <div>最低購買量</div>
-                                <div>銷售警示量</div>
+                                <div class="alertNumber">銷售警示量</div>
                                 <div class="del"></div>
                             </li>
                             <li class="btn_spec_add list-unstyled mt-3 p-1 d-flex justify-content-end">

@@ -2577,7 +2577,10 @@ function InitCompactSpecEditor($row, key) {
     RefreshCompactSpecSummary($row);
 }
 
-window.matchMedia("(max-width: 768px)").addEventListener("change", function (event) {
+// 與 ProductList.css 規格卡片排版的斷點一致（手機與平板）。
+var SPEC_COMPACT_QUERY = "(max-width: 1199px)";
+
+window.matchMedia(SPEC_COMPACT_QUERY).addEventListener("change", function (event) {
     if (!event.matches) $("#Spec_Frame .spec_list").each(function () {
         var editor = $(this).data("compactEditor");
         if (editor) editor.hide();
@@ -2585,7 +2588,7 @@ window.matchMedia("(max-width: 768px)").addEventListener("change", function (eve
 });
 
 document.addEventListener("invalid", function (event) {
-    if (!window.matchMedia("(max-width: 768px)").matches) return;
+    if (!window.matchMedia(SPEC_COMPACT_QUERY).matches) return;
     var $row = $(event.target).closest("#Spec_Frame .spec_list");
     if (!$row.length || $(".spec-compact-editor.show, .spec-compact-editor.showing").length) return;
     var editor = $row.data("compactEditor");

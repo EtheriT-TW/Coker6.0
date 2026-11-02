@@ -1272,7 +1272,7 @@ namespace EtheriT.Coker.Application
                 {
                     Key = type.ToString(),
                     Value = (int)type,
-                    Description = "設定連結或建立路徑轉址",
+                    Description = "設定連結或建立路徑轉址；舊網址轉址可同時填寫路徑名稱（如 /tw/index.asp?au_id=1&sub_id=2）與目標連結（如 /abc）",
                     RouterName = "",
                     ShowRouterName = true,
                     ShowLinkUrl = true
@@ -1360,6 +1360,7 @@ namespace EtheriT.Coker.Application
                 .Where(x => !string.IsNullOrEmpty(x.RouterName)
                          && !string.IsNullOrEmpty(x.LinkUrl)
                          && x.PageType == PageTypeEnum.跳頁
+                         && !x.IsDeleted
                          && x.FK_WebsiteId == WebsiteID
                          && !x.RemovedFromShelves) // 視你的欄位
                 .Select(x => new JumpRuleDto

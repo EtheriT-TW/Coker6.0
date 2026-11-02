@@ -633,10 +633,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                 }
                 else
                 {
+                    var isECPayPending = ResponseData?.OrderInfo?.TradeStatus == "0";
+
                     await loginUserData.SetLogs(
                         0,
                         configuration.GetValue<long>("WebConfig:SiteId"),
-                        "ECPayReturnNotPaid",
+                        isECPayPending ? "ECPayReturnPending" : "ECPayReturnNotPaid",
                         JsonConvert.SerializeObject(new
                         {
                             OrderId = ohdata.Id,
@@ -650,8 +652,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                         })
                     );
 
+                    // TradeStatus=0 為未付款（如中租零卡待申請／審核中），維持原狀態等待後續通知，不視為付款失敗。
                     // 失敗通知只允許更新尚未完成的付款；不得把已付款、已出貨等狀態降級。
-                    await TryMarkECPayFailedAsync(ohdata.Id);
+                    if (!isECPayPending)
+                        await TryMarkECPayFailedAsync(ohdata.Id);
                 }
 
                 return "1|OK";

@@ -1,3 +1,5 @@
+using EtheriT.Coker.Application.Shared.Dto.Directory;
+
 namespace EtheriT.Coker.Application.Shared.Dto.Product
 {
     public class ProductRecommendationsDto
@@ -18,5 +20,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public double SimilarityScore { get; set; }
         public double InterestScore { get; set; }
         public double Score { get; set; }
+        public DirectoryReleInfoDto? Product { get; set; }
     }
 }

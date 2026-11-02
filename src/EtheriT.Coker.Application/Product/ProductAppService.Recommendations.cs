@@ -1,13 +1,14 @@
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Product;
+using EtheriT.Coker.Application.Shared.Dto.Directory;
 using Microsoft.EntityFrameworkCore;
 
 namespace EtheriT.Coker.Application.Product
 {
     public partial class ProductAppService
     {
-        public async Task<ProductRecommendationsDto?> GetRecommendations(long id, int count = 8)
+        public async Task<ProductRecommendationsDto?> GetRecommendations(long id, int count = 10)
         {
             count = Math.Clamp(count, 1, 50);
             // 由商品所屬網站決定範圍，但必須先通過本站／允許子站的檢查。
@@ -118,8 +119,25 @@ namespace EtheriT.Coker.Application.Product
             }).OrderByDescending(s => s.Score).ThenByDescending(s => s.SimilarityScore)
                 .ThenBy(s => s.Id).Take(count).ToListAsync();
 
+            if (result.Items.Count == 0) return result;
+
+            // 圖片與價格（含會員價、時價、紅利）沿用目錄卡片的取法，不在這裡另外計算。
+            // 必須傳商品所屬網站 siteId；傳 rootSiteId 時，子站商品會全部查不到。
+            var cards = await GetDirectoryReleInfo(new DirectoryReleInfoInputDto
+            {
+                Ids = result.Items.Select(i => i.Id).ToList(),
+                SiteId = siteId
+            }) ?? new List<DirectoryReleInfoDto>();
+            var cardMap = cards.ToDictionary(c => c.Id);
+
+            // 以推薦分數順序為主；查不到卡片資料的商品直接拿掉。
+            result.Items = result.Items.Where(i => cardMap.ContainsKey(i.Id)).ToList();
+            var orgName = Uri.EscapeDataString(string.IsNullOrWhiteSpace(site.OrgName) ? "Page" : site.OrgName);
             foreach (var item in result.Items)
-                item.Link = $"/{Uri.EscapeDataString(string.IsNullOrWhiteSpace(site.OrgName) ? "Page" : site.OrgName)}/search/product/{item.Id}";
+            {
+                item.Product = cardMap[item.Id];
+                item.Link = $"/{orgName}/search/product/{item.Id}";
+            }
             return result;
         }
     }

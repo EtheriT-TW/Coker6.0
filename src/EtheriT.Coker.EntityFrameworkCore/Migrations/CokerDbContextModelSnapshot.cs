@@ -8030,6 +8030,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             name = "CDN 服務商",
                             pattern = "",
                             type = 3
+                        },
+                        new
+                        {
+                            Id = 35L,
+                            CreationTime = new DateTime(2026, 10, 30, 12, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            DefaultValue = "Disabled",
+                            FK_StoreSetGroupId = 2L,
+                            IsDeleted = false,
+                            jobID = "E001",
+                            key = "ProductRecommendations",
+                            maxlength = 20,
+                            memo = "於商品頁「上一則／下一則」上方顯示依標籤推薦的商品",
+                            name = "推薦商品模組",
+                            pattern = "",
+                            type = 3
                         });
                 });
 
@@ -10278,6 +10294,28 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             Key = "Fastly",
                             Value = "Fastly"
+                        },
+                        new
+                        {
+                            Id = 29L,
+                            CreationTime = new DateTime(2026, 10, 30, 12, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 35L,
+                            IsDefault = true,
+                            IsDeleted = false,
+                            Key = "Disabled",
+                            Value = "關閉"
+                        },
+                        new
+                        {
+                            Id = 30L,
+                            CreationTime = new DateTime(2026, 10, 30, 12, 0, 0, 0, DateTimeKind.Local).AddTicks(1459),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 35L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "Enabled",
+                            Value = "開啟"
                         });
                 });
 

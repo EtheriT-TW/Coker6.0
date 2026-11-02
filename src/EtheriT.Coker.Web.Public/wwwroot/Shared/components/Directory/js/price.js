@@ -59,7 +59,9 @@
     function formatBonus(value) {
         const text = normalizeText(value);
         if (!text) return "";
-        return `${text}紅利點`;
+        // 文字由後端 Locale 的 BonusPointsValue 提供（{0} 為點數）；沒載入時退回中文
+        const template = (w.local && w.local.BonusPointsValue) || "{0}紅利點";
+        return template.replace("{0}", text);
     }
 
     function buildOriginPriceLine(label, value, extraClass) {

@@ -64,7 +64,14 @@
             canShop: $('.btn_addToCar').length > 0,
             totalBonus: typeof totalBonus !== 'undefined' ? totalBonus : 0,
             orderPrice: typeof orderPrice !== 'undefined' ? orderPrice : false,
-            i18n: defaultI18n
+            i18n: defaultI18n,
+            hooks: {
+                afterRender: function(result, controller){
+                    if(window.ProductRecommendations){
+                        window.ProductRecommendations.load(controller.state.productId);
+                    }
+                }
+            }
         });
     };
 })(window, window.jQuery);

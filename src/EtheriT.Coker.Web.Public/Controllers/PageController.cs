@@ -246,6 +246,10 @@ namespace EtheriT.Coker.Web.Public.Controllers
             ViewBag.InvoiceMode = invoiceMode;
             ViewBag.Carrier = Carrier;
             ViewBag.BonusEnabled = bonusSetting.BonusEnabled;
+            ViewBag.ShowProductRecommendations = StoreSet.storeSetDetails?
+                .Find(e => e.key == "ProductRecommendations")?
+                .value?
+                .Contains("Enabled") == true;
             var headerStyleView = defaultData.View;
             var configuredHeader = template?.templateSections.FirstOrDefault(e => e.sectionType == SectionTypeEnum.表頭);
             if (template != null && configuredHeader != null && !string.IsNullOrWhiteSpace(configuredHeader.ContentConfig))

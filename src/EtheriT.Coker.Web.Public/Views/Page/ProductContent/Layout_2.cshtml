@@ -17,6 +17,7 @@
 <style id="productDescriptionCss" nonce="@ViewBag.Nonce">@Html.Raw(HttpUtility.HtmlDecode(ViewBag.ProductContentCss ?? ""))</style>
 <script src="~/js/Page/ProductContent.min.js" asp-append-version="true"></script>
 <script src="~/js/Page/ProductContent/Layout_2.min.js" asp-append-version="true"></script>
+<script src="~/js/Page/ProductContent/Recommendations.min.js" asp-append-version="true"></script>
 <script>
     // 後端已算好的購買狀態旗標，供 Layout_2.js 讀取（取代資安改版移除的 #main data-*）
     window.ProductBuyState = {
@@ -329,6 +330,13 @@
         </div>
     </coker-safe-inherited-content>
 </Content>
+@if (ViewBag.ShowProductRecommendations == true)
+{
+    <section id="ProductRecommendations" class="container product-recommend d-none" aria-labelledby="ProductRecommendationsTitle">
+        <h2 id="ProductRecommendationsTitle" class="product-recommend-heading">@L.get("RecommendedProducts")</h2>
+        <ul class="product-recommend-list list-unstyled mb-0"></ul>
+    </section>
+}
 <div id="SwitchPage" class="container mt-5 my-lg-5 justify-content-center">
     <a href="" title="" target="_self" class="btn_prev disabled"><span class="translate">@L.get("Prev")</span></a>
     <a href="" title="@L.get("BackToList")" target="_self" class="btn_list mx-4 mx-sm-5"><span class="translate">@L.get("BackToList")</span></a>

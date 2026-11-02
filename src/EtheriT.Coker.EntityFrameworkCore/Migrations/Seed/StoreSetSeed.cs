@@ -593,6 +593,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     jobID = "S003",
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new StoreSet
+                {
+                    Id = 35,
+                    key = "ProductRecommendations",
+                    name = "推薦商品模組",
+                    memo = "於商品頁「上一則／下一則」上方顯示依標籤推薦的商品",
+                    FK_StoreSetGroupId = 2,
+                    type = SeoSetDataTypeEnum.radio,
+                    maxlength = 20,
+                    pattern = "",
+                    IsDeleted = false,
+                    DefaultValue = "Disabled",
+                    jobID = "E001",
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 10, 30, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
@@ -859,6 +874,25 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     IsDeleted = false,
                     CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 9, 2, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 29,
+                    Key = "Disabled",
+                    Value = "關閉",
+                    FK_StoreSetId = 35,
+                    IsDefault = true,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 10, 30, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
+                }, new storeSetItem
+                {
+                    Id = 30,
+                    Key = "Enabled",
+                    Value = "開啟",
+                    FK_StoreSetId = 35,
+                    IsDeleted = false,
+                    CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 10, 30, 12, 00, 00, 00, DateTimeKind.Local).AddTicks(1459)
                 }
             );
         }

@@ -11,6 +11,14 @@
                 return Coker.api.get("/api/Product/GetHistoryDisplay/", {
                     page: page
                 });
+            },
+
+            /** 取得商品頁推薦商品 */
+            GetRecommendations:function(id, count){
+                return Coker.api.get("/api/Product/GetRecommendations", {
+                    id: id,
+                    count: count
+                });
             }
 
         }

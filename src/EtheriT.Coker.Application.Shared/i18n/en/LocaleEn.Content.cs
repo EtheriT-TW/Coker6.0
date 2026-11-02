@@ -19,8 +19,10 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string AddtoCart { get; } = "Add to Cart";
         public static string MarketPrice { get; } = "Market Price";
         public static string Bonus { get; } = "Bonus";
+        public static string BonusPointsValue { get; } = "{0} Bonus Points";
         public static string Prev { get; } = "Previous";
         public static string Next { get; } = "Next";
+        public static string RecommendedProducts { get; } = "Recommended Products";
         public static string BackToList { get; } = "Back to List";
         public static string LastModifiedTime { get; } = "Last Modified";
         public static string EventDate { get; } = "Event Date";

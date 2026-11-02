@@ -22,8 +22,10 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string AddtoCart { get; } = "加入購物車";
         public static string MarketPrice { get; } = "時價";
         public static string Bonus { get; } = "紅利";
+        public static string BonusPointsValue { get; } = "{0}紅利點";
         public static string Prev { get; } = "上一則";
         public static string Next { get; } = "下一則";
+        public static string RecommendedProducts { get; } = "推薦商品";
         public static string BackToList { get; } = "回列表頁";
         public static string LastModifiedTime { get; } = "最後編輯時間";
         public static string EventDate { get; } = "活動日期";

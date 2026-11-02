@@ -1,5 +1,7 @@
 ﻿using EtheriT.Coker.Application;
 
+using Microsoft.AspNetCore.WebUtilities;
+
 namespace EtheriT.Coker.Web.Public.Services
 {
     public class JumpRedirectCache
@@ -110,6 +112,40 @@ namespace EtheriT.Coker.Web.Public.Services
                 return null;
 
             return safeUrl;
+        }
+
+        public string? EvaluatePathRedirect(HttpRequest request)
+        {
+            KeyValuePair<string, string>[] rules;
+            lock (_lock)
+            {
+                rules = _rules.Where(x => x.Key.StartsWith("/"))
+                    .OrderByDescending(x => x.Key.Contains('?'))
+                    .ToArray();
+            }
+
+            foreach (var rule in rules)
+            {
+                var source = rule.Key.Split('?', 2);
+                if (!string.Equals(source[0], request.Path.Value, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // 有指定參數時完整比對，忽略參數排列順序；值仍區分大小寫。
+                if (source.Length == 2)
+                {
+                    var query = QueryHelpers.ParseQuery(source[1]);
+                    if (query.Count != request.Query.Count || query.Any(pair =>
+                        !request.Query.TryGetValue(pair.Key, out var values) ||
+                        !pair.Value.OrderBy(value => value, StringComparer.Ordinal)
+                            .SequenceEqual(values.OrderBy(value => value, StringComparer.Ordinal))))
+                        continue;
+                }
+
+                if (TryNormalizeTargetUrl(rule.Value, out var safeUrl))
+                    return safeUrl;
+            }
+
+            return null;
         }
 
         public async Task EnsureRouteRulesLoadedAsync()

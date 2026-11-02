@@ -525,7 +525,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (ResultResponseData == null) throw new Exception("無法取得ECPayOrderResult");
 
-                if (!ResultResponseData.TransMsg.ToLower().Contains("success")) await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayOrderResultFail", JsonConvert.SerializeObject(ResultResponseData));
+                if (ResultResponseData.TransCode != 1)
+                    await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayOrderResultFail", JsonConvert.SerializeObject(ResultResponseData));
 
                 var data = Decrypt(ResultResponseData.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                 var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);

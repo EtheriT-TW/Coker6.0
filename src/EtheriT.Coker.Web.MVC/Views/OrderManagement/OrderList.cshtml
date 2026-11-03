@@ -94,7 +94,7 @@
             <button type="button" class="btn_order_more btn btn-outline-secondary btn-sm" aria-expanded="false" aria-controls="OrderMoreActions">更多操作</button>
         </div>
         <div class="row m-0">
-            <div id="OrderDetails" class="card border-0 col-9 overflow-auto">
+            <div id="OrderDetails" class="card border-0 col-9 overflow-auto p-0">
                 <div class="card-header fw-bold fs-5 row gx-0 text-end align-items-center">
                     <div class="col-auto fw-bold fs-5 d-flex align-items-center">
                         <button class="btn_back d-flex bg-transparent border-0 align-items-center" type="button" title="返回列表" aria-label="返回列表">
@@ -216,6 +216,9 @@
                                     <div class="d-flex gap-1 align-items-center">
                                         <div class="gray_text text-nowrap">付款方式：</div>
                                         <div data-key="payment" class="order_payment"></div>
+                                        <button type="button" class="btn_refundGuide btn btn-link p-0 text-secondary lh-1 flex-shrink-0 d-none" title="查看此付款方式的退款方式" aria-label="查看此付款方式的退款方式">
+                                            <i class="fa-regular fa-circle-question"></i>
+                                        </button>
                                         <button class="btn_refund btn-danger btn px-3 py-1 text-white fw-bold text-nowrap flex-shrink-0 ms-auto d-none">退款</button>
                                     </div>
                                     <div id="SystemMemo" class="card border-0 mb-3">

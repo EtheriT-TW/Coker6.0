@@ -498,3 +498,14 @@
         border-left-color: transparent;
         bottom: -2rem;
     }
+
+/* 付款方式退款說明彈窗：文字中的 \n 顯示為換行；中文盡量在標點、空白處斷行，避免把詞切開 */
+.refund-guide-item {
+    white-space: pre-line;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.swal2-title.refund-guide-title {
+    font-size: 1.5rem;
+}

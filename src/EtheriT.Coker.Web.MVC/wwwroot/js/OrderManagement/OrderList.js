@@ -11,6 +11,65 @@ function SyncOrderEditStatus() {
 }
 let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_queryLogisticsStatus, $btn_CVSReturn, $btn_logistics_save, $btn_send_notification, btn_logistics_edit, btn_logistics_update
 var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0, ECPayLogisticsTypeStr = "", ECPayLogisticsSubTypeStr = "";
+// 綠界退刷 API 不支援的付款方式（key 為 PaymentTypes.Id），退款需由商家至對應平台人工處理。
+const REFUND_GUIDES = {
+    31: {
+        title: "URICH 裕富無卡分期 退款方式",
+        items: [
+            "無法透過本系統或綠界廠商後台退款。",
+            "商家需直接聯繫裕富，申請退款處理。"
+        ]
+    },
+    32: {
+        title: "ZINGALA 中租銀角零卡 退款方式",
+        items: [
+            "無法透過本系統退款。",
+            ["商家：登入", { linkText: "綠界廠商後台", href: "https://vendor.ecpay.com.tw/User/LogOn_Step1" }, "取消該筆訂單即可退款。\n路徑：一般訂單查詢 › ",
+             {linkText:"中租銀角零卡訂單", href:"https://p.ecpay.com.tw/C733F06"}, "\n（或", {linkText:"全方位金流訂單", href:"https://p.ecpay.com.tw/B06754A"}, "）"],
+            "顧客：需至 zingala 銀角零卡 App 設定退款帳號，之後會自動退款。"
+        ]
+    },
+    33: {
+        title: "TWQR 退款方式",
+        items: [
+            "無法透過本系統或綠界廠商後台退款，綠界廠商後台僅能查詢訂單。",
+            ["商家：登入", {linkText:"歐付寶後台", href:"https://login.opay.tw/Login/LoginPCAdmin"},
+             "或歐付寶APP操作退款。\n詳細可參閱", {linkText:"《歐付寶TWQR使用手冊》", href:"https://p.opay.tw/FZoHz"}, "。"],
+            "送出退款後，需待歐付寶審核完成才能確認退款結果。"
+        ]
+    }
+};
+function ShowRefundGuide(paymentCode) {
+    const guide = REFUND_GUIDES[paymentCode];
+    if (!guide) return;
+
+    const $list = $("<ul>", { "class": "text-start mb-0 ps-3" });
+    guide.items.forEach(function (item) {
+        const $item = $("<li>", { "class": "refund-guide-item mb-2" }).appendTo($list);
+
+        // 每一行可為字串或片段陣列；片段中字串為純文字，{ linkText, href } 為外部連結，可放多個。
+        const segments = Array.isArray(item) ? item : [item];
+        segments.forEach(function (segment) {
+            if (typeof segment === "string") {
+                $item.append(document.createTextNode(segment));
+                return;
+            }
+
+            $("<a>", {
+                href: segment.href,
+                target: "_blank",
+                rel: "noopener noreferrer"
+            }).text(segment.linkText || segment.href).appendTo($item);
+        });
+    });
+
+    Swal.fire({
+        title: guide.title,
+        html: $list[0],
+        confirmButtonText: "我知道了",
+        customClass: { title: "refund-guide-title" }
+    });
+}
 function PageReady() {
     OrderDataCollapse();
     $(window).resize(OrderDataCollapse);
@@ -244,6 +303,11 @@ function PageReady() {
             });
         });
     });
+
+    $(".btn_refundGuide").on("click", function () {
+        ShowRefundGuide($(this).data("paymentCode"));
+    });
+
 
     $(".btn_checkrefund").on("click", function () {
         co.sweet.loading();
@@ -1010,6 +1074,10 @@ function HeaderDataSet(result) {
     if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
     else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && result.canRefund) $(".btn_refund").removeClass("d-none");
     else OrderStateChange(oristate)
+
+    $(".btn_refundGuide")
+        .data("paymentCode", result.paymentCode)
+        .toggleClass("d-none", !REFUND_GUIDES[result.paymentCode]);
 
     if ([1, 2, 3].includes(oristate))
         $(".btn_send_notification").removeClass("d-none");

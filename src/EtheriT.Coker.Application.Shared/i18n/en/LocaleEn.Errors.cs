@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string NoPermissionDescriptionPrefix { get; } = "Please";
         public static string NoPermissionLoginLinkText { get; } = "log in";
         public static string NoPermissionDescriptionSuffix { get; } = "and verify your membership status, or ";
+        public static string NoPermissionLoggedInDescription { get; } = "Please verify your membership status, or ";
         public static string returnHomePage { get; } = "return to the homepage";
     }
 }

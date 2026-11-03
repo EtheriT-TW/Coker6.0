@@ -14,6 +14,7 @@ namespace EtheriT.Coker.Application.Shared.i18n
         public static string NoPermissionDescriptionPrefix { get;  } = "請 ";
         public static string NoPermissionLoginLinkText { get; } = "登入會員";
         public static string NoPermissionDescriptionSuffix { get; } = "並確認您的會員身分，或 ";
+        public static string NoPermissionLoggedInDescription { get; } = "請確認您的會員身分，或 ";
         public static string returnHomePage { get; } = "回到首頁";
     }
 }

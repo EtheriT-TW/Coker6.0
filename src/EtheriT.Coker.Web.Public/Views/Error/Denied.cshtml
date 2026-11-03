@@ -3,6 +3,7 @@
 @model PageViewModel
 @{
     ViewData["UseSiteTitleAsMainHeading"] = false;
+    bool isLogin = ViewBag.isLogin == true;
 }
 @section Styles {
     <link rel="stylesheet" href="~/css/Page/Index.min.css" asp-append-version="true" />
@@ -25,9 +26,16 @@
         <div class="col">
             <h1>@L.get("NoPermission")</h1>
             <p>
-                @L.get("NoPermissionDescriptionPrefix")
-                <a href="#LoginModal" data-bs-toggle="modal" data-bs-target="#LoginModal" role="button">@L.get("NoPermissionLoginLinkText")</a>
-                @L.get("NoPermissionDescriptionSuffix")
+                @if (isLogin)
+                {
+                    @L.get("NoPermissionLoggedInDescription")
+                }
+                else
+                {
+                    @L.get("NoPermissionDescriptionPrefix")
+                    <a href="#LoginModal" data-bs-toggle="modal" data-bs-target="#LoginModal" role="button">@L.get("NoPermissionLoginLinkText")</a>
+                    @L.get("NoPermissionDescriptionSuffix")
+                }
                 <a href="/" title="{@L.get("LinkTo", L.get("HomePage"))}">@L.get("returnHomePage")</a>
             </p>
         </div>

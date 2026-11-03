@@ -8768,7 +8768,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             CreationTime = new DateTime(2024, 7, 25, 19, 25, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
                             IsDeleted = false,
-                            Memo = "Apple pay 須再跟綠界開通服務，並請洽詢網站平台業務單位加購服務設定。",
+                            Memo = "Apple pay 、 URICH 、 ZINGALA 、 TWQR須再跟綠界開通服務，並請洽詢網站平台業務單位加購服務設定。",
                             ServiceType = 1,
                             Title = "綠界支付",
                             ser_no = 500

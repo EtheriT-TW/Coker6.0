@@ -5,14 +5,17 @@
         DxColumn,
         DxDataGrid,
         DxPaging,
-        DxSearchPanel
+        DxSearchPanel,
+        DxStateStoring
     } from "devextreme-vue/data-grid";
     import { fetchDomains } from "@/services/domain-api";
     import type { DomainListItem } from "@/types/domain";
     import {domainStatusView} from "@/utils/domain-display";
     import { remainingDaysClass } from "@/utils/website-display";
+    import { useGridSearchPersistence } from "@/utils/grid-search-state";
 
     const router = useRouter();
+    const onGridInitialized = useGridSearchPersistence("platform.domains.grid");
 
     const domains = ref<DomainListItem[]>([]);
     const isTruncated = ref(false);
@@ -76,9 +79,11 @@
                     :column-hiding-enabled="true"
                     :hover-state-enabled="true"
                     :allow-column-resizing="true"
-                    no-data-text="目前沒有網域資料">
+                    no-data-text="目前沒有網域資料"
+                    @initialized="onGridInitialized">
             <DxSearchPanel :visible="true" :width="260" placeholder="搜尋網域、網域公司" />
             <DxPaging :page-size="20" />
+            <DxStateStoring :enabled="true" type="sessionStorage" storage-key="platform.domains.grid" :saving-timeout="0" />
 
             <DxColumn data-field="DomainName" caption="網域" :min-width="200" :hiding-priority="7" />
             <DxColumn data-field="Registrar" caption="網域公司" :min-width="140" :hiding-priority="2" />

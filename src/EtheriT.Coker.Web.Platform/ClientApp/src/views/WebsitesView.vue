@@ -5,7 +5,8 @@
         DxColumn,
         DxDataGrid,
         DxPaging,
-        DxSearchPanel
+        DxSearchPanel,
+        DxStateStoring
     } from "devextreme-vue/data-grid";
     import { fetchWebsites } from "@/services/website-api";
     import { WebsiteStatus, type WebsiteListItem } from "@/types/website";
@@ -15,8 +16,10 @@
         statusView,
         toHref
     } from "@/utils/website-display";
+    import { useGridSearchPersistence } from "@/utils/grid-search-state";
 
     const router = useRouter();
+    const onGridInitialized = useGridSearchPersistence("platform.websites.grid");
 
     const websites = ref<WebsiteListItem[]>([]);
     const isTruncated = ref(false);
@@ -173,9 +176,11 @@
                     :column-hiding-enabled="true"
                     :hover-state-enabled="true"
                     :allow-column-resizing="true"
-                    no-data-text="目前沒有網站資料">
+                    no-data-text="目前沒有網站資料"
+                    @initialized="onGridInitialized">
             <DxSearchPanel :visible="true" :width="260" placeholder="搜尋網站、客戶、統編、網址" />
             <DxPaging :page-size="20" />
+            <DxStateStoring :enabled="true" type="sessionStorage" storage-key="platform.websites.grid" :saving-timeout="0" />
 
             <!-- hiding-priority：數字越小越早隱藏，不可重複 -->
             <DxColumn data-field="Name" caption="網站名稱" :min-width="200" :hiding-priority="8" />

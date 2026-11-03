@@ -7,14 +7,17 @@
         DxDataGrid,
         DxHeaderFilter,
         DxPaging,
-        DxSearchPanel
+        DxSearchPanel,
+        DxStateStoring
     } from "devextreme-vue/data-grid";
     import ConfirmDialog from "@/components/ConfirmDialog.vue";
     import { deleteCustomer, fetchCustomers } from "@/services/customer-api";
     import type { CustomerListItem } from "@/types/customer";
     import type { CellClickEvent } from "devextreme/ui/data_grid";
+    import { useGridSearchPersistence } from "@/utils/grid-search-state";
 
     const router = useRouter();
+    const onGridInitialized = useGridSearchPersistence("platform.companies.grid");
 
     const customers = ref<CustomerListItem[]>([]);
     const loading = ref(false);
@@ -127,9 +130,11 @@
                     :hover-state-enabled="true"
                     :allow-column-resizing="true"
                     no-data-text="目前沒有客戶資料"
-                    @cell-click="onCellClick">
+                    @cell-click="onCellClick"
+                    @initialized="onGridInitialized">
             <DxSearchPanel :visible="true" :width="260" placeholder="搜尋公司名稱、統編" />
             <DxPaging :page-size="20" />
+            <DxStateStoring :enabled="true" type="sessionStorage" storage-key="platform.companies.grid" :saving-timeout="0" />
             <DxHeaderFilter :visible="true" />
 
             <DxColumn data-field="Name" caption="公司名稱" :min-width="220" :allow-header-filtering="false" />

@@ -127,3 +127,19 @@ router.afterEach((to, _from, failure) => {
     const title = typeof to.meta.title === "string" ? to.meta.title : "Platform";
     document.title = `${title} - Coker Platform`;
 });
+
+// 清單頁 DataGrid 的狀態存放鍵，要跟各清單頁 DxStateStoring 的 storage-key 一致
+const LIST_GRID_STATE_KEYS: Readonly<Record<string, string>> = {
+    "/companies": "platform.companies.grid",
+    "/websites": "platform.websites.grid",
+    "/domains": "platform.domains.grid"
+};
+
+// 只有從自己的新增／編輯頁（meta.nav 指回這個清單）返回才保留搜尋條件，
+// 從側邊選單或其他頁進來一律清掉，清單從乾淨狀態開始
+router.beforeEach((to, from) => {
+    const storageKey = LIST_GRID_STATE_KEYS[to.path];
+    if (storageKey && from.meta.nav !== to.path) {
+        sessionStorage.removeItem(storageKey);
+    }
+});

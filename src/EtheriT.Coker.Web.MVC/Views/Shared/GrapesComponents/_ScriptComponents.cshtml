@@ -123,6 +123,7 @@
                     const result = await response.json();
                     if (!response.ok) {
                         const error = new Error(result.message || 'AI 請求失敗，請重新登入或稍後重試。');
+                        error.needsClarification = result.needsClarification === true;
                         error.serviceUnavailable = result.serviceUnavailable === true || [401, 403, 429].includes(response.status) || response.status >= 500;
                         throw error;
                     }

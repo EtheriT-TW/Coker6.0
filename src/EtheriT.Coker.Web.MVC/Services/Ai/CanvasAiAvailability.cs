@@ -63,7 +63,7 @@ public sealed class CanvasAiAvailability(IHttpClientFactory clients, IConfigurat
             timeout.CancelAfter(TimeSpan.FromSeconds(8));
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUri, "health/ready"));
+                using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUri, "health/ready?workflow=canvas-edit"));
                 request.Headers.Add("X-Api-Key", key);
                 using var response = await clients.CreateClient("ParallelAi").SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
                 lastResult = new(false, (int)response.StatusCode switch {

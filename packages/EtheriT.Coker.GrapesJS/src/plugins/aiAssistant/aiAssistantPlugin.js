@@ -11,7 +11,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         <div class="coker-canvas-ai-body">
         <p class="coker-canvas-ai-note">內容會傳送至 AI 服務。套用後請使用原有儲存功能。</p>
         <label>修改範圍<select data-scope><option value="selected">目前選取區塊</option><option value="canvas">整個畫布</option><option value="new">產生全新 layout</option></select></label>
-        <label>修改方式<select data-edit-mode><option value="style">只調整樣式（保留原文）</option><option value="content">調整內容與排版</option></select></label>
+        <label>修改方式<select data-edit-mode><option value="auto">自動判斷（建議）</option><option value="style">只調整樣式（保留原文）</option><option value="content">調整內容與排版</option></select></label>
         <div class="coker-canvas-ai-log" data-log aria-live="polite"></div>
         <label>需求<textarea data-prompt rows="4" maxlength="4000" placeholder="例如：選取區塊的標題放大一級，三欄改成四欄"></textarea></label>
         <div class="coker-canvas-ai-actions"><button type="button" data-send>產生並套用</button><button type="button" data-cancel disabled>取消</button><button type="button" data-clear>清除對話</button></div>
@@ -139,7 +139,8 @@ export function aiAssistantPlugin(editor, options = {}) {
         if (scope === 'selected' && (!selected || selected === editor.getWrapper())) return status('請先選取要修改的區塊。');
         if (scope === 'new' && !await confirm('產生全新 layout 將取代畫布內容，是否繼續？')) return;
         if (destroyed || pending) return;
-        const preserveContent = scope !== 'new' && find('[data-edit-mode]').value === 'style';
+        const autoDetect = scope !== 'new' && find('[data-edit-mode]').value === 'auto';
+        let preserveContent = scope !== 'new' && find('[data-edit-mode]').value !== 'content';
         const cleanBeforePreparingIds = recordedContent === contentSignature();
         const targets = scope === 'new' ? [] : scope === 'selected'
             ? [selected, ...selected.find('*')] : editor.getWrapper().find('*');
@@ -150,7 +151,8 @@ export function aiAssistantPlugin(editor, options = {}) {
             const element = component.getEl();
             const computed = element?.ownerDocument.defaultView.getComputedStyle(element);
             return { selector: `#${id}`, properties: Object.fromEntries(
-                ['font-size', 'font-weight', 'font-style', 'font-family', 'line-height', 'color', 'display']
+                ['font-size', 'font-weight', 'font-style', 'font-family', 'line-height', 'color', 'display',
+                    'background-color', 'text-shadow', '-webkit-text-stroke-width', '-webkit-text-stroke-color', 'paint-order']
                     .map(name => [name, computed?.getPropertyValue(name) || ''])) };
         });
         const originalProject = JSON.stringify(editor.getProjectData());
@@ -164,7 +166,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         try {
             const result = await adapter.ai.generate({
                 scope, prompt, html,
-                preserveContent, styleContext: JSON.stringify(styleContext),
+                preserveContent, autoDetect, styleContext: JSON.stringify(styleContext),
                 css: scope === 'new' ? '' : editor.getCss(scope === 'selected' ? { component: selected } : {}),
                 history: JSON.stringify(conversation).slice(-8000)
             }, { signal: pending.signal });
@@ -174,6 +176,10 @@ export function aiAssistantPlugin(editor, options = {}) {
             if (requestKey !== getKey() || originalProject !== JSON.stringify(editor.getProjectData()) ||
                 (scope === 'selected' && !selected.parent()))
                 throw new Error('等待期間畫布已修改或切換，未套用 AI 回覆，請重新送出。');
+            if (autoDetect) {
+                if (typeof result.preserveContent !== 'boolean') throw new Error('未取得自動判斷結果，未修改畫布。');
+                preserveContent = result.preserveContent;
+            }
             const replaceHtml = !preserveContent || result.htmlChanged === true;
             const safeHtml = replaceHtml ? validateHtml(result.html) : null;
             if (preserveContent && replaceHtml) {
@@ -201,7 +207,20 @@ export function aiAssistantPlugin(editor, options = {}) {
             restoring = true;
             try {
                 if (replaceHtml) {
-                    if (scope === 'selected') selected.replaceWith(safeHtml);
+                    if (scope === 'selected') {
+                        const parent = selected.parent();
+                        const at = parent.components().indexOf(selected);
+                        const replacement = new DOMParser().parseFromString(safeHtml, 'text/html');
+                        const replacementIds = new Set([...replacement.body.querySelectorAll('[id]')].map(el => el.id));
+                        const keepIds = [selected, ...selected.find('*')]
+                            .map(component => component.getId()).filter(id => replacementIds.has(id));
+                        // replaceWith removes ID rules before adding the replacement.
+                        // Preserve rules for surviving elements, including nested text spans.
+                        selected.remove({ keepIds });
+                        if (selected.parent()) throw new Error('無法替換選取區塊，已保留畫布。');
+                        const inserted = parent.append(safeHtml, { at });
+                        if (inserted.length) editor.select(inserted[0]);
+                    }
                     else editor.setComponents(safeHtml);
                 }
                 for (const rule of rules) editor.Css.setRule(rule.selector, rule.properties, { addStyles: true });
@@ -216,6 +235,12 @@ export function aiAssistantPlugin(editor, options = {}) {
             find('[data-prompt]').value = '';
             status('已套用，請檢查桌面／手機預覽並使用原有儲存功能。');
         } catch (error) {
+            if (!destroyed && error.needsClarification === true && requestKey === getKey()) {
+                conversation.push({ role: 'user', content: prompt }, { role: 'assistant', content: error.message });
+                conversation = conversation.slice(-8);
+                render();
+                find('[data-prompt]').value = '';
+            }
             if (!destroyed && (error.serviceUnavailable === true || error instanceof TypeError || error instanceof SyntaxError)) {
                 serviceUnavailable = true;
                 editor.Panels.removeButton('options', 'coker-ai-assistant');
@@ -231,7 +256,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         if (typeof html !== 'string' || !html.trim()) throw new Error('AI 未回傳有效 HTML。');
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const tags = new Set('SECTION ARTICLE HEADER FOOTER NAV DIV SPAN P H1 H2 H3 H4 H5 H6 UL OL LI A IMG PICTURE SOURCE STRONG EM B I U SMALL BR HR BLOCKQUOTE FIGURE FIGCAPTION TABLE THEAD TBODY TFOOT TR TH TD DL DT DD BUTTON'.split(' '));
-        const attrs = new Set('id class title role alt href src sizes width height loading decoding target rel type colspan rowspan scope'.split(' '));
+        const attrs = new Set('id class title role alt href src sizes width height loading decoding target rel type colspan rowspan scope data-text'.split(' '));
         for (const el of doc.body.querySelectorAll('*')) {
             if (!tags.has(el.tagName)) throw new Error('AI HTML 包含不支援的元件。');
             for (const a of el.attributes) {
@@ -253,7 +278,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         if (!Array.isArray(rules) || rules.length > 100) throw new Error('AI 未提供有效 CSS 修改，請更新 MVC 與插件後重試。');
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const ids = new Set([...doc.body.querySelectorAll('[id]')].map(el => el.id));
-        const allowed = new Set('color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap grid-template-columns flex-direction flex-wrap justify-content align-items'.split(' '));
+        const allowed = new Set('color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap grid-template-columns flex-direction flex-wrap justify-content align-items'.split(' '));
         for (const rule of rules) {
             if (!rule || !/^#[a-zA-Z_][a-zA-Z0-9_-]*$/.test(rule.selector) || !ids.has(rule.selector.slice(1)) || !rule.properties ||
                 Object.entries(rule.properties).some(([name, value]) => !allowed.has(name) || typeof value !== 'string' || value.length > 300 ||

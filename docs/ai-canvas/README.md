@@ -52,10 +52,22 @@ AI 輔助是獨立的根層級權限項目，不依附內容管理；只使用�
 
 MVC `POST /api/CanvasAi/Chat` 驗證登入、防偽權杖、目前站台、來源頁面及 AI 權限；不接受瀏覽器指定模型或 system 訊息。API Key 僅在後端加入上游請求。錯誤不回傳上游回應或金鑰。
 
+## 網站語系與單模型流程
+
+- 文字邊框／描邊以字形輪廓處理，區別於元件矩形 border。前後端白名單支援 text-shadow、-webkit-text-stroke（含 width／color）與 paint-order；StyleContext 包含目前描邊、陰影及背景色。Qwen 依文字顏色選擇有對比的細描邊，不使用固定色碼 mapping；仍需在編輯器與實際頁面驗收視覺效果。此項前端來源修改需手動執行既有 build:mvc 才會生效。
+- 畫布 AI 僅呼叫 Parallel 的 Ollama:CanvasPlannerModel，預設 qwen2.5-coder:7b。每次請求正常為 1 次推論，不做交叉審查、自動重試或語意重產；既有明確換字／字級等程式處理路徑為 0 次。
+- MVC 在權限驗證後取得目前 Website.Locale，不接受前端指定語系；未設定時不送出修改。語系要求由 Qwen 執行，不再經第二模型校正，需手動驗收。
+- JSON Schema、摘要／追問純文字檢查、原文保護、HTML／CSS 白名單及 ID 範圍驗證仍保留。色名與錯字交給 AI 判讀，不使用固定色名 mapping。
+- 目前選取區塊使用精簡提示與結構化 SelectedTarget、History、StyleContext。整段文字改色應使用元件 styles；只有明確指名且實際存在的局部原文才使用 textStyles。
+- readiness 使用 /health/ready?workflow=canvas-edit，只確認 Qwen 的設定模型存在，不檢查或呼叫 Ministral。readiness 不執行推論。
+- 實際推論數可查看 CanvasAi/Chat 回應的 X-Canvas-Model-Calls 標頭或 Parallel 完成日誌。逾時或連線中斷未收到回應時，以 Parallel 日誌為準。
+- 此次為後端修改，不需重新產生前端 bundle。手動重新編譯並啟動兩個後端，清除舊對話後驗證整段改色、局部原文、字級與連結保留，以及不同網站語系；未自行執行 build、restore、test 或推論。
+
 ## 使用方式與範圍
 
 - 選取區塊：先選 GrapesJS 元件，要求放大文字、縮小文字、三欄改四欄等修改。
-- 修改方式預設為「只調整樣式」：保持原文，整個元件修改只合併 CSS 屬性；局部文字格式需要增加 span，但不改寫文字。內容／結構變更請選「調整內容與排版」。全新 layout 自動使用內容模式。傳給 AI 的規則要求繁體中文（zh-TW），不可擅自轉換原文字體或改寫文案。純樣式模式由程式保留原文，不依賴模型重寫 HTML。
+- 修改方式預設為「自動判斷」：明確的文字替換直接由 MVC 處理，其餘需求由 AI 回傳 editMode（style／content）；未回傳有效判斷時不套用。樣式需求保留原文，明確要求更換文字、連結或結構時才使用內容模式。仍可手動選「只調整樣式」或「調整內容與排版」；全新 layout 使用內容模式。前端依後端回傳的 preserveContent 核對是否允許文字變更。傳給 AI 的規則依目前網站的 Website.Locale 決定生成語系。
+- 例如「品牌兩個字換成 專業」會保留原有元素、ID 與連結，僅替換文字節點；跨節點文字依原節點順序分配新文字。支援連結的 data-text 顯示文字屬性，改字時同步更新受影響連結的 data-text；不開放任意 data-* 屬性。手動選「只調整樣式」時仍提示切換模式。
 - 局部文字樣式：AI 使用 `textStyles: [{ text: '德瑞克', properties: { color: '#e53935', 'font-style': 'italic', 'font-size': 'calc(1em + 2px)' } }]`，而不是對整個容器改樣式。MVC 在目前選取 HTML 內精確匹配原文，可跨相鄰文字節點；為匹配文字加上唯一 ID 的 span，回傳 htmlChanged=true 與 CSS 規則。半級比周圍文字大 2px。前後端均核對原文字內容不變，仍禁止 inline-style／script；找不到原文、輸出超限或不符合安全限制則不套用。相同字串多次出現時會全部套用。套用後若 HTML／CSS 都沒有差異，提示未產生變更，不顯示成功或新增紀錄。
 - 明確的基本局部格式指令，例如「德瑞克三個字體大一級，斜體，改為紅色」或「德瑞克三個字改為紅字，斜體，跟其他文字大半級」，由 MVC 解析目標原文與基本格式組合：字數須符合、原文須存在選取區塊，支援紅／藍／黑色、粗／斜體、大／小一級或半級。整條指令必須全部符合才使用此路徑；其他語意仍交由 AI。兩者共用局部 span 與 CSS 安全檢查，沒有放寬 script／inline-style 限制。定位失敗、屬性不支援、HTML／CSS 驗證失敗會分別提示，不再使用同一則泛用錯誤。
 - 請求包含目標實際 computed font-size／font-weight／font-style／font-family 等參考值。純樣式模式明確要求「文字大一級／小一級」時，依原字級加減 4px，僅套用 font-size，保留粗體、斜體與其他屬性。

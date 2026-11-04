@@ -29,9 +29,15 @@ public sealed class CanvasAiController(LoginUserData user, NavigationProvider na
         var permission = HttpContext.GetPermission();
         if (!permission.CanVisble || !permission.CanUpdate || !HttpContext.HasPermission(CokerContextKeys.AiAssistant))
             return StatusCode(403, new { message = "需要目前頁面的編輯權限與 AI 輔助權限。" });
+        // Always resolve locale from the authorized website, never from browser input.
+        input.WebsiteLocale = (await user.GetWebsiteLocal())?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(input.WebsiteLocale))
+            return UnprocessableEntity(new { message = "目前網站尚未設定語系，請先設定網站語系。" });
         var result = await ai.Generate(input, cancellationToken);
+        if (input.ModelCalls.HasValue)
+            Response.Headers["X-Canvas-Model-Calls"] = input.ModelCalls.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         var serviceUnavailable = result.Status == 429 || result.Status >= 500;
         if (serviceUnavailable) await availability.MarkUnavailableAsync();
-        return StatusCode(result.Status, new { html = result.Html, styles = result.Styles, htmlChanged = result.HtmlChanged, message = result.Message, preserveContent = input.PreserveContent, serviceUnavailable });
+        return StatusCode(result.Status, new { html = result.Html, styles = result.Styles, htmlChanged = result.HtmlChanged, message = result.Message, preserveContent = input.PreserveContent, needsClarification = result.NeedsClarification, serviceUnavailable });
     }
 }

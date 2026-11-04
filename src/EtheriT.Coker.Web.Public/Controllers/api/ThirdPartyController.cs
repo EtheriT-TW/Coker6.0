@@ -264,7 +264,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                                 response = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(dto.OrderId);
                                 break;
                             case "HOME":
-
+                                response = await ecPayLogisticsAppService.ECPayLogisticsExpressHOMECreate(dto.OrderId);
                                 break;
                             default:
                                 response.Message = $"物流方式【{dto.ExtraData}】不支援";
@@ -316,6 +316,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     case "ReturnCVS":
                         response = await ecPayLogisticsAppService.ECPayLogisticsCVSReturn(dto.OrderId);
                         break;
+                    case "ReturnHOME":
+                        response = await ecPayLogisticsAppService.ECPayLogisticsHOMEReturn(dto.OrderId);
+                        break;
                     default:
                         response.Message = $"查詢動作【{dto.Action}】不支援";
                         break;
@@ -335,9 +338,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpPost]
         [AllowAnonymous]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> ECPayLogisticsCVSReturnResponse(ECPayLogisticsCallbackReverseDto dto)
+        public async Task<IActionResult> ECPayLogisticsReturnResponse(ECPayLogisticsCallbackReverseDto dto)
         {
-            await ecPayLogisticsAppService.ECPayLogisticsCVSReturnResponse(dto);
+            await ecPayLogisticsAppService.ECPayLogisticsReturnResponse(dto);
             return Content("1|OK");
         }
         private string GenerateAutoPostForm(string actionUrl, object RequestBody)

@@ -9,7 +9,8 @@ function SyncOrderEditStatus() {
     $(".order-dirty-badge").toggleClass("d-none", !dirty);
     $(".order-edit-status").text(dirty ? "有未儲存變更，請按「儲存訂單」" : "尚無未儲存變更");
 }
-let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_queryLogisticsStatus, $btn_CVSReturn, $btn_logistics_save, $btn_send_notification, btn_logistics_edit, btn_logistics_update
+let $btn_reSend, $btn_save, $btn_createLogistics, $btn_printShippingLabel, $btn_queryLogisticsStatus, $btn_logisticsReturn, $btn_logistics_save, $btn_send_notification, btn_logistics_edit, btn_logistics_update
+
 var oristate = 0, payment = "", isCashOnDelivery = false, transactionId = "", thirdparty = 0, ECPayLogisticsTypeStr = "", ECPayLogisticsSubTypeStr = "";
 // 綠界退刷 API 不支援的付款方式（key 為 PaymentTypes.Id），退款需由商家至對應平台人工處理。
 const REFUND_GUIDES = {
@@ -150,7 +151,7 @@ function PageReady() {
                 $btn_queryLogisticsStatus.addClass("d-none");
             }
             if (parseInt($order_status.val()) != 8) {
-                $btn_CVSReturn.addClass("d-none");
+                $btn_logisticsReturn.addClass("d-none");
             }
             if (parseInt($order_status.val()) === 3) {
                 co.sweet.confirm("發送出貨通知信", "是否確認發送出貨通知信?", "確定", "取消", function () {
@@ -363,58 +364,53 @@ function PageReady() {
     });
 
     $btn_createLogistics.on("click", function () {
-       co.sweet.loading();
-       if (!ECPayLogisticsTypeStr) {
-           co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
-           return;
-       }
+        if (!ECPayLogisticsTypeStr) {
+            co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
+            return;
+        }
 
-       const data = {
-           Action: "CreateLogistics",
-           OrderId: keyId,
-           ExtraData: "CVS",
-       };
+        if (ECPayLogisticsTypeStr == "HOME") {
 
-       Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
-           if (result.success) {
-               co.sweet.success(result.message, function () { }, false);
-               $btn_printShippingLabel.removeClass("d-none");
-           } else {
-               co.sweet.error("訂單狀態錯誤", result.message);
-           }
-           $btn_createLogistics.addClass("d-none");
-       });
+            co.sweet.confirm("物流資料寫入", `<div><div class="mb-3"><label class="me-3">郵遞區號</label><input type="text" name="SenderZipCode" placeholder="郵遞區號"></div><div class="mb-3"><label class="me-3">寄件地址</label><input type="text" name="SenderAddress" placeholder="寄件地址"></div><div class="mb-3"><label class="me-3">貨物重量</label><input type="text" name="GoodsWeight" placeholder="貨物重量"></div><div class="mb-3"><label class="me-3">箱形規格</label><input type="text" name="Specification" placeholder="箱形規格"></div></div>`, "建立物流訂單", "取消", function () {
+                console.log("哈嘿")
+            });
+        } else {
+            console.log("ELSE")
+            co.sweet.loading();
+        }
+        console.log("OUTSIDE")
+
     });
 
     $btn_printShippingLabel.on("click", function () {
-       if (!ECPayLogisticsSubTypeStr) {
-           co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
-           return;
-       }
+        if (!ECPayLogisticsSubTypeStr) {
+            co.sweet.error("錯誤", "取得物流子類型發生錯誤", null, false);
+            return;
+        }
 
-       const $form = $("<form>", {
-           method: "post",
-           action: "/api/ThirdParty/ECPayLogisticsPrintShippingLabel",
-           target: "_blank"
-       });
+        const $form = $("<form>", {
+            method: "post",
+            action: "/api/ThirdParty/ECPayLogisticsPrintShippingLabel",
+            target: "_blank"
+        });
 
-       const data = {
-           Action: "PrintOrderInfo",
-           OrderId: keyId,
-           ExtraData: ECPayLogisticsSubTypeStr,
-       };
+        const data = {
+            Action: "PrintOrderInfo",
+            OrderId: keyId,
+            ExtraData: ECPayLogisticsSubTypeStr,
+        };
 
-       $.each(data, function (key, value) {
-           $("<input>", {
-               type: "hidden",
-               name: key,
-               value: value
-           }).appendTo($form);
-       });
+        $.each(data, function (key, value) {
+            $("<input>", {
+                type: "hidden",
+                name: key,
+                value: value
+            }).appendTo($form);
+        });
 
-       $("body").append($form);
-       $form.submit();
-       $form.remove();
+        $("body").append($form);
+        $form.submit();
+        $form.remove();
     });
 
     $btn_queryLogisticsStatus.on("click", function () {
@@ -440,7 +436,7 @@ function PageReady() {
         });
     });
 
-    $btn_CVSReturn.on("click", function () {
+    $btn_logisticsReturn.on("click", function () {
         co.sweet.loading();
         if (!ECPayLogisticsTypeStr) {
             co.sweet.error("錯誤", "取得物流方式發生錯誤", null, false);
@@ -448,7 +444,7 @@ function PageReady() {
         }
 
         const data = {
-            Action: "ReturnCVS",
+            Action: ECPayLogisticsTypeStr == "CVS" ? "ReturnCVS" : "ReturnHOME",
             OrderId: keyId,
             ExtraData: "",
         };
@@ -657,7 +653,7 @@ function ElementInit() {
     $btn_createLogistics = $(".btn_createLogistics");
     $btn_printShippingLabel = $(".btn_printShippingLabel");
     $btn_queryLogisticsStatus = $(".btn_queryLogisticsStatus");
-    $btn_CVSReturn = $(".btn_CVSReturn");
+    $btn_logisticsReturn = $(".btn_logisticsReturn");
     $btn_send_notification = $(".btn_send_notification");
     $btn_logistics_edit = $(".btn_logistics_edit");
     $btn_logistics_update = $(".btn_logistics_update");
@@ -1020,13 +1016,25 @@ function HeaderDataInsert(data) {
             .text("");
     }
 
-    if ([1, 2, 6].includes(data.state)  && data.cvsStoreID != null) {
+    if ([1, 2, 6].includes(data.state) && data.cvsStoreID != null) {
         if (data.allPayLogisticsID) $btn_printShippingLabel.removeClass("d-none");
         else if (data.logisticsType >= 8 && data.logisticsType <= 15) $btn_createLogistics.removeClass("d-none");
     }
 
-    if (data.logisticsStatus == "已取件" && [8, 9, 10, 11].includes(data.logisticsType) && !data.logisticsStatusStr.startsWith("退貨編號")) {
-        $btn_CVSReturn.removeClass("d-none");
+    if ([16, 17, 18, 19].includes(data.logisticsType) && data.logisticsTypeStr == "HOME" && data.allPayLogisticsID == null) {
+        $btn_createLogistics.removeClass("d-none");
+    }
+
+    if (data.logisticsStatus == "已取件" && [8, 9, 10, 11, 17, 18, 19].includes(data.logisticsType) && !data.logisticsStatusStr.startsWith("退貨編號")) {
+        $btn_logisticsReturn.removeClass("d-none");
+    }
+
+    if ([16, 17, 18, 19].includes(data.logisticsType)) {
+        $("#Logistics .ECPayLogistics").removeClass("d-none");
+        $("#Logistics .default").addClass("d-none");
+    } else {
+        $("#Logistics .default").removeClass("d-none");
+        $("#Logistics .ECPayLogistics").addClass("d-none");
     }
 
     if (data.state == 3 && data.logisticsStatusStr != "") {
@@ -1060,7 +1068,7 @@ function HeaderDataSet(result) {
             .addClass("btn-secondary");
         $btn_logistics_edit.prop("disabled", true);
         $tracking_number.prop("disabled", true);
-    } 
+    }
     else if (oristate == 7) {
         var sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -1081,6 +1089,9 @@ function HeaderDataSet(result) {
 
     if ([1, 2, 3].includes(oristate))
         $(".btn_send_notification").removeClass("d-none");
+
+    if (result.bookingNote) $(".bookingNoteLine").removeClass("d-none");
+    else $(".bookingNoteLine").addClass("d-none");
 
     if (result.bonus == 0) $(".bonusLine").addClass("d-none");
     else $(".bonusLine").removeClass("d-none");
@@ -1272,7 +1283,7 @@ function DataInsert(data, frame) {
                     break;
                 default:
                     if ($this.data("key") != "invoiceRecipient") {
-                        if (!!!data[key] && $this.text() == "") $this.addClass("d-none");
+                        if (!!!data[key] && $this.text() == "" && !$this.hasClass("permanent")) $this.addClass("d-none");
                         else $this.removeClass("d-none").text(data[key]);
                     }
                     break;
@@ -1306,7 +1317,7 @@ function BackToList() {
     $("#OrderData .LogisticsStatusStr").addClass("d-none");
     $("#OrderData .LogisticsStatusStr").text("");
     $btn_queryLogisticsStatus.addClass("d-none");
-    $btn_CVSReturn.addClass("d-none");
+    $btn_logisticsReturn.addClass("d-none");
     window.location.hash = ""
     $("#OrderDetails > .card-body > .purchase_list > .purchase_item").each(function () {
         $(this).remove();

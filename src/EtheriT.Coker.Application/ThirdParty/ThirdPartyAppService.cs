@@ -232,8 +232,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                             {
                                 LogisticsType.AddRange(new[]
                                 {
-                                    ShippingTypeEnum.綠界_黑貓,
                                     ShippingTypeEnum.綠界_中華郵政,
+                                    ShippingTypeEnum.綠界_黑貓_常溫,
+                                    ShippingTypeEnum.綠界_黑貓_冷藏,
+                                    ShippingTypeEnum.綠界_黑貓_冷凍,
                                 });
                             }
 
@@ -473,6 +475,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (website == null) throw new Exception("取得網站內容發生錯誤");
 
                 var frontApiUrl = _env.IsProduction() ? $"{website.DefaultUrl}/api/ThirdParty/{apiPath}" : $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/{apiPath}";
+                frontApiUrl = $"https://localhost:7193/api/ThirdParty/{apiPath}";
                 var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
                 var postresponse = await ThirdPartyClient_Front.PostAsync(frontApiUrl, jsonContent);
 

@@ -134,6 +134,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
                     case "CreateLogistics":
                     case "GetTradeInfo":
                     case "ReturnCVS":
+                    case "ReturnHOME":
                         response = await thirdPartyAppService.HandleThirdPartyLogistics(dto);
                         break;
                     default:

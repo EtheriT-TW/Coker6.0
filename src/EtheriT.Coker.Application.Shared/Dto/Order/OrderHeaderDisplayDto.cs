@@ -57,6 +57,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? PersonalInvoiceTypeTitle { get; set; }
         public string? Carrier { get; set; }
         public string? AllPayLogisticsID { get; set; }
+        public string? BookingNote { get; set; }
         public string? CVSStoreID { get; set; }
         public string? CVSStoreName { get; set; }
         public string? CVSAddress { get; set; }

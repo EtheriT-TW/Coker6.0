@@ -3,7 +3,7 @@ const traitInputAttr = { placeholder: '例如：輸入文字' };
 export const grapesZhTw = {
     assetManager: {
         addButton: '新增圖片',
-        inputPlh: 'http://path/to/the/image.jpg',
+        inputPlh: 'https://path/to/the/image.jpg',
         modalTitle: '選擇圖片',
         uploadTitle: '點擊或拖曳圖片上傳'
     },

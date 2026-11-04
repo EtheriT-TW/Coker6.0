@@ -43,7 +43,7 @@
     const revealedPassword = ref<string | null>(null);   // 從後端讀回的原密碼，只用來顯示
     const isPasswordVisible = ref(true);
     const isPasswordEdited = ref(false);                 // 使用者動過輸入框才算要改密碼
-    const passwordNotice = ref("");
+    const domainSecretNotice = ref("");
     const revealing = ref(false);
 
     const form = useManagedForm<DomainForm, DomainDetail>({
@@ -129,7 +129,7 @@
         isPasswordEdited.value = false;
         // 有存密碼 → 預設遮罩；沒有 → 直接可輸入
         isPasswordVisible.value = !detail.HasPassword;
-        passwordNotice.value = "";
+        domainSecretNotice.value = "";
     }
 
     function onPasswordInput(event: Event): void {
@@ -152,18 +152,18 @@
         }
 
         revealing.value = true;
-        passwordNotice.value = "";
+        domainSecretNotice.value = "";
         try {
             const result = await fetchDomainPassword(domainId.value);
             // 讀不到時也切到明文狀態（空白），讓使用者可以直接重新輸入
             revealedPassword.value = result.State === "Ok" ? result.Password ?? "" : "";
             isPasswordVisible.value = true;
-            if (result.State === "Empty") passwordNotice.value = "這筆尚未記錄網域密碼。";
-            else if (result.State === "Unreadable") passwordNotice.value = "此註記已無法讀取，請重新輸入。";
+            if (result.State === "Empty") domainSecretNotice.value = "這筆尚未記錄網域密碼。";
+            else if (result.State === "Unreadable") domainSecretNotice.value = "此註記已無法讀取，請重新輸入。";
         }
         catch (error) {
             console.error(error);
-            passwordNotice.value = "讀取網域密碼失敗，請稍後再試。";
+            domainSecretNotice.value = "讀取網域密碼失敗，請稍後再試。";
         }
         finally {
             revealing.value = false;
@@ -291,7 +291,7 @@
                     </div>
                     <FormFieldErrors :errors="form.getErrors('Password')" />
                     <p v-if="isPasswordReadonly" class="field-note">點擊眼睛顯示密碼後即可修改。</p>
-                    <p v-if="passwordNotice" class="field-note field-note-error">{{ passwordNotice }}</p>
+                    <p v-if="domainSecretNotice" class="field-note field-note-error">{{ domainSecretNotice }}</p>
                     <p v-if="willClearPassword" class="field-note field-note-error">儲存後會清除原本的網域密碼。</p>
                 </div>
 

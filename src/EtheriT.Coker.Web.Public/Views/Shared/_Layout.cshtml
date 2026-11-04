@@ -13,8 +13,6 @@
         ViewBag.NoCopy?.ToString(),
         ViewBag.option?.ToString()
     ).Trim();
-    // DevExtreme 檔案較大，預設不載入；需要的頁面設定 ViewData["UseDevExtreme"] = true。
-    var useDevExtreme = ViewData["UseDevExtreme"] as bool? == true;
     var pageLocale = ViewData["HtmlLocale"]?.ToString()?.Trim();
     if (string.IsNullOrWhiteSpace(pageLocale))
     {
@@ -109,7 +107,7 @@
             }
     </style>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.7.2/css/all.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.7.2/css/all.css" integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous" />
     <script nonce="@ViewBag.Nonce">
         (function () {
             var probe = document.createElement('i');
@@ -131,10 +129,6 @@
     <link rel="stylesheet" href="~/lib/sweetalert2/dist/sweetalert2.min.css" />
     <link rel="stylesheet" href="~/lib/aos/aos.css" />
     <link rel="stylesheet" href="~/Shared/shared.min.css" asp-append-version="true" />
-    @if (useDevExtreme)
-    {
-        <link rel="stylesheet" href="~/css/vendor.min.css" asp-append-version="true" />
-    }
     <link rel="stylesheet" href="~/css/Header/Header.min.css" asp-append-version="true" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon" asp-append-version="true" />
     <link rel="canonical" href="@ViewData["CanonicalUrl"]" />
@@ -230,12 +224,6 @@
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    @if (useDevExtreme)
-    {
-        <script src="~/js/vendor.min.js" asp-append-version="true" nonce="@ViewBag.Nonce"></script>
-        <script src="~/js/devextreme/localization/dx.messages.zh-tw.js" asp-append-version="true"></script>
-        <script nonce="@ViewBag.Nonce">DevExpress.localization.locale('zh-tw');</script>
-    }
     <style nonce="@ViewBag.Nonce">
             :root {
                 --orgName: @ViewData["OrgName"];

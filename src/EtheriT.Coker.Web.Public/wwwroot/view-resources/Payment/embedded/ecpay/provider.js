@@ -13,6 +13,12 @@
         var sdkLoadState = w.ECPay ? "loaded" : "idle";
         var sdkLoadCallbacks = [];
 
+        var TWQR_IMAGE_BASE = "/images/paymenticon/twqr/";
+        var TWQR_LOGO_FILE = "twqr_logo.svg";
+        var TWQR_APPS_FILE = "TWQR.png";
+        var TWQR_APPS_LABEL =
+            "支援 App：台灣Pay、iPASS MONEY、全支付、悠遊付、icash Pay、歐付寶、街口支付等";
+
         function flushSdkLoadCallbacks(errorMessage) {
             var callbacks = sdkLoadCallbacks.slice();
             sdkLoadCallbacks = [];
@@ -90,6 +96,41 @@
             }
 
             return "Apple Pay 付款未完成，請重新操作。";
+        }
+
+                function createTwqrHeader() {
+            var header = w.document.createElement("div");
+            var prefix = w.document.createElement("span");
+            var logo = w.document.createElement("img");
+            var suffix = w.document.createElement("span");
+
+            header.className = "twqr-pay__header";
+
+            prefix.textContent = "歐付寶";
+
+            logo.className = "twqr-pay__logo";
+            logo.src = TWQR_IMAGE_BASE + TWQR_LOGO_FILE;
+            logo.alt = "TWQR";
+
+            suffix.textContent = "支付";
+
+            header.appendChild(prefix);
+            header.appendChild(logo);
+            header.appendChild(suffix);
+
+            return header;
+        }
+
+        function createTwqrAppList() {
+            var image = w.document.createElement("img");
+
+            image.className = "twqr-pay__apps";
+            image.src = TWQR_IMAGE_BASE + TWQR_APPS_FILE;
+            image.alt = TWQR_APPS_LABEL;
+            image.width = 2546;
+            image.height = 1110;
+
+            return image;
         }
 
         function create(options) {
@@ -195,21 +236,25 @@
                     var content = w.document.createElement("div");
                     var description = w.document.createElement("p");
 
-                    description.textContent = isPhone
-                        ? "請點選下方按鈕，前往 TWQR 付款頁面。"
-                        : "請使用支援 TWQR 的手機 App 掃描付款。";
-
-                    content.appendChild(description);
+                    content.className = "twqr-pay";
+                    content.appendChild(createTwqrHeader());
 
                     var qrHost = null;
 
                     if (!isPhone) {
                         qrHost = w.document.createElement("div");
-                        qrHost.className =
-                            "d-flex justify-content-center bg-white p-3";
+                        qrHost.className = "twqr-pay__qr";
 
                         content.appendChild(qrHost);
                     }
+
+                    description.className = "twqr-pay__desc";
+                    description.textContent = isPhone
+                        ? "請點選下方按鈕，前往 TWQR 付款頁面。"
+                        : "請使用支援 TWQR 的手機 App 掃描付款。";
+
+                    content.appendChild(description);
+                    content.appendChild(createTwqrAppList());
 
                     if (redirectUrl) {
                         var link = w.document.createElement("a");
@@ -217,7 +262,7 @@
                         link.href = redirectUrl;
                         link.target = "_blank";
                         link.rel = "noopener noreferrer";
-                        link.className = "btn btn-primary my-3";
+                        link.className = "twqr-pay__link";
                         link.textContent = "開啟 TWQR 付款頁面";
 
                         content.appendChild(link);
@@ -225,25 +270,37 @@
 
                     var notice = w.document.createElement("p");
 
-                    notice.className = "small text-muted";
-                    notice.textContent =
-                        "付款資料有效期限為 10 分鐘；完成操作後，請確認訂單付款狀態。";
+                    notice.className = "twqr-pay__notice";
+
+                    [
+                        "付款資料有效期限為 10 分鐘；",
+                        "完成操作後，請確認訂單付款狀態。"
+                    ].forEach(function (text) {
+                        var line = w.document.createElement("span");
+
+                        line.className = "twqr-pay__notice-line";
+                        line.textContent = text;
+                        notice.appendChild(line);
+                    });
 
                     content.appendChild(notice);
 
                     return w.Swal.fire({
-                        title: "TWQR 付款",
                         html: content,
                         confirmButtonText: "關閉付款資訊",
                         allowOutsideClick: false,
+                        customClass: {
+                            popup: "twqr-pay-popup",
+                            htmlContainer: "twqr-pay-popup__body"
+                        },
                         didOpen: function () {
                             if (!qrHost) return;
 
                             try {
                                 new w.QRCode(qrHost, {
                                     text: qrText,
-                                    width: 256,
-                                    height: 256,
+                                    width: 200,
+                                    height: 200,
                                     correctLevel: w.QRCode.CorrectLevel.M
                                 });
                             } catch (ex) {

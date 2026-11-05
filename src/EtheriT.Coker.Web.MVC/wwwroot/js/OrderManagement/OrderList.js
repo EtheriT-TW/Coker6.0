@@ -70,6 +70,31 @@ function ShowRefundGuide(paymentCode) {
         customClass: { title: "refund-guide-title" }
     });
 }
+function GetRefundGuideCode() {
+    const paymentCode = $(".btn_refundGuide").data("paymentCode");
+    return REFUND_GUIDES[paymentCode] ? paymentCode : null;
+}
+// 需人工退款的付款方式，訂單已取消時常駐提醒商家去對應平台退款。
+function SyncRefundReminder(state) {
+    const needsReminder = parseInt(state) === 4 && GetRefundGuideCode() !== null;
+    $(".btn_refundReminder").toggleClass("d-none", !needsReminder);
+}
+// 已完成超過 7 天的訂單會鎖住，不能再改狀態或退款。
+function IsCompletedOrderLocked(result) {
+    if (parseInt(result.state) !== 7 || result.completedDate == null) return false;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return new Date(result.completedDate) < sevenDaysAgo;
+}
+// 依訂單最新資料切換「退款」與「查看退款狀態」；開單與存檔後都會呼叫。回傳是否有顯示其中一個。
+function SyncRefundButtons(result) {
+    const state = parseInt(result.state);
+    const hasRefunded = result.refundTransactionId != null;
+    const canRefund = !hasRefunded && result.transactionId != null && ![1, 5, 6].includes(state) && !IsCompletedOrderLocked(result) && result.canRefund;
+    $(".btn_checkrefund").toggleClass("d-none", !hasRefunded);
+    $(".btn_refund").toggleClass("d-none", !canRefund);
+    return hasRefunded || canRefund;
+}
 function PageReady() {
     OrderDataCollapse();
     $(window).resize(OrderDataCollapse);
@@ -139,6 +164,8 @@ function PageReady() {
     });
 
     $btn_save.on("click", function () {
+        // updateOrder 成功時會先把 oristate 改成新狀態（待付款訂單），要在存檔前記住原狀態。
+        const stateBeforeSave = parseInt(oristate);
         updateOrder(function (onSuccess) {
             if (![1, 2, 6].includes(parseInt($order_status.val()))) {
                 $btn_createLogistics.addClass("d-none");
@@ -151,6 +178,13 @@ function PageReady() {
             }
             if (parseInt($order_status.val()) != 8) {
                 $btn_CVSReturn.addClass("d-none");
+            }
+            // 剛改成已取消、且付款方式需人工退款：成功訊息關閉後自動帶出退款方式。
+            if (parseInt($order_status.val()) === 4 && stateBeforeSave !== 4) {
+                oristate = 4;
+                SyncRefundReminder(4);
+                const refundGuideCode = GetRefundGuideCode();
+                if (refundGuideCode !== null) ShowRefundGuide(refundGuideCode);
             }
             if (parseInt($order_status.val()) === 3) {
                 co.sweet.confirm("發送出貨通知信", "是否確認發送出貨通知信?", "確定", "取消", function () {
@@ -306,6 +340,10 @@ function PageReady() {
 
     $(".btn_refundGuide").on("click", function () {
         ShowRefundGuide($(this).data("paymentCode"));
+    });
+
+    $(".btn_refundReminder").on("click", function () {
+        ShowRefundGuide(GetRefundGuideCode());
     });
 
 
@@ -560,6 +598,10 @@ function updateOrder(onSuccess) {
                 $(".btn_recheck").addClass("d-none");
                 oristate = newstate;
             }
+            // 存檔後重新取得訂單，依後端最新資料更新退款按鈕（待付款取消時後端會清掉交易編號）。
+            co.Order.GetHeaderOld(keyId).done(function (latest) {
+                if (latest) SyncRefundButtons(latest);
+            });
             order_list.component.refresh();
         }
         else co.sweet.error("儲存失敗", result.error);
@@ -1050,7 +1092,6 @@ function HeaderDataSet(result) {
     transactionId = result.transactionId;
     $order_status.val(result.state);
     oristate = parseInt(result.state);
-    var status_lock = false;
 
     if ([4, 5].includes(oristate)) {
         $order_status.prop("disabled", true)
@@ -1061,23 +1102,17 @@ function HeaderDataSet(result) {
         $btn_logistics_edit.prop("disabled", true);
         $tracking_number.prop("disabled", true);
     } 
-    else if (oristate == 7) {
-        var sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        if (result.completedDate != null && new Date(result.completedDate) < sevenDaysAgo) {
-            $order_status.prop("disabled", true);
-            $btn_logistics_save.prop("disabled", true);
-            status_lock = true;
-        }
+    else if (IsCompletedOrderLocked(result)) {
+        $order_status.prop("disabled", true);
+        $btn_logistics_save.prop("disabled", true);
     }
 
-    if (result.refundTransactionId != null) $(".btn_checkrefund").removeClass("d-none");
-    else if (result.transactionId != null && ![1, 5, 6].includes(oristate) && !status_lock && result.canRefund) $(".btn_refund").removeClass("d-none");
-    else OrderStateChange(oristate)
+    if (!SyncRefundButtons(result)) OrderStateChange(oristate)
 
     $(".btn_refundGuide")
         .data("paymentCode", result.paymentCode)
         .toggleClass("d-none", !REFUND_GUIDES[result.paymentCode]);
+    SyncRefundReminder(oristate);
 
     if ([1, 2, 3].includes(oristate))
         $(".btn_send_notification").removeClass("d-none");

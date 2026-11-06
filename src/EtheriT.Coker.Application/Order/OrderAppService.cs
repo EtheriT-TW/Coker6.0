@@ -4104,7 +4104,7 @@ namespace EtheriT.Coker.Application.Order
                     ? await loginUserData.GetWebsiteId()
                     : configuration.GetValue<long>("WebConfig:SiteId");
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
-                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var order_header = await db.Order_Headers.AsNoTracking().Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 var order_details = await GetOrderDetails(ohid);
 
                 if (order_header != null && order_details != null)

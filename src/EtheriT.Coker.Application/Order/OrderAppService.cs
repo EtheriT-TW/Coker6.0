@@ -1542,7 +1542,9 @@ namespace EtheriT.Coker.Application.Order
         {
             var requiresLogisticsRecord = logisticsSubType != null &&
                 (logisticsSubType == ShippingTypeEnum.綠界_中華郵政 ||
-                 logisticsSubType == ShippingTypeEnum.綠界_黑貓 ||
+                 logisticsSubType == ShippingTypeEnum.綠界_黑貓_常溫 ||
+                 logisticsSubType == ShippingTypeEnum.綠界_黑貓_冷藏 ||
+                 logisticsSubType == ShippingTypeEnum.綠界_黑貓_冷凍 ||
                  isCvsStore);
 
             var activeLogistics = await db.Order_Logistics
@@ -1587,12 +1589,35 @@ namespace EtheriT.Coker.Application.Order
             }
 
             orderLogistics.LogisticsSubType = GetLogisticsSubType(logisticsSubType!.Value);
-            orderLogistics.LogisticsType = isCvsStore ? "CVS" : "HOME";
-            orderLogistics.CVSStoreID = isCvsStore ? dto.CVSStoreID : null;
-            orderLogistics.CVSStoreName = isCvsStore ? dto.CVSStoreName : null;
-            orderLogistics.CVSAddress = isCvsStore ? dto.CVSAddress : null;
-            orderLogistics.CVSTelephone = isCvsStore ? dto.CVSTelephone : null;
-            orderLogistics.CVSOutSide = isCvsStore ? dto.CVSOutSide : null;
+            if (isCvsStore)
+            {
+                orderLogistics.LogisticsType ="CVS";
+                orderLogistics.CVSStoreID = dto.CVSStoreID;
+                orderLogistics.CVSStoreName = dto.CVSStoreName;
+                orderLogistics.CVSAddress = dto.CVSAddress;
+                orderLogistics.CVSTelephone = dto.CVSTelephone;
+                orderLogistics.CVSOutSide = dto.CVSOutSide;
+            }
+            else
+            {
+                orderLogistics.LogisticsType = "HOME";
+                orderLogistics.ReceiverZipCode = header.RecipientZipCode;
+                orderLogistics.ReceiverAddress = header.RecipientAddress;
+                orderLogistics.Specification ??= "0001";
+                switch (logisticsSubType)
+                {
+                    case ShippingTypeEnum.綠界_中華郵政:
+                    case ShippingTypeEnum.綠界_黑貓_常溫:
+                        orderLogistics.Temperature = "0001";
+                        break;
+                    case ShippingTypeEnum.綠界_黑貓_冷藏:
+                        orderLogistics.Temperature = "0002";
+                        break;
+                    case ShippingTypeEnum.綠界_黑貓_冷凍:
+                        orderLogistics.Temperature = "0003";
+                        break;
+                }
+            }
 
             try
             {
@@ -1825,6 +1850,12 @@ namespace EtheriT.Coker.Application.Order
                     return "HILIFEC2C";
                 case ShippingTypeEnum.綠界_門市寄取_OK超商:
                     return "OKMARTC2C";
+                case ShippingTypeEnum.綠界_中華郵政:
+                    return "POST";
+                case ShippingTypeEnum.綠界_黑貓_常溫:
+                case ShippingTypeEnum.綠界_黑貓_冷藏:
+                case ShippingTypeEnum.綠界_黑貓_冷凍:
+                    return "TCAT";
                 default:
                     return "";
             }
@@ -2232,6 +2263,7 @@ namespace EtheriT.Coker.Application.Order
                         RecipientCellPhone = result.RecipientCellPhone,
                         RecipientAddress = recipientAddress,
                         RecipientEmail = result.RecipientEmail,
+                        BookingNote = orderLogistics?.BookingNote,
                         CVSStoreID = isCvsShipping ? orderLogistics?.CVSStoreID : null,
                         CVSStoreName = isCvsShipping ? orderLogistics?.CVSStoreName : null,
                         CVSAddress = isCvsShipping ? orderLogistics?.CVSAddress : null,
@@ -2413,6 +2445,7 @@ namespace EtheriT.Coker.Application.Order
                             if (await CheckThirdPartyDataExits()) temp_output.CVSStoreID = logistics.CVSStoreID;
                         }
                         temp_output.AllPayLogisticsID = logistics.AllPayLogisticsID;
+                        temp_output.BookingNote = logistics.BookingNote;
                         temp_output.CVSAddress = logistics.CVSAddress;
                         temp_output.CVSOutSide = logistics.CVSOutSide;
                         temp_output.CVSStoreName = logistics.CVSStoreName;
@@ -2445,6 +2478,22 @@ namespace EtheriT.Coker.Application.Order
                                 case "2041":
                                 case "3024":
                                     temp_output.LogisticsStatusStr += "物流狀態：物流中心理貨中";
+                                    break;
+                                case "3006":
+                                case "3015":
+                                case "3120":
+                                case "3312":
+                                case "3313":
+                                case "7004":
+                                    temp_output.LogisticsStatusStr += "配送中";
+                                    break;
+                                case "3003":
+                                case "3307":
+                                case "3308":
+                                case "3309":
+                                case "3314":
+                                    temp_output.LogisticsStatusStr += "已配達";
+                                    temp_output.LogisticsStatus = "已配達";
                                     break;
                                 case "2063":
                                 case "2073":
@@ -2486,6 +2535,23 @@ namespace EtheriT.Coker.Application.Order
                                 case "9001":
                                 case "9002":
                                     temp_output.LogisticsStatusStr += "物流狀態：已取回退回商品";
+                                    break;
+                                case "3303":
+                                case "3306":
+                                    temp_output.LogisticsStatusStr += "投遞失敗(請至綠界物流查詢原因)";
+                                    break;
+                                case "3117":
+                                case "3305":
+                                    temp_output.LogisticsStatusStr += "拒收(請至綠界物流查詢原因)";
+                                    break;
+                                case "3124":
+                                case "3311":
+                                case "3315":
+                                    temp_output.LogisticsStatusStr += "退回中";
+                                    break;
+                                case "3310":
+                                case "5008":
+                                    temp_output.LogisticsStatusStr += "已退回";
                                     break;
                                 case "2075":
                                 case "2077":
@@ -2538,8 +2604,10 @@ namespace EtheriT.Coker.Application.Order
                             temp_output.LogisticsTypeStr = "CVS";
                             temp_output.LogisticsSubTypeStr = "C2COKMART";
                             break;
-                        case ShippingTypeEnum.綠界_黑貓:
                         case ShippingTypeEnum.綠界_中華郵政:
+                        case ShippingTypeEnum.綠界_黑貓_常溫:
+                        case ShippingTypeEnum.綠界_黑貓_冷藏:
+                        case ShippingTypeEnum.綠界_黑貓_冷凍:
                             temp_output.LogisticsTypeStr = "HOME";
                             temp_output.LogisticsSubTypeStr = "HOME";
                             break;

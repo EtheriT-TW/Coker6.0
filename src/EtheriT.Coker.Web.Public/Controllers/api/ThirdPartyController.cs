@@ -264,7 +264,7 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                                 response = await ecPayLogisticsAppService.ECPayLogisticsExpressCVSCreate(dto.OrderId);
                                 break;
                             case "HOME":
-
+                                response = await ecPayLogisticsAppService.ECPayLogisticsExpressHOMECreate(dto.OrderId, dto);
                                 break;
                             default:
                                 response.Message = $"物流方式【{dto.ExtraData}】不支援";
@@ -316,6 +316,9 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                     case "ReturnCVS":
                         response = await ecPayLogisticsAppService.ECPayLogisticsCVSReturn(dto.OrderId);
                         break;
+                    case "ReturnHOME":
+                        response = await ecPayLogisticsAppService.ECPayLogisticsHOMEReturn(dto.OrderId);
+                        break;
                     default:
                         response.Message = $"查詢動作【{dto.Action}】不支援";
                         break;
@@ -327,18 +330,23 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
         [HttpPost]
         [AllowAnonymous]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCallbackDto dto)
+        public async Task<IActionResult> ECPayLogisticsExpressCreateResponse([FromForm] ECPayLogisticsCallbackDto dto)
         {
-            await ecPayLogisticsAppService.ECPayLogisticsExpressCreateResponse(dto);
-            return Content("1|OK");
+            var form = await Request.ReadFormAsync();
+            if (!await ecPayLogisticsAppService.VerifyLogisticsCallback(form.ToDictionary(x => x.Key, x => x.Value.ToString()))) return Content("0|Invalid CheckMacValue");
+            var response = await ecPayLogisticsAppService.ECPayLogisticsExpressCreateResponse(dto);
+            return Content(response.Success ? "1|OK" : "0|Failed");
         }
         [HttpPost]
         [AllowAnonymous]
         [Consumes("application/x-www-form-urlencoded")]
-        public async Task<IActionResult> ECPayLogisticsCVSReturnResponse(ECPayLogisticsCallbackReverseDto dto)
+        [HttpPost("/api/ThirdParty/ECPayLogisticsCVSReturnResponse")]
+        public async Task<IActionResult> ECPayLogisticsReturnResponse([FromForm] ECPayLogisticsCallbackReverseDto dto, [FromQuery] long? orderId, [FromQuery] string? correlation)
         {
-            await ecPayLogisticsAppService.ECPayLogisticsCVSReturnResponse(dto);
-            return Content("1|OK");
+            var form = await Request.ReadFormAsync();
+            if (!await ecPayLogisticsAppService.VerifyLogisticsCallback(form.ToDictionary(x => x.Key, x => x.Value.ToString()))) return Content("0|Invalid CheckMacValue");
+            var response = await ecPayLogisticsAppService.ECPayLogisticsReturnResponse(dto, orderId, correlation);
+            return Content(response.Success ? "1|OK" : "0|Failed");
         }
         private string GenerateAutoPostForm(string actionUrl, object RequestBody)
         {

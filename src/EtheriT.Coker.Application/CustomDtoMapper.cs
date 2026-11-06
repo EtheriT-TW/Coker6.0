@@ -382,7 +382,16 @@ namespace EtheriT.Coker.Application
             CreateMap<ECPayLogisticsCreateCVSRequestDto, ECPayLogisticsCreateRequestDto>()
                 .ReverseMap();
 
+            CreateMap<ECPayLogisticsCreateHomeRequestDto, ECPayLogisticsCreateRequestDto>()
+                .ReverseMap();
+
             CreateMap<ECPayLogisticsReturnRequestDto, ECPayLogisticsReturnFAMIRequestDto>()
+                .ReverseMap();
+
+            CreateMap<ECPayLogisticsReturnRequestDto, ECPayLogisticsReturnHomeDeliveryRequestDto>()
+                .ReverseMap();
+
+            CreateMap<Order_Logistics, ECPayLogisticsReturnHomeDeliveryRequestDto>()
                 .ReverseMap();
 
             //ShoppingCart

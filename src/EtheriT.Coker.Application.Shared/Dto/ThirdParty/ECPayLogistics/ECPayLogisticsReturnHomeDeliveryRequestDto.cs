@@ -5,7 +5,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics
     {
         public string MerchantID { get; set; }
         public string AllPayLogisticsID { get; set; }
-        public string LogisticsSubType { get; set; }
+        public string LogisticsSubType { get; set; } = "TCAT";
         public string ServerReplyURL { get; set; }
         public string SenderName { get; set; }
         public string SenderPhone { get; set; }
@@ -23,8 +23,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics
         public string Temperature { get; set; }
         public string Distance { get; set; }
         public string Specification { get; set; }
-        public string ScheduledPickupTime { get; set; }
-        public string ScheduledDeliveryTime { get; set; }
+        public string ScheduledPickupTime { get; set; } = "4";
+        public string ScheduledDeliveryTime { get; set; } = "4";
         public string Remark { get; set; }
         public string PlatformID { get; set; }
         public string CheckMacValue { get; set; }

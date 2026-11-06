@@ -232,8 +232,10 @@ namespace EtheriT.Coker.Application.ThirdParty
                             {
                                 LogisticsType.AddRange(new[]
                                 {
-                                    ShippingTypeEnum.綠界_黑貓,
                                     ShippingTypeEnum.綠界_中華郵政,
+                                    ShippingTypeEnum.綠界_黑貓_常溫,
+                                    ShippingTypeEnum.綠界_黑貓_冷藏,
+                                    ShippingTypeEnum.綠界_黑貓_冷凍,
                                 });
                             }
 

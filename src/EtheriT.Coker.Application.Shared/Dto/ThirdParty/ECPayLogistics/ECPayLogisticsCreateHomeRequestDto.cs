@@ -3,7 +3,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics
 {
     public class ECPayLogisticsCreateHomeRequestDto : ECPayLogisticsCreateRequestDto
     {
-        public override string LogisticsType => "Home";
+        public override string LogisticsType => "HOME";
         public decimal GoodsWeight { get; set; }
         public string SenderZipCode { get; set; }
         public string SenderAddress { get; set; }

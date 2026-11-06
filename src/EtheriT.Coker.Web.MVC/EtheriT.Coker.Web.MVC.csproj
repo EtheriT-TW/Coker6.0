@@ -5,6 +5,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 	<ItemGroup>
+		<Content Remove="Diagnostics\backoffice-cases.json" />
+		<EmbeddedResource Include="Diagnostics\backoffice-cases.json" LogicalName="Coker.Diagnostics.BackofficeCases.json" />
+	</ItemGroup>
+	<ItemGroup>
 		<Compile Remove="Views\UserManagement\**" />
 		<Content Remove="Views\UserManagement\**" />
 		<EmbeddedResource Remove="Views\UserManagement\**" />
@@ -61,6 +65,7 @@
 		<Content Remove="wwwroot\js\ProductManagement\SpecSetting.js" />
 		<Content Remove="wwwroot\js\ProductManagement\TechnicalCertificate.js" />
 		<Content Remove="wwwroot\js\SearchManagement\CustSearch.js" />
+		<Content Remove="wwwroot\js\SystemDiagnostics\Backoffice.js" />
 		<Content Remove="wwwroot\js\site.js" />
 		<Content Remove="wwwroot\js\StoreSettings\FreightSettings.js" />
 		<Content Remove="wwwroot\js\SystemManagement\SEOSetting.js" />
@@ -170,6 +175,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.10" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.21.0" />
 		<PackageReference Include="MiniExcel" Version="1.45.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

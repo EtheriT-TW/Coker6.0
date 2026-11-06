@@ -1,0 +1,30 @@
+@using EtheriT.Coker.Web.MVC.Diagnostics
+@model BackofficeTestListModel
+<div data-diagnostics-summary data-has-run="@(Model.HasRun ? "true" : "false")" data-total="@Model.TotalCases" data-pages-count="@Model.Pages.Count">
+    <p data-diagnostics-counts>適用操作項目 @Model.TotalCases 項；尚未執行檢測。</p>
+</div>
+<div class="alert alert-secondary" data-diagnostics-empty hidden></div>
+@for (var index = 0; index < Model.Pages.Count; index++)
+{
+    var entry = Model.Pages[index];
+    <details class="card mb-3" data-diagnostics-group data-page-index="@index" data-has-run="@(Model.HasRun ? "true" : "false")" open>
+        <summary class="card-header">@entry.Module / @entry.Title</summary>
+        <div class="card-body"><div class="table-responsive">
+            <table class="table table-bordered">
+                <caption class="sr-only">@entry.Title 檢測項目</caption>
+                <thead><tr><th scope="col">檢測項目</th><th scope="col">結果</th></tr></thead>
+                <tbody>
+                    <tr data-diagnostics-row data-status="@entry.BasicStatus" data-basic="true">
+                        <td>頁面基本檢查</td><td>@entry.BasicMessage</td>
+                    </tr>
+                    @foreach (var test in entry.Cases)
+                    {
+                        <tr data-diagnostics-row data-status="@test.Status">
+                            <td>@test.Title</td><td>@test.StatusLabel @test.ResultMessage</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div></div>
+    </details>
+}

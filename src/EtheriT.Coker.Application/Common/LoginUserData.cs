@@ -431,6 +431,24 @@ namespace EtheriT.Coker.Application
                             binding.WebsiteId == mapping.Role.FK_WebsiteId))));
         }
 
+        public async Task<bool> IsPlatformAdministrator()
+        {
+            var userId = await GetUserId();
+            if (userId <= 0) return false;
+
+            return await db.MappingUserAndPlatformRoles
+                .AsNoTracking()
+                .AnyAsync(mapping =>
+                    mapping.UserId == userId &&
+                    !mapping.IsDeleted &&
+                    mapping.User != null &&
+                    !mapping.User.IsDeleted &&
+                    mapping.PlatformRole != null &&
+                    !mapping.PlatformRole.IsDeleted &&
+                    mapping.PlatformRole.IsEnabled &&
+                    mapping.PlatformRole.Code == PlatformRoleCodes.Administrator);
+        }
+
         public async Task<bool> CanAccessPlatform()
         {
             var userId = await GetUserId();

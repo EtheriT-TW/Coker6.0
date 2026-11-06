@@ -1,0 +1,98 @@
+# 後台功能檢測流程與維護規則
+
+## 執行範圍
+
+MVC「系統檢測 → 後台功能測試」的開始按鈕會真正呼叫已登錄的執行器。
+它不執行 dotnet test、build、restore、bundle、Migration，也不透過 HTTP 遍歷所有 GET Action。
+這些開發／產物操作仍依根目錄 AGENTS.md 由使用者控制。
+
+目前登錄 206 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
+30 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 206。
+原本的 160 個較廣泛人工驗收規格保留在同一份內部清單；尚未綁定 executor 的規格不列入自動檢測畫面及通過數。
+這不是宣稱原本的完整瀏覽器與外部服務驗收已全部自動化。
+
+## 三種實際執行方式
+
+1. 頁面基本檢查：確認 MVC 入口已註冊及 Razor View 可解析。不渲染或執行業務 Action。
+2. 唯讀整合檢查：呼叫白名單中已追蹤的實際 Application Service，使用目前站台資料。
+   列表限制最多兩筆，驗證 DTO 必要欄位及序列化、互斥條件的空列表、識別欄位篩選、遞增／遞減排序及 Skip / Take 分頁。
+   沒有樣本或不足兩筆時，相依檢查標為未執行，不能當作通過。
+   設定、元件、網站地圖、流量及營收使用各自的回應與資料條件檢查。
+3. 隔離業務檢查：每個案例建立獨立 DI 容器、EF Core InMemory 資料庫、測試網站與帳號，以及獨立暫存目錄。
+   呼叫實際業務服務新增、修改、刪除，再清除追蹤並重新查詢資料核對結果。
+   已涵蓋商品、庫存、會員價格、批次庫存、跨站保護、庫存警示、規格、證照、文章、目錄、廣告、標籤、
+   分群、會員角色、箱型、跑馬燈、版頭／頁尾／全站設定、表單批次處理／回覆、信件建構、檔案回收／還原／刪除與路徑界線。
+
+InMemory 只用來驗證隔離資料中的業務邏輯。它不等同 SQL Server，不驗證真實資料庫的外鍵／唯一限制、交易、
+定序、SQL 翻譯與所有關聯式行為；真實 SQL 查詢由唯讀整合檢查另外覆蓋。
+目前也未提供完整瀏覽器點擊、所有匯入匯出、登入工作階段及金流／物流外部契約測試。
+不得將頁面基本檢查或記憶體資料檢查描述成整個功能或整站驗收通過。
+
+## 資料安全
+
+- 唯讀查詢期間以 AsyncLocal 範圍啟用 EF SaveChanges 與 SQL Command 攔截器，阻擋資料寫入。
+  SQL 僅允許受檢查的 SELECT，拒絕非查詢命令與修改資料／結構的關鍵字；服務吞掉資料庫例外時仍判為失敗。
+  不得因 HTTP GET、方法名稱含 Get 或交易 rollback 就認定安全。
+- 訂單正常列表原有逾期訂單維護保持預設啟用；診斷專用 GetAllListForDiagnostics 省略逾期訂單維護，避免查詢順便改單。
+- 隔離容器的 CokerDbContext 與型別化 DbContextOptions 都明確改用新的 InMemoryDatabaseRoot；不得使用客戶連線字串。
+  組態不帶入客戶設定，快取與 HttpContextAccessor 也分開；不得使用真實資料當可修改的 fixture。
+- 網路 HttpClient 與背景工作在隔離容器中阻擋。已登錄的隔離案例不使用靜態 Hangfire API 或未審查的直接網路呼叫。
+- 郵件經實際信封、收件人及本文建構後，在伺服器內部 DiagnosticsSandboxScope 中攔截並存於記憶體；
+  這個分支在建立 SMTP client 前返回，不連線、不寄出。外部請求的 header、cookie 或參數不能開啟此範圍。
+  實際郵件服務是否可投遞不包含在此項通過結果。
+- 測試檔案僅在系統暫存目錄 CokerDiagnostics / 隨機 GUID 下產生，執行後清理。
+  清理前比對完整目錄邊界，不能刪除其他路徑。路徑保護檢查僅解析危險路徑，不寫出界檔案。
+
+## 按鈕、進度與結果
+
+開始按鈕以具防偽驗證的 POST 逐頁執行；伺服器每次重新確認平台管理者身分、站台 ID 與範圍指紋。
+同一網站／使用者同時僅接受一個頁面的檢測工作。前端顯示逐頁進度，可停止；已完成結果保留，未完成仍是尚未檢測。
+每頁呼叫有逾時處理，取消會傳到伺服器的 RequestAborted（部分舊服務不接受 CancellationToken，已送出的資料庫讀取可能待其完成）。
+
+預設只列未通過項目，#failed / #all 與 history.replaceState 切換不重載、不重跑檢測。
+重跑前清除舊狀態，避免把前次通過誤當成本次結果。重新整理後需重新執行，目前沒有持久化檢測紀錄。
+
+使用者只看易懂的項目與結果。原始碼路徑、案例 ID、Controller / Action、入口盤點、排除原因及規格保留內部。
+例外僅記錄伺服器日誌，不將原始錯誤、資料內容或憑證回傳給使用者。
+
+## 新增、修改功能時必做
+
+1. 閱讀 AGENTS.md，從本次變更的 View、Partial、JavaScript 追蹤直接相關 API、DTO 與 Service。
+2. 盤點真實操作及成功／無效輸入／邊界／權限／跨站隔離／失敗分支。不可只新增一個選單或 HTTP 200 測試。
+3. 在 Diagnostics/backoffice-cases.json 新增或更新 page / case，使用穩定唯一 ID，保留來源、步驟與預期結果。
+4. 若可自動執行，必須實作白名單執行器並綁定 executor；僅填入文字步驟不算已實作。
+   - 列表流程：BackofficeReadOnlyChecks，同時指定頁面、識別欄位、必要欄位及明確 Service 呼叫。
+   - 設定／統計：BackofficeObjectChecks，編寫實際回應及資料條件。
+   - 寫入／檔案：BackofficeSandboxChecks 與其 partial，編寫獨立 fixture、實際操作及重新查詢斷言。
+   - 只許登錄固定程式操作，不能讓清單指定任意 URL、SQL、反射方法或外部命令。
+5. 更新 Supports 白名單。載入清單時會拒絕未知或頁面不匹配的 executor，不能默默略過錯字。
+6. 不可為了消除待建置項目，就把人工規格綁到只檢查入口的執行器；不涵蓋的範圍需保留於內部規格並明確說明。
+7. Bug 修正需補能重現問題的斷言；保留未變更 ID，不因排序或標題變動重新編號。
+8. 靜態核對 JSON、唯一 ID、來源路徑、executor 對應、介面簽章與 Git diff，說明未執行的驗證。
+
+每個 page 要有 controller、action、title、module、sources、cases。每個 case 要有 id、title、steps、expected、mode。
+mode 使用 review / isolated / external；executor 是已實作程式的識別，不是可以執行任意程式的腳本。
+沒有執行器的較廣泛人工規格可以保留，但不出現在自動檢測清單，不計入通過。
+
+## 站台適用範圍
+
+NavigationProvider.BuildDiagnosticsScopeAsync 先套網站功能設定，再套版本上限，遞迴保留有效父層下的啟用功能。
+平台管理者不因此取得站台方案沒有的功能；形象站不納入訂單、營收或檢貨單。
+跨功能 case 的 requiredFeatures 必須全部啟用，例如 ContactUsExported、DirectoryFacet 或 OrderManagement。
+登入／忘記密碼／歡迎頁是明確登錄的共用入口；其他無功能映射入口預設不納入。
+
+入口描述資料仍與全部內部規格比對 MissingPages / StalePages，排除需記錄 reason；結果只在伺服器模型，供維護者偵錯查看。
+此比對不能自動辨識既有頁面新增按鈕或規則，所以開發時仍必須維護案例與執行器。
+
+## 資產、套件與驗證
+
+清單以 EmbeddedResource 置入 MVC 組件，更新後需重新編譯啟動。
+MVC View 引用 Backoffice.min.js，原始碼為 wwwroot/js/SystemDiagnostics/Backoffice.js；由使用者手動執行 npm run create-bundles。
+該 script 先檢查授權資產，再執行 yarn 與 gulp buildDev，會產生前端資產及啟動監看，可能下載套件及更新 lock file。
+不由 Codex 執行。
+
+隔離容器使用 Microsoft.EntityFrameworkCore.InMemory 10.0.10，與本專案 EF Core 版本一致，沒有升級既有套件。
+新增 PackageReference 不表示已還原或已編譯成功；還原、編譯及實際執行由使用者依 AGENTS.md 決定。
+
+建議手動檢查：形象／購物站範圍、未授權帳號、逐頁進度、停止後狀態、重跑清除舊結果、hash 切換、
+空資料／不足資料的未執行狀態、隔離 CRUD 與郵件擷取、暫存目錄清理，以及一般寄信／訂單列表既有行為。

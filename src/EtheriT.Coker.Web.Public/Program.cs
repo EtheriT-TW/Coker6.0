@@ -378,6 +378,7 @@ static void ConfigureStaticFileHeaders(StaticFileResponseContext ctx)
     // 固定 headers
     res.Headers["Accept-Ranges"] = "bytes";
     res.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+    res.Headers["X-Content-Type-Options"] = "nosniff";
 
     // 判斷是否為版本化資源
     var isVersioned = req.Query.ContainsKey("v");

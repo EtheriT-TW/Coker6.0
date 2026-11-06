@@ -66,11 +66,11 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                 }
                 if (_env.IsProduction())
                 {
-                    connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com *.googleadservices.com https://ad.doubleclick.net https://stats.g.doubleclick.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://remotejs.com wss://remotejs.com";
+                    connectSrc = $"'self' {backstageHost} *.google.com *.google-analytics.com *.googleapis.com *.googleadservices.com https://ad.doubleclick.net https://stats.g.doubleclick.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw";
                 }
 
                 var scriptSrc = AppendAdditionalSources(
-                    $"'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com translate.google.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com remotejs.com www.instagram.com platform.twitter.com www.threads.com www.threads.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw glogistics.ecpay.com.tw https://cdn.jsdelivr.net",
+                    $"'self' '{selfInline}' *.google.com *.googletagmanager.com *.googleadservices.com *.googleapis.com *.facebook.net *.jquery.com *.yimg.com *.google-analytics.com translate.google.com scaleflex.cloudimg.io googleads.g.doubleclick.net d.line-scdn.net cdn.ckeditor.com www.instagram.com platform.twitter.com www.threads.com www.threads.net https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://applepay.cdn-apple.com logistics-stage.ecpay.com.tw logistics.ecpay.com.tw postgate-stage.ecpay.com.tw postgate.ecpay.com.tw glogistics.ecpay.com.tw https://cdn.jsdelivr.net",
                     "AdditionalScripts");
                 var styleSrc = AppendAdditionalSources(
                     $"'self' '{selfInline}' {ExternalStylesheetPolicy.CspSourceExpression}",
@@ -86,6 +86,13 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     "AdditionalFrames");
                 connectSrc = AppendAdditionalSources(connectSrc, "AdditionalConnections");
                 connectSrc += " https://syndication.twitter.com https://www.threads.com https://www.threads.net https://graph.facebook.com https://www.facebook.com";
+                // 只有開啟 RemoteJs 前端監控的站台（研發站）才放行 remotejs.com，其餘站台維持最小權限
+                bool isRemoteJsEnabled = _configuration.GetValue<bool>("RemoteJs:Enabled", false);
+                if (isRemoteJsEnabled)
+                {
+                    scriptSrc += " https://remotejs.com";
+                    connectSrc += " https://remotejs.com wss://remotejs.com";
+                }
                 var frameAncestors = AppendAdditionalSources(
                     "'self' *.ezsale.tw",
                     "AdditionalFrameAncestors");
@@ -102,14 +109,24 @@ namespace EtheriT.Coker.Web.Public.Middlewares
                     $"img-src {imageSrc}; " +
                     $"frame-src {frameSrc};" +
                     $"connect-src {connectSrc};" +
-                    $"frame-ancestors {frameAncestors};";
-                //cache 限制設定
-                context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
+                    $"frame-ancestors {frameAncestors};" +
+                    $"form-action 'self' https://ecpg-stage.ecpay.com.tw https://ecpg.ecpay.com.tw https://logistics-stage.ecpay.com.tw https://logistics.ecpay.com.tw;" +
+                    $"base-uri 'self';" +
+                    $"object-src 'none';";
+                //cache 限制設定：Antiforgery 產生 token 時會把 Cache-Control 覆寫成 "no-cache, no-store"，
+                //改在回應送出前才設定，確保最後輸出的是完整版本
+                context.Response.OnStarting(() =>
+                {
+                    context.Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private";
+                    return Task.CompletedTask;
+                });
                 //Pragma 為http 1.0以下使用，以上已被 Cache-Control取代
                 context.Response.Headers["Pragma"] = "no-cache";
                 context.Response.Headers["Expires"] = "0";
                 //防止瀏覽器進行 MIME 嗅探
                 context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                //舊瀏覽器不認 CSP frame-ancestors，補 X-Frame-Options；新瀏覽器兩者並存時以 frame-ancestors 為準，*.ezsale.tw 仍可嵌入
+                context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
             }
             bool bypassBodyRewrite = context.Request.Path.HasValue &&
                 (context.Request.Path.Value.EndsWith("/api/Captcha/index", StringComparison.OrdinalIgnoreCase) ||

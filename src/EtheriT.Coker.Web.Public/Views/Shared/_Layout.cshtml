@@ -633,8 +633,7 @@
                     observeNewIcons();
                 }
 
-                // 等 Google 把 select 生出來（TranslateElement 不保證同步完成）
-                // 等 Google 把 select 和 option 都生出來（TranslateElement 不保證同步完成）
+                @* 等 Google 把 select 和 option 都生出來（TranslateElement 不保證同步完成） *@
                 function whenComboReady(callback, tries = 40) {
                     const combo = document.querySelector('select.goog-te-combo');
                     if (combo && combo.options.length > 1) { callback(combo); return; }
@@ -698,7 +697,7 @@
                             restoreOriginalLanguage();
                             return;
                         }
-                        // Google 翻譯後會重建 select，一定要即時查，不能用閉包捕獲的
+                        @* Google 翻譯後會重建 select，一定要即時查，不能用閉包捕獲的 *@
                         const combo = document.querySelector('select.goog-te-combo');
                         if (!combo) return;
                         combo.value = lang.code;

@@ -959,7 +959,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     return response;
                 }
                 logistics.RtnMerchantTradeNo = dto.RtnMerchantTradeNo;
-                db.AuditLogs.Add(new AuditLog
+                db.AuditLogs.Add(new EtheriT.Coker.Core.Models.AuditLog
                 {
                     FK_WebsiteId = WebsiteId, ExecutionTime = DateTime.Now,
                     ServiceName = ECPayLogisticsState.ReturnService, MethodName = nameof(ECPayLogisticsReturnResponse),

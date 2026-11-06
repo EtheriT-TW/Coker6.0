@@ -2633,6 +2633,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         },
                         new
                         {
+                            Id = -718L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 18
+                        },
+                        new
+                        {
+                            Id = -719L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 7L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 19
+                        },
+                        new
+                        {
                             Id = -801L,
                             CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatorUserId = 1L,
@@ -2793,6 +2813,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         },
                         new
                         {
+                            Id = -818L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 18
+                        },
+                        new
+                        {
+                            Id = -819L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 8L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 19
+                        },
+                        new
+                        {
                             Id = -1001L,
                             CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
                             CreatorUserId = 1L,
@@ -2950,6 +2990,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             IsDeleted = false,
                             IsEnabled = false,
                             ShippingType = 17
+                        },
+                        new
+                        {
+                            Id = -1018L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 18
+                        },
+                        new
+                        {
+                            Id = -1019L,
+                            CreationTime = new DateTime(2026, 7, 27, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_PaymentTypeId = 10L,
+                            IsDeleted = false,
+                            IsEnabled = false,
+                            ShippingType = 19
                         });
                 });
 

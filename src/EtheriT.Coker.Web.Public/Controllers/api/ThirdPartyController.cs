@@ -197,7 +197,12 @@ namespace EtheriT.Coker.Web.Public.Controllers.api
                         break;
                 }
             }
-            else response.Error = "Token 驗證錯誤";
+            else
+            {
+                response.Success = false;
+                response.Error = "Token 驗證錯誤";
+                response.Message = "登入已失效或沒有本站操作權限，請重新登入";
+            }
             return response;
         }
         [HttpGet]

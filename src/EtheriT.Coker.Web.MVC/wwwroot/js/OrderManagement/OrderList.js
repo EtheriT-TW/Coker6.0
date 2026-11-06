@@ -172,12 +172,7 @@ function PageReady() {
                 $btn_createLogistics.addClass("d-none");
                 $btn_printShippingLabel.addClass("d-none");
             }
-            if (parseInt($order_status.val()) != 3) {
-                $("#OrderData .LogisticsStatusStr").addClass("d-none");
-                $("#OrderData .LogisticsStatusStr").text("");
-                $btn_queryLogisticsStatus.addClass("d-none");
-            }
-            if (parseInt($order_status.val()) != 8) {
+            if (![3, 7].includes(parseInt($order_status.val()))) {
                 $btn_logisticsReturn.addClass("d-none");
             }
             // 剛改成已取消、且付款方式需人工退款：成功訊息關閉後自動帶出退款方式。
@@ -498,6 +493,17 @@ function PageReady() {
         Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
             if (result.success) {
                 const [code, message] = result.message.split("|");
+                $("#OrderData .LogisticsStatusStr").text(message).removeClass("d-none");
+                const shipment = result.object || {};
+                if (shipment.allPayLogisticsID) {
+                    $btn_createLogistics.addClass("d-none");
+                    $btn_printShippingLabel.removeClass("d-none");
+                }
+                if (shipment.bookingNote) {
+                    $(".order_bookingNote").text(shipment.bookingNote);
+                    $(".bookingNoteLine").removeClass("d-none");
+                }
+                if (shipment.trackingNumber && !$tracking_number.val()) $tracking_number.val(shipment.trackingNumber);
                 co.sweet.success(message, function () { }, false);
             } else {
                 co.sweet.error("無法取得物流狀態", result.message);
@@ -520,6 +526,8 @@ function PageReady() {
 
         Coker.ThirdParty.HandleThirdPartyLogistics(data).done(function (result) {
             if (result.success) {
+                $btn_logisticsReturn.addClass("d-none");
+                $("#OrderData .ReturnLogisticsStatusStr").text(result.message.replace(/<[^>]*>/g, "")).removeClass("d-none");
                 co.sweet.success(result.message, function () { }, false);
             } else {
                 co.sweet.error("產生退貨編號發生錯誤", result.message);
@@ -1098,7 +1106,7 @@ function HeaderDataInsert(data) {
         $btn_createLogistics.removeClass("d-none");
     }
 
-    if (["已取件", "已配達"].includes(data.logisticsStatus) && [8, 9, 10, 11, 16, 18, 19].includes(data.logisticsType) && !data.logisticsStatusStr.startsWith("退貨編號")) {
+    if ([3, 7].includes(data.state) && ["已取件", "已配達"].includes(data.logisticsStatus) && [8, 9, 10, 11, 16, 18, 19].includes(data.logisticsType) && !data.hasLogisticsReturn) {
         $btn_logisticsReturn.removeClass("d-none");
     }
 
@@ -1112,12 +1120,13 @@ function HeaderDataInsert(data) {
         $("#Logistics .ECPayLogistics").addClass("d-none");
     }
 
-    if (data.state == 3 && data.logisticsStatusStr != "") {
-        $btn_queryLogisticsStatus.removeClass("d-none");
-        $("#OrderData .LogisticsStatusStr").html(data.logisticsStatusStr);
+    $btn_queryLogisticsStatus.toggleClass("d-none", !data.canQueryLogistics);
+    if (data.logisticsStatusStr) {
+        $("#OrderData .LogisticsStatusStr").text(data.logisticsStatusStr);
         $("#OrderData .LogisticsStatusStr").removeClass("d-none")
     }
 
+    $("#OrderData .ReturnLogisticsStatusStr").text([data.returnLogisticsStatusStr, data.returnBookingNote ? `退貨託運單號：${data.returnBookingNote}` : ""].filter(Boolean).join("；")).toggleClass("d-none", !data.returnLogisticsStatusStr && !data.returnBookingNote);
     ECPayLogisticsTypeStr = data.logisticsTypeStr;
     ECPayLogisticsSubTypeStr = data.logisticsSubTypeStr;
 }

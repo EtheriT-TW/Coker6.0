@@ -146,7 +146,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (string.IsNullOrEmpty(ThirdPartyData.MerchantID) || string.IsNullOrEmpty(ThirdPartyData.HashKey) || string.IsNullOrEmpty(ThirdPartyData.HashIV)) throw new Exception("查無ECPay所需參數");
 
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && !e.IsDeleted && e.FK_WebsiteId == configuration.GetValue<long>("WebConfig:SiteId")).FirstOrDefaultAsync();
                 if (ohdata == null) throw new Exception("查無訂單資訊");
 
                 var RequestBody = await ECPayExpressCVSRequestBody(ThirdPartyData, ohdata);
@@ -164,41 +164,45 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
                 PostResponse.EnsureSuccessStatusCode();
                 var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                var status = jsonResponse.Split('|')[0];
-                var dataPart = jsonResponse.Contains("|") ? jsonResponse.Split('|')[1] : jsonResponse;
+                var parts = jsonResponse.Split('|', 2);
+                var status = parts[0];
+                var dataPart = parts.Length == 2 ? parts[1] : jsonResponse;
 
                 if (status != "1") response.Message = dataPart;
                 else
                 {
-                    response.Success = true;
-
-                    var ResponseDict = dataPart.Split('&').Select(x => x.Split('=')).ToDictionary(
-                            x => x[0],
-                            x => x.Length > 1 ? Uri.UnescapeDataString(x[1]) : ""
-                        );
+                    var ResponseDict = ParseVerifiedResponse(dataPart, ThirdPartyData);
 
                     var json = JsonConvert.SerializeObject(ResponseDict);
 
                     var ResponseDto = JsonConvert.DeserializeObject<ECPayLogisticsCreateResponseDto>(json);
 
                     var logistics = await db.Order_Logistics.Where(e => e.MerchantTradeNo == ResponseDto.MerchantTradeNo).FirstOrDefaultAsync();
-                    if (logistics == null) throw new Exception($"查無訂單MerchantTradeNo{ResponseDto.MerchantTradeNo}的物流資訊");
+                    if (logistics == null || logistics.FK_OhId != ohid || ResponseDto.MerchantTradeNo != RequestBody.MerchantTradeNo) throw new Exception("綠界建單回應與目前訂單不符，請先補查物流單");
 
-                    logistics.LogisticsStatusCode = ResponseDto.RtnCode.ToString();
+                    await db.Entry(logistics).ReloadAsync();
+                    var responseDate = ECPayLogisticsState.ParseDate(ResponseDto.UpdateStatusDate) ?? throw new Exception("建單回應時間格式錯誤");
+                    if (!logistics.UpdateStatusDate.HasValue || responseDate >= logistics.UpdateStatusDate.Value)
+                    {
+                        logistics.LogisticsStatusCode = ResponseDto.RtnCode.ToString(CultureInfo.InvariantCulture);
+                        logistics.UpdateStatusDate = responseDate;
+                    }
                     logistics.AllPayLogisticsID = ResponseDto.AllPayLogisticsID;
-
-                    if (DateTime.TryParseExact(ResponseDto.UpdateStatusDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var updateDate)) logistics.LastModificationTime = updateDate;
                     logistics.CVSPaymentNo = ResponseDto.CVSPaymentNo;
                     logistics.CVSValidationNo = ResponseDto.CVSValidationNo;
                     logistics.BookingNote = ResponseDto.BookingNote;
 
+                    await db.Entry(ohdata).ReloadAsync();
+                    ECPayLogisticsState.SyncOrderState(ohdata, logistics.LogisticsStatusCode);
                     db.SaveChanges();
+                    response.Success = true;
 
                     response.Message = $@"{ResponseDto.RtnMsg}<br>更新時間{ResponseDto.UpdateStatusDate}";
                 }
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Message = ex.Message;
             }
             return response;
@@ -212,8 +216,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
                 if (LogisticsSetting == null) throw new Exception("查無運費資訊");
 
-                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id).FirstOrDefaultAsync();
-                if (logistics == null) throw new Exception("查無物流資訊");
+                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id && !e.IsDeleted).FirstOrDefaultAsync();
+                if (logistics == null || logistics.LogisticsType != "CVS") throw new Exception("查無超商物流資訊");
 
                 RequestBody = mapper.Map<ECPayLogisticsCreateCVSRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsSetting));
 
@@ -245,7 +249,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (string.IsNullOrEmpty(ThirdPartyData.MerchantID) || string.IsNullOrEmpty(ThirdPartyData.HashKey) || string.IsNullOrEmpty(ThirdPartyData.HashIV)) throw new Exception("查無ECPay所需參數");
 
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && !e.IsDeleted && e.FK_WebsiteId == configuration.GetValue<long>("WebConfig:SiteId")).FirstOrDefaultAsync();
                 if (ohdata == null) throw new Exception("查無訂單資訊");
 
                 var logisticsData = await db.Order_Logistics.FirstOrDefaultAsync(e => e.FK_OhId == ohid);
@@ -282,33 +286,34 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
                 PostResponse.EnsureSuccessStatusCode();
                 var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-                var status = jsonResponse.Split('|')[0];
-                var dataPart = jsonResponse.Contains("|") ? jsonResponse.Split('|')[1] : jsonResponse;
+                var parts = jsonResponse.Split('|', 2);
+                var status = parts[0];
+                var dataPart = parts.Length == 2 ? parts[1] : jsonResponse;
 
                 if (status != "1") response.Message = dataPart;
                 else
                 {
-                    var parsed = HttpUtility.ParseQueryString(dataPart);
-                    var ResponseDict = parsed.AllKeys.Where(k => k != null).ToDictionary(k => k!, k => parsed[k!] ?? "");
-                    if (!ResponseDict.TryGetValue("MerchantID", out var merchant) || merchant != ThirdPartyData.MerchantID ||
-                        !ResponseDict.TryGetValue("CheckMacValue", out var checksum) ||
-                        !string.Equals(checksum, Encrypt(ResponseDict, ThirdPartyData.HashKey, ThirdPartyData.HashIV), StringComparison.OrdinalIgnoreCase))
-                        throw new Exception("綠界建單回應檢查碼驗證失敗，請先查詢物流狀態");
+                    var ResponseDict = ParseVerifiedResponse(dataPart, ThirdPartyData);
                     var json = JsonConvert.SerializeObject(ResponseDict);
 
                     var ResponseDto = JsonConvert.DeserializeObject<ECPayLogisticsCreateResponseDto>(json);
 
                     var logistics = await db.Order_Logistics.Where(e => e.MerchantTradeNo == ResponseDto.MerchantTradeNo).FirstOrDefaultAsync();
-                    if (logistics == null) throw new Exception($"查無訂單MerchantTradeNo{ResponseDto.MerchantTradeNo}的物流資訊");
+                    if (logistics == null || logistics.FK_OhId != ohid || ResponseDto.MerchantTradeNo != RequestBody.MerchantTradeNo) throw new Exception("綠界建單回應與目前訂單不符，請先補查物流單");
 
-                    logistics.LogisticsStatusCode = ResponseDto.RtnCode.ToString();
+                    await db.Entry(logistics).ReloadAsync();
+                    var responseDate = ECPayLogisticsState.ParseDate(ResponseDto.UpdateStatusDate) ?? throw new Exception("建單回應時間格式錯誤");
+                    if (!logistics.UpdateStatusDate.HasValue || responseDate >= logistics.UpdateStatusDate.Value)
+                    {
+                        logistics.LogisticsStatusCode = ResponseDto.RtnCode.ToString(CultureInfo.InvariantCulture);
+                        logistics.UpdateStatusDate = responseDate;
+                    }
                     logistics.AllPayLogisticsID = ResponseDto.AllPayLogisticsID;
-
-                    if (DateTime.TryParseExact(ResponseDto.UpdateStatusDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var updateDate)) logistics.LastModificationTime = updateDate;
                     logistics.CVSPaymentNo = ResponseDto.CVSPaymentNo;
                     logistics.CVSValidationNo = ResponseDto.CVSValidationNo;
                     logistics.BookingNote = ResponseDto.BookingNote;
 
+                    ECPayLogisticsState.SyncOrderState(ohdata, logistics.LogisticsStatusCode);
                     db.SaveChanges();
 
                     response.Success = true;
@@ -317,6 +322,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Message = ex.Message;
             }
             return response;
@@ -330,7 +336,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var LogisticsSetting = await db.LogisticsSettings.Where(e => e.Id == ohdata.Shipping).FirstOrDefaultAsync();
                 if (LogisticsSetting == null) throw new Exception("查無運費資訊");
 
-                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id).FirstOrDefaultAsync();
+                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id && !e.IsDeleted).FirstOrDefaultAsync();
                 if (logistics == null) throw new Exception("查無物流資訊");
 
                 RequestBody = mapper.Map<ECPayLogisticsCreateHomeRequestDto>(await ECPayExpressRequestBody(ThirdPartyData, ohdata, LogisticsSetting));
@@ -368,11 +374,13 @@ namespace EtheriT.Coker.Application.ThirdParty
             try
             {
                 var user = await db.FrontUsers.Where(e => e.UUID == ohdata.FK_UUID).FirstOrDefaultAsync();
-                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id).FirstOrDefaultAsync();
+                var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id && !e.IsDeleted).FirstOrDefaultAsync();
                 if (logistics == null) throw new Exception("查無物流資訊");
+                if (!string.IsNullOrEmpty(logistics.AllPayLogisticsID)) throw new Exception("此訂單已建立物流單，請先查詢物流狀態");
+                if (ohdata.State != OrderStatusEnum.待確認 && ohdata.State != OrderStatusEnum.已付款 && ohdata.State != OrderStatusEnum.待付款) throw new Exception("目前訂單狀態不允許建立物流單");
 
                 RequestBody.MerchantID = ThirdPartyData.MerchantID;
-                var MerchantTradeNo = ($"000000000{ohdata.Id}").Substring((ohdata.Id).ToString().Length);
+                var MerchantTradeNo = logistics.MerchantTradeNo ?? ohdata.Id.ToString("D9", CultureInfo.InvariantCulture);
                 RequestBody.MerchantTradeNo = MerchantTradeNo;
                 logistics.MerchantTradeNo = MerchantTradeNo;
                 db.SaveChanges();
@@ -476,34 +484,35 @@ namespace EtheriT.Coker.Application.ThirdParty
         }
         public async Task<ResponseMessageDto> ECPayLogisticsExpressCreateResponse(ECPayLogisticsCallbackDto dto)
         {
-            ResponseMessageDto response = new ResponseMessageDto();
-            var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
-            var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
-
+            var response = new ResponseMessageDto();
             try
             {
-                await loginUserData.SetLogs(0, WebsiteId, $"ECPayLogisticsExpressCreateResponse", JsonConvert.SerializeObject(dto));
-                var logistics = await db.Order_Logistics.Where(e => e.MerchantTradeNo == dto.MerchantTradeNo).FirstOrDefaultAsync();
-                if (logistics == null) throw new Exception($"查無訂單MerchantTradeNo{dto.MerchantTradeNo}的物流資訊");
-                var ohdata = await db.Order_Headers.Where(e => e.Id == logistics.FK_OhId).FirstOrDefaultAsync();
-                if (ohdata == null) throw new Exception($"查無訂單ID {logistics.FK_OhId}");
-
-                logistics.LogisticsStatusCode = dto.RtnCode.ToString();
-                if (!string.IsNullOrEmpty(dto.AllPayLogisticsID)) logistics.AllPayLogisticsID = dto.AllPayLogisticsID;
-                if (!string.IsNullOrEmpty(dto.BookingNote)) logistics.BookingNote = dto.BookingNote;
-
-                if (new[] { "2068", "3032" }.Contains(logistics.LogisticsStatusCode)) ohdata.State = OrderStatusEnum.已出貨;
-                if (DateTime.TryParseExact(dto.UpdateStatusDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var updateDate)) logistics.LastModificationTime = updateDate;
-
-                db.SaveChanges();
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var logistics = await db.Order_Logistics.FirstOrDefaultAsync(e => !e.IsDeleted && e.MerchantTradeNo == dto.MerchantTradeNo);
+                if (logistics == null) throw new Exception("查無物流資訊");
+                var order = await db.Order_Headers.FirstOrDefaultAsync(e => e.Id == logistics.FK_OhId && !e.IsDeleted && e.FK_WebsiteId == websiteId);
+                if (order == null) throw new Exception("查無本站訂單");
+                if (!string.IsNullOrEmpty(logistics.AllPayLogisticsID) && logistics.AllPayLogisticsID != dto.AllPayLogisticsID)
+                    throw new Exception("物流交易編號不符");
+                var updatedAt = ECPayLogisticsState.ParseDate(dto.UpdateStatusDate) ?? throw new Exception("物流通知時間格式錯誤");
+                // Retries and out-of-order callbacks must not move a shipment back to an older status.
+                if (!logistics.UpdateStatusDate.HasValue || updatedAt >= logistics.UpdateStatusDate.Value)
+                {
+                    logistics.LogisticsStatusCode = dto.RtnCode.ToString(CultureInfo.InvariantCulture);
+                    logistics.UpdateStatusDate = updatedAt;
+                    if (!string.IsNullOrEmpty(dto.AllPayLogisticsID)) logistics.AllPayLogisticsID = dto.AllPayLogisticsID;
+                    if (!string.IsNullOrEmpty(dto.BookingNote)) logistics.BookingNote = dto.BookingNote;
+                    if (!string.IsNullOrEmpty(dto.CVSPaymentNo)) logistics.CVSPaymentNo = dto.CVSPaymentNo;
+                    if (!string.IsNullOrEmpty(dto.CVSValidationNo)) logistics.CVSValidationNo = dto.CVSValidationNo;
+                    ECPayLogisticsState.SyncOrderState(order, logistics.LogisticsStatusCode);
+                    await db.SaveChangesAsync();
+                }
                 response.Success = true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"-------------錯誤訊息查看-------------");
-                Console.WriteLine($"ECPayLogistics=>ECPayLogisticsExpressCreateResponse回傳資料：{ex.Message}");
-                response.Message = $"ECPayLogistics=>ECPayLogisticsExpressCreateResponse回傳資料：{ex.Message}";
-                await loginUserData.SetLogs(0, WebsiteId, $"ECPayLogisticsExpressCreateError", ex.Message);
+                response.Success = false;
+                response.Message = ex.Message;
             }
             return response;
         }
@@ -516,9 +525,9 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (ThirdPartyData.MerchantID != null)
                 {
-                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                    var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && !e.IsDeleted && e.FK_WebsiteId == configuration.GetValue<long>("WebConfig:SiteId")).FirstOrDefaultAsync();
                     if (ohdata == null) throw new Exception($"查無訂單資訊");
-                    var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id).FirstOrDefaultAsync();
+                    var logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohdata.Id && !e.IsDeleted).FirstOrDefaultAsync();
                     if (logistics == null) throw new Exception($"查無訂單物流資訊");
 
                     switch (type)
@@ -591,13 +600,15 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (string.IsNullOrEmpty(ThirdPartyData.MerchantID) || string.IsNullOrEmpty(ThirdPartyData.HashKey) || string.IsNullOrEmpty(ThirdPartyData.HashIV)) throw new Exception("查無ECPay所需參數");
 
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && !e.IsDeleted && e.FK_WebsiteId == configuration.GetValue<long>("WebConfig:SiteId")).FirstOrDefaultAsync();
                 if (ohdata == null) throw new Exception("查無訂單資訊");
-                var order_logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohid).FirstOrDefaultAsync();
+                var order_logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohid && !e.IsDeleted).FirstOrDefaultAsync();
                 if (order_logistics == null) throw new Exception("查無訂單物流資訊");
 
                 var DateTimeNow = DateTime.Now;
 
+                var queriedStatus = order_logistics.LogisticsStatusCode;
+                var queriedUpdateDate = order_logistics.UpdateStatusDate;
                 var hasLogisticsId = !string.IsNullOrEmpty(order_logistics.AllPayLogisticsID);
 
                 var RequestBody = new ECPayLogisticsTradeInfoRequestDto()
@@ -622,132 +633,46 @@ namespace EtheriT.Coker.Application.ThirdParty
                 ThirdPartyClient_ECPayLogistics.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/html"));
 
                 var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
+                PostResponse.EnsureSuccessStatusCode();
                 var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
-
-                if (jsonResponse.StartsWith("0|"))
-                {
-                    var errorMessage = jsonResponse.Substring(2);
-                    response.Message = errorMessage;
-                }
+                if (jsonResponse.StartsWith("0|")) response.Message = jsonResponse.Substring(2);
                 else
                 {
-
-                    var ResponseDict = jsonResponse.Split('&').Select(x => x.Split('=')).ToDictionary(x => x[0], x =>
-                    {
-                        var value = x.Length > 1 ? Uri.UnescapeDataString(x[1]) : "";
-                        return value == "null" ? null : value;
-                     });
-
-                    var json = JsonConvert.SerializeObject(ResponseDict);
-
-                    var ResponseDto = JsonConvert.DeserializeObject<ECPayLogisticsTradeInfoResponseDto>(json);
-                    if(order_logistics.LogisticsStatusCode != ResponseDto.LogisticsStatus)
-                    {
+                    var raw = ParseVerifiedResponse(jsonResponse, ThirdPartyData);
+                    var values = raw.ToDictionary(x => x.Key, x => x.Value == "null" ? null : x.Value);
+                    var ResponseDto = JsonConvert.DeserializeObject<ECPayLogisticsTradeInfoResponseDto>(JsonConvert.SerializeObject(values))
+                        ?? throw new Exception("查詢物流回應格式錯誤");
+                    if (ResponseDto.MerchantTradeNo != order_logistics.MerchantTradeNo ||
+                        (hasLogisticsId && ResponseDto.AllPayLogisticsID != order_logistics.AllPayLogisticsID))
+                        throw new Exception("查詢物流回應與目前訂單不符");
+                    if (string.IsNullOrWhiteSpace(ResponseDto.AllPayLogisticsID)) throw new Exception("查詢回應缺少物流交易編號");
+                    await db.Entry(order_logistics).ReloadAsync();
+                    order_logistics.AllPayLogisticsID = ResponseDto.AllPayLogisticsID;
+                    if (!string.IsNullOrEmpty(ResponseDto.BookingNote)) order_logistics.BookingNote = ResponseDto.BookingNote;
+                    if (!string.IsNullOrEmpty(ResponseDto.CVSPaymentNo)) order_logistics.CVSPaymentNo = ResponseDto.CVSPaymentNo;
+                    if (!string.IsNullOrEmpty(ResponseDto.CVSValidationNo)) order_logistics.CVSValidationNo = ResponseDto.CVSValidationNo;
+                    if (order_logistics.UpdateStatusDate == queriedUpdateDate && order_logistics.LogisticsStatusCode == queriedStatus)
                         order_logistics.LogisticsStatusCode = ResponseDto.LogisticsStatus;
-                        db.SaveChanges();
-                    }
+                    // Query results have no status timestamp; retain the last callback timestamp.
+                    await db.Entry(ohdata).ReloadAsync();
+                    if (string.IsNullOrWhiteSpace(ohdata.TrackingNumber))
+                        ohdata.TrackingNumber = !string.IsNullOrEmpty(ResponseDto.ShipmentNo) ? ResponseDto.ShipmentNo : ECPayLogisticsState.TrackingNumber(order_logistics, null);
+                    ECPayLogisticsState.SyncOrderState(ohdata, order_logistics.LogisticsStatusCode);
+                    await db.SaveChangesAsync();
                     response.Success = true;
-                    response.Message = ResponseDto.LogisticsStatus + "|";
-
-                    switch (ResponseDto.LogisticsStatus)
+                    response.Message = order_logistics.LogisticsStatusCode + "|" + ECPayLogisticsState.StatusText(order_logistics.LogisticsStatusCode);
+                    response.Object = new
                     {
-                        case "300":
-                        case "310":
-                        case "311":
-                        case "325":
-                            response.Message += "訂單處理中";
-                            break;
-                        case "2030":
-                        case "2041":
-                        case "3024":
-                            response.Message += "物流中心理貨中";
-                            break;
-                        case "3006":
-                        case "3015":
-                        case "3120":
-                        case "3312":
-                        case "3313":
-                        case "7004":
-                            response.Message += "配送中";
-                            break;
-                        case "3003":
-                        case "3307":
-                        case "3308":
-                        case "3309":
-                        case "3314":
-                            response.Message += "已配達";
-                            break;
-                        case "2063":
-                        case "2073":
-                        case "2098":
-                        case "3018":
-                        case "3029":
-                            response.Message += "已配達取件門市";
-                            break;
-                        case "2067":
-                        case "3022":
-                            response.Message += "消費者成功取件";
-                            break;
-                        case "2065":
-                        case "2074":
-                        case "3020":
-                            response.Message += "消費者未於期限內取件";
-                            break;
-                        case "4001":
-                            response.Message += "消費者已至門市寄件";
-                            break;
-                        case "2055":
-                        case "2076":
-                        case "2078":
-                        case "3025":
-                        case "4002":
-                        case "7255":
-                            response.Message += "退貨商品已退至物流中心";
-                            break;
-                        case "3303":
-                        case "3306":
-                            response.Message += "投遞失敗(請至綠界物流查詢原因)";
-                            break;
-                        case "3117":
-                        case "3305":
-                            response.Message += "拒收(請至綠界物流查詢原因)";
-                            break;
-                        case "3124":
-                        case "3311":
-                        case "3315":
-                            response.Message += "退回中";
-                            break;
-                        case "3310":
-                        case "5008":
-                            response.Message += "已退回";
-                            break;
-                        case "2072":
-                        case "2099":
-                        case "3019":
-                        case "3031":
-                            response.Message += "已配達退件門市";
-                            break;
-                        case "2044":
-                        case "2070":
-                        case "3023":
-                        case "9001":
-                        case "9002":
-                            response.Message += "已取回退回商品";
-                            break;
-                        case "2075":
-                        case "2077":
-                        case "3021":
-                        case "5004":
-                            response.Message += "退回商品逾期未取，如需了解退貨後續處理方式，請至綠界物流查詢";
-                            break;
-                        default:
-                            response.Message += "未列出的物流狀態，請至綠界物流查詢";
-                            break;
-                    }
+                        order_logistics.AllPayLogisticsID, order_logistics.BookingNote,
+                        TrackingNumber = ECPayLogisticsState.TrackingNumber(order_logistics, ohdata.TrackingNumber),
+                        LogisticsStatusStr = ECPayLogisticsState.StatusText(order_logistics.LogisticsStatusCode)
+                    };
+
                 }
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Message = ex.Message;
             }
             return response;
@@ -764,11 +689,15 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
                 var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
 
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && !e.IsDeleted && e.FK_WebsiteId == configuration.GetValue<long>("WebConfig:SiteId")).FirstOrDefaultAsync();
                 if (ohdata == null) throw new Exception("查無訂單資訊");
-                var order_logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohid).FirstOrDefaultAsync();
+                var order_logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohid && !e.IsDeleted).FirstOrDefaultAsync();
                 if (order_logistics == null) throw new Exception("查無訂單物流資訊");
 
+                if (!string.IsNullOrEmpty(order_logistics.RtnMerchantTradeNo) || !string.IsNullOrEmpty(order_logistics.RtnOrderNo)) throw new Exception("此訂單已申請退貨");
+                if (string.IsNullOrEmpty(order_logistics.AllPayLogisticsID)) throw new Exception("請先建立物流單");
+                if (ohdata.State != OrderStatusEnum.已出貨 && ohdata.State != OrderStatusEnum.已完成) throw new Exception("目前訂單狀態不允許退貨");
+                if (!new[] { "已取件", "已配達" }.Contains(ECPayLogisticsState.StatusText(order_logistics.LogisticsStatusCode))) throw new Exception("物流尚未完成配達或取件，請先查詢物流狀態");
                 var RequestBody = new ECPayLogisticsReturnRequestDto()
                 {
                     MerchantID = ThirdPartyData.MerchantID,
@@ -802,8 +731,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                 RequestBody.GoodsName = NormalizeEcpayGoodsName(itemlist);
                 RequestBody.GoodsAmount = (int)(ohdata.Subtotal + ohdata.Discount + ohdata.Bonus + ohdata.Freight);
 
-                RequestBody.SenderName = ResolveEcpaySenderName(ohdata.Orderer);
-                RequestBody.SenderPhone = ohdata.OrdererTelePhone;
+                RequestBody.SenderName = ResolveEcpaySenderName(ohdata.Recipient);
+                RequestBody.SenderPhone = ohdata.RecipientCellPhone;
 
                 var RequestUri = $"{configuration["ThirdParty:ECPayLogistics:LogisticsUrl"]}/express";
 
@@ -832,7 +761,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     case "UNIMART":
                     case "HILIFE":
                         if (order_logistics.LogisticsSubType == "UNIMARTFREEZE" || order_logistics.LogisticsSubType == "UNIMART") RequestUri += "/ReturnUniMartCVS";
-                        else if (order_logistics.LogisticsSubType == "Hilife") RequestUri += "/ReturnHilifeCVS";
+                        else if (order_logistics.LogisticsSubType == "HILIFE") RequestUri += "/ReturnHilifeCVS";
 
                         RequestBody.CheckMacValue = Encrypt(RequestBody, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
 
@@ -851,6 +780,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 ThirdPartyClient_ECPayLogistics.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/html"));
 
                 var PostResponse = await ThirdPartyClient_ECPayLogistics.PostAsync(RequestUri, content);
+                PostResponse.EnsureSuccessStatusCode();
                 var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
 
                 if (jsonResponse.StartsWith("|"))
@@ -875,6 +805,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Message = ex.Message;
             }
             return response;
@@ -891,9 +822,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
                 var Website = await db.Websites.Where(e => e.Id == WebsiteId).FirstOrDefaultAsync();
 
-                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                var ohdata = await db.Order_Headers.Where(e => e.Id == ohid && !e.IsDeleted && e.FK_WebsiteId == configuration.GetValue<long>("WebConfig:SiteId")).FirstOrDefaultAsync();
                 if (ohdata == null) throw new Exception("查無訂單資訊");
-                var order_logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohid).FirstOrDefaultAsync();
+                var order_logistics = await db.Order_Logistics.Where(e => e.FK_OhId == ohid && !e.IsDeleted).FirstOrDefaultAsync();
                 if (order_logistics == null) throw new Exception("查無訂單物流資訊");
 
                 if (order_logistics.LogisticsType != "HOME" || order_logistics.LogisticsSubType != "TCAT")
@@ -901,6 +832,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (string.IsNullOrEmpty(order_logistics.AllPayLogisticsID)) throw new Exception("請先建立物流訂單");
                 if (!string.IsNullOrEmpty(order_logistics.RtnMerchantTradeNo)) throw new Exception("此訂單已申請退貨");
                 var correlation = Encrypt(new { OrderId = ohid }, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
+                if (ohdata.State != OrderStatusEnum.已出貨 && ohdata.State != OrderStatusEnum.已完成) throw new Exception("目前訂單狀態不允許退貨");
+                if (!new[] { "已取件", "已配達" }.Contains(ECPayLogisticsState.StatusText(order_logistics.LogisticsStatusCode))) throw new Exception("物流尚未完成配達或取件，請先查詢物流狀態");
                 var RequestBody = new ECPayLogisticsReturnRequestDto()
                 {
                     MerchantID = ThirdPartyData.MerchantID,
@@ -977,6 +910,7 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (jsonResponse == "1|OK")
                 {
+                    await db.Entry(order_logistics).ReloadAsync();
                     if (string.IsNullOrEmpty(order_logistics.RtnMerchantTradeNo)) order_logistics.RtnMerchantTradeNo = $"HOME{ohid}";
                     await db.SaveChangesAsync();
                     response.Success = true;
@@ -990,6 +924,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Message = ex.Message;
             }
             return response;
@@ -1002,7 +937,6 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             try
             {
-                await loginUserData.SetLogs(0, WebsiteId, $"ECPayLogisticsExpressCreateResponse", JsonConvert.SerializeObject(dto));
                 Core.Models.Order_Logistics? logistics;
                 if (orderId.HasValue)
                 {
@@ -1013,12 +947,25 @@ namespace EtheriT.Coker.Application.ThirdParty
                 }
                 else logistics = await db.Order_Logistics.FirstOrDefaultAsync(e => e.RtnMerchantTradeNo == dto.RtnMerchantTradeNo);
                 if (logistics == null) throw new Exception("查無逆物流資訊");
-                logistics.RtnMerchantTradeNo = dto.RtnMerchantTradeNo;
                 var ohdata = await db.Order_Headers.Where(e => e.Id == logistics.FK_OhId).FirstOrDefaultAsync();
-                if (ohdata == null) throw new Exception($"查無訂單ID {logistics.FK_OhId}");
-                if (DateTime.TryParseExact(dto.UpdateStatusDate, "yyyy/MM/dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var updateDate)) logistics.LastModificationTime = updateDate;
-
-                db.SaveChanges();
+                if (ohdata == null || ohdata.IsDeleted || ohdata.FK_WebsiteId != WebsiteId || logistics.IsDeleted) throw new Exception("查無本站訂單");
+                if (string.IsNullOrWhiteSpace(dto.RtnMerchantTradeNo)) throw new Exception("逆物流交易編號不可為空");
+                var updatedAt = ECPayLogisticsState.ParseDate(dto.UpdateStatusDate) ?? throw new Exception("退貨通知時間格式錯誤");
+                var previous = await ECPayLogisticsState.GetReturnAsync(db, WebsiteId, logistics);
+                var previousDate = ECPayLogisticsState.ParseDate(previous?.UpdateStatusDate);
+                if (previousDate.HasValue && updatedAt <= previousDate.Value)
+                {
+                    response.Success = true;
+                    return response;
+                }
+                logistics.RtnMerchantTradeNo = dto.RtnMerchantTradeNo;
+                db.AuditLogs.Add(new AuditLog
+                {
+                    FK_WebsiteId = WebsiteId, ExecutionTime = DateTime.Now,
+                    ServiceName = ECPayLogisticsState.ReturnService, MethodName = nameof(ECPayLogisticsReturnResponse),
+                    Parameters = ECPayLogisticsState.ReturnKey(logistics), ReturnValue = JsonConvert.SerializeObject(dto)
+                });
+                await db.SaveChangesAsync();
                 response.Success = true;
             }
             catch (Exception ex)
@@ -1067,6 +1014,18 @@ namespace EtheriT.Coker.Application.ThirdParty
                 data.TryGetValue("MerchantID", out var merchant) && merchant == keys.MerchantID &&
                 data.TryGetValue("CheckMacValue", out var checksum) && !string.IsNullOrEmpty(checksum) &&
                 string.Equals(checksum, Encrypt(data, keys.HashKey, keys.HashIV), StringComparison.OrdinalIgnoreCase);
+        }
+        private Dictionary<string, string> ParseVerifiedResponse(string body, ECPayThirdPartyDataDto keys)
+        {
+            var parsed = HttpUtility.ParseQueryString(body);
+            if (parsed.AllKeys.Any(k => k == null) || parsed.AllKeys.Any(k => parsed.GetValues(k!)?.Length != 1))
+                throw new Exception("綠界回應格式錯誤，請先補查物流單");
+            var values = parsed.AllKeys.ToDictionary(k => k!, k => parsed[k!] ?? "");
+            if (!values.TryGetValue("MerchantID", out var merchant) || merchant != keys.MerchantID ||
+                !values.TryGetValue("CheckMacValue", out var checksum) || string.IsNullOrWhiteSpace(checksum) ||
+                !string.Equals(checksum, Encrypt(values, keys.HashKey, keys.HashIV), StringComparison.OrdinalIgnoreCase))
+                throw new Exception("綠界回應檢查碼驗證失敗，請先補查物流單");
+            return values;
         }
         private string Encrypt(object data, string hashKey, string hashIV)
         {

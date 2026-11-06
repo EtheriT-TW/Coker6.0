@@ -58,6 +58,10 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public string? Carrier { get; set; }
         public string? AllPayLogisticsID { get; set; }
         public string? BookingNote { get; set; }
+        public string? ReturnBookingNote { get; set; }
+        public string? ReturnLogisticsStatusStr { get; set; }
+        public bool HasLogisticsReturn { get; set; }
+        public bool CanQueryLogistics { get; set; }
         public string? CVSStoreID { get; set; }
         public string? CVSStoreName { get; set; }
         public string? CVSAddress { get; set; }

@@ -480,6 +480,8 @@
                     if (redeemBonus <= 0) frame.find(".collapse .header_redeemBonus").closest(".row").remove();
                 }
 
+                var statusText = [orderHeader.logisticsStatusStr, orderHeader.returnLogisticsStatusStr, orderHeader.returnBookingNote ? "退貨託運單號：" + orderHeader.returnBookingNote : ""].filter(Boolean).join("；");
+                if (statusText) $("<div>").addClass("order-logistics-status mt-2").text(statusText).insertAfter(frame.find(".logistics_info"));
                 if (C.util.string.isNullOrEmpty(orderHeader.trackingNumber)) {
                     frame.find(".logistics_info").addClass("d-none");
                 } else {

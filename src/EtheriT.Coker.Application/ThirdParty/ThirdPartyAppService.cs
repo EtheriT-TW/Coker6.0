@@ -13,6 +13,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
+using EtheriT.Coker.Application.Shared.Dto.enumType;
+using System.Security.Claims;
+using EtheriT.Coker.Application.Token;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.IdentityModel.Tokens.Jwt;
@@ -30,13 +34,15 @@ namespace EtheriT.Coker.Application.ThirdParty
         private readonly ICookieManagerAppService cookieManager;
         private readonly HttpClient ThirdPartyClient_Front;
         private readonly IWebHostEnvironment _env;
+        private readonly ITokenAppService tokenAppService;
         public ThirdPartyAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
             IConfiguration configuration,
             ICookieManagerAppService cookieManager,
             IHttpClientFactory httpClientFactory,
-            IWebHostEnvironment env
+            IWebHostEnvironment env,
+            ITokenAppService tokenAppService
         )
         {
             this.db = db;
@@ -44,6 +50,7 @@ namespace EtheriT.Coker.Application.ThirdParty
             this.configuration = configuration;
             this.cookieManager = cookieManager;
             this._env = env;
+            this.tokenAppService = tokenAppService;
             ThirdPartyClient_Front = httpClientFactory.CreateClient("ThirdPartyClient_Front");
         }
 
@@ -400,33 +407,48 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
+                var signKey = configuration["JwtSettings:SignKey"];
+                if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(signKey)) throw new Exception("Token 驗證設定錯誤");
+                var issuer = configuration["JwtSettings:Issuer"];
+                var audience = configuration["JwtSettings:Audience"] ?? issuer;
                 var handler = new JwtSecurityTokenHandler();
-                var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
-
-                if (jsonToken == null) return response;
-
-                string tokenid = jsonToken.Claims.FirstOrDefault(c => c.Type == "sid")?.Value;
-                string username = jsonToken.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
-                long expTimestamp = long.Parse(jsonToken.Claims.FirstOrDefault(c => c.Type == "exp")?.Value ?? "0");
-                DateTime expDate = DateTimeOffset.FromUnixTimeSeconds(expTimestamp).UtcDateTime;
-
-                if (expDate < DateTime.UtcNow) throw new Exception("Token 已過期");
-                else
+                handler.ValidateToken(token, new TokenValidationParameters
                 {
-                    response.Success = true;
-                    var db_token = await db.Tokens.Where(e => e.id.ToString() == tokenid).FirstOrDefaultAsync();
-                    if (db_token != null && db_token.UserID != null)
-                    {
-                        var user = await db.Users.Where(e => e.Id == db_token.UserID && e.Name == username).FirstOrDefaultAsync();
-                        if (user != null) response.Success = true;
-                        else throw new Exception("查無使用者資訊");
-                    }
-                    else throw new Exception("Token資訊錯誤");
-                }
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signKey)),
+                    ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
+                    RequireSignedTokens = true,
+                    ValidateIssuer = true, ValidIssuer = issuer,
+                    ValidateAudience = true, ValidAudience = audience,
+                    ValidateLifetime = true, RequireExpirationTime = true,
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                }, out var validatedToken);
+                if (await tokenAppService.IsTokenRevoked(token)) throw new Exception("Token 已撤銷");
+                var jwt = validatedToken as JwtSecurityToken ?? throw new Exception("Token 格式錯誤");
+                var sidValue = jwt.Claims.FirstOrDefault(c => c.Type == "sid" || c.Type == ClaimTypes.Sid)?.Value;
+                if (!Guid.TryParse(sidValue, out var sid)) throw new Exception("Token 識別碼錯誤");
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                if (websiteId == 0) websiteId = await loginUserData.GetWebsiteId();
+                var now = DateTime.Now;
+                var session = await db.Tokens.FirstOrDefaultAsync(e => e.id == sid && e.websiteId == websiteId &&
+                    e.UserID != null && e.StartTime <= now && e.EndTime != null && e.EndTime > now);
+                if (session == null) throw new Exception("登入已失效或不屬於目前網站");
+                var username = jwt.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
+                var user = await db.Users.FirstOrDefaultAsync(e => e.Id == session.UserID && e.Name == username && !e.IsDeleted && e.Status == (int)UserStatusEnum.開通);
+                if (user == null) throw new Exception("帳號已失效");
+                var hasAccess = await db.MappingUserAndRoles.AnyAsync(mapping => !mapping.IsDeleted && mapping.UserId == user.Id &&
+                    mapping.Role != null && !mapping.Role.IsDeleted &&
+                    (mapping.Role.Type == RoleTypeEnum.系統維護 ||
+                     (mapping.Role.Type == RoleTypeEnum.後台 && mapping.Role.FK_WebsiteId == websiteId &&
+                      db.MappingUserAndWebsites.Any(binding => !binding.IsDeleted && binding.UserId == user.Id &&
+                          binding.WebsiteId == websiteId && binding.Website != null && !binding.Website.IsDeleted))));
+                if (!hasAccess) throw new Exception("沒有目前網站的後台操作權限");
+                response.Success = true;
 
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.Error = ex.Message;
             }
             return response;
@@ -474,7 +496,12 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
                 if (website == null) throw new Exception("取得網站內容發生錯誤");
 
-                var frontApiUrl = _env.IsProduction() ? $"{website.DefaultUrl}/api/ThirdParty/{apiPath}" : $"https://lcb.develop.coker.ezsale.tw/api/ThirdParty/{apiPath}";
+                var frontBaseUrl = configuration["ThirdParty:FrontApiBaseUrl"];
+                if (string.IsNullOrWhiteSpace(frontBaseUrl)) frontBaseUrl = website.DefaultUrl;
+                if (!Uri.TryCreate(frontBaseUrl, UriKind.Absolute, out var frontUri) ||
+                    (frontUri.Scheme != Uri.UriSchemeHttps && frontUri.Scheme != Uri.UriSchemeHttp))
+                    throw new Exception("前台 API 網址設定錯誤");
+                var frontApiUrl = $"{frontBaseUrl.TrimEnd('/')}/api/ThirdParty/{apiPath}";
                 var jsonContent = new StringContent(JsonConvert.SerializeObject(dto), Encoding.UTF8, "application/json");
                 var postresponse = await ThirdPartyClient_Front.PostAsync(frontApiUrl, jsonContent);
 

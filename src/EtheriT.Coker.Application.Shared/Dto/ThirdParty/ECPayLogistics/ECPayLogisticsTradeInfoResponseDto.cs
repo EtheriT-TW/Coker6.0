@@ -3,7 +3,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics
 {
     public class ECPayLogisticsTradeInfoResponseDto
     {
-        public int? ActualWeight { get; set; }
+        public decimal? ActualWeight { get; set; }
         public string AllPayLogisticsID { get; set; }
         public string BookingNote { get; set; }
         public int CollectionAllocateAmount { get; set; }
@@ -14,7 +14,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.ThirdParty.ECPayLogistics
         public string CVSValidationNo { get; set; }
         public int GoodsAmount { get; set; }
         public string GoodsName { get; set; }
-        public int? GoodsWeight { get; set; }
+        public decimal? GoodsWeight { get; set; }
         public int HandlingCharge { get; set; }
         public string LogisticsStatus { get; set; }
         public string LogisticsType { get; set; }

@@ -33,6 +33,7 @@ using EtheriT.Coker.Application.Shared.Recipients;
 using EtheriT.Coker.Application.Shared.ShoppingCart;
 using EtheriT.Coker.Application.StoreSet;
 using EtheriT.Coker.Application.Token;
+using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.Application.Shared.Marketing;
 using EtheriT.Coker.Application.Shared.Dto.Marketing;
 using EtheriT.Coker.Application.Marketing;
@@ -2251,6 +2252,7 @@ namespace EtheriT.Coker.Application.Order
                         recipientAddress = result.OrdererAddress.Replace(" ", "");
                     }
 
+                    var returnState = orderLogistics == null ? null : await ECPayLogisticsState.GetReturnAsync(db, WebsiteId, orderLogistics);
                     OrderHeaderGetOneDto output = new OrderHeaderGetOneDto()
                     {
                         Id = result.Id,
@@ -2264,6 +2266,11 @@ namespace EtheriT.Coker.Application.Order
                         RecipientAddress = recipientAddress,
                         RecipientEmail = result.RecipientEmail,
                         BookingNote = orderLogistics?.BookingNote,
+                        ReturnBookingNote = returnState?.BookingNote,
+                        ReturnLogisticsStatusStr = orderLogistics == null ? "" : ECPayLogisticsState.ReturnText(orderLogistics, returnState),
+                        HasLogisticsReturn = !string.IsNullOrEmpty(orderLogistics?.RtnMerchantTradeNo) || !string.IsNullOrEmpty(orderLogistics?.RtnOrderNo),
+                        CanQueryLogistics = !string.IsNullOrEmpty(orderLogistics?.MerchantTradeNo) || !string.IsNullOrEmpty(orderLogistics?.AllPayLogisticsID),
+                        LogisticsStatusStr = ECPayLogisticsState.StatusText(orderLogistics?.LogisticsStatusCode),
                         CVSStoreID = isCvsShipping ? orderLogistics?.CVSStoreID : null,
                         CVSStoreName = isCvsShipping ? orderLogistics?.CVSStoreName : null,
                         CVSAddress = isCvsShipping ? orderLogistics?.CVSAddress : null,
@@ -2295,7 +2302,7 @@ namespace EtheriT.Coker.Application.Order
                         TransactionId = result.TransactionId,
                         RefundTransactionId = result.refundTransactionId,
                         Memo = result.Memo ?? "",
-                        TrackingNumber = result.TrackingNumber ?? "",
+                        TrackingNumber = ECPayLogisticsState.TrackingNumber(orderLogistics, result.TrackingNumber),
                     };
                     if (output.Payment != "")
                     {
@@ -2462,112 +2469,17 @@ namespace EtheriT.Coker.Application.Order
                                 : $"　{logistics.CVSStoreName}({cvsDetail})";
                         }
 
-                        if (logistics.RtnOrderNo != null) temp_output.LogisticsStatusStr = $"退貨編號：{logistics.RtnOrderNo}<br>";
+                        temp_output.TrackingNumber = ECPayLogisticsState.TrackingNumber(logistics, temp_output.TrackingNumber);
+                        temp_output.CanQueryLogistics = !string.IsNullOrEmpty(logistics.MerchantTradeNo) || !string.IsNullOrEmpty(logistics.AllPayLogisticsID);
+                        temp_output.LogisticsStatusStr = ECPayLogisticsState.StatusText(logistics.LogisticsStatusCode);
+                        temp_output.LogisticsStatus = temp_output.LogisticsStatusStr;
+                        temp_output.HasLogisticsReturn = !string.IsNullOrEmpty(logistics.RtnMerchantTradeNo) || !string.IsNullOrEmpty(logistics.RtnOrderNo);
+                        var returnState = await ECPayLogisticsState.GetReturnAsync(db, WebsiteId, logistics);
+                        temp_output.ReturnBookingNote = returnState?.BookingNote;
+                        temp_output.ReturnLogisticsStatusStr = ECPayLogisticsState.ReturnText(logistics, returnState);
+                        if (!string.IsNullOrEmpty(logistics.RtnOrderNo))
+                            temp_output.ReturnLogisticsStatusStr = $"退貨編號：{logistics.RtnOrderNo}；{temp_output.ReturnLogisticsStatusStr}";
 
-                        if (logistics.LogisticsStatusCode != null && temp_output.State == (int)OrderStatusEnum.已出貨)
-                        {
-                            switch (logistics.LogisticsStatusCode)
-                            {
-                                case "300":
-                                case "310":
-                                case "311":
-                                case "325":
-                                    temp_output.LogisticsStatusStr += "物流狀態：訂單處理中";
-                                    break;
-                                case "2030":
-                                case "2041":
-                                case "3024":
-                                    temp_output.LogisticsStatusStr += "物流狀態：物流中心理貨中";
-                                    break;
-                                case "3006":
-                                case "3015":
-                                case "3120":
-                                case "3312":
-                                case "3313":
-                                case "7004":
-                                    temp_output.LogisticsStatusStr += "配送中";
-                                    break;
-                                case "3003":
-                                case "3307":
-                                case "3308":
-                                case "3309":
-                                case "3314":
-                                    temp_output.LogisticsStatusStr += "已配達";
-                                    temp_output.LogisticsStatus = "已配達";
-                                    break;
-                                case "2063":
-                                case "2073":
-                                case "2098":
-                                case "3018":
-                                case "3029":
-                                    temp_output.LogisticsStatusStr += "物流狀態：已配達取件門市";
-                                    break;
-                                case "2067":
-                                case "3022":
-                                    temp_output.LogisticsStatusStr += "物流狀態：消費者成功取件";
-                                    temp_output.LogisticsStatus = "已取件";
-                                    break;
-                                case "2065":
-                                case "2074":
-                                case "3020":
-                                    temp_output.LogisticsStatusStr += "物流狀態：消費者未於期限內取件";
-                                    break;
-                                case "4001":
-                                    temp_output.LogisticsStatusStr += "物流狀態：消費者已至門市寄件";
-                                    break;
-                                case "2055":
-                                case "2076":
-                                case "2078":
-                                case "3025":
-                                case "4002":
-                                case "7255":
-                                    temp_output.LogisticsStatusStr += "物流狀態：退貨商品已退至物流中心";
-                                    break;
-                                case "2072":
-                                case "2099":
-                                case "3019":
-                                case "3031":
-                                    temp_output.LogisticsStatusStr += "物流狀態：已配達退件門市";
-                                    break;
-                                case "2044":
-                                case "2070":
-                                case "3023":
-                                case "9001":
-                                case "9002":
-                                    temp_output.LogisticsStatusStr += "物流狀態：已取回退回商品";
-                                    break;
-                                case "3303":
-                                case "3306":
-                                    temp_output.LogisticsStatusStr += "投遞失敗(請至綠界物流查詢原因)";
-                                    break;
-                                case "3117":
-                                case "3305":
-                                    temp_output.LogisticsStatusStr += "拒收(請至綠界物流查詢原因)";
-                                    break;
-                                case "3124":
-                                case "3311":
-                                case "3315":
-                                    temp_output.LogisticsStatusStr += "退回中";
-                                    break;
-                                case "3310":
-                                case "5008":
-                                    temp_output.LogisticsStatusStr += "已退回";
-                                    break;
-                                case "2075":
-                                case "2077":
-                                case "3021":
-                                case "5004":
-                                    temp_output.LogisticsStatusStr += "物流狀態：退回商品逾期未取，如需了解退貨後續處理方式，請至綠界物流查詢";
-                                    break;
-                                default:
-                                    temp_output.LogisticsStatusStr += "未列出的物流狀態，請至綠界物流查詢";
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            temp_output.LogisticsStatusStr = "";
-                        }
                     }
 
                     if (!isCvsShipping)

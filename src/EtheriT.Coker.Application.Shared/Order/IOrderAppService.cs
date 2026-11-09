@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<ResponseMessageDto> AddHeader(OrderHeaderAddDto dto);
         public Task<ResponseMessageDto> FrontUserUpdate(OrderHeaderAddDto dto);
         public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions);
+        public Task<JsonResult> GetAllListForDiagnostics(DataSourceLoadOptions loadOptions);
         public Task<OrderHeaderGetOneDto> GetHeaderOne(long id);
         public Task<List<OrderDetailsGetAllDto>> GetOrderDetails(long id);
         public Task<List<OrderDisplayDto>> GetOrderDisplay(List<long> ohids, bool check);

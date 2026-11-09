@@ -1,0 +1,17 @@
+@{
+    var heading = ViewData["PageHeading"];
+}
+<div class="row page-tilte align-items-center">
+    <div class="col-md-auto">
+        <h1 class="weight-300 h3 title">@heading</h1>
+        <p class="text-muted m-0 desc">系統檢測 / @heading</p>
+    </div>
+</div>
+<div class="content">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5">功能建置中</h2>
+            <p class="text-muted mb-0">@ViewData["EmptyMessage"]</p>
+        </div>
+    </div>
+</div>

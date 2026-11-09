@@ -1,0 +1,3656 @@
+{
+  "pages": [
+    {
+      "id": "OrderManagement.Index",
+      "module": "訂單管理",
+      "controller": "OrderManagement",
+      "action": "Index",
+      "title": "訂單列表",
+      "sources": [
+        "Controllers/OrderManagementController.cs",
+        "Views/OrderManagement/OrderList.cshtml",
+        "Controllers/api/OrderController.cs",
+        "wwwroot/js/OrderManagement/OrderList.js",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "OrderManagement.Index.automatic-orders-paging",
+          "title": "訂單列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "orders/paging"
+        },
+        {
+          "id": "OrderManagement.Index.automatic-orders-sort",
+          "title": "訂單列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "orders/sort"
+        },
+        {
+          "id": "OrderManagement.Index.automatic-orders-filter",
+          "title": "訂單列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "orders/filter"
+        },
+        {
+          "id": "OrderManagement.Index.automatic-orders-empty",
+          "title": "訂單列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "orders/empty"
+        },
+        {
+          "id": "OrderManagement.Index.automatic-orders-load",
+          "title": "訂單列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "orders"
+        },
+        {
+          "id": "OrderManagement.Index.query",
+          "title": "查詢、篩選與分頁",
+          "steps": "以訂單編號、狀態篩選，切換分頁後清除條件。",
+          "expected": "資料符合條件；清除後恢復列表。",
+          "mode": "review"
+        },
+        {
+          "id": "OrderManagement.Index.detail",
+          "title": "訂單明細與金額",
+          "steps": "開啟含運費、折扣、紅利的測試訂單，比對商品與總額。",
+          "expected": "明細、折扣、紅利及總額與測試資料一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "OrderManagement.Index.edit",
+          "title": "訂單資料與備註儲存",
+          "steps": "修改測試訂單收件資料與客服備註，儲存後重新載入。",
+          "expected": "變更正確保存，未修改欄位保持原值。",
+          "mode": "isolated"
+        },
+        {
+          "id": "OrderManagement.Index.status",
+          "title": "訂單狀態與不可逆限制",
+          "steps": "切換測試訂單狀態，再檢查已取消與付款失敗訂單的操作。",
+          "expected": "合法狀態可儲存；終止狀態禁止再次修改。",
+          "mode": "isolated"
+        },
+        {
+          "id": "OrderManagement.Index.logistics",
+          "title": "物流建單、託運單與退貨",
+          "steps": "在物流沙盒建立測試託運單、列印並進行退貨流程。",
+          "expected": "沙盒回應、物流編號與列印內容一致，不產生正式物流單。",
+          "mode": "external"
+        },
+        {
+          "id": "OrderManagement.Index.payment",
+          "title": "付款確認、退款及狀態同步",
+          "steps": "以金流沙盒訂單操作付款確認與退款，重查付款狀態。",
+          "expected": "付款與退款狀態符合沙盒結果，重複操作不重複扣退費。",
+          "mode": "external"
+        },
+        {
+          "id": "OrderManagement.Index.mail",
+          "title": "訂單與出貨通知",
+          "steps": "將訂單通知、重送與出貨通知送至測試信箱。",
+          "expected": "收件人、內容與訂單一致，不寄送客戶。",
+          "mode": "external"
+        },
+        {
+          "id": "OrderManagement.Index.dirty",
+          "title": "未儲存變更與返回確認",
+          "steps": "修改測試訂單狀態或備註後返回列表，分別取消與確認離開。",
+          "expected": "取消離開保留編輯內容；確認放棄不保存，未修改時不誤提示。",
+          "mode": "isolated"
+        },
+        {
+          "id": "OrderManagement.Index.tracking",
+          "title": "手動物流編號與重複儲存",
+          "steps": "修改測試訂單托運單號，連續點擊儲存並重新載入。",
+          "expected": "單號正確保存，送出期間禁止重複操作，錯誤時保留可重試狀態。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "OrderManagement.RevenueReport",
+      "module": "訂單管理",
+      "controller": "OrderManagement",
+      "action": "RevenueReport",
+      "title": "營收報表",
+      "sources": [
+        "Controllers/OrderManagementController.cs",
+        "Views/OrderManagement/RevenueReport.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "OrderManagement.RevenueReport.object-revenue-month",
+          "title": "每月營收區間及統計檢查",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/revenue-month"
+        },
+        {
+          "id": "OrderManagement.RevenueReport.object-revenue-day",
+          "title": "每日營收區間及統計檢查",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/revenue-day"
+        },
+        {
+          "id": "OrderManagement.RevenueReport.period",
+          "title": "日期區間與彙總",
+          "steps": "以固定測試訂單切換日期區間，核對筆數、金額與客單價。",
+          "expected": "依下單日期統計，客單價與有效訂單計算一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "OrderManagement.RevenueReport.exclude",
+          "title": "有效與無效訂單",
+          "steps": "準備已付款、已出貨、已完成、已取消與付款失敗訂單。",
+          "expected": "有效與無效訂單依畫面定義分別統計，不重複計算。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Report.R001",
+      "module": "訂單管理",
+      "controller": "Report",
+      "action": "R001",
+      "title": "列印檢貨單",
+      "sources": [
+        "Controllers/ReportController.cs",
+        "Views/Report/R001.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "Report.R001.print",
+          "title": "檢貨內容與列印",
+          "steps": "帶入已知測試訂單 ID，預覽並列印檢貨單。",
+          "expected": "品項、數量與收件資訊正確，分頁無截斷。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Report.R001.scope",
+          "title": "無效與跨站訂單 ID",
+          "steps": "以不存在及其他測試站的訂單 ID 讀取報表。",
+          "expected": "明確拒絕或顯示無資料，不洩露其他站台訂單。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ProductManagement.ProductList",
+      "module": "商品管理",
+      "controller": "ProductManagement",
+      "action": "ProductList",
+      "title": "商品列表",
+      "sources": [
+        "Controllers/ProductManagementController.cs",
+        "Views/ProductManagement/ProductList.cshtml",
+        "Controllers/api/ProductController.cs",
+        "wwwroot/js/ProductManagement/ProductList.js",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ProductManagement.ProductList.sandbox-product-scope",
+          "title": "跨站商品修改與刪除保護",
+          "steps": "建立其他測試站的商品，嘗試修改與刪除，確認拒絕且資料保持原值。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/product-scope"
+        },
+        {
+          "id": "ProductManagement.ProductList.sandbox-product-delete",
+          "title": "商品與庫存關聯刪除",
+          "steps": "建立測試商品及庫存，透過實際刪除服務刪除，核對商品與庫存刪除標記。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/product-delete"
+        },
+        {
+          "id": "ProductManagement.ProductList.sandbox-product-batch-stock",
+          "title": "批次庫存指定範圍",
+          "steps": "建立兩個商品，只批次修改其中一個，核對另一個保持原值。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/product-batch-stock"
+        },
+        {
+          "id": "ProductManagement.ProductList.sandbox-product-prices",
+          "title": "會員價格與紅利保存",
+          "steps": "建立測試會員角色與價格，修改金額後重新查詢金額及紅利。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/product-prices"
+        },
+        {
+          "id": "ProductManagement.ProductList.sandbox-product-stock",
+          "title": "規格庫存與購買限制保存",
+          "steps": "新增測試商品，修改庫存、最低購買量、警示量、容量點數與子料號，重新查詢。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/product-stock"
+        },
+        {
+          "id": "ProductManagement.ProductList.sandbox-product-core",
+          "title": "商品新增、必填與上下架資料保存",
+          "steps": "拒絕空白名稱，新增測試商品，修改標題、顯示及上下架狀態，重新查詢儲存結果。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/product-core"
+        },
+        {
+          "id": "ProductManagement.ProductList.automatic-products-paging",
+          "title": "商品列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "products/paging"
+        },
+        {
+          "id": "ProductManagement.ProductList.automatic-products-sort",
+          "title": "商品列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "products/sort"
+        },
+        {
+          "id": "ProductManagement.ProductList.automatic-products-filter",
+          "title": "商品列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "products/filter"
+        },
+        {
+          "id": "ProductManagement.ProductList.automatic-products-empty",
+          "title": "商品列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "products/empty"
+        },
+        {
+          "id": "ProductManagement.ProductList.automatic-products-load",
+          "title": "商品列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "products"
+        },
+        {
+          "id": "ProductManagement.ProductList.query",
+          "title": "商品列表、標籤與排序",
+          "steps": "使用商品名稱、標籤及上架條件篩選，再切換排序。",
+          "expected": "結果與條件一致，分頁與排序正確。",
+          "mode": "review"
+        },
+        {
+          "id": "ProductManagement.ProductList.edit",
+          "title": "基本資料、必填與上下架",
+          "steps": "新增測試商品，驗證空白必填欄位，再修改顯示與上架日期。",
+          "expected": "無效輸入被阻擋；有效資料保存並依期間顯示。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.stock",
+          "title": "規格、庫存與購買限制",
+          "steps": "設定多規格的子料號、可銷售量、最低購買量與警示量。",
+          "expected": "重開編輯後各規格資料一致，不互相覆蓋。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.price",
+          "title": "會員價格與付款方式",
+          "steps": "設定非會員及會員層級價格，輸入超出畫面上限的價格。",
+          "expected": "各層級價格正確保存；超出限制的值被拒絕。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.media",
+          "title": "圖片、影片與下載檔案",
+          "steps": "上傳測試圖片與檔案，輸入有效及無效影片網址，調整輪播順序。",
+          "expected": "預覽、封面、檔案及排序正確；無效影片提示錯誤。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.canvas",
+          "title": "畫布編輯、預覽與發布",
+          "steps": "編輯測試商品畫布，預覽、儲存，再重開編輯。",
+          "expected": "內容與樣式保留，預覽與發布內容一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.import",
+          "title": "三步驟商品匯入",
+          "steps": "選版型、上傳合法與錯誤測試檔、檢查掃描結果後確認匯入。",
+          "expected": "錯誤被指出；確認前不正式匯入；筆數與掃描一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.export",
+          "title": "商品匯出與背景進度",
+          "steps": "以測試商品啟動匯出，查看進度並下載產物。",
+          "expected": "進度完成後可下載，商品與價格內容一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.delete",
+          "title": "刪除商品與取消刪除",
+          "steps": "先取消刪除，再確認刪除專用測試商品。",
+          "expected": "取消不改資料；確認只刪除指定測試商品。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.ProductList.batch-stock",
+          "title": "規格庫存批次設定",
+          "steps": "選取多個測試商品規格進行批次庫存設定，再逐筆核對。",
+          "expected": "只更新選取規格，非法數值被拒絕，未選取規格保持原值。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ProductManagement.TechnicalCertificate",
+      "module": "商品管理",
+      "controller": "ProductManagement",
+      "action": "TechnicalCertificate",
+      "title": "技術證照",
+      "sources": [
+        "Controllers/ProductManagementController.cs",
+        "Views/ProductManagement/TechnicalCertificate.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ProductManagement.TechnicalCertificate.sandbox-certificate-crud",
+          "title": "技術證照增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/certificate-crud"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.automatic-certificates-paging",
+          "title": "證照列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "certificates/paging"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.automatic-certificates-sort",
+          "title": "證照列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "certificates/sort"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.automatic-certificates-filter",
+          "title": "證照列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "certificates/filter"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.automatic-certificates-empty",
+          "title": "證照列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "certificates/empty"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.automatic-certificates-load",
+          "title": "證照列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "certificates"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.edit",
+          "title": "證照資料與顯示期間",
+          "steps": "新增測試證照，設定圖片、排序及顯示起訖日期後重開。",
+          "expected": "證照資料與期間保存正確。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.canvas",
+          "title": "證照畫布發布",
+          "steps": "編輯測試證照詳細說明並發布、重新開啟。",
+          "expected": "內容與圖片保留。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.TechnicalCertificate.delete",
+          "title": "刪除證照",
+          "steps": "取消一次刪除，再刪除指定測試證照。",
+          "expected": "取消保留資料；確認只移除指定證照。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ProductManagement.SpecSetting",
+      "module": "商品管理",
+      "controller": "ProductManagement",
+      "action": "SpecSetting",
+      "title": "規格設定",
+      "sources": [
+        "Controllers/ProductManagementController.cs",
+        "Views/ProductManagement/SpecSetting.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ProductManagement.SpecSetting.sandbox-spec-delete",
+          "title": "規格類型刪除",
+          "steps": "新增測試類型並透過刪除服務刪除，核對刪除標記。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/spec-delete"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.sandbox-spec-value",
+          "title": "規格值新增與修改",
+          "steps": "建立規格類型及規格值，修改名稱，核對儲存結果與所屬類型。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/spec-value"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.sandbox-spec-type",
+          "title": "規格類型必填、新增與修改",
+          "steps": "測試空白類型被拒絕，再新增與修改類型，重新查詢結果。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/spec-type"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-specs-paging",
+          "title": "規格值列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "specs/paging"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-specs-sort",
+          "title": "規格值列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "specs/sort"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-specs-filter",
+          "title": "規格值列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "specs/filter"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-specs-empty",
+          "title": "規格值列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "specs/empty"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-specs-load",
+          "title": "規格值列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "specs"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-spec-types-paging",
+          "title": "規格類型列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "spec-types/paging"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-spec-types-sort",
+          "title": "規格類型列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "spec-types/sort"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-spec-types-filter",
+          "title": "規格類型列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "spec-types/filter"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-spec-types-empty",
+          "title": "規格類型列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "spec-types/empty"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.automatic-spec-types-load",
+          "title": "規格類型列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "spec-types"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.type",
+          "title": "規格類型增修與名稱驗證",
+          "steps": "新增、修改規格類型，嘗試符號開頭的名稱。",
+          "expected": "合法名稱可保存，符號開頭依規則拒絕。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.spec",
+          "title": "子規格與 Google 變體屬性",
+          "steps": "新增子規格並設定 Google 變體屬性後重新載入。",
+          "expected": "子規格所屬類型正確，SEO 屬性保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.SpecSetting.delete",
+          "title": "規格刪除與關聯",
+          "steps": "測試刪除未使用及已被商品引用的規格。",
+          "expected": "依既有關聯規則處理，不造成商品規格損壞。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ProductManagement.SaleQuantityStaging",
+      "module": "商品管理",
+      "controller": "ProductManagement",
+      "action": "SaleQuantityStaging",
+      "title": "可銷售量警示",
+      "sources": [
+        "Controllers/ProductManagementController.cs",
+        "Views/ProductManagement/SaleQuantityStaging.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ProductManagement.SaleQuantityStaging.sandbox-stock-alerts",
+          "title": "庫存警示門檻邊界",
+          "steps": "建立警示量為五的商品，逐次設定庫存為四、五、六，核對實際警示列表。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/stock-alerts"
+        },
+        {
+          "id": "ProductManagement.SaleQuantityStaging.automatic-stock-alerts-paging",
+          "title": "庫存警示列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "stock-alerts/paging"
+        },
+        {
+          "id": "ProductManagement.SaleQuantityStaging.automatic-stock-alerts-sort",
+          "title": "庫存警示列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "stock-alerts/sort"
+        },
+        {
+          "id": "ProductManagement.SaleQuantityStaging.automatic-stock-alerts-filter",
+          "title": "庫存警示列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "stock-alerts/filter"
+        },
+        {
+          "id": "ProductManagement.SaleQuantityStaging.automatic-stock-alerts-empty",
+          "title": "庫存警示列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "stock-alerts/empty"
+        },
+        {
+          "id": "ProductManagement.SaleQuantityStaging.automatic-stock-alerts-load",
+          "title": "庫存警示列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "stock-alerts"
+        },
+        {
+          "id": "ProductManagement.SaleQuantityStaging.threshold",
+          "title": "庫存警示門檻",
+          "steps": "準備低於、等於及高於警示量的測試商品規格。",
+          "expected": "警示列表符合實際門檻判斷，數量與商品一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ProductManagement.SaleQuantityStaging.query",
+          "title": "警示列表查詢",
+          "steps": "依商品名稱篩選並切換分頁。",
+          "expected": "只列出符合條件的警示規格。",
+          "mode": "review"
+        }
+      ]
+    },
+    {
+      "id": "Page.Index",
+      "module": "頁面管理",
+      "controller": "Page",
+      "action": "Index",
+      "title": "自訂頁面",
+      "sources": [
+        "Controllers/PageController.cs",
+        "Views/Page/Index.cshtml",
+        "Controllers/api/WebMenuController.cs",
+        "wwwroot/js/Page/Index.js",
+        "Diagnostics/BackofficeObjectChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Page.Index.object-menu-tree",
+          "title": "網站地圖樹狀查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/menu-tree"
+        },
+        {
+          "id": "Page.Index.automatic-menus-paging",
+          "title": "選單列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "menus/paging"
+        },
+        {
+          "id": "Page.Index.automatic-menus-sort",
+          "title": "選單列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "menus/sort"
+        },
+        {
+          "id": "Page.Index.automatic-menus-filter",
+          "title": "選單列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "menus/filter"
+        },
+        {
+          "id": "Page.Index.automatic-menus-empty",
+          "title": "選單列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "menus/empty"
+        },
+        {
+          "id": "Page.Index.automatic-menus-load",
+          "title": "選單列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "menus"
+        },
+        {
+          "id": "Page.Index.tree",
+          "title": "網站地圖與頁面選取",
+          "steps": "展開網站地圖並選取不同層級的測試頁面。",
+          "expected": "選單結構與選取頁面內容一致。",
+          "mode": "review"
+        },
+        {
+          "id": "Page.Index.menu",
+          "title": "選單新增、修改與類型",
+          "steps": "新增測試選單，調整名稱、頁面類型及連結後重開。",
+          "expected": "各類型欄位與連結保存正確。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.sort",
+          "title": "選單拖曳階層與排序",
+          "steps": "拖曳測試選單到其他層級，重新整理頁面。",
+          "expected": "父子關係與順序保持，不產生循環。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.canvas",
+          "title": "畫布、元件與發布",
+          "steps": "在測試頁面加入元件及圖片，預覽、儲存並重開。",
+          "expected": "元件內容、圖片與樣式保留。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.visibility",
+          "title": "顯示切換與刪除",
+          "steps": "切換測試選單顯示狀態，再取消與確認刪除。",
+          "expected": "狀態正確保存；取消不刪資料。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.history",
+          "title": "畫布歷程檢視",
+          "steps": "對已保存多版的測試頁面開啟畫布歷程及版本明細。",
+          "expected": "版本時間與明細對應正確，不因檢視而覆寫內容。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Page.ComponerManager",
+      "module": "頁面管理",
+      "controller": "Page",
+      "action": "ComponerManager",
+      "title": "元件管理",
+      "sources": [
+        "Controllers/PageController.cs",
+        "Views/Page/ComponerManager.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Page.ComponerManager.object-components",
+          "title": "元件目錄查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/components"
+        },
+        {
+          "id": "Page.ComponerManager.edit",
+          "title": "元件分類與必填欄位",
+          "steps": "新增測試元件，依序留空標題、排序，再輸入有效資料。",
+          "expected": "必填被檢查，分類與顯示設定可保存。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.ComponerManager.icon",
+          "title": "圖示與圖片標題",
+          "steps": "分別使用 icon 與圖片作為測試元件標題。",
+          "expected": "標題顯示與選擇一致，未設定 icon 時可使用圖片。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.ComponerManager.usage",
+          "title": "元件用途複選",
+          "steps": "選擇多個用途並確認，再測試自訂元件不設定用途。",
+          "expected": "選擇結果重開後一致，自訂元件可依規則保存。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ContentManagement.Tag",
+      "module": "內容管理",
+      "controller": "ContentManagement",
+      "action": "Tag",
+      "title": "標籤設定",
+      "sources": [
+        "Controllers/ContentManagementController.cs",
+        "Views/ContentManagement/Tag.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ContentManagement.Tag.sandbox-tag-group-crud",
+          "title": "標籤群組增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/tag-group-crud"
+        },
+        {
+          "id": "ContentManagement.Tag.sandbox-tag-crud",
+          "title": "標籤增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/tag-crud"
+        },
+        {
+          "id": "ContentManagement.Tag.automatic-tag-group-list-paging",
+          "title": "標籤群組列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "tag-group-list/paging"
+        },
+        {
+          "id": "ContentManagement.Tag.automatic-tag-group-list-sort",
+          "title": "標籤群組列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "tag-group-list/sort"
+        },
+        {
+          "id": "ContentManagement.Tag.automatic-tag-group-list-filter",
+          "title": "標籤群組列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "tag-group-list/filter"
+        },
+        {
+          "id": "ContentManagement.Tag.automatic-tag-group-list-empty",
+          "title": "標籤群組列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "tag-group-list/empty"
+        },
+        {
+          "id": "ContentManagement.Tag.read-only-list",
+          "title": "標籤群組列表／資料載入與欄位檢查",
+          "steps": "以目前站台的實際列表服務查詢至多一筆資料，不要求總筆數。",
+          "expected": "查詢與 DTO 序列化成功，回傳列表格式且至多一筆；空列表也有效。不驗證增修刪及完整篩選流程。",
+          "mode": "review",
+          "executor": "tag-group-list"
+        },
+        {
+          "id": "ContentManagement.Tag.tag",
+          "title": "標籤增修與名稱驗證",
+          "steps": "新增及修改標籤，再輸入符號開頭的名稱。",
+          "expected": "合法名稱保存，無效名稱被拒絕。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Tag.group",
+          "title": "標籤群組與子標籤",
+          "steps": "建立測試群組、加入子標籤並切換顯示。",
+          "expected": "群組、子標籤及顯示狀態保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Tag.delete",
+          "title": "標籤與群組刪除",
+          "steps": "測試取消刪除及刪除有關聯的測試群組。",
+          "expected": "取消不改資料；關聯依規則處理，不誤刪其他標籤。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ContentManagement.Directory",
+      "module": "內容管理",
+      "controller": "ContentManagement",
+      "action": "Directory",
+      "title": "目錄管理",
+      "sources": [
+        "Controllers/ContentManagementController.cs",
+        "Views/ContentManagement/Directory.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ContentManagement.Directory.sandbox-directory-crud",
+          "title": "目錄增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/directory-crud"
+        },
+        {
+          "id": "ContentManagement.Directory.automatic-directories-paging",
+          "title": "目錄列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "directories/paging"
+        },
+        {
+          "id": "ContentManagement.Directory.automatic-directories-sort",
+          "title": "目錄列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "directories/sort"
+        },
+        {
+          "id": "ContentManagement.Directory.automatic-directories-filter",
+          "title": "目錄列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "directories/filter"
+        },
+        {
+          "id": "ContentManagement.Directory.automatic-directories-empty",
+          "title": "目錄列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "directories/empty"
+        },
+        {
+          "id": "ContentManagement.Directory.automatic-directories-load",
+          "title": "目錄列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "directories"
+        },
+        {
+          "id": "ContentManagement.Directory.edit",
+          "title": "目錄資料與內容類型",
+          "steps": "新增測試目錄，分別設定商品、文章與選單類型。",
+          "expected": "資料與綁定內容類型一致，重開可正確讀取。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Directory.binding",
+          "title": "標籤、選單與內容關聯",
+          "steps": "調整測試目錄的綁定標籤、選單及內容。",
+          "expected": "僅影響指定目錄，關聯內容符合設定。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Directory.facet",
+          "title": "目錄再分類區間",
+          "steps": "測試年份、西元／民國顯示及分類區間拖曳、停用與儲存。",
+          "expected": "區間與排序保存，無效或重疊區間依規則提示。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "DirectoryFacet"
+          ]
+        },
+        {
+          "id": "ContentManagement.Directory.articles",
+          "title": "目錄內文章增修與畫布",
+          "steps": "於測試目錄新增文章，修改內文與畫布後重開。",
+          "expected": "文章隸屬目錄正確，內容與畫布保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Directory.delete",
+          "title": "目錄刪除與關聯保護",
+          "steps": "刪除含關聯資料的測試目錄，檢查提示與結果。",
+          "expected": "依關聯規則處理，不影響其他目錄資料。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ContentManagement.Article",
+      "module": "內容管理",
+      "controller": "ContentManagement",
+      "action": "Article",
+      "title": "文章管理",
+      "sources": [
+        "Controllers/ContentManagementController.cs",
+        "Views/ContentManagement/Directory.cshtml",
+        "Views/ContentManagement/_ArticleContent.cshtml",
+        "Controllers/api/ArticleController.cs",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ContentManagement.Article.sandbox-article-crud",
+          "title": "文章增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/article-crud"
+        },
+        {
+          "id": "ContentManagement.Article.automatic-articles-paging",
+          "title": "文章列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "articles/paging"
+        },
+        {
+          "id": "ContentManagement.Article.automatic-articles-sort",
+          "title": "文章列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "articles/sort"
+        },
+        {
+          "id": "ContentManagement.Article.automatic-articles-filter",
+          "title": "文章列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "articles/filter"
+        },
+        {
+          "id": "ContentManagement.Article.automatic-articles-empty",
+          "title": "文章列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "articles/empty"
+        },
+        {
+          "id": "ContentManagement.Article.automatic-articles-load",
+          "title": "文章列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "articles"
+        },
+        {
+          "id": "ContentManagement.Article.scope",
+          "title": "文章模式與列表",
+          "steps": "進入文章管理，確認列表與目錄管理模式差異。",
+          "expected": "顯示文章管理模式，資料與欄位符合用途。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.Article.edit",
+          "title": "文章資料與必填驗證",
+          "steps": "新增測試文章，驗證必填、標籤、圖片及顯示期間。",
+          "expected": "有效資料保存；無效欄位有明確提示。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Article.canvas",
+          "title": "文章進階編輯與發布",
+          "steps": "編輯測試文章畫布、預覽並發布，再重新載入。",
+          "expected": "內文、圖片與樣式一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Article.group",
+          "title": "文章群組與刪除權限",
+          "steps": "以有權限及無權限的測試帳號操作群組與刪除。",
+          "expected": "按鈕與伺服器端限制一致，未授權操作被拒絕。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ContentManagement.Marquee",
+      "module": "內容管理",
+      "controller": "ContentManagement",
+      "action": "Marquee",
+      "title": "跑馬燈訊息",
+      "sources": [
+        "Controllers/ContentManagementController.cs",
+        "Views/ContentManagement/Marquee.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ContentManagement.Marquee.sandbox-marquee-delete",
+          "title": "跑馬燈刪除",
+          "steps": "建立測試訊息並刪除，重新查詢刪除標記。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/marquee-delete"
+        },
+        {
+          "id": "ContentManagement.Marquee.sandbox-marquee-core",
+          "title": "跑馬燈新增與修改",
+          "steps": "建立測試訊息，修改文字、位置與另開視窗，重新查詢。",
+          "expected": "隔離資料中的操作結果符合上述步驟，未影響客戶資料；不包含瀏覽器互動或 SQL 相容性。",
+          "mode": "isolated",
+          "executor": "sandbox/marquee-core"
+        },
+        {
+          "id": "ContentManagement.Marquee.automatic-marquee-list-paging",
+          "title": "跑馬燈列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "marquee-list/paging"
+        },
+        {
+          "id": "ContentManagement.Marquee.automatic-marquee-list-sort",
+          "title": "跑馬燈列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "marquee-list/sort"
+        },
+        {
+          "id": "ContentManagement.Marquee.automatic-marquee-list-filter",
+          "title": "跑馬燈列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "marquee-list/filter"
+        },
+        {
+          "id": "ContentManagement.Marquee.automatic-marquee-list-empty",
+          "title": "跑馬燈列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "marquee-list/empty"
+        },
+        {
+          "id": "ContentManagement.Marquee.read-only-list",
+          "title": "跑馬燈列表／資料載入與欄位檢查",
+          "steps": "以目前站台的實際列表服務查詢至多一筆資料，不要求總筆數。",
+          "expected": "查詢與 DTO 序列化成功，回傳列表格式且至多一筆；空列表也有效。不驗證增修刪及完整篩選流程。",
+          "mode": "review",
+          "executor": "marquee-list"
+        },
+        {
+          "id": "ContentManagement.Marquee.edit",
+          "title": "文字、位置、連結與排序",
+          "steps": "建立測試跑馬燈，設定頁首／內頁、連結與另開視窗。",
+          "expected": "各欄位與排序重新載入後一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Marquee.period",
+          "title": "顯示期間與數量限制",
+          "steps": "準備超過五筆及不同顯示期間的測試訊息。",
+          "expected": "依顯示期間與排序選取，前台最多顯示五筆。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Marquee.delete",
+          "title": "訊息刪除",
+          "steps": "取消後再確認刪除測試訊息。",
+          "expected": "取消不改資料；確認只刪指定訊息。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "ContentManagement.ContactUs",
+      "module": "內容管理",
+      "controller": "ContentManagement",
+      "action": "ContactUs",
+      "title": "聯絡我們",
+      "sources": [
+        "Controllers/ContentManagementController.cs",
+        "Views/ContentManagement/ContactUs.cshtml",
+        "Controllers/api/ContactController.cs",
+        "wwwroot/js/ContentManagement/ContactsExport.js",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "ContentManagement.ContactUs.sandbox-contact-reply",
+          "title": "回覆保存、收件人與完成狀態鎖定",
+          "steps": "使用隔離記憶體資料，執行對應服務並重新讀取資料；信件只擷取內容與收件人，不連 SMTP。",
+          "expected": "資料與設定保存正確，信件與指定收件人對應，完成資料不能再次修改；不表示實際外部服務與瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/contact-reply"
+        },
+        {
+          "id": "ContentManagement.ContactUs.sandbox-contact-status",
+          "title": "表單批次狀態與未選取資料保護",
+          "steps": "使用隔離記憶體資料，執行對應服務並重新讀取資料；信件只擷取內容與收件人，不連 SMTP。",
+          "expected": "資料與設定保存正確，信件與指定收件人對應，完成資料不能再次修改；不表示實際外部服務與瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/contact-status"
+        },
+        {
+          "id": "ContentManagement.ContactUs.automatic-contacts-paging",
+          "title": "表單列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "contacts/paging"
+        },
+        {
+          "id": "ContentManagement.ContactUs.automatic-contacts-sort",
+          "title": "表單列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "contacts/sort"
+        },
+        {
+          "id": "ContentManagement.ContactUs.automatic-contacts-filter",
+          "title": "表單列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "contacts/filter"
+        },
+        {
+          "id": "ContentManagement.ContactUs.automatic-contacts-empty",
+          "title": "表單列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "contacts/empty"
+        },
+        {
+          "id": "ContentManagement.ContactUs.automatic-contacts-load",
+          "title": "表單列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "contacts"
+        },
+        {
+          "id": "ContentManagement.ContactUs.query",
+          "title": "表單查詢與明細",
+          "steps": "依表單位置、日期與處理狀態篩選並開啟明細。",
+          "expected": "明細與列表一致，條件正確套用。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.ContactUs.status",
+          "title": "處理狀態與批次更新",
+          "steps": "更新一筆及多筆測試表單的處理狀態。",
+          "expected": "只更新選取資料，重新載入保持一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.ContactUs.reply",
+          "title": "回覆寄送與禁止再次編輯",
+          "steps": "以測試信箱提交回覆，重開已寄出的回覆。",
+          "expected": "內容送至測試信箱；已送出內容不可再修改。",
+          "mode": "external"
+        },
+        {
+          "id": "ContentManagement.ContactUs.export",
+          "title": "匯出條件、筆數上限與權限",
+          "steps": "以測試資料選擇表單類型與日期，測試超出上限及無匯出權限。",
+          "expected": "匯出符合條件；超量或無權限有明確提示。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "ContactUsExported"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ContentManagement.SettingCSS",
+      "module": "內容管理",
+      "controller": "ContentManagement",
+      "action": "SettingCSS",
+      "title": "自訂 CSS",
+      "sources": [
+        "Controllers/ContentManagementController.cs",
+        "Views/ContentManagement/SettingCSS.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "ContentManagement.SettingCSS.load",
+          "title": "CSS 編輯器載入",
+          "steps": "開啟編輯器，檢查既有 CSS 及語法顯示。",
+          "expected": "內容完整載入，編輯器無錯誤。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.SettingCSS.save",
+          "title": "CSS 儲存與站台隔離",
+          "steps": "在測試站修改 CSS、儲存後重開，另查看其他測試站。",
+          "expected": "只更新目前站台，內容重新載入一致。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "AdvertisementManagement.CustomAd",
+      "module": "廣告管理",
+      "controller": "AdvertisementManagement",
+      "action": "CustomAd",
+      "title": "自訂廣告",
+      "sources": [
+        "Controllers/AdvertisementManagementController.cs",
+        "Views/AdvertisementManagement/CustomAd.cshtml",
+        "wwwroot/js/AdvertisementManagement/CustomAd.js",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "AdvertisementManagement.CustomAd.automatic-advertise-directories-paging",
+          "title": "廣告目錄列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "advertise-directories/paging"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.automatic-advertise-directories-sort",
+          "title": "廣告目錄列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "advertise-directories/sort"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.automatic-advertise-directories-filter",
+          "title": "廣告目錄列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "advertise-directories/filter"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.automatic-advertise-directories-empty",
+          "title": "廣告目錄列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "advertise-directories/empty"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.automatic-advertise-directories-load",
+          "title": "廣告目錄列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "advertise-directories"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.query",
+          "title": "廣告目錄查詢與排序方式",
+          "steps": "查詢廣告目錄，切換預設、隨機、人氣與使用者習慣排序設定。",
+          "expected": "查詢結果正確，排序方式保存後重新載入一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.directory",
+          "title": "廣告目錄與標籤、選單綁定",
+          "steps": "新增測試廣告目錄，設定標題、顯示、標籤與選單關聯後重開。",
+          "expected": "必填被驗證，目錄與關聯設定保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.media",
+          "title": "廣告素材、影片與連結",
+          "steps": "在測試目錄新增廣告項目，上傳圖片或影片並設定連結與另開視窗。",
+          "expected": "素材可預覽，連結、另開設定與顯示狀態保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "AdvertisementManagement.CustomAd.delete",
+          "title": "廣告及目錄刪除",
+          "steps": "分別取消及確認刪除專用測試廣告與目錄。",
+          "expected": "取消不改資料；刪除依關聯規則處理，不影響其他目錄。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "AdvertisementManagement.EnterAd",
+      "module": "廣告管理",
+      "controller": "AdvertisementManagement",
+      "action": "EnterAd",
+      "title": "進入廣告",
+      "sources": [
+        "Controllers/AdvertisementManagementController.cs",
+        "Views/AdvertisementManagement/EnterAd.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "AdvertisementManagement.EnterAd.sandbox-enter-ad-crud",
+          "title": "進入廣告增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/enter-ad-crud"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.automatic-enter-ads-paging",
+          "title": "進入廣告列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "enter-ads/paging"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.automatic-enter-ads-sort",
+          "title": "進入廣告列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "enter-ads/sort"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.automatic-enter-ads-filter",
+          "title": "進入廣告列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "enter-ads/filter"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.automatic-enter-ads-empty",
+          "title": "進入廣告列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "enter-ads/empty"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.automatic-enter-ads-load",
+          "title": "進入廣告列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "enter-ads"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.list",
+          "title": "廣告列表與編輯資料",
+          "steps": "開啟列表並選取一筆測試廣告。",
+          "expected": "編輯欄位與所選資料一致。",
+          "mode": "review"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.edit",
+          "title": "廣告資料與顯示設定",
+          "steps": "新增測試廣告，修改顯示、排序及期間後重新載入。",
+          "expected": "有效資料正確保存，期間與顯示規則一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.canvas",
+          "title": "廣告畫布與發布",
+          "steps": "修改測試廣告畫布，預覽並發布。",
+          "expected": "內容、圖片與版面保留。",
+          "mode": "isolated"
+        },
+        {
+          "id": "AdvertisementManagement.EnterAd.delete",
+          "title": "刪除與取消",
+          "steps": "先取消，再確認刪除指定測試廣告。",
+          "expected": "取消不改資料；確認只移除指定項目。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "AdvertisementManagement.RightSideAd",
+      "module": "廣告管理",
+      "controller": "AdvertisementManagement",
+      "action": "RightSideAd",
+      "title": "右側浮動廣告",
+      "sources": [
+        "Controllers/AdvertisementManagementController.cs",
+        "Views/AdvertisementManagement/RightSideAd.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "AdvertisementManagement.RightSideAd.sandbox-side-ad-crud",
+          "title": "浮動廣告增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/side-ad-crud"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.automatic-side-ads-paging",
+          "title": "浮動廣告列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "side-ads/paging"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.automatic-side-ads-sort",
+          "title": "浮動廣告列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "side-ads/sort"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.automatic-side-ads-filter",
+          "title": "浮動廣告列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "side-ads/filter"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.automatic-side-ads-empty",
+          "title": "浮動廣告列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "side-ads/empty"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.automatic-side-ads-load",
+          "title": "浮動廣告列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "side-ads"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.list",
+          "title": "廣告列表與編輯資料",
+          "steps": "開啟列表並選取一筆測試廣告。",
+          "expected": "編輯欄位與所選資料一致。",
+          "mode": "review"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.edit",
+          "title": "廣告資料與顯示設定",
+          "steps": "新增測試廣告，修改顯示、排序及期間後重新載入。",
+          "expected": "有效資料正確保存，期間與顯示規則一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.canvas",
+          "title": "廣告畫布與發布",
+          "steps": "修改測試廣告畫布，預覽並發布。",
+          "expected": "內容、圖片與版面保留。",
+          "mode": "isolated"
+        },
+        {
+          "id": "AdvertisementManagement.RightSideAd.delete",
+          "title": "刪除與取消",
+          "steps": "先取消，再確認刪除指定測試廣告。",
+          "expected": "取消不改資料；確認只移除指定項目。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "MemberManagement.Index",
+      "module": "會員管理",
+      "controller": "MemberManagement",
+      "action": "Index",
+      "title": "會員設定",
+      "sources": [
+        "Controllers/MemberManagementController.cs",
+        "Views/MemberManagement/Index.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "MemberManagement.Index.object-member-settings",
+          "title": "會員設定欄位查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/member-settings"
+        },
+        {
+          "id": "MemberManagement.Index.load",
+          "title": "會員設定載入",
+          "steps": "開啟會員設定並比對目前測試站設定。",
+          "expected": "設定值與欄位正確載入。",
+          "mode": "review"
+        },
+        {
+          "id": "MemberManagement.Index.save",
+          "title": "會員設定儲存",
+          "steps": "調整測試站會員設定，儲存後重新載入。",
+          "expected": "設定值保存一致，其他站台不受影響。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "MemberManagement.MemberList",
+      "module": "會員管理",
+      "controller": "MemberManagement",
+      "action": "MemberList",
+      "title": "會員清單",
+      "sources": [
+        "Controllers/MemberManagementController.cs",
+        "Views/MemberManagement/MemberList.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "MemberManagement.MemberList.automatic-members-paging",
+          "title": "會員列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "members/paging"
+        },
+        {
+          "id": "MemberManagement.MemberList.automatic-members-sort",
+          "title": "會員列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "members/sort"
+        },
+        {
+          "id": "MemberManagement.MemberList.automatic-members-filter",
+          "title": "會員列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "members/filter"
+        },
+        {
+          "id": "MemberManagement.MemberList.automatic-members-empty",
+          "title": "會員列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "members/empty"
+        },
+        {
+          "id": "MemberManagement.MemberList.automatic-members-load",
+          "title": "會員列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "members"
+        },
+        {
+          "id": "MemberManagement.MemberList.query",
+          "title": "會員查詢與詳細資料",
+          "steps": "查詢測試會員，開啟詳細資料並核對基本資料。",
+          "expected": "列表與會員明細對應正確，篩選與分頁符合條件。",
+          "mode": "isolated"
+        },
+        {
+          "id": "MemberManagement.MemberList.create",
+          "title": "新增會員與重複資料",
+          "steps": "新增測試會員，使用重複帳號或信箱再試一次。",
+          "expected": "合法會員建立成功；重複資料依規則提示。",
+          "mode": "external"
+        },
+        {
+          "id": "MemberManagement.MemberList.edit",
+          "title": "會員狀態、等級與基本資料",
+          "steps": "修改測試會員狀態、身分等級及聯絡資料後重開。",
+          "expected": "修改內容一致，狀態與等級正確保存。",
+          "mode": "isolated"
+        },
+        {
+          "id": "MemberManagement.MemberList.mail",
+          "title": "開通與忘記密碼信",
+          "steps": "對測試會員發送開通與忘記密碼信。",
+          "expected": "僅送至測試信箱，連結對應正確會員且有有效期。",
+          "mode": "external"
+        },
+        {
+          "id": "MemberManagement.MemberList.social",
+          "title": "社群綁定資訊",
+          "steps": "以沙盒社群帳號檢查綁定資料與可用操作。",
+          "expected": "提供者、帳號與會員對應正確，不存取真實客戶社群帳號。",
+          "mode": "external"
+        },
+        {
+          "id": "MemberManagement.MemberList.orders",
+          "title": "會員歷史訂單",
+          "steps": "開啟有訂單的測試會員，查看最新三筆歷史訂單與訂單明細。",
+          "expected": "訂單依時間排序，筆數、金額及會員對應正確。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "OrderManagement"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MemberManagement.MemberType",
+      "module": "會員管理",
+      "controller": "MemberManagement",
+      "action": "MemberType",
+      "title": "會員角色管理",
+      "sources": [
+        "Controllers/MemberManagementController.cs",
+        "Views/MemberManagement/MemberType.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "MemberManagement.MemberType.sandbox-member-role-crud",
+          "title": "非預設會員角色增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/member-role-crud"
+        },
+        {
+          "id": "MemberManagement.MemberType.automatic-member-roles-paging",
+          "title": "會員角色列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "member-roles/paging"
+        },
+        {
+          "id": "MemberManagement.MemberType.automatic-member-roles-sort",
+          "title": "會員角色列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "member-roles/sort"
+        },
+        {
+          "id": "MemberManagement.MemberType.automatic-member-roles-filter",
+          "title": "會員角色列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "member-roles/filter"
+        },
+        {
+          "id": "MemberManagement.MemberType.automatic-member-roles-empty",
+          "title": "會員角色列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "member-roles/empty"
+        },
+        {
+          "id": "MemberManagement.MemberType.automatic-member-roles-load",
+          "title": "會員角色列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "member-roles"
+        },
+        {
+          "id": "MemberManagement.MemberType.edit",
+          "title": "會員角色增修與排序",
+          "steps": "新增測試角色，調整標題、描述與排序後重開。",
+          "expected": "角色內容與排序正確保存。",
+          "mode": "isolated"
+        },
+        {
+          "id": "MemberManagement.MemberType.delete",
+          "title": "角色刪除與會員關聯",
+          "steps": "以未使用及已被測試會員使用的角色測試刪除。",
+          "expected": "依關聯規則處理，不破壞會員等級資料。",
+          "mode": "isolated"
+        },
+        {
+          "id": "MemberManagement.MemberType.content",
+          "title": "會員角色介紹與畫布",
+          "steps": "編輯測試會員角色介紹、圖片及詳細說明，儲存後重新開啟。",
+          "expected": "角色與介紹內容關聯正確，畫布及素材保存一致。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "MemberManagement.UserType",
+      "module": "會員管理",
+      "controller": "MemberManagement",
+      "action": "UserType",
+      "title": "使用者分群",
+      "sources": [
+        "Controllers/MemberManagementController.cs",
+        "Views/MemberManagement/UserType.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "MemberManagement.UserType.sandbox-user-group-crud",
+          "title": "使用者分群增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/user-group-crud"
+        },
+        {
+          "id": "MemberManagement.UserType.automatic-groups-paging",
+          "title": "分群列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "groups/paging"
+        },
+        {
+          "id": "MemberManagement.UserType.automatic-groups-sort",
+          "title": "分群列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "groups/sort"
+        },
+        {
+          "id": "MemberManagement.UserType.automatic-groups-filter",
+          "title": "分群列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "groups/filter"
+        },
+        {
+          "id": "MemberManagement.UserType.automatic-groups-empty",
+          "title": "分群列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "groups/empty"
+        },
+        {
+          "id": "MemberManagement.UserType.automatic-groups-load",
+          "title": "分群列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "groups"
+        },
+        {
+          "id": "MemberManagement.UserType.edit",
+          "title": "分群與標籤設定",
+          "steps": "新增測試分群，設定標題、描述與標籤後重開。",
+          "expected": "分群及標籤關聯一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "MemberManagement.UserType.delete",
+          "title": "分群刪除",
+          "steps": "取消再確認刪除測試分群。",
+          "expected": "取消保留資料；確認只刪指定分群。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "MemberManagement.ManagerList",
+      "module": "帳號與權限",
+      "controller": "MemberManagement",
+      "action": "ManagerList",
+      "title": "管理者清單",
+      "sources": [
+        "Controllers/MemberManagementController.cs",
+        "Views/MemberManagement/ManagerList.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "MemberManagement.ManagerList.automatic-managers-paging",
+          "title": "管理者列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "managers/paging"
+        },
+        {
+          "id": "MemberManagement.ManagerList.automatic-managers-sort",
+          "title": "管理者列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "managers/sort"
+        },
+        {
+          "id": "MemberManagement.ManagerList.automatic-managers-filter",
+          "title": "管理者列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "managers/filter"
+        },
+        {
+          "id": "MemberManagement.ManagerList.automatic-managers-empty",
+          "title": "管理者列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "managers/empty"
+        },
+        {
+          "id": "MemberManagement.ManagerList.automatic-managers-load",
+          "title": "管理者列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "managers"
+        },
+        {
+          "id": "MemberManagement.ManagerList.query",
+          "title": "管理者與角色資料",
+          "steps": "查看測試站管理者並開啟詳細資料。",
+          "expected": "角色、狀態及聯絡資料對應正確。",
+          "mode": "review"
+        },
+        {
+          "id": "MemberManagement.ManagerList.edit",
+          "title": "管理者資料與密碼驗證",
+          "steps": "修改專用測試管理者資料，測試不符規則及不一致密碼。",
+          "expected": "合法資料保存；無效密碼被拒絕。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "MemberManagement.SelfData",
+      "module": "帳號與權限",
+      "controller": "MemberManagement",
+      "action": "SelfData",
+      "title": "個人資料修改",
+      "sources": [
+        "Controllers/MemberManagementController.cs",
+        "Views/MemberManagement/SelfData.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "MemberManagement.SelfData.profile",
+          "title": "個人資料儲存",
+          "steps": "以專用測試帳號修改暱稱、聯絡信箱與地址後重開。",
+          "expected": "僅更新本人資料，格式驗證正確。",
+          "mode": "isolated"
+        },
+        {
+          "id": "MemberManagement.SelfData.password",
+          "title": "修改密碼與重新登入",
+          "steps": "使用專用測試帳號驗證舊密碼錯誤、弱密碼、確認不一致及有效密碼。",
+          "expected": "無效輸入被拒絕；成功後可用新密碼登入。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "PowerManagement.Index",
+      "module": "帳號與權限",
+      "controller": "PowerManagement",
+      "action": "Index",
+      "title": "權限控制",
+      "sources": [
+        "Controllers/PowerManagementController.cs",
+        "Views/PowerManagement/Index.cshtml",
+        "Controllers/api/PowerManagementController.cs"
+      ],
+      "cases": [
+        {
+          "id": "PowerManagement.Index.roles",
+          "title": "角色增修與刪除",
+          "steps": "建立測試角色、修改名稱、刪除並檢查成員關聯。",
+          "expected": "操作僅影響測試角色，關聯處理符合規則。",
+          "mode": "isolated"
+        },
+        {
+          "id": "PowerManagement.Index.users",
+          "title": "加入、移除與邀請管理者",
+          "steps": "加入現有測試使用者、建立新測試使用者，再移除網站綁定。",
+          "expected": "僅改變指定站台綁定，不刪除其他站台帳號。",
+          "mode": "external"
+        },
+        {
+          "id": "PowerManagement.Index.permissions",
+          "title": "檢視、新增、修改、刪除與執行權限",
+          "steps": "分別授予測試角色各種權限，登入該角色操作畫面與直接呼叫 API。",
+          "expected": "畫面與伺服器端權限一致，未授權操作被拒絕。",
+          "mode": "isolated"
+        },
+        {
+          "id": "PowerManagement.Index.website",
+          "title": "網站功能啟用與版本限制",
+          "steps": "調整測試站功能啟用，檢查選單及直接存取。",
+          "expected": "停用功能與版本限制不能藉角色權限繞過。",
+          "mode": "isolated"
+        },
+        {
+          "id": "PowerManagement.Index.platform",
+          "title": "系統檢測平台角色隔離",
+          "steps": "以平台管理者、網站超級管理員及一般管理員分別存取檢測頁。",
+          "expected": "只有具 MVC 存取權的 PlatformAdministrator 可進入；不能以網站權限授予。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.Index",
+      "module": "商店管理",
+      "controller": "StoreSettings",
+      "action": "Index",
+      "title": "商店設定",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/StoreSettings/Index.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.Index.object-shop-settings",
+          "title": "商店設定欄位查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/shop-settings"
+        },
+        {
+          "id": "StoreSettings.Index.load",
+          "title": "設定分組與載入失敗",
+          "steps": "檢查商品、價格、結帳與其他設定分組；模擬設定讀取失敗。",
+          "expected": "欄位正確分組，讀取失敗有提示且不覆寫原值。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.Index.save",
+          "title": "商店設定驗證與保存",
+          "steps": "調整測試站商品顯示、價格與結帳設定，儲存後重開。",
+          "expected": "有效設定保存，無效數值被提示。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.FreightSettings",
+      "module": "商店管理",
+      "controller": "StoreSettings",
+      "action": "FreightSettings",
+      "title": "運費設定",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/StoreSettings/FreightSettings.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.FreightSettings.automatic-freight-paging",
+          "title": "運費列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "freight/paging"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.automatic-freight-sort",
+          "title": "運費列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "freight/sort"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.automatic-freight-filter",
+          "title": "運費列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "freight/filter"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.automatic-freight-empty",
+          "title": "運費列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "freight/empty"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.automatic-freight-load",
+          "title": "運費列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "freight"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.edit",
+          "title": "運費增修、預設與組數上限",
+          "steps": "新增測試運費、設定預設，嘗試超過六組。",
+          "expected": "預設與設定正確保存，組數上限有提示。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.rules",
+          "title": "免運、單筆、依箱與折抵",
+          "steps": "分別設定各種運費計算方式並以固定購物資料驗證。",
+          "expected": "運費與條件計算一致，不重複收取。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.payment",
+          "title": "付款限制與金額區間",
+          "steps": "設定付款方式允許狀態及最低／最高金額，測試無效區間。",
+          "expected": "限制保存正確，無效區間被拒絕。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.FreightSettings.delete",
+          "title": "刪除運費設定",
+          "steps": "取消與確認刪除測試運費，檢查預設及引用。",
+          "expected": "取消不改資料，刪除符合預設與引用規則。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.PaymentSettings",
+      "module": "商店管理",
+      "controller": "StoreSettings",
+      "action": "PaymentSettings",
+      "title": "金流設定",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/StoreSettings/PaymentSettings.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.PaymentSettings.object-payment-settings",
+          "title": "金流設定查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/payment-settings"
+        },
+        {
+          "id": "StoreSettings.PaymentSettings.settings",
+          "title": "支付方式與設定保存",
+          "steps": "在測試站調整支付方式及沙盒設定，儲存後重開。",
+          "expected": "支付方式與設定一致；畫面不洩露敏感憑證。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.PaymentSettings.sandbox",
+          "title": "沙盒連線與錯誤提示",
+          "steps": "使用金流沙盒及無效測試設定驗證連線流程。",
+          "expected": "成功與失敗有明確結果，不使用正式商店憑證。",
+          "mode": "external"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.LogisticsSettings",
+      "module": "商店管理",
+      "controller": "StoreSettings",
+      "action": "LogisticsSettings",
+      "title": "物流設定",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/StoreSettings/LogisticsSettings.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.LogisticsSettings.object-logistics-settings",
+          "title": "物流設定查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/logistics-settings"
+        },
+        {
+          "id": "StoreSettings.LogisticsSettings.settings",
+          "title": "物流方式與設定保存",
+          "steps": "調整測試站物流方式及必要欄位後重開。",
+          "expected": "物流類型與必要欄位驗證一致，設定保存正確。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.LogisticsSettings.sandbox",
+          "title": "物流沙盒串接",
+          "steps": "使用物流沙盒與無效測試設定驗證流程。",
+          "expected": "錯誤可辨識，不建立正式物流單。",
+          "mode": "external"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.LogisticsBox",
+      "module": "商店管理",
+      "controller": "StoreSettings",
+      "action": "LogisticsBox",
+      "title": "箱型設定",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/StoreSettings/LogisticsBox.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.LogisticsBox.sandbox-box-crud",
+          "title": "箱型增修刪保存",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/box-crud"
+        },
+        {
+          "id": "StoreSettings.LogisticsBox.automatic-boxes-paging",
+          "title": "箱型列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "boxes/paging"
+        },
+        {
+          "id": "StoreSettings.LogisticsBox.automatic-boxes-sort",
+          "title": "箱型列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "boxes/sort"
+        },
+        {
+          "id": "StoreSettings.LogisticsBox.automatic-boxes-filter",
+          "title": "箱型列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "boxes/filter"
+        },
+        {
+          "id": "StoreSettings.LogisticsBox.automatic-boxes-empty",
+          "title": "箱型列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "boxes/empty"
+        },
+        {
+          "id": "StoreSettings.LogisticsBox.automatic-boxes-load",
+          "title": "箱型列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "boxes"
+        },
+        {
+          "id": "StoreSettings.LogisticsBox.edit",
+          "title": "箱型資料與整數驗證",
+          "steps": "新增測試箱型，輸入空白名稱、零、負數及小數容量，再輸入合法值。",
+          "expected": "名稱與正整數容量驗證正確，排序及顯示可保存。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.LogisticsBox.delete",
+          "title": "箱型刪除與引用",
+          "steps": "刪除未引用及已被測試運費引用的箱型。",
+          "expected": "引用依規則處理，不影響其他箱型。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.MarketingSettings",
+      "module": "商店管理",
+      "controller": "StoreSettings",
+      "action": "MarketingSettings",
+      "title": "行銷活動",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/StoreSettings/MarketingSettings.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.MarketingSettings.automatic-campaigns-paging",
+          "title": "活動列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "campaigns/paging"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.automatic-campaigns-sort",
+          "title": "活動列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "campaigns/sort"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.automatic-campaigns-filter",
+          "title": "活動列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "campaigns/filter"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.automatic-campaigns-empty",
+          "title": "活動列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "campaigns/empty"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.automatic-campaigns-load",
+          "title": "活動列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "campaigns"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.discount",
+          "title": "滿額折抵與打折門檻",
+          "steps": "建立滿額折抵及打折測試活動，驗證門檻上下與最高折抵。",
+          "expected": "折抵與折數依規則計算，非法數值不能保存。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.gift",
+          "title": "加價購與贈品資格",
+          "steps": "設定指定商品滿件、滿額與訂單滿額活動，驗證混搭及優惠商品選擇。",
+          "expected": "資格次數、可選件數與活動價格正確。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.priority",
+          "title": "優先權、併用與期間",
+          "steps": "建立重疊期間及同優先權測試活動，切換併用與累計。",
+          "expected": "依優先權與建立時間選擇，併用提示及累計計算符合規則。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.MarketingSettings.edit",
+          "title": "活動商品批次價格與刪除",
+          "steps": "測試固定價格及參考價打折批次套用，再刪除測試活動。",
+          "expected": "商品活動價正確，刪除不影響其他活動。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.BonusSettings",
+      "module": "商店管理",
+      "controller": "StoreSettings",
+      "action": "BonusSettings",
+      "title": "舊紅利設定入口",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/StoreSettings/BonusSettings.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.BonusSettings.review",
+          "title": "舊入口用途確認",
+          "steps": "檢查此空白／舊版入口是否仍有路由與使用者入口。",
+          "expected": "確認是否停用或導向現行紅利設定；未確認前不視為有完整案例。",
+          "mode": "review"
+        }
+      ]
+    },
+    {
+      "id": "BonusManagement.Settings",
+      "module": "紅利管理",
+      "controller": "BonusManagement",
+      "action": "Settings",
+      "title": "紅利設定",
+      "sources": [
+        "Controllers/BonusManagementController.cs",
+        "Views/BonusManagement/Settings.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "BonusManagement.Settings.settings",
+          "title": "迎新禮、扣抵與回饋",
+          "steps": "設定測試站迎新紅利、消費門檻、扣抵比例與上限後重開。",
+          "expected": "各欄位保存一致，無效比例與數值被拒絕。",
+          "mode": "isolated"
+        },
+        {
+          "id": "BonusManagement.Settings.expiry",
+          "title": "累計贈送與有效期限",
+          "steps": "以固定測試消費金額驗證累計回饋及有效天數。",
+          "expected": "倍數、點數與到期日符合設定。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "BonusManagement.Transaction",
+      "module": "紅利管理",
+      "controller": "BonusManagement",
+      "action": "Transaction",
+      "title": "紅利異動",
+      "sources": [
+        "Controllers/BonusManagementController.cs",
+        "Views/BonusManagement/Transaction.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "BonusManagement.Transaction.automatic-bonus-members-paging",
+          "title": "紅利會員列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "bonus-members/paging"
+        },
+        {
+          "id": "BonusManagement.Transaction.automatic-bonus-members-sort",
+          "title": "紅利會員列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "bonus-members/sort"
+        },
+        {
+          "id": "BonusManagement.Transaction.automatic-bonus-members-filter",
+          "title": "紅利會員列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "bonus-members/filter"
+        },
+        {
+          "id": "BonusManagement.Transaction.automatic-bonus-members-empty",
+          "title": "紅利會員列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "bonus-members/empty"
+        },
+        {
+          "id": "BonusManagement.Transaction.automatic-bonus-members-load",
+          "title": "紅利會員列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "bonus-members"
+        },
+        {
+          "id": "BonusManagement.Transaction.select",
+          "title": "異動對象與生日篩選",
+          "steps": "選擇多位測試會員，切換本月生日篩選，確認超過二十位的摘要。",
+          "expected": "實際異動對象與選取一致，不因摘要上限漏人。",
+          "mode": "isolated"
+        },
+        {
+          "id": "BonusManagement.Transaction.submit",
+          "title": "點數增減與原因驗證",
+          "steps": "輸入空白原因、無效點數及合法增減點數後確認。",
+          "expected": "無效輸入被拒絕，合法異動產生日誌且餘額正確。",
+          "mode": "external"
+        }
+      ]
+    },
+    {
+      "id": "BonusManagement.Record",
+      "module": "紅利管理",
+      "controller": "BonusManagement",
+      "action": "Record",
+      "title": "歷史紅利查詢",
+      "sources": [
+        "Controllers/BonusManagementController.cs",
+        "Views/BonusManagement/Record.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "BonusManagement.Record.automatic-bonus-records-paging",
+          "title": "紅利紀錄／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "bonus-records/paging"
+        },
+        {
+          "id": "BonusManagement.Record.automatic-bonus-records-sort",
+          "title": "紅利紀錄／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "bonus-records/sort"
+        },
+        {
+          "id": "BonusManagement.Record.automatic-bonus-records-filter",
+          "title": "紅利紀錄／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "bonus-records/filter"
+        },
+        {
+          "id": "BonusManagement.Record.automatic-bonus-records-empty",
+          "title": "紅利紀錄／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "bonus-records/empty"
+        },
+        {
+          "id": "BonusManagement.Record.automatic-bonus-records-load",
+          "title": "紅利紀錄／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "bonus-records"
+        },
+        {
+          "id": "BonusManagement.Record.query",
+          "title": "紅利日誌查詢與金額核對",
+          "steps": "查詢已知測試會員的紅利異動，核對時間、點數及備註。",
+          "expected": "日誌與測試異動一致，站台資料隔離。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Template.GlobalSettings",
+      "module": "版型設定",
+      "controller": "Template",
+      "action": "GlobalSettings",
+      "title": "全域設定",
+      "sources": [
+        "Controllers/TemplateController.cs",
+        "Views/Template/GlobalSettings.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Template.GlobalSettings.sandbox-template-global",
+          "title": "全站顯示設定保存",
+          "steps": "使用隔離記憶體資料，執行對應服務並重新讀取資料；信件只擷取內容與收件人，不連 SMTP。",
+          "expected": "資料與設定保存正確，信件與指定收件人對應，完成資料不能再次修改；不表示實際外部服務與瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/template-global"
+        },
+        {
+          "id": "Template.GlobalSettings.visibility",
+          "title": "全站共用內容顯示開關",
+          "steps": "切換跑馬燈、頁面路徑、人氣值與發布日期，保存後檢查測試站。",
+          "expected": "全站顯示符合設定，個別內容原有顯示設定保留。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Template.HeaderSettings",
+      "module": "版型設定",
+      "controller": "Template",
+      "action": "HeaderSettings",
+      "title": "版頭設定",
+      "sources": [
+        "Controllers/TemplateController.cs",
+        "Views/Template/HeaderSettings.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Template.HeaderSettings.sandbox-template-header",
+          "title": "版頭設定保存",
+          "steps": "使用隔離記憶體資料，執行對應服務並重新讀取資料；信件只擷取內容與收件人，不連 SMTP。",
+          "expected": "資料與設定保存正確，信件與指定收件人對應，完成資料不能再次修改；不表示實際外部服務與瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/template-header"
+        },
+        {
+          "id": "Template.HeaderSettings.layout",
+          "title": "版頭與 Logo 位置",
+          "steps": "切換 Logo 上／左及 Banner 重疊配置後重新載入。",
+          "expected": "設定保存，桌機與手機版無遮擋。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Template.HeaderSettings.menu",
+          "title": "主選單設定",
+          "steps": "調整測試站主選單並重新載入。",
+          "expected": "主選單與設定一致，連結正確。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Template.HeaderSettings.banner",
+          "title": "Banner 圖片、連結與排序",
+          "steps": "新增桌機與手機 Banner，設定標題、副標題、連結及啟用狀態。",
+          "expected": "圖片與不同裝置顯示正確，排序與連結保存一致。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Template.FooterSettings",
+      "module": "版型設定",
+      "controller": "Template",
+      "action": "FooterSettings",
+      "title": "頁尾設定",
+      "sources": [
+        "Controllers/TemplateController.cs",
+        "Views/Template/FooterSettings.cshtml",
+        "Diagnostics/BackofficeSandboxChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Template.FooterSettings.sandbox-template-footer",
+          "title": "頁尾草稿保存",
+          "steps": "使用隔離記憶體資料，執行對應服務並重新讀取資料；信件只擷取內容與收件人，不連 SMTP。",
+          "expected": "資料與設定保存正確，信件與指定收件人對應，完成資料不能再次修改；不表示實際外部服務與瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/template-footer"
+        },
+        {
+          "id": "Template.FooterSettings.edit",
+          "title": "頁尾內容與連結保存",
+          "steps": "修改測試站頁尾內容及連結後儲存、重開與預覽。",
+          "expected": "內容保留，連結與不同裝置版面正確。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "SearchManagement.CustSearch",
+      "module": "搜尋設定",
+      "controller": "SearchManagement",
+      "action": "CustSearch",
+      "title": "自訂搜尋",
+      "sources": [
+        "Controllers/SearchManagementController.cs",
+        "Views/SearchManagement/CustSearch.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "SearchManagement.CustSearch.automatic-search-paging",
+          "title": "搜尋設定列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "search/paging"
+        },
+        {
+          "id": "SearchManagement.CustSearch.automatic-search-sort",
+          "title": "搜尋設定列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "search/sort"
+        },
+        {
+          "id": "SearchManagement.CustSearch.automatic-search-filter",
+          "title": "搜尋設定列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "search/filter"
+        },
+        {
+          "id": "SearchManagement.CustSearch.automatic-search-empty",
+          "title": "搜尋設定列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "search/empty"
+        },
+        {
+          "id": "SearchManagement.CustSearch.automatic-search-load",
+          "title": "搜尋設定列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "search"
+        },
+        {
+          "id": "SearchManagement.CustSearch.edit",
+          "title": "搜尋項目與商品文章關聯",
+          "steps": "建立測試搜尋項目，設定分類、商品與文章範圍。",
+          "expected": "標題、範圍、排序與顯示保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "SearchManagement.CustSearch.delete",
+          "title": "搜尋項目刪除",
+          "steps": "取消再確認刪除指定測試搜尋項目。",
+          "expected": "取消保留資料，確認只刪指定項目。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Newsletter.Index",
+      "module": "電子報管理",
+      "controller": "Newsletter",
+      "action": "Index",
+      "title": "電子報管理",
+      "sources": [
+        "Controllers/NewsletterController.cs",
+        "Views/Newsletter/Index.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "Newsletter.Index.wizard",
+          "title": "多步驟內容編輯",
+          "steps": "逐步編輯測試電子報主選單、內容區與頁尾，前後切換再儲存。",
+          "expected": "各步驟輸入保留，重開資料一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Newsletter.Index.media",
+          "title": "圖片與 email 專用素材",
+          "steps": "設定網站及 email 使用的 Logo、圖片及 icon，預覽電子報。",
+          "expected": "各用途素材正確，不出現遺失圖片。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Newsletter.Index.canvas",
+          "title": "畫布與顯示期間",
+          "steps": "編輯測試電子報畫布與期間、排序後重新載入。",
+          "expected": "畫布內容及顯示設定保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Newsletter.Index.send",
+          "title": "電子報寄送與收件群組",
+          "steps": "僅選測試收件群組發送，檢查信件內容與連結。",
+          "expected": "不寄客戶信箱，收件範圍及信件內容正確。",
+          "mode": "external"
+        },
+        {
+          "id": "Newsletter.Index.delete",
+          "title": "電子報刪除",
+          "steps": "取消後再刪除指定測試電子報。",
+          "expected": "取消保留，確認只刪指定項目。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Newsletter.Recipient",
+      "module": "電子報管理",
+      "controller": "Newsletter",
+      "action": "Recipient",
+      "title": "電子報收件者",
+      "sources": [
+        "Controllers/NewsletterController.cs",
+        "Views/Newsletter/Recipient.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Newsletter.Recipient.automatic-recipients-paging",
+          "title": "收件者列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "recipients/paging"
+        },
+        {
+          "id": "Newsletter.Recipient.automatic-recipients-sort",
+          "title": "收件者列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "recipients/sort"
+        },
+        {
+          "id": "Newsletter.Recipient.automatic-recipients-filter",
+          "title": "收件者列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "recipients/filter"
+        },
+        {
+          "id": "Newsletter.Recipient.automatic-recipients-empty",
+          "title": "收件者列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "recipients/empty"
+        },
+        {
+          "id": "Newsletter.Recipient.automatic-recipients-load",
+          "title": "收件者列表／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "recipients"
+        },
+        {
+          "id": "Newsletter.Recipient.edit",
+          "title": "收件者增修與信箱驗證",
+          "steps": "新增測試收件者，輸入無效及有效信箱後重新載入。",
+          "expected": "格式檢查正確，姓名與信箱保存一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Newsletter.Recipient.delete",
+          "title": "移除收件者",
+          "steps": "取消後再刪除指定測試收件者。",
+          "expected": "只移除指定收件者，不影響其他群組或會員。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "FileManagement.Index",
+      "module": "檔案管理",
+      "controller": "FileManagement",
+      "action": "Index",
+      "title": "檔案管理",
+      "sources": [
+        "Controllers/FileManagementController.cs",
+        "Views/FileManagement/Index.cshtml",
+        "Controllers/api/FileManagementController.cs"
+      ],
+      "cases": [
+        {
+          "id": "FileManagement.Index.sandbox-file-path",
+          "title": "上傳目錄路徑界線",
+          "steps": "測試正常路徑、父目錄跳脫與同前綴的相鄰目錄，僅驗證路徑解析，不寫入界線外檔案。",
+          "expected": "檔案操作符合服務規則，所有實體檔案都在獨立暫存目錄；目錄界線以外的路徑必須被拒絕。",
+          "mode": "isolated",
+          "executor": "sandbox/file-path"
+        },
+        {
+          "id": "FileManagement.Index.sandbox-file-recycle",
+          "title": "檔案回收、還原與永久刪除",
+          "steps": "在獨立暫存目錄建立檔案與記憶體索引，移入回收桶、還原後核對內容，再永久刪除。",
+          "expected": "檔案操作符合服務規則，所有實體檔案都在獨立暫存目錄；目錄界線以外的路徑必須被拒絕。",
+          "mode": "isolated",
+          "executor": "sandbox/file-recycle"
+        },
+        {
+          "id": "FileManagement.Index.browse",
+          "title": "檔案瀏覽、預覽與引用",
+          "steps": "切換資料夾，查看縮圖、檔名、容量及引用明細。",
+          "expected": "路徑、預覽與引用對應正確，不能跨站讀檔。",
+          "mode": "review"
+        },
+        {
+          "id": "FileManagement.Index.upload",
+          "title": "新增資料夾與上傳",
+          "steps": "在獨立測試檔案目錄建立資料夾，上傳合法及不允許檔案。",
+          "expected": "合法檔案可預覽；不允許類型與路徑被拒絕。",
+          "mode": "isolated"
+        },
+        {
+          "id": "FileManagement.Index.scan",
+          "title": "引用掃描與背景進度",
+          "steps": "在測試站啟動引用掃描，離開再返回頁面。",
+          "expected": "作業進度可接續顯示，引用與測試內容一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "FileManagement.Index.recycle",
+          "title": "回收、還原與永久刪除",
+          "steps": "將專用測試檔移入回收桶、還原，再測試永久刪除。",
+          "expected": "引用保護有效，還原正確，永久刪除只處理指定測試檔。",
+          "mode": "isolated"
+        },
+        {
+          "id": "FileManagement.Index.batch",
+          "title": "批次清理與取消確認",
+          "steps": "選取多筆測試檔，測試取消與確認批次移入回收桶及永久刪除。",
+          "expected": "取消不改檔案；只處理選取項目，背景結果清楚。",
+          "mode": "isolated"
+        },
+        {
+          "id": "FileManagement.Index.path",
+          "title": "檔案路徑與跨站存取限制",
+          "steps": "在獨立測試目錄嘗試父目錄跳脫及其他測試站檔案路徑。",
+          "expected": "讀取、上傳、回收與刪除皆不能越出授權目錄或站台。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "SystemManagement.Index",
+      "module": "系統管理",
+      "controller": "SystemManagement",
+      "action": "Index",
+      "title": "網站資料",
+      "sources": [
+        "Controllers/SystemManagementController.cs",
+        "Views/SystemManagement/WebData.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "SystemManagement.Index.object-website",
+          "title": "網站資料查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/website"
+        },
+        {
+          "id": "SystemManagement.Index.company",
+          "title": "公司資訊與格式驗證",
+          "steps": "輸入無效統編、信箱及空白公司名稱，再輸入合法測試資料。",
+          "expected": "必要欄位與 8／10 碼代碼規則被驗證，合法資料保存。",
+          "mode": "isolated"
+        },
+        {
+          "id": "SystemManagement.Index.website",
+          "title": "網站資訊與素材",
+          "steps": "修改測試站名稱、描述、寄件名稱、Logo、圖示及分享圖後重開。",
+          "expected": "各設定及圖片保存，不更新其他站台。",
+          "mode": "isolated"
+        },
+        {
+          "id": "SystemManagement.Index.terms",
+          "title": "隱私權與會員條款",
+          "steps": "修改測試站隱私權與會員條款，儲存並預覽。",
+          "expected": "文字、格式與連結保存完整。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "SystemManagement.SEO",
+      "module": "系統管理",
+      "controller": "SystemManagement",
+      "action": "SEO",
+      "title": "SEO 設定",
+      "sources": [
+        "Controllers/SystemManagementController.cs",
+        "Views/SystemManagement/SEO.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "SystemManagement.SEO.object-seo",
+          "title": "SEO設定欄位查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/seo"
+        },
+        {
+          "id": "SystemManagement.SEO.load",
+          "title": "SEO 欄位載入",
+          "steps": "開啟設定並比對測試站既有欄位。",
+          "expected": "欄位與設定值完整載入。",
+          "mode": "review"
+        },
+        {
+          "id": "SystemManagement.SEO.save",
+          "title": "SEO 保存與站台隔離",
+          "steps": "修改測試站 SEO 設定，儲存後重新載入。",
+          "expected": "設定一致，其他站台保持原值。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "StoreSettings.SMTPSettings",
+      "module": "系統管理",
+      "controller": "StoreSettings",
+      "action": "SMTPSettings",
+      "title": "SMTP Server",
+      "sources": [
+        "Controllers/StoreSettingsController.cs",
+        "Views/SystemManagement/SEO.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs",
+        "Diagnostics/BackofficeSandboxChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "StoreSettings.SMTPSettings.object-smtp-settings",
+          "title": "郵件設定欄位查詢",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/smtp-settings"
+        },
+        {
+          "id": "StoreSettings.SMTPSettings.sandbox-mail-envelope",
+          "title": "信件建構與收件人對應（不對外寄送）",
+          "steps": "使用隔離記憶體資料，執行對應服務並重新讀取資料；信件只擷取內容與收件人，不連 SMTP。",
+          "expected": "資料與設定保存正確，信件與指定收件人對應，完成資料不能再次修改；不表示實際外部服務與瀏覽器已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/mail-envelope"
+        },
+        {
+          "id": "StoreSettings.SMTPSettings.save",
+          "title": "SMTP 設定與敏感資料",
+          "steps": "使用測試 SMTP 帳號調整設定，保存後重開。",
+          "expected": "設定保存，密碼等敏感資訊不外洩。",
+          "mode": "isolated"
+        },
+        {
+          "id": "StoreSettings.SMTPSettings.delivery",
+          "title": "測試信件投遞",
+          "steps": "以測試郵件服務執行需要寄信的測試流程。",
+          "expected": "只進測試郵件收件匣，失敗有可追查錯誤。",
+          "mode": "external"
+        }
+      ]
+    },
+    {
+      "id": "Theme.Index",
+      "module": "系統管理",
+      "controller": "Theme",
+      "action": "Index",
+      "title": "後台配色設定",
+      "sources": [
+        "Controllers/ThemeController.cs",
+        "Views/Theme/ThemeColor.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "Theme.Index.theme",
+          "title": "配色切換與重新載入",
+          "steps": "使用專用測試帳號切換側欄、標頭與主色後重整。",
+          "expected": "配色正確套用，文字與選單仍可辨識。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "AuditLogs.Index",
+      "module": "系統管理",
+      "controller": "AuditLogs",
+      "action": "Index",
+      "title": "操作紀錄",
+      "sources": [
+        "Controllers/AuditLogsController.cs",
+        "Views/AuditLogs/Index.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "AuditLogs.Index.automatic-audit-list-paging",
+          "title": "操作紀錄列表／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "audit-list/paging"
+        },
+        {
+          "id": "AuditLogs.Index.automatic-audit-list-sort",
+          "title": "操作紀錄列表／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "audit-list/sort"
+        },
+        {
+          "id": "AuditLogs.Index.automatic-audit-list-filter",
+          "title": "操作紀錄列表／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "audit-list/filter"
+        },
+        {
+          "id": "AuditLogs.Index.automatic-audit-list-empty",
+          "title": "操作紀錄列表／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "audit-list/empty"
+        },
+        {
+          "id": "AuditLogs.Index.read-only-list",
+          "title": "操作紀錄列表／資料載入與欄位檢查",
+          "steps": "以目前站台的實際列表服務查詢至多一筆資料，不要求總筆數。",
+          "expected": "查詢與 DTO 序列化成功，回傳列表格式且至多一筆；空列表也有效。不驗證增修刪及完整篩選流程。",
+          "mode": "review",
+          "executor": "audit-list"
+        },
+        {
+          "id": "AuditLogs.Index.query",
+          "title": "操作紀錄篩選與明細",
+          "steps": "以已知測試操作篩選時間、使用者與功能。",
+          "expected": "紀錄對應正確，不洩露其他站台資料及敏感憑證。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Dashboard.Index",
+      "module": "統計與儀表板",
+      "controller": "Dashboard",
+      "action": "Index",
+      "title": "儀表板",
+      "sources": [
+        "Controllers/DashboardController.cs",
+        "Views/Dashboard/Index.cshtml",
+        "Diagnostics/BackofficeObjectChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Dashboard.Index.object-order-trend",
+          "title": "訂單趨勢資料檢查",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/order-trend",
+          "requiredFeatures": [
+            "OrderManagement"
+          ]
+        },
+        {
+          "id": "Dashboard.Index.object-contact-summary",
+          "title": "表單統計資料檢查",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/contact-summary",
+          "requiredFeatures": [
+            "ContactUs"
+          ]
+        },
+        {
+          "id": "Dashboard.Index.object-popular-pages",
+          "title": "熱門頁面筆數及統計檢查",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/popular-pages"
+        },
+        {
+          "id": "Dashboard.Index.object-traffic-heatmap",
+          "title": "訪客時段統計資料檢查",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/traffic-heatmap"
+        },
+        {
+          "id": "Dashboard.Index.object-traffic",
+          "title": "流量統計資料檢查",
+          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
+          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "mode": "review",
+          "executor": "object/traffic"
+        },
+        {
+          "id": "Dashboard.Index.commerce",
+          "title": "訂單、營收與庫存摘要",
+          "steps": "以固定測試訂單及庫存比對摘要卡與近三十天趨勢。",
+          "expected": "排除取消、付款失敗及暫存訂單，金額含商品與運費。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "OrderManagement"
+          ]
+        },
+        {
+          "id": "Dashboard.Index.traffic",
+          "title": "流量區間、熱門頁面與熱圖",
+          "steps": "切換今日、本月、今年及自訂區間，查看熱門頁與時段。",
+          "expected": "區間、前五名與圖表資料一致，無資料時正常顯示。",
+          "mode": "review"
+        },
+        {
+          "id": "Dashboard.Index.contacts",
+          "title": "表單統計與近期提交",
+          "steps": "準備不同處理狀態的測試表單，比對統計與最近五筆。",
+          "expected": "分組、數量與排序正確。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "ContactUs"
+          ]
+        },
+        {
+          "id": "Dashboard.Index.failure",
+          "title": "載入失敗與重新整理",
+          "steps": "在隔離環境模擬單一統計 API 失敗後恢復。",
+          "expected": "失敗有提示，其他區塊可用，恢復後可重新載入。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "FlowSize.Index",
+      "module": "統計與儀表板",
+      "controller": "FlowSize",
+      "action": "Index",
+      "title": "使用流量統計",
+      "sources": [
+        "Controllers/FlowSizeController.cs",
+        "Views/FlowSize/Index.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "FlowSize.Index.automatic-flow-year-paging",
+          "title": "每年流量／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "flow-year/paging"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-year-sort",
+          "title": "每年流量／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "flow-year/sort"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-year-filter",
+          "title": "每年流量／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "flow-year/filter"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-year-empty",
+          "title": "每年流量／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "flow-year/empty"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-year-load",
+          "title": "每年流量／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "flow-year"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-month-paging",
+          "title": "每月流量／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "flow-month/paging"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-month-sort",
+          "title": "每月流量／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "flow-month/sort"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-month-filter",
+          "title": "每月流量／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "flow-month/filter"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-month-empty",
+          "title": "每月流量／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "flow-month/empty"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-month-load",
+          "title": "每月流量／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "flow-month"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-day-paging",
+          "title": "每日流量／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "flow-day/paging"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-day-sort",
+          "title": "每日流量／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "flow-day/sort"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-day-filter",
+          "title": "每日流量／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "flow-day/filter"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-day-empty",
+          "title": "每日流量／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "flow-day/empty"
+        },
+        {
+          "id": "FlowSize.Index.automatic-flow-day-load",
+          "title": "每日流量／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "flow-day"
+        },
+        {
+          "id": "FlowSize.Index.period",
+          "title": "年、月、日統計",
+          "steps": "切換年、月、日模式及日期，核對上傳、下載與總計。",
+          "expected": "區間正確且總計等於上傳加下載。",
+          "mode": "review"
+        }
+      ]
+    },
+    {
+      "id": "Remote.Index",
+      "module": "統計與儀表板",
+      "controller": "Remote",
+      "action": "Index",
+      "title": "頁面瀏覽統計",
+      "sources": [
+        "Controllers/RemoteController.cs",
+        "Views/Remote/Index.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Remote.Index.automatic-remote-page-paging",
+          "title": "頁面瀏覽統計／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "remote-page/paging"
+        },
+        {
+          "id": "Remote.Index.automatic-remote-page-sort",
+          "title": "頁面瀏覽統計／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "remote-page/sort"
+        },
+        {
+          "id": "Remote.Index.automatic-remote-page-filter",
+          "title": "頁面瀏覽統計／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "remote-page/filter"
+        },
+        {
+          "id": "Remote.Index.automatic-remote-page-empty",
+          "title": "頁面瀏覽統計／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "remote-page/empty"
+        },
+        {
+          "id": "Remote.Index.automatic-remote-page-load",
+          "title": "頁面瀏覽統計／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "remote-page"
+        },
+        {
+          "id": "Remote.Index.query",
+          "title": "頁面人數、人次與停留時間",
+          "steps": "切換類別與日期，核對已知測試流量。",
+          "expected": "頁面、人數、人次及停留時間符合統計定義。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Remote.Page",
+      "module": "統計與儀表板",
+      "controller": "Remote",
+      "action": "Page",
+      "title": "全站瀏覽統計",
+      "sources": [
+        "Controllers/RemoteController.cs",
+        "Views/Remote/Page.cshtml",
+        "Diagnostics/BackofficeReadOnlyChecks.cs"
+      ],
+      "cases": [
+        {
+          "id": "Remote.Page.automatic-remote-site-paging",
+          "title": "全站瀏覽統計／分頁結果",
+          "steps": "先查兩筆，再跳過一筆查一筆。",
+          "expected": "第二次回傳與原本第二筆一致；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "remote-site/paging"
+        },
+        {
+          "id": "Remote.Page.automatic-remote-site-sort",
+          "title": "全站瀏覽統計／遞增與遞減排序",
+          "steps": "分別以遞增、遞減方式呼叫實際服務。",
+          "expected": "回傳順序符合指定方向；不足兩筆不視為通過。",
+          "mode": "review",
+          "executor": "remote-site/sort"
+        },
+        {
+          "id": "Remote.Page.automatic-remote-site-filter",
+          "title": "全站瀏覽統計／條件篩選",
+          "steps": "讀取一筆實際資料，再以其識別欄位查詢。",
+          "expected": "回傳資料符合指定條件。",
+          "mode": "review",
+          "executor": "remote-site/filter"
+        },
+        {
+          "id": "Remote.Page.automatic-remote-site-empty",
+          "title": "全站瀏覽統計／無資料回應",
+          "steps": "以互斥條件呼叫實際列表服務。",
+          "expected": "正確回傳空列表，而非錯誤或不相關資料。",
+          "mode": "review",
+          "executor": "remote-site/empty"
+        },
+        {
+          "id": "Remote.Page.automatic-remote-site-load",
+          "title": "全站瀏覽統計／資料載入與欄位檢查",
+          "steps": "呼叫實際列表服務，限制兩筆，檢查資料欄位與序列化結果。",
+          "expected": "列表格式正確，必要欄位存在，最多兩筆資料。",
+          "mode": "review",
+          "executor": "remote-site"
+        },
+        {
+          "id": "Remote.Page.query",
+          "title": "全站日期與流量",
+          "steps": "切換日期並核對固定測試瀏覽紀錄。",
+          "expected": "人數、人次與日期區間一致，不混入其他站台。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Account.Index",
+      "module": "帳號與工作階段",
+      "controller": "Account",
+      "action": "Index",
+      "title": "後台登入",
+      "sources": [
+        "Controllers/AccountController.cs",
+        "Views/Account/Index.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "Account.Index.login",
+          "title": "登入成功與錯誤帳密",
+          "steps": "以專用測試帳號測試錯誤與正確帳密。",
+          "expected": "錯誤不登入；成功進入有權限的頁面。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Account.Index.access",
+          "title": "無權限與登入逾時",
+          "steps": "以無 MVC 權限及逾時工作階段存取後台。",
+          "expected": "拒絕未授權存取或要求登入，不洩露資料。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Account.Forget",
+      "module": "帳號與工作階段",
+      "controller": "Account",
+      "action": "Forget",
+      "title": "忘記密碼",
+      "sources": [
+        "Controllers/AccountController.cs",
+        "Views/Account/Forget.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "Account.Forget.request",
+          "title": "忘記密碼與信箱驗證",
+          "steps": "使用測試信箱及無效信箱提交申請。",
+          "expected": "格式檢查正確，信件僅送測試信箱，回應不洩露帳號存在性。",
+          "mode": "external"
+        }
+      ]
+    },
+    {
+      "id": "Account.NewPassword",
+      "module": "帳號與工作階段",
+      "controller": "Account",
+      "action": "NewPassword",
+      "title": "重設密碼",
+      "sources": [
+        "Controllers/AccountController.cs",
+        "Views/Account/NewPassword.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "Account.NewPassword.token",
+          "title": "重設連結有效性",
+          "steps": "使用測試帳號的有效、過期及已使用連結。",
+          "expected": "只有有效且未使用連結可完成重設。",
+          "mode": "external"
+        },
+        {
+          "id": "Account.NewPassword.password",
+          "title": "密碼規則與確認一致",
+          "steps": "輸入不符規則、不一致及有效的新密碼。",
+          "expected": "無效輸入拒絕；有效密碼可登入，舊密碼失效。",
+          "mode": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "Welcome.Index",
+      "module": "帳號與工作階段",
+      "controller": "Welcome",
+      "action": "Index",
+      "title": "後台歡迎頁",
+      "sources": [
+        "Controllers/WelcomeController.cs",
+        "Views/Welcome/Index.cshtml"
+      ],
+      "cases": [
+        {
+          "id": "Welcome.Index.navigation",
+          "title": "無可用功能與網站切換",
+          "steps": "以無選單權限的測試帳號登入，並以多站測試帳號切換站台。",
+          "expected": "無功能時可顯示歡迎頁；切站後選單與站台一致。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Welcome.Index.stale",
+          "title": "舊分頁站台不一致保護",
+          "steps": "在另一分頁切換測試站，再於舊分頁嘗試查詢或儲存。",
+          "expected": "舊分頁被阻擋或提示重新整理，不寫入錯誤站台。",
+          "mode": "isolated"
+        }
+      ]
+    }
+  ],
+  "exclusions": [
+    {
+      "controller": "Account",
+      "action": "Register",
+      "reason": "目前沒有對應 Register View；保留入口，需另行確認是否移除或實作。"
+    },
+    {
+      "controller": "Account",
+      "action": "Privacy",
+      "reason": "靜態隱私聲明頁；內容審閱另由人工處理。"
+    },
+    {
+      "controller": "Account",
+      "action": "Error",
+      "reason": "錯誤展示入口，不當成業務功能。"
+    },
+    {
+      "controller": "Error",
+      "action": "Code",
+      "reason": "HTTP 錯誤展示入口，不當成業務功能。"
+    },
+    {
+      "controller": "Error",
+      "action": "E500",
+      "reason": "HTTP 500 錯誤展示入口，不當成業務功能。"
+    },
+    {
+      "controller": "SystemDiagnostics",
+      "action": "Backoffice",
+      "reason": "檢測清單本身，不遞迴納入業務清單。"
+    },
+    {
+      "controller": "SystemDiagnostics",
+      "action": "Public",
+      "reason": "前台檢測入口，另行建置。"
+    },
+    {
+      "controller": "SystemDiagnostics",
+      "action": "History",
+      "reason": "檢測紀錄入口，另行建置。"
+    },
+    {
+      "controller": "Login",
+      "action": "LoginWithLine",
+      "reason": "社群登入 Challenge 入口，沒有獨立後台 View；外部登入流程列入前台／會員社群沙盒案例，非後台業務頁面。"
+    },
+    {
+      "controller": "Login",
+      "action": "LoginWithFacebook",
+      "reason": "社群登入 Challenge 入口，沒有獨立後台 View；外部登入流程列入前台／會員社群沙盒案例，非後台業務頁面。"
+    },
+    {
+      "controller": "Login",
+      "action": "LoginWithGoogle",
+      "reason": "社群登入 Challenge 入口，沒有獨立後台 View；外部登入流程列入前台／會員社群沙盒案例，非後台業務頁面。"
+    },
+    {
+      "controller": "Login",
+      "action": "LoginWithApple",
+      "reason": "社群登入 Challenge 入口，沒有獨立後台 View；外部登入流程列入前台／會員社群沙盒案例，非後台業務頁面。"
+    },
+    {
+      "controller": "Login",
+      "action": "LoginWithInstagram",
+      "reason": "社群登入 Challenge 入口，沒有獨立後台 View；外部登入流程列入前台／會員社群沙盒案例，非後台業務頁面。"
+    },
+    {
+      "controller": "Login",
+      "action": "Callback",
+      "reason": "外部登入回呼，沒有獨立後台 View；其 token 與回傳網址安全性需由登入流程另行驗證，排除不表示安全或通過。"
+    },
+    {
+      "controller": "SystemDiagnostics",
+      "action": "Run",
+      "reason": "平台管理者的內部基本檢測 API，不是業務頁面；僅解析入口與 View，不執行業務操作。"
+    }
+  ]
+}

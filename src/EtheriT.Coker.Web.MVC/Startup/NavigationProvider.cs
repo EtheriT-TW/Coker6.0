@@ -35,7 +35,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
             this.memoryCache = memoryCache;
             this.permissionStateStore = permissionStateStore;
         }
-        public async Task<Site> getMenus()
+        public async Task<Site> getMenus(bool includePlatformDiagnostics = false)
         {
             Site site = new Site
             {
@@ -546,6 +546,48 @@ namespace EtheriT.Coker.Web.MVC.Startup
                     }
                 }
             };
+            // Platform diagnostics are not customer-assignable website permissions.
+            if (includePlatformDiagnostics && await loginUserData.IsPlatformAdministrator() && false)
+            {
+                site.Jobs.Add(new JobMenu
+                {
+                    PageName = "SystemDiagnostics",
+                    Title = "系統檢測",
+                    Icon = "fact_check",
+                    CollapseId = "#SystemDiagnostics",
+                    CanVisble = true,
+                    jobItemModels = new List<JobMenu>
+                    {
+                        new JobMenu
+                        {
+                            PageName = "BackofficeFunctionTests",
+                            Title = "後台功能測試",
+                            Controller = "SystemDiagnostics",
+                            Action = "Backoffice",
+                            Icon = "admin_panel_settings",
+                            CanVisble = true
+                        },
+                        new JobMenu
+                        {
+                            PageName = "PublicFunctionTests",
+                            Title = "前台功能測試",
+                            Controller = "SystemDiagnostics",
+                            Action = "Public",
+                            Icon = "public",
+                            CanVisble = true
+                        },
+                        new JobMenu
+                        {
+                            PageName = "SystemDiagnosticsHistory",
+                            Title = "檢測紀錄",
+                            Controller = "SystemDiagnostics",
+                            Action = "History",
+                            Icon = "history",
+                            CanVisble = true
+                        }
+                    }
+                });
+            }
             site.PageTitleMap = BuildPageTitleMap(site.Jobs);
             return site;
         }
@@ -554,7 +596,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
             string? controllerName = null,
             string? actionName = null)
         {
-            var site = await getMenus();
+            var site = await getMenus(includePlatformDiagnostics: true);
 
             await SetPower(site);
             await SetWebsite(site);
@@ -562,6 +604,15 @@ namespace EtheriT.Coker.Web.MVC.Startup
 
             return site;
         }
+        public async Task<Site> BuildDiagnosticsScopeAsync()
+        {
+            var site = await getMenus();
+            await SetWebsite(site);
+            // Website feature grants must not override the edition ceiling.
+            await SetPower(site);
+            return site;
+        }
+
         public async Task SetPower(Site site)
         {
             WebsiteLevelEnum level = await loginUserData.GetWebsiteLevel();

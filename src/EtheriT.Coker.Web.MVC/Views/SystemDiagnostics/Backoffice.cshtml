@@ -1,0 +1,36 @@
+@model EtheriT.Coker.Web.MVC.Diagnostics.BackofficeTestListModel
+@inject EtheriT.Coker.Application.LoginUserData LoginUserData
+<div class="row page-tilte align-items-center">
+    <div class="col-md-auto">
+        <h1 class="weight-300 h3 title">後台功能測試</h1>
+        <p class="text-muted m-0 desc">檢查目前網站可使用的功能，優先查看需要處理的項目。</p>
+    </div>
+</div>
+<div class="content" id="backoffice-diagnostics" data-run-url="@Url.Content("~/api/SystemDiagnostics/Run")">
+    <div class="alert alert-info">
+        依目前站台可用功能，逐項執行查詢、篩選、排序、分頁與頁面基本檢查。
+        商品、庫存、價格、規格與跑馬燈的操作檢測使用獨立記憶體資料，不修改客戶資料。
+        記憶體中的業務測試不代表實際 SQL 或瀏覽器操作已通過；資料不足的檢測會列為未執行，不計為通過。
+        畫面僅列出已建置的自動檢測；完整瀏覽器操作、金流／物流串接與實際寄送尚未涵蓋。
+    </div>
+    <div class="card mb-3"><div class="card-body">
+        <form id="diagnostics-run-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="scopeStamp" value="@Model.ScopeStamp" />
+            <input type="hidden" name="websiteId" value="@(await LoginUserData.GetWebsiteId())" />
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary" id="diagnostics-run" disabled>開始檢測</button>
+                <button type="button" class="btn btn-outline-secondary d-none" id="diagnostics-stop" hidden>停止檢測</button>
+                <a class="btn btn-outline-secondary" href="#failed" data-diagnostics-filter="failed">未通過項目</a>
+                <a class="btn btn-outline-secondary" href="#all" data-diagnostics-filter="all">全部檢測項目</a>
+            </div>
+        </form>
+        <p class="text-muted mt-2 mb-0" id="diagnostics-message" role="status" aria-live="polite">正在載入檢測程式；若按鈕持續未啟用，請重新整理或聯絡系統維護人員。</p>
+    </div></div>
+    <div id="diagnostics-results" aria-live="polite">
+        @await Html.PartialAsync("_BackofficeResults", Model)
+    </div>
+</div>
+@section scripts {
+    <script src="~/js/SystemDiagnostics/Backoffice.min.js" asp-append-version="true"></script>
+}

@@ -107,7 +107,11 @@ namespace EtheriT.Coker.Application.Order
             this.stringHandler = stringHandler;
 
         }
-        public async Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions)
+        public Task<JsonResult> GetAllList(DataSourceLoadOptions loadOptions) => GetAllListCore(loadOptions, true);
+
+        public Task<JsonResult> GetAllListForDiagnostics(DataSourceLoadOptions loadOptions) => GetAllListCore(loadOptions, false);
+
+        private async Task<JsonResult> GetAllListCore(DataSourceLoadOptions loadOptions, bool reconcileExpiredOrders)
         {
             long WebsiteID = await loginUserData.GetWebsiteId();
             string error = string.Empty;
@@ -154,7 +158,7 @@ namespace EtheriT.Coker.Application.Order
                         }
                     }
                 }
-                await CheckECPayExpiredOrders(false);
+                if (reconcileExpiredOrders) await CheckECPayExpiredOrders(false);
                 var output = DataSourceLoader.Load(dataQuery, loadOptions);
                 return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
             }

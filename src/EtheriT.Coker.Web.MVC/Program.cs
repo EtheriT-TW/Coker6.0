@@ -268,6 +268,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<CokerDbContext>(options =>
     {
+        options.AddInterceptors(new EtheriT.Coker.Web.MVC.Diagnostics.DiagnosticsSaveGuard(),
+            new EtheriT.Coker.Web.MVC.Diagnostics.DiagnosticsCommandGuard());
         options.UseSqlServer(configuration.GetConnectionString("Default"),
             sqlServerOptionsAction: sqlOptions =>
             {
@@ -368,6 +370,8 @@ builder.Services.AddTransient<CustomWebDocumentViewerController>();
 builder.Services.AddTransient<CustomReportDesignerController>();
 builder.Services.AddTransient<CustomQueryBuilderController>();
 
+var diagnosticsRegistrations = builder.Services.ToArray();
+builder.Services.AddSingleton(new EtheriT.Coker.Web.MVC.Diagnostics.BackofficeSandboxFactory(diagnosticsRegistrations));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -274,6 +274,17 @@ namespace EtheriT.Coker.Application.Common
             // 設定郵件內容
             message.Body = bodyBuilder.ToMessageBody();
 
+            // Exercise envelope/body generation in an isolated scenario, without
+            // creating an SMTP client or connecting to any mail server.
+            if (EtheriT.Coker.Application.Shared.Common.DiagnosticsSandboxScope.Current is { } diagnostics)
+            {
+                diagnostics.Mail.Add(new EtheriT.Coker.Application.Shared.Common.DiagnosticsCapturedMail(
+                    message.Subject, message.To.Mailboxes.Concat(message.Cc.Mailboxes).Concat(message.Bcc.Mailboxes)
+                        .Select(mailbox => mailbox.Address).ToArray(), bodyBuilder.HtmlBody, bodyBuilder.TextBody));
+                response.Success = true;
+                return response;
+            }
+
             try
             {
                 bool enableLog = Configuration.GetValue<bool>("SmtpSettings:EnableSmtpDebugLog");

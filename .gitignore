@@ -417,6 +417,7 @@ launchSettings.json
 **/devextreme-license.js
 **/devextreme-license.ts
 docs/*.*
+!docs/BACKOFFICE_FUNCTION_TESTS.md
 
 # Frontend package build outputs
 packages/*/dist/

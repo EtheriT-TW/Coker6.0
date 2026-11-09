@@ -1,6 +1,7 @@
 using EtheriT.Coker.Application.Configuration;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Order;
+using EtheriT.Coker.Application.ThirdParty;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
             var now = DateTime.Now;
             var createdAfter = now.AddHours(-lookbackHours);
             var createdBefore = now.AddMinutes(-minimumAgeMinutes);
+            var watchedCodes = ECPayPendingPaymentPolicy.ResultWatchedCodes;
+            var watchedStartedAfter = now.AddDays(-(ECPayPendingPaymentPolicy.BnplReviewDays + 1));
 
             var pendingOrders = await (
                 from order in db.Order_Headers.AsNoTracking()
@@ -79,12 +82,15 @@ namespace EtheriT.Coker.Application.BackgroundJob
                       !website.IsDeleted &&
                       (!options.TargetWebsiteId.HasValue ||
                        order.FK_WebsiteId == options.TargetWebsiteId.Value) &&
-                      payment.Code == "ECPayApplePay" &&
                       order.TransactionId != null &&
                       order.TransactionId != "" &&
-                      (order.State == OrderStatusEnum.待確認 ||
-                       order.State == OrderStatusEnum.待付款) &&
-                      order.CreationTime >= createdAfter &&
+                      ((payment.Code == "ECPayApplePay" &&
+                        (order.State == OrderStatusEnum.待確認 ||
+                         order.State == OrderStatusEnum.待付款) &&
+                        order.CreationTime >= createdAfter) ||
+                       (watchedCodes.Contains(payment.Code) &&
+                        order.State == OrderStatusEnum.待付款 &&
+                        (order.RepayDate ?? order.CreationTime) >= watchedStartedAfter)) &&
                       order.CreationTime <= createdBefore
                 orderby order.CreationTime
                 select new
@@ -166,7 +172,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
             }
 
             logger.LogInformation(
-                "ECPay Apple Pay reconciliation completed. Checked={Checked}, Paid={Paid}, Failed={Failed}",
+                "ECPay payment reconciliation completed. Checked={Checked}, Paid={Paid}, Failed={Failed}",
                 pendingOrders.Count,
                 paidCount,
                 failedCount);

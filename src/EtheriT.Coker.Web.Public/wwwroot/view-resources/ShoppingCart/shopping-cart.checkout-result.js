@@ -49,7 +49,7 @@
                             }
                             break;
                         case "待付款":
-                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，待商家確認付款資訊，謝謝您的訂購！");
+                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(result.orderHeader.paymentPendingMessage || "訂單已成立，待商家確認付款資訊，謝謝您的訂購！");
                             break;
                     }
                     cart.CheckoutResult.SuccessPageDataInsert(result);

@@ -21,6 +21,9 @@ function computeSelectedSubtotal() {
     return { sum, bonus, discountEligibleSum };
 }
 function TotalCount() {
+    // 訂單結果頁顯示的是訂單資料，購物車試算不可覆蓋金額。
+    if (S.isCheckout) return;
+
     const { sum, bonus, discountEligibleSum } = cart.Pricing.computeSelectedSubtotal();
     const rewardAmount = cart.Marketing && typeof cart.Marketing.refreshRewardCampaigns === "function"
         ? Number(cart.Marketing.refreshRewardCampaigns() || 0)

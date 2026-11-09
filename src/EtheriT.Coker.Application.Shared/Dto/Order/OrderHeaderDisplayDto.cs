@@ -17,6 +17,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public int State { get; set; }
         public DateTime? CompletedDate { get; set; }
         public string StateStr { get; set; }
+        public string PaymentPendingMessage { get; set; } = "";
         public string Orderer { get; set; }
         public string OrdererSex { get; set; }
         public string OrdererEmail { get; set; }

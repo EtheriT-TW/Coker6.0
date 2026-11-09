@@ -189,7 +189,6 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     case "CreditInstallment":
                                     case "UnionPay":
                                     case "ApplePay":
-                                    case "TWQR":
                                         if (DateTimeNow > tradeDate.AddMinutes(30))
                                         {
                                             message = "交易失敗";
@@ -223,6 +222,21 @@ namespace EtheriT.Coker.Application.ThirdParty
                                         }
                                         break;
                                 }
+
+                                var resultWindow = ECPayPendingPaymentPolicy.GetResultWindow(await GetPaymentCodeAsync(ohdata.Payment));
+                                if (resultWindow.HasValue)
+                                {
+                                    // TradeStatus 非 0、非 1 代表交易失敗，例如無卡分期審核未通過。
+                                    var tradeStatus = queryTradeResponse.OrderInfo.TradeStatus;
+                                    var isTradeFailed = !string.IsNullOrEmpty(tradeStatus) && tradeStatus != "0";
+
+                                    if (isTradeFailed || DateTimeNow > tradeDate.Add(resultWindow.Value))
+                                    {
+                                        message = "交易失敗";
+                                        if (await TryMarkECPayFailedAsync(ohdata.Id))
+                                            ohdata.State = OrderStatusEnum.付款失敗;
+                                    }
+                                }
                             }
                             response.Success = true;
                             response.Message = $"{(int)ohdata.State},{message}";
@@ -248,6 +262,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var ohdata = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
                 var payment = await db.PaymentTypes.Where(e => e.Id == ohdata.Payment).FirstOrDefaultAsync() ?? throw new Exception("查無訂單付款方式");
                 var DateTimeNow = DateTime.Now;
+
+                if (ECPayPendingPaymentPolicy.IsResultPending(ohdata, payment, DateTimeNow))
+                    throw new Exception("付款結果確認中，暫時無法取消訂單，請等候結果或聯繫客服。");
 
                 switch (ohdata.State)
                 {
@@ -513,6 +530,51 @@ namespace EtheriT.Coker.Application.ThirdParty
 
             return updatedRows > 0;
         }
+
+        private async Task<string?> GetPaymentCodeAsync(long paymentId)
+        {
+            return await db.PaymentTypes
+                .Where(e => e.Id == paymentId)
+                .Select(e => e.Code)
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<bool> TryHandleWatchedPaymentNotPaidAsync(ECPayResponseDataDto responseData)
+        {
+            var merchantTradeNo = responseData.OrderInfo?.MerchantTradeNo;
+            if (string.IsNullOrEmpty(merchantTradeNo))
+                return false;
+
+            var order = await db.Order_Headers
+                .Where(e => e.TransactionId == merchantTradeNo)
+                .Select(e => new { e.Id, e.Payment })
+                .FirstOrDefaultAsync();
+
+            if (order == null ||
+                !ECPayPendingPaymentPolicy.IsResultWatched(await GetPaymentCodeAsync(order.Payment)))
+                return false;
+
+            // RtnCode=2 為無卡分期申請中，其餘非 1 的代碼才是付款失敗。
+            var isApplying = responseData.RtnCode == 2;
+
+            await loginUserData.SetLogs(
+                0,
+                configuration.GetValue<long>("WebConfig:SiteId"),
+                isApplying ? "ECPayReturnPending" : "ECPayReturnNotPaid",
+                JsonConvert.SerializeObject(new
+                {
+                    OrderId = order.Id,
+                    RtnCode = responseData.RtnCode,
+                    RtnMsg = responseData.RtnMsg,
+                    MerchantTradeNo = merchantTradeNo
+                })
+            );
+
+            if (!isApplying)
+                await TryMarkECPayFailedAsync(order.Id);
+
+            return true;
+        }
         public async Task<IActionResult> ECPayOrderResult(string ResultData)
         {
             var WebsiteId = configuration.GetValue<long>("WebConfig:SiteId");
@@ -536,7 +598,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 var ohdata = await db.Order_Headers.Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo).FirstOrDefaultAsync() ?? throw new Exception("查無訂單資訊");
 
-                if (ResponseData.RtnCode != 1)
+                // RtnCode=2 為無卡分期申請中，最終結果以 ReturnURL 為準，不視為付款失敗。
+                if (ResponseData.RtnCode != 1 && ResponseData.RtnCode != 2)
                 {
                     await TryMarkECPayFailedAsync(ohdata.Id);
                 }
@@ -566,7 +629,13 @@ namespace EtheriT.Coker.Application.ThirdParty
                 if (ResponseData.RtnCode == 1) ResponseData.Success = true;
 
                 await loginUserData.SetLogs(0, configuration.GetValue<long>("WebConfig:SiteId"), $"ECPayReturn", JsonConvert.SerializeObject(ResponseData));
-                if (ResponseData.RtnCode != 1) throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
+                if (ResponseData.RtnCode != 1)
+                {
+                    if (await TryHandleWatchedPaymentNotPaidAsync(ResponseData))
+                        return "1|OK";
+
+                    throw new Exception($"取得ECPayReturn發生錯誤，{JsonConvert.SerializeObject(ResponseData, Formatting.Indented)}");
+                }
 
                 var ohdata = await db.Order_Headers
                     .Where(e => e.TransactionId == ResponseData.OrderInfo.MerchantTradeNo)
@@ -629,6 +698,9 @@ namespace EtheriT.Coker.Application.ThirdParty
                                 MerchantTradeNo = ResponseData.OrderInfo.MerchantTradeNo
                             })
                         );
+
+                        if (ECPayPendingPaymentPolicy.IsResultWatched(await GetPaymentCodeAsync(ohdata.Payment)))
+                            await orderAppService.PaidOrderConflictMailSend(ohdata.Id, ResponseData.OrderInfo.MerchantTradeNo);
                     }
                 }
                 else
@@ -775,6 +847,9 @@ namespace EtheriT.Coker.Application.ThirdParty
 
                 if (payment.FK_ThirdPartyId != 4)
                     throw new Exception("此訂單不是綠界付款方式");
+
+                if (ECPayPendingPaymentPolicy.IsResultPending(orderHeader, payment, DateTime.Now))
+                    throw new Exception("付款結果確認中，暫時無法重新付款。");
 
                 var thirdPartyData = await ECPayGetThirdPartyData();
 

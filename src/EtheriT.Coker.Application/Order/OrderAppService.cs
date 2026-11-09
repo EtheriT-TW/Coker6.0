@@ -2536,6 +2536,7 @@ namespace EtheriT.Coker.Application.Order
 
                     temp_output.CanRefund = payment.CanRefund || IsECPayApplePayPayment(payment);
                     temp_output.ThirdParties = payment.FK_ThirdPartyId;
+                    temp_output.PaymentPendingMessage = ECPayPendingPaymentPolicy.GetPendingMessage(payment.Code);
 
                     temp_output.CreationTime = order_header.CreationTime.ToString("yyyy-MM-dd HH:mm");
                     output.Add(temp_output);
@@ -2973,6 +2974,7 @@ namespace EtheriT.Coker.Application.Order
 
                         var canCancel =
                             isintime &&
+                            !ECPayPendingPaymentPolicy.IsResultPending(order_header, payment, now) &&
                             (
                                 new List<int>
                                 {
@@ -3031,6 +3033,10 @@ namespace EtheriT.Coker.Application.Order
                 WaitingMessage = ""
             };
 
+            // 綠界結果未出前不可換交易編號，否則後續通知會對不上訂單。
+            if (ECPayPendingPaymentPolicy.IsResultPending(order, payment, now))
+                return result;
+
             // 明確付款失敗，一律允許重新付款
             if (order.State == OrderStatusEnum.付款失敗)
             {
@@ -3077,6 +3083,9 @@ namespace EtheriT.Coker.Application.Order
         }
         private static bool CanRepay(Order_Header order, PaymentType? payment, DateTime now)
         {
+            if (ECPayPendingPaymentPolicy.IsResultPending(order, payment, now))
+                return false;
+
             // 明確付款失敗，一律允許重新付款
             if (order.State == OrderStatusEnum.付款失敗)
                 return true;
@@ -3474,7 +3483,17 @@ namespace EtheriT.Coker.Application.Order
                         if (newStatus == OrderStatusEnum.已取消 &&
                             (oldStatus == OrderStatusEnum.待確認 || oldStatus == OrderStatusEnum.待付款))
                         {
-                            orderHeader.TransactionId = null;
+                            var paymentCode = await db.PaymentTypes
+                                .Where(e => e.Id == orderHeader.Payment)
+                                .Select(e => e.Code)
+                                .FirstOrDefaultAsync();
+
+                            // 這些付款方式的交易可能晚於取消才成功，保留編號才認得出是哪筆訂單。
+                            if (oldStatus != OrderStatusEnum.待付款 ||
+                                !ECPayPendingPaymentPolicy.IsResultWatched(paymentCode))
+                            {
+                                orderHeader.TransactionId = null;
+                            }
                         }
 
                         break;
@@ -4728,6 +4747,47 @@ namespace EtheriT.Coker.Application.Order
             {
                 response.Error = ex.Message;
                 await WriteOrderMailFailureLogAsync("PaySuccessMailException", ohid, response, ex);
+            }
+            return response;
+        }
+        public async Task<ResponseMessageDto> PaidOrderConflictMailSend(long ohid, string merchantTradeNo)
+        {
+            ResponseMessageDto response = new ResponseMessageDto();
+            try
+            {
+                var websiteId = configuration.GetValue<long>("WebConfig:SiteId");
+                var website = await db.Websites.Where(e => e.Id == websiteId).FirstOrDefaultAsync();
+
+                if (string.IsNullOrEmpty(website?.ContactMail))
+                    throw new Exception("網站未設定客服信箱，無法寄送付款異常通知");
+
+                var orderNo = ohid.ToString("D9");
+                var mailhtml = $@"<div>訂單 {orderNo} 收到綠界付款成功通知，但訂單目前的狀態無法改為已付款（可能已取消）。</div>
+                                  <div>綠界特店交易編號：{merchantTradeNo}</div>
+                                  <div>請盡快確認訂單，並聯繫客人與綠界處理取消分期或退款。</div>";
+
+                response = await mailAppService.sendMail(new SenderDto
+                {
+                    Recipients = new List<MailUserDataDto>()
+                    {
+                        new MailUserDataDto()
+                        {
+                            Name = !string.IsNullOrEmpty(website.Contact) ? website.Contact : "客服信箱",
+                            Email = website.ContactMail,
+                        }
+                    },
+                    Subject = $"【{website.Title}】付款與訂單狀態不一致(訂單編號：{orderNo})",
+                    Body = mailhtml,
+                    Css = "*{ font-family: sans-serif; }",
+                }, website.Contact);
+
+                if (!response.Success)
+                    await WriteOrderMailFailureLogAsync("PaidOrderConflictMailFail", ohid, response);
+            }
+            catch (Exception ex)
+            {
+                response.Error = ex.Message;
+                await WriteOrderMailFailureLogAsync("PaidOrderConflictMailException", ohid, response, ex);
             }
             return response;
         }

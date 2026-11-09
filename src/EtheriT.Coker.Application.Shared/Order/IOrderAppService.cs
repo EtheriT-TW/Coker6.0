@@ -38,6 +38,7 @@ namespace EtheriT.Coker.Application.Shared.Order
         public Task<List<MemberOrderDto>> GetMemberOrder(Guid UUID);
         public Task<ResponseMessageDto> PaySuccessMailSend(long ohid, DateTime date);
         public Task<ResponseMessageDto> PayFailMailSend(long ohid, DateTime date);
+        public Task<ResponseMessageDto> PaidOrderConflictMailSend(long ohid, string merchantTradeNo);
         public Task<ResponseMessageDto> CancelOrderMailSend(long ohid, DateTime date);
         public Task<ResponseMessageDto> GetForPaymentAsync(long ohid, bool isTemp = false);
         public Task<ResponseMessageDto> GetForRefundAsync(long ohid);

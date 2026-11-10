@@ -504,6 +504,12 @@ namespace EtheriT.Coker.Application.Templates
                 dto.Visibility ??= new GlobalVisibilitySettingsDto();
                 dto.SchemaVersion = 1;
 
+                if(dto.MarqueeDelaySeconds < GlobalSettingsDto.MinMarqueeDelaySeconds || dto.MarqueeDelaySeconds > GlobalSettingsDto.MaxMarqueeDelaySeconds)
+                {
+                    response.Error = $"跑馬燈顯示秒數需介於 {GlobalSettingsDto.MinMarqueeDelaySeconds} 到 {GlobalSettingsDto.MaxMarqueeDelaySeconds} 秒之間";
+                    return response;
+                }
+
                 var template = await getDefaultTemplate();
                 var storedSettings = string.IsNullOrWhiteSpace(template.LayoutConfig)
                     ? new JObject()

@@ -18,6 +18,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
         public bool? HasShoppingCar { get; set; }
         public bool ShowPagePath { get; set; } = true;
         public bool ShowMarquee { get; set; } = true;
+        public int MarqueeDelaySeconds { get; set; } = 3;
         public string marqueeBagroundImage { get; set; } = string.Empty;
         public string marqueeIcon { get; set; } = string.Empty;
         public TemplatesDto? templates { get; set; }

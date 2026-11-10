@@ -18,6 +18,7 @@ function PageReady() {
                 $('#showPagePath').prop('checked', visibility.showPagePath ?? true);
                 $('#showPopular').prop('checked', visibility.showPopular ?? false);
                 $('#showPublishDate').prop('checked', visibility.showPublishDate ?? true);
+                $('#marqueeDelaySeconds').val(result.object?.marqueeDelaySeconds ?? 3);
             })
             .catch(error => {
                 co.sweet.error('讀取失敗', error.message);
@@ -27,12 +28,20 @@ function PageReady() {
             });
     }
 
+    $('#marqueeDelaySeconds').on('keydown', function (event) {
+        if (['e', 'E', '+', '-', '.'].includes(event.key)) {
+            event.preventDefault();
+        }
+    });
+
+
     $form.on('submit', function (event) {
         event.preventDefault();
         setLoading(true);
 
         const data = {
             schemaVersion: 1,
+            marqueeDelaySeconds: Number($('#marqueeDelaySeconds').val()),
             visibility: {
                 showMarquee: $('#showMarquee').prop('checked'),
                 showPagePath: $('#showPagePath').prop('checked'),

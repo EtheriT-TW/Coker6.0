@@ -17,9 +17,20 @@
             <p class="text-muted mb-4">控制全站共用內容是否顯示；個別內容原有的顯示設定仍會保留。</p>
             <div class="row g-4">
                 <div class="col-md-6">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" id="showMarquee">
-                        <label class="form-check-label" for="showMarquee">顯示跑馬燈</label>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-sm-auto">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="showMarquee">
+                                <label class="form-check-label" for="showMarquee">顯示跑馬燈</label>
+                            </div>
+                        </div>
+                        <label class="col-auto col-form-label" for="marqueeDelaySeconds">每筆顯示</label>
+                        <div class="col-6 col-sm-4">
+                            <div class="input-group">
+                                <input class="form-control" type="number" id="marqueeDelaySeconds" min="1" max="60" step="1" value="3" required>
+                                <span class="input-group-text">秒</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">

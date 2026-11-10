@@ -447,7 +447,7 @@
         }
         <div class="content position-absolute row align-items-center w-100">
             <div class="text overflow-hidden text-white p-0 col">
-                <div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden">
+                <div class="swiper marqueeSwiper swiper-initialized swiper-vertical swiper-pointer-events swiper-backface-hidden" data-marquee-delay-seconds="@Model.MarqueeDelaySeconds">
                     <div class="swiper-wrapper">
                         @foreach (var marquee in Model.marqueeModels ?? new List<MarqueeDisplayDto>())
                         {

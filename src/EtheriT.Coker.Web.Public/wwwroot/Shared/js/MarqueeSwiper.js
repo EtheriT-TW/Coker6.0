@@ -1,4 +1,6 @@
 ﻿function MarqueeSwiper(SiteId) {
+    const marqueeDelaySeconds = Number($(".marqueeSwiper").first().attr("data-marquee-delay-seconds"));
+    const marqueeDelay = marqueeDelaySeconds > 0 ? marqueeDelaySeconds * 1000 : 3000;
     var Marquee = {
         getMarqueeData: function (webid, placement) {
             return $.ajax({
@@ -54,7 +56,7 @@
             enabled: true,
         },
         autoplay: {
-            delay: 3000,
+            delay: marqueeDelay,
         },
     });
     const checkFunction = function () {
@@ -146,7 +148,7 @@
                 enabled: true,
             },
             autoplay: {
-                delay: 3000,
+                delay: marqueeDelay,
             },
         });
 

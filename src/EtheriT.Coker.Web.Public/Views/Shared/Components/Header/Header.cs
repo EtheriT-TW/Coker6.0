@@ -239,6 +239,7 @@ namespace EtheriT.Coker.Web.Public.Views.Shared.Components.Header
 
                     var globalSettings = await templatesApplicationService.GetGlobalSettingsForDisplayAsync(defaultData.Id);
                     headerViewModel.ShowMarquee = globalSettings.Visibility.ShowMarquee;
+                    headerViewModel.MarqueeDelaySeconds = globalSettings.MarqueeDelaySeconds;
                     headerViewModel.ShowPagePath = globalSettings.Visibility.ShowPagePath;
 
                     if (marquee != null && marquee.Count > 0)

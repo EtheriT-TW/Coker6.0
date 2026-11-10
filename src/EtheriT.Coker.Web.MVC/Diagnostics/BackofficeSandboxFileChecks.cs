@@ -13,7 +13,9 @@ public static partial class BackofficeSandboxChecks
         var root = Path.GetFullPath(paths.GetRootPath("diagnostics"));
         var safe = Path.GetFullPath(paths.GetPhysicalPath("diagnostics", "files/probe.txt"));
         Require(safe.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), "A normal file path escaped the upload root.");
-        foreach (var input in new[] { "../outside.txt", "../" + Path.GetFileName(root) + "-other/outside.txt" })
+        Require(Path.GetFullPath(paths.GetPhysicalPath("diagnostics", ".")) == root, "Upload root itself was rejected.");
+        foreach (var input in new[] { "../outside.txt", "..\\outside.txt",
+            "../" + Path.GetFileName(root) + "-other/outside.txt", "..\\" + Path.GetFileName(root) + "-other\\outside.txt" })
         {
             var rejected = false;
             try { paths.GetPhysicalPath("diagnostics", input); }

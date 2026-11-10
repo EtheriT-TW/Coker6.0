@@ -20,12 +20,17 @@
             <input type="hidden" name="websiteId" value="@(await LoginUserData.GetWebsiteId())" />
             <div class="d-flex flex-wrap gap-2">
                 <button type="submit" class="btn btn-primary" id="diagnostics-run" disabled>開始檢測</button>
+                <button type="submit" class="btn btn-outline-primary d-none" id="diagnostics-retry" hidden disabled>複測未通過項目</button>
                 <button type="button" class="btn btn-outline-secondary d-none" id="diagnostics-stop" hidden>停止檢測</button>
-                <a class="btn btn-outline-secondary" href="#failed" data-diagnostics-filter="failed">未通過項目</a>
-                <a class="btn btn-outline-secondary" href="#all" data-diagnostics-filter="all">全部檢測項目</a>
+                <a class="btn btn-outline-secondary d-none" href="#failed" data-diagnostics-filter="failed" hidden>未通過項目</a>
+                <a class="btn btn-outline-secondary d-none" href="#all" data-diagnostics-filter="all" hidden>全部檢測項目</a>
             </div>
         </form>
-        <p class="text-muted mt-2 mb-0" id="diagnostics-message" role="status" aria-live="polite">正在載入檢測程式；若按鈕持續未啟用，請重新整理或聯絡系統維護人員。</p>
+        @if (ViewData["DiagnosticsHistoryWarning"] is string historyWarning)
+        {
+            <p class="text-warning mt-2 mb-0" role="alert">@historyWarning</p>
+        }
+        <p class="text-muted mt-2 mb-0" id="diagnostics-message" data-last-run="@ViewData["LastDiagnosticsAt"]" role="status" aria-live="polite">正在載入檢測程式；若按鈕持續未啟用，請重新整理或聯絡系統維護人員。</p>
     </div></div>
     <div id="diagnostics-results" aria-live="polite">
         @await Html.PartialAsync("_BackofficeResults", Model)

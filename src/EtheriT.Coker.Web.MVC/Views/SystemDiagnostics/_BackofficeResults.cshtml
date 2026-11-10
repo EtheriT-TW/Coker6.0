@@ -1,5 +1,9 @@
 @using EtheriT.Coker.Web.MVC.Diagnostics
 @model BackofficeTestListModel
+@if (ViewData["DiagnosticsHistoryWarning"] is string historyWarning && Model.HasRun)
+{
+    <p class="text-warning" data-diagnostics-storage-warning role="alert">@historyWarning</p>
+}
 <div data-diagnostics-summary data-has-run="@(Model.HasRun ? "true" : "false")" data-total="@Model.TotalCases" data-pages-count="@Model.Pages.Count">
     <p data-diagnostics-counts>適用操作項目 @Model.TotalCases 項；尚未執行檢測。</p>
 </div>
@@ -7,7 +11,7 @@
 @for (var index = 0; index < Model.Pages.Count; index++)
 {
     var entry = Model.Pages[index];
-    <details class="card mb-3" data-diagnostics-group data-page-index="@index" data-has-run="@(Model.HasRun ? "true" : "false")" open>
+    <details class="card mb-3" data-diagnostics-group data-page-index="@index" data-has-run="@(entry.BasicStatus != BackofficeTestStatus.NotRun ? "true" : "false")" open>
         <summary class="card-header">@entry.Module / @entry.Title</summary>
         <div class="card-body"><div class="table-responsive">
             <table class="table table-bordered">

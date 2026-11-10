@@ -55,8 +55,11 @@ public sealed record BackofficeTestListModel(
     int PlannedCases = 0)
 {
     public string ScopeStamp => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
-        System.Text.Encoding.UTF8.GetBytes(string.Join("|", Pages.SelectMany(page =>
-            new[] { page.Id }.Concat(page.Cases.Select(test => test.Id)))))));
+        System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(Pages.Select(page => new
+        {
+            page.Id, page.Sources,
+            Cases = page.Cases.Select(test => new { test.Id, test.Executor, test.Steps, test.Expected, test.RequiredFeatures })
+        })))));
 }
 
 // Inventory only: no HTTP requests, controller execution, database or file mutation.

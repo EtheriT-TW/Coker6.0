@@ -41,9 +41,12 @@ public static partial class BackofficeSandboxChecks
     private static async Task TemplateFooter(BackofficeSandbox box)
     {
         var service = box.Services.GetRequiredService<ITemplatesApplicationService>();
-        Success(await service.saveDefaultFooter(new MenuSaveContenDto { SaveHtml = "<p>diagnostics-footer</p>", SaveCss = "p{color:red}" }));
+        Success(await service.GetDefaultFooterTemplatesAsync());
+        var footer = await box.Db.FooterTemplates.SingleAsync();
+        var id = footer.Id;
+        Success(await service.saveDefaultFooter(new MenuSaveContenDto { Id = checked((int)id), SaveHtml = "<p>diagnostics-footer</p>", SaveCss = "p{color:red}" }));
         box.Db.ChangeTracker.Clear();
-        Require(await box.Db.FooterTemplates.AsNoTracking().AnyAsync(row => row.saveHtml != null && row.saveHtml.Contains("diagnostics-footer")), "Footer draft was not saved.");
+        Require(await box.Db.FooterTemplates.AsNoTracking().AnyAsync(row => row.Id == id && row.saveHtml != null && row.saveHtml.Contains("diagnostics-footer") && row.saveCss == "p{color:red}"), "Footer draft was not saved.");
     }
     private static async Task<List<Contact>> ContactFixtures(BackofficeSandbox box)
     {

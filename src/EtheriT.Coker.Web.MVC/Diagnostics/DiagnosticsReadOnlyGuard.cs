@@ -83,7 +83,7 @@ public sealed class DiagnosticsCommandGuard : DbCommandInterceptor
         var sql = Regex.Replace(command.CommandText,
             @"'(?:''|[^'])*'|\[(?:\]\]|[^\]])*\]|""(?:""""|[^""])*""|--[^\r\n]*|/\*[\s\S]*?\*/", " ");
         if (!Regex.IsMatch(sql, @"^\s*SELECT\b", RegexOptions.IgnoreCase) ||
-            Regex.IsMatch(sql, @"\b(INSERT|UPDATE|DELETE|MERGE|EXEC|EXECUTE|INTO|ALTER|DROP|CREATE|TRUNCATE|DBCC|BACKUP|RESTORE|NEXT|OPENROWSET|OPENQUERY)\b", RegexOptions.IgnoreCase))
+            Regex.IsMatch(sql, @"\b(INSERT|UPDATE|DELETE|MERGE|EXEC|EXECUTE|INTO|ALTER|DROP|CREATE|TRUNCATE|DBCC|BACKUP|RESTORE|OPENROWSET|OPENQUERY)\b|\bNEXT\s+VALUE\s+FOR\b", RegexOptions.IgnoreCase))
             session.RejectWrite();
         session.RegisterCancellation(command);
     }

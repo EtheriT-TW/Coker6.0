@@ -61,9 +61,11 @@ namespace EtheriT.Coker.Application
 
             var rootPath = GetRootPath(orgName);
             var physicalPath = Path.GetFullPath(Path.Combine(rootPath, relativePath));
-            var safeRoot = Path.GetFullPath(rootPath);
+            var safeRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootPath));
+            var rootPrefix = Path.EndsInDirectorySeparator(safeRoot) ? safeRoot : safeRoot + Path.DirectorySeparatorChar;
 
-            if (!physicalPath.StartsWith(safeRoot, StringComparison.OrdinalIgnoreCase))
+            if (!physicalPath.Equals(safeRoot, StringComparison.OrdinalIgnoreCase)
+                && !physicalPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
                 throw new Exception("檔案路徑不合法");
 
             return physicalPath;

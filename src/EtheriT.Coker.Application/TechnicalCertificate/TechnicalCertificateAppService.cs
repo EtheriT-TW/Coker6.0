@@ -93,7 +93,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 				}
 				else
 				{
-					tc = db.TechnicalCertificates.Where(e => e.Id == dto.Id).FirstOrDefault();
+                    var websiteId = await loginUserData.GetWebsiteId();
+					tc = db.TechnicalCertificates.Where(e => e.Id == dto.Id && e.FK_WebsiteId == websiteId && !e.IsDeleted).FirstOrDefault();
 					if (tc != null)
 					{
                         tc.Disp_opt = dto.Disp_opt;
@@ -582,7 +583,8 @@ namespace EtheriT.Coker.Application.TechnicalCertificate
 
 			try
 			{
-				var db_tc = db.TechnicalCertificates.Where(e => e.Id == Id).FirstOrDefault();
+                var websiteId = await loginUserData.GetWebsiteId();
+				var db_tc = db.TechnicalCertificates.Where(e => e.Id == Id && e.FK_WebsiteId == websiteId && !e.IsDeleted).FirstOrDefault();
 				long usetId = await loginUserData.GetUserId();
 
 				if (db_tc != null)

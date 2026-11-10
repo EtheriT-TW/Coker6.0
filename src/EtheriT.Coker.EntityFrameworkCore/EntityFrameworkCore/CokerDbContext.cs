@@ -144,10 +144,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // 掃描所有繼承自 FullAuditedEntity 的類別
+            // Domain entities live with FullAuditedEntity. Scanning every loaded
+            // assembly also inspects optional vendor types and can fail while a
+            // new provider (e.g. diagnostics InMemory) builds its model.
             var entityType = typeof(FullAuditedEntity); // 基類型
-            var configurations = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(a => a.GetTypes())
+            var configurations = entityType.Assembly.GetTypes()
                 .Where(t => t.IsClass && !t.IsAbstract && entityType.IsAssignableFrom(t)) // 篩選繼承類別
                 .Select(entity => typeof(FullAuditedEntityConfiguration<>).MakeGenericType(entity)) // 動態構造類型
                 .ToList();

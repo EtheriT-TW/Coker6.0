@@ -5,6 +5,7 @@
     const results = root.querySelector("#diagnostics-results");
     const form = root.querySelector("#diagnostics-run-form");
     const run = root.querySelector("#diagnostics-run");
+    const retry = root.querySelector("#diagnostics-retry");
     const stop = root.querySelector("#diagnostics-stop");
     const message = root.querySelector("#diagnostics-message");
     const filters = [...root.querySelectorAll("[data-diagnostics-filter]")];
@@ -14,6 +15,7 @@
     const groups = () => [...results.querySelectorAll("[data-diagnostics-group]")];
     function setHidden(element, hidden) { element.hidden = hidden; element.classList.toggle("d-none", hidden); }
     function update() {
+        const hasResults = groups().some(group => group.dataset.hasRun === "true");
         let visible = 0, passed = 0, failed = 0, skipped = 0, pending = 0, basics = 0;
         for (const group of groups()) {
             let count = 0;
@@ -24,13 +26,14 @@
                 else if (status === "Passed") passed++;
                 else if (status === "Skipped") skipped++;
                 else if (status === "NotRun") pending++;
-                setHidden(row, filter !== "all" && status !== "Failed");
+                setHidden(row, !hasResults || (filter !== "all" && status !== "Failed"));
                 if (!row.hidden) count++;
             }
             setHidden(group, count === 0);
             if (count) visible++;
         }
         for (const link of filters) {
+            setHidden(link, !hasResults);
             const active = link.dataset.diagnosticsFilter === filter;
             link.classList.toggle("btn-secondary", active);
             link.classList.toggle("btn-outline-secondary", !active);
@@ -43,9 +46,12 @@
         const empty = results.querySelector("[data-diagnostics-empty]");
         setHidden(empty, visible > 0);
         empty.textContent = summary.dataset.pagesCount === "0" ? "目前網站沒有適用的檢測項目。" : running ? "檢測進行中，暫未發現未通過項目。" :
-            groups().some(group => group.dataset.hasRun === "true") ? "已執行的項目未發現異常；其餘未執行項目不代表通過，請查看全部檢測項目。" :
-            "尚未執行檢測。可切換全部檢測項目查看範圍。";
+            hasResults ? "已執行的項目未發現異常；其餘未執行項目不代表通過，請查看全部檢測項目。" :
+            "尚未執行檢測，請點選「開始檢測」。";
         run.disabled = running || summary.dataset.pagesCount === "0";
+        if (!running) run.textContent = hasResults ? "重新檢測" : "開始檢測";
+        setHidden(retry, !hasResults);
+        retry.disabled = running || failed === 0;
     }
     function selectFilter(value) {
         filter = value === "all" ? "all" : "failed";
@@ -63,7 +69,7 @@
         running = true;
         setHidden(stop, false);
         run.textContent = "檢測中…";
-        const targets = groups();
+        const targets = groups().filter(group => event.submitter !== retry || group.querySelector('[data-status="Failed"]'));
         // Clear prior results before a new run so old successes cannot look current.
         for (const group of targets) {
             group.dataset.hasRun = "false";
@@ -73,7 +79,7 @@
             }
         }
         update();
-        let completed = 0;
+        let completed = 0, storageWarning = "";
         controller = new AbortController();
         try {
             for (const group of targets) {
@@ -93,6 +99,7 @@
                     response.status === 401 || response.status === 403 ? "登入已失效或沒有執行權限。" : "檢測未完成，請稍後重試或聯絡系統維護人員。");
                 const template = document.createElement("template");
                 template.innerHTML = html;
+                storageWarning = template.content.querySelector("[data-diagnostics-storage-warning]")?.textContent || storageWarning;
                 const replacement = template.content.querySelector("[data-diagnostics-group]");
                 if (!replacement) throw new Error("未取得檢測結果，請重新登入後再試。");
                 replacement.dataset.pageIndex = group.dataset.pageIndex;
@@ -100,7 +107,8 @@
                 completed++;
                 update();
             }
-            message.textContent = "檢測完成（" + completed + " / " + targets.length + "）。未執行項目不代表通過；結果保留於本頁。";
+            message.textContent = "檢測完成（" + completed + " / " + targets.length + "）。" +
+                (storageWarning || "最後結果已儲存。") + "複測會重新檢查有未通過項目的整個功能。未執行項目不代表通過。";
         } catch (error) {
             message.textContent = error.name === "AbortError" ? "檢測已停止或逾時，已完成的結果仍保留；其餘項目尚未檢測。" : error.message;
         } finally {
@@ -112,5 +120,8 @@
         }
     });
     selectFilter(filter);
-    message.textContent = "結果僅保留於本頁，重新整理後需重新檢測。";
+    message.textContent = groups().some(group => group.dataset.hasRun === "true")
+        ? (message.dataset.lastRun ? "已載入上次結果（" + message.dataset.lastRun + "）。" : "") +
+            "最後結果依網站及帳號儲存，服務重啟後仍可載入。檢測範圍或規格變更後需重新檢測。可直接複測未通過項目。"
+        : "點選「開始檢測」後，會自動儲存結果，並提供結果篩選與複測。";
 })();

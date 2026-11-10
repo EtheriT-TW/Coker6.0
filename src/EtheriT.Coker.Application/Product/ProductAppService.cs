@@ -232,6 +232,10 @@ namespace EtheriT.Coker.Application.Product
 
                 output.Success = tag_response.Success && techcert_response.Success && stock_response.Success;
                 output.Error = stock_change ? "" : stock_response.Message == "庫存變動" ? stock_response.Message : "";
+                if (!output.Success)
+                    output.Error = !tag_response.Success ? "商品標籤儲存失敗：" + tag_response.Error
+                        : !techcert_response.Success ? "商品證照關聯儲存失敗：" + techcert_response.Error
+                        : "商品庫存儲存失敗：" + stock_response.Error;
                 output.Message = asoid.ToString();
                 output.Object = stock_response.Object;
             }

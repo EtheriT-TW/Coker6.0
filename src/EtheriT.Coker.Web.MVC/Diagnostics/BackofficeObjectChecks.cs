@@ -90,7 +90,9 @@ public static class BackofficeObjectChecks
                     passed = traffic.Items != null && traffic.Items.All(row => row.PageViews >= 0 && row.Visitors >= 0); break;
                 case "object/traffic-heatmap":
                     var heatmap = await service.GetTrafficHeatmap(7);
-                    passed = heatmap.Items != null && heatmap.Items.All(row => row.DayOfWeek is >= 0 and <= 6 && row.Hour is >= 0 and <= 23 && row.TotalViews >= 0 && row.TotalVisitors >= 0); break;
+                    passed = heatmap.Items != null && heatmap.Items.Count == 7 * 24
+                        && heatmap.Items.Select(row => (row.DayOfWeek, row.Hour)).Distinct().Count() == 7 * 24
+                        && heatmap.Items.All(row => row.DayOfWeek is >= 1 and <= 7 && row.Hour is >= 0 and <= 23 && row.TotalViews >= 0 && row.TotalVisitors >= 0); break;
                 case "object/popular-pages":
                     var popular = await service.GetPopularPages(5, DateTime.Today.AddDays(-7), DateTime.Today);
                     passed = popular != null && popular.Count <= 5 && popular.All(row => row.Views >= 0 && row.Visitors >= 0); break;

@@ -10,11 +10,12 @@ using AutoMapper;
 using EtheriT.Coker.Application.Common;
 using Newtonsoft.Json.Linq;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
     [Authorize]
-    public class SystemDiagnosticsController : Controller
+    public partial class SystemDiagnosticsController : Controller
     {
         private readonly LoginUserData loginUserData;
         private readonly IActionDescriptorCollectionProvider actionDescriptors;
@@ -23,6 +24,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         private readonly ILogger<SystemDiagnosticsController> logger;
         private readonly BackofficeSandboxFactory sandboxFactory;
         private readonly IMapper mapper;
+        private BackofficeResultStore ResultStore => new(
+            HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().ContentRootPath);
 
         public SystemDiagnosticsController(LoginUserData loginUserData,
             IActionDescriptorCollectionProvider actionDescriptors, NavigationProvider navigation,
@@ -39,13 +42,56 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Backoffice(bool showAll = false)
+        public Task<IActionResult> Backoffice(bool showAll = false) => BuildBackofficePage(showAll, "Backoffice");
+
+        private async Task<IActionResult> BuildBackofficePage(bool showAll, string viewName)
         {
             if (!await loginUserData.IsPlatformAdministrator()) return Forbid();
 
-            ViewData["Title"] = "BackofficeFunctionTests";
+            var websiteId = await loginUserData.GetWebsiteId();
+            var userId = await loginUserData.GetUserId();
+            HttpContext.RequestServices.GetRequiredService<BackgroundOperationContext>().Set(websiteId, userId);
+            ViewData["Title"] = viewName == "History" ? "SystemDiagnosticsHistory" : "BackofficeFunctionTests";
             var scope = await navigation.BuildDiagnosticsScopeAsync();
-            return View(BackofficeTestCatalog.Build(actionDescriptors, scope.Jobs, true) with { ShowAll = showAll });
+            var model = BackofficeTestCatalog.Build(actionDescriptors, scope.Jobs, true) with { ShowAll = showAll };
+            try
+            {
+                var last = await ResultStore.LoadAsync(websiteId, userId, viewName == "History" ? null : model.ScopeStamp);
+                if (last != null)
+                {
+                    ViewData["LastDiagnosticsAt"] = last.AtUtc.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss");
+                    if (last.ScopeStamp != model.ScopeStamp)
+                    {
+                        ViewData["DiagnosticsHistoryWarning"] = "已找到上次紀錄，但目前可用功能或檢測規格已變更，請重新檢測；舊結果不列入目前狀態。";
+                    }
+                    else
+                    {
+                    // Restore results only, keeping the current catalog and scope authoritative.
+                    model = model with { Pages = model.Pages.Select(page => last.Pages.TryGetValue(page.Id, out var saved)
+                        ? page with { BasicStatus = saved.BasicStatus, BasicMessage = saved.BasicMessage,
+                            Cases = page.Cases.Select(test => saved.Cases.FirstOrDefault(candidate => candidate.Id == test.Id) is { } old
+                                ? test with { Status = old.Status, ResultMessage = old.ResultMessage } : test).ToList() }
+                        : page).ToList() };
+                    }
+                }
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+            {
+                logger.LogWarning(exception, "Could not load diagnostics history for site {WebsiteId}", websiteId);
+                ViewData["DiagnosticsHistoryWarning"] = "無法載入上次檢測紀錄，請聯絡系統維護人員；仍可執行新檢測。";
+            }
+            Response.Headers.CacheControl = "no-store";
+            if (viewName == "History")
+            {
+                var publicPlan = await BuildPublicPlan(websiteId);
+                PublicReport? publicReport = null;
+                string? publicWarning = publicPlan.Error;
+                try { publicReport = await PublicStore.LoadAsync(websiteId, userId, publicPlan.Stamp); }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+                { logger.LogWarning(exception, "Could not load public history for site {Site}", websiteId); publicWarning = "無法載入前台檢測紀錄。"; }
+                ViewData["PublicDiagnostics"] = new PublicDiagnosticsModel(publicPlan, publicReport, showAll, publicWarning);
+            }
+            return View(viewName, model);
         }
 
         [HttpPost("/api/SystemDiagnostics/Run"), ValidateAntiForgeryToken]
@@ -71,6 +117,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             var actions = actionDescriptors.ActionDescriptors.Items.OfType<ControllerActionDescriptor>()
                 .Select(action => (action.ControllerName, action.ActionName)).ToHashSet();
             var pages = new List<BackofficeTestPage>();
+            var errors = new Dictionary<string, string>();
             foreach (var page in new[] { selected })
             {
                 var passed = false;
@@ -84,6 +131,7 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                 catch (Exception exception)
                 {
                     logger.LogWarning(exception, "Diagnostics view lookup failed for {PageId}", page.Id);
+                    errors[page.Id] = exception.ToString();
                 }
                 var cases = new List<BackofficeTestCase>();
                 var samples = new Dictionary<string, JArray>();
@@ -105,13 +153,17 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                             status = check.Status;
                             message = check.Message;
                             if (status == BackofficeTestStatus.Failed)
+                            {
+                                errors[test.Id] = message;
                                 logger.LogWarning("Diagnostics assertion failed for {CaseId} on site {WebsiteId}: {Summary}",
                                     test.Id, websiteId, message);
+                            }
                         }
                     }
                     catch (Exception exception) when (exception is not OperationCanceledException)
                     {
                         logger.LogWarning(exception, "Diagnostics failed for {CaseId} on site {WebsiteId}", test.Id, websiteId);
+                        errors[test.Id] = exception.ToString();
                         status = BackofficeTestStatus.Failed;
                         message = "此項檢測未通過，請聯絡系統維護人員。";
                     }
@@ -130,6 +182,12 @@ namespace EtheriT.Coker.Web.MVC.Controllers
                     Cases = cases
                 });
             }
+            try { await ResultStore.SaveAsync(websiteId, userId, model.ScopeStamp, pages, errors); }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+            {
+                logger.LogWarning(exception, "Could not save diagnostics history for site {WebsiteId}", websiteId);
+                ViewData["DiagnosticsHistoryWarning"] = "本次結果未能儲存，重新整理後可能無法還原，請聯絡系統維護人員。";
+            }
             return PartialView("_BackofficeResults", model with
             {
                 Pages = pages, HasRun = true, TotalCases = selected.Cases.Count,
@@ -140,14 +198,10 @@ namespace EtheriT.Coker.Web.MVC.Controllers
         }
 
         [HttpGet]
-        public Task<IActionResult> Public() => ShowPage(
-            "PublicFunctionTests", "前台功能測試",
-            "尚未建立前台功能檢測案例，目前不會執行任何功能測試。");
+        public Task<IActionResult> Public(bool showAll = false) => PublicPage(showAll);
 
         [HttpGet]
-        public Task<IActionResult> History() => ShowPage(
-            "SystemDiagnosticsHistory", "檢測紀錄",
-            "目前尚未提供檢測執行與紀錄功能。");
+        public Task<IActionResult> History(bool showAll = false) => BuildBackofficePage(showAll, "History");
 
         private async Task<IActionResult> ShowPage(string pageName, string heading, string message)
         {

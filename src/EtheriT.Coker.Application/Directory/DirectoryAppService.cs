@@ -3084,7 +3084,7 @@ namespace EtheriT.Coker.Application.Directory
         public async Task<ResponseMessageDto> Delete(long Id)
         {
             ResponseMessageDto output = new ResponseMessageDto() { Success = false };
-            ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = false };
+            ResponseMessageDto tagdeleteresponse = new ResponseMessageDto() { Success = true };
 
             try
             {
@@ -3101,6 +3101,7 @@ namespace EtheriT.Coker.Application.Directory
                         {
 
                             tagdeleteresponse = await tagAppService.TagAssociateDelete(tagid.Id);
+                            if (!tagdeleteresponse.Success) return tagdeleteresponse;
                         }
                     }
 

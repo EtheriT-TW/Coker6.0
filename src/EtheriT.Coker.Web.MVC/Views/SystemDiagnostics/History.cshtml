@@ -1,0 +1,88 @@
+@using EtheriT.Coker.Web.MVC.Diagnostics
+@model BackofficeTestListModel
+@{
+    var cases = Model.Pages.SelectMany(page => page.Cases).ToList();
+    var hasResults = Model.Pages.Any(page => page.BasicStatus != BackofficeTestStatus.NotRun);
+    var failed = cases.Count(test => test.Status == BackofficeTestStatus.Failed)
+        + Model.Pages.Count(page => page.BasicStatus == BackofficeTestStatus.Failed);
+}
+<div class="row page-tilte align-items-center">
+    <div class="col-md-auto">
+        <h1 class="weight-300 h3 title">檢測紀錄</h1>
+        <p class="text-muted m-0 desc">查看目前網站與帳號的前台、後台功能檢測狀態。</p>
+    </div>
+</div>
+<div class="content">
+    <section aria-labelledby="backoffice-history-heading">
+    <div class="card mb-3"><div class="card-body">
+        <h2 class="h5" id="backoffice-history-heading">後台功能檢測</h2>
+        @if (ViewData["LastDiagnosticsAt"] is string at)
+        {
+            <p>最後更新：@at</p>
+        }
+        @if (ViewData["DiagnosticsHistoryWarning"] is string warning)
+        {
+            <p class="text-warning" role="alert">@warning</p>
+        }
+        else if (!hasResults)
+        {
+            <p>尚無後台檢測紀錄，請先開始後台檢測。</p>
+        }
+        @if (hasResults)
+        {
+            <p>通過 @cases.Count(test => test.Status == BackofficeTestStatus.Passed) 項；未通過（含基本檢查）@failed 項；未執行 @cases.Count(test => test.Status is BackofficeTestStatus.NotRun or BackofficeTestStatus.Skipped) 項。</p>
+            <p class="text-muted">結果逐頁儲存，可能包含不同時間的檢測；未執行不代表通過。目前僅保留最後結果。</p>
+            <a class="btn btn-outline-secondary" asp-action="History" asp-route-showAll="false">未通過項目</a>
+            <a class="btn btn-outline-secondary" asp-action="History" asp-route-showAll="true">全部檢測項目</a>
+        }
+        <a class="btn btn-primary" href="@(Url.Action("Backoffice"))#failed">@(hasResults ? "查看與複測後台功能" : "開始後台檢測")</a>
+    </div></div>
+    @if (hasResults && !Model.ShowAll && failed == 0)
+    {
+        <p class="alert alert-info">已保存的後台結果沒有未通過項目；未執行項目不代表通過。</p>
+    }
+    @if (hasResults)
+    {
+        foreach (var entry in Model.Pages)
+        {
+            var visible = entry.Cases.Where(test => Model.ShowAll || test.Status == BackofficeTestStatus.Failed).ToList();
+            if (!Model.ShowAll && visible.Count == 0 && entry.BasicStatus != BackofficeTestStatus.Failed) { continue; }
+            <details class="card mb-3" open>
+                <summary class="card-header">@entry.Module / @entry.Title</summary>
+                <div class="card-body table-responsive"><table class="table table-bordered">
+                    <thead><tr><th scope="col">檢測項目</th><th scope="col">結果</th></tr></thead>
+                    <tbody>
+                        @if (Model.ShowAll || entry.BasicStatus == BackofficeTestStatus.Failed)
+                        {
+                            <tr><td>頁面基本檢查</td><td>@entry.BasicMessage</td></tr>
+                        }
+                        @foreach (var test in visible)
+                        {
+                            <tr><td>@test.Title</td><td>@test.StatusLabel @test.ResultMessage</td></tr>
+                        }
+                    </tbody>
+                </table></div>
+            </details>
+        }
+    }
+    </section>
+    <section class="card mb-3" aria-labelledby="public-history-heading">
+        <div class="card-body">
+            <h2 class="h5" id="public-history-heading">前台功能檢測</h2>
+            @if (ViewData["PublicDiagnostics"] is PublicDiagnosticsModel publicModel)
+            {
+                if (publicModel.Warning != null) { <p class="text-warning">@publicModel.Warning</p> }
+                if (publicModel.Report is { } publicReport)
+                {
+                    var findings = publicReport.Pages.Values.SelectMany(item => item.Findings).ToList();
+                    <p>最後更新：@publicReport.AtUtc.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss")</p>
+                    <p>抽樣檢查通過 @(findings.Count(item => item.Status == PublicCheckStatus.Passed)) 項；異常 @(findings.Count(item => item.Status == PublicCheckStatus.Failed)) 項；無法確認 @(findings.Count(item => item.Status == PublicCheckStatus.NeedsReview)) 項；未檢測 @(findings.Count(item => item.Status == PublicCheckStatus.NotRun)) 項。</p>
+                    <p>已完成 @publicReport.Pages.Count / @publicModel.Plan.Targets.Count 個抽樣頁面。</p>
+                    <p class="text-muted">未檢測與需人工確認不代表通過。前台結果與上方後台統計分開保存。</p>
+                }
+                else { <p class="text-muted">目前範圍尚無前台檢測紀錄，或前台頁面與功能設定已更新。</p> }
+            }
+            <a class="btn btn-primary" asp-action="Public">查看與執行前台檢測</a>
+        </div>
+    </section>
+</div>

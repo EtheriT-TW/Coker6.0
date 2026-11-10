@@ -4,6 +4,10 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # User-specific files
+# Runtime diagnostics history (kept outside wwwroot).
+/src/EtheriT.Coker.Web.MVC/App_Data/BackofficeDiagnostics/
+/src/EtheriT.Coker.Web.MVC/App_Data/PublicDiagnostics/
+
 *.rsuser
 *.suo
 *.user
@@ -418,6 +422,7 @@ launchSettings.json
 **/devextreme-license.ts
 docs/*.*
 !docs/BACKOFFICE_FUNCTION_TESTS.md
+!docs/PUBLIC_FUNCTION_TESTS.md
 
 # Frontend package build outputs
 packages/*/dist/

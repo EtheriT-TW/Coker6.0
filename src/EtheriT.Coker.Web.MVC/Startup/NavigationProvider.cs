@@ -547,7 +547,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 }
             };
             // Platform diagnostics are not customer-assignable website permissions.
-            if (includePlatformDiagnostics && await loginUserData.IsPlatformAdministrator() && false)
+            if (includePlatformDiagnostics && await loginUserData.IsPlatformAdministrator())
             {
                 site.Jobs.Add(new JobMenu
                 {

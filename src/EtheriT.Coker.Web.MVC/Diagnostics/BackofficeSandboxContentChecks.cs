@@ -41,12 +41,22 @@ public static partial class BackofficeSandboxChecks
         Require(removed == null || removed.IsDeleted, "Delete did not remove or soft-delete the fixture.");
     }
 
-    private static Task CertificateCrud(BackofficeSandbox box)
+    private static async Task CertificateCrud(BackofficeSandbox box)
     {
         var service = box.Services.GetRequiredService<ITechnicalCertificateAppService>();
-        return Crud<TechnicalCertificate, TechCertDto>(box,
+        await Crud<TechnicalCertificate, TechCertDto>(box,
             new() { Title = "檢測證照", Description = "檢測說明", Img = "", Permanent = true, Disp_opt = true },
             service.AddUp, service.Delete, (input, id) => { input.Id = id; input.Title = "更新檢測資料"; }, row => row.Title);
+        var foreign = new TechnicalCertificate { FK_WebsiteId = 999000002, Title = "其他站台證照" };
+        box.Db.TechnicalCertificates.Add(foreign);
+        await box.Db.SaveChangesAsync();
+        var id = foreign.Id;
+        box.Db.ChangeTracker.Clear();
+        Require(!(await service.AddUp(new TechCertDto { Id = id, Title = "不應變更" })).Success, "Cross-site certificate edit was accepted.");
+        Require(!(await service.Delete(id)).Success, "Cross-site certificate deletion was accepted.");
+        box.Db.ChangeTracker.Clear();
+        var unchanged = await box.Db.TechnicalCertificates.AsNoTracking().SingleAsync(row => row.Id == id);
+        Require(unchanged.Title == "其他站台證照" && !unchanged.IsDeleted, "Cross-site certificate was modified.");
     }
     private static Task DirectoryCrud(BackofficeSandbox box)
     {

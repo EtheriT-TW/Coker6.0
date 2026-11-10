@@ -1,0 +1,30 @@
+@using EtheriT.Coker.Web.MVC.Diagnostics
+@model PublicDiagnosticsModel
+@if (Model.Warning != null) { <p class="alert alert-warning" data-public-warning>@Model.Warning</p> }
+@for (var index = 0; index < Model.Plan.Targets.Count; index++)
+{
+    var target = Model.Plan.Targets[index];
+    var saved = Model.Report?.Pages.GetValueOrDefault(target.Url);
+    <details class="card mb-3" data-public-group data-index="@index" data-completed="@(saved != null ? "true" : "false")" data-stop-run="@(saved?.StopRun == true ? "true" : "false")" open>
+        <summary class="card-header">@target.Title</summary>
+        <div class="card-body">
+            <a href="@target.Url" target="_blank" rel="noopener noreferrer">開啟前台頁面</a>
+            @if (saved != null)
+            {
+                <p class="text-muted">檢測時間：@saved.AtUtc.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss")</p>
+                <div class="table-responsive"><table class="table table-bordered"><thead><tr><th scope="col">檢測項目</th><th scope="col">資源</th><th scope="col">結果</th></tr></thead><tbody>
+                    @foreach (var finding in saved.Findings)
+                    {
+                        <tr data-public-row data-status="@finding.Status"><td>@finding.Kind</td><td class="text-break">
+                            <div>@finding.Resource</div>
+                            @if (!string.IsNullOrWhiteSpace(finding.Location)) { <small class="text-muted">來源位置：@finding.Location</small> }
+                            @if (Uri.TryCreate(finding.RelatedUrl, UriKind.Absolute, out var original) && PublicProbeClient.IsHttp(original))
+                            { <div><a href="@original.AbsoluteUri" target="_blank" rel="noopener noreferrer">開啟原始影片來源</a></div> }
+                        </td><td>@finding.Label：@finding.Message</td></tr>
+                    }
+                </tbody></table></div>
+            }
+            else { <p data-public-pending>尚未檢測</p> }
+        </div>
+    </details>
+}

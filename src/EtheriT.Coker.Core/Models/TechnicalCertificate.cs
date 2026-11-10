@@ -11,8 +11,8 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(300)] public string? Title { get; set; }
         [StringLength(250)] public string? Description { get; set; }
         public int Ser_no { get; set; }
-        public string Html {  get; set; }
-        public string Css { get; set; }
+        public string Html { get; set; } = string.Empty;
+        public string Css { get; set; } = string.Empty;
         public string? SaveHtml { get; set; }
         public string? SaveCss { get; set; }
         public virtual DateTime? StartDate { get; set; }

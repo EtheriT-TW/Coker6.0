@@ -22,6 +22,9 @@ public static partial class BackofficeSandboxChecks
 {
     private static readonly IReadOnlyDictionary<string, string> Pages = new Dictionary<string, string>
     {
+        ["sandbox/diagnostics-history"] = "SystemDiagnostics.Backoffice",
+        ["sandbox/diagnostics-guards"] = "SystemDiagnostics.Backoffice",
+        ["sandbox/public-diagnostics"] = "SystemDiagnostics.Public",
         ["sandbox/product-core"] = "ProductManagement.ProductList",
         ["sandbox/product-stock"] = "ProductManagement.ProductList",
         ["sandbox/product-prices"] = "ProductManagement.ProductList",
@@ -66,6 +69,9 @@ public static partial class BackofficeSandboxChecks
         token.ThrowIfCancellationRequested();
         switch (executor)
         {
+            case "sandbox/diagnostics-history": await DiagnosticsHistory(sandbox); break;
+            case "sandbox/diagnostics-guards": await DiagnosticsGuards(sandbox); break;
+            case "sandbox/public-diagnostics": await PublicDiagnosticsRegression(sandbox); break;
             case "sandbox/product-core": await ProductCore(sandbox); break;
             case "sandbox/product-stock": await ProductStock(sandbox); break;
             case "sandbox/product-prices": await ProductPrices(sandbox); break;
@@ -103,7 +109,71 @@ public static partial class BackofficeSandboxChecks
 
     private static void Require(bool condition, string reason)
     { if (!condition) throw new InvalidOperationException("Diagnostic assertion failed: " + reason); }
-    private static void Success(ResponseMessageDto result) => Require(result.Success, result.Error ?? result.Message ?? "Service failed.");
+
+    private static async Task DiagnosticsGuards(BackofficeSandbox box)
+    {
+        // Exercise the real interceptor without opening a connection or running SQL.
+        var interceptor = new DiagnosticsCommandGuard();
+        using (var session = new DiagnosticsReadOnlySession())
+        {
+            using var command = new Microsoft.Data.SqlClient.SqlCommand(
+                "SELECT [Id] FROM [Prods] ORDER BY [Id] OFFSET @skip ROWS FETCH NEXT @take ROWS ONLY");
+            interceptor.ScalarExecuting(command, null!, default);
+            Require(!session.WriteAttempted, "Read-only pagination was rejected.");
+        }
+        foreach (var sql in new[] { "SELECT NEXT VALUE FOR dbo.Sequence", "SELECT 1; UPDATE Prods SET Title = 'changed'",
+            "SELECT * INTO NewTable FROM Prods", "DELETE FROM Prods", "EXEC dbo.Maintenance" })
+        {
+            using var session = new DiagnosticsReadOnlySession();
+            using var command = new Microsoft.Data.SqlClient.SqlCommand(sql);
+            try { interceptor.ScalarExecuting(command, null!, default); }
+            catch (InvalidOperationException) when (session.WriteAttempted) { }
+            Require(session.WriteAttempted, "Unsafe command was accepted: " + sql);
+        }
+        // Model creation must still register domain entities and apply soft deletion.
+        Require(box.Db.Model.FindEntityType(typeof(TechnicalCertificate)) != null, "Certificate model was not registered.");
+        var deleted = new Prod { Title = "檢測軟刪除", Introduction = "", Description = "", FK_WebsiteId = 999000001, IsDeleted = true };
+        box.Db.Prods.Add(deleted);
+        await box.Db.SaveChangesAsync();
+        var id = deleted.Id;
+        box.Db.ChangeTracker.Clear();
+        Require(!await box.Db.Prods.AnyAsync(row => row.Id == id)
+            && await box.Db.Prods.IgnoreQueryFilters().AnyAsync(row => row.Id == id), "Domain soft deletion configuration was lost.");
+    }
+
+    private static async Task DiagnosticsHistory(BackofficeSandbox box)
+    {
+        var root = box.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath;
+        var first = new BackofficeTestPage("first", "fixture", "fixture", "fixture", "fixture", new(), new()
+        {
+            new BackofficeTestCase("case", "fixture", "fixture", "fixture", "isolated") { Status = BackofficeTestStatus.Failed }
+        }) { BasicStatus = BackofficeTestStatus.Passed };
+        var store = new BackofficeResultStore(root);
+        await store.SaveAsync(1, 1, "scope", new[] { first }, new Dictionary<string, string> { ["case"] = "fixture exception" });
+        // A fresh instance has no shared memory cache, just as after a process restart.
+        store = new BackofficeResultStore(root);
+        var restored = await store.LoadAsync(1, 1, "scope");
+        Require(restored?.Pages["first"].Cases[0].Status == BackofficeTestStatus.Failed, "Stored failure was not restored.");
+        Require(restored?.Errors.GetValueOrDefault("case") == "fixture exception", "Internal error evidence was not restored.");
+        Require(await store.LoadAsync(2, 1, "scope") == null && await store.LoadAsync(1, 2, "scope") == null,
+            "History leaked across site or user.");
+        Require(await store.LoadAsync(1, 1, "changed") == null, "Stale scope was restored.");
+        var latest = await store.LoadAsync(1, 1, null);
+        Require(latest?.ScopeStamp == "scope" && latest.AtUtc != default,
+            "History could not read the last record timestamp after a scope change.");
+        Require(await store.LoadAsync(2, 1, null) == null && await store.LoadAsync(1, 2, null) == null,
+            "Latest history leaked across site or user.");
+        var second = first with { Id = "second", Cases = new() { first.Cases[0] with { Id = "second-case" } } };
+        await store.SaveAsync(1, 1, "scope", new[] { second }, new Dictionary<string, string> { ["second-case"] = "other exception" });
+        await store.SaveAsync(1, 1, "scope", new[] { first with { Cases = new() { first.Cases[0] with { Status = BackofficeTestStatus.Passed } } } });
+        restored = await new BackofficeResultStore(root).LoadAsync(1, 1, "scope");
+        Require(restored?.Pages.Count == 2 && restored.Pages["first"].Cases[0].Status == BackofficeTestStatus.Passed
+            && restored.Pages["second"].Cases[0].Status == BackofficeTestStatus.Failed, "Retest did not replace only its page.");
+        Require(restored != null && !restored.Errors.ContainsKey("case")
+            && restored.Errors.GetValueOrDefault("second-case") == "other exception", "Retest left stale evidence or cleared another page's error.");
+    }
+    private static void Success(ResponseMessageDto result) => Require(result.Success,
+        !string.IsNullOrWhiteSpace(result.Error) ? result.Error : result.Message ?? "Service failed.");
     private static IProductAppService Products(BackofficeSandbox box) => box.Services.GetRequiredService<IProductAppService>();
 
     private static ProdAddUpDto ProductFixture() => new()
@@ -117,7 +187,8 @@ public static partial class BackofficeSandboxChecks
     {
         var input = ProductFixture();
         var response = await Products(box).ProductAddUp(input);
-        Success(response);
+        Require(response.Success, "Product creation failed: " +
+            (!string.IsNullOrWhiteSpace(response.Error) ? response.Error : response.Message));
         Require(long.TryParse(response.Message, out var id) && id > 0, "Product ID was not returned.");
         input.Id = id;
         box.Db.ChangeTracker.Clear();

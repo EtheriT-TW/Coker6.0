@@ -3039,7 +3039,18 @@ namespace EtheriT.Coker.Application.Order
 
             // 綠界結果未出前不可換交易編號，否則後續通知會對不上訂單。
             if (ECPayPendingPaymentPolicy.IsResultPending(order, payment, now))
+            {
+                var countdownAt = ECPayPendingPaymentPolicy.GetCountdownAvailableAt(order, payment);
+                if (countdownAt.HasValue)
+                {
+                    var waitSeconds = (int)Math.Ceiling((countdownAt.Value - now).TotalSeconds);
+                    result.AvailableAt = countdownAt;
+                    result.RemainingSeconds = Math.Max(0, waitSeconds);
+                    result.WaitingMessage = $"約 {Math.Ceiling(waitSeconds / 60m)} 分鐘後可重新付款";
+                }
+
                 return result;
+            }
 
             // 明確付款失敗，一律允許重新付款
             if (order.State == OrderStatusEnum.付款失敗)
@@ -3573,7 +3584,8 @@ namespace EtheriT.Coker.Application.Order
                 if (WebsiteID == 0) WebsiteID = await loginUserData.GetWebsiteId();
                 var Website = await db.Websites.Where(e => e.Id == WebsiteID).FirstOrDefaultAsync();
                 var StoreSet = await storeSetAppService.getValues(new StoreSetGetValueInput { SiteId = WebsiteID, key = "HasInvoice" });
-                var order_header = await db.Order_Headers.Where(e => e.Id == ohid).FirstOrDefaultAsync();
+                // 信件內容會遮罩個資欄位，不可追蹤，否則遮罩值會被後續存檔寫回訂單。
+                var order_header = await db.Order_Headers.AsNoTracking().Where(e => e.Id == ohid).FirstOrDefaultAsync();
                 var order_details = await GetOrderDetails(ohid);
                 bool hasInvoice =
                     StoreSet != null && StoreSet.Success && StoreSet.detailItem != null && StoreSet.detailItem.value != null &&

@@ -700,6 +700,9 @@
 
                             SwalClose = false;
                             ecpayProvider.showTwqrPayment(twqrInfo);
+                            ecpayProvider.watchTwqrPayment(context.orderId, function () {
+                                window.location.replace(`/${OrgName}/ShoppingCar?${String(context.orderId).padStart(9, "0")}`);
+                            });
                             break;
 
                         default:

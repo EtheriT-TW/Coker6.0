@@ -82,6 +82,9 @@
                         provider.showTwqrPayment(twqrInfo, function () {
                             location.reload();
                         });
+                        provider.watchTwqrPayment(currentOrder.id, function () {
+                            location.reload();
+                        });
                         break;
                 }
             }

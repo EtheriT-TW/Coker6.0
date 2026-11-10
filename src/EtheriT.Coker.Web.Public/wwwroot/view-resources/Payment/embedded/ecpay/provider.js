@@ -18,6 +18,8 @@
         var TWQR_APPS_FILE = "TWQR.png";
         var TWQR_APPS_LABEL =
             "支援 App：台灣Pay、iPASS MONEY、全支付、悠遊付、icash Pay、歐付寶、街口支付等";
+        var TWQR_WATCH_INTERVAL_MS = 5000;
+        var TWQR_WATCH_LIMIT_MS = 11 * 60 * 1000;
 
         function flushSdkLoadCallbacks(errorMessage) {
             var callbacks = sdkLoadCallbacks.slice();
@@ -313,6 +315,32 @@
                             onClose();
                         }
                     });
+                },
+
+                watchTwqrPayment: function (orderId, onFinished) {
+                    var deadline = Date.now() + TWQR_WATCH_LIMIT_MS;
+
+                    function scheduleNext() {
+                        if (Date.now() < deadline) {
+                            setTimeout(check, TWQR_WATCH_INTERVAL_MS);
+                        }
+                    }
+
+                    function check() {
+                        C.Order.GetAllData(orderId).done(function (results) {
+                            var header = results && results[0] ? results[0].orderHeader : null;
+                            var state = header ? header.stateStr : "";
+
+                            if (state === "已付款" || state === "付款失敗") {
+                                onFinished();
+                                return;
+                            }
+
+                            scheduleNext();
+                        }).fail(scheduleNext);
+                    }
+
+                    scheduleNext();
                 },
 
                 canUseApplePay: function () {

@@ -407,10 +407,12 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var signKey = configuration["JwtSettings:SignKey"];
+                var backstageJwt = configuration.GetSection("BackstageJwtSettings");
+                var jwtSettings = backstageJwt.Exists() ? backstageJwt : configuration.GetSection("JwtSettings");
+                var signKey = jwtSettings["SignKey"];
                 if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(signKey)) throw new Exception("Token 驗證設定錯誤");
-                var issuer = configuration["JwtSettings:Issuer"];
-                var audience = configuration["JwtSettings:Audience"] ?? issuer;
+                var issuer = jwtSettings["Issuer"];
+                var audience = jwtSettings["Audience"] ?? issuer;
                 var handler = new JwtSecurityTokenHandler();
                 handler.ValidateToken(token, new TokenValidationParameters
                 {

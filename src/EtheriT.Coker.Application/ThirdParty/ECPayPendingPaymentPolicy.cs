@@ -15,7 +15,8 @@ namespace EtheriT.Coker.Application.ThirdParty
 
         // 綠界說明裕富、中租審核約 1～3 個工作日，7 天可涵蓋連假。
         public const int BnplReviewDays = 7;
-        private const int TwqrResultMinutes = 30;
+        // 綠界文件：TWQR 付款期限為 10 分鐘。
+        private const int TwqrResultMinutes = 10;
 
         // 訂單時間早於綠界交易時間，多留緩衝讓查單先判定結果。
         private const int PendingGraceMinutes = 10;
@@ -51,7 +52,16 @@ namespace EtheriT.Coker.Application.ThirdParty
                 return false;
 
             var baseTime = order.RepayDate ?? order.CreationTime;
-            return now < baseTime.Add(resultWindow.Value).AddMinutes(PendingGraceMinutes);
+            return now < baseTime.Add(resultWindow.Value).AddMinutes(IsBnpl(payment?.Code) ? PendingGraceMinutes : 0);
+        }
+
+        public static DateTime? GetCountdownAvailableAt(Order_Header order, PaymentType? payment)
+        {
+            if (!string.Equals(payment?.Code, TwqrCode, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            var baseTime = order.RepayDate ?? order.CreationTime;
+            return baseTime.AddMinutes(TwqrResultMinutes);
         }
 
         public static string GetPendingMessage(string? paymentCode)

@@ -422,7 +422,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                 var jsonResponse = await PostResponse.Content.ReadAsStringAsync();
                 var creditDetailResponse = JsonConvert.DeserializeObject<ECPayResponseDto>(jsonResponse) ?? throw new Exception("無法取得ECPayCreditDetail");
 
-                if (!creditDetailResponse.TransMsg.ToLower().Contains("success")) throw new Exception($"取得ECPayCreditDetail發生錯誤，{JsonConvert.SerializeObject(creditDetailResponse, Formatting.Indented)}");
+                if (creditDetailResponse.TransCode != 1) throw new Exception($"取得ECPayCreditDetail發生錯誤，{JsonConvert.SerializeObject(creditDetailResponse, Formatting.Indented)}");
 
                 var data = Decrypt(creditDetailResponse.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                 var creditDetailResponseData = JsonConvert.DeserializeObject<ECPayCreditDetailResponseDataDto>(data as string);
@@ -779,6 +779,8 @@ namespace EtheriT.Coker.Application.ThirdParty
                             response.Message = JsonConvert.SerializeObject(createPaymentResponse);
                             response.Success = true;
                             ohdata.State = OrderStatusEnum.待付款;
+                            if (ECPayPendingPaymentPolicy.IsResultWatched(await GetPaymentCodeAsync(ohdata.Payment)))
+                                ohdata.RepayDate = DateTime.Now;
                             db.SaveChanges();
                         }
                         else
@@ -991,7 +993,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     var Response = JsonConvert.DeserializeObject<ECPayResponseDto>(jsonResponse);
                     if (Response != null)
                     {
-                        if (Response.TransMsg.ToLower().Contains("success"))
+                        if (Response.TransCode == 1)
                         {
                             var data = Decrypt(Response.Data, ThirdPartyData.HashKey, ThirdPartyData.HashIV);
                             var ResponseData = JsonConvert.DeserializeObject<ECPayResponseDataDto>(data as string);

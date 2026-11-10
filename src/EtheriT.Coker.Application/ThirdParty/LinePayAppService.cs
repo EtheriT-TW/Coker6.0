@@ -614,7 +614,8 @@ namespace EtheriT.Coker.Application.ThirdParty
             }
             catch (Exception e)
             {
-
+                response.Error = "LINE Pay 設定錯誤";
+                response.Message = e.Message;
             }
             return response;
         }

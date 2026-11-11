@@ -1115,6 +1115,30 @@ export function imageListPlugin(editor) {
         }
     });
 
+    // 用圖片本身的 Modal 換圖只會改 src；前台列表讀 data-src、燈箱讀 data-full-src，
+    // 這裡同步 data-src，並清掉屬於舊圖的大圖路徑與 guid，燈箱會退回使用新圖
+    editor.on('component:update:src', component => {
+        if (String(component?.get?.('tagName') || '').toLowerCase() !== 'img') {
+            return;
+        }
+        const anchor = component.closest?.('a.imageItem');
+        if (!anchor) {
+            return;
+        }
+        const src = String(component.get('src') || '').trim();
+        if (!src || src.startsWith('data:') || component.getAttributes?.()['data-src'] === src) {
+            return;
+        }
+        component.addAttributes?.({ 'data-src': src });
+        anchor.removeAttributes?.([
+            'data-full-src',
+            'data-medium-src',
+            'data-image-guid',
+            'data-medium-guid',
+            'data-thumbnail-guid'
+        ]);
+    });
+
     editor.DomComponents.addType(imageListComponentType, {
         isComponent(element) {
             return element?.classList?.contains('imageList')

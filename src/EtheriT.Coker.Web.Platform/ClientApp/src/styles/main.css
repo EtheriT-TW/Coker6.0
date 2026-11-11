@@ -1421,6 +1421,22 @@ button, input, select, textarea {
     margin-left: auto;
 }
 
+/* 會影響後台資料的操作：紅框白底，滑過才填滿，跟藍色摘要卡區隔開 */
+.ui-button-danger-outline {
+    min-height: 34px;
+    padding: 0 12px;
+    color: #c2413b;
+    background: #fff;
+    border-color: #e8b4b1;
+    font-size: 12px;
+}
+
+    .ui-button-danger-outline:hover {
+        color: #fff;
+        background: #c2413b;
+        border-color: #c2413b;
+    }
+
 .customer-unbind-notice {
     display: flex;
     flex-wrap: wrap;
@@ -1429,6 +1445,18 @@ button, input, select, textarea {
     gap: 8px 12px;
     margin: 10px 0 0;
 }
+
+.customer-unbind-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+    .customer-unbind-text .material-symbols-outlined {
+        flex: none;
+        font-size: 18px;
+    }
 
 @media (max-width: 520px) {
     .customer-summary {

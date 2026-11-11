@@ -633,16 +633,19 @@
                             </span>
                         </div>
                         <button v-if="hasCompanyMapping && !form.model.value.UnbindCompany"
-                                class="ui-button ui-button-ghost customer-summary-action"
+                                class="ui-button ui-button-danger-outline customer-summary-action"
                                 type="button"
                                 @click="unbindCompany">
                             <span class="material-symbols-outlined" aria-hidden="true">link_off</span>
                             <span>解除綁定公司</span>
                         </button>
                     </div>
-                    <p v-if="form.model.value.UnbindCompany" class="alert alert-info customer-unbind-notice" role="status">
-                        <span>儲存後會解除此站台在後台綁定的所有公司資料，並改綁上方帶出的客戶。</span>
-                        <button class="ui-button ui-button-ghost" type="button" @click="cancelUnbindCompany">取消解除</button>
+                    <p v-if="form.model.value.UnbindCompany" class="alert alert-warning customer-unbind-notice" role="status">
+                        <span class="customer-unbind-text">
+                            <span class="material-symbols-outlined" aria-hidden="true">link_off</span>
+                            <span>儲存後會解除此站台在後台綁定的所有公司資料，並改綁上方帶出的客戶。</span>
+                        </span>
+                        <button class="ui-button ui-button-secondary" type="button" @click="cancelUnbindCompany">取消解除</button>
                     </p>
                 </div>
 

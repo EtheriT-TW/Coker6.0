@@ -974,7 +974,7 @@ nav.navbar.fixed-top {
 /* 文章下方切換頁面，把margin換成padding就可以改變因爲背景顔色不同導致的中間斷層 裏面原本有個my-5類，直接換成py-5可能更快 */
 #SwitchPage {
     margin: 0 auto;
-    padding: 3rem 0;
+    padding: 1.5rem 0;
 }
 
 /* banner的左右切換按鈕加個邊距 */
@@ -1234,7 +1234,7 @@ nav.navbar.fixed-top {
 }
 
 #main > .container:not(#CenterLine) {
-    padding-bottom: 2rem;
+    padding-bottom: .5rem;
 }
 
 @media (min-width:576px) {

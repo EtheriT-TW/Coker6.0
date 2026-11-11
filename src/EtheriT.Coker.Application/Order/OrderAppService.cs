@@ -4081,7 +4081,9 @@ namespace EtheriT.Coker.Application.Order
                     }
                     """;
                     MailUserDataDto cc = new MailUserDataDto { Name = "客服信箱" };
-                    var conpny = await (from c in db.MappingCompanyAndWebsites.Include(e => e.Company).Where(e => e.FK_WebsiteId == WebsiteID)
+                    var conpny = await (from c in db.MappingCompanyAndWebsites.Include(e => e.Company)
+                                            .Where(e => e.FK_WebsiteId == WebsiteID && !e.IsDeleted && e.Company != null && !e.Company.IsDeleted)
+                                            .OrderBy(e => e.Id)
                                         select c.Company).FirstOrDefaultAsync();
                     if (conpny != null)
                     {

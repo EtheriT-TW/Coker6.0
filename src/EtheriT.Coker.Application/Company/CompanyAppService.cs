@@ -129,7 +129,8 @@ namespace EtheriT.Coker.Application.Company
                 var belongsToCurrentWebsite = await db.MappingCompanyAndWebsites.AnyAsync(e =>
                     !e.IsDeleted &&
                     e.FK_WebsiteId == siteId &&
-                    e.FK_CompanyId == dto.Id);
+                    e.FK_CompanyId == dto.Id &&
+                    e.Company != null && !e.Company.IsDeleted);
                 if (!belongsToCurrentWebsite)
                     throw new Exception("公司資料與目前網站不符，請重新整理後再試");
 

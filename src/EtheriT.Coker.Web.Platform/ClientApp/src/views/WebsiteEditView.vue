@@ -85,6 +85,10 @@
     const lookupKeyword = ref("");
     const customer = ref<CustomerLookup | null>(null);
     const isCustomerDeleted = ref(false);
+    // 載入時的客戶狀態；取消「解除綁定公司」時還原用
+    const loadedCustomer = ref<{ companyId: number; customer: CustomerLookup | null }>({ companyId: 0, customer: null });
+    // 該站在後台有任何未刪除的公司對應（MappingCompanyAndWebsites）才顯示「解除綁定公司」
+    const hasCompanyMapping = computed(() => loadedCustomer.value.companyId > 0);
     const lookingUp = ref(false);
     const lookupError = ref("");
     const isNotFoundDialogOpen = ref(false);
@@ -118,7 +122,8 @@
             SuspendedDate: "",
             TerminatedDate: "",
             Urls: [],
-            Remark: ""
+            Remark: "",
+            UnbindCompany: false
         };
     }
 
@@ -244,6 +249,10 @@
                 .map(item => item.Url);
             if (domainMissingUrls.length) {
                 saveConfirmation.message += `\n\n以下網址尚未建立網域資料，仍可儲存，之後可到「網域管理」補建：\n${domainMissingUrls.join('\n')}`;
+            }
+
+            if (values.UnbindCompany) {
+                saveConfirmation.message += `\n\n儲存後會解除此站台在後台綁定的所有公司資料，改綁「${customer.value?.Name ?? ""}」。`;
             }
 
             return await requestConfirm(saveConfirmation);
@@ -422,6 +431,29 @@
         form.clearErrors("FK_CompanyId");
     }
 
+    function restoreLoadedCustomer(): void {
+        const { companyId, customer: loaded } = loadedCustomer.value;
+        customer.value = loaded;
+        // FK_CompanyId 為 0＝後台還沒綁公司；有 Id 卻帶不出客戶才是客戶被刪除
+        isCustomerDeleted.value = companyId > 0 && loaded === null;
+        // 統編選填，沒統編的客戶改顯示公司名稱
+        lookupKeyword.value = loaded?.TaxId || loaded?.Name || "";
+        form.model.value.FK_CompanyId = companyId;
+        form.clearErrors("FK_CompanyId");
+    }
+
+    /** 只在畫面上清掉客戶並標記，按儲存才真的解除 */
+    function unbindCompany(): void {
+        setCustomer(null);
+        lookupKeyword.value = "";
+        form.model.value.UnbindCompany = true;
+    }
+
+    function cancelUnbindCompany(): void {
+        form.model.value.UnbindCompany = false;
+        restoreLoadedCustomer();
+    }
+
     /**
      * 新增時帶入預設主機，並放一列勾選為主要網址的預設網址（跟著站台代碼產生）；
      * 用 reset 才不會一進頁面就被標成「尚未儲存」（載入期間表單鎖住，使用者還沒輸入）。
@@ -459,11 +491,8 @@
         if (shouldAddPendingUrl) form.isDirty.value = true;
         isPendingUrlAdded.value = shouldAddPendingUrl;
 
-        customer.value = detail.Customer;
-        // FK_CompanyId 為 0＝後台還沒綁公司；有 Id 卻帶不出客戶才是客戶被刪除
-        isCustomerDeleted.value = detail.FK_CompanyId > 0 && detail.Customer === null;
-        // 統編選填，沒統編的客戶改顯示公司名稱
-        lookupKeyword.value = detail.Customer?.TaxId || detail.Customer?.Name || "";
+        loadedCustomer.value = { companyId: detail.FK_CompanyId, customer: detail.Customer };
+        restoreLoadedCustomer();
     }
 
     async function lookupByKeyword(): Promise<void> {
@@ -603,7 +632,18 @@
                                 <span v-if="customer.PrimaryContactName">聯絡人 {{ customer.PrimaryContactName }}</span>
                             </span>
                         </div>
+                        <button v-if="hasCompanyMapping && !form.model.value.UnbindCompany"
+                                class="ui-button ui-button-ghost customer-summary-action"
+                                type="button"
+                                @click="unbindCompany">
+                            <span class="material-symbols-outlined" aria-hidden="true">link_off</span>
+                            <span>解除綁定公司</span>
+                        </button>
                     </div>
+                    <p v-if="form.model.value.UnbindCompany" class="alert alert-info customer-unbind-notice" role="status">
+                        <span>儲存後會解除此站台在後台綁定的所有公司資料，並改綁上方帶出的客戶。</span>
+                        <button class="ui-button ui-button-ghost" type="button" @click="cancelUnbindCompany">取消解除</button>
+                    </p>
                 </div>
 
                 <div class="form-field">

@@ -1415,6 +1415,33 @@ button, input, select, textarea {
         margin: 0 6px;
     }
 
+/* 解除綁定按鈕靠右；提示列文字與「取消解除」同一行，寬度不夠時換行 */
+.customer-summary-action {
+    flex: none;
+    margin-left: auto;
+}
+
+.customer-unbind-notice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin: 10px 0 0;
+}
+
+@media (max-width: 520px) {
+    .customer-summary {
+        flex-wrap: wrap;
+    }
+
+    .customer-summary-action {
+        width: 100%;
+        margin-left: 0;
+        justify-content: center;
+    }
+}
+
 
 .visually-hidden {
     position: absolute;

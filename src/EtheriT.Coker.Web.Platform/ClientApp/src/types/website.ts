@@ -158,6 +158,8 @@ export interface WebsiteForm {
     /** 站台代碼：新增時可填，編輯時唯讀（送出時後端也不會讀） */
     OrgName: string;
     FK_CompanyId: number;
+    /** true＝按了「解除綁定公司」，儲存時才生效 */
+    UnbindCompany: boolean;
     Name: string;
     Level: number | null;
     Locale: string;

@@ -85,6 +85,11 @@ public class WebsiteSaveRequest
 {
     public bool SynchronizeBindings { get; set; }
     public string? BindingTarget { get; set; }
+    /// <summary>
+    /// true＝使用者按了「解除綁定公司」：儲存時把此站台在 MappingCompanyAndWebsites 的對應全部軟刪除，
+    /// 再綁到 FK_CompanyId。只有編輯會讀，新增忽略。
+    /// </summary>
+    public bool UnbindCompany { get; set; }
     [Range(1, long.MaxValue, ErrorMessage = "請先以統一編號或公司名稱帶出客戶。")]
     public long FK_CompanyId { get; set; }
 

@@ -56,7 +56,8 @@ function toSaveRequest(form: WebsiteForm) {
         TerminatedDate: fromDateInput(form.TerminatedDate),
         // 主要網址與其他網址一起送，後端依 IsPrimary 分開寫。Key、InitialDomain 只是畫面用
         Urls: form.Urls.map(item => ({ Url: item.Url.trim(), IsPrimary: item.IsPrimary })),
-        Remark: blankToNull(form.Remark)
+        Remark: blankToNull(form.Remark),
+        UnbindCompany: form.UnbindCompany
     };
 }
 
@@ -90,7 +91,8 @@ export function toWebsiteForm(detail: WebsiteDetail): WebsiteForm {
             ...(detail.DefaultUrl ? [newWebsiteUrlItem(detail.DefaultUrl, detail.DefaultDomain, true)] : []),
             ...[...urls.values()].map(item => newWebsiteUrlItem(item.Url, item.Domain))
         ],
-        Remark: detail.Remark ?? ""
+        Remark: detail.Remark ?? "",
+        UnbindCompany: false
     };
 }
 

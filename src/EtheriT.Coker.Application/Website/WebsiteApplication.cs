@@ -339,7 +339,7 @@ namespace EtheriT.Coker.Application
             var websiteIds = output.Select(e => e.Id).ToList();
             var companyMappings = await db.MappingCompanyAndWebsites
                 .Where(e => websiteIds.Contains(e.FK_WebsiteId))
-                .Where(e => e.Company != null)
+                .Where(e => !e.IsDeleted && e.Company != null && !e.Company.IsDeleted)
                 .Select(e => new
                 {
                     WebsiteId = e.FK_WebsiteId,

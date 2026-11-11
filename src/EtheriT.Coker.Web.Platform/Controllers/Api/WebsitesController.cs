@@ -90,11 +90,12 @@ public sealed class WebsitesController(
                 AlternateDomainEndDate = db.WebsiteAlternateUrls
                     .Where(url => !url.IsDeleted && url.FK_WebsiteId == site.Id)
                     .Min(url => url.PlatformDomain!.EndDate),
-                // 後台綁定的公司；舊資料若有多筆固定取最早那筆（存檔時會被 SyncCompanyMappingAsync 擋下）。
-                // 客戶被軟刪除時仍帶出名稱，網站不能無聲失去客戶。
+                // 後台綁定的公司：有效綁定（公司未刪除）優先，多筆時取最早那筆，與編輯頁一致。
+                // 只剩公司已刪除的對應時仍帶出名稱，網站不能無聲失去客戶。
                 Customer = site.Company
                     .Where(mapping => !mapping.IsDeleted && mapping.Company != null)
-                    .OrderBy(mapping => mapping.Id)
+                    .OrderBy(mapping => mapping.Company!.IsDeleted ? 1 : 0)
+                    .ThenBy(mapping => mapping.Id)
                     .Select(mapping => new
                     {
                         mapping.Company!.Id,
@@ -407,7 +408,7 @@ public sealed class WebsitesController(
             }
             SyncAlternateUrls(site, others, alternates);
 
-            if (!await SyncCompanyMappingAsync(site.Id, request.FK_CompanyId))
+            if (!await SyncCompanyMappingAsync(site.Id, request.FK_CompanyId, request.UnbindCompany))
             return ValidationProblem(ModelState);
 
         await auditor.SaveChangesAsync(HttpContext.RequestAborted);
@@ -462,13 +463,15 @@ public sealed class WebsitesController(
         var detail = await (
             from site in ActiveSites
             where site.Id == id
-            // 後台綁定的公司；舊資料若有多筆固定取最早那筆（存檔時會被 SyncCompanyMappingAsync 擋下）
+            // 後台綁定的公司：有效綁定（公司未刪除）優先，多筆時取最早那筆（存檔時會被 SyncCompanyMappingAsync 擋下）。
+            // 只剩公司已刪除的對應時仍回傳它的 Id、Customer 為 null，前端據此顯示「原本的客戶資料已被刪除」。
             let companyId = db.MappingCompanyAndWebsites
                 .Where(mapping => !mapping.IsDeleted && mapping.FK_WebsiteId == site.Id)
-                .OrderBy(mapping => mapping.Id)
+                .OrderBy(mapping => mapping.Company == null || mapping.Company.IsDeleted ? 1 : 0)
+                .ThenBy(mapping => mapping.Id)
                 .Select(mapping => (long?)mapping.FK_CompanyId)
                 .FirstOrDefault()
-            join customer in db.Companies.AsNoTracking()
+            join customer in db.Companies.AsNoTracking().Where(company => !company.IsDeleted)
                 on companyId equals (long?)customer.Id into customers
             from customer in customers.DefaultIfEmpty()
             select new WebsiteDetailDto
@@ -577,7 +580,7 @@ public sealed class WebsitesController(
 
         if (request.FK_CompanyId > 0 &&
             !await db.Companies.AnyAsync(
-                company => company.Id == request.FK_CompanyId,
+                company => company.Id == request.FK_CompanyId && !company.IsDeleted,
                 HttpContext.RequestAborted))
             ModelState.AddModelError(nameof(request.FK_CompanyId), "找不到對應的客戶資料，請重新帶出客戶。");
 
@@ -795,24 +798,41 @@ public sealed class WebsitesController(
     /// <summary>
     /// 後台用 MappingCompanyAndWebsites 表示站台屬於哪家公司（一站一公司），
     /// 後台公司資訊、前台 SEO、訂單通知信副本都讀它。
-    /// 換公司時直接改既有那筆的 FK_CompanyId，不採「軟刪除舊的、再新增」：
-    /// 訂單通知信的查詢沒有排除軟刪除，留下舊紀錄可能讓信寄到舊公司。
+    /// 有效綁定＝對應未刪除且公司未刪除，與後台 CompanyAppService 相同；公司已刪除的舊對應不算數、也不動它。
+    /// unbindAll＝使用者按了「解除綁定公司」：該站所有未刪除的對應全部軟刪除，再綁到這次選的公司。
     /// </summary>
-    private async Task<bool> SyncCompanyMappingAsync(long siteId, long companyId)
+    private async Task<bool> SyncCompanyMappingAsync(long siteId, long companyId, bool unbindAll)
     {
         var mappings = await db.MappingCompanyAndWebsites
+            .Include(item => item.Company)
             .Where(item => !item.IsDeleted && item.FK_WebsiteId == siteId)
             .ToListAsync(HttpContext.RequestAborted);
 
-        // 舊資料可能一站多公司，無法判斷要改哪一筆，交給系統管理者處理
-        if (mappings.Count > 1)
+        if (unbindAll)
+        {
+            // PlatformAuditor 會把 Remove 轉成軟刪除
+            db.MappingCompanyAndWebsites.RemoveRange(mappings);
+            db.MappingCompanyAndWebsites.Add(new MappingCompanyAndWebsites
+            {
+                FK_CompanyId = companyId,
+                FK_WebsiteId = siteId
+            });
+            return true;
+        }
+
+        var active = mappings
+            .Where(item => item.Company != null && !item.Company.IsDeleted)
+            .ToList();
+
+        // 一站多家有效公司，無法判斷要改哪一筆
+        if (active.Count > 1)
         {
             ModelState.AddModelError(nameof(WebsiteSaveRequest.FK_CompanyId),
-                "此站台在後台綁定了多筆公司資料，請由系統管理者確認後再儲存。");
+                "此站台在後台綁定了多筆公司資料，請按「解除綁定公司」後重新帶出客戶，再儲存。");
             return false;
         }
 
-        if (mappings.Count == 0)
+        if (active.Count == 0)
         {
             db.MappingCompanyAndWebsites.Add(new MappingCompanyAndWebsites
             {
@@ -823,7 +843,7 @@ public sealed class WebsitesController(
         }
 
         // 公司沒變時 EF 不會產生 UPDATE，也不會動到稽核欄位
-        mappings[0].FK_CompanyId = companyId;
+        active[0].FK_CompanyId = companyId;
         return true;
     }
 

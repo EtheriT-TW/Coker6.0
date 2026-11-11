@@ -294,7 +294,7 @@ public sealed class CustomersController(CokerDbContext db, PlatformAuditor audit
 
         // 後台已綁定站台的公司不可刪：前台 SEO 與訂單通知信 CC 都在讀它。
         var boundSiteCount = await db.MappingCompanyAndWebsites
-            .CountAsync(mapping => mapping.FK_CompanyId == id, HttpContext.RequestAborted);
+            .CountAsync(mapping => !mapping.IsDeleted && mapping.FK_CompanyId == id, HttpContext.RequestAborted);
         if (boundSiteCount > 0)
             return Conflict(new
             {

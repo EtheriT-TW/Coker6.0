@@ -170,7 +170,10 @@
 
                     C.sweet.custom("warning", "取消付款", "是否確認取消本筆訂單之付款？", "是", function () {
                         C.Order.CancelOrder(currentOrder.id, currentOrder.thirdParties).done(function (result) {
-                            if (!result.success) return;
+                            if (!result.success) {
+                                C.sweet.warning("取消付款失敗", result.message || "取消付款時發生錯誤，請聯繫客服協助處理。", null);
+                                return;
+                            }
 
                             state.paymentModal.hide();
                             C.sweet.confirm("訂單已取消", "", "確定", "", function () {

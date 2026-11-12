@@ -97,7 +97,15 @@
             appendActions: function (frame, orderHeader) {
                 frame.find(".state").prepend("<span class='order-state-badge'>" + orderHeader.stateStr + "</span>");
 
-                switch (orderHeader.action) {
+                this.appendActionButtons(frame, orderHeader, orderHeader.action);
+
+                // 取消訂單與重新付款等待時間是兩個獨立狀態。
+                // 即使目前可取消，也仍應顯示重新付款倒數。
+                this.appendRepayCountdown(frame, orderHeader);
+            },
+
+            appendActionButtons: function (frame, orderHeader, action) {
+                switch (action) {
                     case "Cancel":
                         this.appendCancelButton(frame, orderHeader);
                         break;
@@ -109,10 +117,6 @@
                         this.appendCancelButton(frame, orderHeader);
                         break;
                 }
-
-                // 取消訂單與重新付款等待時間是兩個獨立狀態。
-                // 即使目前可取消，也仍應顯示重新付款倒數。
-                this.appendRepayCountdown(frame, orderHeader);
             },
 
             appendCancelButton: function (frame, orderHeader) {
@@ -144,7 +148,7 @@
                                 if ($orderFrame.find(".btn_buyInfo").length > 0) $orderFrame.find(".btn_buyInfo").addClass("d-none");
                                 C.sweet.success(result.message, null, false);
                             } else {
-                                C.sweet.error("取消訂單失敗", "取消訂單時發生錯誤，請聯繫客服協助處理。");
+                                C.sweet.error("取消訂單失敗", result.message || "取消訂單時發生錯誤，請聯繫客服協助處理。");
                             }
                         });
                     });
@@ -176,7 +180,9 @@
                 var render = function () {
                     if (seconds <= 0) {
                         $countdown.remove();
-                        self.appendRepayButton(frame, orderHeader);
+                        // 倒數結束改用後端預先算好的動作；先移除舊按鈕，避免重複按鈕與重複綁定事件。
+                        frame.find(".order-state-actions .btn_payAgain, .order-state-actions .btn_cancelOrder").remove();
+                        self.appendActionButtons(frame, orderHeader, orderHeader.actionAfterWait);
                         return false;
                     }
 

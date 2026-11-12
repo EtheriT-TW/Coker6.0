@@ -58,6 +58,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.Order
         public DateTime? RepayAvailableAt { get; set; }
         public int RepayRemainingSeconds { get; set; }
         public string RepayWaitingMessage { get; set; } = "";
+        /// <summary>倒數結束當下可執行的動作（Repay／Cancel／RepayCancel），前端倒數到 0 時改用這個值顯示按鈕。</summary>
+        public string ActionAfterWait { get; set; } = "";
         public string TrackingNumber { get; set; }
     }
 }

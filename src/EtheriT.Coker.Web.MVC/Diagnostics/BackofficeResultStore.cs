@@ -29,7 +29,7 @@ public sealed class BackofficeResultStore(string contentRoot)
         return snapshot;
     }
 
-    // The controller holds DiagnosticsRunGate for the whole read/merge/write.
+    // Background jobs and enqueue/reset hold the durable work lock for read/merge/write.
     public async Task SaveAsync(long websiteId, long userId, string stamp, IEnumerable<BackofficeTestPage> completed,
         IReadOnlyDictionary<string, string>? errors = null)
     {

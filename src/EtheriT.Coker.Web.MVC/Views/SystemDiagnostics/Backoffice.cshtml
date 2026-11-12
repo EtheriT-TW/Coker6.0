@@ -6,8 +6,12 @@
         <p class="text-muted m-0 desc">檢查目前網站可使用的功能，優先查看需要處理的項目。</p>
     </div>
 </div>
-<div class="content" id="backoffice-diagnostics" data-run-url="@Url.Content("~/api/SystemDiagnostics/Run")">
+<div class="content" id="backoffice-diagnostics" data-run-url="@Url.Content("~/api/SystemDiagnostics/Run")"
+     data-status-url="@Url.Content("~/api/SystemDiagnostics/Status")"
+     data-stop-url="@Url.Content("~/api/SystemDiagnostics/Stop")"
+     data-results-url="@Url.Content("~/api/SystemDiagnostics/Results")">
     <div class="alert alert-info">
+        檢測在背景執行，可離開頁面，稍後回來查看進度與結果。
         依目前站台可用功能，逐項執行查詢、篩選、排序、分頁與頁面基本檢查。
         商品、庫存、價格、規格與跑馬燈的操作檢測使用獨立記憶體資料，不修改客戶資料。
         記憶體中的業務測試不代表實際 SQL 或瀏覽器操作已通過；資料不足的檢測會列為未執行，不計為通過。
@@ -19,7 +23,7 @@
             <input type="hidden" name="scopeStamp" value="@Model.ScopeStamp" />
             <input type="hidden" name="websiteId" value="@(await LoginUserData.GetWebsiteId())" />
             <div class="d-flex flex-wrap gap-2">
-                <button type="submit" class="btn btn-primary" id="diagnostics-run" disabled>開始檢測</button>
+                <button type="submit" class="btn btn-primary d-none" id="diagnostics-run" hidden disabled>開始檢測</button>
                 <button type="submit" class="btn btn-outline-primary d-none" id="diagnostics-retry" hidden disabled>複測未通過項目</button>
                 <button type="button" class="btn btn-outline-secondary d-none" id="diagnostics-stop" hidden>停止檢測</button>
                 <a class="btn btn-outline-secondary d-none" href="#failed" data-diagnostics-filter="failed" hidden>未通過項目</a>

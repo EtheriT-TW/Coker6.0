@@ -19,23 +19,28 @@ public sealed record PublicFinding(string Kind, string Resource, PublicCheckStat
 }
 public sealed record PublicPageResult(string Title, string Url, DateTime AtUtc, List<PublicFinding> Findings)
 {
+    public bool Completed { get; init; } = true;
     public bool StopRun { get; init; }
 }
 public sealed record PublicPlan(long WebsiteId, string Stamp, List<PublicTarget> Targets, bool Limited, string? Error)
 {
+    public HashSet<string> EnabledFeatures { get; init; } = new(StringComparer.Ordinal);
     public HashSet<string> AllowedLinks { get; init; } = new(StringComparer.Ordinal);
 }
 public sealed record PublicReport(string Stamp, DateTime AtUtc, Dictionary<string, PublicPageResult> Pages);
-public sealed record PublicDiagnosticsModel(PublicPlan Plan, PublicReport? Report, bool ShowAll, string? Warning);
+public sealed record PublicDiagnosticsModel(PublicPlan Plan, PublicReport? Report, bool ShowAll, string? Warning)
+{
+    public bool FunctionScan { get; init; }
+}
 public sealed class PublicProbePolicyException(string message) : HttpRequestException(message);
 public sealed record PublicWireResponse(int Code, Dictionary<string, string> Headers, byte[] Body);
 
-public sealed class PublicResultStore(string contentRoot)
+public sealed class PublicResultStore(string contentRoot, bool functionScan = false)
 {
     private string FileName(long site, long user)
     {
         if (site <= 0 || user <= 0) throw new InvalidOperationException("Invalid diagnostics identity.");
-        return Path.Combine(contentRoot, "App_Data", "PublicDiagnostics", $"{site}-{user}.json");
+        return Path.Combine(contentRoot, "App_Data", functionScan ? "PublicFunctionDiagnostics" : "PublicDiagnostics", $"{site}-{user}.json");
     }
     public async Task<PublicReport?> LoadAsync(long site, long user, string stamp)
     {
@@ -61,6 +66,24 @@ public sealed class PublicResultStore(string contentRoot)
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
+
+    public async Task ResetAsync(long site, long user, string stamp, IEnumerable<string> targets)
+    {
+        PublicReport? previous;
+        try { previous = await LoadAsync(site, user, stamp); }
+        catch (JsonException) { previous = null; }
+        var pages = previous?.Pages ?? new Dictionary<string, PublicPageResult>();
+        foreach (var target in targets) pages.Remove(target);
+        var path = FileName(site, user);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            await File.WriteAllTextAsync(temporary, JsonSerializer.Serialize(new PublicReport(stamp, DateTime.UtcNow, pages)));
+            File.Move(temporary, path, true);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+    }
 }
 
 // Requests carry no cookies, authentication or customer headers. DNS is checked
@@ -68,9 +91,11 @@ public sealed class PublicResultStore(string contentRoot)
 public sealed class PublicProbeClient : IDisposable
 {
     private readonly HttpClient client;
+    private readonly PublicReadOnlyPolicy? readOnlyPolicy;
     internal PublicProbeClient(HttpClient fixtureClient) { client = fixtureClient; }
-    public PublicProbeClient()
+    public PublicProbeClient(PublicReadOnlyPolicy? readOnlyPolicy = null)
     {
+        this.readOnlyPolicy = readOnlyPolicy;
         var handler = new SocketsHttpHandler
         {
             AllowAutoRedirect = false, UseCookies = false, UseProxy = false,
@@ -125,13 +150,15 @@ public sealed class PublicProbeClient : IDisposable
     internal async Task<PublicWireResponse> FetchForBrowserAsync(Uri uri, string method,
         IReadOnlyDictionary<string, string> browserHeaders, CancellationToken token, byte[]? body = null)
     {
-        if (!IsHttp(uri) || method is not ("GET" or "HEAD") && !IsReadOnlyVideoRequest(uri, method)) throw new PublicProbePolicyException("Unsupported browser request.");
+        if (!IsHttp(uri) || readOnlyPolicy?.BlocksUnreviewedGet(uri, method) == true || method is not ("GET" or "HEAD") && !IsReadOnlyVideoRequest(uri, method)
+            && readOnlyPolicy?.Allows(uri, method, body) != true) throw new PublicProbePolicyException("Unsupported browser request.");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromSeconds(15));
         using var request = new HttpRequestMessage(new HttpMethod(method), uri);
         if (method == "POST")
         {
             if (body == null || body.Length > 64 * 1024) throw new PublicProbePolicyException("Video metadata request exceeded limit.");
+            if (!IsReadOnlyVideoRequest(uri, method)) body = readOnlyPolicy!.PrepareBody(body);
             request.Content = new ByteArrayContent(body);
             request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
         }
@@ -156,7 +183,8 @@ public sealed class PublicProbeClient : IDisposable
         return new((int)response.StatusCode, headers, data.ToArray());
     }
 
-    public async Task<(int Code, string Media, byte[] Body, Uri Final)> GetAsync(Uri uri, int limit, CancellationToken token, bool head = false)
+    public async Task<(int Code, string Media, byte[] Body, Uri Final)> GetAsync(Uri uri, int limit, CancellationToken token,
+        bool head = false, bool metadataOnly = false)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromSeconds(12));
@@ -173,7 +201,7 @@ public sealed class PublicProbeClient : IDisposable
                 continue;
             }
             var media = response.Content.Headers.ContentType?.MediaType ?? "";
-            if (head) return (code, media, Array.Empty<byte>(), uri);
+            if (head || metadataOnly) return (code, media, Array.Empty<byte>(), uri);
             await using var stream = await response.Content.ReadAsStreamAsync(timeout.Token);
             using var memory = new MemoryStream();
             var buffer = new byte[8192];
@@ -194,7 +222,7 @@ public sealed class PublicProbeClient : IDisposable
 public static class PublicPageChecks
 {
     public static string Stamp(IEnumerable<PublicTarget> targets, IEnumerable<string> features) =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("public-browser-v3|" + JsonSerializer.Serialize(targets)
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("public-resources-v4|" + JsonSerializer.Serialize(targets)
             + "|" + string.Join("|", features.OrderBy(value => value, StringComparer.Ordinal)))));
     public static string Display(Uri uri) => uri.GetLeftPart(UriPartial.Path); // Never show query tokens / map API keys.
     public static bool SameOrigin(Uri left, Uri right) => left.Scheme == right.Scheme && left.IdnHost == right.IdnHost && left.Port == right.Port;
@@ -206,6 +234,7 @@ public static class PublicPageChecks
         var occurrences = new Dictionary<string, int>();
         return new(target.Title, target.Url, DateTime.UtcNow, findings.Select(finding =>
         {
+            if (finding.Id.StartsWith("feature/", StringComparison.Ordinal)) return finding;
             var key = target.Url + "|" + finding.Kind + "|" + finding.Resource;
             var ordinal = occurrences.GetValueOrDefault(key);
             occurrences[key] = ordinal + 1;

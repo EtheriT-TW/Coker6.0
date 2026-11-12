@@ -68,6 +68,58 @@ public static partial class BackofficeSandboxChecks
         Require(await store.LoadAsync(2, 1, "fixture") == null && await store.LoadAsync(1, 2, "fixture") == null
             && await store.LoadAsync(1, 1, "changed") == null, "History leaked across scope.");
         Require(await new BackofficeResultStore(root).LoadAsync(1, 1, null) == null, "Public history contaminated backoffice history.");
+        allowed.Add("https://example.invalid/head-unsupported");
+        var fallback = await PublicBrowserChecks.CheckLinkAsync(new("https://example.invalid/head-unsupported", "/head-unsupported"), origin, allowed, client, CancellationToken.None);
+        Require(fallback?.Status == PublicCheckStatus.Passed && handler.Methods.TakeLast(2).SequenceEqual(new[] { "HEAD", "GET" }),
+            "A server rejecting HEAD did not receive the bounded GET fallback.");
+    }
+
+    private static async Task PublicFunctionsRegression(BackofficeSandbox box)
+    {
+        var policy = new PublicReadOnlyPolicy(new Uri("https://example.invalid/"), 49,
+            new HashSet<string> { "CustomPage", "ProductList" });
+        var json = System.Text.Encoding.UTF8.GetBytes("{\"SiteId\":49,\"Ids\":[1],\"Page\":1,\"ShowNum\":12}");
+        Require(policy.Allows(new Uri("https://example.invalid/api/Directory/GetReleInfo"), "POST", json), "Reviewed read request was rejected.");
+        Require(!policy.Allows(new Uri("https://other.invalid/api/Directory/GetReleInfo"), "POST", json), "Read allowlist crossed origin.");
+        Require(!policy.Allows(new Uri("https://example.invalid/api/ShoppingCart/AddUp"), "POST", json), "Commerce write entered the read allowlist.");
+        Require(!policy.Allows(new Uri("https://example.invalid/api/Directory/GetReleInfo"), "POST",
+            System.Text.Encoding.UTF8.GetBytes("{\"SiteId\":50}")), "Read allowlist crossed website scope.");
+        Require(!policy.Allows(new Uri("https://example.invalid/api/Directory/GetReleInfo"), "POST",
+            System.Text.Encoding.UTF8.GetBytes("{\"SiteId\":49,\"ShowNum\":10000}")), "Unbounded directory request was accepted.");
+        Require(policy.BlocksUnreviewedGet(new Uri("https://example.invalid/api/Product/ClickLog?id=1"), "GET")
+            && policy.BlocksUnreviewedGet(new Uri("https://example.invalid/api/Order/CheckOrder?id=1"), "GET"),
+            "A GET business write bypassed the request policy.");
+        var normalized = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(
+            policy.PrepareBody(System.Text.Encoding.UTF8.GetBytes("{\"SiteId\":0,\"MaxLen\":0}")))!;
+        Require(normalized["SiteId"].GetInt64() == 49 && normalized["WebsiteId"].GetInt64() == 49
+            && normalized["MaxLen"].GetInt32() == 100, "Read request identity or limits were not pinned.");
+        Require(PublicFeatureChecks.Definitions.Select(item => item.Id).Distinct().Count() == PublicFeatureChecks.Definitions.Length,
+            "Public feature identifiers are not unique.");
+        Require(PublicFeatureChecks.Outcome(new("fixture", 0, 0, 0), "fixture").Status == PublicCheckStatus.NotRun,
+            "Detection alone was counted as a workflow pass.");
+        Require(PublicFeatureChecks.Outcome(new("fixture", 1, 0, 1), "fixture").Status == PublicCheckStatus.NotRun,
+            "An unfinished instance was counted as passed.");
+        Require(PublicFeatureChecks.Outcome(new("fixture", 2, 1, 1), "fixture").Status == PublicCheckStatus.Failed,
+            "An operation assertion failure was hidden by pending instances.");
+        Require(PublicFeatureChecks.Outcome(new("fixture", 2, 0, 0), "fixture").Status == PublicCheckStatus.Passed,
+            "Completed operation evidence was rejected.");
+        var root = box.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath;
+        var resources = new PublicResultStore(root);
+        var functions = new PublicResultStore(root, true);
+        var page = new PublicPageResult("fixture", "https://example.invalid/", DateTime.UtcNow, new());
+        await resources.SaveAsync(21, 22, "same-stamp", page);
+        Require(await functions.LoadAsync(21, 22, "same-stamp") == null, "Resource results appeared as function results.");
+        await functions.SaveAsync(21, 22, "same-stamp", page);
+        await functions.ResetAsync(21, 22, "same-stamp", new[] { page.Url });
+        Require((await resources.LoadAsync(21, 22, "same-stamp"))?.Pages.ContainsKey(page.Url) == true,
+            "Function retry removed resource results.");
+        Require(await functions.LoadAsync(21, 23, "same-stamp") == null, "Function results leaked across accounts.");
+        var work = new DiagnosticsWork("fixture", true, "functions", new() { 0 }) { FunctionScan = true };
+        Require(System.Text.Json.JsonSerializer.Deserialize<DiagnosticsWork>(System.Text.Json.JsonSerializer.Serialize(work))?.FunctionScan == true,
+            "A restored function job switched to resource mode.");
+        await functions.SaveAsync(21, 22, "progress", page with { Completed = false });
+        Require((await new PublicResultStore(root, true).LoadAsync(21, 22, "progress"))?.Pages[page.Url].Completed == false,
+            "An unfinished page was restored as completed.");
     }
     private sealed class PublicFixtureHandler : HttpMessageHandler
     {
@@ -78,7 +130,8 @@ public static partial class BackofficeSandboxChecks
             Methods.Add(request.Method.Method);
             var path = request.RequestUri!.AbsolutePath;
             Paths.Add(path);
-            var response = new HttpResponseMessage(path == "/missing" ? HttpStatusCode.NotFound : path == "/redirect" ? HttpStatusCode.Found : HttpStatusCode.OK)
+            var response = new HttpResponseMessage(path == "/head-unsupported" && request.Method == HttpMethod.Head ? HttpStatusCode.MethodNotAllowed
+                : path == "/missing" ? HttpStatusCode.NotFound : path == "/redirect" ? HttpStatusCode.Found : HttpStatusCode.OK)
             { Content = new StringContent("fixture", Encoding.UTF8, "text/html") };
             if (path == "/redirect") response.Headers.Location = new Uri("https://maps.google.com/destination");
             return Task.FromResult(response);

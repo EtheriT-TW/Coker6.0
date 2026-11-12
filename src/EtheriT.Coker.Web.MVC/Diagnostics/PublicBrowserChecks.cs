@@ -50,47 +50,87 @@ public static class PublicBrowserChecks
     }
 
     public static async Task<PublicPageResult> RunAsync(PublicTarget target, IReadOnlySet<string> allowedLinks,
-        IConfiguration configuration, ILogger logger, CancellationToken token)
+        IConfiguration configuration, ILogger logger, CancellationToken token, bool functionScan = false, PublicBrowserSession? session = null,
+        long websiteId = 0, IReadOnlySet<string>? enabledFeatures = null,
+        Func<string, CancellationToken, Task<PublicFinding>>? isolated = null,
+        Func<PublicPageResult, Task>? publish = null, Func<CancellationToken, Task<string>>? quickCartFixture = null)
     {
         var findings = new List<PublicFinding>();
         if (!await BrowserGate.WaitAsync(0, token))
             return PublicPageChecks.Identify(target, new[] { new PublicFinding("瀏覽器檢測", target.Url, PublicCheckStatus.NotRun, "瀏覽器正在檢測其他頁面，請稍後複測。") }) with { StopRun = true };
         try
         {
-            using var playwright = await Playwright.CreateAsync();
-            var channel = configuration["Diagnostics:BrowserChannel"] ?? "msedge";
-            if (channel is not ("msedge" or "chrome" or "chromium")) throw new InvalidOperationException("Unsupported diagnostics browser channel.");
-            await using var browser = await playwright.Chromium.LaunchAsync(new()
-            {
-                Channel = channel == "chromium" ? null : channel, Headless = true, ChromiumSandbox = true,
-                // Every browser request is fulfilled by the DNS-pinned HTTP client.
-                // Any un-intercepted browser traffic has no functioning proxy.
-                Proxy = new Proxy { Server = "http://127.0.0.1:9" },
-                Args = new[] { "--disable-quic", "--disable-background-networking" }, Timeout = 20000
-            });
+            await using var ownedSession = session == null ? new PublicBrowserSession() : null;
+            var browser = await (session ?? ownedSession!).GetAsync(configuration);
             await using var context = await browser.NewContextAsync(new()
             { ServiceWorkers = ServiceWorkerPolicy.Block, AcceptDownloads = false, ViewportSize = new() { Width = 1365, Height = 900 } });
             using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(token);
-            lifetime.CancelAfter(TimeSpan.FromSeconds(120));
+            lifetime.CancelAfter(TimeSpan.FromSeconds(functionScan ? 180 : 45));
             var cancellation = lifetime.Token;
             using var abort = cancellation.Register(() => { _ = context.CloseAsync(); });
-            using var client = new PublicProbeClient();
+            var readPolicy = websiteId > 0 && enabledFeatures != null
+                ? new PublicReadOnlyPolicy(new Uri(target.Url), websiteId, enabledFeatures) : null;
+            using var client = new PublicProbeClient(readPolicy);
             var statuses = new ConcurrentDictionary<string, int>(StringComparer.Ordinal);
             var blocked = new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
             var errors = new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
             var restrictedFrames = new ConcurrentDictionary<string, string>(StringComparer.Ordinal);
             var networkSlots = new SemaphoreSlim(6); // Route callbacks may finish while the context is closing.
             var requests = 0;
+            Task<string>? productFixture = null;
             long received = 0;
+            bool ReserveFixture(int bytes) => Interlocked.Increment(ref requests) <= 300
+                && Interlocked.Add(ref received, bytes) <= 64 * 1024 * 1024;
             await context.AddInitScriptAsync("Object.defineProperty(window,'WebSocket',{value:undefined});Object.defineProperty(window,'EventSource',{value:undefined});Object.defineProperty(window,'RTCPeerConnection',{value:undefined});Object.defineProperty(window,'WebTransport',{value:undefined});");
+            if (functionScan) await context.AddInitScriptAsync(PublicFeatureChecks.ObservationScript);
             await context.RouteAsync("**/*", async route =>
             {
                 var request = route.Request;
+                if (functionScan && quickCartFixture != null && enabledFeatures?.Contains("ProductList") == true
+                    && request.Method == "GET" && Uri.TryCreate(request.Url, UriKind.Absolute, out var productUri)
+                    && PublicPageChecks.SameOrigin(new Uri(target.Url), productUri)
+                    && productUri.AbsolutePath.TrimEnd('/').Equals("/api/Product/GetMainDisplayOne", StringComparison.OrdinalIgnoreCase))
+                {
+                    // This public display getter can sanitize and persist HTML.
+                    // Exercise the UI with the real service's isolated DTO instead.
+                    if (!ReserveFixture(0)) { await route.AbortAsync(); return; }
+                    try
+                    {
+                        productFixture ??= quickCartFixture(cancellation);
+                        var json = await productFixture;
+                        if (Interlocked.Add(ref received, System.Text.Encoding.UTF8.GetByteCount(json)) > 64 * 1024 * 1024)
+                        { await route.AbortAsync(); return; }
+                        await route.FulfillAsync(new() { Status = 200, ContentType = "application/json", Body = json });
+                    }
+                    catch (Exception error)
+                    {
+                        logger.LogWarning(error, "Could not prepare isolated product data");
+                        await route.FulfillAsync(new() { Status = 503, ContentType = "application/json", Body = "{\"message\":\"隔離資料未就緒\"}" });
+                    }
+                    return;
+                }
+                // Captcha endpoints record account events. Supply only an isolated
+                // image fixture for client-side refresh/validation, never call them.
+                if (functionScan && Uri.TryCreate(request.Url, UriKind.Absolute, out var captchaUri)
+                    && PublicPageChecks.SameOrigin(new Uri(target.Url), captchaUri)
+                    && captchaUri.AbsolutePath.Equals("/api/Captcha/index", StringComparison.OrdinalIgnoreCase)
+                    && request.Method == "GET")
+                {
+                    if (!ReserveFixture(100)) { await route.AbortAsync(); return; }
+                    await route.FulfillAsync(new() { Status = 200, ContentType = "image/png", BodyBytes = Convert.FromBase64String(
+                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aYZ0AAAAASUVORK5CYII=") });
+                    return;
+                }
+                if (!functionScan && (request.ResourceType is "media" || request.IsNavigationRequest && request.Frame.ParentFrame != null))
+                { await route.AbortAsync(); return; }
                 if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var uri) || !PublicProbeClient.IsHttp(uri)
-                    || request.Method is not ("GET" or "HEAD") && !PublicProbeClient.IsReadOnlyVideoRequest(uri, request.Method)
+                    || readPolicy?.BlocksUnreviewedGet(uri, request.Method) == true
+                    || request.Method is not ("GET" or "HEAD") && !(functionScan && PublicProbeClient.IsReadOnlyVideoRequest(uri, request.Method))
+                        && readPolicy?.Allows(uri, request.Method, request.PostDataBuffer) != true
                     || Interlocked.Increment(ref requests) > 300
                     || Interlocked.Read(ref received) > 64 * 1024 * 1024
-                    || request.IsNavigationRequest && PublicPageChecks.IsOperationLink(uri))
+                    || request.IsNavigationRequest && PublicPageChecks.IsOperationLink(uri)
+                    || request.IsNavigationRequest && request.Frame.ParentFrame == null && !PublicPageChecks.SameOrigin(new Uri(target.Url), uri))
                 {
                     blocked[request.Url] = "非唯讀操作、非公開網址或超過本頁資源上限";
                     if (request.Method is not ("GET" or "HEAD"))
@@ -138,11 +178,30 @@ public static class PublicBrowserChecks
                 return PublicPageChecks.Identify(target, findings);
             }
             findings.Add(new("頁面載入", target.Url, PublicCheckStatus.Passed, "實際瀏覽器已完成頁面文件載入。"));
-            var element = await page.EvaluateAsync<JsonElement>(SnapshotScript);
+            if (functionScan)
+                findings.AddRange(await PublicFeatureChecks.RunAsync(page, target, cancellation, enabledFeatures, isolated,
+                    publish == null ? null : async progress =>
+                        await publish(PublicPageChecks.Identify(target, findings.Concat(progress)) with { Completed = false }), logger));
+            var element = await page.EvaluateAsync<JsonElement>(SnapshotScript, !functionScan);
             var snapshot = JsonSerializer.Deserialize<PublicBrowserSnapshot>(element.GetRawText())!;
             foreach (var image in snapshot.Images.DistinctBy(image => image.Url))
                 findings.Add(ImageFinding(image, blocked.GetValueOrDefault(image.Url), statuses.GetValueOrDefault(image.Url)));
             if (snapshot.Limited) findings.Add(new("檢測範圍", target.Url, PublicCheckStatus.NotRun, "本頁超過 100 張可見圖片或 100 個不重複連結，其餘未檢測。"));
+            if (!functionScan)
+            {
+                // Links are checked separately with HEAD and a GET fallback; normal public redirects pass.
+                using var linkSlots = new SemaphoreSlim(4);
+                var linkResults = await Task.WhenAll(snapshot.Links.Select(async link =>
+                {
+                    await linkSlots.WaitAsync(cancellation);
+                    try { return await CheckLinkAsync(link, new Uri(target.Url), allowedLinks, client, cancellation); }
+                    finally { linkSlots.Release(); }
+                }));
+                findings.AddRange(linkResults.OfType<PublicFinding>());
+                if (requests > 300 || received > 64 * 1024 * 1024)
+                    findings.Add(new("檢測範圍", target.Url, PublicCheckStatus.NotRun, "已達本頁網路上限，受限資源未列通過。"));
+                return PublicPageChecks.Identify(target, findings);
+            }
             foreach (var video in snapshot.Videos.DistinctBy(item => item.Url).Take(3))
             {
                 if (!Uri.TryCreate(new Uri(page.Url), video.Url, out var videoUri) || !PublicProbeClient.IsHttp(videoUri)) continue;
@@ -208,15 +267,6 @@ public static class PublicBrowserChecks
                 { findings.Add(new("嵌入載入", target.Url, PublicCheckStatus.NotRun, "檢測途中嵌入框被頁面更新或移除，這個框的結果尚未確認。")); }
             }
             if (frames.Count > 200) findings.Add(new("檢測範圍", target.Url, PublicCheckStatus.NotRun, "本頁超過二百個候選嵌入框，其餘未盤點。"));
-            // Links are checked separately with GET; normal public redirects pass.
-            using var linkSlots = new SemaphoreSlim(4);
-            var linkResults = await Task.WhenAll(snapshot.Links.Select(async link =>
-            {
-                await linkSlots.WaitAsync(cancellation);
-                try { return await CheckLinkAsync(link, new Uri(target.Url), allowedLinks, client, cancellation); }
-                finally { linkSlots.Release(); }
-            }));
-            findings.AddRange(linkResults.OfType<PublicFinding>());
             if (requests > 300 || received > 64 * 1024 * 1024)
                 findings.Add(new("檢測範圍", target.Url, PublicCheckStatus.NotRun, "已達本頁三百個請求或 64 MB 上限，受限資源未列通過。"));
             return PublicPageChecks.Identify(target, findings);
@@ -246,11 +296,13 @@ public static class PublicBrowserChecks
             return new("連結可用性", resource, PublicCheckStatus.NotRun, "此目的地不屬於目前啟用的公開頁面，未執行操作。");
         try
         {
-            var response = await client.GetAsync(uri, 8 * 1024 * 1024, token);
+            var response = await client.GetAsync(uri, 8 * 1024 * 1024, token, head: true);
+            if (response.Code is 405 or 501)
+                response = await client.GetAsync(uri, 8 * 1024 * 1024, token, metadataOnly: true);
             var status = response.Code is >= 200 and < 300 ? PublicCheckStatus.Passed
                 : response.Code is 401 or 403 or 429 ? PublicCheckStatus.NeedsReview : PublicCheckStatus.Failed;
             return new("連結可用性", resource, status, status == PublicCheckStatus.Passed
-                ? "已追蹤公開轉址，目的地可正常取得。" : $"目的地回應 HTTP {response.Code}。");
+                ? "已追蹤公開轉址，目的地 HTTP 回應正常；未驗證內容或互動功能。" : $"目的地回應 HTTP {response.Code}。");
         }
         catch (Exception exception) when (PublicProbeClient.IsPolicyFailure(exception))
         { return new("連結可用性", resource, PublicCheckStatus.NotRun, "目的地不符合公開網路檢測限制。"); }
@@ -278,21 +330,21 @@ public static class PublicBrowserChecks
     }
 
     private const string SnapshotScript = """
-        async () => {
+        async inspectImages => {
             const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-            await pause(2000);
+            await pause(600);
             const visible = element => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
             const allImages = [...document.images].filter(visible);
-            const images = allImages.slice(0, 100);
+            const images = inspectImages ? allImages.slice(0, 100) : [];
             for (const image of images) {
                 image.loading = 'eager';
                 image.scrollIntoView({block:'center'});
-                await pause(40);
+                await pause(10);
             }
-            await Promise.all(images.map(image => Promise.race([image.decode().catch(() => {}), pause(4000)])));
-            await pause(1500);
-            const links = [...new Map([...document.querySelectorAll('a[href]')].map(a => [a.href, a])).values()];
-            const videoElements = [...document.querySelectorAll('[data-model-target],.YTmodal_frame,video')]
+            await Promise.all(images.map(image => Promise.race([image.decode().catch(() => {}), pause(3000)])));
+
+            const links = [...new Map([...document.querySelectorAll('a[href]')].filter(visible).map(a => [a.href, a])).values()];
+            const videoElements = (inspectImages ? [] : [...document.querySelectorAll('[data-model-target],.YTmodal_frame,video')])
                 .filter(el => visible(el) && !el.closest('template,[hidden],[aria-hidden="true"]'));
             const videos = videoElements.map((el, index) => {
                 const url = el.getAttribute('data-model-target') || el.getAttribute('data-link') || el.getAttribute('link')
@@ -307,7 +359,7 @@ public static class PublicBrowserChecks
                 Images: images.map(image => ({Url:image.currentSrc || image.src || '', Loaded:image.complete && image.naturalWidth > 0 && image.naturalHeight > 0, Pending:!image.complete})),
                 Links: links.slice(0, 100).map(a => ({Url:a.href, Raw:a.getAttribute('href') || ''})),
                 Videos:videos,
-                Limited:allImages.length > 100 || links.length > 100
+                Limited:inspectImages && (allImages.length > 100 || links.length > 100)
             };
         }
         """;

@@ -7,6 +7,9 @@
 	<ItemGroup>
 		<Content Remove="Diagnostics\backoffice-cases.json" />
 		<EmbeddedResource Include="Diagnostics\backoffice-cases.json" LogicalName="Coker.Diagnostics.BackofficeCases.json" />
+		<EmbeddedResource Include="Diagnostics\Browser\PublicFeatureObserver.js" LogicalName="Coker.Diagnostics.PublicFeatureObserver.js" />
+		<EmbeddedResource Include="Diagnostics\Browser\PublicFeatureWorkflows.js" LogicalName="Coker.Diagnostics.PublicFeatureWorkflows.js" />
+		<EmbeddedResource Include="Diagnostics\Browser\PublicFeatureLegacy.js" LogicalName="Coker.Diagnostics.PublicFeatureLegacy.js" />
 	</ItemGroup>
 	<ItemGroup>
 		<Compile Remove="Views\UserManagement\**" />

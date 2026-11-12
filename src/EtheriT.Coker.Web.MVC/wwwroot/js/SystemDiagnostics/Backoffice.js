@@ -9,7 +9,7 @@
     const stop = root.querySelector("#diagnostics-stop");
     const message = root.querySelector("#diagnostics-message");
     const filters = [...root.querySelectorAll("[data-diagnostics-filter]")];
-    let running = false, controller = null;
+    let running = true;
     let filter = window.location.hash === "#all" || (!window.location.hash &&
         new URL(window.location.href).searchParams.get("showAll") === "true") ? "all" : "failed";
     const groups = () => [...results.querySelectorAll("[data-diagnostics-group]")];
@@ -48,9 +48,10 @@
         empty.textContent = summary.dataset.pagesCount === "0" ? "目前網站沒有適用的檢測項目。" : running ? "檢測進行中，暫未發現未通過項目。" :
             hasResults ? "已執行的項目未發現異常；其餘未執行項目不代表通過，請查看全部檢測項目。" :
             "尚未執行檢測，請點選「開始檢測」。";
+        setHidden(run, running);
         run.disabled = running || summary.dataset.pagesCount === "0";
         if (!running) run.textContent = hasResults ? "重新檢測" : "開始檢測";
-        setHidden(retry, !hasResults);
+        setHidden(retry, running || !hasResults);
         retry.disabled = running || failed === 0;
     }
     function selectFilter(value) {
@@ -62,66 +63,83 @@
     }
     for (const link of filters) link.addEventListener("click", event => { event.preventDefault(); selectFilter(link.dataset.diagnosticsFilter); });
     window.addEventListener("hashchange", () => { filter = window.location.hash === "#all" ? "all" : "failed"; update(); });
-    stop.addEventListener("click", () => controller?.abort());
-    form.addEventListener("submit", async event => {
-        event.preventDefault();
-        if (running || run.disabled) return;
-        running = true;
-        setHidden(stop, false);
-        run.textContent = "檢測中…";
-        const targets = groups().filter(group => event.submitter !== retry || group.querySelector('[data-status="Failed"]'));
-        // Clear prior results before a new run so old successes cannot look current.
-        for (const group of targets) {
-            group.dataset.hasRun = "false";
-            for (const row of group.querySelectorAll("[data-diagnostics-row]")) {
-                row.dataset.status = "NotRun";
-                row.lastElementChild.textContent = "尚未檢測";
-            }
-        }
-        update();
-        let completed = 0, storageWarning = "";
-        controller = new AbortController();
+    let pending = false, polling = false, revision = null, timer = null, disposed = false;
+    const publicScan = false;
+    const identity = () => {
+        const body = new FormData(form);
+        body.set("publicScan", String(publicScan));
+        return body;
+    };
+    function endpoint(url) {
+        const target = new URL(url, location.href);
+        for (const key of ["websiteId", "scopeStamp", "publicScan"]) target.searchParams.set(key, identity().get(key));
+        return target;
+    }
+    async function request(url, options) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
         try {
-            for (const group of targets) {
-                if (controller.signal.aborted) throw new DOMException("Stopped", "AbortError");
-                message.textContent = "正在檢測 " + (completed + 1) + " / " + targets.length + "：" + group.querySelector("summary").textContent;
-                const body = new FormData(form);
-                body.set("pageIndex", group.dataset.pageIndex);
-                const timeout = setTimeout(() => controller.abort(), 120000);
-                let response, html;
-                try {
-                    response = await fetch(root.dataset.runUrl, { method: "POST", credentials: "same-origin", body, signal: controller.signal });
-                    html = await response.text();
-                } finally { clearTimeout(timeout); }
-                if (response.redirected) throw new Error("登入狀態已變更，請重新登入。");
-                if (!response.ok) throw new Error(response.status === 409 ? "站台或功能權限已變更，請重新整理頁面後再試。" :
-                    response.status === 429 ? "此站台已有你的檢測正在執行，請稍後再試。" :
-                    response.status === 401 || response.status === 403 ? "登入已失效或沒有執行權限。" : "檢測未完成，請稍後重試或聯絡系統維護人員。");
+            const response = await fetch(url, { credentials: "same-origin", cache: "no-store", ...options, signal: controller.signal });
+            if (response.redirected || !response.ok) throw new Error(response.status === 409
+                ? "站台或檢測範圍已變更，請重新整理。" : response.status === 429
+                ? "已有背景檢測執行中，請稍後查看狀態。" : "無法取得檢測狀態，請確認登入與伺服器狀態。");
+            return response;
+        } finally { clearTimeout(timeout); }
+    }
+    function visibility(element, hidden) { element.hidden = hidden; element.classList.toggle("d-none", hidden); }
+    async function refresh() {
+        if (polling || pending || disposed) return;
+        polling = true;
+        try {
+            const response = await request(endpoint(root.dataset.statusUrl));
+            const state = await response.json();
+            if (state.revision !== revision) {
+                const html = await (await request(endpoint(root.dataset.resultsUrl))).text();
                 const template = document.createElement("template");
                 template.innerHTML = html;
-                storageWarning = template.content.querySelector("[data-diagnostics-storage-warning]")?.textContent || storageWarning;
-                const replacement = template.content.querySelector("[data-diagnostics-group]");
-                if (!replacement) throw new Error("未取得檢測結果，請重新登入後再試。");
-                replacement.dataset.pageIndex = group.dataset.pageIndex;
-                group.replaceWith(replacement);
-                completed++;
-                update();
+                if (!template.content.querySelector("[data-diagnostics-summary]")) throw new Error("未取得檢測結果，請重新整理確認。");
+                results.replaceChildren(template.content);
+                revision = state.revision;
             }
-            message.textContent = "檢測完成（" + completed + " / " + targets.length + "）。" +
-                (storageWarning || "最後結果已儲存。") + "複測會重新檢查有未通過項目的整個功能。未執行項目不代表通過。";
-        } catch (error) {
-            message.textContent = error.name === "AbortError" ? "檢測已停止或逾時，已完成的結果仍保留；其餘項目尚未檢測。" : error.message;
-        } finally {
-            running = false;
-            controller = null;
-            setHidden(stop, true);
-            run.textContent = "重新檢測";
+            running = state.active;
             update();
+            visibility(stop, !state.active || state.revision === "other");
+            stop.disabled = !!state.stopping;
+            message.textContent = state.message + (state.total ? " 已完成 " + state.completed + " / " + state.total + " 頁。" : "") +
+                (state.active ? "離開頁面不會停止工作。" : "");
+        } catch (error) {
+            running = true; // Unknown state must not enable duplicate submissions.
+            update();
+            visibility(stop, true);
+            message.textContent = error.name === "AbortError" ? "狀態查詢逾時，背景工作不受影響，稍後自動重試。" : error.message;
+        } finally {
+            polling = false;
+            clearTimeout(timer);
+            if (!disposed) timer = setTimeout(refresh, 5000);
         }
+    }
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (running || pending || polling || run.disabled) return;
+        pending = true; running = true; update();
+        const body = identity();
+        body.set("retryOnly", String(event.submitter === retry));
+        try {
+            await request(root.dataset.runUrl, { method: "POST", body });
+            revision = null;
+            message.textContent = "已提交背景檢測，可離開頁面，稍後返回查看。";
+        } catch (error) { message.textContent = error.name === "AbortError" ? "提交逾時，正在確認背景工作狀態，請勿重複提交。" : error.message; }
+        finally { pending = false; await refresh(); }
     });
-    selectFilter(filter);
-    message.textContent = groups().some(group => group.dataset.hasRun === "true")
-        ? (message.dataset.lastRun ? "已載入上次結果（" + message.dataset.lastRun + "）。" : "") +
-            "最後結果依網站及帳號儲存，服務重啟後仍可載入。檢測範圍或規格變更後需重新檢測。可直接複測未通過項目。"
-        : "點選「開始檢測」後，會自動儲存結果，並提供結果篩選與複測。";
+    stop.addEventListener("click", async () => {
+        if (pending || stop.disabled) return;
+        pending = true; stop.disabled = true;
+        try { await request(root.dataset.stopUrl, { method: "POST", body: identity() }); }
+        catch (error) { message.textContent = error.name === "AbortError" ? "停止要求逾時，正在確認狀態。" : error.message; }
+        finally { pending = false; await refresh(); }
+    });
+    window.addEventListener("pagehide", () => { disposed = true; clearTimeout(timer); });
+    window.addEventListener("pageshow", event => { if (event.persisted) { disposed = false; refresh(); } });
+    update();
+    refresh();
 })();

@@ -25,6 +25,13 @@ public static partial class BackofficeSandboxChecks
         ["sandbox/diagnostics-history"] = "SystemDiagnostics.Backoffice",
         ["sandbox/diagnostics-guards"] = "SystemDiagnostics.Backoffice",
         ["sandbox/public-diagnostics"] = "SystemDiagnostics.Public",
+        ["sandbox/public-functions"] = "SystemDiagnostics.Functions",
+        ["sandbox/public-commerce/quickCart"] = "SystemDiagnostics.Functions",
+        ["sandbox/public-commerce/addOn"] = "SystemDiagnostics.Functions",
+        ["sandbox/public-commerce/cart"] = "SystemDiagnostics.Functions",
+        ["sandbox/public-commerce/bonus"] = "SystemDiagnostics.Functions",
+        ["sandbox/public-commerce/payment"] = "SystemDiagnostics.Functions",
+        ["sandbox/diagnostics-background"] = "SystemDiagnostics.Backoffice",
         ["sandbox/product-core"] = "ProductManagement.ProductList",
         ["sandbox/product-stock"] = "ProductManagement.ProductList",
         ["sandbox/product-prices"] = "ProductManagement.ProductList",
@@ -64,6 +71,11 @@ public static partial class BackofficeSandboxChecks
         BackofficeSandboxFactory factory, IMapper mapper, WebsiteLevelEnum level, CancellationToken token)
     {
         if (executor == null || !Pages.TryGetValue(executor, out var expected) || page != expected) return null;
+        if (executor.StartsWith("sandbox/public-commerce/", StringComparison.Ordinal))
+        {
+            var result = await ExecutePublicFeatureAsync(executor["sandbox/public-commerce/".Length..], factory, mapper, level, token);
+            return new(result.Status == PublicCheckStatus.Passed ? BackofficeTestStatus.Passed : BackofficeTestStatus.Failed, result.Message);
+        }
         using var effects = new DiagnosticsSandboxScope();
         await using var sandbox = await factory.CreateAsync(mapper, level, token);
         token.ThrowIfCancellationRequested();
@@ -72,6 +84,8 @@ public static partial class BackofficeSandboxChecks
             case "sandbox/diagnostics-history": await DiagnosticsHistory(sandbox); break;
             case "sandbox/diagnostics-guards": await DiagnosticsGuards(sandbox); break;
             case "sandbox/public-diagnostics": await PublicDiagnosticsRegression(sandbox); break;
+            case "sandbox/public-functions": await PublicFunctionsRegression(sandbox); break;
+            case "sandbox/diagnostics-background": await DiagnosticsBackgroundRegression(sandbox); break;
             case "sandbox/product-core": await ProductCore(sandbox); break;
             case "sandbox/product-stock": await ProductStock(sandbox); break;
             case "sandbox/product-prices": await ProductPrices(sandbox); break;
@@ -183,9 +197,9 @@ public static partial class BackofficeSandboxChecks
         Stocks = new() { new ProductStockDto { Stock = 20, OldStock = 20, Min_Qty = 1, Alert_Qty = 5,
             Price = 100, SubItemNo = "DIAGNOSTICS-SKU", PackingPoint = 1, Prices = new() } }
     };
-    private static async Task<ProdAddUpDto> CreateProduct(BackofficeSandbox box)
+    private static async Task<ProdAddUpDto> CreateProduct(BackofficeSandbox box, ProdAddUpDto? seed = null)
     {
-        var input = ProductFixture();
+        var input = seed ?? ProductFixture();
         var response = await Products(box).ProductAddUp(input);
         Require(response.Success, "Product creation failed: " +
             (!string.IsNullOrWhiteSpace(response.Error) ? response.Error : response.Message));

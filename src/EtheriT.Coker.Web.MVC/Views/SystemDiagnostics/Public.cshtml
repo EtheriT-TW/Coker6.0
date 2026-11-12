@@ -1,15 +1,26 @@
 @model EtheriT.Coker.Web.MVC.Diagnostics.PublicDiagnosticsModel
+@{ var title = Model.FunctionScan ? "前台功能檢測" : "前台圖片、連結檢測"; }
 <div class="row page-tilte align-items-center"><div class="col-md-auto">
-    <h1 class="weight-300 h3 title">前台功能測試</h1>
-    <p class="text-muted">以實際瀏覽器檢查本站公開頁面、圖片顯示與嵌入錯誤，並自動驗證連結目的地。</p>
+    <h1 class="weight-300 h3 title">@title</h1>
+    <p class="text-muted">@(Model.FunctionScan ? "逐頁觀察實際功能，驗證已支援的操作流程與嵌入內容。" : "檢查本站公開頁面的圖片載入與連結目的地。")</p>
 </div></div>
-<div class="content" id="public-diagnostics" data-run-url="@Url.Content("~/api/SystemDiagnostics/RunPublic")">
+<div class="content" id="public-diagnostics" data-function-scan="@(Model.FunctionScan ? "true" : "false")" data-run-url="@Url.Content(Model.FunctionScan ? "~/api/SystemDiagnostics/RunFunctions" : "~/api/SystemDiagnostics/RunPublic")"
+     data-status-url="@Url.Content("~/api/SystemDiagnostics/Status")"
+     data-stop-url="@Url.Content("~/api/SystemDiagnostics/Stop")"
+     data-results-url="@Url.Content("~/api/SystemDiagnostics/Results")">
     <div class="alert alert-info">
-        本次最多抽樣 20 頁；每頁以獨立瀏覽器檢查最多 100 張可見圖片、100 個不重複連結與 10 個嵌入框。文章、商品與證照各抽樣最多 3 筆，僅依目前站台啟用功能納入。
-        僅請求公開 HTTP／HTTPS 資源，不登入、不送出表單、不加入購物車、不寄信或付款；帶參數或操作型連結保留人工確認。
-        網頁請求仍可能產生前台快取或伺服器存取紀錄。
-        會執行頁面 JavaScript、捲動觸發圖片載入，並讀取第三方嵌入框的實際錯誤；正常公開轉址會自動追蹤。
-        需要登入、同意視窗或第三方封鎖時才列為無法確認；CSS 背景圖、登入交易及完整互動流程未包含於本次範圍。
+        檢測在背景執行，可離開頁面，稍後回來查看進度與結果。
+        本次最多抽樣 20 頁；文章、商品與證照各抽樣最多 3 筆，僅依目前站台啟用功能納入，未列出頁面尚未檢測。
+        @if (Model.FunctionScan)
+        {
+            <span>依頁面實際觸發的元件檢測目錄、搜尋、輪播、表單、分享、電子書及其他互動；每類最多操作 10 個元件，電子書最多 3 個。購物車、優惠、加價購、紅利與付款條件使用隔離資料驗證，未涵蓋真實交易。受限或未完成的項目不列為通過。</span>
+        }
+        else
+        {
+            <span>每頁最多檢查 100 張可見圖片及 100 個不重複連結；圖片解碼並行等待，不深入載入影片、地圖或 iframe。</span>
+        }
+        僅存取公開 HTTP／HTTPS 資源，不登入、不提交業務表單、不加入購物車、不寄信或付款。
+        網頁請求仍可能產生快取與存取紀錄；未檢測項目不代表通過。
     </div>
     @if (Model.Plan.Error != null) { <p class="alert alert-warning">@Model.Plan.Error</p> }
     @if (Model.Plan.Limited) { <p class="alert alert-warning">本次頁面盤點或抽樣已達數量上限，未列出的頁面尚未檢測。</p> }
@@ -18,15 +29,14 @@
             @Html.AntiForgeryToken()
             <input type="hidden" name="websiteId" value="@Model.Plan.WebsiteId" />
             <input type="hidden" name="scopeStamp" value="@Model.Plan.Stamp" />
-            <button class="btn btn-primary" type="submit" id="public-run" disabled>開始前台檢測</button>
-            <button class="btn btn-outline-primary d-none" type="submit" id="public-retry" hidden disabled>複測異常與待確認頁面</button>
+            <button class="btn btn-primary d-none" type="submit" id="public-run" hidden disabled>開始前台檢測</button>
+            <button class="btn btn-outline-primary d-none" type="submit" id="public-retry" hidden disabled>複測未通過頁面</button>
             <button class="btn btn-outline-secondary d-none" type="button" id="public-stop" hidden>停止檢測</button>
             <a class="btn btn-outline-secondary d-none" href="#issues" data-public-filter="issues" hidden>需處理項目</a>
             <a class="btn btn-outline-secondary d-none" href="#all" data-public-filter="all" hidden>全部項目</a>
         </form>
         <p class="text-muted mt-2 mb-0" id="public-message" role="status">正在載入檢測程式。</p>
         <p class="text-muted mt-2 mb-0" id="public-counts" role="status"></p>
-        <a asp-action="History">查看檢測紀錄</a>
     </div></div>
     <div id="public-results" aria-live="polite">@await Html.PartialAsync("_PublicResults", Model)</div>
 </div>

@@ -547,7 +547,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 }
             };
             // Platform diagnostics are not customer-assignable website permissions.
-            if (includePlatformDiagnostics && await loginUserData.IsPlatformAdministrator())
+            if (includePlatformDiagnostics && await loginUserData.IsPlatformAdministrator() && false)
             {
                 site.Jobs.Add(new JobMenu
                 {
@@ -569,8 +569,8 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         },
                         new JobMenu
                         {
-                            PageName = "PublicFunctionTests",
-                            Title = "前台功能測試",
+                            PageName = "PublicResourceTests",
+                            Title = "前台圖片、連結檢測",
                             Controller = "SystemDiagnostics",
                             Action = "Public",
                             Icon = "public",
@@ -578,11 +578,11 @@ namespace EtheriT.Coker.Web.MVC.Startup
                         },
                         new JobMenu
                         {
-                            PageName = "SystemDiagnosticsHistory",
-                            Title = "檢測紀錄",
+                            PageName = "PublicFunctionTests",
+                            Title = "前台功能檢測",
                             Controller = "SystemDiagnostics",
-                            Action = "History",
-                            Icon = "history",
+                            Action = "Functions",
+                            Icon = "touch_app",
                             CanVisble = true
                         }
                     }

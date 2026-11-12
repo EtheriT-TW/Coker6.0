@@ -2957,54 +2957,20 @@ namespace EtheriT.Coker.Application.Order
                     {
                         // 判斷訂單在Member可執行的動作 取消訂單/重新付款
                         var temp_OrderHeader = await GetHeaderOne(order_header.Id);
-                        DateTime past24Hours = (DateTime.Now).AddHours(-24);
-                        var isintime = false;
-                        // 按照重新付款、完成訂單、創建訂單的順序判斷24小時內
-                        if (order_header.RepayDate != null && order_header.RepayDate >= past24Hours) isintime = true;
-                        else if (order_header.CompletedDate != null && order_header.CompletedDate >= past24Hours) isintime = true;
-                        else if (order_header.CreationTime >= past24Hours) isintime = true;
-
                         var now = DateTime.Now;
-
                         var payment = paymentList.FirstOrDefault(p => p.Id == order_header.Payment);
-                        var canRefund = payment?.CanRefund == true || IsECPayApplePayPayment(payment);
-
                         var repayInfo = GetRepayInfo(order_header, payment, now);
-                        var canRepay = repayInfo.CanRepay;
 
                         temp_OrderHeader.RepayAvailableAt = repayInfo.AvailableAt;
                         temp_OrderHeader.RepayRemainingSeconds = repayInfo.RemainingSeconds;
                         temp_OrderHeader.RepayWaitingMessage = repayInfo.WaitingMessage;
+                        temp_OrderHeader.Action = ResolveMemberAction(order_header, payment, now);
 
-                        var canCancel =
-                            isintime &&
-                            !ECPayPendingPaymentPolicy.IsResultPending(order_header, payment, now) &&
-                            (
-                                new List<int>
-                                {
-                                    (int)OrderStatusEnum.待確認,
-                                    (int)OrderStatusEnum.待付款
-                                }.Contains((int)order_header.State)
-                                ||
-                                (order_header.State == OrderStatusEnum.已付款 && canRefund)
-                            );
-
-                        if (canRepay && canCancel)
-                        {
-                            temp_OrderHeader.Action = "RepayCancel";
-                        }
-                        else if (canRepay)
-                        {
-                            temp_OrderHeader.Action = "Repay";
-                        }
-                        else if (canCancel)
-                        {
-                            temp_OrderHeader.Action = "Cancel";
-                        }
-                        else
-                        {
-                            temp_OrderHeader.Action = "";
-                        }
+                        // 倒數結束當下的動作由後端先算好，前端倒數到 0 時直接套用，不必重新整理頁面。
+                        temp_OrderHeader.ActionAfterWait =
+                            repayInfo.RemainingSeconds > 0 && repayInfo.AvailableAt.HasValue
+                                ? ResolveMemberAction(order_header, payment, repayInfo.AvailableAt.Value)
+                                : "";
 
                         var snapshotDetails = await GetDetailsDisplay(order_header.Id);
                         var temp_OrderDetails = mapper.Map<List<ShoppingCartDisplayDto>>(snapshotDetails);
@@ -3025,6 +2991,35 @@ namespace EtheriT.Coker.Application.Order
                 response.Message = ex.Message;
             }
             return response;
+        }
+
+        /// <summary>
+        /// 判斷會員訂單在指定時間點可執行的動作：Repay／Cancel／RepayCancel／空字串。
+        /// </summary>
+        private static string ResolveMemberAction(Order_Header order, PaymentType? payment, DateTime at)
+        {
+            // 按照重新付款、完成訂單、創建訂單的順序判斷24小時內
+            var past24Hours = at.AddHours(-24);
+            var isInTime =
+                (order.RepayDate != null && order.RepayDate >= past24Hours) ||
+                (order.CompletedDate != null && order.CompletedDate >= past24Hours) ||
+                order.CreationTime >= past24Hours;
+
+            var canRefund = payment?.CanRefund == true || IsECPayApplePayPayment(payment);
+            var canRepay = GetRepayInfo(order, payment, at).CanRepay;
+            var canCancel =
+                isInTime &&
+                !ECPayPendingPaymentPolicy.IsResultPending(order, payment, at) &&
+                (
+                    order.State == OrderStatusEnum.待確認 ||
+                    order.State == OrderStatusEnum.待付款 ||
+                    (order.State == OrderStatusEnum.已付款 && canRefund)
+                );
+
+            if (canRepay && canCancel) return "RepayCancel";
+            if (canRepay) return "Repay";
+            if (canCancel) return "Cancel";
+            return "";
         }
 
         private static RepayInfoDto GetRepayInfo(Order_Header order, PaymentType? payment, DateTime now)

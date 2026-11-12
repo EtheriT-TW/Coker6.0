@@ -1176,7 +1176,11 @@ namespace EtheriT.Coker.Application.ThirdParty
                                     else ohdata.RepayTimes += 1;
 
                                     OrderInfo.MerchantTradeNo = $"{DateTimeNow:yyyyMMdd}{oid}R{ohdata.RepayTimes}";
-                                    ohdata.RepayDate = DateTimeNow;
+
+                                    // TWQR／無卡分期的等待期要從真正建立交易開始算（ECPayCreatePayment 會設定 RepayDate），
+                                    // 只打開付款視窗就更新，會讓客人一打開就無法取消。
+                                    if (!ECPayPendingPaymentPolicy.IsResultWatched(await GetPaymentCodeAsync(ohdata.Payment)))
+                                        ohdata.RepayDate = DateTimeNow;
                                 }
 
                                 ohdata.TransactionId = OrderInfo.MerchantTradeNo;

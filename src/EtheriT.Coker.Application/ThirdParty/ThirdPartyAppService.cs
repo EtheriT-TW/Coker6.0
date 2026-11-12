@@ -407,26 +407,37 @@ namespace EtheriT.Coker.Application.ThirdParty
             ResponseMessageDto response = new ResponseMessageDto();
             try
             {
-                var backstageJwt = configuration.GetSection("BackstageJwtSettings");
-                var jwtSettings = backstageJwt.Exists() ? backstageJwt : configuration.GetSection("JwtSettings");
-                var signKey = jwtSettings["SignKey"];
-                if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(signKey)) throw new Exception("Token 驗證設定錯誤");
-                var issuer = jwtSettings["Issuer"];
-                var audience = jwtSettings["Audience"] ?? issuer;
+                if (string.IsNullOrWhiteSpace(token)) throw new Exception("Token 驗證設定錯誤");
                 var handler = new JwtSecurityTokenHandler();
-                handler.ValidateToken(token, new TokenValidationParameters
+                if (!handler.CanReadToken(token)) throw new Exception("Token 格式錯誤");
+                JwtSecurityToken jwt;
+                // 前台 JwtSettings 是會員登入用的金鑰，不可拿來驗後台 Token；只有明確設定 BackstageJwtSettings 才驗簽章。
+                var backstageJwt = configuration.GetSection("BackstageJwtSettings");
+                var signKey = backstageJwt["SignKey"];
+                if (!string.IsNullOrWhiteSpace(signKey))
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signKey)),
-                    ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
-                    RequireSignedTokens = true,
-                    ValidateIssuer = true, ValidIssuer = issuer,
-                    ValidateAudience = true, ValidAudience = audience,
-                    ValidateLifetime = true, RequireExpirationTime = true,
-                    ClockSkew = TimeSpan.FromMinutes(1)
-                }, out var validatedToken);
+                    var issuer = backstageJwt["Issuer"];
+                    var audience = backstageJwt["Audience"] ?? issuer;
+                    handler.ValidateToken(token, new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signKey)),
+                        ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
+                        RequireSignedTokens = true,
+                        ValidateIssuer = true, ValidIssuer = issuer,
+                        ValidateAudience = true, ValidAudience = audience,
+                        ValidateLifetime = true, RequireExpirationTime = true,
+                        ClockSkew = TimeSpan.FromMinutes(1)
+                    }, out var validatedToken);
+                    jwt = validatedToken as JwtSecurityToken ?? throw new Exception("Token 格式錯誤");
+                }
+                else
+                {
+                    // 未設定後台金鑰：不驗簽章，改由下方 db.Tokens 工作階段（隨機 GUID、有效期限、站台、使用者、角色）判定身分。
+                    jwt = handler.ReadJwtToken(token);
+                    if (jwt.ValidTo < DateTime.UtcNow) throw new Exception("Token 已過期");
+                }
                 if (await tokenAppService.IsTokenRevoked(token)) throw new Exception("Token 已撤銷");
-                var jwt = validatedToken as JwtSecurityToken ?? throw new Exception("Token 格式錯誤");
                 var sidValue = jwt.Claims.FirstOrDefault(c => c.Type == "sid" || c.Type == ClaimTypes.Sid)?.Value;
                 if (!Guid.TryParse(sidValue, out var sid)) throw new Exception("Token 識別碼錯誤");
                 var websiteId = configuration.GetValue<long>("WebConfig:SiteId");

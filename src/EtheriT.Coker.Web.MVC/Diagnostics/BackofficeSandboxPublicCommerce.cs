@@ -3,6 +3,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Marketing;
 using EtheriT.Coker.Application.Payment;
 using EtheriT.Coker.Application.Shared.BonusManagement;
+using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Bonus;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Marketing;

@@ -447,7 +447,7 @@ namespace EtheriT.Coker.Application.ThirdParty
                     e.UserID != null && e.StartTime <= now && e.EndTime != null && e.EndTime > now);
                 if (session == null) throw new Exception("登入已失效或不屬於目前網站");
                 var username = jwt.Claims.FirstOrDefault(c => c.Type == "username")?.Value;
-                var user = await db.Users.FirstOrDefaultAsync(e => e.Id == session.UserID && e.Name == username && !e.IsDeleted && e.Status == (int)UserStatusEnum.開通);
+                var user = await db.Users.FirstOrDefaultAsync(e => e.Id == session.UserID && e.Name == username && !e.IsDeleted);
                 if (user == null) throw new Exception("帳號已失效");
                 var hasAccess = await db.MappingUserAndRoles.AnyAsync(mapping => !mapping.IsDeleted && mapping.UserId == user.Id &&
                     mapping.Role != null && !mapping.Role.IsDeleted &&

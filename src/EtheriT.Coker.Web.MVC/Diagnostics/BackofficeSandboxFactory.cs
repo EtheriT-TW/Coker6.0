@@ -23,7 +23,8 @@ namespace EtheriT.Coker.Web.MVC.Diagnostics;
 // No production connection strings, mail transport, HTTP clients, cache or jobs.
 public sealed class BackofficeSandboxFactory(ServiceDescriptor[] registrations)
 {
-    public async Task<BackofficeSandbox> CreateAsync(IMapper mapper, WebsiteLevelEnum level, CancellationToken token)
+    public async Task<BackofficeSandbox> CreateAsync(IMapper mapper, WebsiteLevelEnum level, CancellationToken token,
+        Action<IServiceCollection>? configureFixtures = null, bool allowMemoryTransactions = false)
     {
         var id = Guid.NewGuid().ToString("N");
         var parent = Path.Combine(Path.GetTempPath(), "CokerDiagnostics");
@@ -33,8 +34,13 @@ public sealed class BackofficeSandboxFactory(ServiceDescriptor[] registrations)
         foreach (var descriptor in registrations.Where(item => item.ServiceType != typeof(IHostedService))) services.Add(descriptor);
         services.RemoveAll<CokerDbContext>();
         var memoryRoot = new Microsoft.EntityFrameworkCore.Storage.InMemoryDatabaseRoot();
-        var memoryOptions = new DbContextOptionsBuilder<CokerDbContext>()
-            .UseInMemoryDatabase("CokerDiagnostics-" + id, memoryRoot).Options;
+        var memoryBuilder = new DbContextOptionsBuilder<CokerDbContext>()
+            .UseInMemoryDatabase("CokerDiagnostics-" + id, memoryRoot);
+        // Only commerce fixtures opt in. InMemory transactions are no-ops, never
+        // evidence that SQL transaction/rollback behavior has passed.
+        if (allowMemoryTransactions) memoryBuilder.ConfigureWarnings(warnings =>
+            warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
+        var memoryOptions = memoryBuilder.Options;
         services.RemoveAll<DbContextOptions<CokerDbContext>>();
         services.AddSingleton(memoryOptions);
         services.AddScoped(_ => new CokerDbContext(memoryOptions));
@@ -61,6 +67,7 @@ public sealed class BackofficeSandboxFactory(ServiceDescriptor[] registrations)
         var environment = new SandboxEnvironment(folder);
         services.RemoveAll<IWebHostEnvironment>(); services.AddSingleton<IWebHostEnvironment>(environment);
         services.RemoveAll<IHostEnvironment>(); services.AddSingleton<IHostEnvironment>(environment);
+        configureFixtures?.Invoke(services);
         var provider = services.BuildServiceProvider();
         var scope = provider.CreateAsyncScope();
         var sandbox = new BackofficeSandbox(provider, scope, folder, parent);

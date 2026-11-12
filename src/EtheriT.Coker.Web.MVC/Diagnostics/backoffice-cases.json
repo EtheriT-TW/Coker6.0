@@ -5,8 +5,8 @@
       "controller": "SystemDiagnostics",
       "action": "Public",
       "module": "系統檢測",
-      "title": "前台功能測試",
-      "sources": ["Controllers/SystemDiagnosticsController.cs", "Controllers/SystemDiagnosticsPublic.cs", "Views/SystemDiagnostics/Public.cshtml", "Views/SystemDiagnostics/_PublicResults.cshtml", "wwwroot/js/SystemDiagnostics/Public.js", "Diagnostics/PublicDiagnostics.cs", "Diagnostics/PublicBrowserChecks.cs", "Diagnostics/PublicDiagnosticsSandboxChecks.cs"],
+      "title": "前台圖片、連結檢測",
+      "sources": ["Controllers/SystemDiagnosticsController.cs", "Controllers/SystemDiagnosticsPublic.cs", "Views/SystemDiagnostics/Public.cshtml", "Views/SystemDiagnostics/_PublicResults.cshtml", "wwwroot/js/SystemDiagnostics/Public.js", "Diagnostics/PublicDiagnostics.cs", "Diagnostics/PublicBrowserChecks.cs", "Diagnostics/PublicDiagnosticsSandboxChecks.cs", "Diagnostics/DiagnosticsBackgroundJob.cs", "Diagnostics/DiagnosticsWorkStore.cs", "Diagnostics/DiagnosticsPlanBuilder.cs", "Controllers/SystemDiagnosticsJobs.cs"],
       "cases": [
         {
           "id": "SystemDiagnostics.Public.parser-and-history",
@@ -18,27 +18,109 @@
         },
         {
           "id": "SystemDiagnostics.Public.live-sampling",
-          "title": "實際前台抽樣、停止、重測與權限",
-          "steps": "以具備 Playwright 與 Edge 的主機測試 AVIF、內嵌圖片、轉址、電話、地圖 key、YouTube、MP4 與 Facebook。相同影片元件分別放入三種來源及隱藏 FB 樣板，確認只掃描可見來源、分類正確、MP4 等待資料後判斷，FB 顯示按鈕位置及原始影片入口。另驗證功能範圍、停止、紀錄、權限與環境失敗。",
-          "expected": "正常圖片與嵌入有證據才通過；掉圖、錯誤文字及失效目的地列異常；正常轉址及啟用頁面不因未列為主抽樣目標而要求人工確認；登入或第三方封鎖列無法確認，環境未就緒與上限列未檢測。停止不儲存未完成的假失敗，不送出業務表單、購物、寄信或付款。此項為實際部署環境驗收，不計入隔離自動通過數。",
+          "title": "圖片連結抽樣、停止、重測與權限",
+          "steps": "以具備 Playwright 與 Edge 的主機測試 AVIF、內嵌圖片、掉圖、一般連結轉址、電話連結與拒絕 HEAD 的目的地；確認圖片解碼並行、同一工作重用瀏覽器且每頁新建工作階段，影片與 iframe 不深入檢查。另驗證停止、離開返回、權限及功能結果隔離。",
+          "expected": "圖片有解碼證據才通過，無效圖片／失效連結列異常，未載入或受限不算通過。連結優先 HEAD，405／501 才回退 GET，僅讀標頭且保留每跳安全檢查；不檢查 iframe／影片或執行功能操作。兩類進度與結果不混用。此項尚未在部署環境驗證，不列隔離自動通過數。",
           "mode": "external"
         }
       ]
     },
     {
-      "id": "SystemDiagnostics.History",
+      "id": "SystemDiagnostics.Functions",
       "controller": "SystemDiagnostics",
-      "action": "History",
+      "action": "Functions",
       "module": "系統檢測",
-      "title": "檢測紀錄",
-      "sources": ["Controllers/SystemDiagnosticsController.cs", "Views/SystemDiagnostics/History.cshtml", "Diagnostics/BackofficeResultStore.cs"],
+      "title": "前台功能檢測",
+      "sources": [
+        "Controllers/SystemDiagnosticsPublic.cs",
+        "Controllers/SystemDiagnosticsJobs.cs",
+        "Views/SystemDiagnostics/Public.cshtml",
+        "Views/SystemDiagnostics/_PublicResults.cshtml",
+        "wwwroot/js/SystemDiagnostics/Public.js",
+        "Diagnostics/DiagnosticsPlanBuilder.cs",
+        "Diagnostics/DiagnosticsBackgroundJob.cs",
+        "Diagnostics/PublicBrowserChecks.cs",
+        "Diagnostics/PublicBrowserSession.cs",
+        "Diagnostics/PublicFeatureChecks.cs",
+        "Diagnostics/PublicDiagnosticsSandboxChecks.cs",
+        "Diagnostics/PublicReadOnlyPolicy.cs",
+        "Diagnostics/BackofficeSandboxPublicCommerce.cs",
+        "Diagnostics/Browser/PublicFeatureObserver.js",
+        "Diagnostics/Browser/PublicFeatureWorkflows.js",
+        "Diagnostics/Browser/PublicFeatureLegacy.js"
+      ],
       "cases": [
         {
-          "id": "SystemDiagnostics.History.view-latest",
-          "title": "最後檢測紀錄與複測入口",
-          "steps": "以平台管理者完成部分或全部後台檢測後開啟紀錄頁，確認前後台分區；後台切換未通過與全部項目並前往複測，前台尚未實作時不提供結果或複測按鈕；另確認無紀錄、範圍變更、不同帳號與網站及未授權帳號。",
-          "expected": "後台區顯示相同網站與帳號的最後更新時間及適用結果，預設只列失敗，未執行不算通過；前台明確標示尚未實作，不混入後台統計或顯示通過。無紀錄提供後台開始入口，範圍變更提示重測，讀取失敗明確提示；未授權拒絕存取，不顯示其他網站或帳號結果，也不顯示內部錯誤與原始碼資訊。此為人工瀏覽器驗收，不計入自動通過數。",
-          "mode": "isolated"
+          "id": "SystemDiagnostics.Functions.evidence-and-mode-isolation",
+          "title": "操作證據與檢測種類隔離",
+          "steps": "以隔離證據驗證未操作、部分未就緒、操作失敗與完整操作的結果分類；在獨立暫存目錄以相同網站／帳號／範圍分別保存圖片連結與功能結果，再只清除功能結果；序列化還原背景工作種類。 驗證固定讀取 POST 白名單、站台與數量限制、寫入型 GET 阻擋、功能識別及部分進度保存。",
+          "expected": "只有實際完整操作的證據可通過，未完成列未檢測，失敗不被未完成掩蓋；兩種結果不互相讀取或刪除，帳號隔離，還原後不切換工作種類；功能未完成與尚無結果頁須可複測，預設顯示未完成項目。不啟動瀏覽器、不連外、不寫入客戶資料；不能代表實際功能流程已驗證。",
+          "mode": "isolated",
+          "executor": "sandbox/public-functions"
+        },
+        {
+          "id": "SystemDiagnostics.Functions.live-flows",
+          "title": "逐頁觸發的功能操作與限制",
+          "steps": "準備目錄資料／空列表、多頁、排序、年度篩選、搜尋、輪播、版型、分類、表單條件欄位、分享、電子書、導覽、圖區、定位、動畫及商品快速檢視入口。另準備慢載入、初始化失敗、動態元件與 CSP 阻擋頁。逐頁執行並離開返回、停止與複測。",
+          "expected": "依實際元件操作及資料斷言呈現結果，受限、超限、樣本不足或尚未完成不得通過；即時保存功能狀態，交易案例明示隔離資料。本站僅放行固定讀取型 POST，寫入型 GET、交易、追蹤、表單提交及第三方一般 POST 均攔截；產品快速檢視與驗證碼供應隔離回應。不登入、不修改客戶資料、不寄信或付款。此為部署環境人工驗收，尚未執行。",
+          "mode": "external"
+        },
+        {
+          "id": "SystemDiagnostics.Functions.isolated-quickCart",
+          "title": "購物車新增、數量與刪除",
+          "steps": "新增兩件，查詢明細與小計，修改數量，測試超庫存及其他會員刪除，再由本人刪除。",
+          "expected": "數量及小計正確，超庫存與跨會員操作拒絕，刪除後重新查詢不存在。 使用全新記憶體資料庫及私有測試身分，禁止外部網路；不代表 SQL 交易、客戶資料或真實瀏覽器交易已驗證。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "ProductList"
+          ],
+          "executor": "sandbox/public-commerce/quickCart"
+        },
+        {
+          "id": "SystemDiagnostics.Functions.isolated-addOn",
+          "title": "加價購資格與優惠金額",
+          "steps": "建立商品、贈購商品與活動，核對適用清單，分別送出未達及已達購買門檻的加價購。",
+          "expected": "未達門檻拒絕，符合條件時加價商品數量與優惠單價正確。 使用全新記憶體資料庫及私有測試身分，禁止外部網路；不代表 SQL 交易、客戶資料或真實瀏覽器交易已驗證。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "ProductList"
+          ],
+          "executor": "sandbox/public-commerce/addOn"
+        },
+        {
+          "id": "SystemDiagnostics.Functions.isolated-cart",
+          "title": "結帳優惠門檻與總額",
+          "steps": "建立滿額折扣活動，核對未達門檻、達門檻及停用活動的實際結帳折扣。",
+          "expected": "未達門檻及停用時無折扣，達門檻折扣正確，未建立訂單。 使用全新記憶體資料庫及私有測試身分，禁止外部網路；不代表 SQL 交易、客戶資料或真實瀏覽器交易已驗證。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "ProductList",
+            "OrderList"
+          ],
+          "executor": "sandbox/public-commerce/cart"
+        },
+        {
+          "id": "SystemDiagnostics.Functions.isolated-bonus",
+          "title": "紅利可用餘額與折抵限制",
+          "steps": "建立有效及過期紅利與需紅利商品，核對可用餘額並嘗試合法及超額購物車數量。",
+          "expected": "排除過期紅利，超額折抵拒絕，購物車操作不直接扣除帳本餘額。 使用全新記憶體資料庫及私有測試身分，禁止外部網路；不代表 SQL 交易、客戶資料或真實瀏覽器交易已驗證。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "ProductList",
+            "MemberList"
+          ],
+          "executor": "sandbox/public-commerce/bonus"
+        },
+        {
+          "id": "SystemDiagnostics.Functions.isolated-payment",
+          "title": "付款種類、金額與站台限制",
+          "steps": "建立物流及付款方式，核對最低及最高金額界線、跨站查詢與物流付款關閉。",
+          "expected": "金額範圍內可用，超出及跨站拒絕，關閉對應物流規則後不可用。 使用全新記憶體資料庫及私有測試身分，禁止外部網路；不代表 SQL 交易、客戶資料或真實瀏覽器交易已驗證。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "OrderList"
+          ],
+          "executor": "sandbox/public-commerce/payment"
         }
       ]
     },
@@ -48,8 +130,16 @@
       "action": "Backoffice",
       "module": "系統檢測",
       "title": "後台功能測試",
-      "sources": ["Controllers/SystemDiagnosticsController.cs", "Views/SystemDiagnostics/Backoffice.cshtml", "Views/SystemDiagnostics/_BackofficeResults.cshtml", "wwwroot/js/SystemDiagnostics/Backoffice.js", "Diagnostics/BackofficeResultStore.cs", "Diagnostics/BackofficeSandboxChecks.cs"],
+      "sources": ["Controllers/SystemDiagnosticsController.cs", "Views/SystemDiagnostics/Backoffice.cshtml", "Views/SystemDiagnostics/_BackofficeResults.cshtml", "wwwroot/js/SystemDiagnostics/Backoffice.js", "Diagnostics/BackofficeResultStore.cs", "Diagnostics/BackofficeSandboxChecks.cs", "Diagnostics/DiagnosticsBackgroundJob.cs", "Diagnostics/DiagnosticsWorkStore.cs", "Diagnostics/DiagnosticsPageRunner.cs", "Diagnostics/DiagnosticsPlanBuilder.cs", "Diagnostics/DiagnosticsBackgroundSandboxChecks.cs", "Controllers/SystemDiagnosticsJobs.cs"],
       "cases": [
+        {
+          "id": "SystemDiagnostics.Backoffice.background-storage",
+          "title": "背景檢測進度、停止與重測隔離",
+          "steps": "使用記憶體 Hangfire 連線替身呼叫實際工作狀態儲存器，檢查跨站／跨帳號、舊工作修改、進度還原、停止要求、失敗及遺失工作；檢查重測範圍，並在獨立暫存目錄重設前台目標結果。",
+          "expected": "進度及停止要求可由新實例還原；舊工作與其他站台／帳號不能修改目前工作；結束工作不再啟動，失敗或遺失工作標為中斷；只清除重測頁，保留其他頁。不連線 SQL、不提交真實 Hangfire 工作、不啟動瀏覽器，不能代替實際背景執行驗收。",
+          "mode": "isolated",
+          "executor": "sandbox/diagnostics-background"
+        },
         {
           "id": "SystemDiagnostics.Backoffice.model-and-query-guards",
           "title": "檢測環境與唯讀分頁保護",
@@ -59,10 +149,17 @@
           "executor": "sandbox/diagnostics-guards"
         },
         {
+          "id": "SystemDiagnostics.Backoffice.background-lifecycle",
+          "title": "離開頁面後的背景執行與權限",
+          "steps": "前後台分別開始檢測後離開頁面、關閉分頁、重新登入返回，檢查排隊／進度／結果；跨分頁重複提交、停止排隊及執行中的工作；檢查一般業務佇列不被檢測占用。撤銷管理者權限、切換站台、停用功能及重啟網站，再檢查狀態與恢復。以舊版 pageIndex 或自行加入 URL／JavaScript 提交時，不得擴大後端產生範圍。",
+          "expected": "離開頁面不會取消背景工作；返回自動載入進度與已保存結果。同站台帳號一次只有一份前或後台工作，停止保留已完成結果，重新執行清除目標舊狀態；未授權及跨站請求拒絕，執行時範圍變更中止。重啟後從已保存進度恢復或明確標示中斷，查詢失敗不顯示完成或通過。此項須實際部署環境人工驗收，不列自動通過數。",
+          "mode": "external"
+        },
+        {
           "id": "SystemDiagnostics.Backoffice.result-controls",
           "title": "無結果與已有結果的操作按鈕",
-          "steps": "以無紀錄的網站及帳號開啟頁面（含 #all）；開始檢測，分別在第一頁完成前停止、完成部分頁面及載入既有紀錄後檢查按鈕；再檢查全部通過與含失敗結果。",
-          "expected": "無結果僅顯示開始檢測，隱藏複測與兩個篩選按鈕，提示不要求點選隱藏按鈕；執行中顯示停止檢測；有完成或還原的結果才顯示其餘三個按鈕，沒有失敗時複測停用。此為人工瀏覽器驗收規格，未納入自動通過數。",
+          "steps": "確認系統檢測選單只保留前後台測試、前台頁無檢測紀錄連結、舊 History 網址不再提供紀錄頁。以無紀錄的網站及帳號開啟頁面（含 #all）；前後台分別開始檢測，檢查提交中、排隊中、執行中、要求停止及離開返回時均隱藏開始／重新檢測與複測按鈕；分別在第一頁完成前停止、完成部分頁面及載入既有紀錄後檢查按鈕；再檢查全部通過與含失敗結果。",
+          "expected": "系統檢測僅保留前後台入口，舊 History 網址不再提供頁面；各自測試頁仍可還原最後結果與背景進度。無結果僅顯示開始檢測，隱藏複測與兩個篩選按鈕，提示不要求點選隱藏按鈕；狀態尚未確認、提交中、排隊中、執行中及等待停止時隱藏開始／重新檢測與複測按鈕，確認有目前工作時顯示停止檢測；執行中有結果仍可切換結果篩選。確認工作結束後恢復開始／重新檢測；有結果才顯示複測，沒有失敗時複測停用。此為人工瀏覽器驗收規格，未納入自動通過數。",
           "mode": "isolated"
         },
         {
@@ -3654,8 +3751,28 @@
   "exclusions": [
     {
       "controller": "SystemDiagnostics",
+      "action": "RunFunctions",
+      "reason": "具防偽驗證的功能檢測提交 API，目標由後端產生，種類固定為功能檢測；由功能證據隔離及人工流程案例覆蓋，非獨立業務頁面。"
+    },
+    {
+      "controller": "SystemDiagnostics",
+      "action": "DiagnosticsStatus",
+      "reason": "目前站台／帳號的背景檢測狀態、結果或停止 API；驗證平台管理者與站台，停止另需防偽驗證。由背景生命週期規格及狀態儲存隔離案例覆蓋，非獨立業務頁面。"
+    },
+    {
+      "controller": "SystemDiagnostics",
+      "action": "DiagnosticsResults",
+      "reason": "目前站台／帳號的背景檢測狀態、結果或停止 API；驗證平台管理者與站台，停止另需防偽驗證。由背景生命週期規格及狀態儲存隔離案例覆蓋，非獨立業務頁面。"
+    },
+    {
+      "controller": "SystemDiagnostics",
+      "action": "StopDiagnostics",
+      "reason": "目前站台／帳號的背景檢測狀態、結果或停止 API；驗證平台管理者與站台，停止另需防偽驗證。由背景生命週期規格及狀態儲存隔離案例覆蓋，非獨立業務頁面。"
+    },
+    {
+      "controller": "SystemDiagnostics",
       "action": "RunPublic",
-      "reason": "具防偽驗證的前台抽樣 POST API，只接受目前站台與重算範圍內的頁面索引；由隔離執行器及人工端對端驗收覆蓋，非獨立業務頁面。"
+      "reason": "具防偽驗證的前台背景檢測提交 API，只接受目前站台、範圍指紋與複測選項；目標由後端產生，不接受任意 URL／瀏覽器指令，非獨立業務頁面。"
     },
     {
       "controller": "Account",

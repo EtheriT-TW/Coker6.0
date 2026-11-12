@@ -4,6 +4,7 @@ using DevExpress.XtraCharts;
 using EtheriT.Coker.Authentication.Backoffice;
 using EtheriT.Coker.Authentication.ExternalProviders;
 using EtheriT.Coker.Application;
+using EtheriT.Coker.Web.MVC.Diagnostics;
 using EtheriT.Coker.Application.Advertise;
 using EtheriT.Coker.Application.Article;
 using EtheriT.Coker.Application.AuditLog;
@@ -146,6 +147,16 @@ builder.Services.AddHangfire(config =>
 );
 // 註冊 Hangfire 跟蹤服務
 builder.Services.AddHangfireServer();
+// Browser diagnostics must not occupy the normal business-job workers.
+builder.Services.AddHangfireServer(options =>
+{
+    options.Queues = new[] { "diagnostics" };
+    options.WorkerCount = 1;
+});
+builder.Services.AddSingleton<DiagnosticsWorkStore>();
+builder.Services.AddScoped<DiagnosticsPlanBuilder>();
+builder.Services.AddScoped<DiagnosticsPageRunner>();
+builder.Services.AddScoped<DiagnosticsBackgroundJob>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<BackgroundJobService>();

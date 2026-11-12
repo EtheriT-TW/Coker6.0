@@ -423,6 +423,7 @@ launchSettings.json
 docs/*.*
 !docs/BACKOFFICE_FUNCTION_TESTS.md
 !docs/PUBLIC_FUNCTION_TESTS.md
+!docs/PUBLIC_FEATURE_INVENTORY.md
 
 # Frontend package build outputs
 packages/*/dist/

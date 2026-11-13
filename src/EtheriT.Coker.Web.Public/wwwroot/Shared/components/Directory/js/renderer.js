@@ -94,10 +94,23 @@
         const pathSegments = w.location.pathname.toLowerCase().split("/");
         const isSpecificPage = pathSegments.includes("search") || pathSegments.includes("techcert");
 
-        if (isSearch || isSpecificPage) {
+        const source = String($item.attr("data-content-source") || "").trim().toLowerCase();
+        const isAllContent = source === "all-products" || source === "all-articles";
+        const explicitPath = normalizePathSegment($item.attr("data-dirpath") || $item.data("pageto"));
+
+        if (isAllContent) {
+            // Default full-content links use the canonical route; explicit browsing conditions are appended below.
+            const detail = String(data.link || "").split("?")[0].replace(/^\/+/, "");
+            const org = normalizePathSegment(data.orgName);
+            const base = explicitPath
+                ? buildDirectoryBasePath(data.orgName, explicitPath)
+                : (org ? `/${org}/search` : "/search");
+            path = base.replace(/\/+$/, "") + "/" + detail;
+            target = "_self";
+        } else if (isSearch || isSpecificPage) {
             const links = String(data.link || "").split("?filter=");
             data.link = links[0];
-            const filter = links.length > 1 ? "?filter=" + links[1] : "";
+            const filter = links.length > 1 ? "?filter=" + encodeURIComponent(links[1]) : "";
 
             switch (data.type) {
                 case 3:
@@ -163,8 +176,24 @@
             path = path.replace("//", "/");
         }
 
+        if ((Number(data.type) === 1 || Number(data.type) === 2) && w.co?.Directory?.withNavigationContext) {
+            const filters = $item.data("filtered");
+            const filterJson = Array.isArray(filters) && filters.length ? JSON.stringify(filters) : '';
+            const ids = isAllContent ? [] : String($item.attr("data-dirid") || '').split(',')
+                .map(Number).filter(id => Number.isSafeInteger(id) && id > 0);
+            path = co.Directory.withNavigationContext(path, {
+                SearchSortBy: $item.data("searchSortBy"), SearchSortDirection: $item.data("searchSortDirection"),
+                ProductNameFilter: $item.data("productNameFilter"), filters: filterJson,
+                Facet: $item.attr("data-facet"), DirectoryType: $item.data("directoryTypeChecked"),
+                MaxLen: $item.data("maxlen"), dirids: isSearch ? [] : ids,
+                ContentSource: isAllContent && explicitPath ? source : ''
+            });
+        }
+
         return {
             path: path,
+            allContent: isAllContent,
+            label: data.title || "查看內容",
             target: target,
             title: target === "_blank"
                 ? (isFn(w.cokerI18n) ? w.cokerI18n("LinkToAndBlank", data.title) : data.title)
@@ -182,6 +211,15 @@
         };
 
         if ($content.length > 0) {
+            if (linkData.allContent && !$content.is("a")) {
+                const $title = $content.find(".title").first();
+                if ($title.length && !$title.closest("a").length) {
+                    // Keep a real crawlable link even when the card also has buy/share buttons.
+                    $title.wrap($("<a>").attr(attrs).addClass("text-reset text-decoration-none"));
+                } else if (!$content.find("a").length) {
+                    $content.append($("<a>").attr(attrs).text(linkData.label));
+                }
+            }
             if ($content.attr("data-directory-clickable-card") === "true") {
                 $content.attr({ role: "link", tabindex: "0", "data-directory-href": linkData.path });
                 $content.off("click.directoryCard keydown.directoryCard")

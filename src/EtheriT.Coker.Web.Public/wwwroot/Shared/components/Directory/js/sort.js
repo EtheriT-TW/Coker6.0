@@ -36,6 +36,9 @@
     }
 
     function resolveContentType($frame, result) {
+        const source = String($frame.attr("data-content-source") || "").toLowerCase();
+        if (source === "all-products") return contentTypes.product;
+        if (source === "all-articles") return contentTypes.article;
         const explicitType = normalizeContentType(
             result?.contentType
             ?? result?.ContentType
@@ -250,6 +253,7 @@
             $switchControl.children(".directory-sort-control").after($filter);
         }
         w.CokerI18n.apply($switchControl[0]);
+        if (!$filter.is(":focus")) $filter.val(String($frame.data("productNameFilter") || ""));
         $filter.off("input.directoryProductFilter compositionstart.directoryProductFilter compositionend.directoryProductFilter")
             .on("compositionstart.directoryProductFilter", function () {
                 $filter.data("composing", true);

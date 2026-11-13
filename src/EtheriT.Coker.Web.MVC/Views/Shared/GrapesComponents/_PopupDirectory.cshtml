@@ -1,5 +1,4 @@
 ﻿@using DevExtreme.AspNet.Mvc;
-@using EtheriT.Coker.Application.Shared.Dto.Directory;
 
 @(
     Html.DevExtreme().Popup()
@@ -13,52 +12,29 @@
 )
 @using (Html.DevExtreme().NamedTemplate("PopupDirectory-template"))
 {
-    <div id="DirectoryList2" class="card border-0">
-        <div class="card-body position-relative">
-
-            @(Html.DevExtreme().DataGrid<DirectoryGetListDto>()
-                .DataSource(
-                d => d.RemoteController().Key("Id")
-                .LoadUrl("/api/Directory/GetAllList").LoadMethod("Get")
-                .LoadParams(new { includeAdvertise = true })
-                )
-                .ID("DirectoryList2")
-                .Selection(
-                s => s.Mode(SelectionMode.Multiple)
-                )
-                .RemoteOperations(true)
-                .ColumnHidingEnabled(false)
-                .ShowBorders(true)
-                .FilterRow(
-                filterRow =>
-                filterRow.Visible(true)
-                .ApplyFilter(GridApplyFilterMode.Auto)
-                )
-                .SearchPanel(searchPanel =>
-                searchPanel.Visible(true)
-                .Placeholder("請輸入要搜尋的資料")
-                )
-                .Columns(c =>
-                {
-                    c.AddFor(e => e.Title).Caption("標題");
-                    c.AddFor(e => e.Description).Caption("描述");
-                    c.AddFor(e => e.Type).Caption("綁定內容").Visible(false);
-                })
-                .OnSelectionChanged("DirectoryList_SelectChange")
-                .Toolbar(toolbar =>
-                {
-                    toolbar.Items(i =>
-                    {
-                        i.Add()
-                    .Name(DataGridToolbarItem.SearchPanel)
-                    .ShowText(ToolbarItemShowTextMode.Always)
-                    .Location(ToolbarItemLocation.After);
-                    });
-                })
-                .Paging(paging => paging.PageSize(10))
-                )
+    <div class="row align-items-end g-3 mb-3">
+        <div class="col-12 col-md">
+            <div class="fw-semibold mb-2">顯示分類</div>
+            <div class="d-flex flex-wrap gap-3 directory-type-filters" role="group" aria-label="顯示分類">
+                <label class="form-check mb-0"><input type="checkbox" class="form-check-input" value="商品" checked> 商品</label>
+                <label class="form-check mb-0"><input type="checkbox" class="form-check-input" value="文章" checked> 文章</label>
+                <label class="form-check mb-0"><input type="checkbox" class="form-check-input" value="選單" checked> 選單</label>
+                <label class="form-check mb-0 directory-ad-filter"><input type="checkbox" class="form-check-input" value="廣告" checked> 廣告</label>
+            </div>
+        </div>
+        <div class="col-12 col-md-5 col-lg-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="search" class="form-control directory-search" placeholder="搜尋目錄名稱或描述" aria-label="搜尋目錄名稱或描述">
+            </div>
         </div>
     </div>
+    <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+        <span class="directory-selection-summary" role="status" aria-live="polite">載入目錄中…</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary directory-clear">清除選取</button>
+    </div>
+    <p class="text-muted small mb-2">可複選同一分類的目錄；所有商品、所有文章各自只能單獨選取。取消勾選或清除選取後可改選其他分類。</p>
+    <div id="DirectoryList2" class="mb-3"></div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary cancel">取消</button>
         <button type="button" class="btn btn-primary Sure">確定</button>

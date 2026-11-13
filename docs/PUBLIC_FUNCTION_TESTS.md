@@ -56,3 +56,26 @@
 頁面仍引用 Public.min.js；修改原始碼後由使用者在 MVC 專案手動執行 npm run create-bundles。
 該流程檢查授權資產後執行 yarn 與 gulp buildDev，可能下載套件、修改 lock file、產生大量資產與啟動監看；耗時依環境而定。
 Codex 未執行 build、restore、test、bundle、瀏覽器檢測或任何資料庫操作。
+
+## 全內容目錄回歸
+
+後台元件 data-content-source 支援 all-products／all-articles，前台送 ContentSource 至原目錄 API。
+全內容查詢不需關鍵字、不寫搜尋紀錄；全文章僅文章管理內容，商品套公開、上架期間與會員瀏覽權限；保留站台、分頁、排序及最大筆數限制。
+未指定 data-dirpath／pageto 時連至 search 下的商品／文章網址，指定路徑優先；圖卡包含真實 a href，含購物按鈕的卡片不建立巢狀互動元素。
+新增 sandbox/directory-all-content，使用獨立 InMemory fixture 斷言資料隔離、公開條件、分頁、最大筆數、唯讀與未知來源拒絕。尚未執行，不表示 SQL／瀏覽器通過。
+人工驗收另涵蓋全內容列表的公開入口、分頁 a href、排序／過濾、顯式路徑、畫布來源切換與舊目錄上下則；前台自動檢測仍有既有 POST 封鎖限制，不擴大放行。
+前台與 MVC 腳本仍使用既有 min.js 產物；由使用者分別在 Web.Public 與 Web.MVC 執行 npm run create-bundles，未由 Codex 執行。
+
+## 無關鍵字正式網址上下則
+
+search/product/ID 與 search/article/ID 未帶關鍵字時，SwitchPage 依同站公開條件及全內容列表預設排序投影 ID／標題，回傳相鄰兩格，首末保留空格。無搜尋日誌、無商品圖片／價格／完整內容批次載入。
+商品 controller.js 與文章 wwwroot/js/Page/Index.js 區分有／無關鍵字，無關鍵字不使用搜尋 sessionStorage，不拼接 undefined 或空搜尋字至上下則網址。
+沿用 sandbox/directory-all-content 補首末、反向、隱藏內容及文章相鄰斷言，未執行。人工驗收補直接開啟正式網址、商品 AJAX 切換／返回、原目錄與帶關鍵字搜尋回歸；尚未執行瀏覽器驗證。
+
+## 排序與篩選瀏覽參數
+
+共用 coker.api.directory.js 的 getNavigationContext／withNavigationContext：非預設排序帶 sort／direction；名稱、標籤、再分類、目錄與筆數限制以 name／filter／facet／directoryType／dirid／maxLen 傳遞，特殊路徑的全內容元件另帶 source。使用 URLSearchParams 編碼；無條件省略對應參數，canonical 維持原正式網址。
+商品 controller 與文章 Index 將條件送 SwitchPage，並套用至上下則及返回列表；關鍵字搜尋 sessionStorage 鍵包含完整條件，避免混用不同排序。列表初始還原 URL 排序及篩選，保留使用者後續操作。
+既有 sandbox/directory-all-content 補名稱排序反向、名稱過濾、最大筆數及真實關鍵字搜尋條件斷言；未執行。人工規格補三種列表、中文與特殊字元、另開分頁、清空條件、返回列表及原目錄上下則。
+
+價格降冪人工回歸：從 /C8SHOP/Products?sort=price&direction=desc 依列表開啟商品，前後則須依列表相鄰 ID（跨品牌／目錄仍連續），連續切換及返回列表均保留 sort／direction；另核對未帶參數時使用預設順序。商品全內容分支返回列表不得覆蓋已附加的排序條件。此回歸尚未驗證修正後結果；僅重現原問題。更新 DTO／Application Service 後須重新編譯並重新啟動前台，僅重新產生 JavaScript bundle 不會更新後端排序。

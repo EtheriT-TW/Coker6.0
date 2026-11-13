@@ -13,6 +13,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? ProductNameFilter { get; set; }
         public string? SearchSortBy { get; set; }
         public string? SearchSortDirection { get; set; }
+        public string? ContentSource { get; set; }
         public string? Type { get; set; }
         public string? Target { get; set; }
         public long DirectoryType { get; set; } = 0;

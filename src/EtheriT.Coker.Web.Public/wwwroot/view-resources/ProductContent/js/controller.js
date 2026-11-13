@@ -906,11 +906,14 @@
             const diridList = dirid == null ? null : dirid.split(',').map(Number);
             const filter = urlParams.get('filter');
             const routername = catalog.substring(catalog.lastIndexOf('/') + 1).toLowerCase();
+            const navigationContext = window.co.Directory.getNavigationContext();
+            const withContext = path => window.co.Directory.withNavigationContext(path, navigationContext);
+            const fullContentMode = !searchtext && (routername === 'search' || navigationContext.ContentSource);
             const encodedSearchText = encodeURIComponent(searchtext);
             const filterSuffix = filter ? `?filter=${encodeURIComponent(filter)}` : '';
-            const searchCacheKey = `product-${searchtext}-${filter || ''}`;
+            const searchCacheKey = `product-${searchtext}-${filter || ''}-${JSON.stringify(navigationContext)}`;
 
-            $switch.find('.btn_list').attr('href', catalog);
+            $switch.find('.btn_list').attr('href', withContext(catalog));
 
             const bindSearchMode = (list) => {
                 if (!Array.isArray(list) || list.length === 0) {
@@ -919,18 +922,18 @@
                 }
 
                 const index = list.findIndex(p => String(p.key) === String(productid));
-                $switch.find('.btn_list').attr('href', `${catalog}/Get/3/${encodedSearchText}${filterSuffix}`);
+                $switch.find('.btn_list').attr('href', withContext(`${catalog}/Get/3/${encodedSearchText}${filterSuffix}`));
 
                 if (index > 0) {
                     const prev = list[index - 1];
                     const link = `${catalog}/product/${prev.key}/${encodedSearchText}${filterSuffix}`;
-                    $switch.find('.btn_prev').attr({ href: link, title: prev.value }).removeClass('disabled');
+                    $switch.find('.btn_prev').attr({ href: withContext(link), title: prev.value }).removeClass('disabled');
                 }
 
                 if (index < list.length - 1 && index >= 0) {
                     const next = list[index + 1];
                     const link = `${catalog}/product/${next.key}/${encodedSearchText}${filterSuffix}`;
-                    $switch.find('.btn_next').attr({ href: link, title: next.value }).removeClass('disabled');
+                    $switch.find('.btn_next').attr({ href: withContext(link), title: next.value }).removeClass('disabled');
                 }
             };
 
@@ -950,6 +953,7 @@
             }
 
             this.options.api.switchPage({
+                ...navigationContext,
                 id: productid,
                 dirids: diridList,
                 routername: routername,
@@ -961,6 +965,18 @@
 
                 if (!Array.isArray(result) || result.length === 0) {
                     $switch.addClass('d-none');
+                    return;
+                }
+
+                if (fullContentMode) {
+                    $switch.find('.btn_list').attr('href', withContext(catalog));
+                    ['.btn_prev', '.btn_next'].forEach((selector, index) => {
+                        const neighbor = result[index];
+                        if (neighbor?.key) {
+                            $switch.find(selector).attr({ href: withContext(`${catalog}/product/${neighbor.key}`), title: neighbor.value })
+                                .removeClass('disabled');
+                        }
+                    });
                     return;
                 }
 
@@ -976,14 +992,14 @@
 
                 if (result[0]?.key != null) {
                     $switch.find('.btn_prev').attr({
-                        href: `${catalog}/product/${result[0].key}`,
+                        href: withContext(`${catalog}/product/${result[0].key}`),
                         title: result[0].value
                     }).removeClass('disabled');
                 }
 
                 if (result[1]?.key != null) {
                     $switch.find('.btn_next').attr({
-                        href: `${catalog}/product/${result[1].key}`,
+                        href: withContext(`${catalog}/product/${result[1].key}`),
                         title: result[1].value
                     }).removeClass('disabled');
                 }

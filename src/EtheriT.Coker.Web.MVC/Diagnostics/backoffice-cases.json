@@ -850,7 +850,12 @@
         "Controllers/api/WebMenuController.cs",
         "wwwroot/js/Page/Index.js",
         "Diagnostics/BackofficeObjectChecks.cs",
-        "Diagnostics/BackofficeReadOnlyChecks.cs"
+        "Diagnostics/BackofficeReadOnlyChecks.cs",
+        "Views/Shared/GrapesComponents/_PopupDirectory.cshtml",
+        "wwwroot/js/Grapes/grapesjs-Coker6.js",
+        "Controllers/api/DirectoryController.cs",
+        "Diagnostics/BackofficeSandboxContentChecks.cs",
+        "Diagnostics/BackofficeSandboxChecks.cs"
       ],
       "cases": [
         {
@@ -942,6 +947,47 @@
           "steps": "對已保存多版的測試頁面開啟畫布歷程及版本明細。",
           "expected": "版本時間與明細對應正確，不因檢視而覆寫內容。",
           "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.directory-source-settings",
+          "title": "目錄資料來源選擇與保存",
+          "steps": "環境：具頁面編輯權限的測試站台、兩個不同來源的內容目錄元件。從同一列表分別單選所有商品、所有文章，及跨頁複選同類目錄，儲存頁面後重開；測試清除、空選確認、取消、快速關閉再重開、API 失敗及原目錄已刪除／撤權。",
+          "expected": "所有商品／文章與一般目錄同列並正確還原；保存 all-products／all-articles 時不將虛擬鍵當目錄 ID，指定目錄保存 directory 與實際 ID。元件 ID、路徑、版型與分頁設定保留，兩元件不串值。載入中或失敗不可確認，失效舊選項必須清除後重選；取消不變更。前台需依來源查詢並符合 directory-all-content 隔離案例及公開頁人工驗收；未執行不宣稱通過。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.directory-category-selection",
+          "title": "目錄分類顯示、篩選與用途限制",
+          "steps": "環境：同站準備商品、文章、選單、廣告目錄及另一站資料。檢查標題／分類／描述順序；商品、文章、選單篩選預設全選，測試複選分類及全部取消、文字搜尋與換頁。選所有商品後嘗試勾文章／一般目錄；清除後選商品目錄，測試同類跨頁複選、異類滑鼠及鍵盤選取；取消最後一筆後改選文章。篩掉已選分類並確認選取摘要，再還原篩選。對選單／廣告元件及無編輯權限帳號重複檢查。 搜尋框應位於顯示分類右側；於窄螢幕換行，輸入與清空搜尋、搭配分類篩選後檢查結果，關閉重開應清空搜尋且恢復分類全選。",
+          "expected": "分類緊鄰標題。篩選只改變顯示，不偷偷清除跨頁或隱藏選項；全部取消顯示空列表；恢復後原勾選仍在。所有商品／文章各自單選，其餘項目反灰停用；一般目錄可複選同類，所有項及異類反灰；取消或清除後恢復可選。鍵盤或程式觸發選取亦不可繞過互斥，確認再次檢查混類；既有混類設定可取消整理但不可直接保存。選單／廣告元件不提供全內容選項。沿用原站台及權限 API，無其他站台目錄，無權限不可保存。 寬螢幕分類與搜尋同列，窄螢幕搜尋換至下一列且不溢出；列表內不再重複顯示搜尋框。搜尋與清空結果正確，保留原本選取與互斥規則。",
+          "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.directory-all-content",
+          "title": "全商品與全文章資料範圍、分頁及唯讀查詢",
+          "steps": "在獨立記憶體站台建立公開、隱藏、過期、下架、其他站及會員限定商品，以及公開、隱藏、過期與其他站文章。呼叫實際目錄服務的 all-products／all-articles，檢查無關鍵字、殘留目錄 ID、偽造站台、跨頁及最大筆數、未知來源。 另以無 searchtext 的 search 商品／文章網址查詢上下則，驗證首末邊界、反向導覽及隱藏商品拒絕。 同步驗證名稱升降序反轉上下則、商品名稱過濾後單筆邊界、最大筆數截斷，以及有關鍵字的搜尋帶排序與名稱條件。",
+          "expected": "只回傳適用站台與訪客權限的公開有效內容，商品及文章分開；總筆數、分頁與最大筆數一致，回傳正確 detail 路由，不寫搜尋紀錄，未知來源拒絕。不代表 SQL 翻譯、瀏覽器或正式環境已驗證。 無搜尋字的正式商品／文章路由能取得同類公開相鄰 ID；首末空槽正確，不回傳隱藏、過期、下架、跨站內容或一般選單，也不寫搜尋紀錄。 所有商品及真實搜尋的排序／名稱篩選／筆數限制傳遞一致；明確排序反轉相鄰方向，單筆篩選雙向空槽。",
+          "mode": "isolated",
+          "requiredFeatures": [
+            "ProductList",
+            "Article"
+          ],
+          "executor": "sandbox/directory-all-content"
+        },
+        {
+          "id": "Page.Index.directory-all-content-links",
+          "title": "全內容列表前台連結、排序與分頁",
+          "steps": "環境：測試站台已公開且有導覽入口的所有商品及所有文章頁，使用一般圖卡與含購買／分享按鈕的模板。清空元件路徑，檢查載入、排序、名稱過濾與第二頁；指定有效路徑後重測，返回原目錄檢查上下則。於 GrapesJS 在所有商品／所有文章／指定目錄間切換。 直接開啟 /站台/search/product/ID 與 /站台/search/article/ID，不帶關鍵字；操作上下則、商品 AJAX 切換、瀏覽器返回及首末邊界，再測帶關鍵字／filter 的舊搜尋與原目錄網址。 三種列表（一般目錄、全內容、關鍵字搜尋）分別切換非預設排序、升降序、名稱、標籤／分類／facet 篩選，點入內容連續上下則與返回列表、另開分頁。包含中文及 &、#、+ 字元；再清除條件確認網址省略預設值。",
+          "expected": "全商品／文章無需搜尋關鍵字即可載入；分頁及排序正確。路徑空白時每張圖卡有真實 a href 指向 /站台/search/product/ID 或 /站台/search/article/ID，預設且未篩選時不附帶搜尋字、filter 或 dirid；指定路徑優先。購物、分享不被巢狀連結攔截，原目錄上下則保留；畫布切換新來源會重載，不顯示前次來源資料。重新抓取後再確認適用 canonical URL 的入鏈，不預先宣稱 Ahrefs 問題已排除。 無關鍵字上下則正常顯示，連結保持乾淨的 search/product/ID 或 search/article/ID，不帶 undefined、空關鍵字尾斜線或無效搜尋列表網址；不讀取關鍵字搜尋快取，原目錄與關鍵字搜尋上下則保持原行為。 網址僅在非預設時攜帶 sort／direction，生效篩選帶 name／filter／facet／directoryType，必要目錄帶 dirid；上下則及返回列表保留相同條件，不交叉使用其他條件的搜尋快取。URLSearchParams 正確編碼，canonical 不含瀏覽參數。指定路徑的全內容元件以 source 保留來源種類，無條件仍用原預設行為。",
+          "mode": "external"
+        },
+        {
+          "id": "Page.Index.menu-published-content-cache",
+          "title": "頁面發布同步更新選單可點擊狀態",
+          "steps": "獨立記憶體站台先建立空選單暖快取，測試只存草稿、空轉有、文字／CSS修改、僅剩 body／空段落／nbsp／style 後發布、空轉空、純圖片發布及圖片改文字；清空後重新開啟前台內容。另讀其他站台版本確認隔離。",
+          "expected": "只有有／無可導頁內容切換時遞增目標站台 menu 版本；有轉有及空轉空重用版本，只存草稿不改正式版本。真正空白的發布內容 Html／PageText／SaveHtml／Css／SaveCss 為 null，前台重開不復原舊內容；純圖片保留並可導頁。暖快取 JSON 的 hasContan 正確更新，不需再編輯選單；其他站台版本不變。使用獨立記憶體資料，未執行不代表 SQL 或瀏覽器驗證通過。",
+          "mode": "isolated",
+          "executor": "sandbox/menu-content-cache"
         }
       ]
     },

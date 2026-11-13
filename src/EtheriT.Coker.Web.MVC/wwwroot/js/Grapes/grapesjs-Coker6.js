@@ -335,47 +335,187 @@
                         name: 'data-dirid', type: 'button',
                         text: "設置目錄",
                         command: editor => {
-                            var data = null;
-                            if (!!!PopupDirectory) {
-                                PopupDirectory = $("#PopupDirectory").dxPopup("instance");
-                                PopupDirectory.option("contentTemplate", $("#PopupDirectory-template"));
-                                PopupDirectory.option("title", "設置目錄");
-                                window.DirectoryList_SelectChange = function (selectedItems) {
-                                    data = selectedItems.selectedRowsData;
-                                }
-                                window.setTimeout(function () {
-                                    var popup = $("#PopupDirectory").dxPopup("instance");
-                                    var content = popup.content();
-                                    $(content).find(".cancel").on("click", function () {
-                                        PopupDirectory.hide();
-                                    });
-                                    $(content).find(".Sure").on("click", function (component) {
-                                        var oldlist = editor.getSelected().getAttributes()["data-dirid"];
-                                        editor.getSelected().set("attributes", {
-                                            "data-dirid": data.map(function (item) {
-                                                return item['Id'];
-                                            }),
-                                            "data-diridname": data.map(function (item) {
-                                                return item['Title'];
-                                            })
-                                        });
-                                        PopupDirectory.hide();
-                                        var newlist = editor.getSelected().getAttributes()["data-dirid"].toString();
-                                        if (oldlist != newlist) {
-                                            $(".gjs-frame")[0].contentWindow.DirectoryGetDataInit();
-                                        }
-                                    });
-                                }, 200);
+                            const component = editor.getSelected();
+                            if (!component) return;
+                            const attributes = component.getAttributes();
+                            const supportsAll = component.getClasses().includes('catalog_frame');
+                            const source = supportsAll && ['all-products', 'all-articles'].includes(attributes['data-content-source'])
+                                ? attributes['data-content-source'] : 'directory';
+                            const dirids = String(attributes['data-dirid'] || '').split(',')
+                                .map(Number).filter(id => Number.isSafeInteger(id) && id > 0);
+
+                            if (!PopupDirectory) {
+                                PopupDirectory = $('#PopupDirectory').dxPopup('instance');
+                                PopupDirectory.option('contentTemplate', $('#PopupDirectory-template'));
+                                PopupDirectory.option('title', '設定目錄');
                             }
-                            var data_dirid = editor.getSelected().get("attributes")['data-dirid'];
-                            var dirids = typeof (data_dirid) == "string" ? data_dirid.split(',').map(Number) : data_dirid;
-                            PopupDirectory.option({
-                                onShown: function () {
-                                    var grid = $("#DirectoryList2").dxDataGrid("instance");
-                                    if (grid) {
-                                        grid.selectRows(dirids);
+                            PopupDirectory.option('onShown', function () {
+                                const content = $(PopupDirectory.content());
+                                const gridElement = content.find('#DirectoryList2');
+                                const previousGrid = DevExpress.ui.dxDataGrid.getInstance(gridElement[0]);
+                                if (previousGrid) previousGrid.dispose();
+                                gridElement.empty();
+                                const confirmButton = content.find('.Sure').prop('disabled', true);
+                                const summary = content.find('.directory-selection-summary');
+                                const filters = content.find('.directory-type-filters input');
+                                filters.prop('checked', true);
+                                let active = true;
+                                let rows = [];
+                                let selectedKeys = [];
+                                let syncing = false;
+                                let ready = false;
+                                let missingSelection = false;
+                                let grid;
+                                const rowByKey = new Map();
+                                const selectedRows = () => selectedKeys.map(key => rowByKey.get(key)).filter(Boolean);
+                                const canSelect = row => {
+                                    if (selectedKeys.includes(row.Key)) return true;
+                                    const selection = selectedRows();
+                                    if (missingSelection) return false;
+                                    if (!selection.length) return true;
+                                    if (row.Source || selection.some(item => item.Source)) return false;
+                                    return selection.every(item => item.Type === row.Type);
+                                };
+                                const updateSummary = () => {
+                                    const selection = selectedRows();
+                                    const visibleTypes = filters.filter(':checked').map(function () { return this.value; }).get();
+                                    const hiddenCount = selection.filter(item => !visibleTypes.includes(item.Type)).length;
+                                    const mixed = new Set(selection.map(item => item.Type)).size > 1;
+                                    if (missingSelection) {
+                                        summary.text('原選取目錄已不存在或無權限，請清除選取後重新選擇');
+                                        return;
                                     }
-                                }
+                                    summary.text(selection.length
+                                        ? (selection[0].Source ? '已選取：' + selection[0].Title :
+                                            '已選取 ' + selection.length + ' 個目錄' + (mixed ? '（分類不同，請取消不需要的項目）' : '（' + selection[0].Type + '）')) +
+                                            (hiddenCount ? '；其中 ' + hiddenCount + ' 項被分類篩選隱藏' : '')
+                                        : '尚未選取');
+                                };
+                                const refreshSelection = () => {
+                                    syncing = true;
+                                    grid.option('selectedRowKeys', selectedKeys.slice());
+                                    syncing = false;
+                                    grid.repaint();
+                                    updateSummary();
+                                };
+                                gridElement.dxDataGrid({
+                                    keyExpr: 'Key', dataSource: [], remoteOperations: false,
+                                    showBorders: true, columnHidingEnabled: false,
+                                    selection: { mode: 'multiple', showCheckBoxesMode: 'always', allowSelectAll: false },
+                                    paging: { pageSize: 10 },
+                                    searchPanel: { visible: false },
+                                    filterRow: { visible: true, applyFilter: 'auto' },
+                                    columns: [
+                                        { dataField: 'Title', caption: '標題', minWidth: 180 },
+                                        { dataField: 'Type', caption: '分類', width: 90 },
+                                        { dataField: 'Description', caption: '描述', minWidth: 180 }
+                                    ],
+                                    onEditorPreparing: function (e) {
+                                        if (e.type === 'selection' && e.parentType === 'dataRow') {
+                                            e.editorOptions.disabled = !ready || !canSelect(e.row.data);
+                                        }
+                                    },
+                                    onRowPrepared: function (e) {
+                                        if (e.rowType !== 'data') return;
+                                        const disabled = !canSelect(e.data);
+                                        $(e.rowElement).toggleClass('text-muted', disabled)
+                                            .css('opacity', disabled ? 0.45 : '')
+                                            .attr('aria-disabled', disabled ? 'true' : 'false');
+                                    },
+                                    onSelectionChanged: function (e) {
+                                        if (syncing || !ready) return;
+                                        selectedKeys = selectedKeys.filter(key => !(e.currentDeselectedRowKeys || []).includes(key));
+                                        for (const key of e.currentSelectedRowKeys || []) {
+                                            const row = rowByKey.get(key);
+                                            if (row && canSelect(row)) selectedKeys.push(key);
+                                        }
+                                        selectedKeys = [...new Set(selectedKeys)];
+                                        refreshSelection();
+                                    }
+                                });
+                                grid = gridElement.dxDataGrid('instance');
+                                content.find('.directory-search').val('').off('input.directorySearch')
+                                    .on('input.directorySearch', function () {
+                                        grid.searchByText(this.value);
+                                    });
+                                const applyFilters = () => {
+                                    const types = filters.filter(':checked').map(function () { return this.value; }).get();
+                                    const expression = [];
+                                    types.forEach(type => {
+                                        if (expression.length) expression.push('or');
+                                        expression.push(['Type', '=', type]);
+                                    });
+                                    // Change only the component filter; retain search text, column filters and selected keys.
+                                    grid.filter(expression.length ? expression : ['Key', '=', '__no_category__']);
+                                    grid.pageIndex(0);
+                                    updateSummary();
+                                };
+                                filters.off('change.directorySource').on('change.directorySource', applyFilters);
+                                content.find('.directory-clear').off('click.directorySource').on('click.directorySource', function () {
+                                    selectedKeys = [];
+                                    missingSelection = false;
+                                    refreshSelection();
+                                });
+                                content.find('.cancel').off('click.directorySource').on('click.directorySource', function () {
+                                    PopupDirectory.hide();
+                                });
+                                PopupDirectory.option('onHidden', function () { active = false; });
+                                confirmButton.off('click.directorySource').on('click.directorySource', function () {
+                                    if (!active || !ready) return;
+                                    if (missingSelection) {
+                                        co.sweet.warn('提示', '原選取目錄已不存在或無權限，請清除選取後重新選擇');
+                                        return;
+                                    }
+                                    const selection = selectedRows();
+                                    if (!selection.length) {
+                                        co.sweet.warn('提示', '請至少選擇一個項目');
+                                        return;
+                                    }
+                                    if (new Set(selection.map(item => item.Type)).size !== 1 ||
+                                        (selection.some(item => item.Source) && selection.length !== 1)) {
+                                        co.sweet.warn('提示', '請選擇同一分類的目錄，或單獨選擇所有商品／所有文章');
+                                        return;
+                                    }
+                                    const selectedSource = selection[0].Source || 'directory';
+                                    component.addAttributes({
+                                        'data-content-source': selectedSource,
+                                        'data-dirid': selectedSource === 'directory' ? selection.map(item => item.Id).join(',') : '',
+                                        'data-diridname': selection.map(item => item.Title).join(',')
+                                    });
+                                    PopupDirectory.hide();
+                                });
+                                // Fetch only directory metadata through the existing authenticated, site-scoped API.
+                                // Local paging keeps the two source choices and cross-page selection in the same list.
+                                summary.text('載入目錄中…');
+                                $.getJSON('/api/Directory/GetAllList', { includeAdvertise: true }).done(function (result) {
+                                    if (!active) return;
+                                    if (!result || !Array.isArray(result.data)) {
+                                        summary.text('目錄資料格式不正確，請關閉後重試');
+                                        return;
+                                    }
+                                    rows = result.data.map(item => ({ ...item, Key: String(item.Id) }));
+                                    content.find('.directory-ad-filter').toggle(rows.some(item => item.Type === '廣告'));
+                                    if (supportsAll) rows.unshift(
+                                        { Key: 'all-products', Source: 'all-products', Title: '所有商品', Type: '商品', Description: '本站所有符合公開條件的商品' },
+                                        { Key: 'all-articles', Source: 'all-articles', Title: '所有文章', Type: '文章', Description: '本站所有符合公開條件的文章' }
+                                    );
+                                    rows.forEach(row => rowByKey.set(row.Key, row));
+                                    selectedKeys = source !== 'directory' ? [source] : dirids.map(String);
+                                    if (selectedKeys.some(key => !rowByKey.has(key))) {
+                                        missingSelection = true;
+                                        selectedKeys = selectedKeys.filter(key => rowByKey.has(key));
+                                    }
+                                    syncing = true;
+                                    grid.option('dataSource', rows);
+                                    grid.option('selectedRowKeys', selectedKeys);
+                                    syncing = false;
+                                    ready = true;
+                                    grid.repaint();
+                                    updateSummary();
+                                    confirmButton.prop('disabled', false);
+                                }).fail(function () {
+                                    if (active) summary.text('目錄載入失敗，請關閉後重試');
+                                });
                             });
                             PopupDirectory.show();
                         }
@@ -411,7 +551,7 @@
                         fWindow.DirectoryGetDataInit();
                     }, 200);
                 });
-                self.on(`change:attributes:data-dirid`, component => {
+                self.on(`change:attributes:data-dirid change:attributes:data-content-source`, component => {
                     setTimeout(() => {
                         const fWindow = $(".gjs-frame")[0].contentWindow;
                         let attr = component.getAttributes();

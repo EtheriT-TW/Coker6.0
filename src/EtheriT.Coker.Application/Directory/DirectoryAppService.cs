@@ -515,7 +515,7 @@ namespace EtheriT.Coker.Application.Directory
         // ✅ 文章：只有「標籤」Filter；選單：無 Filter；商品：標籤 + 技術文件 + DirectoryType
         // ✅ 商品支援價格、名稱、商品編號、型號排序；同值時仍依使用者加權排序
 
-        private async Task<DirectoryReleInfoGetDto> SearchReleInfo(DirectoryReleInfoInputDto dto)
+        private async Task<DirectoryReleInfoGetDto> SearchReleInfo(DirectoryReleInfoInputDto dto, bool allContent = false)
         {
             // ---------- 基本參數 ----------
             long searchId = (dto.Ids != null && dto.Ids.Count > 0) ? dto.Ids[0] : 0;
@@ -538,26 +538,34 @@ namespace EtheriT.Coker.Application.Directory
             };
 
             // 沒有 keyword 就直接回空（沿用你原本語意）
-            if (string.IsNullOrWhiteSpace(dto.SearchText))
+            if (!allContent && string.IsNullOrWhiteSpace(dto.SearchText))
             {
                 output.TotalCount = 0;
                 output.TotalPage = 0;
                 return output;
             }
 
-            // 記錄搜尋 log（沿用你原本語意）
-            await custSearchAppService.SaveSearchLog(new SaveSearchLogDto
+            // Full-content catalog browsing is not a keyword search and must not write search logs.
+            if (!allContent)
             {
-                Key = dto.SearchText,
-                FK_CustSearchId = searchId,
-                FK_WebsiteId = dto.SiteId ?? 0
-            });
+                await custSearchAppService.SaveSearchLog(new SaveSearchLogDto
+                {
+                    Key = dto.SearchText,
+                    FK_CustSearchId = searchId,
+                    FK_WebsiteId = dto.SiteId ?? 0
+                });
+            }
 
             // 分頁修正（原本 -1 會造成跳筆）
             int page = (dto.Page.HasValue && dto.Page.Value > 0) ? dto.Page.Value : 1;
             int showNum = (dto.ShowNum.HasValue ? dto.ShowNum.Value : 12);
             if (showNum <= 0 && showNum != -500) showNum = 12;
 
+            if (allContent)
+            {
+                showNum = showNum <= 0 ? 12 : Math.Min(showNum, 100);
+                page = Math.Min(page, int.MaxValue / showNum);
+            }
             int skip = (showNum == -500) ? 0 : (page - 1) * showNum;
 
             // 圖片 fallback（沿用你原本 regex）
@@ -577,7 +585,7 @@ namespace EtheriT.Coker.Application.Directory
                 case SearchTargetIds.Article:
                     // 「找文章」同時涵蓋一般內容頁（WebMenu）與文章管理內容。
                     // 舊的搜尋代碼 0 原本即包含兩者；改用 -1 區分商品後仍需保留此行為。
-                    includeMenu = true;
+                    includeMenu = !allContent;
                     includeArticle = true;
                     break;
 
@@ -663,7 +671,7 @@ namespace EtheriT.Coker.Application.Directory
                     .Where(x => !x.IsDeleted)
                     .Where(x => x.FK_WebsiteId == websiteId)
                     .Where(x => x.Visible)
-                    .Where(x => !string.IsNullOrEmpty(x.Html))
+                    .Where(x => allContent || !string.IsNullOrEmpty(x.Html))
                     .Where(x =>
                         x.permanent ||
                         (
@@ -700,6 +708,10 @@ namespace EtheriT.Coker.Application.Directory
             if (includeProd)
             {
                 prodQ = BuildProdBaseSearchQuery(dto, websiteId);
+                if (allContent)
+                    prodQ = prodQ.Where(p => p.permanent ||
+                        (p.StartTime.HasValue && p.EndTime.HasValue &&
+                         p.StartTime.Value <= DateTime.Now && p.EndTime.Value >= DateTime.Now));
 
                 // 額外：日期範圍（商品用 StartTime/EndTime 或你要的邏輯，這裡用你 dto 欄位）
                 if (dto.StartDate.HasValue)
@@ -745,6 +757,8 @@ namespace EtheriT.Coker.Application.Directory
                 totalCount = await unionForCount.CountAsync();
             }
 
+            if (dto.MaxLen.GetValueOrDefault() > 0)
+                totalCount = Math.Min(totalCount, dto.MaxLen.Value);
             output.TotalCount = totalCount;
 
             if (showNum == -500) showNum = totalCount;
@@ -760,7 +774,7 @@ namespace EtheriT.Coker.Application.Directory
             // 只取當頁 ids（穩定排序：最後一定要有 TieBreaker）
             var pageRows = await union
                 .Skip(skip)
-                .Take(showNum)
+                .Take(allContent || dto.MaxLen.GetValueOrDefault() > 0 ? Math.Max(0, Math.Min(showNum, totalCount - skip)) : showNum)
                 .ToListAsync();
 
             // ---------- 回查詳細資料並組 DTO ----------
@@ -2089,6 +2103,19 @@ namespace EtheriT.Coker.Application.Directory
         }
         public async Task<DirectoryReleInfoGetDto> GetReleInfo(DirectoryReleInfoInputDto dto)
         {
+            var source = (dto.ContentSource ?? "directory").Trim().ToLowerInvariant();
+            if (source == "all-products" || source == "all-articles")
+            {
+                // Source kind wins over stale directory IDs or search target values from saved components.
+                dto.Ids = new List<long> { source == "all-products" ? SearchTargetIds.Product : SearchTargetIds.Article };
+                dto.SearchText = dto.SearchText?.Trim() ?? string.Empty;
+                var configuredSite = configuration.GetValue<long>("WebConfig:SiteId");
+                var currentSite = configuredSite > 0 ? configuredSite : await loginUserData.GetWebsiteId();
+                if (currentSite > 0) dto.SiteId = currentSite;
+                return await SearchReleInfo(dto, allContent: true);
+            }
+            if (source != "directory" && source != string.Empty)
+                throw new ArgumentException("Unsupported catalog content source.", nameof(dto.ContentSource));
             var corr = new List<CorrDTAID>();
             if ((dto.Type ?? "").ToLower() == "search") return await SearchReleInfo(dto);
             if ((dto.Type ?? "").ToLower() == "techcert") return await TechCertReleInfo(dto);
@@ -3764,20 +3791,82 @@ namespace EtheriT.Coker.Application.Directory
             }
             return adlist;
         }
+        private async Task<List<KeyValueDto>> GetAllContentNeighborsAsync(DirectorySwitchPageDto dto, long websiteId)
+        {
+            if (dto.type != 1 && dto.type != 2) return new List<KeyValueDto>();
+            var input = new DirectoryReleInfoInputDto
+            {
+                SearchText = string.Empty,
+                SearchSortBy = dto.SearchSortBy, SearchSortDirection = dto.SearchSortDirection,
+                ProductNameFilter = dto.ProductNameFilter, Facet = dto.Facet,
+                DirectoryType = dto.DirectoryType, MaxLen = dto.MaxLen,
+                Filters = string.IsNullOrWhiteSpace(dto.filters) ? new() :
+                    JsonConvert.DeserializeObject<List<DirectoryFilterDto>>(dto.filters) ?? new()
+            };
+            var roleId = await GetCurrentFrontRoleIdAsync(websiteId);
+            IQueryable<Prod>? products = null;
+            IQueryable<Core.Models.Article>? articles = null;
+            if (dto.type == 1)
+            {
+                products = BuildProdBaseSearchQuery(input, websiteId)
+                    .Where(p => p.permanent || (p.StartTime.HasValue && p.EndTime.HasValue &&
+                        p.StartTime.Value <= DateTime.Now && p.EndTime.Value >= DateTime.Now));
+                products = ApplyFrontProductViewPermission(products, websiteId, roleId);
+                products = ApplyProdFilters(products, input, websiteId);
+            }
+            else
+            {
+                articles = db.Article.AsNoTracking()
+                    .Where(a => !a.IsDeleted && a.Visible && a.FK_WebsiteId == websiteId)
+                    .Where(a => a.permanent || (a.StartTime.HasValue && a.EndTime.HasValue &&
+                        a.StartTime.Value <= DateTime.Now && a.EndTime.Value >= DateTime.Now));
+                articles = ApplyArticleFilters(articles, input, websiteId);
+            }
+            // Use the same default ordering as the full-content catalog, without loading images/prices/detail DTOs.
+            var context = await GetUserSearchContextAsync();
+            var priceRoles = new List<long> { 0, 1 };
+            if (dto.type == 1 && string.Equals(dto.SearchSortBy, "price", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var orgName = await loginUserData.GetWebsiteOrgName(websiteId);
+                    var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
+                    priceRoles = priceRoles.Concat(roleContext.VisibleRoleIds).Distinct().ToList();
+                }
+                catch { if (roleId.HasValue) priceRoles.Add(roleId.Value); }
+            }
+            var query = BuildUnionQuery(null, articles, products, websiteId, context, priceRoles, input);
+            if (dto.MaxLen.GetValueOrDefault() > 0) query = query.Take(dto.MaxLen.Value);
+            var items = await query.Select(row => new { row.Id, row.Title }).ToListAsync();
+            var index = items.FindIndex(item => item.Id == dto.id);
+            if (index < 0) return new List<KeyValueDto>();
+            return new List<KeyValueDto>
+            {
+                index > 0 ? new KeyValueDto { Key = items[index - 1].Id.ToString(), Value = items[index - 1].Title ?? string.Empty } : new(),
+                index < items.Count - 1 ? new KeyValueDto { Key = items[index + 1].Id.ToString(), Value = items[index + 1].Title ?? string.Empty } : new()
+            };
+        }
+
         public async Task<List<KeyValueDto>> SwitchPage(DirectorySwitchPageDto dto)
         {
             var WebsiteID = configuration.GetValue<long>("WebConfig:SiteId") != 0 ? configuration.GetValue<long>("WebConfig:SiteId") : await loginUserData.GetWebsiteId();
             List<KeyValueDto> response = new List<KeyValueDto>();
             try
             {
+                if ((string.Equals(dto.routername, "search", StringComparison.OrdinalIgnoreCase) ||
+                     dto.ContentSource == "all-products" || dto.ContentSource == "all-articles") && string.IsNullOrWhiteSpace(dto.searchtext))
+                    return await GetAllContentNeighborsAsync(dto, WebsiteID);
                 if (dto.routername == "search")
                 {
                     List<DirectoryFilterDto> Filters = new List<DirectoryFilterDto>();
                     Filters = dto.filters != null ? JsonConvert.DeserializeObject<List<DirectoryFilterDto>>(dto.filters) : null;
                     DirectoryReleInfoInputDto searchdto = new DirectoryReleInfoInputDto()
                     {
-                        Ids = dto.type == 1 ? new List<long> { 3 } : new List<long> { 0 },
+                        Ids = new List<long> { dto.type == 1 ? SearchTargetIds.Product : SearchTargetIds.Article },
                         SearchText = dto.searchtext,
+                        SearchSortBy = dto.SearchSortBy, SearchSortDirection = dto.SearchSortDirection,
+                        ProductNameFilter = dto.ProductNameFilter, DirectoryType = dto.DirectoryType,
+                        Facet = dto.Facet, MaxLen = dto.MaxLen,
                         SiteId = WebsiteID,
                         Type = "search",
                         ShowNum = -500,
@@ -3835,7 +3924,9 @@ namespace EtheriT.Coker.Application.Directory
                             SiteId = WebsiteID,
                             Page = 1,
                             ShowNum = -500,
-                            Filters = filters
+                            Filters = filters,
+                            SearchSortBy = dto.SearchSortBy, SearchSortDirection = dto.SearchSortDirection,
+                            ProductNameFilter = dto.ProductNameFilter, Facet = dto.Facet, MaxLen = dto.MaxLen
                         });
                         var datas = directoryResult.ReleInfos
                             .Where(x => dto.type == 1

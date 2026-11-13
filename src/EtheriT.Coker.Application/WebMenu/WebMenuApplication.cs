@@ -949,6 +949,30 @@ namespace EtheriT.Coker.Application
             catch { }
             return result;
         }
+        private string GetMenuPublishedText(string html)
+        {
+            var document = htmlProcessor.LoadHtml(html ?? string.Empty);
+            foreach (var node in htmlProcessor.Find(document, "head,script,style,title,meta,link").ToList())
+                node.Remove();
+            return System.Net.WebUtility.HtmlDecode(htmlProcessor.text(document.DocumentNode.OuterHtml))
+                .Replace("\u200B", string.Empty).Replace("\uFEFF", string.Empty).Trim();
+        }
+
+        private bool IsEmptyMenuCanvas(string html, string pageText)
+        {
+            if (!string.IsNullOrWhiteSpace(pageText)) return false;
+            var document = htmlProcessor.LoadHtml(html ?? string.Empty);
+            foreach (var node in htmlProcessor.Find(document, "head,script,style,title,meta,link").ToList())
+                node.Remove();
+            var emptyContainers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { "html", "body", "div", "span", "p", "br" };
+            return !document.DocumentNode.Descendants().Any(node =>
+                node.NodeType == HtmlAgilityPack.HtmlNodeType.Element &&
+                (!emptyContainers.Contains(node.Name) || node.Attributes.Any(attribute =>
+                    attribute.Name.StartsWith("data-", StringComparison.OrdinalIgnoreCase) ||
+                    (attribute.Name.Equals("style", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(attribute.Value)))));
+        }
+
         public async Task<ResponseMessageDto> importConten(MenuSaveContenDto dto)
         {
             ResponseMessageDto response = new ResponseMessageDto();
@@ -961,6 +985,7 @@ namespace EtheriT.Coker.Application
                 var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 if (menu != null)
                 {
+                    var previouslyHadContent = CustomDtoMapper.HasContent(menu);
                     string Orgname = await loginUserData.GetWebsiteOrgName();
                     importDto.Html = stringHandler.HtmlDecode(importDto.Html);
                     importDto.Html = htmlProcessor.RemoveNode(importDto.Html ?? "", ".backstageType");
@@ -976,11 +1001,24 @@ namespace EtheriT.Coker.Application
                         true
                     );
 
-                    menu.PageText = htmlProcessor.text(sanitized.Html);
+                    var publishedText = GetMenuPublishedText(sanitized.Html);
+                    var isEmpty = IsEmptyMenuCanvas(sanitized.Html, publishedText);
                     importDto.Html = stringHandler.HtmlEncode(sanitized.Html);
                     importDto.Css = sanitized.Css;
                     mapper.Map(importDto, menu);
+                    menu.PageText = isEmpty ? null : publishedText;
+                    if (isEmpty)
+                    {
+                        // Clear both published and editor markup so an empty canvas stays empty on reopen.
+                        menu.Html = null;
+                        menu.Css = null;
+                        menu.SaveHtml = null;
+                        menu.SaveCss = null;
+                    }
                     await loginUserData.SaveChanges(menu);
+                    // Text/layout changes do not alter the navigation JSON. Only invalidate on a content-state transition.
+                    if (previouslyHadContent != CustomDtoMapper.HasContent(menu))
+                        await websiteCacheStateAppService.TouchByWebsiteIdAsync(menu.FK_WebsiteId, WebsiteCacheKeys.Menu);
                     await fileReferenceWriter.ReplaceSourceReferencesAsync(
                         menu.FK_WebsiteId,
                         new FileReferenceSource("WebMenu", menu.Id, "Published",
@@ -1049,10 +1087,15 @@ namespace EtheriT.Coker.Application
 
             if (sanitized.WasSanitized)
             {
-                menu.Html = stringHandler.HtmlEncode(sanitized.Html);
-                menu.Css = sanitized.Css;
-                menu.PageText = htmlProcessor.text(sanitized.Html);
+                var previouslyHadContent = CustomDtoMapper.HasContent(menu);
+                var pageText = GetMenuPublishedText(sanitized.Html);
+                var isEmpty = IsEmptyMenuCanvas(sanitized.Html, pageText);
+                menu.Html = isEmpty ? null : stringHandler.HtmlEncode(sanitized.Html);
+                menu.Css = isEmpty ? null : sanitized.Css;
+                menu.PageText = isEmpty ? null : pageText;
                 await loginUserData.SaveChanges(menu);
+                if (previouslyHadContent != CustomDtoMapper.HasContent(menu))
+                    await websiteCacheStateAppService.TouchByWebsiteIdAsync(menu.FK_WebsiteId, WebsiteCacheKeys.Menu);
             }
 
             return sanitized;

@@ -91,6 +91,9 @@
     function canAutoLoadCatalog($el) {
         if (!$el || !$el.length) return false;
 
+        const source = String($el.attr("data-content-source") || "").trim().toLowerCase();
+        if (source === "all-products" || source === "all-articles") return true;
+
         const dirIds = getDirIds($el);
 
         if (dirIds.length > 0) return true;
@@ -173,6 +176,7 @@
 
         return {
             Ids: dirid,
+            ContentSource: String($self.attr("data-content-source") || "directory").trim().toLowerCase(),
             SiteId: typeof w.SiteId === "undefined" ? 0 : w.SiteId,
             Page: page,
             ShowNum: shownum,
@@ -201,6 +205,21 @@
 
     function initSingleCatalog($self, page) {
         if (!canAutoLoadCatalog($self)) return;
+        if (!$self.data("navigationContextApplied") && w.co?.Directory?.getNavigationContext) {
+            $self.data("navigationContextApplied", true);
+            const query = new URLSearchParams(w.location.search);
+            const context = co.Directory.getNavigationContext();
+            if (query.has('sort')) $self.data({ searchSortBy: context.SearchSortBy, searchSortDirection: context.SearchSortDirection });
+            if (query.has('name')) $self.data('productNameFilter', context.ProductNameFilter);
+            if (query.has('directoryType')) $self.data('directoryTypeChecked', context.DirectoryType);
+            if (query.has('facet')) $self.attr('data-facet', context.Facet);
+            if (query.has('filter')) {
+                try {
+                    const filters = JSON.parse(context.filters);
+                    if (Array.isArray(filters)) $self.data('filtered', filters);
+                } catch (_) { /* Ignore malformed filters instead of breaking initialization. */ }
+            }
+        }
         // 鄰近據點必須等瀏覽器定位完成，避免送出缺少座標的查詢。
         if (!hasNearestCoordinates($self)) return;
 
@@ -222,6 +241,7 @@
         const option = buildCatalogOption($self, page);
 
         $self.data("prevdirid", dirid.join(","));
+        $self.data("previousContentSource", $self.attr("data-content-source") || "directory");
         $self.find(".catalog>.template").remove();
 
         if (w.DirectoryService && typeof w.DirectoryService.getCatalogData === "function") {
@@ -440,7 +460,10 @@
             const $self = $(this);
             const dirid = getDirIds($self).join(",");
 
-            if (typeof $self.data("prevdirid") === "undefined" || dirid !== $self.data("prevdirid")) {
+            const source = $self.attr("data-content-source") || "directory";
+            if (typeof $self.data("prevdirid") === "undefined" || dirid !== $self.data("prevdirid") ||
+                source !== $self.data("previousContentSource")) {
+                $self.removeData("page");
                 initElemntAndLoadDir($self);
             }
         });

@@ -1566,6 +1566,7 @@ function updateAdvancedGroupComponents(component, fields, dirtyGroupPaths, slide
         const attributes = { target: field.groupTarget || '_self' };
         if (field.groupHref) {
             attributes.href = field.groupHref;
+            attributes['data-link-value'] = field.groupHref;
         }
         target.addAttributes?.(attributes);
         if (!field.groupHref) {

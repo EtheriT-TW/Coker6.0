@@ -485,7 +485,7 @@
             $tagList.removeClass('d-none');
 
             result.tagDatas.forEach(item => {
-                $tagList.prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="/${this.options.orgName}/Search/Get/-2/${encodeURIComponent(item.tag_Name)}">${item.tag_Name}</a></li>`);
+                $tagList.prepend(`<li><a class="round_tag rounded-pill me-1 px-3 py-1" href="/${this.options.orgName}/Search/Get/-2/${window.co.Directory.encodeSearchKeyword(item.tag_Name)}">${item.tag_Name}</a></li>`);
             });
         }
 
@@ -897,7 +897,7 @@
             const productid = pathParts[0];
             let searchtext = pathParts[1] || '';
             try {
-                searchtext = decodeURIComponent(searchtext);
+                searchtext = window.co.Directory.decodeSearchKeyword(decodeURIComponent(searchtext));
             } catch (error) {
                 console.warn('ProductContent: invalid search path encoding.', error);
             }
@@ -909,7 +909,7 @@
             const navigationContext = window.co.Directory.getNavigationContext();
             const withContext = path => window.co.Directory.withNavigationContext(path, navigationContext);
             const fullContentMode = !searchtext && (routername === 'search' || navigationContext.ContentSource);
-            const encodedSearchText = encodeURIComponent(searchtext);
+            const encodedSearchText = window.co.Directory.encodeSearchKeyword(searchtext);
             const filterSuffix = filter ? `?filter=${encodeURIComponent(filter)}` : '';
             const searchCacheKey = `product-${searchtext}-${filter || ''}-${JSON.stringify(navigationContext)}`;
 

@@ -89,6 +89,26 @@ namespace EtheriT.Coker.Web.Public.Controllers
         private readonly PageArtifactStore pageArtifacts;
         private readonly PreparedHtmlContent preparedHtml;
 
+        private bool TryGetMenuRedirectUrl(string? linkUrl, out string redirectUrl)
+        {
+            redirectUrl = string.Empty;
+            var target = linkUrl?.Trim();
+            if (string.IsNullOrEmpty(target) || target.Any(char.IsControl) || target.Contains('\\'))
+                return false;
+            var current = new Uri($"{Request.Scheme}://{Request.Host}{Request.PathBase}{Request.Path}{Request.QueryString}");
+            if (!Uri.TryCreate(current, target, out var destination) ||
+                (destination.Scheme != Uri.UriSchemeHttp && destination.Scheme != Uri.UriSchemeHttps))
+                return false;
+            // A fragment-only link or an alias pointing to itself must not create a redirect loop.
+            if (Uri.Compare(current, destination, UriComponents.SchemeAndServer | UriComponents.PathAndQuery,
+                    UriFormat.UriEscaped, StringComparison.Ordinal) == 0)
+                return false;
+            redirectUrl = destination.GetLeftPart(UriPartial.Authority) == current.GetLeftPart(UriPartial.Authority)
+                ? destination.PathAndQuery + destination.Fragment
+                : destination.AbsoluteUri;
+            return true;
+        }
+
         public PageController(
             ILogger<PageController> logger,
             IFreightAppService freightAppService,
@@ -184,6 +204,9 @@ namespace EtheriT.Coker.Web.Public.Controllers
                 website = key;
                 key = "home";
             }
+            // MVC already URL-decodes route/query values; only decode our explicitly marked format once.
+            if (string.Equals(key, "search", StringComparison.OrdinalIgnoreCase))
+                search = EtheriT.Coker.Application.Shared.Search.SearchKeywordCodec.Decode(search);
             long id = detailId ?? 0;
             var rootSiteId = Configuration.GetValue<long>("WebConfig:SiteId");
             var defaultData = await websiteApplication.GetDefaultData(rootSiteId, website);
@@ -542,6 +565,19 @@ namespace EtheriT.Coker.Web.Public.Controllers
                         else
                         {
                             model.PageData = PageData;
+                            // A menu with both a route and a destination is an alias, even without canvas HTML.
+                            // Only handle the menu itself; product/article child routes keep their own content.
+                            if (PageData.Id > 0 && string.IsNullOrEmpty(option) &&
+                                TryGetMenuRedirectUrl(PageData.LinkUrl, out var redirectUrl))
+                            {
+                                if (await IsFrontRoleDeniedAsync(PageData.Id, PermissionDetailsTypeEnum.選單會員))
+                                {
+                                    Response.StatusCode = 401;
+                                    view = "../Error/Denied";
+                                    break;
+                                }
+                                return Redirect(redirectUrl);
+                            }
                             model.ParentData = await webMenuApplication.GetParentConten(new GetFrontContenInputDto { key = key, siteId = defaultData.Id });
                             model.MenuBread = await webMenuApplication.GetMenuBread(model.PageData.Id);
                             model.PageData.LayoutType = defaultData.Layout_Type;

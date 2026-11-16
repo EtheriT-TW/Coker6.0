@@ -525,8 +525,7 @@ namespace EtheriT.Coker.Application
             CreateMap<StoreSetGroupOutputDto, StoreSetGroup>().ReverseMap();
             CreateMap<StoreSetItemOutputDto, storeSetItem>().ReverseMap();
 
-            //CustSearch
-            CreateMap<CuseSearchListDto, CustSearch>().ReverseMap();
+            // CustSearch admin settings are mapped explicitly to keep system IDs and scope fields server-controlled.
 
             //Recipients
             CreateMap<RecipientsDto, Recipient>()

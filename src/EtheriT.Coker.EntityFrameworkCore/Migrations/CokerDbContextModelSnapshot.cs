@@ -17,7 +17,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -1147,8 +1147,15 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -1166,6 +1173,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("ScopeJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("SearchAllArticle")
                         .HasColumnType("bit");
 
@@ -1178,6 +1188,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int>("SerNo")
                         .HasColumnType("int");
 
+                    b.Property<long?>("SystemTargetId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Title")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -1187,7 +1200,13 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FK_WebsiteId");
+                    b.HasIndex("FK_WebsiteId", "IsDefault")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0 AND [IsDefault] = 1");
+
+                    b.HasIndex("FK_WebsiteId", "SystemTargetId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0 AND [SystemTargetId] IS NOT NULL");
 
                     b.ToTable("CustSearch");
                 });

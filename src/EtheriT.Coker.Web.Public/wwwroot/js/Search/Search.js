@@ -37,7 +37,7 @@
                             console.error("儲存關鍵字時發生錯誤:", error);
                         }
                         $search.data("search-text", $(self).val());
-                        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${encodeURIComponent($search.data("search-text"))}`;
+                        window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${co.Directory.encodeSearchKeyword($search.data("search-text"))}`;
                     }
                 }, 300);
             });
@@ -204,7 +204,7 @@
         //$tabs.removeClass("active");
         //$(this).addClass("active");
         //$search.data("searchID", $(this).data("id"));
-        window.location.href = `/${OrgName}/Search/Get/${$(this).data("id")}/${encodeURIComponent($search.data("search-text"))}`;
+        window.location.href = `/${OrgName}/Search/Get/${$(this).data("id")}/${co.Directory.encodeSearchKeyword($search.data("search-text"))}`;
     });
     $(".search-category .catalog_frame [name='startDate']").on("change", function () {
         $search.data("startDate", $(this).val());

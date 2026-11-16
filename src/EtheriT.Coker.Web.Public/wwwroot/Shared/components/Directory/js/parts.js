@@ -319,7 +319,7 @@
                 const text = $self.data("tagname");
                 if (typeof w.OrgName === "undefined") return false;
 
-                location.href = `/${w.OrgName}/Search/Get/-2/${encodeURIComponent(text)}`;
+                location.href = `/${w.OrgName}/Search/Get/-2/${w.co.Directory.encodeSearchKeyword(text)}`;
                 return false;
             });
         });

@@ -6,8 +6,8 @@ MVC「系統檢測 → 後台功能測試」的開始按鈕會真正呼叫已登
 它不執行 dotnet test、build、restore、bundle、Migration，也不透過 HTTP 遍歷所有 GET Action。
 這些開發／產物操作仍依根目錄 AGENTS.md 由使用者控制。
 
-目前登錄 218 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
-42 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 218。
+目前登錄 220 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
+44 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 220。
 原本的 160 個較廣泛人工驗收規格保留在同一份內部清單；尚未綁定 executor 的規格不列入自動檢測畫面及通過數。
 這不是宣稱原本的完整瀏覽器與外部服務驗收已全部自動化。
 
@@ -170,3 +170,87 @@ public-functions 同步核對讀取 API 白名單、拒絕寫入型 GET、站台
 新增 sandbox/menu-content-cache：先建立空頁的暖選單 JSON 快取，驗證發布新增／清空內容後 menu 版本與 hasContan 自動更新，只存草稿及其他站台版本不變；使用獨立記憶體資料庫，未執行，不代表 SQL 或瀏覽器驗證通過。人工複驗需確認前台重新載入後主選單可點擊狀態更新，不需再編輯選單。
 
 menu-content-cache 補充：版本只於有／無內容切換時更新；有轉有、空轉空與草稿重用版本。空白 body／段落／nbsp 與樣式文字不算內容，發布後清空正式及編輯 HTML/CSS；讀取不復原空殼，純圖片保留。上述新增斷言未執行。
+
+新增 sandbox/search-keyword-codec（Page.Index）：固定 UTF-8 Base64Url 協定向量、中文／emoji／特殊字元往返、無前綴舊關鍵字原值、非法格式回退。只驗證共用 C# 編碼類別，不表示 JavaScript、IIS 或瀏覽器已驗證；尚未執行。
+
+## 自訂搜尋後台管理
+
+新增 sandbox/cust-search-settings，沿用 SearchManagement.CustSearch.edit ID 綁定實際隔離執行器。涵蓋商品／文章固定項目、列表預設切換、三類混合範圍、全部旗標、預設切換、軟刪除、失效／跨站參照拒絕及不修改 Directory／搜尋紀錄。測試使用獨立 InMemory；尚未執行，不表示 SQL filtered unique index、Serializable 交易、API 授權或瀏覽器已通過。
+editor 與 delete 人工規格補 API 權限、防偽、快速切換、錯誤保留表單、失效選項及取消操作；不計入自動通過數。前台 GetSearchList／SearchReleInfo 尚未接此階段設定，不宣稱後台預設已於前台生效。schema 與手動更新流程見下節。
+
+# 自訂搜尋後台設定與手動更新
+
+## 本階段範圍
+
+後台列表／單筆／範圍選項／新增修改／刪除改用 Search API，不再呼叫 Directory API。商品 -2、文章 -1 以唯讀虛擬項目提供，名稱、範圍、顯示及順序固定，不提供編輯或刪除；只能由列表 SetDefault 選為本站預設，首次選取時保存該站設定。舊版已保存的系統名稱等覆寫不再套用，只保留預設用途。自訂項目可混合全部／指定標籤商品、全部／指定標籤文章、全部／指定選單。
+
+同類標籤／選單預定採 OR、多類結果合併去重；本階段只保存範圍，前台消費尚待下一階段，不宣稱已生效。預設必須顯示；清除／刪除預設後，後台讀取回退至既有站台自動選擇。有商品時優先商品，否則文章；不在讀取時寫入資料。
+
+API 每次依目前授權站台及 CustSearch 功能權限檢查讀取／新增／修改／刪除。設定預設透過獨立 SetDefault 操作並需修改權限；AddUp 忽略傳入預設值，修改自訂項時保留原預設。POST 需防偽 Token。所有範圍 ID 必須屬本站且有效。讀取／儲存錯誤不可變成空範圍的成功；原文顯示使用文字輸出。
+
+## 必要 schema 變更（未建立或執行 Migration）
+
+CustSearch 新增：Description（nullable nvarchar(150)）、IsDefault（bool 預設 false）、SystemTargetId（nullable bigint）、ScopeJson（nullable nvarchar(max)）。既有三個 SearchAll 旗標保持。ScopeJson 保存 ProductTagIds、ArticleTagIds、MenuIds，不使用可清除的 JsonObjects 快取存放業務設定。
+
+新增兩個只套有效資料的 unique filtered index：站台＋SystemTargetId（非 null），站台＋IsDefault（true）。切換預設於關聯式資料庫使用 Serializable 交易，先清除舊預設再保存新預設；InMemory 不模擬此交易，不能當成 SQL 驗證。
+
+建議手動建立 Migration：
+
+~~~powershell
+dotnet ef migrations add CompleteCustSearchSettings --project "src/EtheriT.Coker.EntityFrameworkCore/EtheriT.Coker.EntityFrameworkCore.csproj" --startup-project "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+~~~
+
+此命令可能編譯與還原套件，會新增 Migration／更新 snapshot，耗時依環境而定。先檢視產物，確認僅包含預期的欄位及索引；本次未產生任何 Migration。
+
+完成審查及備份後，由使用者自行決定是否執行：
+
+~~~powershell
+dotnet ef database update --project "src/EtheriT.Coker.EntityFrameworkCore/EtheriT.Coker.EntityFrameworkCore.csproj" --startup-project "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+~~~
+
+此命令會改變指定環境的資料庫 schema，可能需要鎖定與較長時間；不得在未確認連線環境前執行。原始碼不可先於 schema 單獨啟用，否則讀取新增欄位會失敗。
+
+既有 CustSearch 資料保留，新欄位為空值／false；不刪改舊標籤關聯，也不推測無法區分商品／文章的舊標籤所屬範圍。舊資料若沒有完整範圍，需管理者於表單重新確認後保存；空範圍不允許保存。
+
+## 前端資產與手動驗收
+
+MVC 頁面仍引用 CustSearch.min.js。由使用者在 src/EtheriT.Coker.Web.MVC 執行 npm run create-bundles。實際 script 先檢查 DevExtreme 授權，再執行 yarn && gulp buildDev；可能下載相依、修改 lock file、產生大量資產並啟動監看，耗時依環境而定。未由 Codex 執行。
+
+手動核對：兩個系統項目、混合範圍保存重開、顯示／排序、切換預設、全部旗標、失效範圍、取消／軟刪除、跨站隔離、無權限及防偽失敗。不得只以 HTTP 200 作為儲存成功。
+
+## 下一階段前台接入
+
+GetSearchList 需載入顯示項目、站台名稱／排序覆寫與預設。SearchReleInfo 需依自訂範圍查詢並套用公開／期間／站台／會員權限；同一解析器亦需供上下則使用。
+既有正整數 1／2 有站台歷史行為、3 有舊商品搜尋相容語意；串接正數 CustSearch ID 時必須另外辨識新自訂來源，不可直接覆蓋既有路由。後台此階段不產生新的前台自訂搜尋連結，也不改動既有前台判斷。
+
+建議手動編譯指定 MVC 專案（尚未執行）：
+
+~~~powershell
+dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+~~~
+
+此命令可能自動還原套件並寫入 bin／obj，耗時依環境而定。完成 schema 及資產更新後，再於測試環境啟動並依功能清單驗收。
+
+## 搜尋設定版面與共用標籤選擇回歸
+
+列表使用單選控制直接保存預設；兩個固定項沒有編輯／刪除入口且 AddUp 後端拒絕固定 ID。表單不再包含預設欄位，縮短基本資料與三類範圍排列。商品／文章標籤共用既有 TagSelectModal 與 TagListModalInit，各欄位各自保存 tagList，讀取明細只載入已選標籤名稱，不預載全部標籤；搜尋、群組及分頁沿用共用模組。選單下拉限制高度及寬度。
+原 sandbox/cust-search-settings 補 SetDefault、固定項拒絕、一般保存不可修改預設、選取名稱與不預載全部標籤斷言。editor 人工規格補單選預設失敗還原、共用標籤兩欄切換、清除／取消／確認及緊湊／窄螢幕版面；尚未執行。此次沒有新增 schema 變更，未執行 bundle／build／Migration。
+
+精簡操作補充：儲存按鈕直接送出一次，不再顯示第二次確認；返回僅在有未保存變更時詢問。預設切換只改目標旗標，不從表單重寫名稱或範圍，另補隔離斷言。
+
+## 搜尋預設設定 HTTP 400 回歸
+
+SetDefault 回傳無欄位 errors 的 HTTP 400，符合防偽驗證拒絕的回應；尚未取得伺服器驗證日誌，因此不宣稱已確認唯一原因。比照 Contact 匯出流程，Search API 新增經讀取權限檢查、no-store 的 GetAntiforgeryToken；前端在新增／修改／預設／刪除 POST 前取得最新 Cookie／RequestToken 配對，更新 hidden 與 header，取得失敗就不寫入，不自動重送業務 POST。原 ValidateAntiForgeryToken 不移除。
+editor 人工規格補舊頁 Token／Cookie 更新、先取 Token 再 POST、Token 失敗零寫入、直接缺 Token POST 拒絕及預設失敗還原。未執行 API、瀏覽器或資料庫寫入測試；只核對原始碼、JS 語法、JSON 與 diff。MVC 需重新編譯及手動 npm run create-bundles；資產影響與命令見前述章節。
+
+## 商品搜尋選項依可見資料判斷
+
+HasSearchableProductsAsync 為後台與現有前台 GetSearchList 共用條件：站台等級可用商品、本站、未刪除、Visible、未下架且永久或位於有效上架期間。沒有符合商品時不回傳固定商品項，Options.HasProducts=false，編輯區不提供新增商品範圍，後端亦拒絕設定商品預設或新增／變更商品範圍。
+既有商品範圍保留，可保存未變更的範圍或明確移除，不因商品暫時下架而自動刪除。純商品自訂項在無商品時 IsAvailable=false，不可設為有效預設；混合項仍可使用文章／選單部分。有效預設回退文章，但不於讀取時重寫已存偏好；商品恢復後可重新提供。點已勾選的自動回退項同樣送出 SetDefault，使管理者能明確保存目前選擇。
+原 sandbox/cust-search-settings 補無商品、不可見／下架／過期／未開始／刪除／跨站商品、有效商品恢復、最後可見商品消失、範圍保留與移除及預設回退斷言。使用隔離 fixture，尚未執行，不表示 SQL 或瀏覽器通過；editor 人工規格同步更新。未新增資料庫欄位或 Migration，未執行編譯、bundle 或資料庫操作。
+
+搜尋設定列表顯示順序回歸：移除欄位 SortOrder／SortIndex，預設排序改由 GetAll 的載入選項提供，避免顯示多欄排序箭頭及順位 2；保留外部明確排序供原列表唯讀檢查使用。系統列的順序數字留白，自訂列顯示其 SerNO；欄名維持「排序」並加寬至 110px；數字僅作排列先後，不是前台顯示內容。editor 人工規格補橫向標題、無標記及系統列留白／自訂列順序與分頁；尚未執行瀏覽器驗證。
+
+搜尋設定編輯版面回歸：移除編輯卡片 col-xl-10／col-xxl-9 的額外限寬，與列表及頁面內容同寬對齊；移除 small、form-control-sm、btn-sm，恢復系統標準文字與控制項尺寸，保留緊湊同列配置。editor 人工規格補寬螢幕對齊、標準字級與窄螢幕換行；未執行瀏覽器或編譯驗證。本次只改 Razor 與檢測說明，不需重產前端 bundle。
+
+搜尋設定操作一致性：編輯標頭沿用商品頁的左側 keyboard_backspace 返回箭頭＋標題、右側儲存；保留有變更才確認返回的既有邏輯。商品／文章／選單範圍改為 col-auto 類別與全部勾選、col 選擇器，不再以 1／2／9 百分比欄寬分配短文字。標準字級與全寬維持。editor 人工規格同步更新，尚未執行瀏覽器驗證；本次只改 Razor，不需重新產生 bundle。

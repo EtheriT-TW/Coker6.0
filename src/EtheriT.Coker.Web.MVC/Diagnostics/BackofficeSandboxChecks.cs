@@ -46,6 +46,8 @@ public static partial class BackofficeSandboxChecks
         ["sandbox/marquee-delete"] = "ContentManagement.Marquee"
         , ["sandbox/certificate-crud"] = "ProductManagement.TechnicalCertificate"
         , ["sandbox/directory-crud"] = "ContentManagement.Directory"
+        , ["sandbox/cust-search-settings"] = "SearchManagement.CustSearch"
+        , ["sandbox/search-keyword-codec"] = "Page.Index"
         , ["sandbox/directory-all-content"] = "Page.Index"
         , ["sandbox/menu-content-cache"] = "Page.Index"
         , ["sandbox/article-crud"] = "ContentManagement.Article"
@@ -102,6 +104,8 @@ public static partial class BackofficeSandboxChecks
             case "sandbox/marquee-delete": await MarqueeDelete(sandbox); break;
             case "sandbox/certificate-crud": await CertificateCrud(sandbox); break;
             case "sandbox/directory-crud": await DirectoryCrud(sandbox); break;
+            case "sandbox/cust-search-settings": await CustSearchSettings(sandbox); break;
+            case "sandbox/search-keyword-codec": SearchKeywordEncoding(); break;
             case "sandbox/directory-all-content": await DirectoryAllContents(sandbox); break;
             case "sandbox/menu-content-cache": await MenuPublishedContentCache(sandbox); break;
             case "sandbox/article-crud": await ArticleCrud(sandbox); break;

@@ -22,7 +22,7 @@ using EtheriT.Coker.Application.Token;
 
 namespace EtheriT.Coker.Application.Search
 {
-    public class CustSearchAppService: ICustSearchAppService
+    public partial class CustSearchAppService: ICustSearchAppService
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
@@ -44,35 +44,6 @@ namespace EtheriT.Coker.Application.Search
             this.tagAppService = tagAppService;
             this.webMenuApplicationService = webMenuApplicationService;
             this.tokenAppService = tokenAppService;
-        }
-        public async Task<JsonResult> GetAll(DataSourceLoadOptions loadOptions) {
-            try
-            {
-                long WebsiteID = await loginUserData.GetWebsiteId();
-                var result = db.CustSearch;
-
-                if (result != null)
-                {
-                    var dataQuery = from e in result
-                                    where !e.IsDeleted && e.FK_WebsiteId == WebsiteID
-                                    select new CuseSearchListDto
-                                    {
-                                        Id = e.Id,
-                                        Title = e.Title,
-                                        Visible = e.Visible,
-                                        SerNO =e.SerNo
-                                    };
-                    var output = await DataSourceLoader.LoadAsync(dataQuery, loadOptions);
-                    return new JsonResult(output, new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
-                }
-                else throw new Exception("查無目錄資料");
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return new JsonResult(new List<CuseSearchListDto>(), new JsonSerializerSettings { ContractResolver = new DefaultContractResolver() });
         }
         public async Task<List<SearchItemDto>> GetSearchList(long sid)
         {
@@ -103,7 +74,7 @@ namespace EtheriT.Coker.Application.Search
 				}
                 if ((int)site.Level >= 1)
                 {
-                    bool hasProds = await db.Prods.Where(e => e.FK_WebsiteId == site.Id).Where(e => !e.IsDeleted).Where(e => !e.RemovedFromShelves).AnyAsync();
+                    bool hasProds = await HasSearchableProductsAsync(site.Id);
                     if (hasProds) {
                         list.Add(
                             new SearchItemDto

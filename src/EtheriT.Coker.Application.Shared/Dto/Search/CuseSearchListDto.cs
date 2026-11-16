@@ -13,5 +13,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.Search
         public string Placeholder { get; set; }
         public bool Visible { get; set; }
         public int SerNO { get; set; }
+        public bool IsDefault { get; set; }
+        public bool IsSystem { get; set; }
+        public bool IsAvailable { get; set; } = true;
+        public string ScopeSummary { get; set; } = string.Empty;
     }
 }

@@ -13,6 +13,12 @@ namespace EtheriT.Coker.Core.Models
         [StringLength(100)]
         public string? Title { get; set; }
         public int SerNo { get; set; }
+        [StringLength(150)]
+        public string? Description { get; set; }
+        public bool IsDefault { get; set; }
+        // Null for custom searches; fixed negative IDs remain stable across sites and title changes.
+        public long? SystemTargetId { get; set; }
+        public string? ScopeJson { get; set; }
         public bool SearchAllProd { get; set; }
         public bool SearchAllArticle { get; set; }
         public bool SearchAllMenu { get; set; }

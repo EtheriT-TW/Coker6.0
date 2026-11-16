@@ -680,6 +680,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<CustSearch>(o =>
             {
+                o.HasIndex(x => new { x.FK_WebsiteId, x.SystemTargetId }).IsUnique()
+                    .HasFilter("[IsDeleted] = 0 AND [SystemTargetId] IS NOT NULL");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.IsDefault }).IsUnique()
+                    .HasFilter("[IsDeleted] = 0 AND [IsDefault] = 1");
                 o.HasOne(f => f.Website).WithMany(u => u.CustSearchs).HasForeignKey(f => f.FK_WebsiteId);
             });
             modelBuilder.Entity<AuditLog>(o =>

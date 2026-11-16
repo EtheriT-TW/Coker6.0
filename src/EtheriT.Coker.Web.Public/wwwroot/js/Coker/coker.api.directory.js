@@ -5,6 +5,27 @@
 
     Coker.extend({
         Directory: {
+            encodeSearchKeyword: function (value) {
+                const text = String(value ?? '');
+                if (!text) return '';
+                const bytes = new TextEncoder().encode(text);
+                let binary = '';
+                bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+                return '~b64~' + btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            },
+            decodeSearchKeyword: function (value) {
+                const text = String(value ?? '');
+                if (!text.startsWith('~b64~')) return text;
+                const payload = text.substring(5);
+                if (!/^[A-Za-z0-9_-]+$/.test(payload) || payload.length % 4 === 1) return text;
+                try {
+                    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+                    const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='));
+                    const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+                    const decoded = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+                    return Coker.Directory.encodeSearchKeyword(decoded) === text ? decoded : text;
+                } catch (_) { return text; }
+            },
             getNavigationContext: function () {
                 const q = new URLSearchParams(w.location.search);
                 return {

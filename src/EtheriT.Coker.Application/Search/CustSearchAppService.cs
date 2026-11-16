@@ -96,12 +96,22 @@ namespace EtheriT.Coker.Application.Search
 
         public async Task SaveSearchLog(SaveSearchLogDto dto)
         {
+            // Legacy or malformed requests may send missing values as literal strings.
+            // Ignore these requests without making public search depend on tracking.
+            var keyword = dto.Key?.Trim();
+            if (string.IsNullOrEmpty(keyword) || keyword.Length > 100 ||
+                string.Equals(keyword, "undefined", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(keyword, "null", StringComparison.OrdinalIgnoreCase)) return;
+
             string Ip = loginUserData.GetClientIP()??"";
             long WebsiteID = dto.FK_WebsiteId == 0 ? await loginUserData.GetWebsiteId() : dto.FK_WebsiteId;
             Guid uuid = await tokenAppService.GetUUID();
+            // Anonymous visitors have a UUID too, but invalid/missing tokens do not.
+            if (uuid == Guid.Empty || WebsiteID <= 0) return;
+
             SearchLog log = new SearchLog
             {
-                Key = dto.Key,
+                Key = keyword,
                 ClientIpAddress = Ip,
                 FK_WebsiteId = WebsiteID,
                 FK_CustSearchId = dto.FK_CustSearchId,
@@ -109,7 +119,7 @@ namespace EtheriT.Coker.Application.Search
             };
             var reg = db.SearchLogs.Where(e => e.CreationTime.Date == log.CreationTime.Date && e.FK_WebsiteId == log.FK_WebsiteId && e.FK_CustSearchId == log.FK_CustSearchId)
                         .Where(e => e.Key == log.Key && e.UUID == log.UUID);
-            if (!reg.Any())
+            if (!await reg.AnyAsync())
             {
                 db.SearchLogs.Add(log);
                 await db.SaveChangesAsync();

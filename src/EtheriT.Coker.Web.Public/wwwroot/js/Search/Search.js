@@ -26,17 +26,19 @@
             $(".search-input").on("change", function () {
                 const self = this;
                 setTimeout(async () => {
-                    const query = $(self).val().toLowerCase();
+                    const keyword = co.Directory.normalizeSearchKeyword($(self).val());
+                    if (!keyword) return;
+                    const query = keyword.toLowerCase();
                     if (query != "" && $search.data("search-text") != query) {
                         // 插入關鍵字到資料庫
                         try {
-                            if (query.trim() != "" && typeof (query) !== "undefined") {
+                            if (query !== "") {
                                 await SearchDb.addOrUpdateData(query);
                             }
                         } catch (error) {
                             console.error("儲存關鍵字時發生錯誤:", error);
                         }
-                        $search.data("search-text", $(self).val());
+                        $search.attr("data-search-text", keyword).data("searchText", keyword);
                         window.location.href = `/${OrgName}/Search/Get/${$search.data("dirid")}/${co.Directory.encodeSearchKeyword($search.data("search-text"))}`;
                     }
                 }, 300);
@@ -53,7 +55,7 @@
             });
 
             $(".search-input").on("input", async function () {
-                const query = $(this).val().toLowerCase();
+                const query = co.Directory.normalizeSearchKeyword($(this).val()).toLowerCase();
 
                 // 根據 type 分組資料
                 const localData = data.filter(item => item.type === "local" && item.key.toLowerCase().includes(query));
@@ -204,7 +206,9 @@
         //$tabs.removeClass("active");
         //$(this).addClass("active");
         //$search.data("searchID", $(this).data("id"));
-        window.location.href = `/${OrgName}/Search/Get/${$(this).data("id")}/${co.Directory.encodeSearchKeyword($search.data("search-text"))}`;
+        const keyword = co.Directory.normalizeSearchKeyword($search.data("searchText"));
+        if (!keyword) return;
+        window.location.href = `/${OrgName}/Search/Get/${$(this).data("id") ?? 0}/${co.Directory.encodeSearchKeyword(keyword)}`;
     });
     $(".search-category .catalog_frame [name='startDate']").on("change", function () {
         $search.data("startDate", $(this).val());

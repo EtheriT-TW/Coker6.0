@@ -103,6 +103,14 @@ public static partial class BackofficeSandboxChecks
         var product = await service.GetDataOne(SearchTargetIds.Product);
         Require(product!.Id == -2 && product.IsSystem && product.SearchAllProd && !product.SearchAllArticle && product.Title == "商品",
             "Fixed items must retain their original name, target and scope after a default-only change.");
+        foreach (var target in new[] { SearchTargetIds.Article, SearchTargetIds.Product, SearchTargetIds.Article, SearchTargetIds.Product })
+        {
+            Success(await service.SetDefault(target));
+            box.Db.ChangeTracker.Clear();
+            Require(await box.Db.CustSearch.CountAsync(x => x.FK_WebsiteId == site && x.IsDefault && !x.IsDeleted) == 1 &&
+                await box.Db.CustSearch.AnyAsync(x => x.FK_WebsiteId == site && x.SystemTargetId == target && x.IsDefault && !x.IsDeleted),
+                "Repeated default changes must leave exactly one stored selection for the current site.");
+        }
         Require(!(await service.Delete(-2)).Success, "Built-in searches must not be deletable.");
         Require(!(await service.AddUp(new() { Title = "", SearchAllArticle = true })).Success, "Blank title must be rejected.");
         Require(!(await service.AddUp(new() { Title = "無範圍" })).Success, "Empty search scope must be rejected.");

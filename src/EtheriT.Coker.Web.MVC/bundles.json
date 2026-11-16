@@ -129,6 +129,7 @@
       "output": "css/CokerCore.min.css",
       "input": [
         "wwwroot/css/CokerCore/hashPage.css",
+        "wwwroot/css/CokerCore/editor.css",
         "wwwroot/css/CokerCore/FileListManager.css"
       ]
     },

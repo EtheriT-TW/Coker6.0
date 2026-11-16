@@ -118,7 +118,7 @@ function ready() {
             }, true);
         }
     }
-    if ($(".search-input").val() != "") {
+    if ($(".search-input").length && co.Directory.normalizeSearchKeyword($(".search-input").val())) {
         const encodedString = decodeSearchText($(".search-input").val());
         const textArea = document.createElement('textarea');
         textArea.innerHTML = encodedString;
@@ -128,8 +128,6 @@ function ready() {
         $(".searchText").text($(".search-input").val());
         $("#Search_Result .catalog_frame").attr("data-search-text", $(".search-input").val());
     }
-    co.page.init($conten);
-    co.page.observe("#ProductDescription > Content");
 
     if ($("body").width() < 992) $("#lanBar").before($("#layout4 #NavbarContent"));
 
@@ -222,6 +220,8 @@ function ready() {
         typeof (PageReady) === "function" && PageReady();
         typeof (HeaderInit) === "function" && HeaderInit();
         typeof (FooterInit) === "function" && FooterInit();
+        co.page.init($conten);
+        co.page.observe("#ProductDescription > Content");
     });
 
 
@@ -724,9 +724,8 @@ function cookie_reject() {
     $("#Cookie").removeClass("show")
 }
 function CreateToken() {
-    return Coker.Token.GetToken().done(function (result) {
+    return Coker.Token.EnsureToken().done(function (result) {
         if (result && result.success && result.token) {
-            localStorage.setItem("token", result.token);
             CheckToken();
         } else if (Coker.api && typeof Coker.api.clearAuth === "function") {
             Coker.api.clearAuth();

@@ -132,15 +132,19 @@
      * Authorization header helper
      */
     Coker.api.authHeader = Coker.api.authHeader || function () {
-        var token = w.localStorage ? w.localStorage.getItem("token") : null;
+        var token;
+        try { token = w.localStorage.getItem("token"); }
+        catch (_) { token = Coker.Token && Coker.Token.getAccessToken ? Coker.Token.getAccessToken() : null; }
         return token ? { Authorization: "Bearer " + token } : {};
     };
 
     Coker.api.clearAuth = Coker.api.clearAuth || function () {
-        if (!w.localStorage) return;
-        w.localStorage.removeItem("token");
-        w.localStorage.removeItem("lastSaveToken");
-        w.localStorage.removeItem("lastSaveTime");
+        if (Coker.Token && Coker.Token.ResetToken) Coker.Token.ResetToken();
+        try {
+            w.localStorage.removeItem("token");
+            w.localStorage.removeItem("lastSaveToken");
+            w.localStorage.removeItem("lastSaveTime");
+        } catch (_) { /* Storage may be blocked. */ }
     };
 
     /**

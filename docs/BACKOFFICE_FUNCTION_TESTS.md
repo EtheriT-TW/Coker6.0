@@ -6,8 +6,8 @@ MVC「系統檢測 → 後台功能測試」的開始按鈕會真正呼叫已登
 它不執行 dotnet test、build、restore、bundle、Migration，也不透過 HTTP 遍歷所有 GET Action。
 這些開發／產物操作仍依根目錄 AGENTS.md 由使用者控制。
 
-目前登錄 220 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
-44 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 220。
+目前登錄 221 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
+45 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 221。
 原本的 160 個較廣泛人工驗收規格保留在同一份內部清單；尚未綁定 executor 的規格不列入自動檢測畫面及通過數。
 這不是宣稱原本的完整瀏覽器與外部服務驗收已全部自動化。
 
@@ -254,3 +254,28 @@ HasSearchableProductsAsync 為後台與現有前台 GetSearchList 共用條件�
 搜尋設定編輯版面回歸：移除編輯卡片 col-xl-10／col-xxl-9 的額外限寬，與列表及頁面內容同寬對齊；移除 small、form-control-sm、btn-sm，恢復系統標準文字與控制項尺寸，保留緊湊同列配置。editor 人工規格補寬螢幕對齊、標準字級與窄螢幕換行；未執行瀏覽器或編譯驗證。本次只改 Razor 與檢測說明，不需重產前端 bundle。
 
 搜尋設定操作一致性：編輯標頭沿用商品頁的左側 keyboard_backspace 返回箭頭＋標題、右側儲存；保留有變更才確認返回的既有邏輯。商品／文章／選單範圍改為 col-auto 類別與全部勾選、col 選擇器，不再以 1／2／9 百分比欄寬分配短文字。標準字級與全寬維持。editor 人工規格同步更新，尚未執行瀏覽器驗證；本次只改 Razor，不需重新產生 bundle。
+
+## 搜尋設定 SQL Server 重試策略與交易回歸
+
+MVC Program 已啟用 EnableRetryOnFailure，但 CustSearch SetDefault／AddUp 原本直接開始手動交易，會與 SqlServerRetryingExecutionStrategy 不相容。新增共用 ExecuteAdminTransactionAsync：由 CreateExecutionStrategy.ExecuteAsync 包住完整 Serializable 交易，失敗結果不 commit，DbUpdateException 在策略外處理，使可重試的資料庫錯誤有機會重做。重做前僅清除本站 CustSearch 的已追蹤狀態，重新查詢資料。新增項目保留已配置 ID，以便提交成功但確認遺失時檢查原項目存在，避免再次插入。
+原 sandbox/cust-search-settings 補四次預設反覆切換、每次只有一個本站預設斷言；尚未執行。InMemory 不驗證 SQL Server 重試或真正的 rollback。editor 另補啟用 EnableRetryOnFailure 的隔離 SQL Server 人工驗收及暫時連線失敗情境，不得用客戶資料庫寫入來自動檢測，也不把記憶體結果宣稱為 SQL 通過。此次未執行編譯、測試、Migration、bundle 或資料庫操作。
+
+搜尋設定編輯標頭整理：列表專用預設說明於編輯時隱藏；標頭左側維持返回箭頭＋標題，右側為顯示開關與儲存。名稱與搜尋提示排第一列，描述與較窄排序排第二列，不再把顯示開關掛在描述旁。顯示開關移出 fieldset 後，custSearchSetControls 明確維持載入／儲存／無權限時的停用規則，保留原欄位 ID 與保存資料。editor 人工規格同步更新，未執行瀏覽器驗證。此次涉及 CustSearch.js，MVC 需手動 npm run create-bundles；可能下載相依、改 lock file、產生資產並啟動監看，未由 Codex 執行。
+
+## 商品與搜尋編輯頁樣式共用
+
+原商品灰色標頭／表單底色綁定 ProductContent／ProductForm，搜尋頁未套用。將相同規則抽至 wwwroot/css/CokerCore/editor.css，加入既有 CokerCore.min.css 輸入，兩頁以 backoffice-editor 明確套用；移除商品頁重複配色規則，仍使用既有 --color-gray-bg-dark 與全站字級／按鈕色票。搜尋表單白色內容卡沿用商品 card p-2，顯示開關改用既有 selectedItem＋visibility／visibility_off 圖示，保留欄位 ID 及權限／忙碌停用。
+ProductManagement.ProductList.edit 與 SearchManagement.CustSearch.editor 人工規格補兩頁配色對照、圖示切換、窄螢幕與商品原操作回歸；共用樣式為選用，不自動改動其他功能。未執行瀏覽器、build 或 bundle，沒有新增 schema 變更。
+MVC 應由使用者手動 npm run create-bundles，讓 CokerCore.min.css 與 ProductList.min.css 同步更新；既有流程先檢查授權，再執行 yarn && gulp buildDev，可能下載相依、更新 lock file、產生大量資產及啟動監看，耗時依環境而定。不得直接引用 editor.css 繞過 bundle。
+
+## 搜尋日誌輸入與訪客識別回歸
+
+新增 `Page.Index.search-log-validation`，綁定 `sandbox/search-log-validation`。使用獨立 InMemory 資料庫、測試簽章及實際 Token／搜尋日誌服務，驗證缺少、損壞、過期、跨站與全零 UUID Token 不落日誌；有效匿名 Token 搭配空白、undefined／null 及超長關鍵字不落日誌。有效中文、加號關鍵字保留原 Token UUID，去除前後空白，同日同目標去重，不同目標分開記錄。
+
+人工回歸：以新訪客直接開啟搜尋網址，確認 Token 建立後有效搜尋寫入非零 UUID；模擬 Token 建立失敗或刪除 Token 後直接呼叫搜尋 API，內容仍可查詢而不新增無效日誌。既有異常資料不自動修改。上述案例及瀏覽器驗收尚未執行；隔離案例不代表 SQL 或正式環境驗證通過。
+
+## 搜尋初始化與 Token 更新流程回歸
+
+擴充既有 `sandbox/search-log-validation`：以實際 Token 服務驗證匿名有效 Token 重用、過期 Access Token 透過 RefreshToken 更新、匿名 UUID 保留、舊 RefreshToken 不被誤作廢及更新後日誌 UUID 一致；簽入基礎設施以隔離替身處理，不驗證真實 Cookie 驗證管線。未增加自動案例數。
+
+擴充 `Page.Index.search-keyword-links` 人工瀏覽器驗收：慢網路首次進站多目錄共用初始化；搜尋 API／上下則等待 Token；到期前更新；Token 失敗不送搜尋且可重試；缺少輸入、空白、undefined／null 在前台阻擋；動態關鍵字屬性及 jQuery 快取同步。對應來源為前台 site.js、coker.api.token.js、coker.core.js、coker.api.directory.js、coker.feature.search.js、Search.js 及 Directory boot.js。瀏覽器規格仍未綁定自動執行器，不計自動通過數。上述執行器與人工情境均未執行。

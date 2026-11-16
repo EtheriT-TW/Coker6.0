@@ -76,6 +76,7 @@ function custSearchSetControls() {
     var editable = custSearchState.ready && !custSearchState.busy && custSearchWritable();
     $('#CustSearchFields').prop('disabled', !editable);
     $('#CustSearchSave').prop('disabled', !editable);
+    $('#CustSearchVisible').prop('disabled', !editable);
     $('#CustSearchBack, #CustSearchAdd').prop('disabled', custSearchState.busy);
     var hasProducts = custSearchState.options?.hasProducts === true;
     $('#CustSearchProductScope').toggleClass('d-none', !hasProducts);
@@ -138,6 +139,7 @@ function custSearchReadHash() {
     bootstrap.Modal.getInstance(document.getElementById('TagModal'))?.hide();
     var hash = location.hash.substring(1);
     $('#CustSearchAdd').toggleClass('d-none', !!hash);
+    $('#CustSearchListHint').toggleClass('d-none', !!hash);
     if (!hash) { $('#CustSearchList').removeClass('d-none'); $('#CustSearchEditor').addClass('d-none'); return; }
     if (!/^-?\d+$/.test(hash)) { location.hash = ''; return; }
     var id = Number(hash);

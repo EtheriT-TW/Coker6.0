@@ -195,9 +195,6 @@ body.product-canvas-disabled #ProductCanvas .product-canvas-unavailable {
     font-variant-numeric: tabular-nums;
 }
 
-#ProductContent .btn_back {
-    color: #4E565A;
-}
 
 /* Product List Filter */
 .product-list-filter-panel {
@@ -290,9 +287,6 @@ body.product-canvas-disabled #ProductCanvas .product-canvas-unavailable {
 }
 
 /* Product Content */
-#ProductContent > .card-header {
-    background-color: var(--color-gray-bg-dark);
-}
 
 .data_upload > .btn_upload_add {
     width: 2.25rem;
@@ -331,9 +325,6 @@ body.product-canvas-disabled #ProductCanvas .product-canvas-unavailable {
     height: auto;
 }
 
-#ProductForm {
-    background-color: var(--color-gray-bg-dark);
-}
 
     #ProductForm .btn_input_pic {
         height: 3.5rem;

@@ -130,42 +130,62 @@ public partial class CustSearchAppService
         };
     }
 
+    private async Task<ResponseMessageDto> ExecuteAdminTransactionAsync(long site, Func<Task<ResponseMessageDto>> operation)
+    {
+        var attempt = 0;
+        return await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            if (attempt++ > 0)
+            {
+                // SaveChanges may have accepted tracked values before a later transaction failure.
+                // Reload this feature's rows on retry instead of replaying those stale entity states.
+                foreach (var entry in db.ChangeTracker.Entries<CustSearch>()
+                    .Where(x => x.Entity.FK_WebsiteId == site).ToList()) entry.State = EntityState.Detached;
+            }
+            await using var transaction = db.Database.IsRelational()
+                ? await db.Database.BeginTransactionAsync(IsolationLevel.Serializable) : null;
+            var result = await operation();
+            if (result.Success && transaction != null) await transaction.CommitAsync();
+            return result;
+        });
+    }
+
     public async Task<ResponseMessageDto> SetDefault(long id)
     {
         var site = await AdminSiteAsync();
         var system = id == SearchTargetIds.Product || id == SearchTargetIds.Article;
         if (id <= 0 && !system) return new() { Message = "無效的搜尋項目。" };
-        await using var transaction = db.Database.IsRelational()
-            ? await db.Database.BeginTransactionAsync(IsolationLevel.Serializable) : null;
         try
         {
-            var row = system
-                ? await db.CustSearch.SingleOrDefaultAsync(x => !x.IsDeleted && x.FK_WebsiteId == site && x.SystemTargetId == id)
-                : await db.CustSearch.SingleOrDefaultAsync(x => !x.IsDeleted && x.FK_WebsiteId == site && x.Id == id && x.SystemTargetId == null);
-            if (!system && row == null) return new() { Message = "找不到目前站台的搜尋項目。" };
-            if (!system && !row!.Visible) return new() { Message = "請先啟用此搜尋項目，再設為預設。" };
-            var hasProducts = await HasSearchableProductsAsync(site);
-            if (id == SearchTargetIds.Product && !hasProducts)
-                return new() { Message = "目前沒有可見且有效上架的商品，無法設定商品搜尋。" };
-            if (!system && !HasAvailableScope(ToEdit(row!), hasProducts))
-                return new() { Message = "此搜尋項目目前沒有可用範圍，請選擇其他項目。" };
-            var previous = await db.CustSearch.Where(x => !x.IsDeleted && x.FK_WebsiteId == site && x.IsDefault).ToListAsync();
-            previous.ForEach(x => x.IsDefault = false);
-            await loginUserData.SaveChanges(previous.Cast<object>());
-            if (row == null)
+            return await ExecuteAdminTransactionAsync(site, async () =>
             {
-                var item = BuiltIn(id);
-                row = new CustSearch { FK_WebsiteId = site, SystemTargetId = id, Title = item.Title,
-                    Placeholder = item.Placeholder ?? "", SerNo = item.SerNO, Visible = true,
-                    SearchAllProd = item.SearchAllProd, SearchAllArticle = item.SearchAllArticle };
-                db.CustSearch.Add(row);
-            }
-            // Only the default flag changes for an existing custom item; never rewrite its scope from a stale form.
-            row.IsDefault = true;
-            if (system) row.Visible = true;
-            await loginUserData.SaveChanges(row);
-            if (transaction != null) await transaction.CommitAsync();
-            return new() { Success = true };
+                var row = system
+                    ? await db.CustSearch.SingleOrDefaultAsync(x => !x.IsDeleted && x.FK_WebsiteId == site && x.SystemTargetId == id)
+                    : await db.CustSearch.SingleOrDefaultAsync(x => !x.IsDeleted && x.FK_WebsiteId == site && x.Id == id && x.SystemTargetId == null);
+                if (!system && row == null) return new() { Message = "找不到目前站台的搜尋項目。" };
+                if (!system && !row!.Visible) return new() { Message = "請先啟用此搜尋項目，再設為預設。" };
+                var hasProducts = await HasSearchableProductsAsync(site);
+                if (id == SearchTargetIds.Product && !hasProducts)
+                    return new() { Message = "目前沒有可見且有效上架的商品，無法設定商品搜尋。" };
+                if (!system && !HasAvailableScope(ToEdit(row!), hasProducts))
+                    return new() { Message = "此搜尋項目目前沒有可用範圍，請選擇其他項目。" };
+                var previous = await db.CustSearch.Where(x => !x.IsDeleted && x.FK_WebsiteId == site && x.IsDefault).ToListAsync();
+                previous.ForEach(x => x.IsDefault = false);
+                await loginUserData.SaveChanges(previous.Cast<object>());
+                if (row == null)
+                {
+                    var item = BuiltIn(id);
+                    row = new CustSearch { FK_WebsiteId = site, SystemTargetId = id, Title = item.Title,
+                        Placeholder = item.Placeholder ?? "", SerNo = item.SerNO, Visible = true,
+                        SearchAllProd = item.SearchAllProd, SearchAllArticle = item.SearchAllArticle };
+                    db.CustSearch.Add(row);
+                }
+                // Only the default flag changes for an existing custom item; never rewrite its scope from a stale form.
+                row.IsDefault = true;
+                if (system) row.Visible = true;
+                await loginUserData.SaveChanges(row);
+                return new() { Success = true };
+            });
         }
         catch (DbUpdateException) { return new() { Message = "搜尋設定已變動，請重新載入後再試。" }; }
     }
@@ -201,34 +221,40 @@ public partial class CustSearchAppService
             scope.ProductTagIds.Count == 0 && scope.ArticleTagIds.Count == 0 && scope.MenuIds.Count == 0)
             return new() { Message = "請至少設定一種搜尋範圍。" };
 
-        await using var transaction = db.Database.IsRelational()
-            ? await db.Database.BeginTransactionAsync(IsolationLevel.Serializable) : null;
+        long? insertedId = null;
         try
         {
-            CustSearch? row = dto.Id > 0
-                ? await db.CustSearch.SingleOrDefaultAsync(x => !x.IsDeleted && x.FK_WebsiteId == site && x.Id == dto.Id && x.SystemTargetId == null) : null;
-            if (dto.Id > 0 && row == null) return new() { Message = "找不到目前站台的搜尋項目。" };
-            if (!await HasSearchableProductsAsync(site) && (dto.SearchAllProd || scope.ProductTagIds.Count > 0))
+            return await ExecuteAdminTransactionAsync(site, async () =>
             {
-                var old = row == null ? null : ToEdit(row);
-                if (old == null || old.SearchAllProd != dto.SearchAllProd ||
-                    !old.ProductTagIds.ToHashSet().SetEquals(scope.ProductTagIds))
-                    return new() { Message = "目前沒有可見且有效上架的商品，暫不提供新增或變更商品範圍。" };
-            }
-            dto.IsDefault = row?.IsDefault ?? false;
-            if (dto.IsDefault && !dto.Visible) return new() { Message = "請先在列表改選其他預設，再隱藏此項目。" };
-            if (row == null)
-            {
-                row = new CustSearch { FK_WebsiteId = site };
-                db.CustSearch.Add(row);
-            }
-            row.Title = title; row.Description = dto.Description?.Trim(); row.Placeholder = dto.Placeholder?.Trim() ?? "";
-            row.SerNo = dto.SerNO; row.Visible = dto.Visible; row.IsDefault = dto.IsDefault;
-            row.SearchAllProd = dto.SearchAllProd; row.SearchAllArticle = dto.SearchAllArticle; row.SearchAllMenu = dto.SearchAllMenu;
-            row.ScopeJson = JsonConvert.SerializeObject(scope);
-            await loginUserData.SaveChanges(row);
-            if (transaction != null) await transaction.CommitAsync();
-            return new() { Success = true, Object = row.SystemTargetId ?? row.Id };
+                // If a commit succeeded but its acknowledgement was lost, do not insert the same search twice.
+                if (dto.Id == 0 && insertedId.HasValue && await db.CustSearch.AsNoTracking().IgnoreQueryFilters()
+                    .AnyAsync(x => x.Id == insertedId.Value && x.FK_WebsiteId == site))
+                    return new() { Success = true, Object = insertedId.Value };
+                CustSearch? row = dto.Id > 0
+                    ? await db.CustSearch.SingleOrDefaultAsync(x => !x.IsDeleted && x.FK_WebsiteId == site && x.Id == dto.Id && x.SystemTargetId == null) : null;
+                if (dto.Id > 0 && row == null) return new() { Message = "找不到目前站台的搜尋項目。" };
+                if (!await HasSearchableProductsAsync(site) && (dto.SearchAllProd || scope.ProductTagIds.Count > 0))
+                {
+                    var old = row == null ? null : ToEdit(row);
+                    if (old == null || old.SearchAllProd != dto.SearchAllProd ||
+                        !old.ProductTagIds.ToHashSet().SetEquals(scope.ProductTagIds))
+                        return new() { Message = "目前沒有可見且有效上架的商品，暫不提供新增或變更商品範圍。" };
+                }
+                dto.IsDefault = row?.IsDefault ?? false;
+                if (dto.IsDefault && !dto.Visible) return new() { Message = "請先在列表改選其他預設，再隱藏此項目。" };
+                if (row == null)
+                {
+                    row = new CustSearch { FK_WebsiteId = site };
+                    db.CustSearch.Add(row);
+                }
+                row.Title = title; row.Description = dto.Description?.Trim(); row.Placeholder = dto.Placeholder?.Trim() ?? "";
+                row.SerNo = dto.SerNO; row.Visible = dto.Visible; row.IsDefault = dto.IsDefault;
+                row.SearchAllProd = dto.SearchAllProd; row.SearchAllArticle = dto.SearchAllArticle; row.SearchAllMenu = dto.SearchAllMenu;
+                row.ScopeJson = JsonConvert.SerializeObject(scope);
+                await loginUserData.SaveChanges(row);
+                if (dto.Id == 0) insertedId = row.Id;
+                return new() { Success = true, Object = row.SystemTargetId ?? row.Id };
+            });
         }
         catch (DbUpdateException) { return new() { Message = "搜尋設定已變動，請重新載入後再儲存。" }; }
     }

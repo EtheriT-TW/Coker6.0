@@ -19,7 +19,9 @@
 }
 
 #Form .card-body > div > .select_status > select {
-    width: 8rem;
+    width: auto;
+    min-width: 8rem;
+    flex-shrink: 0;
 }
 
 #Form .card-body > div > form > textarea {

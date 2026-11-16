@@ -180,8 +180,27 @@ function CartDropAdd(result) {
     $template.data("scid", result.scId);
     $template.find(".btn_cart_delete").on("click", function () {
         var $self = $(this).parents("li").first();
-        Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-            CartDropDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤")
+        var canMoveToFavorites = window.__LOGIN_STATE__ === true && result.isAdditional !== true;
+
+        Swal.fire({
+            icon: "info",
+            title: "確定將商品從購物車移除？",
+            html: "該商品將會從購物車中移除，且不可復原。",
+            showCancelButton: true,
+            showDenyButton: canMoveToFavorites,
+            confirmButtonColor: "#3085d6",
+            denyButtonColor: "#e0457b",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "確認移除",
+            denyButtonText: "移至我的最愛",
+            cancelButtonText: "取消",
+            allowOutsideClick: false
+        }).then(function (choice) {
+            if (choice.isConfirmed) {
+                CartDropDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤");
+            } else if (choice.isDenied) {
+                CartDropMoveToFavorites($self, $self.data("scid"), result.pId);
+            }
         });
     });
 
@@ -216,6 +235,20 @@ function CartDropReset(scid, quantity) {
                 $(this).find(".pro_quantity").text(quantity)
             }
         }
+    });
+}
+function CartDropMoveToFavorites($item, scId, pId) {
+    Coker.Favorites.Check(pId).then(function (check) {
+        if (check && check.success) return check;
+        return Coker.Favorites.Add(pId);
+    }).done(function (favorites) {
+        if (!favorites || !favorites.success) {
+            Coker.sweet.error("移至我的最愛失敗", (favorites && favorites.message) || "加入收藏時發生錯誤", null, true);
+            return;
+        }
+        CartDropDelete($item, scId, "已將商品移至我的最愛", "商品已加入收藏，但從購物車移除時發生錯誤");
+    }).fail(function () {
+        Coker.sweet.error("移至我的最愛失敗", "加入收藏時發生錯誤，請稍後再試。", null, true);
     });
 }
 function CartDropDelete(self, id, success, error) {

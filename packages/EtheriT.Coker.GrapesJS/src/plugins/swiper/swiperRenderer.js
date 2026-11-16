@@ -164,8 +164,11 @@ function applyFieldGroup(root, field) {
     }
     if (field.groupHref) {
         target.setAttribute('href', field.groupHref);
+        target.setAttribute('data-link-value', field.groupHref);
+        target.setAttribute('data-link-type', 'link');
     } else {
         target.removeAttribute('href');
+        target.setAttribute('data-link-value', '');
     }
     target.setAttribute('target', field.groupTarget || '_self');
 }
@@ -251,6 +254,8 @@ function updateTemplateImage(image, slide, document, slideElement) {
     if (slide.link) {
         if (ordinaryLink) {
             ordinaryLink.setAttribute('href', slide.link);
+            ordinaryLink.setAttribute('data-link-value', slide.link);
+            ordinaryLink.setAttribute('data-link-type', 'link');
             ordinaryLink.setAttribute('title', slide.title);
             ordinaryLink.setAttribute('target', slide.target);
             return;
@@ -258,6 +263,8 @@ function updateTemplateImage(image, slide, document, slideElement) {
 
         const link = document.createElement('a');
         link.setAttribute('href', slide.link);
+        link.setAttribute('data-link-value', slide.link);
+        link.setAttribute('data-link-type', 'link');
         link.setAttribute('title', slide.title);
         link.setAttribute('target', slide.target);
         image.replaceWith(link);

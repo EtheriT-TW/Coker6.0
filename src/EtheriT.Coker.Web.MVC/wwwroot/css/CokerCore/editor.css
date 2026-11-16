@@ -1,0 +1,14 @@
+/* Shared editing frame: opt in per page without importing another feature's stylesheet. */
+.backoffice-editor > .card-header,
+.backoffice-editor > form.card-body {
+    background-color: var(--color-gray-bg-dark);
+}
+
+.backoffice-editor .btn_back {
+    color: inherit;
+}
+
+.backoffice-editor .selectedItem:disabled + label {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -14,7 +14,7 @@
         }
 
         label = $.trim(label).replace(/[　：:*]/g, "");
-        return label || $field.attr("placeholder") || $field.attr("name") || "必填欄位";
+        return label || $field.attr("placeholder") || $field.attr("name") || cart.Utils.t("CkRequiredField", "必填欄位");
     }
 
     function AddInvalidFields(issues, selector, section) {
@@ -52,28 +52,28 @@
         if (!cart.Shipping.HasSelectedCvsStore()) {
             issues.push({
                 code: "CvsStoreMissing",
-                section: "運送方式",
-                field: "取貨門市",
+                section: cart.Utils.t("CkSecShipping", "運送方式"),
+                field: cart.Utils.t("CkPickupStore", "取貨門市"),
                 target: cart.Shipping.GetCvsStoreSelectionTarget()
             });
         }
 
-        AddInvalidFields(issues, "#Form_Orderer", "訂購人");
-        AddPhonePairIssue(issues, "#OrdererInputTelPhoneArea", "#OrdererInputTelPhone", "訂購人");
+        AddInvalidFields(issues, "#Form_Orderer", cart.Utils.t("CkOrderer", "訂購人"));
+        AddPhonePairIssue(issues, "#OrdererInputTelPhoneArea", "#OrdererInputTelPhone", cart.Utils.t("CkOrderer", "訂購人"));
 
         if ($('[name="RecipientRadio"]:checked').val() === "edit") {
-            AddInvalidFields(issues, "#Form_Recipient", "收件人");
-            AddPhonePairIssue(issues, "#RecipientInputTelPhoneArea", "#RecipientInputTelPhone", "收件人");
+            AddInvalidFields(issues, "#Form_Recipient", cart.Utils.t("CkRecipient", "收件人"));
+            AddPhonePairIssue(issues, "#RecipientInputTelPhoneArea", "#RecipientInputTelPhone", cart.Utils.t("CkRecipient", "收件人"));
         }
 
         var invoiceMode = $("#invoiceType").data("invoice-mode");
         var invoiceType = $('[name="InvoiceType"]:checked').val();
         if (invoiceMode === "UniformIdOnly" && invoiceType === "company") {
-            AddInvalidFields(issues, "#Form_Invoice", "統一編號");
+            AddInvalidFields(issues, "#Form_Invoice", cart.Utils.t("CkTaxId", "統一編號"));
         } else if (invoiceType === "company") {
-            AddInvalidFields(issues, "#Form_Invoice", "發票");
+            AddInvalidFields(issues, "#Form_Invoice", cart.Utils.t("CkInvoice", "發票"));
         } else if (invoiceType === "personal" && $('[name="PersonalInvoiceMode"]:checked').val() === "mobile") {
-            AddInvalidFields(issues, "#Form_InvoicePersonalType", "發票");
+            AddInvalidFields(issues, "#Form_InvoicePersonalType", cart.Utils.t("CkInvoice", "發票"));
         }
 
         return issues.filter(function (issue, index, list) {
@@ -103,12 +103,12 @@
         $warning.empty().removeClass("d-none");
 
         if (!hasOrderDetails) {
-            $warning.text("請先選擇要結帳的商品，才能選擇付款方式");
+            $warning.text(cart.Utils.t("CkSelectItemsBeforePayment", "請先選擇要結帳的商品，才能選擇付款方式"));
             return;
         }
 
         if (issues.length === 0) {
-            $warning.text("請先完整填寫訂購、運送、收件與發票資料，才能選擇付款方式");
+            $warning.text(cart.Utils.t("CkCompleteBeforePayment", "請先完整填寫訂購、運送、收件與發票資料，才能選擇付款方式"));
             return;
         }
 
@@ -116,11 +116,11 @@
             return issue.section + "－" + issue.field;
         });
 
-        $("<span>").text("尚未完成：" + names.join("、") + "。").appendTo($warning);
+        $("<span>").text(cart.Utils.t("CkIncomplete", "尚未完成：{0}。", [names.join(cart.Utils.t("CkListSeparator", "、"))])).appendTo($warning);
         $("<button>", {
             type: "button",
             class: "btn btn-link text-danger text-decoration-underline p-0 ms-2 align-baseline",
-            text: "前往填寫"
+            text: cart.Utils.t("CkGoFill", "前往填寫")
         }).on("click", function () {
             FocusIssue(issues[0] && issues[0].target);
         }).appendTo($warning);

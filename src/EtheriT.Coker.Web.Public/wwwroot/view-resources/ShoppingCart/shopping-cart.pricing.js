@@ -113,11 +113,11 @@ function TotalCount() {
     const allowsFullProductRedemption = Number(MaxRedemptionPercent) >= 100;
     const redemptionLimitText = allowsFullProductRedemption
         ? (hasMaximumDiscount
-            ? `單筆折抵上限 ${cart.Utils.formatMoney(maximumDiscountAmount)}`
-            : "商品金額可全額折抵")
+            ? cart.Utils.t("CkBonusCapPerOrder", "單筆折抵上限 {0}", [cart.Utils.formatMoney(maximumDiscountAmount)])
+            : cart.Utils.t("CkBonusFullRedeem", "商品金額可全額折抵"))
         : (hasMaximumDiscount
-            ? `折抵上限 ${MaxRedemptionPercent}%，單筆上限 ${cart.Utils.formatMoney(maximumDiscountAmount)}`
-            : `折抵上限 ${MaxRedemptionPercent}%`);
+            ? cart.Utils.t("CkBonusCapPercentAndMax", "折抵上限 {0}%，單筆上限 {1}", [MaxRedemptionPercent, cart.Utils.formatMoney(maximumDiscountAmount)])
+            : cart.Utils.t("CkBonusCapPercent", "折抵上限 {0}%", [MaxRedemptionPercent]));
 
     let allBonus = Number(bonus || 0);
     let redeemAmount = 0;
@@ -125,7 +125,7 @@ function TotalCount() {
 
     // 預設全部清空（避免殘留）
     $bonusDisconLine.addClass("d-none");
-    $bonusDisconLine.find(".summary-label").text("紅利折抵");
+    $bonusDisconLine.find(".summary-label").text(cart.Utils.t("CartBonusDiscount", "紅利折抵"));
     $bonusDisconLine.find(".bonusDiscion").text("");
 
     $bonusRuleLine.addClass("d-none");
@@ -140,7 +140,7 @@ function TotalCount() {
             const diff = MinOrderForRedemption - payableSubtotal;
 
             $redeemRuleText.text(
-                `再消費 ${cart.Utils.formatMoney(diff)} 可使用紅利折抵（${redemptionLimitText}）`
+                cart.Utils.t("CkBonusSpendMoreToRedeem", "再消費 {0} 可使用紅利折抵（{1}）", [cart.Utils.formatMoney(diff), redemptionLimitText])
             );
 
             $bonusRuleLine.removeClass("d-none");
@@ -166,7 +166,7 @@ function TotalCount() {
 
                 // label 覆蓋
                 $bonusDisconLine.find(".summary-label")
-                    .text(`本單可使用紅利折抵（${redemptionLimitText}）`);
+                    .text(cart.Utils.t("CkBonusCanRedeem", "本單可使用紅利折抵（{0}）", [redemptionLimitText]));
                 splitParentheticalDetail(
                     $bonusDisconLine.find(".summary-label"),
                     "summary-label-main",
@@ -175,7 +175,7 @@ function TotalCount() {
 
                 // 金額
                 $bonusDisconLine.find(".bonusDiscion")
-                    .text(`${redeemAmount.toLocaleString()} 點`);
+                    .text(cart.Utils.t("CkPoints", "{0} 點", [redeemAmount.toLocaleString()]));
 
                 allBonus += redeemAmount;
                 payableSubtotal = Math.max(0, payableSubtotal - redeemAmount);
@@ -183,7 +183,7 @@ function TotalCount() {
                 // 👉 若「被紅利上限卡住」才顯示提示
                 if (memberBonusAmount < cap) {
                     $redeemRuleText.text(
-                        `目前剩餘紅利 ${memberBonusAmount.toLocaleString()} 點，已全數折抵`
+                        cart.Utils.t("CkBonusAllUsed", "目前剩餘紅利 {0} 點，已全數折抵", [memberBonusAmount.toLocaleString()])
                     );
                     $bonusRuleLine.removeClass("d-none");
                 }
@@ -193,7 +193,7 @@ function TotalCount() {
             else if (memberBonusAmount > 0) {
 
                 $redeemRuleText.text(
-                    `目前剩餘紅利 ${memberBonusAmount.toLocaleString()} 點`
+                    cart.Utils.t("CkBonusRemaining", "目前剩餘紅利 {0} 點", [memberBonusAmount.toLocaleString()])
                 );
 
                 $bonusRuleLine.removeClass("d-none");
@@ -241,16 +241,16 @@ function TotalCount() {
     function buildBonusEarnRuleText() {
         if (fixedPointsReward) {
             if (RewardFixedPointsCumulative) {
-                return `每滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
-                    `贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
+                return cart.Utils.t("CkBonusEarnRuleCumulative", "每滿 {0}，贈送 {1} 點紅利，運費不計。",
+                    [cart.Utils.formatMoney(MinOrderForEarnPoints), Number(RewardFixedPoints || 0).toLocaleString()]);
             }
 
-            return `商品滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
-                `固定贈送 ${Number(RewardFixedPoints || 0).toLocaleString()} 點紅利，運費不計。`;
+            return cart.Utils.t("CkBonusEarnRuleFixed", "商品滿 {0}，固定贈送 {1} 點紅利，運費不計。",
+                [cart.Utils.formatMoney(MinOrderForEarnPoints), Number(RewardFixedPoints || 0).toLocaleString()]);
         }
 
-        return `商品滿 ${cart.Utils.formatMoney(MinOrderForEarnPoints)}，` +
-            `依折抵後商品金額 ${Number(RewardRatePercent || 0).toLocaleString()}% 回饋，運費不計。`;
+        return cart.Utils.t("CkBonusEarnRuleRate", "商品滿 {0}，依折抵後商品金額 {1}% 回饋，運費不計。",
+            [cart.Utils.formatMoney(MinOrderForEarnPoints), Number(RewardRatePercent || 0).toLocaleString()]);
     }
 
     if (!earnEnabled) {
@@ -261,7 +261,7 @@ function TotalCount() {
 
         $rewardRow.removeClass("d-none");
         $earnText.html(
-            `<span class="bonus-earn-main">再消費 ${cart.Utils.formatMoney(diff)} 可獲得紅利回饋</span>` +
+            `<span class="bonus-earn-main">${cart.Utils.t("CkBonusSpendMoreToEarn", "再消費 {0} 可獲得紅利回饋", [cart.Utils.formatMoney(diff)])}</span>` +
             `<span class="bonus-earn-rule d-block">${buildBonusEarnRuleText()}</span>`
         );
     } else {
@@ -270,7 +270,7 @@ function TotalCount() {
         if (earnPoints > 0) {
             $rewardRow.removeClass("d-none");
             $earnText.html(
-                `<span class="bonus-earn-main">本單預計獲得 ${earnPoints.toLocaleString()} 點紅利</span>` +
+                `<span class="bonus-earn-main">${cart.Utils.t("CkBonusWillEarn", "本單預計獲得 {0} 點紅利", [earnPoints.toLocaleString()])}</span>` +
                 `<span class="bonus-earn-rule d-block">${buildBonusEarnRuleText()}</span>`
             );
         } else {
@@ -303,9 +303,9 @@ function TotalCount() {
                 .map(function (x) {
                     return `${x.name} × ${x.count}`;
                 })
-                .join("、");
+                .join(cart.Utils.t("CkListSeparator", "、"));
 
-            $boxMemo.text(`(本次配箱：${boxText})`);
+            $boxMemo.text(cart.Utils.t("CkBoxMemo", "(本次配箱：{0})", [boxText]));
             $boxMemo.removeClass("d-none");
         } else {
             $boxMemo.text("");
@@ -316,7 +316,7 @@ function TotalCount() {
     // ===== 全單紅利使用總計 =====
     if (allBonus > 0) {
         $(".bonusUseTotalLine").removeClass("d-none");
-        $(".bonusUseTotalValue").text(`${allBonus.toLocaleString()} 點`);
+        $(".bonusUseTotalValue").text(cart.Utils.t("CkPoints", "{0} 點", [allBonus.toLocaleString()]));
     } else {
         $(".bonusUseTotalLine").addClass("d-none");
         $(".bonusUseTotalValue").text("");
@@ -342,7 +342,7 @@ function setCartPriceBlock($target, cashText, bonusValue, mode) {
             $main.html(cashText || "");
 
             if (bonus > 0) {
-                $bonus.text(`紅利：${bonus.toLocaleString()}`);
+                $bonus.text(cart.Utils.t("CkBonusColon", "紅利：{0}", [bonus.toLocaleString()]));
                 $bonus.removeClass("d-none");
             } else {
                 $bonus.text("");
@@ -351,7 +351,7 @@ function setCartPriceBlock($target, cashText, bonusValue, mode) {
         } else {
             // fallback
             if (bonus > 0) {
-                $target.html(`${cashText}<br/>紅利：${bonus.toLocaleString()}`);
+                $target.html(`${cashText}<br/>${cart.Utils.t("CkBonusColon", "紅利：{0}", [bonus.toLocaleString()])}`);
             } else {
                 $target.html(cashText || "");
             }
@@ -361,8 +361,8 @@ function setCartPriceBlock($target, cashText, bonusValue, mode) {
         if (bonus > 0) {
             $target.html(
                 cashText
-                    ? `${cashText} + 紅利${bonus.toLocaleString()}`
-                    : `紅利${bonus.toLocaleString()}`
+                    ? `${cashText} + ${cart.Utils.t("BonusPointsValue", "{0}紅利點", [bonus.toLocaleString()])}`
+                    : cart.Utils.t("BonusPointsValue", "{0}紅利點", [bonus.toLocaleString()])
             );
         } else {
             $target.html(cashText || "");
@@ -390,9 +390,9 @@ function updateNextStepByBonus() {
         } else {
             $hint.removeClass("d-none");
             $hintText.text(
-                `目前已選商品需紅利 ${Number(bonus || 0).toLocaleString()} 點，` +
-                `會員可用紅利 ${memberBonus.toLocaleString()} 點，` +
-                `尚差 ${shortage.toLocaleString()} 點。`
+                cart.Utils.t("CkBonusShortage", "目前已選商品需紅利 {0} 點，會員可用紅利 {1} 點，尚差 {2} 點。",
+                    [Number(bonus || 0).toLocaleString(), memberBonus.toLocaleString(),
+                    shortage.toLocaleString()])
             );
         }
     }

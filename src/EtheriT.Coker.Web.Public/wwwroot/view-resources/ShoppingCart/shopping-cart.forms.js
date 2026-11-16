@@ -88,7 +88,7 @@
         } else if (S.OrdererOpen && !isopen) {
             S.OrdererFilled = cart.Forms.FormCheck(S.OrdererForms);
             if (!S.OrdererFilled) {
-                Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
+                Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkFillOrderer", "請確實填寫訂購人資料！"), null);
             } else {
                 var data = co.Form.getJson($("#Form_Orderer").attr("id"), $("#OrdererForm .default_data"));
                 data.ordererAddress = `${data.county}${data.district}${data.ordererAddress}`;
@@ -457,23 +457,23 @@
 
         if (!cart.Forms.OrdererDataGet()) {
             checksuccess = false;
-            if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
+            if (EnableWarning) Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkFillOrderer", "請確實填寫訂購人資料！"), null);
         }
         else {
             if (S.order_data.zone == "" ^ S.order_data.ordererTelePhone == "") {
-                if (EnableWarning) Coker.sweet.warning("資料填寫錯誤", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。", null);
+                if (EnableWarning) Coker.sweet.warning(cart.Utils.t("CkFormError", "資料填寫錯誤"), cart.Utils.t("CkOrdererPhonePair", "如要提供訂購人電話資訊，請確實填寫區碼與聯絡電話。"), null);
                 checksuccess = false;
             }
         }
 
         if (!cart.Forms.RecipientDataGet()) {
             checksuccess = false;
-            if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫收件人資料！", null);
+            if (EnableWarning) Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkFillRecipient", "請確實填寫收件人資料！"), null);
         }
         else {
             if ($(`[name="RecipientRadio"]:checked`).val() == "edit") {
                 if (S.recipient_data.zone == "" ^ S.recipient_data.recipientTelePhone == "") {
-                    if (EnableWarning) Coker.sweet.warning("資料填寫錯誤", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。", null);
+                    if (EnableWarning) Coker.sweet.warning(cart.Utils.t("CkFormError", "資料填寫錯誤"), cart.Utils.t("CkRecipientPhonePair", "如要提供收件人電話資訊，請確實填寫區碼與聯絡電話。"), null);
                     checksuccess = false;
                 }
             }
@@ -481,12 +481,12 @@
 
         if (!cart.Forms.InvoiceDataGet()) {
             checksuccess = false;
-            if (EnableWarning) Coker.sweet.warning("請注意", "請確實填寫發票資料！", null);
+            if (EnableWarning) Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkFillInvoice", "請確實填寫發票資料！"), null);
         }
 
         if (!SkipCvsStoreValidation && !cart.Shipping.HasSelectedCvsStore()) {
             checksuccess = false;
-            if (EnableWarning) Coker.sweet.warning("請注意", "請先選擇超商取貨門市！", null);
+            if (EnableWarning) Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkChooseCvsStore", "請先選擇超商取貨門市！"), null);
         }
 
         return checksuccess;
@@ -528,9 +528,9 @@
             class: "orderer_city form-select",
             required: "required"
         });
-        $county.append("<label class='px-4 required' for='OrdererSelectCity'>縣市</label>");
+        $county.append("<label class='px-4 required' for='OrdererSelectCity'>" + cart.Utils.t("CkCounty", "縣市") + "</label>");
         var $county_first_option = $county.children('select').children('option').first();
-        $county_first_option.text("請選擇縣市");
+        $county_first_option.text(cart.Utils.t("CkChooseCounty", "請選擇縣市"));
         $county_first_option.attr('disabled', 'disabled');
 
         $district.children('select').attr({
@@ -538,9 +538,9 @@
             class: "orderer_town form-select",
             required: "required"
         });
-        $district.append("<label class='px-4 required' for='OrdererSelectCity'>鄉鎮</label>");
+        $district.append("<label class='px-4 required' for='OrdererSelectCity'>" + cart.Utils.t("CkDistrict", "鄉鎮") + "</label>");
         var $district_first_option = $district.children('select').children('option').first();
-        $district_first_option.text("請選擇鄉鎮");
+        $district_first_option.text(cart.Utils.t("CkChooseDistrict", "請選擇鄉鎮"));
         $district_first_option.attr('disabled', 'disabled');
 
         $county = S.$Recipient_TWzipcode.children('.county');
@@ -551,9 +551,9 @@
             class: "recipient_city form-select",
             required: "required"
         });
-        $county.append("<label class='px-4 required' for='RecipientSelectCity'>縣市</label>");
+        $county.append("<label class='px-4 required' for='RecipientSelectCity'>" + cart.Utils.t("CkCounty", "縣市") + "</label>");
         var $county_first_option = $county.children('select').children('option').first();
-        $county_first_option.text("請選擇縣市");
+        $county_first_option.text(cart.Utils.t("CkChooseCounty", "請選擇縣市"));
         $county_first_option.attr('disabled', 'disabled');
 
         $district.children('select').attr({
@@ -561,9 +561,9 @@
             class: "recipient_town form-select",
             required: "required"
         });
-        $district.append("<label class='px-4 required' for='RecipientSelectCity'>鄉鎮</label>");
+        $district.append("<label class='px-4 required' for='RecipientSelectCity'>" + cart.Utils.t("CkDistrict", "鄉鎮") + "</label>");
         var $district_first_option = $district.children('select').children('option').first();
-        $district_first_option.text("請選擇鄉鎮");
+        $district_first_option.text(cart.Utils.t("CkChooseDistrict", "請選擇鄉鎮"));
         $district_first_option.attr('disabled', 'disabled');
 
 
@@ -574,18 +574,18 @@
             id: "InvoiceSelectCity",
             class: "bill_city form-select"
         });
-        $county.append("<label class='px-4' for='InvoiceSelectCity'>縣市</label>");
+        $county.append("<label class='px-4' for='InvoiceSelectCity'>" + cart.Utils.t("CkCounty", "縣市") + "</label>");
         var $county_first_option = $county.children('select').children('option').first();
-        $county_first_option.text("請選擇縣市");
+        $county_first_option.text(cart.Utils.t("CkChooseCounty", "請選擇縣市"));
         $county_first_option.attr('disabled', 'disabled');
 
         $district.children('select').attr({
             id: "InvoiceSelectTown",
             class: "bill_town form-select"
         });
-        $district.append("<label class='px-4' for='InvoiceSelectCity'>鄉鎮</label>");
+        $district.append("<label class='px-4' for='InvoiceSelectCity'>" + cart.Utils.t("CkDistrict", "鄉鎮") + "</label>");
         var $district_first_option = $district.children('select').children('option').first();
-        $district_first_option.text("請選擇鄉鎮");
+        $district_first_option.text(cart.Utils.t("CkChooseDistrict", "請選擇鄉鎮"));
         $district_first_option.attr('disabled', 'disabled');
     }
     function RecipientsList_ContentReady(e) {
@@ -595,7 +595,7 @@
         var data = selectedItems.selectedRowsData;
     }
     function RecipientsList_DeleteButtonClicked(e) {
-        co.sweet.confirm("刪除收件人", "確定刪除？資料刪除後不可復原", "確　定", "取　消", function () {
+        co.sweet.confirm(cart.Utils.t("CkDeleteRecipient", "刪除收件人"), cart.Utils.t("CkDeleteConfirmText", "確定刪除？資料刪除後不可復原"), cart.Utils.t("Confirm", "確　定"), cart.Utils.t("Cancel", "取　消"), function () {
             //co.Tag.TagDelete(e.row.key).done(function () {
             //    RecipientsList_dxData.refresh();
             //})

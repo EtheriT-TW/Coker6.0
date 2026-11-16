@@ -15,6 +15,10 @@ function IsQuickCartEditMode() {
     return quickCartOptions && quickCartOptions.mode === "edit-cart";
 }
 
+function ModalText(key, fallback) {
+    return window.CokerI18n ? window.CokerI18n.get(key, fallback) : fallback;
+}
+
 function ShoppingCarModalInit() {
     if (shoppingCarModalInitialized || !document.getElementById('ShoppingCarModal')) return;
     shoppingCarModalInitialized = true;
@@ -108,7 +112,7 @@ function DataClear() {
     $input_quantity.prop("disabled", false).removeAttr("max").val(1);
     $modal.find(".btn_count_minus, .btn_count_plus").prop("disabled", false);
     $modal.find(".btn_addToCar").removeClass("close").prop("disabled", false);
-    $modal.find(".btn_addToCar > div").text("加入購物車");
+    $modal.find(".btn_addToCar > div").text(ModalText("AddtoCart", "加入購物車"));
 }
 
 function ModalSetLoading(isLoading, message) {
@@ -121,7 +125,7 @@ function ModalSetLoading(isLoading, message) {
 function ModalDefaultSet() {
     return Product.GetOne.ProdMainDisplay($modal.data("pid")).done(function (product) {
         if (!product) {
-            $pro_discount.text("查無商品資料");
+            $pro_discount.text(ModalText("QuickCartProductNotFound", "查無商品資料"));
             $modal.find(".btn_addToCar").addClass("close");
             return;
         }
@@ -138,7 +142,7 @@ function ModalDefaultSet() {
         if (!modal_stock_list.length) {
             ModalSetPriceDisplay(null, product);
             $input_quantity.val(0).attr("max", 0);
-            ModalSetPurchaseAvailability(false, product.purchaseUnavailableReason || "已售完");
+            ModalSetPurchaseAvailability(false, product.purchaseUnavailableReason || ModalText("ProdEmpty", "已售完"));
             return;
         }
 
@@ -156,7 +160,7 @@ function ModalDefaultSet() {
         ModalBuildSpecGroup(2, modal_stock_list);
         ModalRefreshSelection(product);
     }).fail(function () {
-        $pro_discount.text("商品資料讀取失敗");
+        $pro_discount.text(ModalText("QuickCartLoadFailed", "商品資料讀取失敗"));
         $modal.find(".btn_addToCar").addClass("close");
     }).always(function () {
         ModalSetLoading(false);
@@ -171,7 +175,7 @@ function ModalBuildSpecGroup(type, stocks) {
     stocks.forEach(function (stock) {
         var id = Number(stock[idKey] || 0);
         if (id > 0 && !values.some(function (value) { return value.id === id; })) {
-            values.push({ id: id, name: stock[optionKey] || "未命名規格", title: stock[groupKey] || "規格" });
+            values.push({ id: id, name: stock[optionKey] || ModalText("QuickCartUnnamedSpec", "未命名規格"), title: stock[groupKey] || ModalText("Specification", "規格") });
         }
     });
     if (!values.length) return;
@@ -195,13 +199,18 @@ function ModalFormatMoney(value) {
     return window.CokerCurrency.format(Number(value) || 0);
 }
 
+// 紅利點數文字，格式與分類列表 price.js 一致（BonusPointsValue）
+function ModalFormatBonus(bonus) {
+    return ModalText("BonusPointsValue", "{0}紅利點").replace("{0}", bonus.toLocaleString("en-US"));
+}
+
 // 純文字版：給 label 等只能吃純文字的地方用
 function ModalFormatPrice(price) {
     var cash = Number(price && price.price || 0);
     var bonus = Number(price && price.bonus || 0);
-    if (cash <= 0 && bonus > 0) return "紅利 " + bonus.toLocaleString("en-US") + " 點";
+    if (cash <= 0 && bonus > 0) return ModalFormatBonus(bonus);
     var text = ModalFormatMoney(cash);
-    return bonus > 0 ? text + " + 紅利 " + bonus.toLocaleString("en-US") + " 點" : text;
+    return bonus > 0 ? text + " + " + ModalFormatBonus(bonus) : text;
 }
 
 // 拆出貨幣符號的 HTML 版本，注入時必須用 .html()
@@ -212,15 +221,15 @@ function ModalFormatMoneyHtml(value) {
 function ModalFormatPriceHtml(price) {
     var cash = Number(price && price.price || 0);
     var bonus = Number(price && price.bonus || 0);
-    if (cash <= 0 && bonus > 0) return "紅利 " + bonus.toLocaleString("en-US") + " 點";
+    if (cash <= 0 && bonus > 0) return ModalFormatBonus(bonus);
     var html = ModalFormatMoneyHtml(cash);
-    return bonus > 0 ? html + " + 紅利 " + bonus.toLocaleString("en-US") + " 點" : html;
+    return bonus > 0 ? html + " + " + ModalFormatBonus(bonus) : html;
 }
 
 function ModalSetPriceDisplay(stock, product) {
     // priceDisplayText 來自後端資料，一律用 .text() 保持安全
     if (stock && stock.timePrice) {
-        $pro_discount.text(product.priceDisplayText || "時價");
+        $pro_discount.text(product.priceDisplayText || ModalText("MarketPrice", "時價"));
         return [];
     }
 
@@ -235,7 +244,7 @@ function ModalSetPriceDisplay(stock, product) {
     } else if (product.price != null && product.price !== "") {
         $pro_discount.html(ModalFormatMoneyHtml(product.price));
     } else {
-        $pro_discount.text("目前無售價資訊");
+        $pro_discount.text(ModalText("QuickCartNoPrice", "目前無售價資訊"));
     }
     return prices;
 }
@@ -244,7 +253,7 @@ function ModalSetPurchaseAvailability(canPurchase, reason) {
     $quantity_controls.toggleClass("d-none", !canPurchase);
     $purchase_status
         .toggleClass("d-none", canPurchase)
-        .text(canPurchase ? "" : (reason || "已售完"));
+        .text(canPurchase ? "" : (reason || ModalText("ProdEmpty", "已售完")));
     $input_quantity.prop("disabled", !canPurchase);
     $modal.find(".btn_count_minus, .btn_count_plus").prop("disabled", !canPurchase);
     $modal.find(".btn_addToCar")
@@ -273,7 +282,7 @@ function ModalRefreshSelection(product) {
     });
     if (!stock) {
         modal_price_id = null;
-        $pro_discount.text("請選擇完整規格");
+        $pro_discount.text(ModalText("QuickCartSelectSpec", "請選擇完整規格"));
         return;
     }
 
@@ -286,7 +295,7 @@ function ModalRefreshSelection(product) {
         ModalSetPriceDisplay(stock, product);
         $input_quantity.val(0).attr("max", 0);
         ModalSetPurchaseAvailability(false,
-            stock.purchaseUnavailableReason || product.purchaseUnavailableReason || "已售完");
+            stock.purchaseUnavailableReason || product.purchaseUnavailableReason || ModalText("ProdEmpty", "已售完"));
         return;
     }
 
@@ -308,7 +317,7 @@ function ModalRefreshSelection(product) {
     var prices = ModalSetPriceDisplay(stock, product);
     if (!prices.length) {
         modal_price_id = null;
-        ModalSetPurchaseAvailability(false, stock.purchaseUnavailableReason || "目前無法購買");
+        ModalSetPurchaseAvailability(false, stock.purchaseUnavailableReason || ModalText("QuickCartCannotPurchase", "目前無法購買"));
         return;
     }
 
@@ -326,7 +335,7 @@ function ModalRefreshSelection(product) {
 
     if (prices.length > 1) {
         var $group = $($("#Modal_Template_Spec_Radio").html()).clone().addClass("modal-price-options");
-        $group.find(".spec_title").text("價格方案");
+        $group.find(".spec_title").text(ModalText("QuickCartPricePlan", "價格方案"));
         var $control = $group.find(".spec_control");
         prices.forEach(function (price) {
             var inputId = "quick_cart_price_" + price.id;
@@ -374,16 +383,16 @@ function AddToCart() {
     }
 
     if (!localStorage.getItem("AgreePrivacy")) {
-        Coker.sweet.error("請注意", "若要進行商品選購，請先同意隱私權政策", null);
+        Coker.sweet.error(ModalText("AlertTitle", "請注意"), ModalText("AddCartNeedPrivacy", "若要進行商品選購，請先同意隱私權政策"), null);
     } else {
         var selectedStock = modal_stock_list.find(function (stock) {
             return Number(stock.fK_S1id || 0) === Number(modal_s1 || 0)
                 && Number(stock.fK_S2id || 0) === Number(modal_s2 || 0);
         });
         if (!modal_product_data || modal_product_data.canPurchase === false || !selectedStock || selectedStock.canPurchase !== true) {
-            Coker.sweet.error("請注意", (selectedStock && selectedStock.purchaseUnavailableReason)
+            Coker.sweet.error(ModalText("AlertTitle", "請注意"), (selectedStock && selectedStock.purchaseUnavailableReason)
                 || (modal_product_data && modal_product_data.purchaseUnavailableReason)
-                || "此商品目前無法購買", null, false);
+                || ModalText("QuickCartProductCannotPurchase", "此商品目前無法購買"), null, false);
             return;
         }
         if (modal_s1 != null && modal_s2 != null) {
@@ -395,7 +404,7 @@ function AddToCart() {
                 Quantity: $input_quantity.val(),
             }).done(function (result) {
                 if (result.success) {
-                    Coker.sweet.success("商品已成功加入購物車", null, true);
+                    Coker.sweet.success(ModalText("AddCartSuccess", "商品已成功加入購物車"), null, true);
                     var addedDetail = {
                         productId: Number($modal.data("pid")),
                         result: result
@@ -418,14 +427,14 @@ function AddToCart() {
                     if (result.error === "庫存不足") {
                         Coker.sweet.error(result.error, result.message, null, false);
                     } else {
-                        Coker.sweet.error("商品加入購物車發生錯誤", result.message, null, true);
+                        Coker.sweet.error(ModalText("AddCartError", "商品加入購物車發生錯誤"), result.message, null, true);
                     }
                 }
             }).fail(function () {
-                Coker.sweet.error("錯誤", "商品加入購物車發生錯誤", null, true);
+                Coker.sweet.error(ModalText("Error", "錯誤"), ModalText("AddCartError", "商品加入購物車發生錯誤"), null, true);
             });
         } else {
-            Coker.sweet.error("請注意", "請確實選擇規格", null, false);
+            Coker.sweet.error(ModalText("AlertTitle", "請注意"), ModalText("AddCartNeedSelection", "請確實選擇規格"), null, false);
         }
     }
 }
@@ -438,8 +447,8 @@ function UpdateCartVariant() {
 
     if (!selectedStock || selectedStock.canPurchase !== true || !modal_price_id) {
         Coker.sweet.error(
-            "無法修改商品規格",
-            (selectedStock && selectedStock.purchaseUnavailableReason) || "請選擇可購買的規格與價格方案。",
+            ModalText("QuickCartVariantFailed", "無法修改商品規格"),
+            (selectedStock && selectedStock.purchaseUnavailableReason) || ModalText("QuickCartVariantSelectHint", "請選擇可購買的規格與價格方案。"),
             null,
             false
         );
@@ -457,8 +466,8 @@ function UpdateCartVariant() {
     }).done(function (result) {
         if (!result || result.success !== true) {
             Coker.sweet.error(
-                "無法修改商品規格",
-                (result && result.message) || "請重新整理購物車後再試。",
+                ModalText("QuickCartVariantFailed", "無法修改商品規格"),
+                (result && result.message) || ModalText("QuickCartVariantRefresh", "請重新整理購物車後再試。"),
                 null,
                 true
             );
@@ -479,7 +488,7 @@ function UpdateCartVariant() {
 
         bootstrap.Modal.getOrCreateInstance(document.getElementById("ShoppingCarModal")).hide();
     }).fail(function () {
-        Coker.sweet.error("無法修改商品規格", "請稍後再試。", null, true);
+        Coker.sweet.error(ModalText("QuickCartVariantFailed", "無法修改商品規格"), ModalText("QuickCartTryAgainLater", "請稍後再試。"), null, true);
         $saveButton.prop("disabled", false);
     });
 }
@@ -493,7 +502,7 @@ window.ProductQuickCart = window.ProductQuickCart || {
         ShoppingCarModalInit();
         quickCartOptions = options;
         DataClear();
-        ModalSetLoading(true, "正在讀取商品資料…");
+        ModalSetLoading(true, ModalText("QuickCartLoading", "正在讀取商品資料…"));
         $modal.data("pid", productId);
         $pro_name.text(options.productName || "");
         modal_default_image = options.imageUrl || "/images/noImg.jpg";
@@ -504,7 +513,7 @@ window.ProductQuickCart = window.ProductQuickCart || {
         $modal.find(".modal-left").attr({ "data-product-url": productUrl, role: "link", tabindex: "0" });
         $modal.find(".btn_addToCar").removeClass("close");
         if (IsQuickCartEditMode()) {
-            $modal.find(".btn_addToCar > div").text("確認修改");
+            $modal.find(".btn_addToCar > div").text(ModalText("QuickCartConfirmChange", "確認修改"));
         }
         ModalDefaultSet();
 

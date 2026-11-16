@@ -100,12 +100,12 @@
         if ($content.find(".btn_addToCar").length > 0) {
             $content.find(".btn_addToCar").removeClass("d-none");
         } else {
-            const html = '<div class="btn_addToCar"><button type="button">加入購物車</button></div>';
+            const html = '<div class="btn_addToCar"><button type="button"></button></div>';
             $content.find("div").first().find("a").first().after(html);
         }
 
         const $buyButton = $content.find(".btn_addToCar").first();
-        $buyButton.find("button").text("加入購物車");
+        $buyButton.find("button").text(w.CokerI18n.get("AddtoCart", "加入購物車"));
         const $wrappingLink = $buyButton.closest("a");
         if ($wrappingLink.length && !$wrappingLink.is($content)) {
             $buyButton.insertAfter($wrappingLink);

@@ -35,11 +35,11 @@
     }
 
     function LogisticsLabel(recipient) {
-        if (!recipient.logisticsType) return "尚未指定配送方式";
+        if (!recipient.logisticsType) return cart.Utils.t("CkNoDeliveryMethod", "尚未指定配送方式");
         if (IsCvsType(recipient.logisticsType)) {
-            return recipient.cvsStoreName ? "超商取貨・" + recipient.cvsStoreName : "超商取貨";
+            return recipient.cvsStoreName ? cart.Utils.t("CkCvsPickup", "超商取貨") + "・" + recipient.cvsStoreName : cart.Utils.t("CkCvsPickup", "超商取貨");
         }
-        return "宅配／貨運";
+        return cart.Utils.t("CkHomeDelivery", "宅配／貨運");
     }
 
     function GetSelectedLogisticsType() {
@@ -154,15 +154,15 @@
 
         if (isCvs) {
             if (cart.Shipping.PaymentGatewaySelectsCvsStore()) {
-                recipient.recipientAddress = "將於付款平台選擇取貨門市";
+                recipient.recipientAddress = cart.Utils.t("CkStoreOnPaymentPlatform", "將於付款平台選擇取貨門市");
             } else {
                 recipient.recipientAddress = storeName
                     ? storeName + (storeAddress ? "（" + storeAddress + "）" : "")
-                    : "尚未選擇取貨門市";
+                    : cart.Utils.t("CkStoreNotSelected", "尚未選擇取貨門市");
             }
-            $(".recipient-display-address-label").text("取貨門市");
+            $(".recipient-display-address-label").text(cart.Utils.t("CkPickupStore", "取貨門市"));
         } else {
-            $(".recipient-display-address-label").text("收件地址");
+            $(".recipient-display-address-label").text(cart.Utils.t("CkShippingAddress", "收件地址"));
         }
 
         cart.Utils.ShoppingCartDataInsert(recipient, $("#RecipientActivePanel > .default_data"));
@@ -200,8 +200,8 @@
     function CreateCard(data) {
         var recipient = Normalize(data);
         var address = IsCvsType(recipient.logisticsType)
-            ? (recipient.cvsAddress || "尚未設定取貨門市")
-            : (recipient.recipientAddress || "尚未設定宅配地址");
+            ? (recipient.cvsAddress || cart.Utils.t("CkStoreNotSet", "尚未設定取貨門市"))
+            : (recipient.recipientAddress || cart.Utils.t("CkAddressNotSet", "尚未設定宅配地址"));
         var $details = $("<div>", { class: "recipient-card-details" });
 
         $("<div>", { class: "recipient-card-heading" })
@@ -214,7 +214,7 @@
         var $button = $("<button>", {
             type: "button",
             class: "recipient-use-button align-self-center",
-            text: "使用這筆資料"
+            text: cart.Utils.t("CkUseThis", "使用這筆資料")
         }).on("click", function () {
             Apply(data, true);
         });
@@ -231,12 +231,12 @@
         $("#RecipientsListEmpty").toggleClass("d-none", items.length > 0);
         $("#RecipientModal .recipient-footer-new").toggleClass("d-none", items.length === 0);
         $("#RecipientsListEmpty .recipient-empty-title").text(
-            logisticsType ? "這個配送方式還沒有常用收件資訊" : "目前沒有常用收件資訊"
+            logisticsType ? cart.Utils.t("CkRecipientEmptyForMethod", "這個配送方式還沒有常用收件資訊") : cart.Utils.t("CkRecipientEmpty", "目前沒有常用收件資訊")
         );
         $("#RecipientsListEmpty .recipient-empty-description").text(
             logisticsType
-                ? "可新增一筆符合目前配送方式的收件資訊。"
-                : "先新增收件人與配送方式，下次結帳就能直接選用。"
+                ? cart.Utils.t("CkRecipientAddForMethod", "可新增一筆符合目前配送方式的收件資訊。")
+                : cart.Utils.t("CkRecipientEmptyHint", "先新增收件人與配送方式，下次結帳就能直接選用。")
         );
 
         items.forEach(function (item) {
@@ -246,8 +246,8 @@
 
     function ShowLoadError(xhr) {
         var message = xhr && xhr.status === 401
-            ? "登入狀態已失效，請重新登入後再讀取。"
-            : "請重新讀取；也可以直接新增一筆收件資訊。";
+            ? cart.Utils.t("CkSessionExpired", "登入狀態已失效，請重新登入後再讀取。")
+            : cart.Utils.t("CkReloadOrAdd", "請重新讀取；也可以直接新增一筆收件資訊。");
 
         $("#RecipientsListLoading").addClass("d-none");
         $("#RecipientsListError").removeClass("d-none")

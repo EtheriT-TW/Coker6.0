@@ -2070,11 +2070,11 @@ body > .popover.bs-popover-auto.fade {
     }
 
     #Step1 .purchase_item > .content > .cart-item-price::before {
-        content: "單價";
+        content: attr(data-label);
     }
 
     #Step1 .purchase_item > .content > .pro_subtotal::before {
-        content: "小計";
+        content: attr(data-label);
     }
 
     #Step1 .purchase_item.cart-additional-item > .content > .cart-item-price,
@@ -2323,11 +2323,11 @@ body > .popover.bs-popover-auto.fade {
     }
 
     #Step1 .purchase_item .cart-item-price::before {
-        content: "單價：";
+        content: attr(data-label-colon);
     }
 
     #Step1 .purchase_item > .content > .pro_subtotal::before {
-        content: "小計：";
+        content: attr(data-label-colon);
     }
 
     #Step1 .purchase_item .counter_input button,

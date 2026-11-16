@@ -136,16 +136,16 @@
                     const bonusNotEnough = Number(bonus || 0) > memberBonus;
 
                     if (!S.hasProds) {
-                        Coker.sweet.warning("錯誤", "無可購買商品。", null, false);
+                        Coker.sweet.warning(cart.Utils.t("Error", "錯誤"), cart.Utils.t("CkNoPurchasable", "無可購買商品。"), null, false);
                         S.buy_step_swiper.slideTo(0);
                     } else if (!hasSelected) {
-                        Coker.sweet.warning("請注意", "請先勾選要結帳的商品（至少 1 項）。", null);
+                        Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkSelectAtLeastOne", "請先勾選要結帳的商品（至少 1 項）。"), null);
                         S.buy_step_swiper.slideTo(0);
                         return;
                     } else if ($errorSelected.length > 0) {
                         Coker.sweet.warning(
-                            "無法結帳",
-                            "您選取的商品中包含已下架或庫存不足的品項，請先調整或移除後再繼續結帳。",
+                            cart.Utils.t("CkCannotCheckout", "無法結帳"),
+                            cart.Utils.t("CkSelectedUnavailable", "您選取的商品中包含已下架或庫存不足的品項，請先調整或移除後再繼續結帳。"),
                             null,
                             false
                         );
@@ -153,8 +153,8 @@
                         return;
                     } else if (bonusNotEnough) {
                         Coker.sweet.warning(
-                            "紅利不足",
-                            `目前已選商品需紅利 ${Number(bonus || 0).toLocaleString()} 點，會員可用紅利 ${memberBonus.toLocaleString()} 點，請先調整商品或數量。`,
+                            cart.Utils.t("BonusInsufficient", "紅利不足"),
+                            cart.Utils.t("CkBonusShortAdjust", "目前已選商品需紅利 {0} 點，會員可用紅利 {1} 點，請先調整商品或數量。", [Number(bonus || 0).toLocaleString(), memberBonus.toLocaleString()]),
                             null,
                             false
                         );
@@ -219,22 +219,22 @@
                         if (S.InvoiceOpen) { S.InvoiceFilled = cart.Forms.FormCheck(S.InvoiceForms) };
                         cart.Payment.Core.RadioPayment();
                         if (S.ShippingForms.find(".noshipping").length > 0) {
-                            Coker.sweet.warning("請注意", "店家尚未設置運費方式，無法繼續", null);
+                            Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkNoShippingCannotContinue", "店家尚未設置運費方式，無法繼續"), null);
                             S.buy_step_swiper.slideTo(1);
                         } else if (S.PaymentForms.find(".nopayment").length > 0) {
-                            Coker.sweet.warning("請注意", "店家尚未設置付款方式，無法繼續", null);
+                            Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkNoPaymentCannotContinue", "店家尚未設置付款方式，無法繼續"), null);
                             S.buy_step_swiper.slideTo(1);
                         } else {
                             S.shipMethodsChosen = cart.Forms.FormCheck(S.ShippingForms);
                             S.payMethodsChosen = cart.Forms.FormCheck(S.PaymentForms);
                             if (!(S.shipMethodsChosen && S.payMethodsChosen)) {
-                                Coker.sweet.warning("請注意", "請確實選擇運送及付款方式！", null);
+                                Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkChooseShippingPayment", "請確實選擇運送及付款方式！"), null);
                                 setTimeout(function () {
                                     S.buy_step_swiper.slideTo(1);
                                 }, 1500);
                             }
                         }
-                        Coker.sweet.warning("未完成結帳流程！", "若資料已確實填寫完畢，請點選下方[確認付款]按鈕進入付款程序", null);
+                        Coker.sweet.warning(cart.Utils.t("CkCheckoutIncomplete", "未完成結帳流程！"), cart.Utils.t("CkCheckoutIncompleteHint", "若資料已確實填寫完畢，請點選下方[確認付款]按鈕進入付款程序"), null);
                         setTimeout(function () {
                             S.buy_step_swiper.slideTo(1);
                         }, 1500);
@@ -429,41 +429,41 @@
             S.shipMethodsChosen = S.shipMethodsChosen && cart.Shipping.HasSelectedCvsStore();
             if (!S.OrdererFilled) {
                 if (!S.OrdererOpen) cart.Forms.OrdererEdit(true);
-                Coker.sweet.warning("請注意", "請確實填寫訂購人資料！", null);
+                Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkFillOrderer", "請確實填寫訂購人資料！"), null);
             } else if (!S.RecipientFilled) {
-                Coker.sweet.warning("請注意", "請確實填寫收件人資料！", null);
+                Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkFillRecipient", "請確實填寫收件人資料！"), null);
             } else if (!S.InvoiceFilled) {
-                Coker.sweet.warning("請注意", "請確實填寫發票寄送資料！", null);
+                Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkFillInvoiceDelivery", "請確實填寫發票寄送資料！"), null);
             } else if (!S.shipMethodsChosen) {
                 if (cart.Shipping.IsCvsShippingSelected() && !cart.Shipping.HasSelectedCvsStore()) {
                     S.CvsStoreValidationRequested = true;
                     cart.Shipping.UpdateCvsStoreSelectionDisplay();
-                    Coker.sweet.warning("請注意", "請先選擇超商取貨門市！", null);
+                    Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkChooseCvsStore", "請先選擇超商取貨門市！"), null);
                 } else {
-                    Coker.sweet.warning("請注意", "請選擇運送方式！", null);
+                    Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkChooseShippingExcl", "請選擇運送方式！"), null);
                 }
             } else if (!S.payMethodsChosen && !cart.Payment.Core.hasProvidersByType("embedded")) {
-                Coker.sweet.warning("請注意", "請選擇付款方式！", null);
+                Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkChoosePaymentExcl", "請選擇付款方式！"), null);
             } else {
                 var isEmbeddedPayment = cart.Payment.Core.isActiveEmbeddedPayment();
                 if (isEmbeddedPayment && !cart.Payment.Core.isActiveEmbeddedLoaded()) {
                     cart.Payment.Core.setProvidersMonitorByType("embedded", true);
                     cart.Payment.Core.reloadActiveEmbeddedProvider();
-                    co.sweet.warning("付款模組尚未載入完成，請稍候再試。", "", null);
+                    co.sweet.warning(cart.Utils.t("CkPaymentModuleLoading", "付款模組尚未載入完成，請稍候再試。"), "", null);
                 } else if (isEmbeddedPayment && !cart.Payment.Core.isActiveEmbeddedReady()) {
                     cart.Payment.Core.setProvidersMonitorByType("embedded", true);
                     cart.Payment.Core.reloadActiveEmbeddedProvider();
 
                     co.sweet.warning(
-                        "付款資訊已更新",
-                        "正在重新同步付款資訊，請稍候再點選確認付款。",
+                        cart.Utils.t("CkPaymentInfoUpdated", "付款資訊已更新"),
+                        cart.Utils.t("CkPaymentResyncing", "正在重新同步付款資訊，請稍候再點選確認付款。"),
                         null
                     );
                 } else {
                     cart.Payment.Core.setProvidersMonitorByType("embedded", false);
-                    Coker.sweet.custom("info", "是否確定結帳？", "點選確認進入付款流程", "是，開始付款", function () {
+                    Coker.sweet.custom("info", cart.Utils.t("CkConfirmCheckoutQ", "是否確定結帳？"), cart.Utils.t("CkConfirmCheckoutHint", "點選確認進入付款流程"), cart.Utils.t("CkStartPayment", "是，開始付款"), function () {
                         cart.Order.OrderHeaderAdd();
-                    }, "否", function () {
+                    }, cart.Utils.t("No", "否"), function () {
                         cart.Payment.Core.setProvidersMonitorByType("embedded", true);
                     });
                 }
@@ -499,7 +499,7 @@
 
         $(".btn_backshop").each(function () {
             var $this = $(this);
-            if ($this.attr("href") == "") $this.attr("title", "繼續購物：返回上一頁");
+            if ($this.attr("href") == "") $this.attr("title", cart.Utils.t("CkContinueShoppingBack", "繼續購物：返回上一頁"));
         })
         $(".btn_backshop").on("click", function (event) {
             var $this = $(this);

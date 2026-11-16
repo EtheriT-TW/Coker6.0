@@ -67,13 +67,12 @@ namespace EtheriT.Coker.Application.Token
                 string? RefreshTokenStr = null;
                 DateTime date = DateTime.Now;
                 TokenKeyItem tokenItem = new TokenKeyItem();
-                bool userStatus = loginUserData.IsLoggedIn();
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("Token", out tokenStr);
 
-                if (!string.IsNullOrEmpty(tokenStr) && userStatus)
+                if (!string.IsNullOrEmpty(tokenStr))
                 {
                     output = await CheckToken(null);
-                    if (output.Success) return output;
+                    if (output.Success && new JwtSecurityTokenHandler().ReadJwtToken(output.Token).ValidTo > DateTime.UtcNow.AddMinutes(1)) return output;
                 }
                 httpContextAccessor.HttpContext?.Response.Cookies.Delete("Token");
                 httpContextAccessor.HttpContext?.Request.Cookies.TryGetValue("RefreshToken", out RefreshTokenStr);
@@ -85,7 +84,12 @@ namespace EtheriT.Coker.Application.Token
                     {
                         var RefreshToken = await RefreshTokens.Where(e => e.StartTime < date && date < e.EndTime).FirstOrDefaultAsync();
                         var oidRefreshToken = await RefreshTokens.FirstOrDefaultAsync();
-                        if (RefreshToken != null)
+                        if (RefreshToken != null && RefreshToken.UserID == null)
+                        {
+                            // Refreshing an anonymous session must preserve its visitor identity.
+                            tokenItem = await NewToken(null, RefreshToken.UUID);
+                        }
+                        else if (RefreshToken != null)
                         {
                             var uuid = await db.MappingOldNewUUID
                                 .Where(e => e.TempUUID == RefreshToken.UUID && !e.IsDeleted)

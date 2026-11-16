@@ -182,7 +182,7 @@
             ShowNum: shownum,
             MaxLen: maxlen,
             Type: typeof $self.data("type") === "undefined" ? null : $self.data("type"),
-            SearchText: typeof $self.data("searchText") === "undefined" ? null : ($self.data("searchText") || "").toString().trim(),
+            SearchText: co.Directory.normalizeSearchKeyword($self.attr("data-search-text") ?? $self.data("searchText")),
             ProductNameFilter: String($self.data("productNameFilter") || "").trim(),
             SearchSortBy: typeof $self.data("searchSortBy") === "undefined" ? null : $self.data("searchSortBy"),
             SearchSortDirection: typeof $self.data("searchSortDirection") === "undefined" ? null : $self.data("searchSortDirection"),
@@ -263,6 +263,7 @@
                 .fail(function (error) {
                     if ($self.data("directoryRequestId") !== requestId) return;
 
+                    $self.removeData("page");
                     $self.removeData("directoryScrollAfterRender");
 
                     if (w.DirectoryRenderer && typeof w.DirectoryRenderer.hideLoading === "function") {

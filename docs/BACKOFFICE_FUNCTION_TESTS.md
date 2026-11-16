@@ -6,8 +6,8 @@ MVC「系統檢測 → 後台功能測試」的開始按鈕會真正呼叫已登
 它不執行 dotnet test、build、restore、bundle、Migration，也不透過 HTTP 遍歷所有 GET Action。
 這些開發／產物操作仍依根目錄 AGENTS.md 由使用者控制。
 
-目前登錄 220 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
-44 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 220。
+目前登錄 221 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
+45 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 221。
 原本的 160 個較廣泛人工驗收規格保留在同一份內部清單；尚未綁定 executor 的規格不列入自動檢測畫面及通過數。
 這不是宣稱原本的完整瀏覽器與外部服務驗收已全部自動化。
 
@@ -267,3 +267,15 @@ MVC Program 已啟用 EnableRetryOnFailure，但 CustSearch SetDefault／AddUp �
 原商品灰色標頭／表單底色綁定 ProductContent／ProductForm，搜尋頁未套用。將相同規則抽至 wwwroot/css/CokerCore/editor.css，加入既有 CokerCore.min.css 輸入，兩頁以 backoffice-editor 明確套用；移除商品頁重複配色規則，仍使用既有 --color-gray-bg-dark 與全站字級／按鈕色票。搜尋表單白色內容卡沿用商品 card p-2，顯示開關改用既有 selectedItem＋visibility／visibility_off 圖示，保留欄位 ID 及權限／忙碌停用。
 ProductManagement.ProductList.edit 與 SearchManagement.CustSearch.editor 人工規格補兩頁配色對照、圖示切換、窄螢幕與商品原操作回歸；共用樣式為選用，不自動改動其他功能。未執行瀏覽器、build 或 bundle，沒有新增 schema 變更。
 MVC 應由使用者手動 npm run create-bundles，讓 CokerCore.min.css 與 ProductList.min.css 同步更新；既有流程先檢查授權，再執行 yarn && gulp buildDev，可能下載相依、更新 lock file、產生大量資產及啟動監看，耗時依環境而定。不得直接引用 editor.css 繞過 bundle。
+
+## 搜尋日誌輸入與訪客識別回歸
+
+新增 `Page.Index.search-log-validation`，綁定 `sandbox/search-log-validation`。使用獨立 InMemory 資料庫、測試簽章及實際 Token／搜尋日誌服務，驗證缺少、損壞、過期、跨站與全零 UUID Token 不落日誌；有效匿名 Token 搭配空白、undefined／null 及超長關鍵字不落日誌。有效中文、加號關鍵字保留原 Token UUID，去除前後空白，同日同目標去重，不同目標分開記錄。
+
+人工回歸：以新訪客直接開啟搜尋網址，確認 Token 建立後有效搜尋寫入非零 UUID；模擬 Token 建立失敗或刪除 Token 後直接呼叫搜尋 API，內容仍可查詢而不新增無效日誌。既有異常資料不自動修改。上述案例及瀏覽器驗收尚未執行；隔離案例不代表 SQL 或正式環境驗證通過。
+
+## 搜尋初始化與 Token 更新流程回歸
+
+擴充既有 `sandbox/search-log-validation`：以實際 Token 服務驗證匿名有效 Token 重用、過期 Access Token 透過 RefreshToken 更新、匿名 UUID 保留、舊 RefreshToken 不被誤作廢及更新後日誌 UUID 一致；簽入基礎設施以隔離替身處理，不驗證真實 Cookie 驗證管線。未增加自動案例數。
+
+擴充 `Page.Index.search-keyword-links` 人工瀏覽器驗收：慢網路首次進站多目錄共用初始化；搜尋 API／上下則等待 Token；到期前更新；Token 失敗不送搜尋且可重試；缺少輸入、空白、undefined／null 在前台阻擋；動態關鍵字屬性及 jQuery 快取同步。對應來源為前台 site.js、coker.api.token.js、coker.core.js、coker.api.directory.js、coker.feature.search.js、Search.js 及 Directory boot.js。瀏覽器規格仍未綁定自動執行器，不計自動通過數。上述執行器與人工情境均未執行。

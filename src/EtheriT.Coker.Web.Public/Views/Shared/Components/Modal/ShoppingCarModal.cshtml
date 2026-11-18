@@ -1,4 +1,5 @@
 ﻿@using EtheriT.Coker.Web.Public.Views.Shared.Components.Modal
+@using EtheriT.Coker.Application.Shared.i18n;
 
 <link rel="stylesheet" href="~/css/Modal/ShoppingCarModal.min.css" asp-append-version="true" />
 
@@ -7,18 +8,18 @@
 		<div class="modal-body position-relative">
 			<div class="quick-cart-loading" role="status" aria-live="polite">
 				<div class="spinner-border" aria-hidden="true"></div>
-				<div class="quick-cart-loading-text">正在讀取商品資料…</div>
+				<div class="quick-cart-loading-text">@L.get("QuickCartLoading")</div>
 			</div>
 			<button class="btn_close bg-transparent border-0 fs-4 position-absolute top-0 end-0" data-bs-dismiss="modal">
-				<i class="fa-regular fa-circle-xmark"><span class="d-none">關閉</span></i>
+				<i class="fa-regular fa-circle-xmark"><span class="d-none">@L.get("CloseWindow")</span></i>
 			</button>
 
 			<div class="content py-3 py-md-0">
 				<figure class="row">
 					<div class="d-flex flex-column modal-left col-md-5">
 						<div class="col-md-4 pb-2 pb-md-0 text-center align-self-center w-100">
-							<a class="modal-product-link d-block" href="#" aria-label="瀏覽商品完整資訊">
-								<img class="pro_image img-fluid border" alt="商品圖" />
+							<a class="modal-product-link d-block" href="#" aria-label="@L.get("QuickCartViewProduct")">
+								<img class="pro_image img-fluid border" alt="@L.get("QuickCartProductImage")" />
 							</a>
 						</div>
 						<ul class="tag d-flex flex-wrap my-2 overflow-hidden d-none"></ul>
@@ -32,7 +33,7 @@
 						</div>
 
 						<div class="priceframe d-flex flex-wrap align-items-center">
-							<span class="price-label modal-field-title">售價</span>
+							<span class="price-label modal-field-title">@L.get("QuickCartPriceLabel")</span>
 							<div class="ori_price price me-2 d-none"></div>
 							<div class="discount d-flex align-items-center fs-4 fw-bold"></div>
 						</div>
@@ -40,22 +41,22 @@
 						<div class="options BuyGroup">
 							<div class="buy_line row d-sm-flex d-block justify-content-center flex-column">
 								<div class="counter col-auto d-flex align-items-center my-2">
-									<label id="counterTitle" class="modal-field-title" for="quantityInput2">數量</label>
+									<label id="counterTitle" class="modal-field-title" for="quantityInput2">@L.get("Quantity")</label>
 									<div class="quick-cart-unavailable d-none" role="status" aria-live="polite"></div>
 									<button class="btn_count_minus bg-white">
 										<i class="fa-solid fa-minus"></i>
-										<span class="d-none">減少</span>
+										<span class="d-none">@L.get("Decrease")</span>
 									</button>
 									<input id="quantityInput2" class="input_pro_quantity text-center" name="counter" type="number" value="1">
 
 									<button class="btn_count_plus bg-white">
 										<i class="fa-solid fa-plus"></i>
-										<span class="d-none">增加</span>
+										<span class="d-none">@L.get("Increase")</span>
 									</button>
 								</div>
 
 								<button type="button" class="btn_addToCar col py-2 text-center text-white border-0">
-									<div>加入購物車</div>
+									<div>@L.get("AddtoCart")</div>
 								</button>
 							</div>
 						</div>
@@ -73,7 +74,7 @@
 				</template>
 
 				<a href="#" class="btn_learnMore col py-2 d-flex align-items-center justify-content-center w-100">
-					<div class="text-white">瀏覽更多</div>
+					<div class="text-white">@L.get("ViewMore")</div>
 				</a>
 				
 			</div>

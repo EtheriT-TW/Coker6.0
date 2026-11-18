@@ -409,8 +409,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                 {
                     response.Error = IsSqlDeadlock(ex) ? "CartBusy" : "CartUpdateFailed";
                     response.Message = IsSqlDeadlock(ex)
-                        ? "購物車正在更新，請稍後再試。"
-                        : "商品加入購物車失敗，請稍後再試。";
+                        ? L.get("CartBusyMessage")
+                        : L.get("CartUpdateFailedMessage");
                 }
                 else
                 {
@@ -2153,8 +2153,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
                         await db.SaveChangesAsync();
                         output.Success = true;
                         output.Message = removedAdditionalIds.Any()
-                            ? $"主要商品已移除，並一併移除 {removedAdditionalIds.Count} 項已失效的優惠商品。"
-                            : "商品已移除。";
+                            ? L.get("CartItemRemovedWithAdditional", removedAdditionalIds.Count)
+                            : L.get("CartItemRemoved");
                         output.Object = new { RemovedCartIds = removedAdditionalIds };
                     }
                     else throw new Exception("查無商品資料");

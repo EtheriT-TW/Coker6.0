@@ -1,5 +1,6 @@
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Core.Models;
+using EtheriT.Coker.Application.Shared.i18n;
 
 namespace EtheriT.Coker.Core.Product
 {
@@ -25,13 +26,13 @@ namespace EtheriT.Coker.Core.Product
         public static string? GetProductUnavailableReason(Prod product, DateTime? now = null)
         {
             var currentTime = now ?? DateTime.Now;
-            if (product.IsDeleted || !product.Visible || product.RemovedFromShelves) return "商品已下架";
-            if (product.Status == ProdStatusEnum.售完) return "商品已售完";
-            if (product.Status == ProdStatusEnum.停產) return "商品已停產";
+            if (product.IsDeleted || !product.Visible || product.RemovedFromShelves) return L.get("ProductUnavailable");
+            if (product.Status == ProdStatusEnum.售完) return L.get("ProdEmpty");
+            if (product.Status == ProdStatusEnum.停產) return L.get("ProductDiscontinued");
             if (!product.permanent &&
                 (!product.StartTime.HasValue || !product.EndTime.HasValue ||
                  currentTime <= product.StartTime.Value || currentTime >= product.EndTime.Value))
-                return "目前不在商品販售期間";
+                return L.get("ProductNotInSalePeriod");
             return null;
         }
 
@@ -56,11 +57,11 @@ namespace EtheriT.Coker.Core.Product
         {
             var productReason = GetProductUnavailableReason(product, now);
             if (productReason != null) return productReason;
-            if (stock.IsDeleted) return "此規格已下架";
-            if (stock.IsTimePrice) return "此規格為時價商品";
-            if (!hasPrice) return "此規格目前沒有可購買價格";
+            if (stock.IsDeleted) return L.get("StockRemoved");
+            if (stock.IsTimePrice) return L.get("StockIsTimePrice");
+            if (!hasPrice) return L.get("StockNoPrice");
             if (!product.NoStockManagement && GetMaxPurchaseQuantity(product, stock) <= 0)
-                return "已售完";
+                return L.get("StockSoldOut");
             return null;
         }
     }

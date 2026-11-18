@@ -140,10 +140,10 @@ function groupByFreight(list) {
 function createGroupHeader(meta) {
     const $tpl = $($('#Template_Cart_GroupHeader').html().trim());
     $tpl.attr('data-group-id', meta.id);
-    $tpl.find('[data-field="title"]').text(meta.title || '一般配送');
+    $tpl.find('[data-field="title"]').text(meta.title || CokerI18n.get("CartDefaultShipping", "一般配送"));
     if (meta.describe) $tpl.find('[data-field="describe"]').text(meta.describe).show();
     else $tpl.find('[data-field="describe"]').hide();
-    $tpl.find('[data-field="count"]').text(`${meta.count} 件`);
+    $tpl.find('[data-field="count"]').text(CokerI18n.get("CartItemCount", "{0} 件").replace("{0}", meta.count));
     $tpl.find('.btn-checkout-group').attr('data-group-id', meta.id);
     return $tpl;
 }
@@ -160,7 +160,7 @@ function renderCartGroups(result) {
         const items = groups[key];
         const meta = {
             id: Number(key),
-            title: items[0].freight?.title || '一般配送',
+            title: items[0].freight?.title || CokerI18n.get("CartDefaultShipping", "一般配送"),
             describe: items[0].freight?.describe || '',
             count: items.length
         };
@@ -169,7 +169,7 @@ function renderCartGroups(result) {
         const $group = $($('#Template_Cart_Group').html().trim());
         $group.attr('data-group-id', meta.id);
         $group.find('[data-field="title"]').text(meta.title);
-        $group.find('[data-field="count"]').text(`${meta.count} 件`);
+        $group.find('[data-field="count"]').text(CokerI18n.get("CartItemCount", "{0} 件").replace("{0}", meta.count));
         if (meta.describe) $group.find('[data-field="describe"]').text(meta.describe);
         else $group.find('[data-field="describe"]').remove();
 
@@ -185,16 +185,16 @@ function renderCartGroups(result) {
 
                 '<span>' +
                 '<i class="fa-solid fa-turn-down me-2"></i>' +
-                '加價購／贈品' +
+                CokerI18n.get("CartAddOnGift", "加價購／贈品") +
                 '</span>' +
 
                 '<span class="cart-additional-section-actions">' +
-                '<small>會隨本組主要商品一併結帳</small>' +
+                '<small>' + CokerI18n.get("CartAddOnCheckoutWithGroup", "會隨本組主要商品一併結帳") + '</small>' +
 
                 '<button type="button" ' +
                 'class="btn btn-sm btn-outline-danger js-open-cart-addons">' +
                 '<i class="fa-solid fa-plus me-1"></i>' +
-                '補選／調整' +
+                CokerI18n.get("CartAddOnAdjust", "補選／調整") +
                 '</button>' +
                 '</span>' +
                 '</li>'
@@ -205,8 +205,8 @@ function renderCartGroups(result) {
             $groupItems.append(
                 '<li class="cart-order-additional-section-label">' +
                 '<span>' +
-                '<strong>訂單加價購／贈品</strong>' +
-                '<small>本筆購物車符合優惠活動條件</small>' +
+                '<strong>' + CokerI18n.get("CartOrderAddOnGift", "訂單加價購／贈品") + '</strong>' +
+                '<small>' + CokerI18n.get("CartOrderAddOnQualified", "本筆購物車符合優惠活動條件") + '</small>' +
                 '</span>' +
                 '</li>'
             );
@@ -412,7 +412,7 @@ function CartListAdd(data, $container) {
         $template.find('.pro_name').first().before(
             '<span class="cart-additional-badge">' +
             '<i class="fa-solid fa-link me-1"></i>' +
-            (isOrderLevel ? '訂單優惠' : '附屬優惠品') +
+            (isOrderLevel ? CokerI18n.get("CartBadgeOrderOffer", "訂單優惠") : CokerI18n.get("CartBadgeAddOnItem", "附屬優惠品")) +
             '</span>'
         );
 
@@ -425,11 +425,11 @@ function CartListAdd(data, $container) {
 
         $template.find('.pro_quantity')
             .prop('readonly', true)
-            .attr('aria-label', '優惠商品數量');
+            .attr('aria-label', CokerI18n.get("CartAddOnQuantity", "優惠商品數量"));
 
         if (!isOrderLevel) {
             $template.find('.btn_count_plus')
-                .attr('title', '補選或調整優惠商品');
+                .attr('title', CokerI18n.get("CartAddOnAdjustTitle", "補選或調整優惠商品"));
         }
     }
     else {
@@ -457,11 +457,11 @@ function CartListAdd(data, $container) {
                     cart.Items.ReloadCartDisplay().done(function (items) {
                         ReloadCartDropdown(items);
                         S.productAddOnDrafts = null;
-                        Coker.sweet.success("商品規格已更新", null, true);
+                        Coker.sweet.success(CokerI18n.get("CartVariantUpdated", "商品規格已更新"), null, true);
                     }).fail(function () {
                         Coker.sweet.error(
-                            "商品已更新",
-                            "畫面更新失敗，請重新整理購物車確認。",
+                            CokerI18n.get("CartItemUpdated", "商品已更新"),
+                            CokerI18n.get("CartRefreshFailed", "畫面更新失敗，請重新整理購物車確認。"),
                             null,
                             true
                         );
@@ -474,7 +474,7 @@ function CartListAdd(data, $container) {
             .removeAttr("target rel")
             .attr({
                 href: "#",
-                title: `查看或修改：${data.title}`,
+                title: CokerI18n.get("CartViewOrEditTitle", "查看或修改：{0}").replace("{0}", data.title),
                 role: "button"
             })
             .on("click", openVariantEditor);
@@ -485,7 +485,7 @@ function CartListAdd(data, $container) {
         }
         $("<span>", {
             class: "cart-item-edit-variant border-0 bg-transparent p-0",
-            text: "查看／修改"
+            text: CokerI18n.get("CartViewOrEdit", "查看／修改")
         }).appendTo($specDetail);
     }
 
@@ -505,7 +505,7 @@ function CartListAdd(data, $container) {
         if (!$shortageContent.length) $shortageContent = $template;
         $shortageContent.append(
             $('<div class="js-cart-stock-shortage text-danger small mt-1"></div>')
-                .text(data.describe || "目前庫存不足，請先調整數量才可結帳。")
+                .text(data.describe || CokerI18n.get("CartStockShortCheckout", "目前庫存不足，請先調整數量才可結帳。"))
         );
     } else if (isUnavailable) {
         $template.addClass("cart-item-error");
@@ -521,7 +521,7 @@ function CartListAdd(data, $container) {
             .prop('checked', false)
             .attr('data-requires-confirmation', 'true');
 
-        var warningMessage = data.describe || "商品資訊已調整，請確認後再勾選結帳。";
+        var warningMessage = data.describe || CokerI18n.get("CartItemChanged", "商品資訊已調整，請確認後再勾選結帳。");
         var $warningContent = $template.find(".js-cart-item-message");
         if (!$warningContent.length) $warningContent = $template;
 
@@ -538,18 +538,18 @@ function CartListAdd(data, $container) {
 
         if (mayRemoveAdditionalItems) {
             Coker.sweet.confirm(
-                "確定移除主要商品？",
-                "移除後若不再符合活動資格，相關加價購／贈品也會一併移除。",
-                "確認移除",
-                "取消",
+                CokerI18n.get("CartRemoveMainTitle", "確定移除主要商品？"),
+                CokerI18n.get("CartRemoveMainText", "移除後若不再符合活動資格，相關加價購／贈品也會一併移除。"),
+                CokerI18n.get("CartRemoveConfirmButton", "確認移除"),
+                CokerI18n.get("Cancel", "取消"),
                 function () {
-                    cart.Items.CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品時發生錯誤");
+                    cart.Items.CartDelete($self, $self.data("scId"), CokerI18n.get("CartRemoveSuccess", "成功移除商品"), CokerI18n.get("CartRemoveError", "移除商品發生未知錯誤"));
                 }
             );
             return;
         }
-        Coker.sweet.confirm("確定將商品從購物車移除？", "該商品將會從購物車中移除，且不可復原。", "確認移除", "取消", function () {
-            cart.Items.CartDelete($self, $self.data("scId"), "成功移除商品", "移除商品發生未知錯誤");
+        Coker.sweet.confirm(CokerI18n.get("CartRemoveConfirmTitle", "確定將商品從購物車移除？"), CokerI18n.get("CartRemoveConfirmText", "該商品將會從購物車中移除，且不可復原。"), CokerI18n.get("CartRemoveConfirmButton", "確認移除"), CokerI18n.get("Cancel", "取消"), function () {
+            cart.Items.CartDelete($self, $self.data("scId"), CokerI18n.get("CartRemoveSuccess", "成功移除商品"), CokerI18n.get("CartRemoveError", "移除商品發生未知錯誤"));
         });
     });
 
@@ -650,9 +650,9 @@ function CartListAdd(data, $container) {
                             $btn_favorites.data("Fid", favorites.message);
                             $self.addClass("fa-solid")
                             $self.removeClass("fa-regular")
-                            Coker.sweet.success("成功將商品加入收藏", null, true);
+                            Coker.sweet.success(CokerI18n.get("AddFavoriteSuccess", "成功將商品加入收藏"), null, true);
                         } else {
-                            Coker.sweet.error("商品加入收藏發生錯誤", favorites.message, null, true);
+                            Coker.sweet.error(CokerI18n.get("CartAddFavoriteError", "商品加入收藏發生錯誤"), favorites.message, null, true);
                         }
                     });
                 } else {
@@ -662,9 +662,9 @@ function CartListAdd(data, $container) {
                                 $btn_favorites.data("Fid", "");
                                 $self.addClass("fa-regular")
                                 $self.removeClass("fa-solid")
-                                Coker.sweet.success("已將商品從收藏中移除", null, true);
+                                Coker.sweet.success(CokerI18n.get("RemoveFavoriteSuccess", "已將商品從收藏中移除"), null, true);
                             } else {
-                                Coker.sweet.error("商品移除收藏發生錯誤", favorites.message, null, true);
+                                Coker.sweet.error(CokerI18n.get("CartRemoveFavoriteError", "商品移除收藏發生錯誤"), favorites.message, null, true);
                             }
                         });
                     }
@@ -695,7 +695,7 @@ function CartListInsert($frame, data) {
                 case "link":
                     $self.attr({
                         href: `/${OrgName}/search/product/${data['pId']}`,
-                        title: `連結至：${data['title']}(另開新視窗)`
+                        title: CokerI18n.get("LinkToAndBlank", "連結至：{0}(另開新視窗)").replace("{0}", data['title'])
                     });
                     break;
                 case "spec":
@@ -706,7 +706,7 @@ function CartListInsert($frame, data) {
                     data[key] = data[key].replaceAll(`/${OrgName}/`, '/');
                     $self.attr({
                         src: data[key],
-                        alt: `${data['title']}的圖片`
+                        alt: CokerI18n.get("CartProductImageAlt", "{0}的圖片").replace("{0}", data['title'])
                     });
                     break;
                 case "oldQuantity":
@@ -741,9 +741,9 @@ function CartListInsert($frame, data) {
 
                     if (oldBonus > 0) {
                         if (original > 0) {
-                            oldText = `${cart.Utils.formatMoneyHtml(original)} + 紅利${oldBonus.toLocaleString()}`;
+                            oldText = `${cart.Utils.formatMoneyHtml(original)} + ${CokerI18n.get("BonusPointsValue", "{0}紅利點").replace("{0}", oldBonus.toLocaleString())}`;
                         } else {
-                            oldText = `紅利${oldBonus.toLocaleString()}`;
+                            oldText = CokerI18n.get("BonusPointsValue", "{0}紅利點").replace("{0}", oldBonus.toLocaleString());
                         }
                     } else {
                         oldText = cart.Utils.formatMoneyHtml(original);
@@ -828,7 +828,7 @@ function CartListInsert($frame, data) {
                 $frame.find(".nostock")
                     .removeClass("d-none")
                     .find(".js-unavailable-message")
-                    .text(data.describe || "此商品目前無法購買，請調整或移除。");
+                    .text(data.describe || CokerI18n.get("CartItemUnavailable", "此商品目前無法購買，請調整或移除。"));
                 $frame.children(".content").addClass("d-none");
                 $frame.find(".btn_side_icon .favorites").addClass("d-none");
             }
@@ -872,7 +872,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
         $qty.val(oldQty);
         updateSubtotalAndDisplay(oldQty);
 
-        var displayMessage = message || "商品數量修改發生錯誤，請稍後再試。";
+        var displayMessage = message || CokerI18n.get("CartQtyUpdateError", "商品數量修改發生錯誤，請稍後再試。");
 
         // 2. 彈出錯誤訊息
         if (title) {
@@ -944,7 +944,7 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
                 if (!$shortageContent.length) $shortageContent = $li;
                 $li.find('.js-cart-stock-shortage').remove();
                 $('<div class="js-cart-stock-shortage text-danger small mt-1"></div>')
-                    .text(updateItem.message || updateItem.Message || "目前庫存不足，請繼續調整數量。")
+                    .text(updateItem.message || updateItem.Message || CokerI18n.get("CartStockShortAdjust", "目前庫存不足，請繼續調整數量。"))
                     .appendTo($shortageContent);
 
                 updateSubtotalAndDisplay(updatedQuantity);
@@ -956,8 +956,8 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
 
             if (!updateSucceeded) {
                 handleUpdateError(
-                    "商品數量無法更新",
-                    updateItem.message || updateItem.Message || "庫存不足，已恢復為原本數量。",
+                    CokerI18n.get("CartQtyCannotUpdate", "商品數量無法更新"),
+                    updateItem.message || updateItem.Message || CokerI18n.get("CartQtyRestored", "庫存不足，已恢復為原本數量。"),
                     false
                 );
                 return;
@@ -980,11 +980,11 @@ function CartQuantityUpdate(self, price, bonus, scid, quantity, $group) {
             return;
         }
 
-        var msg = result.message || "商品數量修改發生錯誤，請稍後再試。";
-        handleUpdateError("商品更改數量發生錯誤", msg, false);
+        var msg = result.message || CokerI18n.get("CartQtyUpdateError", "商品數量修改發生錯誤，請稍後再試。");
+        handleUpdateError(CokerI18n.get("CartQtyUpdateErrorTitle", "商品更改數量發生錯誤"), msg, false);
 
     }).fail(function () {
-        handleUpdateError("錯誤", "商品數量修改發生錯誤，請稍後再試。", true);
+        handleUpdateError(CokerI18n.get("Error", "錯誤"), CokerI18n.get("CartQtyUpdateError", "商品數量修改發生錯誤，請稍後再試。"), true);
     });
 }
 function CartDelete(self, id, success, error) {
@@ -992,7 +992,7 @@ function CartDelete(self, id, success, error) {
 
     Product.Delete.Cart(id).done(function (result) {
         if (!result || result.success !== true) {
-            Coker.sweet.error("錯誤", (result && result.error) || error, null, true);
+            Coker.sweet.error(CokerI18n.get("Error", "錯誤"), (result && result.error) || error, null, true);
             return;
         }
 
@@ -1022,7 +1022,7 @@ function CartDelete(self, id, success, error) {
                         return;
                     }
 
-                    $currentGroup.find('[data-field="count"]').text(remainingCount + " 件");
+                    $currentGroup.find('[data-field="count"]').text(CokerI18n.get("CartItemCount", "{0} 件").replace("{0}", remainingCount));
                     cart.Items.syncAdditionalSelection($currentGroup);
                     cart.Items.updateGroupSelectedSubtotal($currentGroup);
                 });
@@ -1040,7 +1040,7 @@ function CartDelete(self, id, success, error) {
             };
 
             Coker.sweet.success(
-                result.message || ("主要商品已移除，並一併移除 " + removedAdditionalIds.length + " 項優惠商品。"),
+                result.message || CokerI18n.get("CartItemRemovedWithAdditional", "主要商品已移除，並一併移除 {0} 項已失效的優惠商品。").replace("{0}", removedAdditionalIds.length),
                 applyCascadeRemoval,
                 false
             );
@@ -1062,7 +1062,7 @@ function CartDelete(self, id, success, error) {
             if (remainingCount === 0) {
                 $group.remove();
             } else {
-                $group.find('[data-field="count"]').text(`${remainingCount} 件`);
+                $group.find('[data-field="count"]').text(CokerI18n.get("CartItemCount", "{0} 件").replace("{0}", remainingCount));
                 cart.Items.syncAdditionalSelection($group);
                 cart.Items.updateGroupSelectedSubtotal($group);
             }
@@ -1084,7 +1084,7 @@ function CartDelete(self, id, success, error) {
             cart.Forms.DetailsClear();
         }
     }).fail(function () {
-        Coker.sweet.error("錯誤", error, null, true);
+        Coker.sweet.error(CokerI18n.get("Error", "錯誤"), error, null, true);
     });
 }
 function getSelectedCartIds() {
@@ -1147,7 +1147,7 @@ function ValidateCartOnInit() {
                 $itemCheckbox.prop({ checked: false, disabled: true });
                 $li.find('.btn_count_plus').prop('disabled', true);
                 $li.find('.js-cart-stock-shortage')
-                    .text(msg || '目前庫存不足，請先調整數量才可結帳。');
+                    .text(msg || CokerI18n.get("CartStockShortCheckout", "目前庫存不足，請先調整數量才可結帳。"));
                 return;
             }
 
@@ -1165,7 +1165,7 @@ function ValidateCartOnInit() {
             var $content = $li.find('.js-cart-item-message');
             if (!$content.length) $content = $li;
             var $msgDiv = $('<div class="js-stock-error text-danger small mt-1"></div>');
-            $msgDiv.text(msg || '此商品目前無法購買，請調整或移除。');
+            $msgDiv.text(msg || CokerI18n.get("CartItemUnavailable", "此商品目前無法購買，請調整或移除。"));
             $content.append($msgDiv);
         });
 

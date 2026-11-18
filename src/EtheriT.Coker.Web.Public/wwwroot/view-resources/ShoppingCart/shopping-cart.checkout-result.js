@@ -20,19 +20,19 @@
                 if (results.length > 0) {
                     var result = results[0];
                     $("#Step4 > .card-header > .order_number").text(window.location.search.substring(1));
-                    $("#Step4 > .card-body .pruchase_content .order_time").text(`訂單成立時間：${result.orderHeader.creationTime}`);
+                    $("#Step4 > .card-body .pruchase_content .order_time").text(cart.Utils.t("CkOrderTimeLabel", "訂單成立時間：") + result.orderHeader.creationTime);
                     switch (result.orderHeader.stateStr) {
                         case "待確認":
-                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立，謝謝您的訂購！");
+                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(cart.Utils.t("CkOrderPlaced", "訂單已成立，謝謝您的訂購！"));
                             break;
                         case "已付款":
-                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已成立並完成付款，謝謝您的訂購！");
+                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(cart.Utils.t("CkOrderPaid", "訂單已成立並完成付款，謝謝您的訂購！"));
                             break;
                         case "已取消":
-                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單已取消。");
+                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(cart.Utils.t("CkOrderCancelled", "訂單已取消。"));
                             break;
                         case "付款失敗":
-                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text("訂單付款失敗！");
+                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(cart.Utils.t("CkOrderPayFailed", "訂單付款失敗！"));
                             if ($('.buyagain_text').length > 0 && !IsLogin) {
                                 $('.buyagain_text').removeClass("d-none");
                                 $('.buyagain_text span').on("click", function () {
@@ -42,22 +42,22 @@
                                             var ohidstr = `000000000${result.message}`.substring(result.message.length);
                                             window.location.href = `/${OrgName}/ShoppingCar?reorder${ohidstr}`;
                                         } else {
-                                            Coker.sweet.error("錯誤", result.message)
+                                            Coker.sweet.error(cart.Utils.t("Error", "錯誤"), result.message)
                                         }
                                     });
                                 });
                             }
                             break;
                         case "待付款":
-                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(result.orderHeader.paymentPendingMessage || "訂單已成立，待商家確認付款資訊，謝謝您的訂購！");
+                            $("#Step4 > .card-body > .pruchase_content > .status_alert").text(result.orderHeader.paymentPendingMessage || cart.Utils.t("CkOrderPendingPayment", "訂單已成立，待商家確認付款資訊，謝謝您的訂購！"));
                             break;
                     }
                     cart.CheckoutResult.SuccessPageDataInsert(result);
                 } else {
                     if (S.islogin) {
-                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("查無訂單資訊或期限已過，請至會員管理歷史訂單中確認");
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(cart.Utils.t("CkOrderNotFoundExpired", "查無訂單資訊或期限已過，請至會員管理歷史訂單中確認"));
                     } else {
-                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text("查無訂單資訊");
+                        $("#Step4 > .card-body > .pruchase_content > .status_alert").text(cart.Utils.t("CkOrderNotFound", "查無訂單資訊"));
                     }
                 }
                 S.buy_step_swiper.enable();
@@ -92,7 +92,7 @@
                 window.location.replace(`/${OrgName}/ShoppingCar`);
             });
         } else if (window.location.search.substring(1).startsWith("PaymentError")) {
-            co.sweet.confirm("訂單付款發生錯誤", "", "確認", "", null);
+            co.sweet.confirm(cart.Utils.t("CkOrderPayError", "訂單付款發生錯誤"), "", cart.Utils.t("Confirm", "確認"), "", null);
         }
     }
     function SuccessPageDataInsert(data) {
@@ -172,12 +172,12 @@
                         var $text = $("<span></span>");
 
                         $text.append(
-                            "<strong>訂單加價購／贈品</strong>"
+                            "<strong>" + cart.Utils.t("CartOrderAddOnGift", "訂單加價購／贈品") + "</strong>"
                         );
 
                         $text.append(
                             $("<small></small>").text(
-                                "本筆訂單符合優惠活動條件"
+                                cart.Utils.t("CkOrderQualified", "本筆訂單符合優惠活動條件")
                             )
                         );
 
@@ -200,12 +200,12 @@
                     var $text = $("<span></span>");
 
                     $text.append(
-                        "<strong>加價購／贈品</strong>"
+                        "<strong>" + cart.Utils.t("CartAddOnGift", "加價購／贈品") + "</strong>"
                     );
 
                     $text.append(
                         $("<small></small>").text(
-                            '隨「' + parentLabel + '」一併成立'
+                            cart.Utils.t("CkAddOnWithParent", "隨「{0}」一併成立", [parentLabel])
                         )
                     );
 
@@ -237,7 +237,7 @@
                     $item.find(".pro_name").before(
                         '<span class="step4-additional-badge">' +
                         '<i class="fa-solid fa-link me-1" aria-hidden="true"></i>' +
-                        "加價購／贈品" +
+                        cart.Utils.t("CartAddOnGift", "加價購／贈品") +
                         "</span>"
                     );
                 }
@@ -303,8 +303,8 @@
             var name = String(cart.Utils.getValueIgnoreCase(item, "name") || "");
             var amount = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(item, "discountAmount"));
             var times = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(item, "appliedTimes"));
-            var repeatText = times > 1 ? "，套用 " + times + " 次" : "";
-            var label = name ? escapeHtml(name) + repeatText : "活動折扣";
+            var repeatText = times > 1 ? cart.Utils.t("CkAppliedTimes", "，套用 {0} 次", [times]) : "";
+            var label = name ? escapeHtml(name) + repeatText : cart.Utils.t("CartMktDiscount", "活動折扣");
 
             return '<div class="py-2 d-flex justify-content-end text-end step4MarketingDiscountLine">' +
                 '<div>' + label + '</div>' +
@@ -417,7 +417,7 @@
 
                     var $row = $('<div class="row mb-1"></div>');
                     $row.append(
-                        $('<div class="col-auto col-sm-2 text-end ps-4"></div>').text(title + "：")
+                        $('<div class="col-auto col-sm-2 text-end ps-4"></div>').text(title + cart.Utils.t("CkColon", "："))
                     );
                     $row.append(
                         $('<div class="col text-start ps-0 text-break"></div>').text(value)
@@ -462,10 +462,10 @@
             .text(orderNumber);
 
         $("#Step4 > .card-body .pruchase_content .order_time")
-            .text(`訂單成立時間：${message[2]}`);
+            .text(cart.Utils.t("CkOrderTimeLabel", "訂單成立時間：") + message[2]);
 
         $("#Step4 > .card-body > .pruchase_content > .status_alert")
-            .text("訂單已成立，訂單明細載入中，請稍候...");
+            .text(cart.Utils.t("CkOrderLoading", "訂單已成立，訂單明細載入中，請稍候..."));
 
         S.buy_step_swiper.enable();
         S.buy_step_swiper.slideNext(0);
@@ -473,8 +473,8 @@
         S.buy_step_swiper.disable();
 
         Coker.sweet.processing(
-            "訂單成立中",
-            "正在載入訂單明細，請稍候..."
+            cart.Utils.t("CkOrderCreating", "訂單成立中"),
+            cart.Utils.t("CkOrderLoadingDetail", "正在載入訂單明細，請稍候...")
         );
 
         Coker.Order.GetAllData(order_header_id)
@@ -483,15 +483,15 @@
                     cart.CheckoutResult.SuccessPageDataInsert(results[0]);
 
                     $("#Step4 > .card-body > .pruchase_content > .status_alert")
-                        .text("訂單已成立，謝謝您的訂購！");
+                        .text(cart.Utils.t("CkOrderPlaced", "訂單已成立，謝謝您的訂購！"));
                 } else {
                     $("#Step4 > .card-body > .pruchase_content > .status_alert")
-                        .text("訂單已成立，但查無訂單明細，請至會員管理歷史訂單中確認。");
+                        .text(cart.Utils.t("CkOrderNoDetail", "訂單已成立，但查無訂單明細，請至會員管理歷史訂單中確認。"));
                 }
             })
             .fail(function () {
                 $("#Step4 > .card-body > .pruchase_content > .status_alert")
-                    .text("訂單已成立，但訂單明細載入失敗，請至會員管理歷史訂單中確認。");
+                    .text(cart.Utils.t("CkOrderDetailFailed", "訂單已成立，但訂單明細載入失敗，請至會員管理歷史訂單中確認。"));
             })
             .always(function () {
                 if (document.activeElement &&
@@ -526,14 +526,14 @@
 
             if (!S.islogin) {
                 Coker.sweet.warning(
-                    "信件發送失敗",
-                    "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。",
+                    cart.Utils.t("CkMailFailed", "信件發送失敗"),
+                    cart.Utils.t("CkMailFailedGuest", "訂購信件發送失敗，請註冊會員以查看詳細訂單，或將訂單完成頁面截圖。"),
                     done
                 );
             } else {
                 Coker.sweet.warning(
-                    "信件發送失敗",
-                    "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。",
+                    cart.Utils.t("CkMailFailed", "信件發送失敗"),
+                    cart.Utils.t("CkMailFailedMember", "訂購信件發送失敗，訂單詳細可於會員管理歷史訂單中查看。"),
                     done
                 );
             }
@@ -541,7 +541,7 @@
 
         if (storeMemoText !== "") {
             Coker.sweet.notice(
-                "小提醒",
+                cart.Utils.t("CkReminder", "小提醒"),
                 storeMemoText.replaceAll("\n", "<br/>"),
                 showMailErrorIfNeed
             );
@@ -559,7 +559,7 @@
         if (!url) return;
         $("#Step4 > .card-body .thirdpay_link a").attr({
             href: url,
-            title: title || "連結至：付款頁面(開新視窗)"
+            title: title || cart.Utils.t("CkPaymentPageLinkTitle", "連結至：付款頁面(開新視窗)")
         });
         $("#Step4 > .card-body .thirdpay_link").removeClass("d-none");
     }

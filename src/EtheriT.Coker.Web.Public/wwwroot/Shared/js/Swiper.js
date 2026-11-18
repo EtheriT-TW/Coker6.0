@@ -1037,6 +1037,17 @@ function SwiperInit(obj) {
                 }
             };
             let pictureSwiperThumbs = new Swiper("#pictureSwiperThumbs", pictureSwiperThumbsOptions);
+            // 縮圖載入後依實際尺寸修正比例（建立時可能只拿到 LazyImage 佔位圖 160x90 的比例）
+            document.getElementById('pictureSwiperThumbs').addEventListener('load', function (event) {
+                const image = event.target;
+                if (!image.matches('img[data-src]') || !image.naturalWidth || !image.naturalHeight) return;
+                const slide = image.closest('.swiper-slide');
+                const ratio = image.naturalWidth / image.naturalHeight;
+                if (!slide || Math.abs(ratio - Number(slide.getAttribute('data-thumbnail-ratio'))) < 0.01) return;
+                slide.setAttribute('data-thumbnail-ratio', ratio);
+                sizePictureThumbnails(pictureSwiperThumbs);
+                pictureSwiperThumbs.update();
+            }, true);
             function revealPictureThumbnails(swiper, speed) {
                 if (buildingPictureSlides || !$('#SwiperModal').hasClass('show')) return;
                 const thumbs = pictureSwiperThumbs;
@@ -1175,8 +1186,9 @@ function SwiperInit(obj) {
                     obj['fullSrc'] = $a.attr('data-full-src') || obj['src'];
                     obj['mediumSrc'] = $a.attr('data-medium-src') || '';
                     obj['alt'] = typeof ($(this).attr("alt")) == "undefined" ? "" : $(this).attr("alt");
-                    const imageWidth = this.naturalWidth || Number($(this).attr('width'));
-                    const imageHeight = this.naturalHeight || Number($(this).attr('height'));
+                    const isRealImageLoaded = $(this).attr("src") === obj['src'] && this.naturalWidth > 0;
+                    const imageWidth = isRealImageLoaded ? this.naturalWidth : Number($(this).attr('width'));
+                    const imageHeight = isRealImageLoaded ? this.naturalHeight : Number($(this).attr('height'));
                     obj['thumbnailRatio'] = imageWidth > 0 && imageHeight > 0 ? imageWidth / imageHeight : 1.5;
 
                     let item = null;
@@ -1614,9 +1626,8 @@ function SwiperInit(obj) {
     $(".swiper_components").each(function () {
         var $self = $(this);
         const index = $self.index(this);
-        $self.find(".swiper_thumbs_components > .swiper-wrapper").empty();
-
         if (!!!$self.data("isInit")) {
+            $self.find(".swiper_thumbs_components > .swiper-wrapper").empty();
             if (typeof ($self.attr("id")) == "undefined") $self.attr("id", `id-${Math.random().toString(36).substring(2, 9)}-${Date.now()}`)
             var Id = "#" + $self.attr("id") + " .swiper";
             var totalSlide = $self.find('.swiper-slide').length;
@@ -1721,7 +1732,7 @@ function SwiperInit(obj) {
                 const $alts = [];
                 const $class = [];
                 $self.find(".swiper-slide img").each(function () { //遍歷所有thumnbs-image底下的img
-                    $images.push($(this).attr("src")); //儲存到$images變數
+                    $images.push(this.cokerLazyImageSource || $(this).attr("src")); //儲存到$images變數（LazyImage 管理的圖 src 可能是佔位圖，改取真實網址）
                     $alts.push($(this).attr("alt"));
                     if ($(this).closest('.swiper-slide').hasClass('backstageType')) {
                         $class.push('backstageType');

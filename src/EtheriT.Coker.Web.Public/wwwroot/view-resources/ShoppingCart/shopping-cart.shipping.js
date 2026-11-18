@@ -10,7 +10,7 @@
         S.payMethodsChosen = cart.Forms.FormCheck(S.PaymentForms);
 
         if (!(S.shipMethodsChosen && S.payMethodsChosen)) {
-            Coker.sweet.warning("請注意", "請確實選擇運送及付款方式！", null);
+            Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkChooseShippingPayment", "請確實選擇運送及付款方式！"), null);
         } else {
             S.buy_step_swiper.slideNext();
         }
@@ -79,12 +79,12 @@
             $section.addClass("d-none");
         } else if (!$payment.length) {
             $section.removeClass("d-none");
-            $status.text("請先選擇付款方式，再確認取貨門市的選擇流程。");
+            $status.text(cart.Utils.t("CkChoosePaymentFirstStore", "請先選擇付款方式，再確認取貨門市的選擇流程。"));
         } else if (PaymentGatewaySelectsCvsStore()) {
-            var paymentTitle = $.trim($payment.attr("data-title") || "付款平台");
+            var paymentTitle = $.trim($payment.attr("data-title") || cart.Utils.t("CkPaymentPlatform", "付款平台"));
             $section.removeClass("d-none");
             $status.addClass("is-gateway")
-                .text("取貨門市將於「" + paymentTitle + "」付款頁面選擇，本站不會重複要求選店。");
+                .text(cart.Utils.t("CkStoreChosenOnPayment", "取貨門市將於「{0}」付款頁面選擇，本站不會重複要求選店。", [paymentTitle]));
         } else {
             var storeName = $.trim($shipping.attr("data-cvsstorename") || "");
             var storeAddress = $.trim($shipping.attr("data-cvsaddress") || "");
@@ -95,17 +95,17 @@
             $button.removeClass("d-none");
 
             if (!hasStore) {
-                $button.val("請選擇取貨門市");
+                $button.val(cart.Utils.t("CkChoosePickupStore", "請選擇取貨門市"));
                 if (S.CvsStoreValidationRequested === true) {
                     $button.addClass("is-missing").attr("aria-invalid", "true");
-                    $status.addClass("is-missing").text("尚未選擇門市，完成後才能結帳。");
+                    $status.addClass("is-missing").text(cart.Utils.t("CkStoreNotChosen", "尚未選擇門市，完成後才能結帳。"));
                 } else {
-                    $status.text("請選擇本次訂單的取貨門市。");
+                    $status.text(cart.Utils.t("CkChooseStoreForOrder", "請選擇本次訂單的取貨門市。"));
                 }
             } else {
                 var storeButtonText = /門市$/.test(storeName) ? storeName : storeName + "門市";
                 $button.val(storeButtonText)
-                    .attr("title", "變更取貨門市：" + storeName)
+                    .attr("title", cart.Utils.t("CkChangeStore", "變更取貨門市：{0}", [storeName]))
                     .addClass("is-complete");
                 $status.addClass("d-none is-complete");
             }

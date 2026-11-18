@@ -14,7 +14,7 @@
         var data = S.shopping_cart_data.filter(e => ids.includes(e.Id));
 
         if (ids.length === 0) {
-            Coker.sweet.warning("請注意", "請先勾選要結帳的商品。", null);
+            Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkSelectItemsFirst", "請先勾選要結帳的商品。"), null);
             return;
         }
 
@@ -27,7 +27,7 @@
         Coker.Order.CheckStock(data).done(async function (result) {
             if (!result.success) {
                 Coker.sweet.close();
-                Coker.sweet.error("錯誤", result.message, null, false);
+                Coker.sweet.error(cart.Utils.t("Error", "錯誤"), result.message, null, false);
                 $("#Step1 > .card-body > .purchase_list > li").remove();
                 cart.Items.CardDataGet();
                 S.buy_step_swiper.slideTo(0);
@@ -46,7 +46,7 @@
             if (!cart.Shipping.HasSelectedCvsStore()) {
                 S.CvsStoreValidationRequested = true;
                 cart.Shipping.UpdateCvsStoreSelectionDisplay();
-                Coker.sweet.warning("請注意", "請選擇取貨門市！", null);
+                Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkChooseStoreExcl", "請選擇取貨門市！"), null);
                 return;
             }
 
@@ -74,8 +74,8 @@
 
                     Coker.sweet.close();
                     Coker.sweet.warning(
-                        "付款資訊取得失敗",
-                        result || "目前無法取得付款資訊，請重新操作一次；若問題持續發生，請聯絡客服協助。",
+                        cart.Utils.t("CkPaymentInfoFailed", "付款資訊取得失敗"),
+                        result || cart.Utils.t("CkPaymentInfoFailedHint", "目前無法取得付款資訊，請重新操作一次；若問題持續發生，請聯絡客服協助。"),
                         null
                     );
                     return;
@@ -85,7 +85,7 @@
             });
         }).fail(function () {
             Coker.sweet.close();
-            Coker.sweet.error("錯誤", "庫存確認失敗，請稍後再試。", null, false);
+            Coker.sweet.error(cart.Utils.t("Error", "錯誤"), cart.Utils.t("CkStockCheckFailed", "庫存確認失敗，請稍後再試。"), null, false);
         });
     }
     function AddHeader(paymentInfo) {
@@ -102,7 +102,7 @@
         Coker.Order.AddHeader(S.order_header_data).done(function (result) {
             if (result.success) {
                 Coker.sweet.success(
-                    `謝謝您的訂購！${memberUpdateFailMessage}<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！`,
+                    cart.Utils.t("CkOrderThanks", "謝謝您的訂購！{0}<br />訂單處理中，若有錯誤請修正後重送訂單。請勿按[回上頁]按鈕，以免重複下單，或發生其他不可預期的錯誤！", [memberUpdateFailMessage]),
                     function () {
                         var orderResultLoading = cart.CheckoutResult.OrderSuccess(result);
 
@@ -122,10 +122,10 @@
                     }
                 );
             } else {
-                Coker.sweet.error("錯誤", result.error, null, true);
+                Coker.sweet.error(cart.Utils.t("Error", "錯誤"), result.error, null, true);
             }
         }).fail(function (result) {
-            Coker.sweet.error("錯誤", result.error, null, true);
+            Coker.sweet.error(cart.Utils.t("Error", "錯誤"), result.error, null, true);
         });
     }
     function PurchaseAdd(result, item_list_ul) {
@@ -141,7 +141,7 @@
             item_subtotal_bonus = item.find(`.pro_subtotal > [data-key="subtotalBonus"]`);
 
         item_link.attr("href", `/${OrgName}/search/product/` + result.pId);
-        item_link.attr("title", `連結至：${result.title}(另開新視窗)`);
+        item_link.attr("title", cart.Utils.t("LinkToAndBlank", "連結至：{0}(另開新視窗)", [result.title]));
         item_image.attr("src", result.imagePath.replace(`upload/${OrgName}/`, "upload/"));
         item_name.text(result.title);
         item_specification.append(result.s1Title == "" ? "" : '<span class="border px-1 me-1">' + result.s1Title + '</span>')
@@ -149,12 +149,12 @@
         if (result.price > 0)
             item_unit.html(cart.Utils.formatMoneyHtml(result.price))
         if (result.bonusPrice > 0)
-            item_unitBonus.text(`紅利：${(result.bonusPrice).toLocaleString('en-US')}`)
+            item_unitBonus.text(cart.Utils.t("CkBonusColon", "紅利：{0}", [(result.bonusPrice).toLocaleString('en-US')]))
         item_quantity.text(result.quantity);
         if (result.price > 0)
             item_subtotal.text((result.price * result.quantity).toLocaleString('en-US'))
         if (result.bonusPrice > 0)
-            item_subtotal_bonus.text("紅利：" + (result.bonusPrice * result.quantity).toLocaleString('en-US'))
+            item_subtotal_bonus.text(cart.Utils.t("CkBonusColon", "紅利：{0}", [(result.bonusPrice * result.quantity).toLocaleString('en-US')]))
 
         item_list_ul.append(item);
     }

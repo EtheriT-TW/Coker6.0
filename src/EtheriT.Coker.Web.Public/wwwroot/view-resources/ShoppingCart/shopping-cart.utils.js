@@ -5,6 +5,15 @@
     var S = cart.State;
     cart.Utils = cart.Utils || {};
 
+    // 多語系取字：args 依序取代 {0}、{1}…（用 split/join，金額裡的 $ 不會被當成取代語法）
+    cart.Utils.t = function (key, fallback, args) {
+        var text = window.CokerI18n ? window.CokerI18n.get(key, fallback) : fallback;
+        (args || []).forEach(function (value, index) {
+            text = text.split("{" + index + "}").join(value);
+        });
+        return text;
+    };
+
 function toNumberValue(value) {
     if (value == null || value === "") return 0;
     return Number(String(value).replaceAll(",", "")) || 0;
@@ -80,7 +89,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
                 case "link":
                     $this.attr({
                         href: `/${OrgName}/search/product/${getValueIgnoreCase(data, "prodId")}`,
-                        title: `連結至：${getValueIgnoreCase(data, "title") || ""}(另開新視窗)`
+                        title: cart.Utils.t("LinkToAndBlank", "連結至：{0}(另開新視窗)", [getValueIgnoreCase(data, "title") || ""])
                     });
                     break;
 
@@ -113,7 +122,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
                 case "bonus": {
                     var bonus = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(data, "bonus"));
                     if (bonus > 0) {
-                        $this.text(`紅利：${bonus.toLocaleString()}`);
+                        $this.text(cart.Utils.t("CkBonusColon", "紅利：{0}", [bonus.toLocaleString()]));
                         $this.removeClass("d-none");
                     } else {
                         $this.text("");
@@ -131,7 +140,7 @@ function TemplateDataInsert($Frame, $CollapseFrame, $Template, datas, options) {
                 case "subtotalBonus": {
                     var subtotalBonus = cart.Utils.toNumberValue(cart.Utils.getValueIgnoreCase(data, "subtotalBonus"));
                     if (subtotalBonus > 0) {
-                        $this.text(`紅利：${subtotalBonus.toLocaleString()}`);
+                        $this.text(cart.Utils.t("CkBonusColon", "紅利：{0}", [subtotalBonus.toLocaleString()]));
                         $this.removeClass("d-none");
                     } else {
                         $this.text("");

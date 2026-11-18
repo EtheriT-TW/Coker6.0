@@ -112,6 +112,7 @@
                 (declaredSource ? currentSource : (options.placeholder || defaultPlaceholder));
             states.set(image, { source: source, placeholder: placeholder, retries: 0, retryTimer: null });
             image.cokerLazyImageManaged = true;
+            image.cokerLazyImageSource = source;
             image.addEventListener("load", onLoad);
             image.addEventListener("error", onError);
             showPlaceholder(image);
@@ -160,6 +161,7 @@
                 image.removeEventListener("error", onError);
                 states.delete(image);
                 delete image.cokerLazyImageManaged;
+                delete image.cokerLazyImageSource;
                 image.dispatchEvent(new CustomEvent("coker:image-reset"));
             });
         }

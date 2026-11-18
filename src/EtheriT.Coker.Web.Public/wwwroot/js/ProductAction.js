@@ -184,20 +184,20 @@ function CartDropAdd(result) {
 
         Swal.fire({
             icon: "info",
-            title: "確定將商品從購物車移除？",
-            html: "該商品將會從購物車中移除，且不可復原。",
+            title: cartText("CartRemoveConfirmTitle", "確定將商品從購物車移除？"),
+            text: cartText("CartRemoveConfirmText", "該商品將會從購物車中移除，且不可復原。"),
             showCancelButton: true,
             showDenyButton: canMoveToFavorites,
             confirmButtonColor: "#3085d6",
             denyButtonColor: "#e0457b",
             cancelButtonColor: "#d33",
-            confirmButtonText: "確認移除",
-            denyButtonText: "移至我的最愛",
-            cancelButtonText: "取消",
+            confirmButtonText: cartText("CartRemoveConfirmButton", "確認移除"),
+            denyButtonText: cartText("CartMoveToFavorites", "移至我的最愛"),
+            cancelButtonText: cartText("Cancel", "取消"),
             allowOutsideClick: false
         }).then(function (choice) {
             if (choice.isConfirmed) {
-                CartDropDelete($self, $self.data("scid"), "成功移除商品", "移除商品發生未知錯誤");
+                CartDropDelete($self, $self.data("scid"), cartText("CartRemoveSuccess", "成功移除商品"), cartText("CartRemoveError", "移除商品發生未知錯誤"));
             } else if (choice.isDenied) {
                 CartDropMoveToFavorites($self, $self.data("scid"), result.pId);
             }
@@ -237,24 +237,31 @@ function CartDropReset(scid, quantity) {
         }
     });
 }
+function cartText(key, fallback) {
+    return window.CokerI18n ? window.CokerI18n.get(key, fallback) : fallback;
+}
 function CartDropMoveToFavorites($item, scId, pId) {
+    var failedTitle = cartText("CartMoveToFavoritesFailed", "移至我的最愛失敗");
+    var failedText = cartText("CartMoveToFavoritesError", "加入收藏時發生錯誤，請稍後再試。");
+
     Coker.Favorites.Check(pId).then(function (check) {
         if (check && check.success) return check;
         return Coker.Favorites.Add(pId);
     }).done(function (favorites) {
         if (!favorites || !favorites.success) {
-            Coker.sweet.error("移至我的最愛失敗", (favorites && favorites.message) || "加入收藏時發生錯誤", null, true);
+            Coker.sweet.error(failedTitle, (favorites && favorites.message) || failedText, null, true);
             return;
         }
-        CartDropDelete($item, scId, "已將商品移至我的最愛", "商品已加入收藏，但從購物車移除時發生錯誤");
+        CartDropDelete($item, scId, cartText("CartMoveToFavoritesSuccess", "已將商品移至我的最愛"), cartText("CartMoveToFavoritesPartial", "商品已加入收藏，但從購物車移除時發生錯誤"), true);
     }).fail(function () {
-        Coker.sweet.error("移至我的最愛失敗", "加入收藏時發生錯誤，請稍後再試。", null, true);
+        Coker.sweet.error(failedTitle, failedText, null, true);
     });
 }
-function CartDropDelete(self, id, success, error) {
+// preferSuccessMessage：true 時忽略後端訊息、改用呼叫端給的 success（例如「移至我的最愛」）
+function CartDropDelete(self, id, success, error, preferSuccessMessage) {
     Product.Delete.Cart(id).done(function (result) {
         if (!result || result.success !== true) {
-            Coker.sweet.error("錯誤", (result && result.error) || error, null, true);
+            Coker.sweet.error(cartText("Error", "錯誤"), (result && result.error) || error, null, true);
             return;
         }
 
@@ -266,14 +273,14 @@ function CartDropDelete(self, id, success, error) {
             CartDropReset(cartId, 0);
         });
 
-        Coker.sweet.success(result.message || success, null, true);
+        Coker.sweet.success(preferSuccessMessage === true ? success : (result.message || success), null, true);
         if (parseInt($("#Car_Badge").text()) <= 0) {
             CartClear();
         } else {
             $(document).trigger("coker:cart-changed");
         }
     }).fail(function () {
-        Coker.sweet.error("錯誤", error, null, true);
+        Coker.sweet.error(cartText("Error", "錯誤"), error, null, true);
     })
 }
 function CartClear() {

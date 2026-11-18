@@ -6,6 +6,10 @@
     var current = null;
     var restoreParent = null;
     var rootSelector = '#ProductRewardPreviewModal';
+
+    function previewText(key, fallback) {
+        return window.CokerI18n ? window.CokerI18n.get(key, fallback) : fallback;
+    }
     var number = function (value) { return Number.parseInt(value, 10) || 0; };
     // 金額可能含小數（例：USD 385.99），不可走 parseInt，小數會被截斷。
     // 數量與 id 仍用上面的 number。
@@ -35,7 +39,7 @@
         var $modal = $root();
         var offerPrice = Number(options.offerPrice) || 0;
         var originalPrice = Number(options.originalPrice) || 0;
-        var productName = options.productName || '優惠商品';
+        var productName = options.productName || previewText('RewardOfferItem', '優惠商品');
         var selected = options.selected === true;
         var disabled = options.disabled === true && !selected;
 
@@ -43,12 +47,12 @@
             src: options.imageUrl || '/images/noImg.jpg',
             alt: productName
         });
-        $modal.find('.product-reward-preview__benefit').text(options.benefitText || (offerPrice <= 0 ? '贈品' : '加價購'));
+        $modal.find('.product-reward-preview__benefit').text(options.benefitText || (offerPrice <= 0 ? previewText('RewardGift', '贈品') : previewText('RewardAddOn', '加價購')));
         $modal.find('.product-reward-preview__name').text(productName);
         $modal.find('.product-reward-preview__stock').text(options.stockName || '').toggle(!!options.stockName);
-        $modal.find('.product-reward-preview__offer').html(offerPrice <= 0 ? '免費贈送' : '優惠價 ' + formatMoneyHtml(offerPrice));
+        $modal.find('.product-reward-preview__offer').html(offerPrice <= 0 ? previewText('RewardFreeGift', '免費贈送') : previewText('RewardOfferPrice', '優惠價 {0}').replace('{0}', formatMoneyHtml(offerPrice)));
         $modal.find('.product-reward-preview__original')
-            .html(originalPrice > 0 && originalPrice !== offerPrice ? '原價 ' + formatMoneyHtml(originalPrice) : '')
+            .html(originalPrice > 0 && originalPrice !== offerPrice ? previewText('RewardOriginalPrice', '原價 {0}').replace('{0}', formatMoneyHtml(originalPrice)) : '')
             .toggle(originalPrice > 0 && originalPrice !== offerPrice);
         $modal.find('.product-reward-preview__link')
             .attr('href', options.productUrl || productUrl(options.productId))
@@ -57,10 +61,10 @@
             .prop('disabled', disabled)
             .toggleClass('is-selected', selected)
             .text(selected
-                ? (options.cancelText || '取消選取')
+                ? (options.cancelText || previewText('RewardCancelSelect', '取消選取'))
                 : disabled
-                    ? (options.disabledText || '目前無法選擇')
-                    : (options.actionText || (offerPrice <= 0 ? '我要贈品' : '我要加購')));
+                    ? (options.disabledText || previewText('RewardCannotSelect', '目前無法選擇'))
+                    : (options.actionText || (offerPrice <= 0 ? previewText('RewardWantGift', '我要贈品') : previewText('RewardPreviewAddOn', '我要加購'))));
     }
 
     function show(options) {

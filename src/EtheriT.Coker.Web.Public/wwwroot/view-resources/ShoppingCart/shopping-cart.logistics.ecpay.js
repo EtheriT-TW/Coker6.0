@@ -17,7 +17,7 @@
     function openMap() {
         var $radio = $('input[name="RadioShipping"]:checked');
         if (!$radio.length || !cart.Shipping.RequiresMerchantCvsStore()) {
-            Coker.sweet.warning("請注意", "目前選擇的物流與付款方式不需在此選擇門市。", null);
+            Coker.sweet.warning(cart.Utils.t("AlertTitle", "請注意"), cart.Utils.t("CkNoStoreNeeded", "目前選擇的物流與付款方式不需在此選擇門市。"), null);
             return;
         }
 

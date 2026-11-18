@@ -6,6 +6,15 @@
 
     cart.Marketing = cart.Marketing || {};
 
+    // 多語系取字：args 依序取代 {0}、{1}…
+    function t(key, fallback, args) {
+        var text = window.CokerI18n ? window.CokerI18n.get(key, fallback) : fallback;
+        (args || []).forEach(function (value, index) {
+            text = text.split("{" + index + "}").join(value);
+        });
+        return text;
+    }
+
     function getValue(data, key) {
         if (!data || !key) return undefined;
 
@@ -308,7 +317,7 @@
         var html = appliedDiscounts.map(function (item) {
             var campaignName = item.campaignName || "";
             var amount = Number(item.discountAmount || 0);
-            var label = campaignName ? escapeHtml(campaignName) : "活動折扣";
+            var label = campaignName ? escapeHtml(campaignName) : t("CartMktDiscount", "活動折扣");
 
             return '<div class="summary-main-row marketingDiscountLine">' +
                 '<div class="summary-label">' + label + '</div>' +
@@ -459,25 +468,25 @@
         var itemLimit = Math.max(1, Number(getValue(item, "maxQuantityPerOrder") || 1));
         if (getValue(campaign, "repeatable")) itemLimit *= Math.max(1, qualification.times);
         var canIncrease = selected && quantity < itemLimit && campaignSelected < qualification.allowance;
-        var tag = offerPrice <= 0 ? "贈品" : "加價購";
-        var priceText = offerPrice <= 0 ? "免費" : cart.Utils.formatMoneyHtml(offerPrice);
+        var tag = offerPrice <= 0 ? t("RewardGift", "贈品") : t("RewardAddOn", "加價購");
+        var priceText = offerPrice <= 0 ? t("RewardFree", "免費") : cart.Utils.formatMoneyHtml(offerPrice);
         var original = originalPrice > 0
-            ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoneyHtml(originalPrice) + '</span>'
+            ? '<span class="cart-reward-original">' + t("RewardOriginalPrice", "原價 {0}", [cart.Utils.formatMoneyHtml(originalPrice)]) + '</span>'
             : "";
 
         return '<article class="cart-reward-card' + (selected ? ' is-selected' : '') + (disabled ? ' is-disabled' : '') + '"' +
             ' data-selection-key="' + key + '" role="button" tabindex="0">' +
-            '<button type="button" class="cart-reward-check" aria-label="' + (selected ? '取消選取優惠商品' : '選取優惠商品') + '"' +
+            '<button type="button" class="cart-reward-check" aria-label="' + (selected ? t("RewardDeselectItem", "取消選取優惠商品") : t("RewardSelectItem", "選取優惠商品")) + '"' +
             (disabled && !selected ? ' disabled' : '') + '><i class="fa-solid fa-check" aria-hidden="true"></i></button>' +
             '<div class="cart-reward-image-wrap"><img src="' + escapeHtml(getValue(item, "imageUrl") || "/images/noImg.jpg") + '" alt="" loading="lazy"></div>' +
             '<div class="cart-reward-body"><span class="cart-reward-tag">' + tag + '</span>' +
             '<div class="cart-reward-name" title="' + escapeHtml(getValue(item, "productName")) + '">' + escapeHtml(getValue(item, "productName")) + '</div>' +
             '<div class="cart-reward-spec">' + escapeHtml(getValue(item, "stockName")) + '</div>' +
-            '<button type="button" class="cart-reward-preview-button">查看完整名稱</button>' +
+            '<button type="button" class="cart-reward-preview-button">' + t("RewardViewFullName", "查看完整名稱") + '</button>' +
             '<div class="cart-reward-price"><strong>' + priceText + '</strong>' + original + '</div></div>' +
-            (selected ? '<div class="cart-reward-quantity" aria-label="優惠商品數量">' +
-                '<button type="button" class="js-reward-minus" aria-label="減少">−</button><span>' + quantity + '</span>' +
-                '<button type="button" class="js-reward-plus" aria-label="增加"' + (canIncrease ? '' : ' disabled') + '>＋</button></div>' : '') +
+            (selected ? '<div class="cart-reward-quantity" aria-label="' + t("CartAddOnQuantity", "優惠商品數量") + '">' +
+                '<button type="button" class="js-reward-minus" aria-label="' + t("Decrease", "減少") + '">−</button><span>' + quantity + '</span>' +
+                '<button type="button" class="js-reward-plus" aria-label="' + t("Increase", "增加") + '"' + (canIncrease ? '' : ' disabled') + '>＋</button></div>' : '') +
             '</article>';
     }
 
@@ -495,22 +504,22 @@
                     ' data-quick-cart-image-url="' + escapeHtml(getValue(product, "imageUrl") || "/images/noImg.jpg") + '"' : '') + '>' +
                 '<img src="' + escapeHtml(getValue(product, "imageUrl") || "/images/noImg.jpg") + '" alt="" loading="lazy">' +
                 '<span><strong>' + escapeHtml(getValue(product, "productName")) + '</strong>' +
-                '<small>' + (available ? '可加入購物車累計活動' : '目前無法購買') + '</small></span>' +
+                '<small>' + (available ? t("CartMktScopeAvailable", "可加入購物車累計活動") : t("QuickCartCannotPurchase", "目前無法購買")) + '</small></span>' +
                 (available ? '<button type="button" class="cart-scope-product-buy">' +
-                    '<i class="fa-solid fa-cart-plus" aria-hidden="true"></i><span>快速選購</span></button>' : '') +
+                    '<i class="fa-solid fa-cart-plus" aria-hidden="true"></i><span>' + t("CartMktQuickBuy", "快速選購") + '</span></button>' : '') +
                 '</article></div>';
         }).join("");
 
         var collapsed = qualified === true;
         return '<div class="cart-scope-products' + (collapsed ? ' is-collapsed' : ' is-expanded') + '"><div class="cart-scope-products-header">' +
-            '<div><strong>選購指定商品</strong><small>' + (collapsed
-                ? '已達活動門檻，仍可展開加購或更換商品'
-                : '不離開購物車，加入後會立即重新計算活動資格') + '</small></div>' +
+            '<div><strong>' + t("CartMktScopeTitle", "選購指定商品") + '</strong><small>' + (collapsed
+                ? t("CartMktScopeQualifiedHint", "已達活動門檻，仍可展開加購或更換商品")
+                : t("CartMktScopeHint", "不離開購物車，加入後會立即重新計算活動資格")) + '</small></div>' +
             '<button type="button" class="cart-scope-toggle" aria-expanded="' + (!collapsed) + '">' +
-            '<span>' + (collapsed ? '展開選購' : '收合') + '</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button></div>' +
+            '<span>' + (collapsed ? t("CartMktExpand", "展開選購") : t("CartMktCollapse", "收合")) + '</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button></div>' +
             '<div class="cart-scope-products-body"' + (collapsed ? ' hidden' : '') + '>' +
-            '<div class="cart-scope-product-nav"><button type="button" class="cart-scope-prev" aria-label="上一組指定商品"><i class="fa-solid fa-chevron-left"></i></button>' +
-            '<button type="button" class="cart-scope-next" aria-label="下一組指定商品"><i class="fa-solid fa-chevron-right"></i></button></div>' +
+            '<div class="cart-scope-product-nav"><button type="button" class="cart-scope-prev" aria-label="' + t("CartMktScopePrev", "上一組指定商品") + '"><i class="fa-solid fa-chevron-left"></i></button>' +
+            '<button type="button" class="cart-scope-next" aria-label="' + t("CartMktScopeNext", "下一組指定商品") + '"><i class="fa-solid fa-chevron-right"></i></button></div>' +
             '<div class="cart-scope-product-swiper swiper"><div class="swiper-wrapper">' + cards + '</div></div></div></div>';
     }
 
@@ -553,11 +562,11 @@
             var q = entry.qualification;
             var selected = getCampaignSelectedQuantity(campaign);
             totalSelected += selected;
-            var conditionName = Number(getValue(campaign, "conditionType")) === 2 ? "指定商品合計" : "本次訂單";
+            var conditionName = Number(getValue(campaign, "conditionType")) === 2 ? t("CartMktCondScope", "指定商品合計") : t("CartMktCondOrder", "本次訂單");
             var hideZeroScopeStatus = !q.qualified && Number(getValue(campaign, "conditionType")) === 2 && q.amount <= 0;
             var status = q.qualified
-                ? '已符合資格，可選 <strong>' + q.allowance + '</strong> 件，目前已選 <strong>' + selected + '</strong> 件'
-                : hideZeroScopeStatus ? '' : conditionName + '目前 <strong>' + cart.Utils.formatMoney(q.amount) + '</strong>，再買 <strong>' + cart.Utils.formatMoney(q.shortage) + '</strong> 即可選購';
+                ? t("CartMktQualifiedStatus", "已符合資格，可選 {0} 件，目前已選 {1} 件", ['<strong>' + q.allowance + '</strong>', '<strong>' + selected + '</strong>'])
+                : hideZeroScopeStatus ? '' : t("CartMktShortageStatus", "{0}目前 {1}，再買 {2} 即可選購", [conditionName, '<strong>' + cart.Utils.formatMoney(q.amount) + '</strong>', '<strong>' + cart.Utils.formatMoney(q.shortage) + '</strong>']);
             var items = (getValue(campaign, "rewardItems") || []).map(function (item) {
                 return renderRewardItem(campaign, item, q, selected);
             }).join("");
@@ -566,14 +575,14 @@
 
             return '<section class="cart-marketing-campaign' + (q.qualified ? ' is-qualified' : '') + '">' +
                 '<div class="cart-campaign-header"><div><h4>' + escapeHtml(getValue(campaign, "name")) + '</h4>' +
-                (status ? '<p>' + status + '</p>' : '') + '</div><span class="cart-campaign-threshold">' + conditionName + '滿 ' + cart.Utils.formatMoney(q.minAmount) + '</span></div>' +
+                (status ? '<p>' + status + '</p>' : '') + '</div><span class="cart-campaign-threshold">' + t("CartMktThreshold", "{0}滿 {1}", [conditionName, cart.Utils.formatMoney(q.minAmount)]) + '</span></div>' +
                 scopeProducts + '<div class="cart-reward-track">' + items + '</div></section>';
         }).join("");
 
         $root.removeClass("d-none");
         $root.find(".cart-marketing-campaign-list").html(html);
         initScopeProductSwipers($root);
-        $root.find(".cart-marketing-selected-summary").text(totalSelected > 0 ? "已選 " + totalSelected + " 件" : "優惠品需自行選取");
+        $root.find(".cart-marketing-selected-summary").text(totalSelected > 0 ? t("CartMktSelectedCount", "已選 {0} 件", [totalSelected]) : t("CartMktSelectHint", "優惠品需自行選取"));
     }
 
     function refreshRewardCampaigns() {
@@ -699,17 +708,17 @@
 
         return '<article class="cart-reward-card cart-addon-modal-card' + (selected ? ' is-selected' : '') +
             (disabled ? ' is-disabled' : '') + '" data-product-selection-key="' + key + '" role="button" tabindex="0">' +
-            '<button type="button" class="cart-reward-check" aria-label="' + (selected ? '取消選取優惠商品' : '選取優惠商品') + '"' +
+            '<button type="button" class="cart-reward-check" aria-label="' + (selected ? t("RewardDeselectItem", "取消選取優惠商品") : t("RewardSelectItem", "選取優惠商品")) + '"' +
             (disabled && !selected ? ' disabled' : '') + '><i class="fa-solid fa-check" aria-hidden="true"></i></button>' +
             '<div class="cart-reward-image-wrap"><img src="' + escapeHtml(getValue(item, "imageUrl") || "/images/noImg.jpg") + '" alt="" loading="lazy"></div>' +
-            '<div class="cart-reward-body"><span class="cart-reward-tag">' + (offerPrice <= 0 ? '贈品' : '加價購') + '</span>' +
+            '<div class="cart-reward-body"><span class="cart-reward-tag">' + (offerPrice <= 0 ? t("RewardGift", "贈品") : t("RewardAddOn", "加價購")) + '</span>' +
             '<div class="cart-reward-name" title="' + escapeHtml(getValue(item, "productName")) + '">' + escapeHtml(getValue(item, "productName")) + '</div>' +
             '<div class="cart-reward-spec">' + escapeHtml(getValue(item, "stockName")) + '</div>' +
-            '<button type="button" class="cart-reward-preview-button">查看完整名稱</button>' +
-            '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? '免費' : cart.Utils.formatMoneyHtml(offerPrice)) + '</strong>' +
-            (originalPrice > 0 ? '<span class="cart-reward-original">原價 ' + cart.Utils.formatMoneyHtml(originalPrice) + '</span>' : '') + '</div></div>' +
-            '<div class="cart-reward-quantity"><button type="button" class="js-product-addon-minus" aria-label="減少"' + (selected ? '' : ' disabled') + '>−</button>' +
-            '<span>' + quantity + '</span><button type="button" class="js-product-addon-plus" aria-label="增加"' + (canIncrease ? '' : ' disabled') + '>＋</button></div></article>';
+            '<button type="button" class="cart-reward-preview-button">' + t("RewardViewFullName", "查看完整名稱") + '</button>' +
+            '<div class="cart-reward-price"><strong>' + (offerPrice <= 0 ? t("RewardFree", "免費") : cart.Utils.formatMoneyHtml(offerPrice)) + '</strong>' +
+            (originalPrice > 0 ? '<span class="cart-reward-original">' + t("RewardOriginalPrice", "原價 {0}", [cart.Utils.formatMoneyHtml(originalPrice)]) + '</span>' : '') + '</div></div>' +
+            '<div class="cart-reward-quantity"><button type="button" class="js-product-addon-minus" aria-label="' + t("Decrease", "減少") + '"' + (selected ? '' : ' disabled') + '>−</button>' +
+            '<span>' + quantity + '</span><button type="button" class="js-product-addon-plus" aria-label="' + t("Increase", "增加") + '"' + (canIncrease ? '' : ' disabled') + '>＋</button></div></article>';
     }
 
     function renderProductAddOnModal(message) {
@@ -720,20 +729,20 @@
             var qualification = getCampaignQualification(campaign, baseItems);
             var selected = getDraftCampaignQuantity(campaign);
             var status = qualification.qualified
-                ? '主要商品共 ' + qualification.quantity + ' 件，可選 ' + qualification.allowance + ' 件，目前選了 ' + selected + ' 件'
-                : '指定商品需滿 ' + qualification.requiredQuantity + ' 件才可選購';
+                ? t("CartAddOnQualifiedStatus", "主要商品共 {0} 件，可選 {1} 件，目前選了 {2} 件", [qualification.quantity, qualification.allowance, selected])
+                : t("CartAddOnRequireStatus", "指定商品需滿 {0} 件才可選購", [qualification.requiredQuantity]);
             var cards = (getValue(campaign, "rewardItems") || []).map(function (item) {
                 return renderProductAddOnCard(campaign, item, qualification);
             }).join('');
             return '<section class="cart-addon-modal-campaign"><div class="cart-campaign-header"><div><h4>' +
                 escapeHtml(getValue(campaign, "name")) + '</h4><p>' + status + '</p></div>' +
-                '<span class="cart-campaign-threshold">每滿 ' + qualification.requiredQuantity + ' 件，可選 ' +
-                Number(getValue(campaign, "selectionQuantityPerQualification") || 1) + ' 件</span></div>' +
+                '<span class="cart-campaign-threshold">' + t("CartAddOnPerThreshold", "每滿 {0} 件，可選 {1} 件", [qualification.requiredQuantity,
+                Number(getValue(campaign, "selectionQuantityPerQualification") || 1)]) + '</span></div>' +
                 '<div class="cart-reward-track">' + cards + '</div></section>';
         }).join('');
         var $campaignRoot = $('.cart-addon-modal-campaigns');
-        $campaignRoot.html(html || '<div class="text-muted py-5 text-center">目前沒有可補選的商品優惠</div>');
-        $('.cart-addon-modal-summary').text(message || '可在這裡直接補選、減少或更換優惠商品');
+        $campaignRoot.html(html || '<div class="text-muted py-5 text-center">' + t("CartAddOnEmpty", "目前沒有可補選的商品優惠") + '</div>');
+        $('.cart-addon-modal-summary').text(message || t("CartAddOnModalHint", "可在這裡直接補選、減少或更換優惠商品"));
     }
 
     function openProductAddOnModal(message, campaignKeys, groupId) {
@@ -794,15 +803,15 @@
 
         window.ProductRewardPreview.open({
             productId: Number(getValue(item, 'productId') || 0),
-            productName: getValue(item, 'productName') || '優惠商品',
+            productName: getValue(item, 'productName') || t("RewardOfferItem", "優惠商品"),
             stockName: getValue(item, 'stockName') || '',
             imageUrl: getValue(item, 'imageUrl') || '/images/noImg.jpg',
             offerPrice: offerPrice,
             originalPrice: Number(getValue(item, 'originalPrice') || 0),
-            benefitText: offerPrice <= 0 ? '贈品' : '加價購',
+            benefitText: offerPrice <= 0 ? t("RewardGift", "贈品") : t("RewardAddOn", "加價購"),
             selected: selected,
             disabled: disabled,
-            cancelText: offerPrice <= 0 ? '取消贈品' : '取消加購',
+            cancelText: offerPrice <= 0 ? t("RewardCancelGift", "取消贈品") : t("RewardCancelAddOn", "取消加購"),
             parentModal: draftMode ? '#CartProductAddOnModal' : null,
             onAction: function () {
                 var source = draftMode ? S.productAddOnDrafts || {} : S.marketingRewardSelections || {};
@@ -815,7 +824,7 @@
 
     function saveProductAddOnDrafts() {
         var campaigns = getModalProductAddOnCampaigns();
-        $('.cart-addon-modal-summary').text('正在儲存優惠商品…');
+        $('.cart-addon-modal-summary').text(t("CartAddOnSaving", "正在儲存優惠商品…"));
         var requests = campaigns.map(function (campaign) {
             var selections = (getValue(campaign, 'rewardItems') || []).map(function (item) {
                 return {
@@ -836,8 +845,8 @@
             var results = requests.length === 1 ? [arguments[0]] : Array.prototype.slice.call(arguments).map(function (x) { return x[0]; });
             var failed = results.find(function (x) { return !x || x.success !== true; });
             if (failed) {
-                $('.cart-addon-modal-summary').text(failed.message || '無法更新，請重新整理後再試。');
-                Coker.sweet.error('無法更新優惠商品', failed.message || '請重新整理後再試。', null, true);
+                $('.cart-addon-modal-summary').text(failed.message || t("CartAddOnUpdateFailedReload", "無法更新，請重新整理後再試。"));
+                Coker.sweet.error(t("CartAddOnUpdateFailedTitle", "無法更新優惠商品"), failed.message || t("CartReloadAndRetry", "請重新整理後再試。"), null, true);
                 $('.js-save-cart-addons').prop('disabled', false);
                 return;
             }
@@ -846,15 +855,15 @@
                 var modalElement = document.getElementById('CartProductAddOnModal');
                 if (modalElement) bootstrap.Modal.getOrCreateInstance(modalElement).hide();
                 $('.js-save-cart-addons').prop('disabled', false);
-                Coker.sweet.success('優惠商品已更新', null, true);
+                Coker.sweet.success(t("CartAddOnUpdated", "優惠商品已更新"), null, true);
             }).fail(function () {
-                $('.cart-addon-modal-summary').text('優惠商品已儲存，但畫面更新失敗，請重新整理後確認。');
+                $('.cart-addon-modal-summary').text(t("CartAddOnSavedRefreshFailed", "優惠商品已儲存，但畫面更新失敗，請重新整理後確認。"));
                 $('.js-save-cart-addons').prop('disabled', false);
-                Coker.sweet.error('畫面更新失敗', '優惠商品已儲存，請重新整理購物車確認。', null, true);
+                Coker.sweet.error(t("CartRefreshFailedTitle", "畫面更新失敗"), t("CartAddOnSavedReload", "優惠商品已儲存，請重新整理購物車確認。"), null, true);
             });
         }).fail(function () {
-            $('.cart-addon-modal-summary').text('無法更新，請稍後再試。');
-            Coker.sweet.error('無法更新優惠商品', '請稍後再試。', null, true);
+            $('.cart-addon-modal-summary').text(t("CartAddOnUpdateFailedLater", "無法更新，請稍後再試。"));
+            Coker.sweet.error(t("CartAddOnUpdateFailedTitle", "無法更新優惠商品"), t("QuickCartTryAgainLater", "請稍後再試。"), null, true);
             $('.js-save-cart-addons').prop('disabled', false);
         });
     }
@@ -867,7 +876,7 @@
             }, 0);
             return persisted > qualification.allowance;
         });
-        if (invalid) openProductAddOnModal('主要商品數量已減少，請調整超出資格的優惠商品後儲存');
+        if (invalid) openProductAddOnModal(t("CartAddOnOverLimit", "主要商品數量已減少，請調整超出資格的優惠商品後儲存"));
         return invalid;
     }
 
@@ -903,7 +912,7 @@
     function focusUnclaimedGiftCampaigns(campaigns) {
         var productAddOnCampaign = campaigns.find(isProductAddOnCampaign);
         if (productAddOnCampaign) {
-            openProductAddOnModal('還有可領取的贈品尚未選擇', [campaignKey(productAddOnCampaign)]);
+            openProductAddOnModal(t("CartGiftUnclaimedHint", "還有可領取的贈品尚未選擇"), [campaignKey(productAddOnCampaign)]);
             return;
         }
         var root = document.getElementById('CartMarketingRewards');
@@ -927,18 +936,18 @@
         };
         var returnToGifts = function () { focusUnclaimedGiftCampaigns(campaigns); };
         var message = campaigns.length > 1
-            ? '目前有 ' + campaigns.length + ' 組贈品尚未領取，確定要放棄並進入下一步嗎？'
-            : '目前還有贈品尚未領取，確定要放棄並進入下一步嗎？';
+            ? t("CartGiftUnclaimedMany", "目前有 {0} 組贈品尚未領取，確定要放棄並進入下一步嗎？", [campaigns.length])
+            : t("CartGiftUnclaimedOne", "目前還有贈品尚未領取，確定要放棄並進入下一步嗎？");
 
         if (typeof window.Swal !== 'undefined' && typeof window.Swal.fire === 'function') {
             S.giftAbandonWarningOpen = true;
             window.Swal.fire({
                 icon: 'warning',
-                title: '還有贈品尚未選取',
+                title: t("CartGiftUnclaimedTitle", "還有贈品尚未選取"),
                 text: message,
                 showCancelButton: true,
-                confirmButtonText: '放棄贈品並繼續',
-                cancelButtonText: '返回選擇贈品',
+                confirmButtonText: t("CartGiftAbandon", "放棄贈品並繼續"),
+                cancelButtonText: t("CartGiftBack", "返回選擇贈品"),
                 reverseButtons: true,
                 focusCancel: true,
                 returnFocus: false
@@ -985,7 +994,7 @@
             $prompt.find('.js-open-cart-addons')
                 .attr('data-campaign-keys', keys.join(','))
                 .attr('data-group-id', groupId)
-                .attr('aria-label', '補選或調整本組優惠商品，目前可選 ' + available + ' 件、已選 ' + selected + ' 件');
+                .attr('aria-label', t("CartAddOnAdjustAria", "補選或調整本組優惠商品，目前可選 {0} 件、已選 {1} 件", [available, selected]));
         });
     }
 
@@ -1020,7 +1029,7 @@
         var $body = $section.find('.cart-scope-products-body').first();
         var expanded = $button.attr('aria-expanded') === 'true';
         $button.attr('aria-expanded', String(!expanded));
-        $button.find('span').text(expanded ? '展開選購' : '收合');
+        $button.find('span').text(expanded ? t("CartMktExpand", "展開選購") : t("CartMktCollapse", "收合"));
         $body.prop('hidden', expanded);
         $section.toggleClass('is-expanded', !expanded).toggleClass('is-collapsed', expanded);
         if (!expanded) initScopeProductSwiper($section);

@@ -12,11 +12,12 @@ public interface IAiClient
 }
 
 // Fixed destinations only. Neither the browser nor StoreSet can supply a URL or authentication header.
-public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability selfAvailability) : IAiClient
+public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability selfAvailability, ILogger<AiClient> logger) : IAiClient
 {
     public async Task<AiChatResult> ChatAsync(WebsiteAiSettings settings, AiChatInput input, CancellationToken token)
     {
         if (!settings.Enabled) return new(403, null, "本站尚未開放 AI 輔助。");
+        if (settings.EffectiveProvider != "self") WebsiteAiSettingsService.ValidateApiKey(settings.ApiKey);
         using var request = CreateRequest(settings, input);
         try
         {
@@ -46,7 +47,22 @@ public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability se
                 ? new(422, null, "AI 沒有回傳完整可用的文字結果。", calls)
                 : new(200, content.Trim(), "", calls);
         }
-        catch (HttpRequestException) { return new(502, null, "無法連線至 AI 服務。"); }
+        catch (HttpRequestException ex)
+        {
+            // Log classifications only: exception messages may contain sensitive provider data.
+            logger.LogWarning("AI connection failed. Provider={Provider}, Error={Error}, InnerType={InnerType}",
+                settings.EffectiveProvider, ex.HttpRequestError, ex.InnerException?.GetType().Name);
+            return new(502, null, ex.HttpRequestError switch
+            {
+                HttpRequestError.NameResolutionError => "無法解析 AI 服務的網域名稱，請檢查伺服器的 DNS 與網路設定。",
+                HttpRequestError.SecureConnectionError => "無法建立與 AI 服務的安全連線，請檢查伺服器時間、憑證信任與 Proxy 設定。",
+                HttpRequestError.ConnectionError => "無法建立與 AI 服務的網路連線，請檢查伺服器對外連線、防火牆與 Proxy 設定。",
+                HttpRequestError.ProxyTunnelError => "無法透過 Proxy 連線至 AI 服務，請檢查伺服器的 Proxy 設定。",
+                HttpRequestError.HttpProtocolError or HttpRequestError.InvalidResponse or HttpRequestError.ResponseEnded
+                    => "AI 服務連線中斷或回傳無效的 HTTP 回應，請檢查伺服器網路與 Proxy 設定。",
+                _ => "無法連線至 AI 服務，請管理員查看伺服器的 AI 連線錯誤分類。"
+            });
+        }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or IOException or IndexOutOfRangeException)
         { return new(502, null, "AI 回覆格式不正確或超過大小限制。"); }
     }
@@ -80,7 +96,10 @@ public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability se
                     generationConfig = new { responseMimeType = "application/json", maxOutputTokens = 16000 } };
                 break;
             case "claude":
+                WebsiteAiSettingsService.ValidateClaudeWorkspaceId(settings.ClaudeWorkspaceId);
                 request = new(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+                if (settings.ClaudeWorkspaceId.Length > 0)
+                    request.Headers.Add("anthropic-workspace-id", settings.ClaudeWorkspaceId);
                 request.Headers.Add("x-api-key", settings.ApiKey);
                 request.Headers.Add("anthropic-version", "2026-10-21");
                 payload = new { model = settings.Model, max_tokens = 16000, system = input.System,
@@ -121,7 +140,7 @@ public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability se
         }
     }
 
-    private static async Task<byte[]> ReadBoundedAsync(HttpResponseMessage response, CancellationToken token)
+    internal static async Task<byte[]> ReadBoundedAsync(HttpResponseMessage response, CancellationToken token)
     {
         const int limit = 262144;
         if (response.Content.Headers.ContentLength > limit) throw new IOException();

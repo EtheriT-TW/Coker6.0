@@ -10,7 +10,8 @@ public static class AiStoreSettingNames
     public const string Provider = "AiProvider";
     public const string Model = "AiModel";
     public const string ApiKey = "AiApiKey";
-    public static readonly string[] All = [Enabled, Provider, Model, ApiKey];
+    public const string ClaudeWorkspaceId = "AiClaudeWorkspaceId";
+    public static readonly string[] All = [Enabled, Provider, Model, ApiKey, ClaudeWorkspaceId];
 
     public static bool IsManaged(string? key) => All.Contains(key?.Trim(), StringComparer.OrdinalIgnoreCase) || IsLegacy(key);
     public static bool IsSecret(string? key) => string.Equals(key?.Trim(), ApiKey, StringComparison.OrdinalIgnoreCase) || IsLegacy(key);

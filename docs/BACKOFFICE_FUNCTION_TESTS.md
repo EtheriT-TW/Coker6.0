@@ -1,5 +1,67 @@
 # 後台功能檢測流程與維護規則
 
+## 帳戶模型清單與下拉選擇
+
+AI 設定新增「載入模型」及名稱＋ID 下拉，保留自訂模型 ID。使用者明確點擊才查詢，不在開頁、切換或保存時連外。查詢可以使用未保存的新金鑰及 Claude 工作區，未填模型仍可查詢；只有這條模型查詢路徑呼叫 Prepare(requireModel:false)，保存與生成原模型必填規則維持。Models POST 沿用編輯權限、防偽、本站與版本驗證；保留已存金鑰時前端不回填金鑰，後端解密讀取，替換時僅經同源 HTTPS 傳入新金鑰。查詢不保存、開放功能或生成，不使用客戶資料庫做測試寫入，不快取不同站台的憑證或模型清單。
+
+新增 AiModelCatalog，以既有禁止轉址 WebsiteAi HTTP client 對三家固定 HTTPS 目的地執行 metadata GET；Claude 帶工作區與版本，Claude／Gemini 支援分頁，Gemini 只取 generateContent，模型 ID 去重並符合保存格式。限制 30 秒、最多 20 頁、每頁 256 KiB／最多 2000 選項，重複 cursor、超限、非 JSON、HTTP 或網路錯誤都拒絕且不回傳部分清單／供應商原文、不重試／回退。OpenAI 清單未提供 Responses 相容性能力，列出 API 回傳且符合 ID 格式的模型；清單不是測試通過，選擇後仍需保存並測試。新模型取不到或不在清單時可以自訂。切換供應商、金鑰操作、新金鑰或工作區即清除舊選項；查詢失敗保留目前模型，用 co.sweet.error 回饋，模型名稱用 textContent 輸出。
+
+新增 BackofficeSandboxAiModelChecks，從既有 sandbox/ai-provider-contracts 執行器實際呼叫：首次無模型 Prepare 成功但保存 Prepare 拒絕、固定目的地／GET／驗證標頭／無金鑰 URL、Claude workspace／分頁／去重、Gemini 去除 models/、生成方法篩選與 pageToken 編碼、OpenAI ID、空清單、400／401／403／429／500 不洩漏、不重試、非 JSON／超大／重複 cursor 拒絕、網路錯誤及 self 零連外。沿用原自動案例 ID／數量，未執行。
+
+新增模型選擇人工規格（不綁 executor，不列使用者自動通過數）：金鑰尚未保存就載入再選擇保存；舊模型不在清單時保留；自訂模型可改；切換三家、金鑰與工作區後不可選舊清單；唯讀不可查詢；缺防偽、跨站、舊版本及撤權拒絕；慢網路與失敗不清除使用者設定；查詢前後設定及版本不變，Test 仍無 Body。沒有新增 Seed、schema 或 Migration。
+
+本次僅靜態檢查，未執行 build、檢測、瀏覽器、真實供應商呼叫或 bundle。建議使用者編譯 MVC（可能還原套件並寫入 bin/obj，時間依環境），並在 src/EtheriT.Coker.Web.MVC 手動 npm run create-bundles；此流程先檢查授權，再 yarn && gulp buildDev，可能下載相依、修改 lock file、產生大量資產與啟動監看，可能耗時較長。
+
+## 儲存成功不要求重新開啟編輯頁
+
+保存成功彈窗只顯示「AI 設定已儲存」。前端既有 apply(data) 即時套用保存回應與版本，Test 與 CanvasAiService.GenerateCore 均在呼叫時讀取本站最新設定；更換供應商、模型、金鑰與 Claude 工作區 ID 不需額外重開或自動重載編輯器。人工回歸需保存後直接測試最新設定，再於已啟用 AI 的編輯器送出新請求核對最新供應商／工作區；不自動發出付費測試或生成。已開啟編輯器的 AI 入口啟用顯示仍由初始化判定，這次不宣稱已實作跨頁入口同步。尚未執行瀏覽器或外部驗收，未執行 bundle。
+
+## AI 設定共用彈窗回饋
+
+保存與測試結果統一使用 co.sweet.success／error，收到有效保存回應且 apply 成功後才顯示成功；不再以頁首或按鈕旁文字作為操作結果回饋。測試費用及重新載入確認改用 co.sweet.confirmAsync，確認期間鎖定操作，取消不送 API；確認後仍保留原防偽與站台比對。後端文字先 HTML 編碼再交給共用彈窗的 html 參數，避免當作標記解析。
+
+更新既有 preview-controls 人工回歸：捲至底部，成功、前端驗證失敗、防偽取得失敗與保存 API 失敗皆顯示共用彈窗；處理中停用、結束恢復。外部測試與重新載入顯示系統確認窗，取消及連點無 API，確認一次只執行一次，測試結果成功／失敗亦用共用彈窗，錯誤中 HTML 字元顯示原文；窄螢幕可閱讀。尚未執行瀏覽器驗收，不新增自動通過數。只修改 Razor 與 JS 原始碼，需手動執行 MVC 的 npm run create-bundles；可能下載相依、修改 lock file、產生大量資產及啟動監看，耗時依環境而定。本次未執行。
+
+## Claude 工作區 ID
+
+新增選填 AiClaudeWorkspaceId（StoreSet ID 40、群組 9、文字、預設空白），AI 管理參數由四個改為五個；沿用本站明細、通用寫入保護與版本指紋。只有 Claude 顯示欄位並送出 anthropic-workspace-id；空白不送，支援已綁定工作區金鑰。切換至其他供應商保存時清空工作區 ID。限制 wrkspc_ 後接 ASCII 英數、總長不超過 100，拒絕標頭注入。工作區 ID 非密鑰，允許回填；金鑰維持加密及遮罩。Test 仍無 Body，只用已保存設定。
+
+擴充既有 sandbox/ai-settings 與 sandbox/ai-provider-contracts：五筆設定、工作區保存重讀、單獨變更更新版本且保留金鑰、換供應商清空、Claude 正確標頭、空白省略、其他供應商不帶入，以及無效／超長／換行 ID 拒絕。保留穩定案例 ID 與數量；未執行，不能宣稱真實 Claude 或 SQL 驗證通過。
+
+人工驗收：完成 Seed 部署、編譯及資產更新後，保留原金鑰，填入具有存取權的工作區 ID 並保存，重開比對；未保存時不能測試。分別測試已綁定金鑰＋空 ID、未綁定金鑰＋有效 ID、錯誤／無權限工作區、跨站保存拒絕、唯讀停用及切換供應商。此項設定缺 Seed 時沿用既有拒絕讀寫行為，不在執行時補建；部署前需先套用 Seed。
+
+未建立 Migration 或修改既有 Migration／snapshot。建議由使用者於 Repository 根目錄執行並審查：
+
+```powershell
+dotnet ef migrations add AddClaudeWorkspaceIdSetting --project "src/EtheriT.Coker.EntityFrameworkCore/EtheriT.Coker.EntityFrameworkCore.csproj" --startup-project "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+```
+
+命令可能編譯及還原套件，會建立 Migration 與更新 snapshot，耗時依環境而定。預期只新增 StoreSet ID 40；必須確認 ID 沒有衝突，且沒有夾帶其他尚未套用的 Seed／schema 差異。既有站台新明細未存在時使用空白，不變更原金鑰。審查、備份與確認目標環境後，再自行執行：
+
+```powershell
+dotnet ef database update --project "src/EtheriT.Coker.EntityFrameworkCore/EtheriT.Coker.EntityFrameworkCore.csproj" --startup-project "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+```
+
+此命令會套用所有待處理 Migration 並寫入資料庫，可能鎖定資料、編譯、還原且耗時較長。本次未執行。MVC 需手動 npm run create-bundles（先檢查授權，再 yarn && gulp buildDev），可能下載相依、改 lock file、產生大量資產與啟動監看；未由 Codex 執行。
+
+## API Key 非 ASCII 字元回歸
+
+WebsiteAiSettingsService.Prepare 在儲存前拒絕非可見 ASCII 金鑰，AiClient 在建立外部請求前使用同一驗證，避免 HttpClient 寫入標頭才拋出 Unknown 連線例外。既有設定讀取不新增此限制，讓管理者仍能進入頁面更換錯誤金鑰；測試回傳安全設定錯誤，不回傳原金鑰，不修改或猜測字元。
+
+擴充既有 sandbox/ai-provider-contracts 執行器：中文、全形、遮罩及零寬字元不可保存，已存錯誤金鑰不可呼叫 HTTP，錯誤不洩漏假金鑰；案例 ID 與自動案例數不變。尚未執行編譯、隔離檢測、瀏覽器或外部 API。人工驗收需先以完整有效金鑰更換並儲存，再點測試；不可用 Console 列表遮罩內容代替原始金鑰。
+
+## AI 連線失敗分類
+
+AiClient 依 HttpRequestException.HttpRequestError 區分 DNS、安全連線、網路、Proxy 與無效／中斷 HTTP 回應，對使用者回傳固定可理解提示；伺服器 warning 日誌僅記錄供應商鍵值、錯誤分類及內層例外型別，不記錄金鑰、請求內容或原始例外訊息。未知錯誤維持明確失敗，不重試、不回退、不略過 TLS 驗證。
+
+擴充既有 sandbox/ai-provider-contracts 執行器與穩定案例 ID：純記憶體 handler 模擬六種連線錯誤，斷言 502、分類提示、不洩漏例外中的假金鑰及僅呼叫一次。尚未執行，不代表實際 DNS、憑證或 Claude 串接通過。由使用者重新編譯啟動 MVC 後，再點測試取得分類；本次僅修改 C# 與內部檢測資料，不需重產 bundle。
+
+## AI 已儲存設定連線測試
+
+WebsiteAi/Test 改為無 Request Body 的 POST，由後端依登入者目前授權站台讀取已儲存的供應商、模型及解密金鑰，固定測試訊息仍由後端建立；不接受前端草稿覆寫。保留編輯權限、防偽、前端 Token 站台比對、30 秒逾時、費用確認及不保存／不開放功能的行為。未儲存變更時停用測試並提示先儲存。API Key 欄位仍供更換並儲存金鑰使用，保留金鑰時儲存送出空字串，測試則不送出任何設定欄位。
+
+更新既有 preview-permissions-and-no-write 人工規格，涵蓋空 Body、後端使用已存設定、草稿不可測試及舊客戶端傳入設定不可覆寫等回歸。未新增自動通過數；未執行外部呼叫、瀏覽器、build 或 bundle。此修改不代表原連線 502 已解決。前端維持引用 AiSettings.min.js，需手動重新產生資產。
+
 ## AI 設定保存與供應商共用呼叫
 
 AiEnabled 改為單一布林 checkBox，DefaultValue=false，不建立「關閉／開放」StoreSetItems。AI 專用頁原本即使用單一開關，因此不修改共用多選 checkbox 元件，也不需因本次調整重產前端資產。StoreSetDetail 仍依站台保存 true／false，沒有本站明細為關閉；只保留四個供應商選項，ID 33～36 不重新編號。已同步既有 AddWebsiteAiStoreSettings 的 Up／Down、Designer 與 snapshot，移除選項 ID 31、32 並將參數 ID 36 的型別改為 4。sandbox/ai-settings 的斷言改為 checkBox＋無選項＋預設 false，並檢查取消勾選確實保存 false；尚未執行。

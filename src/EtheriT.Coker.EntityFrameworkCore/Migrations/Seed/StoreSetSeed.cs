@@ -114,6 +114,12 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     type = SeoSetDataTypeEnum.password, DefaultValue = "", maxlength = 4096, pattern = "", jobID = "A004",
                     memo = "由 AI 專用設定頁加密保存；一般查詢不回填金鑰", CreatorUserId = 1,
                     CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 40, key = "AiClaudeWorkspaceId", name = "Claude 工作區 ID", FK_StoreSetGroupId = 9,
+                    type = SeoSetDataTypeEnum.text, DefaultValue = "", maxlength = 100, pattern = "^wrkspc_[a-zA-Z0-9]+$", jobID = "A005",
+                    memo = "選填；未綁定工作區的 Claude API Key 必須指定工作區 ID", CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 11, 18, 0, 0, 0, DateTimeKind.Local)
                 },
                 new StoreSet
                 {

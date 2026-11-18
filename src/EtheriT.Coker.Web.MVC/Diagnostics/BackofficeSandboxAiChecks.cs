@@ -24,8 +24,8 @@ public static partial class BackofficeSandboxChecks
         Require(!empty.Enabled && empty.EffectiveProvider == "self" && empty.ApiKey == "", "AI must default to disabled without writes.");
         Require(!await box.Db.StoreSetDetail.AnyAsync(d => AiStoreSettingNames.All.Contains(d.StoreSet.key)), "Reading AI defaults must not save settings.");
         var definitions = await box.Db.StoreSet.AsNoTracking().Include(s => s.storeSetItems).Where(s => AiStoreSettingNames.All.Contains(s.key)).ToListAsync();
-        Require(definitions.Count == 4 && definitions.Select(s => s.FK_StoreSetGroupId).Distinct().Count() == 1,
-            "AI must use four seeded parameters under one StoreSetGroup.");
+        Require(definitions.Count == 5 && definitions.Select(s => s.FK_StoreSetGroupId).Distinct().Count() == 1,
+            "AI must use five seeded parameters under one StoreSetGroup.");
         Require(empty.Providers.Select(o => o.Key).SequenceEqual(new[] { "self", "openai", "gemini", "claude" }), "Provider choices must come from seeded StoreSetItems.");
         Require(empty.Providers.Single(o => o.Key == "self").Name == "系統預設 AI", "The default provider label must not expose hosting details.");
         var enabledDefinition = definitions.Single(s => s.key == AiStoreSettingNames.Enabled);
@@ -39,7 +39,7 @@ public static partial class BackofficeSandboxChecks
         Require(loaded.Enabled && loaded.ApiKey == fakeKey && loaded.Provider == "openai" && first.HasApiKey, "Encrypted AI settings must reload.");
         var rows = await box.Db.StoreSetDetail.AsNoTracking().Where(d => d.FK_WebsiteId == site && AiStoreSettingNames.All.Contains(d.StoreSet.key))
             .Select(d => new { d.StoreSet.key, d.value }).ToListAsync();
-        Require(rows.Count == 4 && rows.Single(r => r.key == AiStoreSettingNames.Enabled).value == "true" &&
+        Require(rows.Count == 5 && rows.Single(r => r.key == AiStoreSettingNames.Enabled).value == "true" &&
             rows.Single(r => r.key == AiStoreSettingNames.Provider).value == "openai" && rows.Single(r => r.key == AiStoreSettingNames.Model).value == "fixture-model",
             "Each AI parameter must have its own StoreSetDetail value, not a JSON blob.");
         Require(await box.Db.StoreSetGroup.CountAsync() == groupCount && await box.Db.StoreSet.CountAsync() == definitionCount,
@@ -93,6 +93,17 @@ public static partial class BackofficeSandboxChecks
         var cleared = await service.SaveAsync(new() { WebsiteId = site, Provider = "self", KeyAction = "clear", Revision = kept.Revision }, default);
         var final = await service.GetAsync(default);
         Require(!cleared.HasApiKey && final.ApiKey == "" && final.EffectiveProvider == "self", "Explicit clear must remove the key and select self-hosting.");
+        var workspaceSaved = await service.SaveAsync(new() { WebsiteId = site, Provider = "claude", Model = "fixture-model",
+            KeyAction = "replace", ApiKey = fakeKey, ClaudeWorkspaceId = "wrkspc_fixture123", Revision = cleared.Revision }, default);
+        Require(workspaceSaved.ClaudeWorkspaceId == "wrkspc_fixture123" &&
+            (await service.GetAsync(default)).ClaudeWorkspaceId == "wrkspc_fixture123", "Workspace ID must persist and reload for this site.");
+        var workspaceChanged = await service.SaveAsync(new() { WebsiteId = site, Provider = "claude", Model = "fixture-model",
+            ClaudeWorkspaceId = "wrkspc_fixture456", Revision = workspaceSaved.Revision }, default);
+        Require(workspaceChanged.Revision != workspaceSaved.Revision && (await service.GetAsync(default)).ApiKey == fakeKey,
+            "Changing only the workspace must update the revision and retain the encrypted key.");
+        var workspaceCleared = await service.SaveAsync(new() { WebsiteId = site, Provider = "self", KeyAction = "clear",
+            ClaudeWorkspaceId = "wrkspc_fixture456", Revision = workspaceChanged.Revision }, default);
+        Require(workspaceCleared.ClaudeWorkspaceId == "", "Switching providers must clear Claude workspace selection.");
         var missing = await box.Db.StoreSet.SingleAsync(s => s.key == AiStoreSettingNames.Model);
         missing.IsDeleted = true;
         await box.Db.SaveChangesAsync();
@@ -104,8 +115,38 @@ public static partial class BackofficeSandboxChecks
     private static async Task AiProviderContracts(BackofficeSandbox box)
     {
         var clients = new AiFixtureClients();
-        var client = new AiClient(clients, box.Services.GetRequiredService<CanvasAiAvailability>());
+        var client = new AiClient(clients, box.Services.GetRequiredService<CanvasAiAvailability>(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<AiClient>.Instance);
         var input = new AiChatInput("Return JSON", "fixture input", "zh-tw", "<p>fixture</p>");
+        foreach (var provider in new[] { "claude", "openai", "gemini" })
+        {
+            using var request = client.CreateRequest(new() { Enabled = true, Provider = provider,
+                Model = "fixture-model", ApiKey = "fixture-key", ClaudeWorkspaceId = "wrkspc_fixture123" }, input);
+            Require(request.Headers.Contains("anthropic-workspace-id") == (provider == "claude"),
+                "Workspace header must only be sent to Claude.");
+            if (provider == "claude") Require(request.Headers.GetValues("anthropic-workspace-id").Single() == "wrkspc_fixture123",
+                "Claude workspace header must match the saved ID.");
+        }
+        using (var request = client.CreateRequest(new() { Provider = "claude", Model = "fixture-model", ApiKey = "fixture-key" }, input))
+            Require(!request.Headers.Contains("anthropic-workspace-id"), "A workspace-scoped key may omit the workspace ID.");
+        foreach (var badWorkspace in new[] { "中文", "wrkspc_a\r\nx-test: value", "wrkspc_", new string('a', 101) })
+        {
+            var rejected = false;
+            try { WebsiteAiSettingsService.Prepare(new(), new() { Provider = "claude", ClaudeWorkspaceId = badWorkspace }); }
+            catch (AiSettingsException) { rejected = true; }
+            Require(rejected, "Invalid workspace IDs must be rejected before saving or creating headers.");
+        }
+        foreach (var badKey in new[] { "fixture-中文", "fixture-Ａ", "fixture-•••", "fixture-\u200bkey" })
+        {
+            var rejected = false;
+            try { WebsiteAiSettingsService.Prepare(new(), new() { Provider = "claude", Model = "fixture-model", KeyAction = "replace", ApiKey = badKey }); }
+            catch (AiSettingsException) { rejected = true; }
+            Require(rejected, "Non-ASCII API keys must be rejected before saving.");
+            rejected = false;
+            try { await client.ChatAsync(new() { Enabled = true, Provider = "claude", Model = "fixture-model", ApiKey = badKey }, input, default); }
+            catch (AiSettingsException ex) { rejected = ex.Message.Contains("API Key") && !ex.Message.Contains(badKey); }
+            Require(rejected && clients.Calls == 0, "Existing invalid API keys must fail with a safe settings error before any HTTP call.");
+        }
         var disabled = await client.ChatAsync(new(), input, default);
         Require(disabled.Status == 403 && clients.Calls == 0, "Disabled AI must never call HTTP.");
         foreach (var provider in new[] { "openai", "gemini", "claude" })
@@ -147,6 +188,25 @@ public static partial class BackofficeSandboxChecks
             clients.Body = new string('x', 262145);
             Require((await client.ChatAsync(settings, input, default)).Status == 502, "Oversized responses must be rejected.");
         }
+        foreach (var (error, hint) in new[]
+        {
+            (HttpRequestError.NameResolutionError, "DNS"),
+            (HttpRequestError.SecureConnectionError, "憑證"),
+            (HttpRequestError.ConnectionError, "防火牆"),
+            (HttpRequestError.ProxyTunnelError, "Proxy"),
+            (HttpRequestError.ResponseEnded, "HTTP"),
+            (HttpRequestError.Unknown, "錯誤分類")
+        })
+        {
+            clients.Error = error;
+            var before = clients.Calls;
+            var result = await client.ChatAsync(new WebsiteAiSettings
+                { Enabled = true, Provider = "claude", Model = "fixture-model", ApiKey = "fixture-key" }, input, default);
+            Require(result.Status == 502 && result.Message.Contains(hint) && !result.Message.Contains("fixture-key")
+                && clients.Calls == before + 1, "Connection errors must be classified without leaking exception text, retrying or falling back.");
+        }
+        clients.Error = null;
+        await AiModelCatalogContracts();
         Require(WebsiteAiSettingsService.Prepare(new(), new() { Provider = "gemini" }).EffectiveProvider == "self", "Missing external keys must select self-hosting.");
     }
 
@@ -155,6 +215,7 @@ public static partial class BackofficeSandboxChecks
     {
         public string Body { get; set; } = "{}";
         public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
+        public HttpRequestError? Error { get; set; }
         public int Calls { get; private set; }
         public HttpClient CreateClient(string name) => new(new AiFixtureHandler(this));
         private sealed class AiFixtureHandler(AiFixtureClients owner) : HttpMessageHandler
@@ -162,6 +223,7 @@ public static partial class BackofficeSandboxChecks
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 owner.Calls++;
+                if (owner.Error is { } error) throw new HttpRequestException(error, "fixture-key must not be returned");
                 return Task.FromResult(new HttpResponseMessage(owner.Status) { Content = new StringContent(owner.Body, Encoding.UTF8, "application/json") });
             }
         }

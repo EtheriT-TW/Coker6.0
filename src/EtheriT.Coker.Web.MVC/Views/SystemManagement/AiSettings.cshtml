@@ -61,9 +61,21 @@
                                 <div id="AiApiKeyHelp" class="form-text">金鑰加密儲存，不顯示原文。沒有外部金鑰時使用系統預設 AI。</div>
                             </div>
                             <div class="mb-4">
-                                <label class="form-label fw-bold" for="AiModel">模型名稱</label>
-                                <input id="AiModel" class="form-control" type="text" autocomplete="off" spellcheck="false" maxlength="150" placeholder="請輸入供應商提供的模型 ID" aria-describedby="AiModelHelp">
-                                <div id="AiModelHelp" class="form-text">請填寫你的 API 帳戶可使用的模型 ID。</div>
+                                <label class="form-label fw-bold" for="AiModelSelect">模型名稱</label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <select id="AiModelSelect" class="form-select flex-grow-1 w-auto" style="min-width:0;max-width:100%" aria-describedby="AiModelHelp"></select>
+                                    <button id="AiLoadModels" class="btn btn-outline-primary" type="button">載入模型</button>
+                                </div>
+                                <div id="AiCustomModelFields" class="mt-2" hidden>
+                                    <label class="form-label" for="AiModel">自訂模型 ID</label>
+                                    <input id="AiModel" class="form-control" type="text" autocomplete="off" spellcheck="false" maxlength="150" placeholder="請輸入供應商提供的模型 ID" aria-describedby="AiModelHelp">
+                                </div>
+                                <div id="AiModelHelp" class="form-text" role="status" aria-live="polite">填寫金鑰後按「載入模型」再選擇，也可自訂模型 ID。查詢不會儲存或執行模型生成。</div>
+                            </div>
+                            <div id="AiClaudeWorkspaceFields" class="mb-4" hidden>
+                                <label class="form-label fw-bold" for="AiClaudeWorkspaceId">Claude 工作區 ID（選填）</label>
+                                <input id="AiClaudeWorkspaceId" class="form-control" type="text" autocomplete="off" spellcheck="false" maxlength="100" placeholder="wrkspc_…" aria-describedby="AiClaudeWorkspaceHelp">
+                                <div id="AiClaudeWorkspaceHelp" class="form-text">金鑰未綁定工作區時必填；已綁定時可留空。請到 Claude Console 的工作區頁面複製 ID，填入後先儲存再測試。</div>
                             </div>
                             <div class="alert alert-light border mb-0">外部 AI 的費用與可用額度依你的 API 帳戶計算。</div>
                         </div>
@@ -91,7 +103,7 @@
             <section class="card border-0 shadow-sm" aria-labelledby="AiConnectionTitle">
                 <div class="card-body p-4">
                     <h2 id="AiConnectionTitle" class="h5 fw-bold mb-3">連線檢查</h2>
-                    <p class="text-secondary">外部服務會以固定測試內容檢查回覆，可能產生少量 API 費用；系統預設 AI 服務檢查服務就緒狀態。</p>
+                    <p class="text-secondary">測試使用本站已儲存的設定，變更後請先儲存。外部服務會以固定測試內容檢查回覆，可能產生少量 API 費用；系統預設 AI 服務檢查服務就緒狀態。</p>
                     <button id="AiTest" class="btn btn-outline-primary" type="button" disabled aria-describedby="AiTestHelp">測試連線</button>
                     <div id="AiTestHelp" class="form-text" aria-live="polite">尚未檢查</div>
                 </div>

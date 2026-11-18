@@ -7662,6 +7662,22 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         },
                         new
                         {
+                            Id = 40L,
+                            CreationTime = new DateTime(2026, 11, 18, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            DefaultValue = "",
+                            FK_StoreSetGroupId = 9L,
+                            IsDeleted = false,
+                            jobID = "A005",
+                            key = "AiClaudeWorkspaceId",
+                            maxlength = 100,
+                            memo = "選填；未綁定工作區的 Claude API Key 必須指定工作區 ID",
+                            name = "Claude 工作區 ID",
+                            pattern = "^wrkspc_[a-zA-Z0-9]+$",
+                            type = 1
+                        },
+                        new
+                        {
                             Id = 1L,
                             CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,

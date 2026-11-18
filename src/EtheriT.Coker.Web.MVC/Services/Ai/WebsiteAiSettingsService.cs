@@ -20,17 +20,19 @@ public sealed class WebsiteAiSettings
     public string Provider { get; set; } = "self";
     public string Model { get; set; } = "";
     public string ApiKey { get; set; } = "";
+    public string ClaudeWorkspaceId { get; set; } = "";
     public string Revision { get; set; } = "";
     public IReadOnlyList<AiProviderOption> Providers { get; set; } = [];
     public string EffectiveProvider => string.IsNullOrEmpty(ApiKey) ? "self" : Provider;
-    public AiSettingsView Public(long websiteId) => new(websiteId, Enabled, Provider, Model, ApiKey.Length > 0, Revision, Providers);
+    public AiSettingsView Public(long websiteId) => new(websiteId, Enabled, Provider, Model, ApiKey.Length > 0, Revision, Providers, ClaudeWorkspaceId);
 }
 
 public sealed record AiProviderOption(string Key, string Name);
-public sealed record AiSettingsView(long WebsiteId, bool Enabled, string Provider, string Model, bool HasApiKey, string Revision, IReadOnlyList<AiProviderOption> Providers);
+public sealed record AiSettingsView(long WebsiteId, bool Enabled, string Provider, string Model, bool HasApiKey, string Revision, IReadOnlyList<AiProviderOption> Providers, string ClaudeWorkspaceId);
 
 public sealed class AiSettingsInput
 {
+    public string ClaudeWorkspaceId { get; set; } = "";
     public long WebsiteId { get; set; }
     public bool Enabled { get; set; }
     public string Provider { get; set; } = "self";
@@ -80,8 +82,9 @@ public sealed class WebsiteAiSettingsService(CokerDbContext db, LoginUserData us
         var enabledValue = Value(AiStoreSettingNames.Enabled);
         if (!bool.TryParse(enabledValue, out var enabled)) throw new AiSettingsException("AI 開放設定格式不正確。");
         var settings = new WebsiteAiSettings { Enabled = enabled && details.Any(d => d.FK_StoreSetId == definitions.Single(s => s.key == AiStoreSettingNames.Enabled).Id),
-            Provider = Value(AiStoreSettingNames.Provider), Model = Value(AiStoreSettingNames.Model), Providers = options };
-        // Revision is a fingerprint of the four persisted rows, not another business parameter.
+            Provider = Value(AiStoreSettingNames.Provider), Model = Value(AiStoreSettingNames.Model),
+            ClaudeWorkspaceId = Value(AiStoreSettingNames.ClaudeWorkspaceId), Providers = options };
+        // Revision is a fingerprint of the persisted rows, not another business parameter.
         settings.Revision = details.Count == 0 ? "" : Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(
             details.OrderBy(d => d.FK_StoreSetId).Select(d => new { d.Id, d.FK_StoreSetId, d.value, d.enable, d.LastModificationTime })))));
         try
@@ -97,7 +100,7 @@ public sealed class WebsiteAiSettingsService(CokerDbContext db, LoginUserData us
         }
     }
 
-    public static WebsiteAiSettings Prepare(WebsiteAiSettings current, AiSettingsInput input)
+    public static WebsiteAiSettings Prepare(WebsiteAiSettings current, AiSettingsInput input, bool requireModel = true)
     {
         if (input.Provider is not ("self" or "openai" or "gemini" or "claude") ||
             input.KeyAction is not ("keep" or "replace" or "clear") || input.Revision != current.Revision)
@@ -114,18 +117,34 @@ public sealed class WebsiteAiSettingsService(CokerDbContext db, LoginUserData us
         if (input.KeyAction != "replace" && !string.IsNullOrEmpty(input.ApiKey)) throw new AiSettingsException("請選擇更換金鑰後再輸入。");
         if (input.Provider == "self" && key.Length > 0) throw new AiSettingsException("選擇系統預設 AI 前，請清除外部金鑰。");
         var settings = new WebsiteAiSettings { Enabled = input.Enabled, Provider = input.Provider,
-            Model = input.Model?.Trim() ?? "", ApiKey = key, Revision = current.Revision, Providers = current.Providers };
-        Validate(settings);
+            Model = input.Model?.Trim() ?? "", ApiKey = key, Revision = current.Revision, Providers = current.Providers,
+            ClaudeWorkspaceId = input.Provider == "claude" ? input.ClaudeWorkspaceId?.Trim() ?? "" : "" };
+        Validate(settings, requireModel);
+        ValidateApiKey(settings.ApiKey);
         return settings;
     }
 
-    private static void Validate(WebsiteAiSettings settings)
+    internal static void ValidateApiKey(string key)
     {
+        if (key.Any(c => c < '!' || c > '~'))
+            throw new AiSettingsException("API Key 含有不支援的字元，請從供應商複製完整金鑰，更換後儲存；不可包含中文、全形字元、空白或遮罩符號。");
+    }
+
+    private static void Validate(WebsiteAiSettings settings, bool requireModel = true)
+    {
+        ValidateClaudeWorkspaceId(settings.ClaudeWorkspaceId);
         if (settings.Provider is not ("self" or "openai" or "gemini" or "claude") || settings.ApiKey == null || settings.Model == null ||
             settings.ApiKey.Length > 4096 || settings.ApiKey.Any(char.IsWhiteSpace) || settings.ApiKey.Any(char.IsControl) ||
             settings.Model.Length > 150 || (settings.Model.Length > 0 && !Regex.IsMatch(settings.Model, "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$")) ||
-            (settings.ApiKey.Length > 0 && (settings.Provider == "self" || settings.Model.Length == 0)))
+            (settings.ApiKey.Length > 0 && (settings.Provider == "self" || (requireModel && settings.Model.Length == 0))))
             throw new AiSettingsException("AI 供應商、金鑰或模型格式不正確；使用外部金鑰時必須填寫模型 ID。");
+    }
+
+    internal static void ValidateClaudeWorkspaceId(string workspaceId)
+    {
+        if (workspaceId == null || workspaceId.Length > 100 ||
+            (workspaceId.Length > 0 && !Regex.IsMatch(workspaceId, "\\Awrkspc_[a-zA-Z0-9]+\\z")))
+            throw new AiSettingsException("Claude 工作區 ID 格式不正確，請從 Claude Console 複製完整的工作區 ID。");
     }
 
     public async Task<AiSettingsView> SaveAsync(AiSettingsInput input, CancellationToken token)
@@ -151,6 +170,7 @@ public sealed class WebsiteAiSettingsService(CokerDbContext db, LoginUserData us
                 [AiStoreSettingNames.Enabled] = settings.Enabled ? "true" : "false",
                 [AiStoreSettingNames.Provider] = settings.Provider,
                 [AiStoreSettingNames.Model] = settings.Model,
+                [AiStoreSettingNames.ClaudeWorkspaceId] = settings.ClaudeWorkspaceId,
                 [AiStoreSettingNames.ApiKey] = settings.ApiKey.Length == 0 ? "" : Protector(site, settings.Provider).Protect(settings.ApiKey)
             };
             foreach (var definition in definitions)

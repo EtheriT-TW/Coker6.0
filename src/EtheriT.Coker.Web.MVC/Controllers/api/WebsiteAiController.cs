@@ -11,7 +11,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api;
 
 [ApiController, Authorize, Route("api/WebsiteAi"), ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class WebsiteAiController(LoginUserData user, NavigationProvider navigation,
-    WebsiteAiSettingsService settings, IAiClient client, IAntiforgery antiforgery, CanvasAiAvailability selfAvailability) : ControllerBase
+    WebsiteAiSettingsService settings, IAiClient client, IAntiforgery antiforgery, CanvasAiAvailability selfAvailability,
+    AiModelCatalog modelCatalog) : ControllerBase
 {
     private async Task<bool> Allowed(bool edit)
     {
@@ -48,17 +49,37 @@ public sealed class WebsiteAiController(LoginUserData user, NavigationProvider n
         { return StatusCode(503, new { message = "AI 設定儲存失敗，請重新載入確認後再試。" }); }
     }
 
-    [HttpPost("Test"), ValidateAntiForgeryToken, RequestSizeLimit(16384)]
-    public async Task<IActionResult> Test([FromBody] AiSettingsInput input, CancellationToken token)
+    [HttpPost("Models"), ValidateAntiForgeryToken, RequestSizeLimit(16384)]
+    public async Task<IActionResult> Models([FromBody] AiSettingsInput input, CancellationToken token)
     {
         if (!await Allowed(true)) return Forbid();
-        if (input.WebsiteId <= 0 || input.WebsiteId != await user.GetWebsiteId())
-            return Conflict(new { message = "站台已切換，請重新載入設定。" });
+        var site = await user.GetWebsiteId();
+        if (site <= 0 || site != input.WebsiteId) return Conflict(new { message = "站台已切換，請重新載入設定。" });
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
         timeout.CancelAfter(TimeSpan.FromSeconds(30));
         try
         {
-            var draft = WebsiteAiSettingsService.Prepare(await settings.GetAsync(timeout.Token), input);
+            var draft = WebsiteAiSettingsService.Prepare(await settings.GetAsync(timeout.Token), input, requireModel: false);
+            var result = await modelCatalog.ListAsync(draft, timeout.Token);
+            if (result.Status != 200) return StatusCode(result.Status, new { message = result.Message });
+            return Ok(new { websiteId = site, provider = draft.Provider, models = result.Models });
+        }
+        catch (AiSettingsException ex) { return Conflict(new { message = ex.Message }); }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+        { return StatusCode(504, new { message = "模型清單查詢逾時，請稍後再試。" }); }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        { return StatusCode(503, new { message = "模型清單查詢失敗，請稍後再試。" }); }
+    }
+
+    [HttpPost("Test"), ValidateAntiForgeryToken, RequestSizeLimit(16384)]
+    public async Task<IActionResult> Test(CancellationToken token)
+    {
+        if (!await Allowed(true)) return Forbid();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(30));
+        try
+        {
+            var draft = await settings.GetAsync(timeout.Token);
             if (draft.EffectiveProvider == "self")
             {
                 var readiness = await selfAvailability.CheckAsync(timeout.Token);

@@ -12,6 +12,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
             modelBuilder.Entity<StoreSetGroup>().HasData(
                 new StoreSetGroup
                 {
+                    Id = 9, Title = "AI 設定", Image = "", Description = "設定本站 AI 輔助功能與服務供應商",
+                    CreatorUserId = 1, CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                },
+                new StoreSetGroup
+                {
                     Id = 1,
                     Title = "Google設定",
                     Image = "/images/icon_google.png",
@@ -85,6 +90,31 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }
             );
             modelBuilder.Entity<StoreSet>().HasData(
+                new StoreSet
+                {
+                    Id = 36, key = "AiEnabled", name = "啟用 AI 輔助", FK_StoreSetGroupId = 9,
+                    type = SeoSetDataTypeEnum.checkBox, DefaultValue = "false", maxlength = 5, pattern = "", jobID = "A001",
+                    memo = "預設關閉，由管理者開放後才能使用", CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 37, key = "AiProvider", name = "AI 供應商", FK_StoreSetGroupId = 9,
+                    type = SeoSetDataTypeEnum.select, DefaultValue = "self", maxlength = 20, pattern = "", jobID = "A002",
+                    memo = "未設定外部金鑰時使用系統預設 AI", CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 38, key = "AiModel", name = "模型名稱", FK_StoreSetGroupId = 9,
+                    type = SeoSetDataTypeEnum.text, DefaultValue = "", maxlength = 150, pattern = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$", jobID = "A003",
+                    memo = "外部 AI 使用的模型 ID", CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                }, new StoreSet
+                {
+                    Id = 39, key = "AiApiKey", name = "API Key", FK_StoreSetGroupId = 9,
+                    type = SeoSetDataTypeEnum.password, DefaultValue = "", maxlength = 4096, pattern = "", jobID = "A004",
+                    memo = "由 AI 專用設定頁加密保存；一般查詢不回填金鑰", CreatorUserId = 1,
+                    CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                },
                 new StoreSet
                 {
                     Id = 1,
@@ -611,6 +641,23 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                 }
             );
             modelBuilder.Entity<storeSetItem>().HasData(
+                new storeSetItem
+                {
+                    Id = 33, Key = "self", Value = "系統預設 AI", FK_StoreSetId = 37, IsDefault = true,
+                    CreatorUserId = 1, CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                }, new storeSetItem
+                {
+                    Id = 34, Key = "openai", Value = "OpenAI（ChatGPT）", FK_StoreSetId = 37,
+                    CreatorUserId = 1, CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                }, new storeSetItem
+                {
+                    Id = 35, Key = "gemini", Value = "Google Gemini", FK_StoreSetId = 37,
+                    CreatorUserId = 1, CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                }, new storeSetItem
+                {
+                    Id = 36, Key = "claude", Value = "Anthropic Claude", FK_StoreSetId = 37,
+                    CreatorUserId = 1, CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, DateTimeKind.Local)
+                },
                 new storeSetItem
                 {
                     Id = 1,

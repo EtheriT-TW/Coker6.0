@@ -1,0 +1,108 @@
+@inject EtheriT.Coker.Application.LoginUserData LoginUserData
+@{
+    var canEdit = ViewData["CanEditAiSettings"] is true;
+}
+
+<div id="TopLine" class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 px-4">
+    <div>
+        <h1 class="title fw-bold fs-3 mb-1">AI 設定</h1>
+        <p class="text-secondary mb-0">管理本站的 AI 輔助功能與使用的服務。</p>
+    </div>
+</div>
+
+<div id="AiSettingsMain" class="px-4 pb-4" data-can-edit="@(canEdit ? "true" : "false")"
+     data-website-id="@(await LoginUserData.GetWebsiteId())" data-api-base="@Url.Content("~/api/WebsiteAi")">
+    <div id="AiMessage" class="alert alert-info" role="status" aria-live="polite">正在載入本站 AI 設定…</div>
+    @if (!canEdit)
+    {
+        <div class="alert alert-warning" role="status">你目前只有檢視權限，無法調整設定。</div>
+    }
+    <noscript><div class="alert alert-warning">請啟用 JavaScript 才能操作 AI 設定。</div></noscript>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-8">
+            <section class="card border-0 shadow-sm mb-4" aria-labelledby="AiAccessTitle">
+                <div class="card-body p-4">
+                    <h2 id="AiAccessTitle" class="h5 fw-bold mb-3">功能開放</h2>
+                    <div class="form-check form-switch mb-2">
+                        <input id="AiEnabled" class="form-check-input" type="checkbox" role="switch" disabled aria-describedby="AiEnabledHelp">
+                        <label class="form-check-label fw-bold" for="AiEnabled">啟用 AI 輔助</label>
+                    </div>
+                    <p id="AiEnabledHelp" class="text-secondary mb-0">預設關閉。開放後，使用者仍需具備 AI 輔助權限與目前頁面的編輯權限。</p>
+                </div>
+            </section>
+
+            <section class="card border-0 shadow-sm" aria-labelledby="AiServiceTitle">
+                <div class="card-body p-4">
+                    <h2 id="AiServiceTitle" class="h5 fw-bold mb-1">AI 服務</h2>
+                    <p class="text-secondary mb-4">使用系統預設 AI，或以自己的 API Key 使用外部 AI。</p>
+                    <fieldset id="AiServiceFields" disabled>
+                        <legend class="visually-hidden">服務與金鑰設定</legend>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold" for="AiProvider">AI 供應商</label>
+                            <select id="AiProvider" class="form-select" aria-describedby="AiProviderHelp">
+                                <option value="">正在載入供應商選項…</option>
+                            </select>
+                            <div id="AiProviderHelp" class="form-text">由系統提供服務，不需要另外填寫 API Key。</div>
+                        </div>
+                        <div id="AiExternalFields" hidden>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold" for="AiKeyAction">金鑰操作</label>
+                                <select id="AiKeyAction" class="form-select">
+                                    <option value="keep">保留目前金鑰</option>
+                                    <option value="replace">更換 API Key</option>
+                                    <option value="clear">清除金鑰，改用系統預設 AI</option>
+                                </select>
+                                <div id="AiKeyStatus" class="form-text">尚未載入</div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold" for="AiApiKey">API Key</label>
+                                <input id="AiApiKey" class="form-control" type="password" autocomplete="new-password" spellcheck="false" maxlength="4096" placeholder="選擇更換後輸入新金鑰" aria-describedby="AiApiKeyHelp" disabled>
+                                <div id="AiApiKeyHelp" class="form-text">金鑰加密儲存，不顯示原文。沒有外部金鑰時使用系統預設 AI。</div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-bold" for="AiModel">模型名稱</label>
+                                <input id="AiModel" class="form-control" type="text" autocomplete="off" spellcheck="false" maxlength="150" placeholder="請輸入供應商提供的模型 ID" aria-describedby="AiModelHelp">
+                                <div id="AiModelHelp" class="form-text">請填寫你的 API 帳戶可使用的模型 ID。</div>
+                            </div>
+                            <div class="alert alert-light border mb-0">外部 AI 的費用與可用額度依你的 API 帳戶計算。</div>
+                        </div>
+                    </fieldset>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <section class="card border-0 shadow-sm mb-4" aria-labelledby="AiSummaryTitle">
+                <div class="card-body p-4">
+                    <h2 id="AiSummaryTitle" class="h5 fw-bold mb-3">待儲存設定</h2>
+                    <div aria-live="polite" aria-atomic="true">
+                        <span id="AiStatus" class="badge text-bg-secondary mb-3">未開放</span>
+                        <dl class="mb-0">
+                            <dt class="text-secondary fw-normal">預計使用的服務</dt>
+                            <dd id="AiEffectiveService" class="fw-bold">AI 輔助關閉</dd>
+                            <dt class="text-secondary fw-normal">模型</dt>
+                            <dd id="AiSummaryModel">—</dd>
+                        </dl>
+                        <p id="AiSummaryHelp" class="text-secondary mb-0">修改後請儲存，測試連線不會儲存或開放功能。</p>
+                    </div>
+                </div>
+            </section>
+            <section class="card border-0 shadow-sm" aria-labelledby="AiConnectionTitle">
+                <div class="card-body p-4">
+                    <h2 id="AiConnectionTitle" class="h5 fw-bold mb-3">連線檢查</h2>
+                    <p class="text-secondary">外部服務會以固定測試內容檢查回覆，可能產生少量 API 費用；系統預設 AI 服務檢查服務就緒狀態。</p>
+                    <button id="AiTest" class="btn btn-outline-primary" type="button" disabled aria-describedby="AiTestHelp">測試連線</button>
+                    <div id="AiTestHelp" class="form-text" aria-live="polite">尚未檢查</div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-end align-items-center gap-3 mt-4">
+        <span id="AiSaveHelp" class="text-secondary">僅套用至本站。</span>
+        <button id="AiReset" class="btn btn-outline-secondary" type="button" disabled>重新載入</button>
+        <button id="AiSave" class="btn btn-primary" type="button" disabled aria-describedby="AiSaveHelp">儲存設定</button>
+    </div>
+</div>
+
+<script src="~/js/SystemManagement/AiSettings.min.js" asp-append-version="true"></script>

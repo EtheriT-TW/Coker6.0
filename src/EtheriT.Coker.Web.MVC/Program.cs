@@ -336,6 +336,12 @@ builder.Services.AddHttpClient("ParallelAi", client =>
 }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddScoped<EtheriT.Coker.Web.MVC.Services.Ai.CanvasAiService>();
 builder.Services.AddSingleton<EtheriT.Coker.Web.MVC.Services.Ai.CanvasAiAvailability>();
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<EtheriT.Coker.Web.MVC.Services.Ai.WebsiteAiSettingsService>();
+builder.Services.AddScoped<EtheriT.Coker.Web.MVC.Services.Ai.WebsiteAiAvailability>();
+builder.Services.AddScoped<EtheriT.Coker.Web.MVC.Services.Ai.IAiClient, EtheriT.Coker.Web.MVC.Services.Ai.AiClient>();
+builder.Services.AddHttpClient("WebsiteAi", client => client.Timeout = TimeSpan.FromSeconds(600))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 
 builder.Services.AddHttpClient("ThirdPartyClient_Front", client =>
 {

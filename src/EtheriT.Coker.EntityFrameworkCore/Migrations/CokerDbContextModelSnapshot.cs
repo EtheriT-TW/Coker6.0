@@ -7598,6 +7598,70 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasData(
                         new
                         {
+                            Id = 36L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            DefaultValue = "false",
+                            FK_StoreSetGroupId = 9L,
+                            IsDeleted = false,
+                            jobID = "A001",
+                            key = "AiEnabled",
+                            maxlength = 5,
+                            memo = "預設關閉，由管理者開放後才能使用",
+                            name = "啟用 AI 輔助",
+                            pattern = "",
+                            type = 4
+                        },
+                        new
+                        {
+                            Id = 37L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            DefaultValue = "self",
+                            FK_StoreSetGroupId = 9L,
+                            IsDeleted = false,
+                            jobID = "A002",
+                            key = "AiProvider",
+                            maxlength = 20,
+                            memo = "未設定外部金鑰時使用系統預設 AI",
+                            name = "AI 供應商",
+                            pattern = "",
+                            type = 5
+                        },
+                        new
+                        {
+                            Id = 38L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            DefaultValue = "",
+                            FK_StoreSetGroupId = 9L,
+                            IsDeleted = false,
+                            jobID = "A003",
+                            key = "AiModel",
+                            maxlength = 150,
+                            memo = "外部 AI 使用的模型 ID",
+                            name = "模型名稱",
+                            pattern = "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$",
+                            type = 1
+                        },
+                        new
+                        {
+                            Id = 39L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            DefaultValue = "",
+                            FK_StoreSetGroupId = 9L,
+                            IsDeleted = false,
+                            jobID = "A004",
+                            key = "AiApiKey",
+                            maxlength = 4096,
+                            memo = "由 AI 專用設定頁加密保存；一般查詢不回填金鑰",
+                            name = "API Key",
+                            pattern = "",
+                            type = 10
+                        },
+                        new
+                        {
                             Id = 1L,
                             CreationTime = new DateTime(2023, 2, 1, 18, 8, 0, 0, DateTimeKind.Local).AddTicks(1459),
                             CreatorUserId = 1L,
@@ -8233,6 +8297,16 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("StoreSetGroup");
 
                     b.HasData(
+                        new
+                        {
+                            Id = 9L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            Description = "設定本站 AI 輔助功能與服務供應商",
+                            Image = "",
+                            IsDeleted = false,
+                            Title = "AI 設定"
+                        },
                         new
                         {
                             Id = 1L,
@@ -10060,6 +10134,50 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("StoreSetItems");
 
                     b.HasData(
+                        new
+                        {
+                            Id = 33L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 37L,
+                            IsDefault = true,
+                            IsDeleted = false,
+                            Key = "self",
+                            Value = "系統預設 AI"
+                        },
+                        new
+                        {
+                            Id = 34L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 37L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "openai",
+                            Value = "OpenAI（ChatGPT）"
+                        },
+                        new
+                        {
+                            Id = 35L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 37L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "gemini",
+                            Value = "Google Gemini"
+                        },
+                        new
+                        {
+                            Id = 36L,
+                            CreationTime = new DateTime(2026, 11, 17, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 1L,
+                            FK_StoreSetId = 37L,
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Key = "claude",
+                            Value = "Anthropic Claude"
+                        },
                         new
                         {
                             Id = 1L,

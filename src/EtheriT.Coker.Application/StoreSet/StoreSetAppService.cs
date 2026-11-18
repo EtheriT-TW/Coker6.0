@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Dto.StoreSet;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.StoreSet;
@@ -284,9 +285,14 @@ namespace EtheriT.Coker.Application.StoreSet
         public async Task<ResponseMessageDto> CreateOrUpdate(List<StoreSetDetailOutputDto> datas)
         {
             ResponseMessageDto output = new ResponseMessageDto();
+            if (datas.Any(d => AiStoreSettingNames.IsManaged(d.key)))
+                return new ResponseMessageDto { Message = "AI 設定請使用專用設定頁面。" };
             long websiteId = await loginUserData.GetWebsiteId();
             long userId = await loginUserData.GetUserId();
             var keys = datas.Select(e => e.key);
+            // Match using database collation as well, so aliases cannot target managed AI parameters.
+            if (await db.StoreSet.AnyAsync(s => (AiStoreSettingNames.All.Contains(s.key) || s.key == "__AiSettingsV1") && keys.Contains(s.key)))
+                return new ResponseMessageDto { Message = "AI 設定請使用專用設定頁面。" };
             var updateItems = await db.StoreSetDetail.Include(e => e.StoreSet)
                 .Where(e => !e.IsDeleted)
                 .Where(e => keys.Contains(e.StoreSet.key))
@@ -404,6 +410,8 @@ namespace EtheriT.Coker.Application.StoreSet
         // - 沒 detail / 無有效值：用 StoreSet.DefaultValue 或 storeSetItems.isDefault
         private List<string> ResolveEffectiveValues(Core.Models.StoreSet s, StoreSetDetail? d, bool renderTextareaAsHtml)
         {
+            if (AiStoreSettingNames.IsSecret(s.key))
+                return new List<string> { string.Empty };
             // 1) 先嘗試拿 detail 值
             var fromDetail = ParseDetailValues(s, d?.value);
             if (HasMeaningfulValue(fromDetail))

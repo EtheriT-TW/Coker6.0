@@ -1,13 +1,91 @@
 # 後台功能檢測流程與維護規則
 
+## AI 設定保存與供應商共用呼叫
+
+AiEnabled 改為單一布林 checkBox，DefaultValue=false，不建立「關閉／開放」StoreSetItems。AI 專用頁原本即使用單一開關，因此不修改共用多選 checkbox 元件，也不需因本次調整重產前端資產。StoreSetDetail 仍依站台保存 true／false，沒有本站明細為關閉；只保留四個供應商選項，ID 33～36 不重新編號。已同步既有 AddWebsiteAiStoreSettings 的 Up／Down、Designer 與 snapshot，移除選項 ID 31、32 並將參數 ID 36 的型別改為 4。sandbox/ai-settings 的斷言改為 checkBox＋無選項＋預設 false，並檢查取消勾選確實保存 false；尚未執行。
+
+若 AddWebsiteAiStoreSettings 已套用，修改原檔不會改變已存在的資料庫。需另行審查修正 Migration，將 StoreSet ID 36 的 type 更新為 4，並移除屬於該參數的選項 ID 31、32，保留 StoreSetDetail 既有 true／false 與供應商選項。因 snapshot 已同步目標狀態，後續產生的 Migration 可能為空，需人工補齊並審查 Up／Down，不可直接宣稱資料庫已修正。若需要建立後續修正 Migration，可由使用者自行執行下列指令；會新增 Migration／修改 snapshot，可能編譯及還原套件，耗時依環境而定：
+
+~~~powershell
+dotnet ef migrations add UseCheckboxForWebsiteAiEnabled --project "src/EtheriT.Coker.EntityFrameworkCore/EtheriT.Coker.EntityFrameworkCore.csproj" --startup-project "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+~~~
+
+套用修正仍使用下方 database update 指令，由使用者確認環境、備份及內容後決定；會寫入資料庫，可能鎖定資料並耗時較長。本次未建立／執行上述命令，也未查詢或更新資料庫。
+
+AI 設定的客戶顯示名稱統一為「系統預設 AI」，不揭露部署方式；內部 self 鍵值與路由維持。同步修改 Seed、使用者指定的新 Migration 插入文字及其 Designer／snapshot 對應標籤，未重新產生或套用 Migration。若該 Migration 已套用，修改既有檔案不會更新資料庫，需另外審查 Seed 資料更新。sandbox/ai-settings 增加預設選項顯示名稱斷言，preview-controls 人工規格要求供應商、摘要、金鑰提示、測試結果與錯誤訊息皆不顯示部署方式；本次未執行檢測或瀏覽器驗收。
+
+SystemManagement.AiSettings 已接上本站設定的讀取、保存與測試。保留 preview-controls、preview-permissions-and-no-write 穩定 ID，內容更新為設定保存、畫布開關、權限、防偽、跨站、兩分頁版本衝突、連線測試不保存及錯誤不回退的人工驗收；未綁定 executor，不列自動通過數，尚未執行。
+
+新增 settings-isolation → sandbox/ai-settings、provider-contracts → sandbox/ai-provider-contracts，分別驗證加密保存、遮罩、通用設定拒絕保留鍵值、金鑰保留／清除、換供應商拒用舊金鑰、預設關閉、舊版及跨站拒絕，以及三家固定目的地與格式轉換、錯誤不洩漏／不重試／不回退、過大及非 JSON 回覆。使用既有獨立 InMemory 容器、臨時 Data Protection provider 與假 HTTP handler，不連外，不寫客戶資料庫。已實作執行器與斷言但本次未執行；不能宣稱 SQL、瀏覽器、真實供應商或加密金鑰持久化驗證通過。
+
+AI 設定依既有結構由 StoreSetSeed 定義：StoreSetGroup ID 9「AI 設定」；StoreSet ID 36～39 為 AiEnabled、AiProvider、AiModel、AiApiKey；AiEnabled 為單一 checkBox、DefaultValue=false，不建立 StoreSetItems；僅 AiProvider 使用 StoreSetItems ID 33～36，分別為系統預設 AI／OpenAI／Gemini／Claude。站台值各自寫入四筆 StoreSetDetail，只有 AiApiKey.value 加密，purpose 綁定站台及供應商。已移除 Entity 的 AiSettingsKey 常數與整包 JSON 保存，儲存不再新增群組、參數或選項；Seed 未部署完整時拒絕保存及使用，不在執行時補建。介面供應商選項改讀 StoreSetItems。版本由四筆明細的指紋計算，不新增業務參數或資料欄位。
+
+關聯式保存仍使用執行策略內的 Serializable 交易，InMemory 不驗證 SQL 鎖定及 rollback。無本站明細預設關閉；外部金鑰不存在時走原自架 Gateway。共用 AI 呼叫流程不變。通用設定查詢可看到正常參數定義與非敏感值，但金鑰必須遮罩；通用寫入拒絕四個 AI 參數，必須經 AI 設定頁的權限、版本與金鑰處理。先前版本若已保存 __AiSettingsV1，保留原資料且不自動轉移／刪除，通用讀取仍遮罩；新功能不採用舊整包資料。
+
+部署前需確認 ASP.NET Core Data Protection key ring 可持久化、備份及在多台 MVC 主機間共用，並限制存取。不可刪除 key ring 或任意變更應用程式隔離設定，否則既有設定可能無法解密；此時明確拒絕使用，不自動回退或清空。此階段使用框架既有 key ring 設定，未替使用者操作部署或寫入金鑰檔。前端與 API 不回傳密文或原文。外部測試是固定 JSON 回覆檢查，需使用者點擊並同意可能費用；自架測試僅健康檢查，不代表模型生成或畫布流程通過。頁面載入不做付費推論，外部設定的可呼叫狀態不是測試通過。
+
+MVC 頁面引用 AiSettings.min.js，維護 AiSettings.js 原始碼。使用者需於 src/EtheriT.Coker.Web.MVC 手動執行 npm run create-bundles；實際流程先檢查 DevExtreme 授權，再執行 yarn && gulp buildDev，可能下載相依、修改 lock file、產生大量資產及啟動監看，耗時依環境而定。本次未執行 bundle、build、test 或資料庫操作。
+
+本次原始碼調整清單（路徑以 Repository 根目錄為準）：
+
+| 檔案 | 調整與目的 |
+| --- | --- |
+| src/EtheriT.Coker.Core/Models/StoreSet.cs | 移除先前加入的 AiSettingsKey，Entity 回復原結構。 |
+| src/EtheriT.Coker.EntityFrameworkCore/Migrations/Seed/StoreSetSeed.cs | 新增 AI 群組、四個參數與四個供應商選項；不執行資料更新。 |
+| src/EtheriT.Coker.Application.Shared/Common/AiStoreSettingNames.cs | 集中參數名稱與金鑰遮罩判斷；不是 Entity 欄位。 |
+| src/EtheriT.Coker.Application/StoreSet/StoreSetAppService.cs | 保留正常參數定義及非敏感值，遮罩 API Key；通用寫入拒絕四個 AI 參數，避免繞過專用權限及加密處理。 |
+| src/EtheriT.Coker.Web.MVC/Services/Ai/WebsiteAiSettingsService.cs | 讀取 Seed 定義與選項，分筆保存本站值、單獨加密金鑰、版本與金鑰操作驗證。 |
+| src/EtheriT.Coker.Web.MVC/Services/Ai/AiClient.cs | IAiClient 共用介面、固定供應商轉換、錯誤映射、大小限制及依本站設定判斷可用性。 |
+| src/EtheriT.Coker.Web.MVC/Services/Ai/CanvasAiService.cs | 改用本站設定與共用 AI 呼叫，保留原畫布解析及安全驗證。 |
+| src/EtheriT.Coker.Web.MVC/Controllers/api/WebsiteAiController.cs | 安全設定讀取、專用防偽配對、儲存及不保存的草稿測試。 |
+| src/EtheriT.Coker.Web.MVC/Controllers/api/CanvasAiController.cs | 移除模型呼叫失敗時污染全域自架可用性狀態的操作。 |
+| src/EtheriT.Coker.Web.MVC/Program.cs | 註冊設定、共用呼叫、本站可用性、Data Protection 及禁止轉址的 HTTP client。 |
+| src/EtheriT.Coker.Web.MVC/Views/SystemManagement/AiSettings.cshtml | 預覽頁改為實際設定介面，新增保留／更換／清除操作，支援儲存及測試狀態。 |
+| src/EtheriT.Coker.Web.MVC/wwwroot/js/SystemManagement/AiSettings.js | 讀取／保存／測試、防偽更新、版本與站台比對、忙碌及讀取失敗控制、金鑰清除與費用提示。 |
+| src/EtheriT.Coker.Web.MVC/Views/Shared/GrapesComponents/_ScriptComponents.cshtml | 畫布入口依本站開關與所選服務判斷，不再一律檢查自架服務。 |
+| src/EtheriT.Coker.Web.MVC/Diagnostics/BackofficeSandboxAiChecks.cs | 新增實際隔離保存、保護與供應商轉換斷言；未執行。 |
+| src/EtheriT.Coker.Web.MVC/Diagnostics/BackofficeSandboxChecks.cs | 登錄兩個新的隔離執行器與頁面綁定。 |
+| src/EtheriT.Coker.Web.MVC/Diagnostics/backoffice-cases.json | 新增兩個自動案例並更新兩個既有人工規格，保留原 ID 及其他既有修改。 |
+| docs/BACKOFFICE_FUNCTION_TESTS.md | 更新執行器、驗收範圍、部署與手動準備說明。 |
+
+建議手動執行（尚未執行）：
+
+~~~powershell
+dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+~~~
+
+此修改涉及 C# 型別、DI、EF 查詢與 Razor，需要確認編譯結果。命令可能自動還原套件並寫入 bin／obj 等產物，實際耗時依環境而定。完成資產及編譯後，再於測試環境手動驗收前述操作；首次儲存會新增本站設定資料。未執行上述命令或案例，不表示驗證已通過。
+
+### Seed 資料更新（尚未執行）
+
+這次沒有新增資料庫欄位，但 HasData 的新增定義仍需經專案 Migration／部署流程寫入既有資料庫；只改 Seed 原始碼或重新編譯不會插入資料。本次未建立或執行 Migration、未更新資料庫；依使用者要求，已手動同步現有 AddWebsiteAiStoreSettings、其 Designer 與 snapshot 中的 AI 定義。
+
+建議 Migration 名稱 AddWebsiteAiStoreSettings，由使用者自行決定執行：
+
+~~~powershell
+dotnet ef migrations add AddWebsiteAiStoreSettings --project "src/EtheriT.Coker.EntityFrameworkCore/EtheriT.Coker.EntityFrameworkCore.csproj" --startup-project "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+~~~
+
+此命令可能編譯及還原套件，會建立 Migration 並更新模型 snapshot，耗時依環境而定。請審查應僅新增 AI 群組、四個參數及四個供應商選項；其他尚未登錄的模型差異不可直接套用。
+
+完成審查、備份及確認連線環境後，才由使用者決定：
+
+~~~powershell
+dotnet ef database update --project "src/EtheriT.Coker.EntityFrameworkCore/EtheriT.Coker.EntityFrameworkCore.csproj" --startup-project "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
+~~~
+
+此命令會寫入指定資料庫並套用所有待處理 Migration，可能鎖定資料與耗時較長。先確認沒有同 ID 的客製資料：群組 9、參數 36～39、選項 33～36；尤其先前整包版本若曾在執行時新增資料，可能占用這些 ID。不可盲目覆蓋或刪除；需另行盤點並確認資料轉移方案。舊 __AiSettingsV1 不會被本次程式自動搬移、採用或刪除；新站台設定仍預設關閉，需管理者重新確認及儲存。缺 Seed 時介面提示未部署並停止保存，不產生替代資料。
+
+本次同步擴充 sandbox/ai-settings 的群組／選項來源、四筆獨立明細、保存不新增定義及缺 Seed 拒絕斷言，維持原案例 ID 與數量；尚未執行。瀏覽器需人工比對供應商選項、保存重開、空金鑰、密文遮罩及跨站。AiSettings.js 已修改，仍需使用者在 MVC 目錄手動 npm run create-bundles；作用、產物與耗時如前述。
+
 ## 執行範圍
 
 MVC「系統檢測 → 後台功能測試」的開始按鈕會真正呼叫已登錄的執行器。
 它不執行 dotnet test、build、restore、bundle、Migration，也不透過 HTTP 遍歷所有 GET Action。
 這些開發／產物操作仍依根目錄 AGENTS.md 由使用者控制。
 
-目前登錄 221 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
-45 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 221。
+目前登錄 223 個自動檢測案例：160 個列表查詢／條件／排序／分頁檢查、16 個設定或統計檢查、
+47 個隔離操作案例。實際適用數量依目前站台版本與啟用功能篩選，不固定為 223。
 原本的 160 個較廣泛人工驗收規格保留在同一份內部清單；尚未綁定 executor 的規格不列入自動檢測畫面及通過數。
 這不是宣稱原本的完整瀏覽器與外部服務驗收已全部自動化。
 

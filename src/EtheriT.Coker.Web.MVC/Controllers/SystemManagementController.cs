@@ -1,6 +1,8 @@
 ﻿using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.StoreSet;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using EtheriT.Coker.Web.MVC.Extensions;
 
 namespace EtheriT.Coker.Web.MVC.Controllers
 {
@@ -24,6 +26,16 @@ namespace EtheriT.Coker.Web.MVC.Controllers
             }
             
         }
+        [Authorize, HttpGet]
+        public IActionResult AiSettings()
+        {
+            if (!HttpContext.GetPermission().CanVisble) return Forbid();
+            Response.Headers.CacheControl = "no-store";
+            ViewData["Title"] = "AI 設定";
+            ViewData["CanEditAiSettings"] = HttpContext.GetPermission().CanUpdate;
+            return View();
+        }
+
         public async Task<IActionResult> SEO()
         {
             var response = await _storeSetAppService.getAll(new List<long> { 1, 8 });

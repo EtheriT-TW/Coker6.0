@@ -452,6 +452,13 @@ namespace EtheriT.Coker.Web.MVC.Startup
                                 Icon="manage_search",
                             },
                             new JobMenu{
+                                PageName="AiSettings",
+                                Title="AI 設定",
+                                Controller="SystemManagement",
+                                Action="AiSettings",
+                                Icon="auto_awesome",
+                            },
+                            new JobMenu{
                                 PageName="Theme",
                                 Title="後台配色設定",
                                 Controller="Theme",

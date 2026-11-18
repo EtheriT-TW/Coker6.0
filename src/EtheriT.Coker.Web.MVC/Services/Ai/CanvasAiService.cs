@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Web.MVC.Services.Ai;
 
-public sealed class CanvasAiService(IHttpClientFactory clients, IConfiguration configuration, CanvasAiAvailability availability)
+public sealed class CanvasAiService(IAiClient client, IConfiguration configuration, WebsiteAiSettingsService settingsService, WebsiteAiAvailability availability)
 {
     private const string AllowedCssProperties = "color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap grid-template-columns flex-direction flex-wrap justify-content align-items";
     private const string SelectedInstructions = """
@@ -77,14 +77,18 @@ public sealed class CanvasAiService(IHttpClientFactory clients, IConfiguration c
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(Math.Clamp(configuration.GetValue<int?>("ParallelAi:TimeoutSeconds") ?? 600, 10, 600)));
         try { return await GenerateCore(input, timeout.Token); }
+        catch (AiSettingsException ex) { return new(503, null, ex.Message); }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         { return new(504, null, "AI 回覆逾時，請稍後重試。"); }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        { return new(503, null, "AI 設定或服務暫時無法使用，請稍後再試。"); }
     }
 
     private async Task<CanvasAiResult> GenerateCore(CanvasAiRequest input, CancellationToken cancellationToken)
     {
-        if (!availability.TryGetConnection(out var baseUri, out var key) ||
-            !await availability.IsAvailableAsync(cancellationToken))
+        var settings = await settingsService.GetAsync(cancellationToken);
+        if (!settings.Enabled) return new(403, null, "本站尚未開放 AI 輔助。");
+        if (!(await availability.CheckAsync(settings, cancellationToken)).Available)
             return new(503, null, "AI 服務尚未啟用或設定未完成。");
 
         // A precise size command does not need model-generated HTML/CSS. The controller
@@ -131,42 +135,15 @@ public sealed class CanvasAiService(IHttpClientFactory clients, IConfiguration c
         });
         // Parallel limits each message to 32000 characters and the full request to 256 KiB.
         if (context.Length > 32000) return new(400, null, "畫布或對話太長，請選取較小區塊或清除對話後重試。");
-        var payload = JsonSerializer.SerializeToUtf8Bytes(new
-        {
-            workflow = "canvas-edit",
-            locale = input.WebsiteLocale,
-            originalHtml = input.Html,
-            messages = new[] { new { role = "system", content = input.Scope == "selected" ? SelectedInstructions : Instructions }, new { role = "user", content = context } }
-        });
-        if (payload.Length > 250000) return new(400, null, "畫布內容超過 AI 請求上限。");
-        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(baseUri, "api/ai/chat"));
-        request.Headers.Add("X-Api-Key", key);
-        request.Content = new ByteArrayContent(payload);
-        request.Content.Headers.ContentType = new("application/json");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(Math.Clamp(configuration.GetValue<int?>("ParallelAi:TimeoutSeconds") ?? 600, 10, 600)));
         try
         {
-            using var response = await clients.CreateClient("ParallelAi").SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
-            if (response.Headers.TryGetValues("X-Canvas-Model-Calls", out var callHeaders) &&
-                int.TryParse(callHeaders.FirstOrDefault(), out var modelCalls) && modelCalls is >= 0 and <= 1)
-                input.ModelCalls = modelCalls;
-            if ((int)response.StatusCode == 422)
-                return new(422, null, await ReadCanvasFailure(response, timeout.Token));
-            if (!response.IsSuccessStatusCode)
-                return new((int)response.StatusCode == 429 ? 429 : 502, null,
-                    (int)response.StatusCode == 429 ? "AI 忙碌中，請稍後重試。" : "AI 服務呼叫失敗，請管理員檢查服務與憑證設定。");
-            await using var stream = await response.Content.ReadAsStreamAsync(timeout.Token);
-            using var buffer = new MemoryStream();
-            var chunk = new byte[8192];
-            int count;
-            while ((count = await stream.ReadAsync(chunk, timeout.Token)) > 0)
-            {
-                if (buffer.Length + count > 262144) return new(502, null, "AI 回覆超過上限。");
-                buffer.Write(chunk, 0, count);
-            }
-            using var envelope = JsonDocument.Parse(buffer.ToArray());
-            var content = envelope.RootElement.GetProperty("content").GetString()?.Trim() ?? "";
+            var response = await client.ChatAsync(settings,
+                new(input.Scope == "selected" ? SelectedInstructions : Instructions, context, input.WebsiteLocale, input.Html), timeout.Token);
+            input.ModelCalls = response.ModelCalls;
+            if (response.Status != 200) return new(response.Status, null, response.Message);
+            var content = response.Content ?? "";
             if (content.StartsWith("```"))
             {
                 var start = content.IndexOf('\n');
@@ -240,7 +217,7 @@ public sealed class CanvasAiService(IHttpClientFactory clients, IConfiguration c
         { return new(422, null, "AI 回覆格式不正確，未修改畫布。請重新描述需求。"); }
     }
 
-    private static async Task<string> ReadCanvasFailure(HttpResponseMessage response, CancellationToken cancellationToken)
+    internal static async Task<string> ReadCanvasFailure(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         const string fallback = "AI 修改提案未通過驗證，未修改畫布。請重新描述需求。";
         // Read only a small, known error envelope; never expose upstream text/details.

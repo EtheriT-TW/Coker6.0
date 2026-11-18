@@ -23,6 +23,8 @@ public static partial class BackofficeSandboxChecks
     private static readonly IReadOnlyDictionary<string, string> Pages = new Dictionary<string, string>
     {
         ["sandbox/diagnostics-history"] = "SystemDiagnostics.Backoffice",
+        ["sandbox/ai-settings"] = "SystemManagement.AiSettings",
+        ["sandbox/ai-provider-contracts"] = "SystemManagement.AiSettings",
         ["sandbox/diagnostics-guards"] = "SystemDiagnostics.Backoffice",
         ["sandbox/public-diagnostics"] = "SystemDiagnostics.Public",
         ["sandbox/public-functions"] = "SystemDiagnostics.Functions",
@@ -86,6 +88,8 @@ public static partial class BackofficeSandboxChecks
         token.ThrowIfCancellationRequested();
         switch (executor)
         {
+            case "sandbox/ai-settings": await AiSettingsIsolation(sandbox); break;
+            case "sandbox/ai-provider-contracts": await AiProviderContracts(sandbox); break;
             case "sandbox/diagnostics-history": await DiagnosticsHistory(sandbox); break;
             case "sandbox/diagnostics-guards": await DiagnosticsGuards(sandbox); break;
             case "sandbox/public-diagnostics": await PublicDiagnosticsRegression(sandbox); break;

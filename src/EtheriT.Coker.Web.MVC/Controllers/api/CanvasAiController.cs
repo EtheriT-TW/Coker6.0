@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EtheriT.Coker.Web.MVC.Controllers.api;
 
 [ApiController, Authorize, Route("api/CanvasAi")]
-public sealed class CanvasAiController(LoginUserData user, NavigationProvider navigation, CanvasAiService ai, CanvasAiAvailability availability) : ControllerBase
+public sealed class CanvasAiController(LoginUserData user, NavigationProvider navigation, CanvasAiService ai) : ControllerBase
 {
     [HttpPost("Chat"), ValidateAntiForgeryToken, RequestSizeLimit(262144)]
     public async Task<IActionResult> Chat([FromBody] CanvasAiRequest input, CancellationToken cancellationToken)
@@ -37,7 +37,6 @@ public sealed class CanvasAiController(LoginUserData user, NavigationProvider na
         if (input.ModelCalls.HasValue)
             Response.Headers["X-Canvas-Model-Calls"] = input.ModelCalls.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         var serviceUnavailable = result.Status == 429 || result.Status >= 500;
-        if (serviceUnavailable) await availability.MarkUnavailableAsync();
         return StatusCode(result.Status, new { html = result.Html, styles = result.Styles, htmlChanged = result.HtmlChanged, message = result.Message, preserveContent = input.PreserveContent, needsClarification = result.NeedsClarification, serviceUnavailable });
     }
 }

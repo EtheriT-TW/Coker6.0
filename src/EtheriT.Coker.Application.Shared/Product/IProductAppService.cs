@@ -36,6 +36,7 @@ namespace EtheriT.Coker.Application.Shared.Product
         public Task<ResponseMessageDto> ProdDelete(long Id);
         public Task<ResponseMessageDto> StockDelete(long Id);
         public Task<ResponseMessageDto> PriceDelete(long Id);
+        public Task<ResponseMessageDto> SetCoverImage(ProdSetCoverImageDto dto);
         public Task<ResponseMessageDto> ClickLog(long FK_Pid);
         public Task<byte[]> ExportProductData();
         public Task<byte[]> ExportProductData(long websiteId, System.Action<int, string>? reportProgress);

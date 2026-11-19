@@ -37,6 +37,8 @@ namespace EtheriT.Coker.Core.Models
         public string? PageText { get; set; }
         [MaxLength]
         public string? Css { get; set; }
+        /// <summary>後台指定的預設圖片（FileUpload.Id），可為商品圖或任一規格圖；null 表示依預設規則挑圖</summary>
+        public long? CoverFileUploadId { get; set; }
         public Website? Website { get; set; }
         public List<Prod_Stock> Prod_Stocks { get; set; }
         public List<Prod_Log> Prod_Logs { get; set; }

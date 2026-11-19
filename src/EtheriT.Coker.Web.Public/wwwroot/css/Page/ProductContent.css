@@ -1356,7 +1356,7 @@ i.fa-chevron-right {
 }
 
     #ProductRecommendations .product-recommend-heading {
-        font-size: 1.25rem;
+        font-size: 1.5rem;
         font-weight: 700;
         margin-bottom: 1rem;
     }
@@ -1411,16 +1411,18 @@ i.fa-chevron-right {
             box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .08);
         }
 
+    /* 圖片框高度與目錄商品卡（.type4-image-frame）一致，斷點覆寫見下方 media */
     #ProductRecommendations .product-recommend-image {
-        aspect-ratio: 1 / 1;
+        height: 220px;
         overflow: hidden;
-        background: var(--gray-light);
+        background: #fff;
     }
 
         #ProductRecommendations .product-recommend-image img {
+            display: block;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
         }
 
     #ProductRecommendations .product-recommend-title {
@@ -1436,10 +1438,37 @@ i.fa-chevron-right {
         min-height: 2.8em;
     }
 
-    #ProductRecommendations .product-recommend-price {
-        /* 推到卡片底部：不論有沒有原價，售價都在同一條線上 */
-        margin-top: auto;
+
+    /* 標籤：在價格下方、卡片最底部；固定一行高度，沒有標籤也保留空間，讓各卡片價格對齊 */
+    #ProductRecommendations .product-recommend-tags {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: .25rem;
         padding: .25rem .75rem .75rem;
+        min-height: 2.5rem;
+        overflow: hidden;
+    }
+
+        /* 比照目錄 .tags .badge：最寬 5rem，太長以省略號截斷 */
+        #ProductRecommendations .product-recommend-tags .badge {
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 「…」不跟著縮，空間不夠時優先壓縮前面的標籤 */
+        #ProductRecommendations .product-recommend-tags .product-recommend-tag-more {
+            flex-shrink: 0;
+        }
+
+    #ProductRecommendations .product-recommend-price {
+        /* 推到卡片底部：不論有沒有原價，售價都在同一條線上；底部留白改由下方標籤負責 */
+        margin-top: auto;
+        padding: .25rem .75rem 0;
         line-height: 1.35;
     }
 
@@ -1459,10 +1488,19 @@ i.fa-chevron-right {
             letter-spacing: normal;
         }
 
-/* 平板：一次約 3 張多 */
+        /* 現金＋紅利價：共用 price.css 設了 nowrap，窄卡片會被切掉；推薦卡片允許在「+」後換行 */
+        #ProductRecommendations .product-recommend-price .combo-price {
+            white-space: normal;
+        }
+
+/* 平板：一次約 3 張多；圖片高度同目錄 */
 @media only screen and (max-width: 991.98px) {
     #ProductRecommendations .product-recommend-item {
         flex-basis: 30%;
+    }
+
+    #ProductRecommendations .product-recommend-image {
+        height: 190px;
     }
 }
 
@@ -1470,6 +1508,13 @@ i.fa-chevron-right {
 @media only screen and (max-width: 767.98px) {
     #ProductRecommendations .product-recommend-item {
         flex-basis: 44%;
+    }
+}
+
+/* 小手機：圖片高度同目錄 */
+@media only screen and (max-width: 576px) {
+    #ProductRecommendations .product-recommend-image {
+        height: 150px;
     }
 }
 

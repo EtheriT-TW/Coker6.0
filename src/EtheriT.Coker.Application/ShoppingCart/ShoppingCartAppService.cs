@@ -39,6 +39,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
         private readonly IStoreSetAppService storeSetAppService;
         private readonly IFrontRoleContextService frontRoleContextService;
         private readonly ILogger<ShoppingCartAppService> logger;
+        private readonly IFileUploadAppService fileUploadAppService;
         public ShoppingCartAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -49,7 +50,8 @@ namespace EtheriT.Coker.Application.ShoppingCart
             IBonusManagementAppService bonusManagementAppService,
             IStoreSetAppService storeSetsAppService,
             IFrontRoleContextService frontRoleContextService,
-            ILogger<ShoppingCartAppService> logger
+            ILogger<ShoppingCartAppService> logger,
+            IFileUploadAppService fileUploadAppService
         )
         {
             this.db = db;
@@ -62,6 +64,7 @@ namespace EtheriT.Coker.Application.ShoppingCart
             this.storeSetAppService = storeSetsAppService;
             this.frontRoleContextService = frontRoleContextService;
             this.logger = logger;
+            this.fileUploadAppService = fileUploadAppService;
         }
         public async Task<ResponseMessageDto> UpdateUUID(Guid UserUUID, Guid TempUUID)
         {
@@ -1401,7 +1404,20 @@ namespace EtheriT.Coker.Application.ShoppingCart
                                            select fu.DownloadFileName).FirstOrDefaultAsync();
                     }
 
-                    // 該規格沒設圖 → 退回商品主圖
+                    // 該規格沒設圖（或不是版型二）→ 用商品預設圖片（後台指定 → 第一張商品圖 → 第一張規格圖）
+                    if (imagepath == null && pid.HasValue)
+                    {
+                        var displayUploadIdByProd = await fileUploadAppService.GetProductDisplayUploadIdMapAsync(new List<long> { pid.Value }, WebsiteId);
+                        if (displayUploadIdByProd.TryGetValue(pid.Value, out var displayUploadId))
+                        {
+                            imagepath = await db.FileUploads
+                                .Where(fu => fu.Id == displayUploadId && fu.FK_WebsiteId == WebsiteId)
+                                .Select(fu => fu.DownloadFileName)
+                                .FirstOrDefaultAsync();
+                        }
+                    }
+
+                    // 還是沒有（例如商品已刪除）→ 沿用舊規則：第一張商品圖
                     if (imagepath == null)
                     {
                         imagepath = await (from fu in db.FileUploads

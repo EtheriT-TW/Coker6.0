@@ -54,6 +54,11 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         {
             return await productAppService.PriceAddUp(dto);
         }
+        [HttpPost]
+        public async Task<ResponseMessageDto> SetCoverImage(ProdSetCoverImageDto dto)
+        {
+            return await productAppService.SetCoverImage(dto);
+        }
         [HttpGet]
         public async Task<JsonResult> GetAllList(
             DataSourceLoadOptions loadOptions,

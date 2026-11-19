@@ -2820,6 +2820,200 @@ namespace EtheriT.Coker.Application
             }
             return response;
         }
+        // 後台指定的預設圖片（Prod.CoverFileUploadId）仍有效才回傳：
+        // 必須是該商品的商品圖，或該商品未刪除規格的規格圖，且是單張圖片（不含 360、影片）
+        public async Task<Dictionary<long, long>> GetValidCoverUploadIdMapAsync(List<long> prodIds, long websiteId)
+        {
+            var ids = prodIds?.Where(id => id > 0).Distinct().ToList() ?? new List<long>();
+            if (ids.Count == 0) return new Dictionary<long, long>();
+
+            var coverRows = await db.Prods.AsNoTracking()
+                .Where(p => ids.Contains(p.Id)
+                    && p.FK_WebsiteId == websiteId
+                    && !p.IsDeleted
+                    && p.CoverFileUploadId != null)
+                .Select(p => new { ProdId = p.Id, UploadId = p.CoverFileUploadId!.Value })
+                .ToListAsync();
+            if (coverRows.Count == 0) return new Dictionary<long, long>();
+
+            var validPairs = await QueryProductImageBindingsAsync(
+                coverRows.Select(x => x.ProdId).ToList(),
+                coverRows.Select(x => x.UploadId).Distinct().ToList(),
+                websiteId);
+
+            return coverRows
+                .Where(x => validPairs.Contains((x.ProdId, x.UploadId)))
+                .ToDictionary(x => x.ProdId, x => x.UploadId);
+        }
+
+        public async Task<bool> IsProductCoverCandidateAsync(long prodId, long uploadId, long websiteId)
+        {
+            if (prodId <= 0 || uploadId <= 0) return false;
+
+            var validPairs = await QueryProductImageBindingsAsync(
+                new List<long> { prodId },
+                new List<long> { uploadId },
+                websiteId);
+            return validPairs.Contains((prodId, uploadId));
+        }
+
+        // 商品要顯示的圖（後台列表、行銷活動、前台目錄卡片共用）：
+        // 後台指定的預設圖片 → 第一張商品圖 → 第一張規格圖；回傳 商品Id → FileUpload.Id
+        public async Task<Dictionary<long, long>> GetProductDisplayUploadIdMapAsync(List<long> prodIds, long websiteId)
+        {
+            var ids = prodIds?.Where(id => id > 0).Distinct().ToList() ?? new List<long>();
+            if (ids.Count == 0) return new Dictionary<long, long>();
+
+            var result = await GetValidCoverUploadIdMapAsync(ids, websiteId);
+
+            // 把「網站邊界」綁死在查詢裡，避免跨站撈圖
+            var siteProdIds =
+                from p in db.Prods
+                where p.FK_WebsiteId == websiteId
+                   && !p.IsDeleted
+                   && ids.Contains(p.Id)
+                select p.Id;
+
+            var missingProdIds = ids.Where(id => !result.ContainsKey(id)).ToList();
+            if (missingProdIds.Count > 0)
+            {
+                var imageBinds = await (
+                    from fb in db.FileBinds.AsNoTracking()
+                    join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
+                    join pid in siteProdIds on fb.Sid equals pid
+                    where fb.type == (int)FileBindTypeEnum.產品
+                       && missingProdIds.Contains(fb.Sid)
+                       && !fb.IsDeleted
+                       && fb.num == 1
+                       && !f.IsDeleted
+                       && f.FK_WebsiteId == websiteId
+                       && f.ContentType != null
+                       && f.ContentType.StartsWith("image/")
+                    select new
+                    {
+                        ProdId = fb.Sid,
+                        UploadId = f.Id,
+                        SerNo = fb.SerNo,
+                        CreationTime = fb.CreationTime,
+                        BindId = fb.Id
+                    }
+                ).ToListAsync();
+
+                foreach (var g in imageBinds.GroupBy(x => x.ProdId))
+                {
+                    result[g.Key] = g
+                        .OrderBy(x => x.SerNo)
+                        .ThenBy(x => x.CreationTime)
+                        .ThenBy(x => x.BindId)
+                        .First()
+                        .UploadId;
+                }
+            }
+
+            missingProdIds = ids.Where(id => !result.ContainsKey(id)).ToList();
+            if (missingProdIds.Count > 0)
+            {
+                var specImageBinds = await (
+                    from s in db.Prod_Stocks.AsNoTracking()
+                    join pid in siteProdIds on s.FK_Pid equals pid
+                    join fb in db.FileBinds.AsNoTracking() on s.Id equals fb.Sid
+                    join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
+                    where !s.IsDeleted
+                       && missingProdIds.Contains(s.FK_Pid)
+                       && fb.type == (int)FileBindTypeEnum.產品規格圖
+                       && !fb.IsDeleted
+                       && fb.num == 1
+                       && !f.IsDeleted
+                       && f.FK_WebsiteId == websiteId
+                       && f.ContentType != null
+                       && f.ContentType.StartsWith("image/")
+                    select new
+                    {
+                        ProdId = s.FK_Pid,
+                        UploadId = f.Id,
+                        StockSerNo = s.Ser_No,
+                        SerNo = fb.SerNo,
+                        CreationTime = fb.CreationTime,
+                        BindId = fb.Id
+                    }
+                ).ToListAsync();
+
+                foreach (var g in specImageBinds.GroupBy(x => x.ProdId))
+                {
+                    result[g.Key] = g
+                        .OrderBy(x => x.StockSerNo)
+                        .ThenBy(x => x.SerNo)
+                        .ThenBy(x => x.CreationTime)
+                        .ThenBy(x => x.BindId)
+                        .First()
+                        .UploadId;
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<Dictionary<long, string>> GetProductDisplayImageMapAsync(List<long> prodIds, long websiteId, int size)
+        {
+            var uploadIdByProd = await GetProductDisplayUploadIdMapAsync(prodIds, websiteId);
+            if (uploadIdByProd.Count == 0) return new Dictionary<long, string>();
+
+            var linkByUploadId = await GetImgFileMapByIdAsync(uploadIdByProd.Values.Distinct().ToList(), size);
+            var output = new Dictionary<long, string>();
+            foreach (var (prodId, uploadId) in uploadIdByProd)
+            {
+                if (linkByUploadId.TryGetValue(uploadId, out var link) && !string.IsNullOrWhiteSpace(link))
+                    output[prodId] = link;
+            }
+            return output;
+        }
+
+        private async Task<HashSet<(long ProdId, long UploadId)>> QueryProductImageBindingsAsync(
+            List<long> prodIds, List<long> uploadIds, long websiteId)
+        {
+            var prodBinds = await (
+                from fb in db.FileBinds.AsNoTracking()
+                join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
+                join p in db.Prods.AsNoTracking() on fb.Sid equals p.Id
+                where fb.type == (int)FileBindTypeEnum.產品
+                   && prodIds.Contains(p.Id)
+                   && uploadIds.Contains(f.Id)
+                   && p.FK_WebsiteId == websiteId
+                   && !p.IsDeleted
+                   && !fb.IsDeleted
+                   && fb.num == 1
+                   && !f.IsDeleted
+                   && f.FK_WebsiteId == websiteId
+                   && f.ContentType != null
+                   && f.ContentType.StartsWith("image/")
+                select new { ProdId = p.Id, UploadId = f.Id }
+            ).ToListAsync();
+
+            var specBinds = await (
+                from fb in db.FileBinds.AsNoTracking()
+                join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
+                join s in db.Prod_Stocks.AsNoTracking() on fb.Sid equals s.Id
+                join p in db.Prods.AsNoTracking() on s.FK_Pid equals p.Id
+                where fb.type == (int)FileBindTypeEnum.產品規格圖
+                   && prodIds.Contains(p.Id)
+                   && uploadIds.Contains(f.Id)
+                   && p.FK_WebsiteId == websiteId
+                   && !p.IsDeleted
+                   && !s.IsDeleted
+                   && !fb.IsDeleted
+                   && fb.num == 1
+                   && !f.IsDeleted
+                   && f.FK_WebsiteId == websiteId
+                   && f.ContentType != null
+                   && f.ContentType.StartsWith("image/")
+                select new { ProdId = p.Id, UploadId = f.Id }
+            ).ToListAsync();
+
+            return prodBinds.Concat(specBinds)
+                .Select(x => (x.ProdId, x.UploadId))
+                .ToHashSet();
+        }
+
         private class ProductListCompressedImageRow
         {
             public Guid GuidKey { get; set; }
@@ -2836,98 +3030,26 @@ namespace EtheriT.Coker.Application
             long webid = await loginUserData.GetCommonWebsiteId();
             string orgName = await loginUserData.GetWebsiteOrgName(webid);
 
-            // 把「網站邊界」綁死在查詢裡，避免跨站撈圖
-            var siteProdIds =
-                from p in db.Prods
-                where p.FK_WebsiteId == webid
-                   && !p.IsDeleted
-                   && prodIds.Contains(p.Id)
-                select p.Id;
+            // 依「後台指定的預設圖片 → 第一張商品圖 → 第一張規格圖」挑出每個商品要顯示的圖
+            var uploadIdByProd = await GetProductDisplayUploadIdMapAsync(prodIds, webid);
+            var displayUploadIds = uploadIdByProd.Values.Distinct().ToList();
 
-            // 先抓「商品綁定的原始圖片」(type=產品)
-            // 重點：
-            // 1. 只取 FileUpload.ContentType 為 image/* 的資料
-            // 2. 排除 youtube、video/*、一般檔案
-            // 3. 依 FileBinds.SerNo / CreationTime / Id 排序
-            var imageBinds = await (
-                from fb in db.FileBinds.AsNoTracking()
-                join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
-                join pid in siteProdIds on fb.Sid equals pid
-                where fb.type == (int)FileBindTypeEnum.產品
-                   && !fb.IsDeleted
-                   && !f.IsDeleted
-                   && f.FK_WebsiteId == webid
-                   && f.ContentType != null
-                   && f.ContentType.StartsWith("image/")
-                orderby fb.Sid, fb.SerNo, fb.CreationTime, fb.Id
-                select new
-                {
-                    ProdId = fb.Sid,
-                    GuidKey = f.GuidKey,
-                    OriginalPath = f.DownloadFileName,
-                    SerNo = fb.SerNo,
-                    CreationTime = fb.CreationTime,
-                    BindId = fb.Id
-                }
-            ).ToListAsync();
-
-            // 每個商品挑一張「要顯示的圖」：優先商品圖，商品圖沒有時退規格圖
-            var firstImageMap = new Dictionary<long, (Guid GuidKey, string? OriginalPath)>();
-
-            foreach (var g in imageBinds.GroupBy(x => x.ProdId))
+            var uploadMap = new Dictionary<long, (Guid GuidKey, string? OriginalPath)>();
+            if (displayUploadIds.Count > 0)
             {
-                var first = g
-                    .OrderBy(x => x.SerNo)
-                    .ThenBy(x => x.CreationTime)
-                    .ThenBy(x => x.BindId)
-                    .First();
-                firstImageMap[g.Key] = (first.GuidKey, first.OriginalPath);
+                var uploadRows = await db.FileUploads.AsNoTracking()
+                    .Where(f => displayUploadIds.Contains(f.Id) && !f.IsDeleted && f.FK_WebsiteId == webid)
+                    .Select(f => new { f.Id, f.GuidKey, f.DownloadFileName })
+                    .ToListAsync();
+                foreach (var row in uploadRows)
+                    uploadMap[row.Id] = (row.GuidKey, row.DownloadFileName);
             }
 
-            // 沒有商品圖的商品，退而使用其規格列(Prod_Stock)上的第一張規格圖(type=產品規格圖)
-            var missingProdIds = prodIds
-                .Where(id => !firstImageMap.ContainsKey(id))
-                .Distinct()
-                .ToList();
-
-            if (missingProdIds.Count > 0)
+            var firstImageMap = new Dictionary<long, (Guid GuidKey, string? OriginalPath)>();
+            foreach (var (prodId, uploadId) in uploadIdByProd)
             {
-                var specImageBinds = await (
-                    from s in db.Prod_Stocks.AsNoTracking()
-                    join pid in siteProdIds on s.FK_Pid equals pid
-                    join fb in db.FileBinds.AsNoTracking() on s.Id equals fb.Sid
-                    join f in db.FileUploads.AsNoTracking() on fb.FK_FileUploadId equals f.Id
-                    where !s.IsDeleted
-                       && missingProdIds.Contains(s.FK_Pid)
-                       && fb.type == (int)FileBindTypeEnum.產品規格圖
-                       && !fb.IsDeleted
-                       && !f.IsDeleted
-                       && f.FK_WebsiteId == webid
-                       && f.ContentType != null
-                       && f.ContentType.StartsWith("image/")
-                    select new
-                    {
-                        ProdId = s.FK_Pid,
-                        GuidKey = f.GuidKey,
-                        OriginalPath = f.DownloadFileName,
-                        StockSerNo = s.Ser_No,
-                        SerNo = fb.SerNo,
-                        CreationTime = fb.CreationTime,
-                        BindId = fb.Id
-                    }
-                ).ToListAsync();
-
-                // 先依規格列順序(Ser_No)，再依規格圖 SerNo，取整個商品的第一張規格圖
-                foreach (var g in specImageBinds.GroupBy(x => x.ProdId))
-                {
-                    var first = g
-                        .OrderBy(x => x.StockSerNo)
-                        .ThenBy(x => x.SerNo)
-                        .ThenBy(x => x.CreationTime)
-                        .ThenBy(x => x.BindId)
-                        .First();
-                    firstImageMap[g.Key] = (first.GuidKey, first.OriginalPath);
-                }
+                if (uploadMap.TryGetValue(uploadId, out var upload))
+                    firstImageMap[prodId] = upload;
             }
 
             if (firstImageMap.Count == 0)

@@ -12,6 +12,7 @@ var product_list, spec_num = 0, spec_price_num = 0, spec_remove_list = [], modal
 var $price_modal, priceModal
 var productMediaManager, productFileManager, specMediaManager;
 var spec_media_map = {};
+var cover_file_upload_id = null;   // 載入時後端記錄的預設圖片 FileUpload.Id
 var specMediaModal;
 let importProdPopup = null;
 let productImportTemplateGrid = null;
@@ -1675,7 +1676,12 @@ function ElementInit() {
             Coker.FileListManager.Types.Image360,
             Coker.FileListManager.Types.Video,
             Coker.FileListManager.Types.ExternalVideo
-        ]
+        ],
+        coverSelectable: true,
+        coverRequired: true,
+        isCoverItem: IsEffectiveCover,
+        onCoverChange: HandleCoverChange,
+        onChange: RefreshCoverDisplay
     });
     productFileManager = new Coker.FileListManager("#ProdFiles", {
         type: Coker.FileListManager.Types.File
@@ -1683,10 +1689,12 @@ function ElementInit() {
     specMediaManager = new Coker.FileListManager("#SpecMedia", {
         type: Coker.FileListManager.Types.Image,
         maxCount: parseInt($("#SpecMedia").data("max-count"), 10) || 0,
-        onChange: function () {
-            var $row = $("#SpecMedia").data("spec-row");
-            if ($row && $row.length) refreshSpecThumb($row);
-        }
+        coverSelectable: true,
+        coverRequired: true,
+        isCoverItem: IsEffectiveCover,
+        activateAfterUpload: true,
+        onCoverChange: HandleCoverChange,
+        onChange: RefreshCoverDisplay
     });
 
     specDescModal = new bootstrap.Modal(document.getElementById('SpecDescModal'));
@@ -1794,6 +1802,7 @@ function FormDataClear() {
     productFileManager.reset();
     specMediaManager.reset();
     spec_media_map = {};
+    cover_file_upload_id = null;
     $("#SpecMedia").data("spec-key", null).data("spec-row", null);
 }
 function IsProductCanvasEditingAvailable() {
@@ -1982,8 +1991,9 @@ function FormDataSet(result) {
     TagDataSet(result.tagDatas);
     TechCertDataSet(result.techCertDatas);
 
+    cover_file_upload_id = result.coverFileUploadId || null;
     result.multimedia.forEach(media => {
-        productMediaManager.add(media);
+        productMediaManager.add(Object.assign({}, media, { IsCover: IsCoverMedia(media.id) }));
     })
 
     result.files.forEach(file => {
@@ -2014,6 +2024,7 @@ function FormDataSet(result) {
         });
         SpecAdd(stock);
     });
+    RefreshCoverDisplay();
 
     startDate = result.startTime;
     endDate = result.endTime;
@@ -2449,6 +2460,7 @@ function SpecAdd(result) {
             $self_p.remove();
             $("#Spec_Frame").data("spec_num", spec_num)
             $("#Spec_Frame .spec_list").each(function () { RefreshCompactSpecSummary($(this)); });
+            RefreshCoverDisplay();
         })
     })
 
@@ -2657,6 +2669,7 @@ function convertSpecMedia(m) {
         Type: m.fileType,
         Link: link,
         SerNo: m.serNo,
+        IsCover: IsCoverMedia(m.id),
         IsDelete: false
     };
 }
@@ -2671,6 +2684,84 @@ function OpenSpecMediaModal($row) {
     specMediaManager.setFiles(bucket);
     $block.find("ul > li.upload_list").first().trigger("click");
     specMediaModal.show();
+}
+
+// ===== 預設圖片（商品圖、規格圖整個商品只能勾一張）=====
+function IsCoverMedia(id) {
+    return cover_file_upload_id != null && id == cover_file_upload_id;
+}
+
+function HandleCoverChange(item, checked) {
+    if (checked === true) {
+        productMediaManager.getFiles().forEach(function (f) { f.IsCover = false; });
+        Object.keys(spec_media_map).forEach(function (key) {
+            spec_media_map[key].forEach(function (f) { f.IsCover = false; });
+        });
+        item.IsCover = true;
+    }
+    RefreshCoverDisplay();
+}
+
+// 畫面上還存在的規格列，依目前排序取出各自的規格圖清單（已移除的規格不算）
+function GetLiveSpecBuckets() {
+    var buckets = [];
+    $("#Spec_Frame .spec_list").each(function () {
+        buckets.push(spec_media_map[SpecRowKey($(this))] || []);
+    });
+    return buckets;
+}
+
+// 使用者明確勾選的預設圖片（只認一般圖片）
+function FindExplicitCover() {
+    if (!productMediaManager) return null;
+    var candidates = productMediaManager.getFiles(false).slice();
+    GetLiveSpecBuckets().forEach(function (bucket) {
+        bucket.forEach(function (f) {
+            if (!f.IsDelete) candidates.push(f);
+        });
+    });
+    return candidates.find(function (f) { return f.IsCover === true && f.Type == 1; }) || null;
+}
+
+// 實際會用的預設圖片，與後端規則一致：明確勾選 → 第一張商品圖 → 依規格順序第一張規格圖
+function GetEffectiveCoverItem() {
+    var explicit = FindExplicitCover();
+    if (explicit) return explicit;
+    if (!productMediaManager) return null;
+    var firstProduct = productMediaManager.getFiles(false).find(function (f) { return f.Type == 1; });
+    if (firstProduct) return firstProduct;
+    var firstSpec = null;
+    GetLiveSpecBuckets().some(function (bucket) {
+        firstSpec = bucket.find(function (f) { return !f.IsDelete && f.Type == 1; }) || null;
+        return !!firstSpec;
+    });
+    return firstSpec;
+}
+
+function IsEffectiveCover(item) {
+    return !!item && item === GetEffectiveCoverItem();
+}
+
+// 重畫商品圖清單、規格圖 modal、各規格列縮圖的預設圖片狀態
+function RefreshCoverDisplay() {
+    if (productMediaManager) productMediaManager.refreshCover();
+    if (specMediaManager) specMediaManager.refreshCover();
+    $("#Spec_Frame .spec_list").each(function () { refreshSpecThumb($(this)); });
+}
+
+// 只送「明確勾選」的那張；沒勾過就送 null，後端依規則自動挑
+function SaveCoverImage(pid, coverItem) {
+    var fileUploadId = coverItem && typeof coverItem.Id != "undefined" && coverItem.Id ? coverItem.Id : null;
+    return co.Product.AddUp.CoverImage({
+        ProductId: pid,
+        FileUploadId: fileUploadId
+    }).done(function (result) {
+        if (!result || !result.success) {
+            Coker.sweet.error("預設圖片儲存失敗", (result && result.error) || "請重新勾選預設圖片後再儲存", null, true);
+        }
+    }).fail(function () {
+        Coker.sweet.error("預設圖片儲存失敗", "請重新勾選預設圖片後再儲存", null, true);
+    });
 }
 /* ********** *****************
 排序 沒有資料的情況下依舊可以拖動 需修改
@@ -2695,17 +2786,20 @@ function SortChange($self, change, minindex, maxindex) {
 function refreshSpecThumb($row) {
     var key = SpecRowKey($row);
     var bucket = spec_media_map[key] || [];
-    var first = bucket.find(f => !f.IsDelete);
+    var cover = GetEffectiveCoverItem();
+    var hasCover = !!cover && bucket.indexOf(cover) >= 0;
+    // 這個規格含預設圖片時，縮圖直接顯示那張並加藍框
+    var first = hasCover ? cover : bucket.find(f => !f.IsDelete);
     var $thumb = $row.find(".spec_thumb");
     var $icon = $row.find(".spec_img_icon");
     if (first) {
         var src = first.Type == 4 ? `https://img.youtube.com/vi/${first.File}/hqdefault.jpg`
             : first.Type == 3 ? "/images/defaultImage/video.jpg"
                 : (first.Link || first.File);
-        $thumb.attr("src", src).removeClass("d-none");
+        $thumb.attr("src", src).removeClass("d-none").toggleClass("is-cover", hasCover);
         $icon.addClass("d-none");
     } else {
-        $thumb.addClass("d-none");
+        $thumb.addClass("d-none").removeClass("is-cover");
         $icon.removeClass("d-none");
     }
 }
@@ -2799,6 +2893,9 @@ function AddUp(success_text, error_text, target) {
             Status: status
         }).done(function (result) {
             var pid = parseInt(result.message);
+            // 先記住明確勾選的預設圖片物件：存完若跳回列表會清空畫面，之後就找不到了；
+            // 新圖上傳完成時會把 Id 寫回這個物件，所以最後送出時拿得到
+            var coverItem = FindExplicitCover();
             if (result.success) {
                 Coker.sweet.success(success_text, null, true);
                 var fileListSave = [];
@@ -3119,8 +3216,11 @@ function AddUp(success_text, error_text, target) {
                 });
                 // ===== 規格圖結束 =====
 
+                // 新上傳的圖要等上面全部存完才有 Id，所以預設圖片放在最後才送
                 $.when.apply(null, fileListSave).done(function () {
-                    HashDataEdit();
+                    SaveCoverImage(pid, coverItem).always(function () {
+                        HashDataEdit();
+                    });
                 });
             } else {
                 Coker.sweet.error("錯誤", error_text, null, true);

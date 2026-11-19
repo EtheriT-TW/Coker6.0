@@ -10,6 +10,28 @@
     // 滑鼠移動超過這個距離才算拖曳，避免單純點擊被誤判
     var DRAG_THRESHOLD = 5;
 
+    // 比照目錄卡片：只完整顯示前 2 個標籤，其餘以「…」表示
+    var VISIBLE_TAG_COUNT = 2;
+    var TAG_BADGE_CLASS = "badge rounded-pill bg-light text-secondary fw-normal";
+
+    // 卡片整張是連結，標籤只顯示不另外綁點擊；沒有標籤也回傳空容器，保留高度讓價格對齊
+    function buildTags(tags) {
+        var list = Array.isArray(tags) ? tags : [];
+        var $tags = $("<div>", { "class": "product-recommend-tags" });
+
+        list.slice(0, VISIBLE_TAG_COUNT).forEach(function (tag) {
+            var name = tag && tag.tag_Name;
+            if (!name) return;
+            $("<span>", { "class": TAG_BADGE_CLASS, title: name }).text(name).appendTo($tags);
+        });
+
+        if (list.length > VISIBLE_TAG_COUNT) {
+            $("<span>", { "class": TAG_BADGE_CLASS + " product-recommend-tag-more" }).text("…").appendTo($tags);
+        }
+
+        return $tags;
+    }
+
     function buildCard(item) {
         var product = item.product || {};
         var title = product.title || item.title || "";
@@ -35,6 +57,9 @@
         if (priceHtml) {
             $("<div>", { "class": "product-recommend-price" }).html(priceHtml).appendTo($card);
         }
+
+        // 比照目錄卡片：標籤排在價格下方
+        buildTags(product.tags).appendTo($card);
 
         return $("<li>", { "class": "product-recommend-item" }).append($card);
     }

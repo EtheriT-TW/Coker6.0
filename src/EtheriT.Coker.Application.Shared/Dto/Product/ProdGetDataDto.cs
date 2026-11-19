@@ -28,5 +28,6 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public List<ProductStockDto> Stocks { get; set; }
         public List<FileGetProdDisplayDto> Files { get; set; }
         public List<FileGetProdDisplayDto> Multimedia { get; set; }
+        public long? CoverFileUploadId { get; set; }
     }
 }

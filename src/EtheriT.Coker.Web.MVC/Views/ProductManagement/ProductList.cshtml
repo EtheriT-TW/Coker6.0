@@ -172,7 +172,13 @@
                         </div>
                         <div class="upload_frame custom-file-container d-none" data-upload-id="SpecFileUpload"></div>
                         <div class="media_frame d-none flex-column h-100">
-                            <div class="mb-2">檔案預覽</div>
+                            <div class="media_frame_header d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <div class="media_frame_title">檔案預覽</div>
+                                <div class="cover_toggle form-check mb-0 d-none">
+                                    <input id="SpecMediaCoverToggle" class="cover_toggle_input form-check-input" type="checkbox">
+                                    <label class="form-check-label" for="SpecMediaCoverToggle">設為預設圖片</label>
+                                </div>
+                            </div>
                             <div class="input-group mb-3 d-none">
                                 <input class="form-control lh-lg" type="text" value="Media Name" aria-label="Media Name" readonly="readonly">
                             </div>
@@ -513,7 +519,13 @@
                                         <div class="upload_frame custom-file-container d-none" data-upload-id="FileUpload"></div>
 
                                         <div class="media_frame d-none flex-column h-100">
-                                            <div class="mb-2">檔案預覽</div>
+                                            <div class="media_frame_header d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                                <div class="media_frame_title">檔案預覽</div>
+                                                <div class="cover_toggle form-check mb-0 d-none">
+                                                    <input id="ProdMediaCoverToggle" class="cover_toggle_input form-check-input" type="checkbox">
+                                                    <label class="form-check-label" for="ProdMediaCoverToggle">設為預設圖片</label>
+                                                </div>
+                                            </div>
                                             <div class="input-group mb-3 d-none">
                                                 <input class="form-control lh-lg" type="text" value="Media Name" aria-label="Media Name" readonly="readonly">
                                             </div>

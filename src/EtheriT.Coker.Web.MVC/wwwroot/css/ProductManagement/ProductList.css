@@ -124,6 +124,12 @@ input[type="number"] {
     height: 64px;
     object-fit: cover;
     border-radius: 4px;
+    border: 2px solid var(--bs-border-color);
+}
+
+/* 這個規格含預設圖片：縮圖藍框，其餘規格縮圖灰框 */
+.specImg .spec_thumb.is-cover {
+    border-color: var(--bs-primary);
 }
 
 /* Product List */
@@ -294,6 +300,27 @@ body.product-canvas-disabled #ProductCanvas .product-canvas-unavailable {
 }
 
 .data_upload > ul > .upload_list {
+    cursor: default;
+}
+
+/* 商品圖／規格圖清單：每一張的外框統一 2px 灰框（框在外框上，不壓在圖片上） */
+#ProdMedia > ul > .upload_list,
+#SpecMedia > ul > .upload_list {
+    border: 2px solid var(--bs-border-color) !important;
+    border-radius: 4px;
+}
+
+/* 預設圖片：外框改藍框，外面再加一圈淡藍光暈讓它更明顯 */
+#ProdMedia > ul > .upload_list.is-cover,
+#SpecMedia > ul > .upload_list.is-cover {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), .25) !important;
+}
+
+/* 已是預設圖片時勾選框會鎖住，但不要變淡，看起來仍是「已勾選」 */
+.cover_toggle .form-check-input:disabled,
+.cover_toggle .form-check-input:disabled ~ .form-check-label {
+    opacity: 1;
     cursor: default;
 }
 

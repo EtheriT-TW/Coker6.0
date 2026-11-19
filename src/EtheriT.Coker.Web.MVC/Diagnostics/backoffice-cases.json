@@ -3240,6 +3240,13 @@
         "../EtheriT.Coker.EntityFrameworkCore/Migrations/Seed/StoreSetSeed.cs",
         "../EtheriT.Coker.Application.Shared/Common/AiStoreSettingNames.cs",
         "Services/Ai/AiClient.cs",
+        "../EtheriT.Coker.Application.Shared/Ai/AiContracts.cs",
+        "Services/Ai/AiInputValidation.cs",
+        "Services/Ai/WebsiteAiService.cs",
+        "Services/Ai/CanvasAiClient.cs",
+        "Services/Ai/CanvasAiStyleNormalizer.cs",
+        "Diagnostics/BackofficeSandboxAiCanvasChecks.cs",
+        "Diagnostics/BackofficeSandboxAiGenericChecks.cs",
         "Services/Ai/AiModelCatalog.cs",
         "Diagnostics/BackofficeSandboxAiModelChecks.cs",
         "Services/Ai/CanvasAiService.cs",
@@ -3258,11 +3265,25 @@
         },
         {
           "id": "SystemManagement.AiSettings.provider-contracts",
-          "title": "AI 供應商格式、模型清單與失敗處理",
-          "steps": "環境：獨立容器與純記憶體 HTTP handler，不連外。檢查關閉功能零 HTTP 呼叫、三家固定 HTTPS 目的地、驗證標頭、請求欄位與回覆格式轉換。Claude 有工作區 ID 時核對 anthropic-workspace-id 完全一致、空白時省略，其他供應商不得帶入；無效、超長及換行 ID 必須拒絕。模擬無權限、非 JSON 及超過大小上限回覆，並確認無外部金鑰的自架路由。模擬 DNS、安全連線、網路連線、Proxy 通道、回應中斷與未知 HttpRequestException，例外文字刻意放入假金鑰。透過實際模型清單服務驗證無模型查詢與保存必填的區別、三家 metadata GET 與驗證、Claude 分頁去重、Gemini generateContent 篩選與 token 編碼、OpenAI ID、空清單、錯誤碼、網路、非 JSON、超限與重複 cursor，不執行生成。",
+          "title": "AI 共用呼叫、圖片、模型清單與失敗處理",
+          "steps": "環境：獨立容器與純記憶體 HTTP handler，不連外。檢查關閉功能零 HTTP 呼叫、三家固定 HTTPS 目的地、驗證標頭、請求欄位與回覆格式轉換。Claude 有工作區 ID 時核對 anthropic-workspace-id 完全一致、空白時省略，其他供應商不得帶入；無效、超長及換行 ID 必須拒絕。模擬無權限、非 JSON 及超過大小上限回覆，並確認無外部金鑰的自架路由。模擬 DNS、安全連線、網路連線、Proxy 通道、回應中斷與未知 HttpRequestException，例外文字刻意放入假金鑰。透過實際模型清單服務驗證無模型查詢與保存必填的區別、三家 metadata GET 與驗證、Claude 分頁去重、Gemini generateContent 篩選與 token 編碼、OpenAI ID、空清單、錯誤碼、網路、非 JSON、超限與重複 cursor，不執行生成。另呼叫通用 AI 隔離斷言，核對純文字／多輪／圖片轉換、不強制 JSON、非法輸入零 HTTP、self 通用不支援、舊畫布 Gateway 契約／錯誤／呼叫數，以及共用服務保存加密本站設定後讀取與停用後即時拒絕；所有設定寫入只在獨立 InMemory fixture。",
           "expected": "關閉不呼叫，金鑰不出現在 URL，三家結果統一為文字與單次模型呼叫資訊。中文、全形、遮罩與零寬字元金鑰在 Prepare 被拒絕；已存此類金鑰呼叫前拋出安全設定錯誤且 HTTP 次數為零，不洩漏原值。Gemini 思考內容不作為結果；錯誤不洩漏供應商本文，不重試或回退，非 JSON 與過大回覆拒絕。連線例外回傳 502 與對應分類提示，不含假金鑰或原始例外文字，HTTP 呼叫僅一次。模型查詢可不填模型，保存仍必填；清單正確轉換／去重／翻頁並保留 Claude 工作區，Gemini 僅取 generateContent，不支援的 ID 不列出；HTTP／網路／格式／大小與 cursor 異常不回部分清單，不洩漏金鑰、不重試回退，系統預設不連外。這是本地轉換與錯誤處理斷言，不代表真實供應商契約、網路、憑證、額度或模型能力已驗證。",
           "mode": "isolated",
           "executor": "sandbox/ai-provider-contracts"
+        },
+        {
+          "id": "SystemManagement.AiSettings.selected-css-and-deferred-link",
+          "title": "選取區塊樣式、連結與原文保留",
+          "steps": "環境：隔離測試站台、完成編譯、有 AI 與頁面編輯權限的帳號。執行既有 sandbox/ai-provider-contracts 內的 AiCanvasEdits 隔離斷言。瀏覽器選取品牌入口，輸入『把入口兩個字換成連結』並換行輸入『顏色變成 #336589』；之後從連結編輯功能填網址。另從完整原文重試『協助我把入口兩個字變大』換行『修改為連結』及只放大，核對四字仍在。模擬模型 content 回覆只剩入口與保留品牌入口兩種情況。另驗收原文跨子節點、重複文字、完整 HTTPS 網址，以及 class／標籤／後代／子代／群組規則回覆與區塊外 selector、危險 CSS 值。",
+          "expected": "指定入口兩字成為可後續填網址的連結、href 留空、只該連結套用 #336589，品牌原文與字級不變；放大組合只讓入口相對原字級加大，完整品牌入口原文保留，明確原句不呼叫模型。外觀／連結請求即使模型選 content 也不能刪原文，只有入口的回覆不套用，完整保留原文的連結修改仍允許。常見靜態 CSS selector 在目標 fragment 內定位並轉為 #id，不因 class 或標籤本身拒絕，缺 ID 由程式補上；不影響區塊外、保留原 class，CSS 屬性與值仍驗證。人工瀏覽器情境尚未執行，不列自動通過數；隔離部分已由既有 executor 實作並綁定，未執行不算通過。",
+          "mode": "review"
+        },
+        {
+          "id": "SystemManagement.AiSettings.shared-ai-regression",
+          "title": "共用 AI 分層與畫布相容",
+          "steps": "環境：完成編譯的隔離站台、有／無 AI 與頁面編輯權限帳號，已允許測試的外部金鑰或既有畫布 Gateway。確認設定頁 Test 仍為固定 JSON，三家外部與系統預設畫布的 selected／canvas／new、語系、HTML/CSS 驗證及模型呼叫數不變。於已授權的功能服務呼叫 IWebsiteAiService 驗收純文字、對話歷史、PNG／JPEG／WebP 圖片、JsonObject，並測無視覺能力模型、截斷、關閉 AI、取消與逾時；功能入口缺權限、跨站或防偽仍拒絕。",
+          "expected": "通用呼叫沒有 HTML、CSS、畫布選取或固定 JSON 限制，讀取當前站台保存設定；既有畫布仍由原權限與安全校驗保護，JSON 格式由畫布服務指定。通用任務選系統預設時明確不支援且零 HTTP；不偷偷套畫布 workflow 或換供應商。圖片送入能力仍需相容模型與功能級驗證，沒有新增匿名或任意業務操作 API。此為尚未執行的人工及外部驗收，不列自動通過數。",
+          "mode": "review"
         },
         {
           "id": "SystemManagement.AiSettings.model-selection",
@@ -3282,7 +3303,7 @@
           "id": "SystemManagement.AiSettings.preview-permissions-and-no-write",
           "title": "AI 權限、防偽與連線測試不儲存",
           "steps": "環境：隔離測試站台、無檢視／只有檢視／有編輯帳號，以及使用者明確允許的外部測試金鑰。檢查 Settings、Token、Save、Test 直接 API 與防偽缺失；開頁後撤權或切站、兩分頁互相保存、舊防偽 Cookie 更新。修改開關、供應商、模型或金鑰操作，確認未保存時無法測試；保存後檢查 Test POST 無 Body、無設定欄位且保留防偽 header。以舊格式 Body 傳入不同供應商／模型／金鑰，確認不能覆寫後端已存設定。取消費用確認，再測已儲存的無效金鑰、模型不存在、額度不足、逾時與不相容回覆。自架停機時用已保存外部設定重試，並在測試前後比對已保存開關與內容。",
-          "expected": "讀寫與測試權限皆於後端檢查；跨站與無防偽拒絕，保存仍拒絕舊設定版本；取得最新 Token 失敗不得 POST，不自動重送業務或模型呼叫。Test 僅依目前授權站台已儲存設定呼叫，不採用 Body 草稿，測試內容由後端建立；未保存變更時停用測試並提示先儲存。取消測試零模型請求；測試不保存或開放功能；自架僅健康檢查，外部只傳固定測試內容，結果不宣稱畫布已驗證。外部不受自架可用性阻擋，失敗明示且不默默回退。回應與瀏覽器持久儲存沒有金鑰原文或密文。頁面 no-store。此為未執行的人工與外部驗收，不列自動通過數。",
+          "expected": "讀寫與測試權限皆於後端檢查；跨站與無防偽拒絕，保存仍拒絕舊設定版本；取得最新 Token 失敗不得 POST，不自動重送業務或模型呼叫。Test 僅依目前授權站台已儲存設定呼叫，不採用 Body 草稿，測試內容由後端建立；未保存變更時停用測試並提示先儲存。系統預設及外部服務成功彈窗與狀態文字統一只顯示「連線成功」，失敗不得顯示成功。取消測試零模型請求；測試不保存或開放功能；自架僅健康檢查，外部只傳固定測試內容，檢查範圍保留在內部規格。外部不受自架可用性阻擋，失敗明示且不默默回退。回應與瀏覽器持久儲存沒有金鑰原文或密文。頁面 no-store。此為未執行的人工與外部驗收，不列自動通過數。",
           "mode": "review"
         }
       ]

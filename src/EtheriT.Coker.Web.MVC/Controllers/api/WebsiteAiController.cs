@@ -1,4 +1,5 @@
 using System.Text.Json;
+using EtheriT.Coker.Application.Shared.Ai;
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Web.MVC.Extensions;
 using EtheriT.Coker.Web.MVC.Services.Ai;
@@ -84,11 +85,13 @@ public sealed class WebsiteAiController(LoginUserData user, NavigationProvider n
             {
                 var readiness = await selfAvailability.CheckAsync(timeout.Token);
                 return StatusCode(readiness.Available ? 200 : 503, new { message = readiness.Available
-                    ? "系統預設 AI 服務就緒；未執行模型生成，設定尚未儲存。"
+                    ? "連線成功"
                     : "系統預設 AI 服務尚未就緒，請管理員檢查服務設定。" });
             }
             draft.Enabled = true; // Test only: never persist or enable the website.
-            var result = await client.ChatAsync(draft, new("Return only JSON: {\"ok\":true}.", "Connection test. Return the requested JSON.", "zh-tw", ""), timeout.Token);
+            var result = await client.ChatAsync(draft, new("Return only JSON: {\"ok\":true}.",
+                [new("user", "Connection test. Return the requested JSON.")])
+                { ResponseFormat = AiResponseFormat.JsonObject }, timeout.Token);
             if (result.Status != 200) return StatusCode(result.Status, new { message = result.Message });
             var content = (result.Content ?? "").Trim();
             if (content.StartsWith("```"))
@@ -100,7 +103,7 @@ public sealed class WebsiteAiController(LoginUserData user, NavigationProvider n
             using var json = JsonDocument.Parse(content);
             if (!json.RootElement.TryGetProperty("ok", out var ok) || ok.ValueKind != JsonValueKind.True)
                 return UnprocessableEntity(new { message = "AI 可連線，但測試回覆未符合要求。" });
-            return Ok(new { message = "連線與 JSON 回覆正常；設定尚未儲存，此檢查不代表畫布編輯已驗證。" });
+            return Ok(new { message = "連線成功" });
         }
         catch (AiSettingsException ex) { return Conflict(new { message = ex.Message }); }
         catch (OperationCanceledException) when (!token.IsCancellationRequested)

@@ -1,5 +1,37 @@
 # 後台功能檢測流程與維護規則
 
+## 局部放大與連結不得刪除未指定文字
+
+修正使用者原句「協助我把入口兩個字變大\n修改為連結」未被局部處理接住，模型自行選 content 後整段替換的問題。新增 TryPresentSelectedPhrase，完整識別已支援的放大／縮小、色碼與待設定網址連結組合，在原 HTML 上處理；不認識的其他操作仍交給模型，不忽略未理解的子指令。兩個字放大以繼承字級加 4px，其他文字、字型與內容保留。放大單一片語使用既有文字 span，連結組合只包覆指定原文，href 留待編輯，零模型呼叫。
+
+另在 selected 的外觀／連結請求加入完整原文比對，模型即使回傳 editMode=content，也不能用只有指定兩字的 HTML 覆蓋整個標題；文字不同即不套用。明確文案改寫／刪除等操作不由這條外觀保護規則攔截，既有文字替換流程維持。
+
+擴充既有 BackofficeSandboxAiCanvasChecks／sandbox/ai-provider-contracts：原句保留「品牌入口」、僅入口成連結且放大、只放大不刪品牌、外觀請求中模型回傳只有入口時拒絕、保留完整文字的模型連結內容仍可套用。使用獨立記憶體 fixture、不連外，尚未執行。人工重現需先回到未被截斷的本機版本，再送原句確認四字保留、只入口放大並可設定網址；此修正不會推測或重建先前已刪掉的內容。未執行編譯、檢測或瀏覽器驗收；只修改後端，不需 bundle／Migration。
+
+## 選取區塊 CSS 與待設定網址的局部連結
+
+AI 回覆的靜態 ID／class／標籤、後代／直接子代與逗號群組選擇器，先在目前修改 HTML fragment 中定位，再由 CanvasAiStyleNormalizer 轉為前端既有可套用的 #id 規則；缺 ID 時僅補 ID，保留原文與 class，處理相同屬性的 specificity／先後順序。不把 class 規則發布到全站，未命中修改範圍或不支援的動態 selector 不套用，仍保留 CSS 屬性／值與 HTML 檢查。前端協定不變，不需 bundle。
+
+「把入口兩個字換成連結\n顏色變成 #336589」這類指定原文＋連結＋明確色碼，由既有局部連結流程直接處理，不呼叫模型；未提供網址時建立可後續編輯的 a 元件且不填 href、不猜網址。保留其他文字與字級，色碼只作用於該連結；原有完整 HTTPS 網址流程保留。重複目標或不在選取區塊時仍不任意擴大範圍。
+
+新增 BackofficeSandboxAiCanvasChecks，綁至既有 sandbox/ai-provider-contracts：class／標籤／直接子代／群組定位、同目標屬性優先順序、補 ID 不改原文與 class、區塊外零套用、實際 CanvasAiService 的 class 回覆成功、危險 CSS 值仍拒絕，以及使用者原句的零模型呼叫／只連結入口／保留品牌／href 留空／指定色碼回歸。所有寫入僅在現有獨立 InMemory fixture 與暫存金鑰，不寫客戶資料庫、不連外；未執行，不宣稱瀏覽器或 SQL 通過。
+
+人工驗收：指定「品牌入口」區塊，使用原句後確認入口成為可編輯連結、顏色為 #336589、品牌與字級不變，之後從連結編輯功能填入網址；另測跨子節點、重複文字、提供完整網址、class／標籤樣式回覆只影響選取區塊，以及不安全 CSS 仍不套用。尚未執行編譯、隔離檢測或瀏覽器。需使用者手動編譯 MVC，可能還原套件並更新 bin/obj，耗時依環境；無 Migration 或資產變更。
+
+## 測試連線成功文案
+
+系統預設與外部供應商測試成功的使用者訊息統一為「連線成功」，不加入生成範圍、JSON 或儲存狀態等技術說明。實際檢查流程與失敗結果不變。更新既有 preview-permissions-and-no-write 人工規格，核對成功彈窗及狀態文字均為「連線成功」，失敗不可顯示成功；尚未執行編譯或實際驗收。本次只修改 C# 與檢測文件，不需 bundle。
+
+## 通用 AI 與畫布適配器分層
+
+新增 Application.Shared/Ai/AiContracts（含 IWebsiteAiService）、MVC 的 WebsiteAiService、AiInputValidation 與 CanvasAiClient；Application Service 可引用共用契約而不反向依賴 MVC。AiClient 移除 canvas-edit、HTML、語系、畫布錯誤解析及固定 JSON 假設，改處理多輪 user／assistant 訊息、inline 圖片、文字／JSON 格式與輸出上限。CanvasAiService 改依賴 CanvasAiClient，保留原畫布校驗；設定頁固定 JSON Test 更新至通用契約。畫布入口 readiness 移至 CanvasAiAvailability 檔，未改其權限／可用性語意。通用服務每次讀取本站設定、尊重開關與取消／逾時；不新增無業務權限邊界的公開 Chat API。
+
+系統預設只有已知畫布 Gateway，保留原協定；通用任務明確回傳 501 且不送 HTTP、不默默回退。外部三家支援文字與 PNG／JPEG／WebP Base64 圖片轉換；各功能仍負責上傳完整性、資料存取、提示詞與業務結果驗證。圖片張數／MIME／檔頭／Base64／大小、訊息角色／數量／長度、輸出上限不合法時零模型呼叫。沒有串流、工具／SQL 執行或客服、商品新增功能。
+
+新增 BackofficeSandboxAiGenericChecks，由既有 sandbox/ai-provider-contracts 呼叫（保留案例 ID／數量），使用隔離記憶體設定與純記憶體 HTTP handler：三家純文字不強制 JSON、多輪 assistant 映射、inline 圖片欄位、非法角色／圖片／張數及 token 限制零 HTTP、通用 self 不支援、舊 Gateway workflow／HTML／語系與呼叫數、已知 422 錯誤不洩漏，以及共用服務讀取加密本站設定／停用後即時拒絕。設定寫入只在獨立 InMemory 與臨時金鑰 fixture，不碰客戶資料庫。原 provider-contracts 的 JSON／截斷／錯誤與模型清單斷言仍保留。
+
+尚未執行上述案例、編譯、瀏覽器或真實供應商，不代表 SQL／圖片分析／畫布已通過。新增內部人工規格確認畫布權限與前端契約不變；沒有新增自動通過數。此修改沒有前端資產或 Migration。整合範例、限制與建議手動編譯命令見 docs/AI_INTEGRATION.md；命令可能還原套件並寫入 bin/obj，耗時依環境而定，未由 Codex 執行。
+
 ## 帳戶模型清單與下拉選擇
 
 AI 設定新增「載入模型」及名稱＋ID 下拉，保留自訂模型 ID。使用者明確點擊才查詢，不在開頁、切換或保存時連外。查詢可以使用未保存的新金鑰及 Claude 工作區，未填模型仍可查詢；只有這條模型查詢路徑呼叫 Prepare(requireModel:false)，保存與生成原模型必填規則維持。Models POST 沿用編輯權限、防偽、本站與版本驗證；保留已存金鑰時前端不回填金鑰，後端解密讀取，替換時僅經同源 HTTPS 傳入新金鑰。查詢不保存、開放功能或生成，不使用客戶資料庫做測試寫入，不快取不同站台的憑證或模型清單。

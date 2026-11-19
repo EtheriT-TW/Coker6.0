@@ -104,3 +104,27 @@ public sealed class CanvasAiAvailability(IHttpClientFactory clients, IConfigurat
 }
 
 public sealed record CanvasAiReadiness(bool Available, string Reason, int? HttpStatus = null, bool Cached = false);
+
+// Canvas entrance readiness. General feature services use IWebsiteAiService instead.
+public sealed class WebsiteAiAvailability(WebsiteAiSettingsService settings, CanvasAiAvailability selfAvailability)
+{
+    public async Task<CanvasAiReadiness> CheckAsync(CancellationToken token)
+    {
+        try
+        {
+            var current = await settings.GetAsync(token);
+            return await CheckAsync(current, token);
+        }
+        catch (AiSettingsException) { return new(false, "WebsiteSettingsInvalid"); }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        { return new(false, "WebsiteSettingsUnavailable"); }
+    }
+
+    public Task<CanvasAiReadiness> CheckAsync(WebsiteAiSettings current, CancellationToken token)
+    {
+        if (!current.Enabled) return Task.FromResult(new CanvasAiReadiness(false, "DisabledForWebsite"));
+        // No paid inference on page load. External credentials are verified by explicit test/use.
+        return current.EffectiveProvider == "self" ? selfAvailability.CheckAsync(token)
+            : Task.FromResult(new CanvasAiReadiness(true, "ExternalConfiguredNotVerified"));
+    }
+}

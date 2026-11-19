@@ -1,4 +1,5 @@
 using System.Net;
+using EtheriT.Coker.Application.Shared.Ai;
 using System.Text;
 using System.Text.Json;
 using EtheriT.Coker.Application;
@@ -115,9 +116,9 @@ public static partial class BackofficeSandboxChecks
     private static async Task AiProviderContracts(BackofficeSandbox box)
     {
         var clients = new AiFixtureClients();
-        var client = new AiClient(clients, box.Services.GetRequiredService<CanvasAiAvailability>(),
+        var client = new AiClient(clients,
             Microsoft.Extensions.Logging.Abstractions.NullLogger<AiClient>.Instance);
-        var input = new AiChatInput("Return JSON", "fixture input", "zh-tw", "<p>fixture</p>");
+        var input = new AiChatInput("Return JSON", [new("user", "fixture input")]) { ResponseFormat = AiResponseFormat.JsonObject };
         foreach (var provider in new[] { "claude", "openai", "gemini" })
         {
             using var request = client.CreateRequest(new() { Enabled = true, Provider = provider,
@@ -207,6 +208,8 @@ public static partial class BackofficeSandboxChecks
         }
         clients.Error = null;
         await AiModelCatalogContracts();
+        await AiGenericContracts(box);
+        await AiCanvasEdits(box);
         Require(WebsiteAiSettingsService.Prepare(new(), new() { Provider = "gemini" }).EffectiveProvider == "self", "Missing external keys must select self-hosting.");
     }
 

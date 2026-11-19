@@ -422,6 +422,7 @@ launchSettings.json
 **/devextreme-license.ts
 docs/*.*
 !docs/BACKOFFICE_FUNCTION_TESTS.md
+!docs/AI_INTEGRATION.md
 !docs/PUBLIC_FUNCTION_TESTS.md
 !docs/PUBLIC_FEATURE_INVENTORY.md
 

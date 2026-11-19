@@ -1,11 +1,12 @@
 using HtmlAgilityPack;
+using EtheriT.Coker.Application.Shared.Ai;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Web.MVC.Services.Ai;
 
-public sealed class CanvasAiService(IAiClient client, IConfiguration configuration, WebsiteAiSettingsService settingsService, WebsiteAiAvailability availability)
+public sealed class CanvasAiService(CanvasAiClient client, IConfiguration configuration, WebsiteAiSettingsService settingsService, WebsiteAiAvailability availability)
 {
     private const string AllowedCssProperties = "color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap grid-template-columns flex-direction flex-wrap justify-content align-items";
     private const string SelectedInstructions = """
@@ -77,6 +78,7 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(Math.Clamp(configuration.GetValue<int?>("ParallelAi:TimeoutSeconds") ?? 600, 10, 600)));
         try { return await GenerateCore(input, timeout.Token); }
+        catch (AiInputException ex) { return new(400, null, ex.Message); }
         catch (AiSettingsException ex) { return new(503, null, ex.Message); }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         { return new(504, null, "AI 回覆逾時，請稍後重試。"); }
@@ -94,12 +96,14 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
         // A precise size command does not need model-generated HTML/CSS. The controller
         // has already checked site/editor permissions; readiness remains required above.
         if (input.AutoDetect && input.Scope != "new") input.PreserveContent = true;
+        var localPresentation = TryPresentSelectedPhrase(input);
+        if (localPresentation != null) { input.ModelCalls = 0; return localPresentation; }
         var fontResize = TryResizeSelectedText(input);
         if (fontResize != null) return fontResize;
         var phraseFormat = TryFormatSelectedPhrase(input);
         if (phraseFormat != null) return phraseFormat;
         var phraseLink = TryLinkSelectedPhrase(input);
-        if (phraseLink != null) return phraseLink;
+        if (phraseLink != null) { input.ModelCalls = 0; return phraseLink; }
         var textReplacement = TryReplaceSelectedText(input);
         if (textReplacement != null) return textReplacement;
 
@@ -173,6 +177,8 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
                 (string.IsNullOrWhiteSpace(proposedHtml) || proposedHtml == input.Html))
                 input.PreserveContent = true;
             var html = input.PreserveContent ? input.Html : proposedHtml;
+            if (input.Scope == "selected" && IsPresentationRequest(input.Prompt) && !SameText(input.Html, html ?? ""))
+                return new(422, null, "AI 回覆改動了未要求變更的文字，已保留原區塊。");
             var summary = result.RootElement.TryGetProperty("summary", out var s) ? s.GetString() : "已產生畫布修改";
             if (string.IsNullOrWhiteSpace(html) || html.Length > 64000 || (!input.PreserveContent && !IsSafeFragment(html)))
                 return new(422, null, "AI 回覆包含不支援或不安全的 HTML，未修改畫布。請簡化指令後重試。");
@@ -183,11 +189,16 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
             var textStyles = result.RootElement.TryGetProperty("textStyles", out var textStyleElement)
                 ? JsonSerializer.Deserialize<List<CanvasAiTextStyle>>(textStyleElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                 : [];
+            var normalizedHtml = html;
+            if (!CanvasAiStyleNormalizer.TryNormalize(styles, html, out normalizedHtml, out var normalizedStyles))
+                return new(422, null, "AI 回覆的樣式無法對應到目前修改區塊，未修改畫布。");
+            html = normalizedHtml;
+            styles = normalizedStyles;
             if (!AreSafeStyles(styles, html, out var cssFailure))
             {
                 return new(422, null, "AI CSS 未通過：" + cssFailure + "未修改畫布。");
             }
-            var htmlChanged = false;
+            var htmlChanged = html != (input.PreserveContent ? input.Html : proposedHtml);
             if (textStyles == null || textStyles.Count > 20)
                 return new(422, null, "AI 局部文字樣式格式不正確，未修改畫布。");
             if (textStyles.Count > 0)
@@ -198,7 +209,7 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
                         : "局部文字樣式請使用目前選取區塊與只調整樣式模式。");
                 if (!IsSafeFragment(input.Html, out var markupFailure))
                     return new(422, null, "選取區塊：" + markupFailure);
-                if (!TryApplyTextStyles(textStyles, input.Html, out var markedHtml, out var textRules, out var failure))
+                if (!TryApplyTextStyles(textStyles, html, out var markedHtml, out var textRules, out var failure))
                     return new(422, null, failure);
                 html = markedHtml;
                 styles.AddRange(textRules);
@@ -271,6 +282,58 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
             return detail.Length == 0 ? message : message + "原因：" + detail + "。";
         }
         catch (JsonException) { return fallback; }
+    }
+
+    private static bool SameText(string original, string proposed)
+    {
+        var before = new HtmlDocument(); before.LoadHtml(original);
+        var after = new HtmlDocument(); after.LoadHtml(proposed);
+        return HtmlEntity.DeEntitize(before.DocumentNode.InnerText) == HtmlEntity.DeEntitize(after.DocumentNode.InnerText);
+    }
+
+    private static bool IsPresentationRequest(string prompt) =>
+        Regex.IsMatch(prompt, "放大|縮小|變大|變小|字級|字體|顏色|變色|粗體|斜體|底線|連結") &&
+        !Regex.IsMatch(prompt, "改寫|重寫|刪除|移除|替換|文案|新增文字|增加文字|修改文字|更換文字");
+
+    private static CanvasAiResult? TryPresentSelectedPhrase(CanvasAiRequest input)
+    {
+        if (input.Scope != "selected" || !input.PreserveContent) return null;
+        var command = Regex.Match(input.Prompt.Trim(),
+            @"\A(?:請\s*)?(?:(?:協助我|幫我)\s*)?(?:把|將)?\s*(?<text>.+?)(?<count>[一二兩三四五六七八九十1-9])個字\s*(?<actions>[\s\S]+)\z");
+        if (!command.Success) return null;
+        var target = command.Groups["text"].Value.Trim().Trim('「', '」', '『', '』', '"', '\'');
+        var number = command.Groups["count"].Value;
+        var count = number == "兩" ? 2 : int.TryParse(number, out var digit) ? digit : "一二三四五六七八九十".IndexOf(number, StringComparison.Ordinal) + 1;
+        if (target.Length != count) return null;
+        var properties = new Dictionary<string, string>();
+        var link = false;
+        foreach (var raw in Regex.Split(command.Groups["actions"].Value, @"[\r\n，,、；;]+"))
+        {
+            var clause = raw.Trim().TrimEnd('。', '！', '!');
+            if (clause.Length == 0) continue;
+            if (Regex.IsMatch(clause, @"\A(?:放大|變大|加大)(?:(?:一|1)級)?\z")) properties["font-size"] = "calc(1em + 4px)";
+            else if (Regex.IsMatch(clause, @"\A(?:縮小|變小)(?:(?:一|1)級)?\z")) properties["font-size"] = "calc(1em - 4px)";
+            else if (Regex.IsMatch(clause, @"\A(?:修改為|換成|改成|變成|設為|設定為|加上|新增)(?:超連結|連結)\z")) link = true;
+            else
+            {
+                var color = Regex.Match(clause, @"\A(?:文字|字體)?顏色\s*(?:變成|改成|設為|設定為|改為|變為)?\s*(?<value>\#[a-fA-F0-9]{6}|\#[a-fA-F0-9]{3})\z");
+                if (!color.Success) return null;
+                properties["color"] = color.Groups["value"].Value;
+            }
+        }
+        if (!link && properties.Count == 0) return null;
+        if (link)
+        {
+            var result = TryLinkSelectedPhrase(new CanvasAiRequest { Scope = "selected", Html = input.Html, Prompt = target + "改成連結" });
+            if (result == null || result.Status != 200) return result;
+            foreach (var rule in result.Styles)
+                foreach (var property in properties) rule.Properties[property.Key] = property.Value;
+            return result with { Message = $"已調整「{target}」並設為連結，保留其他文字；網址可稍後設定。" };
+        }
+        if (!IsSafeFragment(input.Html, out var markupFailure)) return new(422, null, "選取區塊：" + markupFailure);
+        if (!TryApplyTextStyles([new() { Text = target, Properties = properties }], input.Html, out var html, out var rules, out var failure))
+            return new(422, null, failure);
+        return new(200, html, $"已調整「{target}」，保留其他文字。") { HtmlChanged = true, Styles = rules };
     }
 
     private static CanvasAiResult? TryResizeSelectedText(CanvasAiRequest input)
@@ -429,13 +492,27 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
         if (input.Scope != "selected") return null;
         var command = Regex.Match(input.Prompt.Trim(),
             @"\A(?:請\s*)?(?<text>.+?)\s*(?:設定|設置|設為|加上|新增)(?:超連結|連結)(?:到|至|為)?\s*(?<url>\S+)\z");
-        if (!command.Success) return null;
+        var pendingLink = false;
+        if (!command.Success)
+        {
+            command = Regex.Match(input.Prompt.Trim(),
+                @"\A(?:請\s*)?(?:把|將)?\s*(?<text>.+?)(?:(?<count>[一二兩三四五六七八九十1-9])個字)?\s*(?:換成|改成|變成|設為|設定為|加上|新增)(?:超連結|連結)(?:[\s，,；;]+(?:文字|字體)?顏色\s*(?:變成|改成|設為|設定為|改為|變為)?\s*(?<color>\#[a-fA-F0-9]{6}|\#[a-fA-F0-9]{3}))?\s*[。！!]?\z");
+            if (!command.Success) return null;
+            pendingLink = true;
+        }
         var target = command.Groups["text"].Value.Trim().Trim('「', '」', '『', '』', '"', '\'');
+        if (pendingLink && command.Groups["count"].Success)
+        {
+            var number = command.Groups["count"].Value;
+            var expected = number == "兩" ? 2 : int.TryParse(number, out var digit) ? digit : "一二三四五六七八九十".IndexOf(number, StringComparison.Ordinal) + 1;
+            if (target.Length != expected) return null;
+        }
         var url = command.Groups["url"].Value;
+        Uri? uri = null;
         if (url.StartsWith("www.", StringComparison.OrdinalIgnoreCase)) url = "https://" + url;
-        if (url.Any(char.IsControl) || url.Contains('\\') ||
-            !Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != "https" ||
-            string.IsNullOrEmpty(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo))
+        if (!pendingLink && (url.Any(char.IsControl) || url.Contains('\\') ||
+            !Uri.TryCreate(url, UriKind.Absolute, out uri) || uri.Scheme != "https" ||
+            string.IsNullOrEmpty(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo)))
             return new(422, null, "請提供有效的 HTTPS 網址，例如 https://www.c8shop.com.tw。");
         if (!IsSafeFragment(input.Html, out var markupFailure))
             return new(422, null, "選取區塊：" + markupFailure);
@@ -463,7 +540,7 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
             if (from > 0)
                 node.ParentNode.InsertBefore(doc.CreateTextNode(HtmlEntity.Entitize(text[..from])), node);
             var link = doc.CreateElement("a");
-            link.SetAttributeValue("href", uri.AbsoluteUri);
+            if (uri != null) link.SetAttributeValue("href", uri.AbsoluteUri);
             var id = "ai-link-" + Guid.NewGuid().ToString("N");
             link.SetAttributeValue("id", id);
             linkIds.Add(id);
@@ -480,11 +557,11 @@ public sealed class CanvasAiService(IAiClient client, IConfiguration configurati
         // Keep the site's anchor defaults from overriding the existing text styling.
         var rules = linkIds.Select(id => new CanvasAiStyle {
                 Selector = "#" + id,
-                Properties = new() { ["color"] = "inherit", ["font-size"] = "inherit", ["text-decoration"] = "inherit" }
+                Properties = new() { ["color"] = command.Groups["color"].Success ? command.Groups["color"].Value : "inherit", ["font-size"] = "inherit", ["text-decoration"] = "inherit" }
             }).ToList();
         if (rules.Count > 100 || !AreSafeStyles(rules, html))
             return new(422, null, "連結樣式超出範圍限制，未修改畫布。");
-        return new(200, html, $"已將「{target}」連結至 {uri.AbsoluteUri}，保留原文。") { HtmlChanged = true, Styles = rules };
+        return new(200, html, uri == null ? $"已將「{target}」設為連結，可稍後設定網址。" : $"已將「{target}」連結至 {uri.AbsoluteUri}，保留原文。") { HtmlChanged = true, Styles = rules };
     }
 
     private static bool TryApplyTextStyles(List<CanvasAiTextStyle> patches, string html, out string markedHtml, out List<CanvasAiStyle> rules, out string failure)

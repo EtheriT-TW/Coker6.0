@@ -1,10 +1,8 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using EtheriT.Coker.Application.Shared.Ai;
 
 namespace EtheriT.Coker.Web.MVC.Services.Ai;
-
-public sealed record AiChatInput(string System, string Context, string Locale, string OriginalHtml);
-public sealed record AiChatResult(int Status, string? Content, string Message, int? ModelCalls = null);
 
 public interface IAiClient
 {
@@ -12,31 +10,32 @@ public interface IAiClient
 }
 
 // Fixed destinations only. Neither the browser nor StoreSet can supply a URL or authentication header.
-public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability selfAvailability, ILogger<AiClient> logger) : IAiClient
+public sealed class AiClient(IHttpClientFactory clients, ILogger<AiClient> logger) : IAiClient
 {
     public async Task<AiChatResult> ChatAsync(WebsiteAiSettings settings, AiChatInput input, CancellationToken token)
     {
         if (!settings.Enabled) return new(403, null, "本站尚未開放 AI 輔助。");
-        if (settings.EffectiveProvider != "self") WebsiteAiSettingsService.ValidateApiKey(settings.ApiKey);
+        if (settings.EffectiveProvider == "self")
+        {
+            AiInputValidation.Validate(input);
+            return new(501, null, "系統預設 AI 尚未提供此類型的共用呼叫，請設定外部 AI 服務或由管理員擴充服務能力。", 0);
+        }
+        WebsiteAiSettingsService.ValidateApiKey(settings.ApiKey);
         using var request = CreateRequest(settings, input);
         try
         {
             using var http = clients.CreateClient("WebsiteAi");
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
-            int? calls = settings.EffectiveProvider == "self" ? null : 1;
-            if (settings.EffectiveProvider == "self" && response.Headers.TryGetValues("X-Canvas-Model-Calls", out var values) &&
-                int.TryParse(values.FirstOrDefault(), out var count) && count is >= 0 and <= 1) calls = count;
+            int? calls = 1;
             if (!response.IsSuccessStatusCode)
             {
                 var code = (int)response.StatusCode;
-                if (settings.EffectiveProvider == "self" && code == 422)
-                    return new(422, null, await CanvasAiService.ReadCanvasFailure(response, token), calls);
                 return new(code == 429 ? 429 : code == 422 ? 422 : 502, null, code switch
                 {
                     401 or 403 => "AI 金鑰無效或沒有使用此模型的權限，請管理員檢查設定。",
                     404 => "AI 模型不存在或帳戶無法使用，請管理員檢查模型設定。",
                     429 => "AI 額度不足或請求過於頻繁，請稍後重試或檢查帳戶額度。",
-                    422 => "AI 修改提案未通過驗證，未修改畫布。請重新描述需求。",
+                    422 => "AI 服務無法處理此請求，請檢查輸入內容與模型能力。",
                     _ => "AI 服務呼叫失敗，請管理員檢查服務與模型設定。"
                 }, calls);
             }
@@ -69,31 +68,34 @@ public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability se
 
     internal HttpRequestMessage CreateRequest(WebsiteAiSettings settings, AiChatInput input)
     {
+        AiInputValidation.Validate(input);
+        var system = input.ResponseFormat == AiResponseFormat.JsonObject ? input.System + "\nReturn only a JSON object." : input.System;
         var provider = settings.EffectiveProvider;
         HttpRequestMessage request;
         object payload;
         switch (provider)
         {
-            case "self":
-                if (!selfAvailability.TryGetConnection(out var baseUri, out var key))
-                    throw new AiSettingsException("系統預設 AI 服務尚未啟用或連線設定未完成。");
-                request = new(HttpMethod.Post, new Uri(baseUri, "api/ai/chat"));
-                request.Headers.Add("X-Api-Key", key);
-                payload = new { workflow = "canvas-edit", locale = input.Locale, originalHtml = input.OriginalHtml,
-                    messages = new[] { new { role = "system", content = input.System }, new { role = "user", content = input.Context } } };
-                break;
             case "openai":
                 request = new(HttpMethod.Post, "https://api.openai.com/v1/responses");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
-                payload = new { model = settings.Model, instructions = input.System, input = input.Context,
-                    store = false, max_output_tokens = 16000, text = new { format = new { type = "json_object" } } };
+                var openAiPayload = new Dictionary<string, object>
+                {
+                    ["model"] = settings.Model, ["instructions"] = system,
+                    ["input"] = input.Messages.Select(m => new { role = m.Role, content = OpenAiParts(m) }).ToArray(),
+                    ["store"] = false, ["max_output_tokens"] = input.MaxOutputTokens
+                };
+                if (input.ResponseFormat == AiResponseFormat.JsonObject)
+                    openAiPayload["text"] = new { format = new { type = "json_object" } };
+                payload = openAiPayload;
                 break;
             case "gemini":
                 request = new(HttpMethod.Post, "https://generativelanguage.googleapis.com/v1beta/models/" + Uri.EscapeDataString(settings.Model) + ":generateContent");
                 request.Headers.Add("x-goog-api-key", settings.ApiKey);
-                payload = new { systemInstruction = new { parts = new[] { new { text = input.System } } },
-                    contents = new[] { new { role = "user", parts = new[] { new { text = input.Context } } } },
-                    generationConfig = new { responseMimeType = "application/json", maxOutputTokens = 16000 } };
+                var generationConfig = new Dictionary<string, object> { ["maxOutputTokens"] = input.MaxOutputTokens };
+                if (input.ResponseFormat == AiResponseFormat.JsonObject) generationConfig["responseMimeType"] = "application/json";
+                payload = new { systemInstruction = new { parts = new[] { new { text = system } } },
+                    contents = input.Messages.Select(m => new { role = m.Role == "assistant" ? "model" : "user", parts = GeminiParts(m) }).ToArray(),
+                    generationConfig };
                 break;
             case "claude":
                 WebsiteAiSettingsService.ValidateClaudeWorkspaceId(settings.ClaudeWorkspaceId);
@@ -102,23 +104,51 @@ public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability se
                     request.Headers.Add("anthropic-workspace-id", settings.ClaudeWorkspaceId);
                 request.Headers.Add("x-api-key", settings.ApiKey);
                 request.Headers.Add("anthropic-version", "2026-10-21");
-                payload = new { model = settings.Model, max_tokens = 16000, system = input.System,
-                    messages = new[] { new { role = "user", content = input.Context } } };
+                payload = new { model = settings.Model, max_tokens = input.MaxOutputTokens,
+                    system,
+                    messages = input.Messages.Select(m => new { role = m.Role, content = ClaudeParts(m) }).ToArray() };
                 break;
             default: throw new AiSettingsException("不支援的 AI 供應商。");
         }
         var bytes = JsonSerializer.SerializeToUtf8Bytes(payload);
-        if (bytes.Length > 250000) { request.Dispose(); throw new AiSettingsException("AI 請求內容超過大小限制。"); }
+        var limit = input.Messages.Any(m => (m.Images?.Count ?? 0) > 0) ? 12 * 1024 * 1024 : 250000;
+        if (bytes.Length > limit) { request.Dispose(); throw new AiInputException("AI 請求內容超過大小限制。"); }
         request.Content = new ByteArrayContent(bytes);
         request.Content.Headers.ContentType = new("application/json");
         return request;
+    }
+
+    private static object[] OpenAiParts(AiMessage message)
+    {
+        var parts = new List<object>();
+        if (!string.IsNullOrWhiteSpace(message.Text)) parts.Add(new { type = "input_text", text = message.Text });
+        foreach (var image in message.Images ?? [])
+            parts.Add(new { type = "input_image", image_url = $"data:{image.MediaType};base64,{image.Base64Data}" });
+        return parts.ToArray();
+    }
+
+    private static object[] GeminiParts(AiMessage message)
+    {
+        var parts = new List<object>();
+        if (!string.IsNullOrWhiteSpace(message.Text)) parts.Add(new { text = message.Text });
+        foreach (var image in message.Images ?? [])
+            parts.Add(new { inlineData = new { mimeType = image.MediaType, data = image.Base64Data } });
+        return parts.ToArray();
+    }
+
+    private static object[] ClaudeParts(AiMessage message)
+    {
+        var parts = new List<object>();
+        foreach (var image in message.Images ?? [])
+            parts.Add(new { type = "image", source = new { type = "base64", media_type = image.MediaType, data = image.Base64Data } });
+        if (!string.IsNullOrWhiteSpace(message.Text)) parts.Add(new { type = "text", text = message.Text });
+        return parts.ToArray();
     }
 
     internal static string ExtractContent(string provider, JsonElement root)
     {
         switch (provider)
         {
-            case "self": return root.GetProperty("content").GetString() ?? "";
             case "openai":
                 if (root.GetProperty("status").GetString() != "completed") return "";
                 return string.Concat(root.GetProperty("output").EnumerateArray()
@@ -154,28 +184,5 @@ public sealed class AiClient(IHttpClientFactory clients, CanvasAiAvailability se
             buffer.Write(chunk, 0, length);
         }
         return buffer.ToArray();
-    }
-}
-
-public sealed class WebsiteAiAvailability(WebsiteAiSettingsService settings, CanvasAiAvailability selfAvailability)
-{
-    public async Task<CanvasAiReadiness> CheckAsync(CancellationToken token)
-    {
-        try
-        {
-            var current = await settings.GetAsync(token);
-            return await CheckAsync(current, token);
-        }
-        catch (AiSettingsException) { return new(false, "WebsiteSettingsInvalid"); }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        { return new(false, "WebsiteSettingsUnavailable"); }
-    }
-
-    public Task<CanvasAiReadiness> CheckAsync(WebsiteAiSettings current, CancellationToken token)
-    {
-        if (!current.Enabled) return Task.FromResult(new CanvasAiReadiness(false, "DisabledForWebsite"));
-        // No paid inference on page load. External credentials are verified by explicit test/use.
-        return current.EffectiveProvider == "self" ? selfAvailability.CheckAsync(token)
-            : Task.FromResult(new CanvasAiReadiness(true, "ExternalConfiguredNotVerified"));
     }
 }

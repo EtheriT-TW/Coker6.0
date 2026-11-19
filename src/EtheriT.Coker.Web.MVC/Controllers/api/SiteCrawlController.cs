@@ -1,6 +1,7 @@
 using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.BackgroundJob;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.SiteCrawl;
 using EtheriT.Coker.Core.Models;
 using Hangfire;
 using Microsoft.AspNetCore.Antiforgery;
@@ -15,8 +16,12 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
 {
     private const int MaxProductLists = 2000;
     private const int MaxListKeyLength = 2100;
+    private const int MaxMenus = 2000;
+    private const int MaxMenuKeyLength = 2000;
+    // 偵測任務一建立就標上 mode，畫面在排隊中就知道是第 2 步（偵測）而不是第 4 步（匯入）。
+    private const string DetectTaskTag = """{"mode":"detect"}""";
 
-    // productLists：確認畫面標成商品的列表（偵測結果的 key），這次匯入先略過。
+    // productLists：確認畫面標成商品的列表（偵測結果的 key）；menus：舊站主選單的勾選與路徑名稱。
     [HttpPost]
     public async Task<IActionResult> Start(long websiteId, StartRequest input)
     {
@@ -28,8 +33,25 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
             .Select(key => key.Trim()).Distinct(StringComparer.Ordinal).ToArray();
         if (productLists.Length > MaxProductLists || productLists.Any(key => key.Length > MaxListKeyLength))
             return BadRequest(new { message = "商品列表資料不正確，請重新偵測。" });
+        if (ParseMenus(input.Menus, out var menus) is { } menuError)
+            return BadRequest(new { message = menuError });
         return await CreateAndScheduleAsync(websiteId,
-            task => jobs.Enqueue<SiteCrawlBackgroundJob>(job => job.Run(task, url, productLists, CancellationToken.None)));
+            task => jobs.Enqueue<SiteCrawlBackgroundJob>(job => job.Run(task, url, productLists, menus, CancellationToken.None)));
+    }
+
+    private static string? ParseMenus(SiteMenuChoice[]? input, out SiteMenuChoice[] menus)
+    {
+        menus = (input ?? []).Where(menu => menu is { Key.Length: > 0 })
+            .DistinctBy(menu => menu.Key, StringComparer.Ordinal).ToArray();
+        if (menus.Length > MaxMenus || menus.Any(menu => menu.Key.Length > MaxMenuKeyLength))
+            return "選單資料不正確，請重新偵測。";
+        var named = menus.Where(menu => menu.Include && !string.IsNullOrWhiteSpace(menu.RouterName))
+            .Select(menu => menu.RouterName!.Trim()).ToList();
+        if (named.FirstOrDefault(name => !SiteMenuSelection.IsValidRouterName(name)) is { } invalid)
+            return $"路徑名稱「{invalid}」只能用英文、數字、「-」「_」，最多 50 字，且不能是 Home。";
+        if (named.GroupBy(name => name, StringComparer.OrdinalIgnoreCase).FirstOrDefault(group => group.Count() > 1) is { } duplicate)
+            return $"路徑名稱「{duplicate.Key}」重複。";
+        return null;
     }
 
     // 匯入前偵測列表（只讀舊站、不寫入新站），結果在任務的 resultJson（mode = detect）。
@@ -41,7 +63,7 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
         if (ParseSource(input.Url) is not { } url)
             return BadRequest(new { message = "請輸入有效的 HTTP 或 HTTPS 網址。" });
         return await CreateAndScheduleAsync(websiteId,
-            task => jobs.Enqueue<SiteCrawlBackgroundJob>(job => job.Detect(task, url, CancellationToken.None)));
+            task => jobs.Enqueue<SiteCrawlBackgroundJob>(job => job.Detect(task, url, CancellationToken.None)), DetectTaskTag);
     }
 
     private static string? ParseSource(string? input)
@@ -55,12 +77,13 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
         return new UriBuilder(uri) { Fragment = "" }.Uri.AbsoluteUri;
     }
 
-    private async Task<IActionResult> CreateAndScheduleAsync(long websiteId, Func<long, string> enqueue)
+    private async Task<IActionResult> CreateAndScheduleAsync(long websiteId, Func<long, string> enqueue,
+        string? initialResult = null)
     {
         BackgroundTaskRecord task;
         try
         {
-            task = await tasks.CreateSiteCrawlTaskAsync(websiteId, await user.GetUserId());
+            task = await tasks.CreateSiteCrawlTaskAsync(websiteId, await user.GetUserId(), initialResult);
         }
         catch (BackgroundTaskConflictException ex)
         {
@@ -164,6 +187,6 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
         progress = task.Progress, message = task.Message, error = task.Error, resultJson = task.ResultJson
     };
 
-    public sealed record StartRequest(string? Url, string[]? ProductLists);
+    public sealed record StartRequest(string? Url, string[]? ProductLists, SiteMenuChoice[]? Menus);
     public sealed record DetectRequest(string? Url);
 }

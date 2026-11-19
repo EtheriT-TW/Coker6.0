@@ -17,6 +17,8 @@ public sealed class SiteDetectResult
     public int PagesScanned { get; set; }
     public bool PageLimitReached { get; set; }
     public List<SiteListCandidate> Lists { get; } = [];
+    // 舊站主選單（和匯入時同一套讀法），給確認畫面勾選要匯入的頁面。
+    public List<SiteMenuCandidate> Menus { get; } = [];
     public List<string> Errors { get; } = [];
     public int ErrorCount { get; private set; }
 

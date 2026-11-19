@@ -13,6 +13,8 @@ public sealed class SiteCrawlHtml(SiteCrawlHttp http, FileUploadAppService files
     private const string PlaceholderPath = "/holder.js/";
     private static readonly Regex CssUrl = new("""url\(\s*(?<q>['"]?)(?<url>[^'")]*)\k<q>\s*\)""", RegexOptions.IgnoreCase);
     private static readonly Regex ImagePath = new(@"\.(png|jpe?g|gif|webp|svg|bmp|ico)$", RegexOptions.IgnoreCase);
+    private static readonly Regex DefaultDocument = new(@"/(index|default)\.(asp|aspx|php|html?|jsp)$", RegexOptions.IgnoreCase);
+    private const string PageParameter = "page";
 
     // 回傳該段 HTML 用到的 CSS：<style> 原樣保留；style 屬性會被淨化器擋掉，改成 class＋規則。
     internal async Task<string> CleanAsync(HtmlNode node, Uri pageUrl, SiteLayoutResult result, bool allowIframes,
@@ -117,7 +119,7 @@ public sealed class SiteCrawlHtml(SiteCrawlHttp http, FileUploadAppService files
         if (node.Name == "a" && value.StartsWith('#')) return;
         if (node.Name == "a" && Uri.TryCreate(pageUrl, value, out var href) &&
             href.Scheme is "http" or "https" or "mailto" or "tel")
-            link.Value = FindMenuRoute(result, href)
+            link.Value = FindRoute(result, href)
                 ?? await ImportLinkedFileAsync(href, pageUrl, result, checkpoint, token)
                 ?? href.AbsoluteUri;
         else
@@ -142,10 +144,13 @@ public sealed class SiteCrawlHtml(SiteCrawlHttp http, FileUploadAppService files
         catch (Exception ex) when (!token.IsCancellationRequested &&
             ex is HttpRequestException or InvalidOperationException or OperationCanceledException or ArgumentException)
         {
+            // 只寫是哪一頁的哪個檔案，不寫舊站路徑（使用者 2026-11-18 要求）；
             // 404 是舊站本身的失效連結（例 superiorlink 型錄 PDF 已被刪除），講清楚不是匯入出錯。
-            var reason = ex is HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound }
-                ? "舊站本身已沒有這個檔案（404）" : ex.Message;
-            result.AddError($"檔案 {Uri.UnescapeDataString(target.AbsolutePath)}（{pageUrl.PathAndQuery}）匯入失敗，連結保留舊站網址。{reason}");
+            var source = result.ContentSource ?? SiteLayoutResult.SourceName(null, pageUrl, "頁面");
+            var name = Uri.UnescapeDataString(target.Segments.LastOrDefault() ?? target.AbsolutePath);
+            result.AddError(ex is HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound }
+                ? $"{source}中的「{name}」在舊站中已無資料。"
+                : $"{source}中的「{name}」無法從舊站下載，連結暫時指向舊站。{ex.Message}");
             return null;
         }
     }
@@ -188,16 +193,71 @@ public sealed class SiteCrawlHtml(SiteCrawlHttp http, FileUploadAppService files
         }
     }
 
+    // 舊站網址 → 新站網址：先找選單，再找已匯入的文章／商品詳細頁。
+    internal static string? FindRoute(SiteLayoutResult result, Uri target) =>
+        FindMenuRoute(result, target) ?? FindDetailRoute(result, target);
+
+    // 舊站詳細頁網址只靠 id（或只有 sub_id 的頁面）識別，au_id／sub_id 不同仍是同一篇（SiteArticleDetector.ArticleKey）。
+    internal static string? FindDetailRoute(SiteLayoutResult result, Uri target) =>
+        target.Scheme is "http" or "https" && DetailKey(target) is { } key ? result.DetailRoutes.GetValueOrDefault(key) : null;
+
+    // 記下匯入後的文章／商品網址：/{OrgName}/{列表選單路徑}/article|product/{id}，和前台目錄元件產生的連結相同；
+    // 找不到列表選單時文章用 /{OrgName}/article/{id}、商品用 /{OrgName}/search/product/{id}（前台搜尋結果用的寫法）。
+    internal static void RegisterDetail(SiteLayoutResult result, Uri articleUrl, Uri? listUrl, bool isProduct, long id)
+    {
+        if (DetailKey(articleUrl) is not { } key) return;
+        var option = isProduct ? "product" : "article";
+        var listRoute = listUrl == null ? null : FindMenuRoute(result, listUrl);
+        var orgName = result.OrgName?.Trim('/');
+        var root = string.IsNullOrEmpty(orgName) ? "" : "/" + orgName;
+        result.DetailRoutes[key] = listRoute != null && !listRoute.EndsWith('/')
+            ? $"{listRoute}/{option}/{id}"
+            : isProduct ? $"{root}/search/product/{id}" : $"{root}/article/{id}";
+    }
+
+    private static string? DetailKey(Uri url)
+    {
+        if (SiteArticleDetector.ArticleKey(url) is not { } key) return null;
+        var host = url.IdnHost.ToLowerInvariant();
+        return (host.StartsWith("www.", StringComparison.Ordinal) ? host[4..] : host) + "|" + key;
+    }
+
+    // 先完全比對；對不到時再去掉分頁參數比對（列表第 2 頁也是同一個選單）。
     internal static string? FindMenuRoute(SiteLayoutResult result, Uri target)
     {
         if (target.Scheme is not ("http" or "https")) return null;
-        var key = SiteLayoutScanner.PageKey(target);
-        var menu = result.ImportedMenus.FirstOrDefault(x => x.SourceUrl != null
-            && SiteLayoutScanner.PageKey(new Uri(x.SourceUrl)) == key);
+        var menu = FindMenu(result, LinkKey(target, dropPage: false), dropPage: false)
+            ?? FindMenu(result, LinkKey(target, dropPage: true), dropPage: true);
         if (menu == null) return null;
         // 前台路由是 /{OrgName}/{RouterName}，少了 OrgName 會被當成站台名稱而 404（系統內既有頁面連結也都帶 OrgName）。
         var orgName = result.OrgName?.Trim('/');
         return string.IsNullOrEmpty(orgName) ? "/" + menu.RouterName : $"/{orgName}/{menu.RouterName}";
+    }
+
+    private static ImportedSiteMenu? FindMenu(SiteLayoutResult result, string key, bool dropPage) =>
+        result.ImportedMenus.FirstOrDefault(menu => menu.SourceUrl != null
+            && LinkKey(new Uri(menu.SourceUrl), dropPage) == key);
+
+    // 連結比對用的網址識別：同一頁在舊站常有不同寫法，都要對到同一個選單（使用者 2026-11-18 要求連到已匯入頁面的連結一律改成新站）。
+    // 不分 http／https、有沒有 www、路徑大小寫（舊站是 IIS）、參數名稱大小寫與順序；結尾的 index／default 預設檔名視同目錄
+    // （/tw/ 與 /tw/index.asp 是同一頁）；追蹤參數由 SiteLayoutScanner.Normalize 拿掉。
+    private static string LinkKey(Uri uri, bool dropPage)
+    {
+        var normalized = SiteLayoutScanner.Normalize(uri);
+        var host = normalized.IdnHost.ToLowerInvariant();
+        if (host.StartsWith("www.", StringComparison.Ordinal)) host = host[4..];
+        var path = DefaultDocument.Replace(Uri.UnescapeDataString(normalized.AbsolutePath).ToLowerInvariant(), "/");
+        var query = normalized.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Select(item =>
+            {
+                var parts = item.Split('=', 2);
+                var name = Uri.UnescapeDataString(parts[0]).ToLowerInvariant();
+                return (Name: name, Item: parts.Length == 2 ? name + "=" + parts[1] : name);
+            })
+            .Where(item => !dropPage || item.Name != PageParameter)
+            .OrderBy(item => item.Item, StringComparer.Ordinal)
+            .Select(item => item.Item);
+        return host + path + "?" + string.Join("&", query);
     }
 
     internal static string ImageSource(HtmlNode image)

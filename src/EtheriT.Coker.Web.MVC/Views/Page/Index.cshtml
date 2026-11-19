@@ -26,15 +26,17 @@
 <div id="TopLine" class="py-2 px-4">
     <div class="d-flex site-crawl-toolbar">
         <div class="title fw-bold fs-4">自訂頁面</div>
-        <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasSite" role="button" aria-controls="offcanvasSite">
-            網站地圖
-        </a>
-        @if (canCrawl)
-        {
-            <button id="SiteCrawlActions" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#SiteCrawlModal">
-                網站爬蟲匯入
-            </button>
-        }
+        <div class="site-crawl-toolbar__actions">
+            @if (canCrawl)
+            {
+                <button id="SiteCrawlActions" type="button" class="btn btn-outline-primary" data-bs-toggle="offcanvas" data-bs-target="#SiteCrawlOffcanvas" aria-controls="SiteCrawlOffcanvas">
+                    網站爬蟲匯入
+                </button>
+            }
+            <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasSite" role="button" aria-controls="offcanvasSite">
+                網站地圖
+            </a>
+        </div>
     </div>
 </div>
 <div id="gjs" class="d-none"></div>
@@ -62,5 +64,5 @@
 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "FrontRolesModal" })
 @if (canCrawl)
 {
-    @await Component.InvokeAsync(nameof(Modal), new { dispaly = "SiteCrawlModal" })
+    @await Component.InvokeAsync(nameof(Modal), new { dispaly = "SiteCrawlOffcanvas" })
 }

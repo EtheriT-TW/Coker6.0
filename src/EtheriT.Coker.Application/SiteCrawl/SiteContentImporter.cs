@@ -72,6 +72,7 @@ public sealed class SiteContentImporter(SiteCrawlHtml html, SiteGalleryBuilder g
         var ownFooter = layout.FooterPage != null && !SiteLayoutScanner.IsSameSection(page.Footer, page.Url,
             layout.FooterPage.Footer, layout.FooterPage.Url);
 
+        result.ContentSource = SiteLayoutResult.SourceName(menu.Title, page.Url, "頁面");
         var built = page.Article != null && SiteImportTemplates.HasGallery(page.Content!)
             ? await gallery.BuildAsync(PrepareContent(page.Content!), page.Url, websiteId, isArticle: false,
                 page.SubTitle ?? MenuPageTitle(page, menu), result, checkpoint, token)

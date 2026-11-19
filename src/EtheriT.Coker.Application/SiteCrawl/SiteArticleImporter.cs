@@ -52,9 +52,11 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
             .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var websiteId = await user.GetWebsiteId();
         // 分類頁（列的是子分類，子分類都建成選單）沒有文章或商品可放，改用選單目錄列出子分類。
+        // 分類介紹裡可能連到文章／商品，所以等文章、商品都建好（記下新站網址）後才寫，見下方兩個出口。
         var categoryPages = layout.Pages.Where(SiteCategoryLists.IsCategoryPage).ToList();
-        await BindCategoryPagesAsync(categoryPages, menus, websiteId, handledMenus, result, checkpoint, token);
-        var lists = layout.Pages.Where(page => page.List != null && !SiteCategoryLists.IsCategoryPage(page))
+        // 使用者取消勾選的頁面上的列表不匯入（同一列表的分頁用 ListKey 對回）。
+        var lists = layout.Pages.Where(page => page.List != null && !SiteCategoryLists.IsCategoryPage(page)
+                && !result.ExcludedPageKeys.Contains(SiteListDetector.ListKey(page.Url)))
             .Select(page =>
             {
                 var menu = menus.GetValueOrDefault(SiteLayoutScanner.PageKey(page.Url));
@@ -63,6 +65,7 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
             }).ToList();
         if (lists.Count == 0)
         {
+            await BindCategoryPagesAsync(categoryPages, menus, websiteId, handledMenus, result, checkpoint, token);
             await cacheState.TouchByWebsiteIdAsync(websiteId, WebsiteCacheKeys.DirectoryContent);
             return handledMenus;
         }
@@ -72,28 +75,44 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
             .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var host = layout.Pages[0].Url.IdnHost;
         // 商品先匯入：商品列表裡的詳細頁不再當文章。
+        // 先把商品、文章都建好（記下新站網址），再寫內文：商品內文連到文章、文章連到商品時才改寫得到。
         var productKeys = new HashSet<string>(StringComparer.Ordinal);
         var productLists = lists.Where(list => list.IsProduct).ToList();
+        PreparedLists? products = null;
+        Dictionary<string, SiteLayoutScanner.LayoutPage> productPages = [];
+        Dictionary<string, long> productIds = [];
         if (productLists.Count > 0)
         {
-            var prepared = await PrepareAsync(ProductKind, productLists, menus, [], websiteId, result, token);
-            productKeys.UnionWith(prepared.Members.Keys);
-            var pages = detailPages.Where(x => productKeys.Contains(x.Key))
+            products = await PrepareAsync(ProductKind, productLists, menus, [], websiteId, result, token);
+            productKeys.UnionWith(products.Members.Keys);
+            productPages = detailPages.Where(x => productKeys.Contains(x.Key))
                 .ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
-            await FetchListedAsync(ProductKind, pages, prepared.Members, host, result, checkpoint, token);
-            await ImportProductsAsync(pages, prepared.Members, websiteId, result, checkpoint, token);
-            await BindListPagesAsync(ProductKind, productLists, prepared.Directories, websiteId, handledMenus, result, checkpoint, token);
+            await FetchListedAsync(ProductKind, productPages, products.Members, host, result, checkpoint, token);
+            productIds = await CreateProductsAsync(productPages, products.Members, websiteId, result, checkpoint, token);
         }
         var articleLists = lists.Where(list => !list.IsProduct).ToList();
+        PreparedLists? articles = null;
+        Dictionary<string, SiteLayoutScanner.LayoutPage> articlePages = [];
+        Dictionary<string, long> articleIds = [];
         if (articleLists.Count > 0)
         {
-            var prepared = await PrepareAsync(ArticleKind, articleLists, menus, productKeys, websiteId, result, token);
-            var pages = detailPages.Where(x => !productKeys.Contains(x.Key))
+            articles = await PrepareAsync(ArticleKind, articleLists, menus, productKeys, websiteId, result, token);
+            articlePages = detailPages.Where(x => !productKeys.Contains(x.Key))
                 .ToDictionary(x => x.Key, x => x.Value, StringComparer.Ordinal);
-            await FetchListedAsync(ArticleKind, pages, prepared.Members, host, result, checkpoint, token);
-            await ImportArticlesAsync(pages, prepared.Members, websiteId, result, checkpoint, token);
-            await BindListPagesAsync(ArticleKind, articleLists, prepared.Directories, websiteId, handledMenus, result, checkpoint, token);
+            await FetchListedAsync(ArticleKind, articlePages, articles.Members, host, result, checkpoint, token);
+            articleIds = await CreateArticlesAsync(articlePages, articles.Members, websiteId, result, checkpoint, token);
         }
+        if (products != null)
+        {
+            await FillProductsAsync(productPages, productIds, products.Members, websiteId, result, checkpoint, token);
+            await BindListPagesAsync(ProductKind, productLists, products.Directories, websiteId, handledMenus, result, checkpoint, token);
+        }
+        if (articles != null)
+        {
+            await FillArticlesAsync(articlePages, articleIds, articles.Members, result, websiteId, checkpoint, token);
+            await BindListPagesAsync(ArticleKind, articleLists, articles.Directories, websiteId, handledMenus, result, checkpoint, token);
+        }
+        await BindCategoryPagesAsync(categoryPages, menus, websiteId, handledMenus, result, checkpoint, token);
         await cacheState.TouchByWebsiteIdAsync(websiteId, WebsiteCacheKeys.DirectoryContent);
         return handledMenus;
     }
@@ -231,7 +250,9 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
         }
     }
 
-    private async Task ImportArticlesAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages,
+    // 第一輪只建文章（取得新站 Id），並記下新站網址：第二輪寫內文時，連到其他文章／商品的連結才改寫得到
+    // （之前邊建邊寫，連到還沒建的文章會留在舊站）。
+    private async Task<Dictionary<string, long>> CreateArticlesAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages,
         Dictionary<string, Membership> membership, long websiteId, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
@@ -240,12 +261,8 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
                 .Select(x => new { x.Id, x.Title }).ToListAsync(token))
             .GroupBy(x => x.Title!, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(x => x.Id).ToList(), StringComparer.Ordinal);
-        var tagIds = membership.Values.SelectMany(x => x.TagIds).Distinct().ToList();
-        var bound = (await db.Tag_Associates.Where(x => !x.IsDeleted && x.Type == TagAssociateTypeEnum.文章 && tagIds.Contains(x.FK_TId))
-                .Select(x => new { x.FK_AId, x.FK_TId }).ToListAsync(token))
-            .Select(x => (x.FK_AId, x.FK_TId)).ToHashSet();
         var claimed = new HashSet<long>();
-
+        var ids = new Dictionary<string, long>(StringComparer.Ordinal);
         foreach (var (key, page) in pages)
         {
             await checkpoint();
@@ -253,6 +270,34 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
             {
                 var member = membership.GetValueOrDefault(key);
                 var id = await SaveArticleAsync(page.Article!, member, byTitle, claimed, websiteId, result, token);
+                ids[key] = id;
+                SiteCrawlHtml.RegisterDetail(result, page.Url, member?.ListUrl, isProduct: false, id);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException && !token.IsCancellationRequested)
+            {
+                logger.LogError(ex, "Site crawl article save failed for {Url}", page.Url);
+                result.AddError($"文章「{page.Article!.Title}」匯入失敗，請查看 MVC 日誌。");
+            }
+        }
+        return ids;
+    }
+
+    private async Task FillArticlesAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages, Dictionary<string, long> ids,
+        Dictionary<string, Membership> membership, SiteLayoutResult result, long websiteId,
+        Func<Task> checkpoint, CancellationToken token)
+    {
+        var tagIds = membership.Values.SelectMany(x => x.TagIds).Distinct().ToList();
+        var bound = (await db.Tag_Associates.Where(x => !x.IsDeleted && x.Type == TagAssociateTypeEnum.文章 && tagIds.Contains(x.FK_TId))
+                .Select(x => new { x.FK_AId, x.FK_TId }).ToListAsync(token))
+            .Select(x => (x.FK_AId, x.FK_TId)).ToHashSet();
+
+        foreach (var (key, page) in pages)
+        {
+            if (!ids.TryGetValue(key, out var id)) continue;
+            await checkpoint();
+            try
+            {
+                var member = membership.GetValueOrDefault(key);
                 foreach (var tagId in member?.TagIds ?? [])
                     if (bound.Add((id, tagId)))
                     {
@@ -318,6 +363,7 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
         SiteLayoutResult result, Func<Task> checkpoint, CancellationToken token)
     {
         var content = SiteContentImporter.PrepareContent(page.Content!);
+        result.ContentSource = SiteLayoutResult.SourceName(page.Article?.Title ?? page.Title, page.Url, "文章");
         var built = await gallery.BuildAsync(content, page.Url, websiteId, isArticle: true, page.SubTitle, result, checkpoint, token);
         if (built == null) return;
 
@@ -411,6 +457,7 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
         SiteLayoutResult result, Func<Task> checkpoint, CancellationToken token)
     {
         if (page.Content == null || SiteImportTemplates.ExtractListIntro(page.Content) is not { } intro) return ("", "");
+        result.ContentSource = SiteLayoutResult.SourceName(page.SubTitle ?? page.Title, page.Url, "列表頁");
         var wrapper = HtmlNode.CreateNode("<div></div>");
         foreach (var child in intro.ChildNodes.ToArray()) wrapper.AppendChild(child.CloneNode(true));
         var css = await html.CleanAsync(wrapper, page.Url, result, allowIframes: true, checkpoint, token);

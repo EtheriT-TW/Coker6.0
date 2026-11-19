@@ -44,6 +44,13 @@ internal sealed class SiteLayoutResult
     public int ProductsUpdated { get; set; }
     // 標成商品的列表（SiteListDetector.ListKey）。
     internal HashSet<string> ProductListKeys { get; } = new(StringComparer.Ordinal);
+    // 確認畫面的主選單選擇（SiteMenuSelection.Key → 選擇）；空的＝全部匯入（舊任務或沒有選擇資料）。
+    internal Dictionary<string, SiteMenuChoice> MenuChoices { get; } = new(StringComparer.Ordinal);
+    // 使用者取消勾選的頁面（PageKey）：連同左欄子頁、文章列表、隱藏頁都不匯入，內文連到它時指回舊站。
+    internal HashSet<string> ExcludedPageKeys { get; } = new(StringComparer.Ordinal);
+    // 已匯入的主選單 Id → 確認畫面的 Key，匯入左欄子頁時用來找它們的勾選與路徑名稱。
+    internal Dictionary<long, string> MenuSelectionKeys { get; } = [];
+    public int MenusExcluded { get; set; }
     public List<string> Errors { get; } = [];
     public int ErrorCount { get; private set; }
     internal bool ScanComplete { get; set; }
@@ -51,6 +58,15 @@ internal sealed class SiteLayoutResult
     // 已改放目錄元件的選單（例 分類首頁改選單目錄），列表綁定與內容匯入都不再覆蓋。
     internal HashSet<long> HandledMenuIds { get; } = [];
     internal string? FirstPageDiagnostic { get; set; }
+    // 目前正在清理的內容是哪裡（例「產品A」商品、「最新消息」頁面），內文附件匯入失敗時用來說明，不寫舊站路徑。
+    internal string? ContentSource { get; set; }
+    // 已匯入的文章／商品：舊站識別（主機|id 或 主機|sub:sub_id）→ 新站網址，內文、頁尾連到詳細頁時改寫用。
+    internal Dictionary<string, string> DetailRoutes { get; } = new(StringComparer.Ordinal);
+    // 讀主選單時入口頁跳轉經過的網址（例 / → default1.asp），都算舊站首頁。
+    internal List<Uri> EntryRedirects { get; } = [];
+
+    internal static string SourceName(string? title, Uri url, string kind) =>
+        $"「{(string.IsNullOrWhiteSpace(title) ? url.PathAndQuery : title.Trim())}」{kind}";
 
     public void AddError(string message)
     {
@@ -74,16 +90,23 @@ public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml 
         var footer = SiteLayoutScanner.SelectLayout(pages, page => page.Footer);
         result.BannerVotes = banner.Votes;
         result.FooterVotes = footer.Votes;
-        if (banner.Page is { } bannerPage)
+        await ImportPartAsync("網站Logo", () => ImportLogoAsync(pages, result, checkpoint, token), result, token);
+        return new SiteLayoutSelection(pages, banner.Page, footer.Page);
+    }
+
+    // 版頭輪播與頁尾的連結要改寫成新站網址，所以等左欄子頁、隱藏選單（子分類）、文章、商品都建好後才匯入；
+    // 之前在掃描完就匯入，頁尾連到子分類的連結全都留在舊站（2026-11-18 superiorlink 實測）。
+    internal async Task ImportBannerAndFooterAsync(SiteLayoutSelection layout, SiteLayoutResult result,
+        Func<Task> checkpoint, CancellationToken token)
+    {
+        if (layout.BannerPage is { } bannerPage)
             await ImportPartAsync("版頭", () => ImportBannerAsync(bannerPage, result, checkpoint, token), result, token);
         else
             result.AddError("沒有辨識到可匯入的版頭。");
-        if (footer.Page is { } footerPage)
+        if (layout.FooterPage is { } footerPage)
             await ImportPartAsync("頁尾", () => ImportFooterAsync(footerPage, result, checkpoint, token), result, token);
         else
             result.AddError("沒有辨識到可匯入的頁尾。");
-        await ImportPartAsync("網站Logo", () => ImportLogoAsync(pages, result, checkpoint, token), result, token);
-        return new SiteLayoutSelection(pages, banner.Page, footer.Page);
     }
 
     // 各頁版頭的 Logo 取最多頁用的那張（同票取先掃到的），設成網站資料的網站Logo（使用者 2026-11-18 要求）。
@@ -177,13 +200,14 @@ public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml 
             || target.Scheme is not ("http" or "https"))
             return null;
 
-        return SiteCrawlHtml.FindMenuRoute(result, target) ?? target.AbsoluteUri;
+        return SiteCrawlHtml.FindRoute(result, target) ?? target.AbsoluteUri;
     }
 
     private async Task ImportFooterAsync(SiteLayoutScanner.LayoutPage page, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
         var node = page.Footer!.CloneNode(true);
+        result.ContentSource = "網站頁尾";
         var css = await html.CleanAsync(node, page.Url, result, allowIframes: false, checkpoint, token);
         await checkpoint();
         var current = await templates.GetDefaultFooterTemplatesAsync();

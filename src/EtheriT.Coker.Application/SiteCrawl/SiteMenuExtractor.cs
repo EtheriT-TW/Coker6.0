@@ -4,8 +4,11 @@ using HtmlAgilityPack;
 namespace EtheriT.Coker.Application.SiteCrawl;
 
 // IsCategory：舊站分類頁子分類列表裡的一項（主選單沒有），建成「不顯示於主選單」但選單目錄列得出來的選單。
+// RouterName：使用者在確認畫面填的路徑名稱（null＝沿用既有或自動產生）。
+// SelectionKey：確認畫面上的 Key（SiteMenuSelection.Apply 填），匯入左欄子頁時用來找它們的選擇。
+// IsSection：偵測時接到主選單項目底下的左欄子頁（只給確認畫面用，匯入時左欄子頁另外由 ImportSectionMenusAsync 建）。
 internal sealed record SiteMenuLink(string Title, Uri? Url, bool OpensNewTab, IReadOnlyList<SiteMenuLink> Children,
-    bool IsCategory = false);
+    bool IsCategory = false, string? RouterName = null, string? SelectionKey = null, bool IsSection = false);
 
 internal static class SiteMenuExtractor
 {

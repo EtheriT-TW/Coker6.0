@@ -28,7 +28,9 @@ public sealed partial class SiteArticleImporter
     private static readonly ImportKind ProductKind = new("商品", DirectoryTypeEnum.商品, ProductPurposeCode, "商品匯入目錄",
         "//*[@data-import-role='product-directory']", CatalogFrameMarker);
 
-    private async Task ImportProductsAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages,
+    // 第一輪只建商品（取得新站 Id）並記下新站網址，第二輪才寫內文，連到其他商品／文章的連結才改寫得到。
+    // 簡述要看內文才知道，第一輪先不動（新商品是空白、既有商品保留原本的），第二輪再寫。
+    private async Task<Dictionary<string, long>> CreateProductsAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages,
         Dictionary<string, Membership> membership, long websiteId, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
@@ -37,14 +39,38 @@ public sealed partial class SiteArticleImporter
                 .Select(x => new { x.Id, x.Title }).ToListAsync(token))
             .GroupBy(x => x.Title, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.Select(x => x.Id).ToList(), StringComparer.Ordinal);
+        var claimed = new HashSet<long>();
+        var ids = new Dictionary<string, long>(StringComparer.Ordinal);
+        foreach (var (key, page) in pages)
+        {
+            await checkpoint();
+            try
+            {
+                var id = await SaveProductAsync(page.Article!, null, byTitle, claimed, websiteId, result, token);
+                ids[key] = id;
+                SiteCrawlHtml.RegisterDetail(result, page.Url, membership.GetValueOrDefault(key)?.ListUrl, isProduct: true, id);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException && !token.IsCancellationRequested)
+            {
+                logger.LogError(ex, "Site crawl product save failed for {Url}", page.Url);
+                result.AddError($"商品「{page.Article!.Title}」匯入失敗，請查看 MVC 日誌。");
+            }
+        }
+        return ids;
+    }
+
+    private async Task FillProductsAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages, Dictionary<string, long> ids,
+        Dictionary<string, Membership> membership, long websiteId, SiteLayoutResult result,
+        Func<Task> checkpoint, CancellationToken token)
+    {
         var tagIds = membership.Values.SelectMany(x => x.TagIds).Distinct().ToList();
         var bound = (await db.Tag_Associates.Where(x => !x.IsDeleted && x.Type == TagAssociateTypeEnum.商品 && tagIds.Contains(x.FK_TId))
                 .Select(x => new { x.FK_AId, x.FK_TId }).ToListAsync(token))
             .Select(x => (x.FK_AId, x.FK_TId)).ToHashSet();
-        var claimed = new HashSet<long>();
 
         foreach (var (key, page) in pages)
         {
+            if (!ids.TryGetValue(key, out var id)) continue;
             await checkpoint();
             try
             {
@@ -52,7 +78,7 @@ public sealed partial class SiteArticleImporter
                 var (content, galleryImages, sideText) = await BuildProductContentAsync(page, websiteId, result, checkpoint, token);
                 var (introduction, keepContent) = sideText != null ? (sideText, true)
                     : ChooseIntroduction(member?.Description, content?.Html);
-                var id = await SaveProductAsync(page.Article!, introduction, byTitle, claimed, websiteId, result, token);
+                await SaveIntroductionAsync(id, introduction, token);
                 foreach (var tagId in member?.TagIds ?? [])
                     if (bound.Add((id, tagId)))
                     {
@@ -99,6 +125,16 @@ public sealed partial class SiteArticleImporter
         "//img|//iframe|//video|//table|//form[.//textarea or .//select or .//input[not(@type='hidden')]]";
 
     private static string Compact(string value) => string.Concat(value.Where(c => !char.IsWhiteSpace(c)));
+
+    // introduction 為 null＝不動（和 SaveProductAsync 對既有商品的處理相同）。
+    private async Task SaveIntroductionAsync(long id, string? introduction, CancellationToken token)
+    {
+        if (introduction == null) return;
+        var product = await db.Prods.FirstAsync(x => x.Id == id, token);
+        if (product.Introduction == introduction) return;
+        product.Introduction = introduction;
+        await user.SaveChanges(product);
+    }
 
     private async Task<long> SaveProductAsync(SiteArticleInfo info, string? introduction,
         Dictionary<string, List<long>> byTitle, HashSet<long> claimed, long websiteId,
@@ -164,6 +200,7 @@ public sealed partial class SiteArticleImporter
         SiteLayoutScanner.LayoutPage page, long websiteId, SiteLayoutResult result, Func<Task> checkpoint, CancellationToken token)
     {
         var content = SiteContentImporter.PrepareContent(page.Content!);
+        result.ContentSource = SiteLayoutResult.SourceName(page.Article?.Title ?? page.Title, page.Url, "商品");
         var hasGallery = SiteImportTemplates.HasGallery(content);
         var images = new List<Uri>();
         foreach (var image in SiteImportTemplates.TakeGalleryImages(content))

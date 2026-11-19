@@ -10,20 +10,43 @@
     });
 
     function initializeSiteCrawl() {
-        const modal = document.getElementById("SiteCrawlModal");
-        if (!modal) return;
+        const panel = document.getElementById("SiteCrawlOffcanvas");
+        if (!panel) return;
 
         const field = name => document.getElementById("siteCrawl" + name);
-        const websiteId = modal.dataset.websiteId;
+        const websiteId = panel.dataset.websiteId;
         const activeStatuses = ["Queued", "Running", "CancelRequested"];
+        const routerPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,49}$/;
+        const keySeparator = "\u001f";
+        const hints = {
+            1: "輸入舊站首頁網址後按「偵測舊站」。偵測只讀取舊站，不會寫入新站。",
+            2: "正在讀取舊站的主選單與列表，完成後會列出結構讓你勾選。",
+            3: "勾選要匯入的頁面。路徑名稱已預先填好匯入後會用的名稱，需要時再改，然後按「下一步」。",
+            4: "確認每個列表要匯入成文章還是商品，再按「開始匯入」。匯入會建立主導覽選單、把輪播附加到預設版頭、以舊站頁尾更新預設頁尾，儲存後立即影響前台。",
+            5: "匯入進行中可以關閉面板，稍後再打開查看進度。",
+            done: "匯入完成，可以打開「網站地圖」檢查選單。要再匯入請按「重新偵測」。",
+            detectFailed: "偵測失敗，請確認網址後重新偵測。",
+            importFailed: "匯入沒有完成，請看上方錯誤，重新偵測後再匯入。"
+        };
+        const logoStatusText = {
+            imported: " 網站Logo已匯入。",
+            unchanged: " 網站Logo與舊站相同。",
+            kept: " 網站Logo已有設定，未覆蓋。"
+        };
         let timer;
         let busy = false;
         let current;
+        let currentMode;
         let reloadedTaskId;
         let reloadingTaskId;
-        // 匯入前偵測的結果：{ sourceUrl, lists }；choices 是使用者在確認畫面的選擇（key → 是否當商品）。
+        let nodeSeq = 0;
+        // 偵測結果：{ taskId, sourceUrl, menus, lists }；confirmPage：確認畫面目前在第 3 步（頁面與路徑名稱）或第 4 步（列表類型）。
         let detected;
+        let confirmPage = 3;
+        // choices：列表 key → 是否當商品；menuBoxes：選單 key → 勾選框；listMenus：列表 key → 所屬主選單 key。
         const choices = new Map();
+        const menuBoxes = new Map();
+        const listMenus = new Map();
 
         function normalizeUrl(value) {
             try {
@@ -39,46 +62,121 @@
             return !!detected && normalizeUrl(field("Url").value) === normalizeUrl(detected.sourceUrl);
         }
 
+        function isRunning() {
+            return activeStatuses.includes(current?.status);
+        }
+
+        // 匯入任務一律是第 5 步；偵測中第 2 步；有對得上網址的偵測結果是第 3 或 4 步；其餘第 1 步。
+        function stepState() {
+            if (current && currentMode === "import")
+                return { step: 5, state: isRunning() ? "active" : current.status === "Succeeded" ? "done" : "error" };
+            if (isRunning()) return { step: 2, state: "active" };
+            if (detectionMatchesInput()) return { step: confirmPage, state: "active" };
+            if (current?.status === "Failed") return { step: 2, state: "error" };
+            return { step: 1, state: "active" };
+        }
+
+        function hintFor({ step, state }) {
+            if (state === "done") return hints.done;
+            if (state === "error") return step === 2 ? hints.detectFailed : hints.importFailed;
+            return hints[step];
+        }
+
+        function renderSteps(steps) {
+            field("Steps").querySelectorAll("li[data-step]").forEach(item => {
+                const number = Number(item.dataset.step);
+                const isCurrent = number === steps.step;
+                item.classList.toggle("is-done", number < steps.step || (isCurrent && steps.state === "done"));
+                item.classList.toggle("is-active", isCurrent && steps.state === "active");
+                item.classList.toggle("is-error", isCurrent && steps.state === "error");
+                if (isCurrent) item.setAttribute("aria-current", "step");
+                else item.removeAttribute("aria-current");
+            });
+            field("Hint").textContent = hintFor(steps);
+        }
+
+        function includedCount() {
+            return field("Menus").querySelectorAll("[data-role=include]:checked").length;
+        }
+
         function updateButtons() {
-            const active = busy || activeStatuses.includes(current?.status);
+            const running = isRunning();
             const matches = detectionMatchesInput();
-            field("Detect").disabled = active;
-            field("Start").disabled = active || !matches;
-            field("ListsStale").classList.toggle("d-none", !detected || matches);
+            const steps = stepState();
+            field("Url").readOnly = running;
+            field("Detect").disabled = busy || running;
+            field("Detect").classList.toggle("d-none", running);
+            field("Detect").textContent = detected || steps.step === 5 ? "重新偵測" : "偵測舊站";
+            field("Detect").classList.toggle("btn-primary", steps.step < 3);
+            field("Detect").classList.toggle("btn-outline-primary", steps.step >= 3);
+            field("Back").classList.toggle("d-none", running || !matches || confirmPage !== 4);
+            field("Back").disabled = busy;
+            field("Next").classList.toggle("d-none", running || !matches || confirmPage !== 3);
+            field("Next").disabled = busy || includedCount() === 0;
+            field("Start").classList.toggle("d-none", running || !matches || confirmPage !== 4);
+            field("Start").disabled = busy;
+            field("Stale").classList.toggle("d-none", !detected || matches);
+            renderSteps(steps);
+        }
+
+        function showConfirmPage(page) {
+            confirmPage = page;
+            field("MenusPanel").classList.toggle("d-none", page !== 3);
+            field("ListsPanel").classList.toggle("d-none", page !== 4);
+            if (page === 4) refreshListVisibility();
+            updateButtons();
+        }
+
+        function updateMenusCount() {
+            const total = field("Menus").querySelectorAll("[data-role=include]").length;
+            field("MenusCount").textContent = detected ? `選單 ${total} 項、匯入 ${includedCount()} 項` : "";
+        }
+
+        function isListIncluded(key) {
+            const menuKey = listMenus.get(key);
+            return !menuKey || menuBoxes.get(menuKey)?.checked !== false;
         }
 
         function updateListsCount() {
-            const products = detected?.lists.filter(item => choices.get(item.key)).length ?? 0;
-            field("ListsCount").textContent = detected
-                ? `共 ${detected.lists.length} 個列表，標成商品 ${products} 個` : "";
+            const lists = detected?.lists.filter(item => isListIncluded(item.key)) ?? [];
+            const products = lists.filter(item => choices.get(item.key)).length;
+            field("ListsCount").textContent = detected ? `列表 ${lists.length} 個、商品 ${products} 個` : "";
         }
 
-        function createListRow(item) {
-            const row = document.createElement("tr");
-            const name = document.createElement("td");
-            const title = document.createElement("div");
-            title.className = "fw-semibold";
-            title.textContent = item.title;
-            const meta = document.createElement("div");
-            meta.className = "small text-body-secondary";
-            meta.textContent = item.path ? item.path + "　" : "";
+        // 上一步取消勾選的頁面上的列表不會匯入，進到列表類型時不列出。
+        function refreshListVisibility() {
+            let visible = 0;
+            field("Lists").querySelectorAll("li[data-list-key]").forEach(row => {
+                const included = isListIncluded(row.dataset.listKey);
+                row.classList.toggle("d-none", !included);
+                if (included) visible++;
+            });
+            field("ListsEmpty").classList.toggle("d-none", visible > 0);
+            updateListsCount();
+        }
+
+        function createSourceLink(url) {
             const link = document.createElement("a");
-            link.href = item.url;
+            link.href = url;
             link.target = "_blank";
             link.rel = "noopener noreferrer";
             link.textContent = "舊站頁面";
-            meta.append(link);
-            name.append(title, meta);
+            return link;
+        }
 
-            const kind = document.createElement("td");
-            kind.className = "d-none d-sm-table-cell text-nowrap";
-            kind.textContent = item.kindName;
+        function createNote(text) {
+            const note = document.createElement("span");
+            note.className = "site-crawl-node__note";
+            note.textContent = text;
+            return note;
+        }
 
-            const choiceCell = document.createElement("td");
+        function createListSelect(item) {
             const select = document.createElement("select");
             select.className = "form-select form-select-sm";
             select.setAttribute("aria-label", `「${item.title}」匯入成`);
             select.dataset.listKey = item.key;
+            select.dataset.locked = String(item.locked);
             for (const [value, text] of [["article", "文章"], ["product", "商品"]]) {
                 const option = document.createElement("option");
                 option.value = value;
@@ -91,27 +189,214 @@
                 choices.set(item.key, select.value === "product");
                 updateListsCount();
             });
-            choiceCell.append(select);
-
-            const reason = document.createElement("td");
-            reason.className = "d-none d-md-table-cell small";
-            reason.textContent = item.reason;
-            row.append(name, kind, choiceCell, reason);
-            return row;
+            return select;
         }
 
-        // 只有新的偵測結果才重設選擇；輪詢同一個任務時保留使用者改過的選項。
+        // 輸入框預先填好「不改的話匯入後的路徑名稱」：既有選單是原本的，新選單是偵測時推算的 import-…；
+        // 清空時退回這個預設值（placeholder 也顯示它）。
+        function createRouterInput(menu) {
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "form-control form-control-sm";
+            input.maxLength = 50;
+            input.value = menu.routerName ?? "";
+            input.placeholder = menu.routerName ?? "";
+            input.autocomplete = "off";
+            input.spellcheck = false;
+            input.dataset.role = "router";
+            input.dataset.suggested = menu.routerName ?? "";
+            input.dataset.existing = String(menu.existingRoute);
+            input.setAttribute("aria-label", `「${menu.title}」的路徑名稱`);
+            input.addEventListener("input", () => {
+                validateRouters();
+                updateButtons();
+            });
+            return input;
+        }
+
+        function createRouterCell(menu) {
+            const cell = document.createElement("div");
+            cell.className = "site-crawl-node__router";
+            if (menu.isHome) cell.append(createNote("Home（首頁固定）"));
+            else if (menu.external) cell.append(createNote("外站連結，不需要路徑名稱"));
+            else if (menu.duplicate) cell.append(createNote("和上方選單同一頁，不另建選單"));
+            else if (menu.linkToParent) cell.append(createNote("就是上層那一頁，連到上層選單"));
+            else cell.append(createRouterInput(menu));
+            return cell;
+        }
+
+        function describeMenu(menu) {
+            const notes = [];
+            if (menu.isHome) notes.push("首頁，一定匯入");
+            if (!menu.url) notes.push("下拉選單上層（沒有頁面）");
+            if (menu.section) notes.push("左欄子頁");
+            if (menu.category) notes.push("分類頁的子分類（不顯示在主選單，選單目錄會列出）");
+            if (menu.existingRoute) notes.push("網站已有同名選單，會更新它");
+            return notes.join("・");
+        }
+
+        function createMenuNode(menu) {
+            const item = document.createElement("li");
+            item.dataset.menuKey = menu.key;
+            const row = document.createElement("div");
+            row.className = "site-crawl-node";
+
+            const main = document.createElement("div");
+            main.className = "site-crawl-node__main form-check mb-0";
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.className = "form-check-input";
+            checkbox.id = "siteCrawlMenu" + (++nodeSeq);
+            checkbox.checked = true;
+            checkbox.disabled = menu.isHome;
+            checkbox.dataset.role = "include";
+            checkbox.dataset.fixed = String(menu.isHome);
+            menuBoxes.set(menu.key, checkbox);
+            const label = document.createElement("label");
+            label.className = "form-check-label site-crawl-node__title";
+            label.htmlFor = checkbox.id;
+            label.textContent = menu.title;
+            const meta = document.createElement("div");
+            meta.className = "site-crawl-node__meta";
+            const description = describeMenu(menu);
+            if (description) meta.append(description + "　");
+            if (menu.url) meta.append(createSourceLink(menu.url));
+            main.append(checkbox, label, meta);
+
+            row.append(main, createRouterCell(menu));
+            item.append(row);
+            checkbox.addEventListener("change", () => {
+                setIncluded(item, checkbox.checked);
+                validateRouters();
+                updateMenusCount();
+                updateButtons();
+            });
+            if (menu.children?.length) {
+                const children = document.createElement("ul");
+                children.append(...menu.children.map(child => createMenuNode(child)));
+                item.append(children);
+            }
+            return item;
+        }
+
+        function createListRow(item) {
+            const entry = document.createElement("li");
+            entry.dataset.listKey = item.key;
+            const row = document.createElement("div");
+            row.className = "site-crawl-node site-crawl-node--list";
+            const main = document.createElement("div");
+            main.className = "site-crawl-node__main";
+            const title = document.createElement("div");
+            title.className = "site-crawl-node__title fw-semibold";
+            title.textContent = item.title;
+            const meta = document.createElement("div");
+            meta.className = "site-crawl-node__meta";
+            const menuKey = listMenus.get(item.key);
+            const path = menuKey ? "主選單：" + menuKey.split(keySeparator).join(" > ") : item.path;
+            if (path) meta.append(path + "　");
+            meta.append(createSourceLink(item.url));
+            const reason = document.createElement("div");
+            reason.className = "site-crawl-node__meta";
+            reason.textContent = `${item.kindName}列表・${item.reason}`;
+            main.append(title, meta, reason);
+            const type = document.createElement("div");
+            type.className = "site-crawl-node__type";
+            type.append(createListSelect(item));
+            row.append(main, type);
+            entry.append(row);
+            return entry;
+        }
+
+        // 取消勾選＝整支不匯入：底下子選單一起取消並鎖住；重新勾選時整支恢復。
+        function setIncluded(item, included) {
+            [item, ...item.querySelectorAll("li[data-menu-key]")].forEach((node, index) => {
+                const row = node.querySelector(":scope > .site-crawl-node");
+                const checkbox = row.querySelector("[data-role=include]");
+                checkbox.checked = included;
+                checkbox.disabled = checkbox.dataset.fixed === "true" || (index > 0 && !included);
+                row.classList.toggle("is-excluded", !included);
+                row.querySelectorAll("[data-role=router]").forEach(control => {
+                    control.disabled = !included;
+                });
+            });
+        }
+
+        // 全部選取／全部取消：逐一套用第一層（整支跟著變）；首頁一定匯入，只改它底下的子選單。
+        function setAllMenus(included) {
+            field("Menus").querySelectorAll(":scope > li[data-menu-key]").forEach(item => {
+                const checkbox = item.querySelector(":scope > .site-crawl-node [data-role=include]");
+                if (checkbox.dataset.fixed === "true")
+                    item.querySelectorAll(":scope > ul > li[data-menu-key]").forEach(child => setIncluded(child, included));
+                else
+                    setIncluded(item, included);
+            });
+            validateRouters();
+            updateMenusCount();
+            updateButtons();
+        }
+
+        // 實際會用的路徑名稱：輸入框的值，清空時用預設值（既有選單的原名或推算的 import-…）。
+        function effectiveRouter(input) {
+            return input.value.trim() || input.dataset.suggested;
+        }
+
+        // 改過的路徑名稱：英數與 - _、最多 50 字、不能叫 Home；沒改的預設值不檢查格式（既有選單的原名可能是手動取的）。
+        // 勾選的項目之間不能重複。
+        function validateRouters() {
+            const inputs = [...field("Menus").querySelectorAll("input[data-role=router]")];
+            const counts = new Map();
+            for (const input of inputs) {
+                const value = effectiveRouter(input).toLowerCase();
+                if (!input.disabled && value) counts.set(value, (counts.get(value) ?? 0) + 1);
+            }
+            let valid = true;
+            for (const input of inputs) {
+                const value = effectiveRouter(input);
+                const changed = value !== input.dataset.suggested;
+                const message = input.disabled ? ""
+                    : changed && !routerPattern.test(value) ? "只能用英文、數字、「-」「_」，最多 50 字，開頭不能是符號。"
+                    : changed && value.toLowerCase() === "home" ? "Home 是首頁專用的路徑名稱。"
+                    : counts.get(effectiveRouter(input).toLowerCase()) > 1 ? "和其他選單的路徑名稱重複。" : "";
+                input.setCustomValidity(message);
+                input.classList.toggle("is-invalid", !!message);
+                input.title = message;
+                if (message) valid = false;
+            }
+            return valid;
+        }
+
+        function collectListMenus(menus) {
+            for (const menu of menus) {
+                if (menu.listKey && !listMenus.has(menu.listKey)) listMenus.set(menu.listKey, menu.key);
+                collectListMenus(menu.children ?? []);
+            }
+        }
+
+        // 只有新的偵測結果才重建畫面；輪詢同一個任務時保留使用者改過的勾選、路徑名稱與列表類型。
         function showDetection(status, result) {
             const isNew = detected?.taskId !== status.taskId;
-            detected = { taskId: status.taskId, sourceUrl: result.sourceUrl, lists: result.lists ?? [] };
-            if (isNew) {
-                choices.clear();
-                for (const item of detected.lists) choices.set(item.key, item.product);
-                if (!field("Url").value.trim()) field("Url").value = result.sourceUrl;
-                field("Lists").replaceChildren(...detected.lists.map(createListRow));
+            detected = {
+                taskId: status.taskId, sourceUrl: result.sourceUrl,
+                menus: result.menus ?? [], lists: result.lists ?? []
+            };
+            if (!isNew) return;
+            choices.clear();
+            menuBoxes.clear();
+            listMenus.clear();
+            for (const item of detected.lists) choices.set(item.key, item.product);
+            if (!field("Url").value.trim()) field("Url").value = result.sourceUrl;
+            if (detected.menus.length) {
+                field("Menus").replaceChildren(...detected.menus.map(menu => createMenuNode(menu)));
+            } else {
+                const empty = document.createElement("li");
+                empty.className = "small text-body-secondary";
+                empty.textContent = "入口頁沒有辨識到主選單，無法匯入，請看上方錯誤。";
+                field("Menus").replaceChildren(empty);
             }
-            field("ListsPanel").classList.remove("d-none");
-            updateListsCount();
+            collectListMenus(detected.menus);
+            field("Lists").replaceChildren(...detected.lists.map(createListRow));
+            updateMenusCount();
+            showConfirmPage(3);
         }
 
         function setAllChoices(product) {
@@ -120,46 +405,33 @@
                 if (!item.locked) choices.set(item.key, product);
             }
             field("Lists").querySelectorAll("select[data-list-key]").forEach(select => {
-                if (!select.disabled) select.value = product ? "product" : "article";
+                if (select.dataset.locked !== "true") select.value = product ? "product" : "article";
             });
             updateListsCount();
         }
 
-        const logoStatusText = {
-            imported: " 網站Logo已匯入。",
-            unchanged: " 網站Logo與舊站相同。",
-            kept: " 網站Logo已有設定，未覆蓋。"
-        };
+        function countMenus(menus) {
+            return (menus ?? []).reduce((total, menu) => total + 1 + countMenus(menu.children), 0);
+        }
 
-        function render(status) {
-            const result = status?.resultJson ? JSON.parse(status.resultJson) : null;
-            current = status;
-            field("ProgressPanel").classList.toggle("d-none", !status);
-            field("Progress").value = status?.progress ?? 0;
-            field("Message").textContent = status?.message ?? "";
-            field("Error").textContent = status?.error ?? "";
-            const canCancel = status?.status === "Queued" || status?.status === "Running";
-            field("Cancel").classList.toggle("d-none", !canCancel);
-            const isDetection = result?.mode === "detect";
-            if (isDetection && status.status === "Succeeded") showDetection(status, result);
-            else if (status && !isDetection) {
-                detected = undefined;
-                field("ListsPanel").classList.add("d-none");
-            }
-            field("Summary").textContent = isDetection
-                ? `偵測讀取 ${result.pagesScanned} 頁，找到 ${result.lists?.length ?? 0} 個列表。`
-                : result?.pagesScanned != null
-                ? `掃描 ${result.pagesScanned} 個內容頁，新增選單 ${result.menusCreated} 個、更新選單 ${result.menusUpdated ?? 0} 個。` +
-                    (result.pagesWithBanner == null ? "" :
-                        ` 辨識到版頭 ${result.pagesWithBanner} 頁、頁尾 ${result.pagesWithFooter} 頁。`) +
-                    (result.bannerVotes > 0 || result.footerVotes > 0 ?
-                        ` 新增輪播 ${result.slidesAdded} 張，頁尾${result.footerUpdated ? "已更新" : "未更新"}。` : "") +
-                    (logoStatusText[result.logoStatus] ?? "") +
-                    (result.articlesCreated > 0 || result.articlesUpdated > 0 ?
-                        ` 文章新增 ${result.articlesCreated} 篇、更新 ${result.articlesUpdated} 篇。` : "") +
-                    (result.productsCreated > 0 || result.productsUpdated > 0 ?
-                        ` 商品新增 ${result.productsCreated} 個、更新 ${result.productsUpdated} 個。` : "")
-                : "";
+        function summarize(result, isDetection) {
+            if (result?.pagesScanned == null) return "";
+            if (isDetection)
+                return `偵測讀取 ${result.pagesScanned} 頁，找到主選單 ${countMenus(result.menus)} 項、列表 ${result.lists?.length ?? 0} 個。`;
+            return `掃描 ${result.pagesScanned} 個內容頁，新增選單 ${result.menusCreated} 個、更新選單 ${result.menusUpdated ?? 0} 個。` +
+                (result.menusExcluded > 0 ? ` 依勾選略過選單 ${result.menusExcluded} 項。` : "") +
+                (result.pagesWithBanner == null ? "" :
+                    ` 辨識到版頭 ${result.pagesWithBanner} 頁、頁尾 ${result.pagesWithFooter} 頁。`) +
+                (result.bannerVotes > 0 || result.footerVotes > 0 ?
+                    ` 新增輪播 ${result.slidesAdded} 張，頁尾${result.footerUpdated ? "已更新" : "未更新"}。` : "") +
+                (logoStatusText[result.logoStatus] ?? "") +
+                (result.articlesCreated > 0 || result.articlesUpdated > 0 ?
+                    ` 文章新增 ${result.articlesCreated} 篇、更新 ${result.articlesUpdated} 篇。` : "") +
+                (result.productsCreated > 0 || result.productsUpdated > 0 ?
+                    ` 商品新增 ${result.productsCreated} 個、更新 ${result.productsUpdated} 個。` : "");
+        }
+
+        function renderErrors(result) {
             const errors = (result?.errors ?? []).map(message => {
                 const item = document.createElement("li");
                 item.textContent = message;
@@ -176,6 +448,24 @@
                 item.textContent = result.pageLimitReached ? "已達掃描頁數上限。" : "其餘錯誤未列出。";
                 field("Errors").append(item);
             }
+        }
+
+        function render(status) {
+            const result = status?.resultJson ? JSON.parse(status.resultJson) : null;
+            const isDetection = result?.mode === "detect";
+            current = status;
+            currentMode = isDetection ? "detect" : "import";
+            field("ProgressPanel").classList.toggle("d-none", !status);
+            field("Progress").value = status?.progress ?? 0;
+            field("Message").textContent = status?.message ?? "";
+            field("Error").textContent = status?.error ?? "";
+            const canCancel = status?.status === "Queued" || status?.status === "Running";
+            field("Cancel").classList.toggle("d-none", !canCancel);
+            if (isDetection && status.status === "Succeeded") showDetection(status, result);
+            else if (status && !isDetection) detected = undefined;
+            field("ConfirmPanel").classList.toggle("d-none", !detected || isRunning());
+            field("Summary").textContent = summarize(result, isDetection);
+            renderErrors(result);
 
             if (menuEditor && status?.status === "Succeeded" &&
                 (result?.menusCreated > 0 || result?.menusUpdated > 0) &&
@@ -204,34 +494,72 @@
                 busy = false;
                 updateButtons();
                 field("Cancel").disabled = false;
-                if (activeStatuses.includes(current?.status)) {
+                if (isRunning()) {
                     timer = setTimeout(() => refresh(() => co.SiteCrawl.getStatus(current.taskId, websiteId)), 1000);
                 }
             }
         }
 
-        function queue(create) {
+        // mode：detect／import，排入後到伺服器回應前就先切到對的步驟。
+        function queue(create, mode) {
             refresh(async () => {
                 const task = await create();
-                render({ taskId: task.taskId, status: "Queued", message: "等待伺服器開始處理" });
+                render({
+                    taskId: task.taskId, status: "Queued", message: "等待伺服器開始處理",
+                    resultJson: JSON.stringify({ mode })
+                });
                 return co.SiteCrawl.getStatus(task.taskId, websiteId);
             });
         }
 
-        modal.addEventListener("shown.bs.modal", () => {
+        function goToLists() {
+            if (busy || isRunning() || !detectionMatchesInput() || includedCount() === 0) return;
+            if (!validateRouters()) {
+                field("Menus").querySelector("input[data-role=router]:invalid")?.reportValidity();
+                return;
+            }
+            showConfirmPage(4);
+        }
+
+        // 沒改的新選單也送出預設的推算名稱，匯入結果就和畫面一致（排除項目不會讓後面的流水號跟著變）；
+        // 沒改的既有選單送 null，沿用原本的路徑名稱。
+        function startImport() {
+            if (busy || isRunning() || !detectionMatchesInput()) return;
+            if (!validateRouters()) {
+                showConfirmPage(3);
+                field("Menus").querySelector("input[data-role=router]:invalid")?.reportValidity();
+                return;
+            }
+            const menus = [...field("Menus").querySelectorAll("li[data-menu-key]")].map(item => {
+                const row = item.querySelector(":scope > .site-crawl-node");
+                const input = row.querySelector("[data-role=router]");
+                const value = input ? effectiveRouter(input) : "";
+                const keepExisting = input?.dataset.existing === "true" && value === input.dataset.suggested;
+                return {
+                    key: item.dataset.menuKey,
+                    include: row.querySelector("[data-role=include]").checked,
+                    routerName: keepExisting ? null : value || null
+                };
+            });
+            const productLists = detected.lists
+                .filter(item => choices.get(item.key) && isListIncluded(item.key)).map(item => item.key);
+            queue(() => co.SiteCrawl.start(detected.sourceUrl, websiteId, productLists, menus), "import");
+        }
+
+        panel.addEventListener("shown.bs.offcanvas", () => {
             refresh(() => co.SiteCrawl.latest(websiteId));
         });
-        // 表單送出（Enter 或「偵測列表」）一律是偵測；匯入要按「開始匯入」，避免沒確認就匯入。
+        // 表單送出（Enter 或「偵測舊站」）一律是偵測；匯入要走完確認步驟按「開始匯入」，避免沒確認就匯入。
         field("Form").addEventListener("submit", event => {
             event.preventDefault();
-            if (busy || activeStatuses.includes(current?.status)) return;
-            queue(() => co.SiteCrawl.detect(field("Url").value, websiteId));
+            if (busy || isRunning()) return;
+            queue(() => co.SiteCrawl.detect(field("Url").value, websiteId), "detect");
         });
-        field("Start").addEventListener("click", () => {
-            if (busy || activeStatuses.includes(current?.status) || !detectionMatchesInput()) return;
-            const productLists = detected.lists.filter(item => choices.get(item.key)).map(item => item.key);
-            queue(() => co.SiteCrawl.start(detected.sourceUrl, websiteId, productLists));
-        });
+        field("MenusAll").addEventListener("click", () => setAllMenus(true));
+        field("MenusNone").addEventListener("click", () => setAllMenus(false));
+        field("Next").addEventListener("click", goToLists);
+        field("Back").addEventListener("click", () => showConfirmPage(3));
+        field("Start").addEventListener("click", startImport);
         field("Url").addEventListener("input", updateButtons);
         field("AllArticles").addEventListener("click", () => setAllChoices(false));
         field("AllProducts").addEventListener("click", () => setAllChoices(true));

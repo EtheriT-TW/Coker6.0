@@ -31,7 +31,7 @@ public sealed class SiteMarqueeImporter(CokerDbContext db, LoginUserData user)
                 title = item.Title,
                 disp_opt = true,
                 ser_no = ++order,
-                link = item.Link == null ? "" : SiteCrawlHtml.FindMenuRoute(result, item.Link) ?? item.Link.AbsoluteUri,
+                link = item.Link == null ? "" : SiteCrawlHtml.FindRoute(result, item.Link) ?? item.Link.AbsoluteUri,
                 target = false,
                 permanent = true
             };

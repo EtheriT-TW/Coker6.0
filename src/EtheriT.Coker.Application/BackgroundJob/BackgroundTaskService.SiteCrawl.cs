@@ -9,7 +9,8 @@ public sealed partial class BackgroundTaskService
 {
     internal static string SiteCrawlKey(long websiteId) => $"site-crawl:{websiteId}";
 
-    public async Task<BackgroundTaskRecord> CreateSiteCrawlTaskAsync(long websiteId, long userId)
+    // resultJson：建立時先放的結果（偵測任務放 {"mode":"detect"}，畫面才分得出是哪一步）。
+    public async Task<BackgroundTaskRecord> CreateSiteCrawlTaskAsync(long websiteId, long userId, string? resultJson = null)
     {
         await using var db = CreateDb();
         var now = DateTime.Now;
@@ -21,6 +22,7 @@ public sealed partial class BackgroundTaskService
             Status = BackgroundTaskStatusEnum.Queued,
             ActiveKey = SiteCrawlKey(websiteId),
             Message = "等待伺服器開始處理",
+            ResultJson = resultJson,
             CreationTime = now,
             CreatorUserId = userId,
             ExpireTime = now.AddDays(7)

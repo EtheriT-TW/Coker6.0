@@ -5,6 +5,7 @@ using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType.WebMenu;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -40,6 +41,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             result.AddError("入口頁沒有辨識到主導覽選單。" + result.FirstPageDiagnostic);
             return entry;
         }
+        links = SiteMenuSelection.Apply(links, result);
         var state = await LoadStateAsync(entry.IdnHost, websiteId, result, checkpoint, hiddenByDefault: false, token);
         // 主選單有「首頁」就把它設成首頁；沒有的話另建一個關閉狀態的首頁選單，內容用舊站入口頁。
         state.HomeLink = FindHomeLink(links, entry);
@@ -50,10 +52,25 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             links = [state.HomeLink, .. links];
         }
         await CreateChildrenAsync(links, state, parentId: null, rootId: null);
+        AddHomeAliases(result, [root, new Uri(root, "/"), entry, .. result.EntryRedirects]);
         return entry;
     }
 
-    private static SiteMenuLink? FindHomeLink(IEnumerable<SiteMenuLink> links, Uri entry)
+    // 舊站根網址（例 superiorlink 的 /）、使用者輸入的網址、入口跳轉經過的網址都是舊站首頁，
+    // 記成首頁選單的別名，內文與頁尾連到它們時才會改寫成新站首頁（2026-11-18 footer_logo 連到 / 留在舊站）。
+    // 已經是其他選單的網址不當別名。
+    private static void AddHomeAliases(SiteLayoutResult result, IEnumerable<Uri> urls)
+    {
+        if (result.ImportedMenus.FirstOrDefault(menu => menu.PageType == PageTypeEnum.首頁 && !menu.IsAlias) is not { } home)
+            return;
+        foreach (var url in urls)
+        {
+            if (url.Scheme is not ("http" or "https") || SiteCrawlHtml.FindMenuRoute(result, url) != null) continue;
+            result.ImportedMenus.Add(home with { SourceUrl = url.AbsoluteUri, IsAlias = true });
+        }
+    }
+
+    internal static SiteMenuLink? FindHomeLink(IEnumerable<SiteMenuLink> links, Uri entry)
     {
         var entryKey = SiteLayoutScanner.PageKey(entry);
         foreach (var link in links)
@@ -89,7 +106,9 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
                 continue;
             var ownKey = SiteLayoutScanner.PageKey(new Uri(menu.SourceUrl!));
             var keys = links.Select(link => SiteLayoutScanner.PageKey(link.Url!)).ToList();
-            if (keys.Any(key => key != ownKey && menuKeys.Contains(key)) || keys.Any(claimed.Contains)) continue;
+            // 使用者取消勾選的主選單也算「其他選單」：左欄列出它們代表這頁只是兄弟之一，不能把它們建成這頁的子選單。
+            if (keys.Any(key => key != ownKey && (menuKeys.Contains(key) || result.ExcludedPageKeys.Contains(key)))
+                || keys.Any(claimed.Contains)) continue;
             // 左欄列出自己、而這個選單已在主選單下拉裡（有上層），左欄是上層的兄弟清單，不是它自己的子頁
             // （例 月份壽星慶生會：兄弟「同天入住」在左欄是展開按鈕、沒有網址，上一行比對不到，2026-11-16 實測）。
             if (menu.ParentId != null && keys.Contains(ownKey)) continue;
@@ -103,9 +122,14 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
 
         var state = await LoadStateAsync(layout.Pages[0].Url.IdnHost, websiteId, result, checkpoint, hiddenByDefault: false, token);
         state.LinkToMenu.UnionWith(ownKeys);
-        foreach (var (menu, page, links) in sections)
+        foreach (var (menu, page, allLinks) in sections)
         {
             await checkpoint();
+            // 確認畫面上對左欄子頁的勾選與路徑名稱；全部取消勾選時這頁維持原樣，不建子選單也不改選單目錄。
+            var links = result.MenuSelectionKeys.TryGetValue(menu.Id, out var parentKey)
+                ? SiteMenuSelection.ApplySection(allLinks, parentKey, SiteLayoutScanner.PageKey(new Uri(menu.SourceUrl!)), result)
+                : allLinks;
+            if (links.Count == 0) continue;
             // 子頁放進主選單下拉；舊站分類首頁是空白頁時（例 房型介紹），點進去改顯示選單目錄列出子頁（使用者 2026-11-13 決定）。
             // 分類首頁自己有內容時保留內容。
             var useDirectory = page.Content == null
@@ -164,7 +188,8 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         {
             foreach (var target in pages[key].ContentLinks ?? new HashSet<string>())
             {
-                if (!visited.Add(target) || !pages.TryGetValue(target, out var page)) continue;
+                if (result.ExcludedPageKeys.Contains(target) || !visited.Add(target)
+                    || !pages.TryGetValue(target, out var page)) continue;
                 if (page.Article != null || page.Content == null || string.IsNullOrWhiteSpace(page.Title)) continue;
                 if (menusByTitle.TryGetValue(page.Title.Trim(), out var same))
                 {
@@ -180,7 +205,9 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         var host = layout.Pages[0].Url.IdnHost;
         var state = await LoadStateAsync(host, websiteId, result, checkpoint, hiddenByDefault: true, token);
         var before = result.ImportedMenus.Count;
-        await CreateChildrenAsync(BuildHiddenTree(hidden, layout.Pages), state, parentId: null, rootId: null);
+        // 子分類在確認畫面上的勾選與路徑名稱（使用者 2026-11-18 要求子分類也能改路徑名稱）。
+        var tree = SiteMenuSelection.ApplyHidden(BuildHiddenTree(hidden, layout.Pages), result);
+        await CreateChildrenAsync(tree, state, parentId: null, rootId: null);
         result.HiddenMenus += result.ImportedMenus.Count - before;
     }
 
@@ -273,7 +300,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         return state;
     }
 
-    private async Task<(Uri Entry, IReadOnlyList<SiteMenuLink> Links)> ReadNavigationAsync(
+    internal async Task<(Uri Entry, IReadOnlyList<SiteMenuLink> Links)> ReadNavigationAsync(
         Uri root, SiteLayoutResult result, Func<Task> checkpoint, CancellationToken token)
     {
         var entry = root;
@@ -298,6 +325,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
                 var rendered = await renderer.TryRenderAsync(response.Url, false, token);
                 return (response.Url, rendered == null ? links : SiteMenuExtractor.Extract(rendered, response.Url));
             }
+            result.EntryRedirects.Add(entry);
             entry = target;
         }
         throw new InvalidOperationException("選單入口跳轉超過上限。");
@@ -318,6 +346,180 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         }
     }
 
+    private static string MenuTitle(SiteMenuLink link) => link.Title[..Math.Min(link.Title.Length, 100)].TrimEnd();
+
+    // 自動產生路徑名稱用的字根：舊站網址路徑轉小寫英數（例 /tw/index.asp → tw-index-asp），前面再加 import-。
+    private static string RouteStem(Uri? url)
+    {
+        if (url == null) return "menu";
+        var stem = Regex.Replace(Uri.UnescapeDataString(url.AbsolutePath.Trim('/')).ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        return stem.Length == 0 ? "home" : stem;
+    }
+
+    // 偵測時推算每個主選單項目留空時會用的路徑名稱（確認畫面的灰字預設值），規則和 MakeMenu 相同：
+    // 首頁固定 Home；外站連結沒有；同層同名的既有選單沿用它的路徑名稱；其餘依序保留 import-{字根}（重複時加 -2、-3）。
+    // 和上方選單同一頁又沒有子選單的項目，匯入時不建選單（Duplicate）。
+    internal async Task<Dictionary<string, SiteMenuRoute>> SuggestRoutesAsync(IReadOnlyList<SiteMenuLink> links, Uri entry,
+        long websiteId, CancellationToken token)
+    {
+        var existing = await db.WebMenus.AsNoTracking()
+            .Where(menu => menu.FK_WebsiteId == websiteId && !menu.IsDeleted)
+            .OrderBy(menu => menu.Id)
+            .Select(menu => new { menu.Id, menu.FK_TopNodeId, menu.Title, menu.RouterName })
+            .ToListAsync(token);
+        var routes = new HashSet<string>(existing.Select(menu => menu.RouterName).Where(route => !string.IsNullOrEmpty(route)),
+            StringComparer.OrdinalIgnoreCase);
+        var children = new Dictionary<long, Dictionary<string, (long Id, string? RouterName)>>();
+        foreach (var menu in existing.Where(menu => menu.Title != null))
+        {
+            if (!children.TryGetValue(menu.FK_TopNodeId ?? 0, out var siblings))
+                children[menu.FK_TopNodeId ?? 0] = siblings = new Dictionary<string, (long, string?)>(StringComparer.Ordinal);
+            siblings.TryAdd(menu.Title!.Trim(), (menu.Id, menu.RouterName));
+        }
+
+        var host = entry.IdnHost;
+        var home = FindHomeLink(links, entry);
+        var importedUrls = new HashSet<string>(StringComparer.Ordinal);
+        var result = new Dictionary<string, SiteMenuRoute>(StringComparer.Ordinal);
+        Walk(links, null, 0, null);
+        return result;
+
+        // parentId：既有上層選單的 Id（第一層是 0）；上層是新建的就是 null，底下不可能有既有選單。
+        // parentPage：上層的頁面（PageKey）。左欄子頁就是上層那一頁時，匯入成連到上層的選單，沒有自己的路徑名稱；
+        // 左欄子頁、子分類另外建（ImportSectionMenusAsync／ImportHiddenPagesAsync 用新的狀態），不和主選單比對重複網址。
+        void Walk(IReadOnlyList<SiteMenuLink> level, string? parentKey, long? parentId, string? parentPage)
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var link in level)
+            {
+                var key = SiteMenuSelection.Key(parentKey, link.Title);
+                if (!seen.Add(key)) continue;
+                var url = link.Url;
+                var isLocal = url != null && SiteCrawlHttp.IsAllowed(url, host);
+                var pageKey = isLocal ? SiteLayoutScanner.PageKey(url!) : null;
+                if (link.IsSection && pageKey != null && pageKey == parentPage)
+                {
+                    result[key] = new SiteMenuRoute(null, false, false, LinkToParent: true);
+                    continue;
+                }
+                var urlKey = isLocal && !link.IsSection && !link.IsCategory ? SiteLayoutScanner.Normalize(url!).AbsoluteUri : null;
+                if (urlKey != null && importedUrls.Contains(urlKey))
+                {
+                    if (link.Children.Count == 0)
+                    {
+                        result[key] = new SiteMenuRoute(null, false, true);
+                        continue;
+                    }
+                    url = null;
+                }
+                if (urlKey != null) importedUrls.Add(urlKey);
+                (long Id, string? RouterName) found = default;
+                var hasExisting = parentId is { } pid && children.TryGetValue(pid, out var siblings)
+                    && siblings.TryGetValue(MenuTitle(link), out found);
+                if (ReferenceEquals(link, home))
+                    result[key] = new SiteMenuRoute(HomeRouterName, hasExisting, false);
+                else if (url != null && !isLocal)
+                    result[key] = new SiteMenuRoute(null, hasExisting, false);
+                else if (hasExisting && !string.IsNullOrWhiteSpace(found.RouterName))
+                    result[key] = new SiteMenuRoute(found.RouterName, true, false);
+                else
+                    result[key] = new SiteMenuRoute(Reserve(routes, "import-" + RouteStem(url), 50, index => $"-{index + 1}"),
+                        false, false);
+                Walk(link.Children, key, hasExisting ? found.Id : null, url == null ? null : pageKey);
+            }
+        }
+    }
+
+    // 偵測時讀主選單各頁的左欄子頁（#left_main_menu）與子分類樹，和匯入掃描同一套讀法：原始碼看起來要 JS 載入時才開瀏覽器。
+    // 左欄子頁只讀沒有下拉的頁面（有下拉的不會再接左欄子頁）；子分類也從左欄子頁往下找（分類頁可能在左欄裡）。
+    internal async Task<SitePageExtras> ReadPageExtrasAsync(IReadOnlyList<SiteMenuLink> links, Uri entry,
+        Action<string> addError, Func<Task> checkpoint, CancellationToken token)
+    {
+        var host = entry.IdnHost;
+        var home = FindHomeLink(links, entry);
+        var targets = Leaves(links).Where(link => !ReferenceEquals(link, home) && link.Url != null
+                && SiteCrawlHttp.IsAllowed(link.Url, host))
+            .Select(link => link.Url!).DistinctBy(SiteLayoutScanner.PageKey).ToList();
+        var sections = new Dictionary<string, IReadOnlyList<SiteMenuLink>>(StringComparer.Ordinal);
+        var categories = new Dictionary<string, IReadOnlyList<SiteMenuLink>>(StringComparer.Ordinal);
+        var explored = new HashSet<string>(StringComparer.Ordinal);
+        var scratch = new SiteLayoutResult();
+        await using (var renderer = new SiteCrawlRenderSession(browsers, host, scratch, logger))
+        {
+            var sectionUrls = new List<Uri>();
+            foreach (var url in targets)
+            {
+                explored.Add(SiteLayoutScanner.PageKey(url));
+                if (await ReadPageAsync(url, renderer) is not { } page) continue;
+                var section = SitePageParts.ReadSectionMenu(page.Document, page.Url, host);
+                if (section.Count > 0)
+                {
+                    sections.TryAdd(SiteLayoutScanner.PageKey(url), section);
+                    sectionUrls.AddRange(section.Select(link => link.Url!));
+                }
+                await AddCategoriesAsync(url, page, renderer);
+            }
+            foreach (var url in sectionUrls.DistinctBy(SiteLayoutScanner.PageKey))
+            {
+                if (!explored.Add(SiteLayoutScanner.PageKey(url))) continue;
+                if (await ReadPageAsync(url, renderer) is { } page) await AddCategoriesAsync(url, page, renderer);
+            }
+        }
+        foreach (var error in scratch.Errors) addError(error);
+        return new SitePageExtras(sections, categories);
+
+        async Task AddCategoriesAsync(Uri url, (Uri Url, HtmlDocument Document) page, SiteCrawlRenderSession renderer)
+        {
+            var found = await ReadCategoriesAsync(page.Url, page.Document, renderer, 0);
+            if (found.Count > 0) categories.TryAdd(SiteLayoutScanner.PageKey(url), found);
+        }
+
+        async Task<(Uri Url, HtmlDocument Document)?> ReadPageAsync(Uri url, SiteCrawlRenderSession renderer)
+        {
+            await checkpoint();
+            try
+            {
+                var reply = await http.GetAsync(url, host, false, 2 * 1024 * 1024, token);
+                await using var content = reply.Content;
+                var page = SiteLayoutScanner.ReadDocument(content, reply.Charset);
+                var rendered = SiteCrawlRenderSession.NeedsRender(page)
+                    ? await renderer.TryRenderAsync(reply.Url, SiteCrawlRenderSession.NeedsScroll(page), token) : null;
+                return (reply.Url, rendered ?? page);
+            }
+            catch (Exception ex) when (!token.IsCancellationRequested &&
+                ex is HttpRequestException or InvalidOperationException or OperationCanceledException)
+            {
+                // 讀不到的頁面就不列它的子頁；正式匯入時會再抓一次。
+                return null;
+            }
+        }
+
+        // 子分類的判斷和 SiteLayoutScanner.ResolveSubPages 相同：列表上只有 sub_id 的卡片，目標頁本身也是列表才算子分類；
+        // 名稱用目標頁的頁面名稱（隱藏選單也是用它命名），子分類頁再往下找下一層。
+        async Task<IReadOnlyList<SiteMenuLink>> ReadCategoriesAsync(Uri pageUrl, HtmlDocument document,
+            SiteCrawlRenderSession renderer, int depth)
+        {
+            if (depth >= MaxHiddenDepth) return [];
+            var items = SiteArticleDetector.ReadList(document, pageUrl, host)?.Items
+                .Where(item => SiteArticleDetector.IsSubPageKey(item.Key)) ?? [];
+            var children = new List<SiteMenuLink>();
+            foreach (var item in items)
+            {
+                if (!explored.Add(SiteLayoutScanner.PageKey(item.Url))) continue;
+                if (await ReadPageAsync(item.Url, renderer) is not { } target
+                    || SiteArticleDetector.ReadList(target.Document, target.Url, host) == null
+                    || SiteArticleDetector.PageName(target.Document) is not { } title || string.IsNullOrWhiteSpace(title))
+                    continue;
+                var grandChildren = await ReadCategoriesAsync(target.Url, target.Document, renderer, depth + 1);
+                children.Add(new SiteMenuLink(title.Trim(), item.Url, false, grandChildren, IsCategory: true));
+            }
+            return children;
+        }
+    }
+
+    private static IEnumerable<SiteMenuLink> Leaves(IEnumerable<SiteMenuLink> links) =>
+        links.SelectMany(link => link.Children.Count == 0 ? [link] : Leaves(link.Children));
+
     // hasSource：這個選單有對應的舊站頁面可匯入內容（沒網址的下拉上層、重複網址的上層都沒有）。
     private (MenuItemDto Dto, bool HasSource)? MakeMenu(SiteMenuLink link, ImportState state, SiblingState siblings, long? parentId, long? rootId)
     {
@@ -335,13 +537,13 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         }
         // 外站連結（例 線上訂房）存成一般頁面＋連結、不填路徑名稱：前台主選單不列「跳頁」類型。
         // 和上層同一頁的子頁（例 泡湯游泳＝飯店設施的頁面）也一樣，連結指向上層選單，內容只存一份。
-        var sameAsMenu = isLocal && state.LinkToMenu.Contains(SiteLayoutScanner.PageKey(url!))
-            ? SiteCrawlHtml.FindMenuRoute(state.Result, url!) : null;
+        // url 可能已在上面被清成 null（和前面選單同一頁、但有子選單的上層），這時沒有要連過去的頁面，直接跳過，
+        // 否則 PageKey(null) 會讓整個匯入失敗。
+        var sameAsMenu = isLocal && url != null && state.LinkToMenu.Contains(SiteLayoutScanner.PageKey(url))
+            ? SiteCrawlHtml.FindMenuRoute(state.Result, url) : null;
         var external = url != null && (!isLocal || sameAsMenu != null);
-        var stem = url == null ? "menu" : Regex.Replace(
-            Uri.UnescapeDataString(url.AbsolutePath.Trim('/')).ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
-        if (stem.Length == 0) stem = "home";
-        var title = link.Title[..Math.Min(link.Title.Length, 100)].TrimEnd();
+        var stem = RouteStem(url);
+        var title = MenuTitle(link);
         siblings.Existing.TryGetValue(title, out var existing);
         var moved = false;
         var isHome = ReferenceEquals(link, state.HomeLink);
@@ -373,7 +575,16 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             dto.FK_RootNodeId = rootId;
             dto.SerNO = siblings.LastOrder == int.MaxValue ? int.MaxValue : ++siblings.LastOrder;
         }
-        if (string.IsNullOrWhiteSpace(dto.RouterName) && !external)
+        if (!external && !isHome && link.RouterName is { } wanted
+            && !string.Equals(dto.RouterName, wanted, StringComparison.OrdinalIgnoreCase))
+        {
+            // 使用者在確認畫面指定的路徑名稱；被其他選單用掉時不自動加流水號，沿用原本或自動產生的名稱並列出錯誤。
+            if (state.Routes.Add(wanted)) dto.RouterName = wanted;
+            else state.Result.AddError($"選單「{title}」的路徑名稱「{wanted}」已被其他選單使用，改用原本或自動產生的名稱。");
+        }
+        // 首頁下面固定改成 Home，不能先保留 import-…：否則名字被佔掉，偵測時推算給下一個選單的 import-…（例 import-tw-index-asp）
+        // 匯入時就會被判成「已被其他選單使用」（2026-11-18 實測）。
+        if (string.IsNullOrWhiteSpace(dto.RouterName) && !external && !isHome)
             dto.RouterName = Reserve(state.Routes, "import-" + stem, 50, index => $"-{index + 1}");
         if (isHome)
         {
@@ -421,6 +632,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             state.Result.AddError($"選單「{dto.Title}」已建立，但儲存後處理失敗。");
         if (link.Url != null && SiteCrawlHttp.IsAllowed(link.Url, state.Host))
             state.ImportedUrls.Add(SiteLayoutScanner.Normalize(link.Url!).AbsoluteUri);
+        if (link.SelectionKey != null) state.Result.MenuSelectionKeys[id] = link.SelectionKey;
         // 沒有舊站頁面的上層與外站連結沒有要匯入的內容，SourceUrl 留空，後續的內容／文章匯入就不會碰它們。
         state.Result.ImportedMenus.Add(new ImportedSiteMenu(id, dto.FK_TopNodeId, dto.Title!, link.Title,
             !hasSource || !string.IsNullOrEmpty(dto.LinkUrl) ? null : link.Url?.AbsoluteUri,

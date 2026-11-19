@@ -1,0 +1,72 @@
+@inject EtheriT.Coker.Application.LoginUserData CrawlUser
+
+<div id="SiteCrawlOffcanvas" class="offcanvas offcanvas-end site-crawl-offcanvas" tabindex="-1"
+     aria-labelledby="siteCrawlTitle" data-website-id="@(await CrawlUser.GetWebsiteId())">
+    <div class="offcanvas-header border-bottom">
+        <h2 class="offcanvas-title fs-5" id="siteCrawlTitle">網站爬蟲匯入</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="關閉"></button>
+    </div>
+    <ol id="siteCrawlSteps" class="site-crawl-steps" aria-label="匯入步驟">
+        <li data-step="1"><span class="site-crawl-steps__no">1</span><span class="site-crawl-steps__label">輸入網址</span></li>
+        <li data-step="2"><span class="site-crawl-steps__no">2</span><span class="site-crawl-steps__label">偵測舊站</span></li>
+        <li data-step="3"><span class="site-crawl-steps__no">3</span><span class="site-crawl-steps__label">頁面與路徑名稱</span></li>
+        <li data-step="4"><span class="site-crawl-steps__no">4</span><span class="site-crawl-steps__label">列表類型</span></li>
+        <li data-step="5"><span class="site-crawl-steps__no">5</span><span class="site-crawl-steps__label">匯入</span></li>
+    </ol>
+    <div class="offcanvas-body">
+        <form id="siteCrawlForm" class="mb-3">
+            <label for="siteCrawlUrl" class="form-label fw-semibold">來源網址</label>
+            <input id="siteCrawlUrl" type="url" class="form-control" maxlength="2048"
+                   placeholder="https://example.com" required />
+            <p id="siteCrawlHint" class="form-text mb-0"></p>
+        </form>
+        <div id="siteCrawlProgressPanel" class="d-none mb-3">
+            <progress id="siteCrawlProgress" class="w-100" max="100" value="0" aria-label="任務進度"></progress>
+            <p id="siteCrawlMessage" class="mb-1" role="status"></p>
+            <p id="siteCrawlSummary" class="mb-1"></p>
+            <ul id="siteCrawlErrors" class="mb-0"></ul>
+        </div>
+        <div id="siteCrawlConfirmPanel" class="d-none">
+            <p id="siteCrawlStale" class="text-warning-emphasis small d-none" role="status">來源網址已變更，請重新偵測。</p>
+            <section id="siteCrawlMenusPanel" aria-labelledby="siteCrawlMenusTitle">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <h3 id="siteCrawlMenusTitle" class="fs-6 fw-bold mb-0 me-auto">選擇頁面與路徑名稱</h3>
+                    <span id="siteCrawlMenusCount" class="small text-body-secondary" aria-live="polite"></span>
+                </div>
+                <p class="form-text mt-0">
+                    取消勾選＝整支不匯入（含子選單、左欄子頁、文章列表），其他頁連到它時仍指回舊站。
+                    路徑名稱是前台網址 /站台/路徑名稱 的最後一段；輸入框已填好不改時匯入後的名稱（既有選單是原本的名稱）。
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <button type="button" id="siteCrawlMenusAll" class="btn btn-outline-secondary btn-sm">全部選取</button>
+                    <button type="button" id="siteCrawlMenusNone" class="btn btn-outline-secondary btn-sm">全部取消</button>
+                </div>
+                <ul id="siteCrawlMenus" class="site-crawl-tree list-unstyled mb-0"></ul>
+            </section>
+            <section id="siteCrawlListsPanel" class="d-none" aria-labelledby="siteCrawlListsTitle">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <h3 id="siteCrawlListsTitle" class="fs-6 fw-bold mb-0 me-auto">設定列表類型</h3>
+                    <span id="siteCrawlListsCount" class="small text-body-secondary" aria-live="polite"></span>
+                </div>
+                <p class="form-text mt-0">
+                    「商品」列表會建在商品管理的商品列表（時價、無規格），列表頁改用勾選「商品匯入目錄」用途的元件顯示。
+                    舊系統購物商品已鎖定為商品；上一步取消勾選的頁面上的列表不列出。
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <button type="button" id="siteCrawlAllArticles" class="btn btn-outline-secondary btn-sm">全部設為文章</button>
+                    <button type="button" id="siteCrawlAllProducts" class="btn btn-outline-secondary btn-sm">全部設為商品</button>
+                </div>
+                <ul id="siteCrawlLists" class="site-crawl-tree list-unstyled mb-0"></ul>
+                <p id="siteCrawlListsEmpty" class="small text-body-secondary d-none">沒有要匯入的列表，可以直接開始匯入。</p>
+            </section>
+        </div>
+        <p id="siteCrawlError" class="text-danger mt-2 mb-0" role="alert"></p>
+    </div>
+    <div class="d-flex flex-wrap justify-content-end gap-2 p-3 border-top">
+        <button type="button" id="siteCrawlCancel" class="btn btn-outline-danger d-none">取消任務</button>
+        <button type="submit" id="siteCrawlDetect" form="siteCrawlForm" class="btn btn-primary" disabled>偵測舊站</button>
+        <button type="button" id="siteCrawlBack" class="btn btn-outline-secondary d-none">上一步</button>
+        <button type="button" id="siteCrawlNext" class="btn btn-primary d-none" disabled>下一步：列表類型</button>
+        <button type="button" id="siteCrawlStart" class="btn btn-primary d-none" disabled>開始匯入</button>
+    </div>
+</div>

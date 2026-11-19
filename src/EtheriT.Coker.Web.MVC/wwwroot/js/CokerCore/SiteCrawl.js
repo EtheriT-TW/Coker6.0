@@ -33,9 +33,9 @@ Coker.extend({
         }
 
         return {
-            // productLists：確認畫面標成商品的列表 key，這次匯入先略過。
-            start: (url, websiteId, productLists) => request("Start?websiteId=" + encodeURIComponent(websiteId), {
-                method: "POST", body: JSON.stringify({ url, productLists: productLists ?? [] })
+            // productLists：確認畫面標成商品的列表 key；menus：舊站主選單的勾選與路徑名稱 [{ key, include, routerName }]。
+            start: (url, websiteId, productLists, menus) => request("Start?websiteId=" + encodeURIComponent(websiteId), {
+                method: "POST", body: JSON.stringify({ url, productLists: productLists ?? [], menus: menus ?? [] })
             }, websiteId),
             detect: (url, websiteId) => request("Detect?websiteId=" + encodeURIComponent(websiteId), {
                 method: "POST", body: JSON.stringify({ url })

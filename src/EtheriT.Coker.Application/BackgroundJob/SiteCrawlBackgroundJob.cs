@@ -25,13 +25,19 @@ public sealed class SiteCrawlBackgroundJob(
 {
     public const string EmptyResult = """{"menusCreated":0,"articlesCreated":0,"errors":[]}""";
 
-    // productLists：匯入前偵測、使用者確認要當商品的列表（SiteListDetector.ListKey），這次先不匯入。
+    // 舊版排程（沒有選單選擇）的相容入口：部署前已排進 Hangfire 的任務會用這個簽章執行。
     [AutomaticRetry(Attempts = 0)]
-    public async Task Run(long taskId, string sourceUrl, string[] productLists, CancellationToken cancellationToken)
+    public Task Run(long taskId, string sourceUrl, string[] productLists, CancellationToken cancellationToken)
+        => Run(taskId, sourceUrl, productLists, [], cancellationToken);
+
+    // productLists：使用者確認要當商品的列表（SiteListDetector.ListKey）；menus：確認畫面的主選單勾選與路徑名稱。
+    [AutomaticRetry(Attempts = 0)]
+    public async Task Run(long taskId, string sourceUrl, string[] productLists, SiteMenuChoice[] menus,
+        CancellationToken cancellationToken)
     {
         if (await BeginAsync(taskId) is not { } started) return;
         using (started.Lock)
-            await ImportMenusAsync(started.Task, sourceUrl, productLists, cancellationToken);
+            await ImportMenusAsync(started.Task, sourceUrl, productLists, menus, cancellationToken);
     }
 
     // 匯入前的列表偵測：只用 HTTP 掃描，找出列表並預猜文章／商品，結果放在 ResultJson 給確認畫面用。
@@ -87,8 +93,20 @@ public sealed class SiteCrawlBackgroundJob(
         {
             if (!await user.isSystemUser() || !await user.CheckedWebSiteId(task.FK_UserId, task.FK_WebsiteId))
                 throw new UnauthorizedAccessException("網站匯入權限已撤銷。");
+            var navigation = await ReadMenusAsync(sourceUrl, result, () => Checkpoint(0), timeout.Token);
             await listDetector.DetectAsync(new Uri(sourceUrl), result, Checkpoint, timeout.Token);
-            var message = $"偵測完成：讀取 {result.PagesScanned} 頁，找到 {result.Lists.Count} 個列表，請確認後開始匯入。";
+            if (navigation is { } nav)
+            {
+                // 左欄子頁、分類頁的子分類也列進確認畫面，讓使用者可以勾選、改路徑名稱（使用者 2026-11-18 要求）。
+                var extras = await importer.ReadPageExtrasAsync(nav.Links, nav.Entry, result.AddError,
+                    () => Checkpoint(result.PagesScanned), timeout.Token);
+                var tree = SiteMenuSelection.AttachCategories(
+                    SiteMenuSelection.AttachSections(nav.Links, nav.Entry, extras.Sections), nav.Entry, extras.Categories);
+                var routes = await importer.SuggestRoutesAsync(tree, nav.Entry, task.FK_WebsiteId, timeout.Token);
+                result.Menus.AddRange(SiteMenuSelection.Describe(tree, nav.Entry,
+                    result.Lists.Select(item => item.Key).ToHashSet(StringComparer.Ordinal), routes));
+            }
+            var message = $"偵測完成：讀取 {result.PagesScanned} 頁，找到主選單 {result.Menus.Count} 項、{result.Lists.Count} 個列表，請確認後開始匯入。";
             if (!await tasks.FinishSiteCrawlAsync(task, BackgroundTaskStatusEnum.Running,
                 BackgroundTaskStatusEnum.Succeeded, message, result.Serialize()))
                 await FinishCancellationAsync(task, result.Serialize());
@@ -110,11 +128,36 @@ public sealed class SiteCrawlBackgroundJob(
         }
     }
 
+    // 偵測時用和正式匯入同一套讀法（含瀏覽器備援）讀主選單，確認畫面的 Key 才對得上；讀不到時記錯誤，列表偵測照常進行。
+    private async Task<(Uri Entry, IReadOnlyList<SiteMenuLink> Links)?> ReadMenusAsync(string sourceUrl,
+        SiteDetectResult result, Func<Task> checkpoint, CancellationToken token)
+    {
+        var scratch = new SiteLayoutResult();
+        try
+        {
+            var navigation = await importer.ReadNavigationAsync(new Uri(sourceUrl), scratch, checkpoint, token);
+            if (navigation.Links.Count == 0)
+                result.AddError("入口頁沒有辨識到主導覽選單，無法匯入。" + scratch.FirstPageDiagnostic);
+            return navigation;
+        }
+        catch (Exception ex) when (!token.IsCancellationRequested &&
+            ex is HttpRequestException or InvalidOperationException or OperationCanceledException)
+        {
+            result.AddError($"無法讀取舊站主選單。{ex.Message}");
+            return null;
+        }
+        finally
+        {
+            foreach (var error in scratch.Errors) result.AddError(error);
+        }
+    }
+
     private async Task ImportMenusAsync(BackgroundTaskRecord task, string sourceUrl, string[] productLists,
-        CancellationToken cancellationToken)
+        SiteMenuChoice[] menus, CancellationToken cancellationToken)
     {
         var result = new SiteLayoutResult();
         result.ProductListKeys.UnionWith(productLists);
+        foreach (var choice in menus) result.MenuChoices.TryAdd(choice.Key, choice);
         var scanningLayout = false;
         var importingContent = false;
         var importingArticles = false;
@@ -173,6 +216,9 @@ public sealed class SiteCrawlBackgroundJob(
             importingContent = true;
             listMenuIds.UnionWith(result.HandledMenuIds);
             await contentImporter.ImportAsync(layout, listMenuIds, result, Checkpoint, timeout.Token);
+            await Checkpoint();
+            // 所有選單、文章、商品都建好了，版頭輪播與頁尾的連結才改寫得到新站網址。
+            await layoutImporter.ImportBannerAndFooterAsync(layout, result, Checkpoint, timeout.Token);
             await Checkpoint();
             await globalCssImporter.ImportAsync(entry, layout, result, Checkpoint, timeout.Token);
             await Checkpoint();

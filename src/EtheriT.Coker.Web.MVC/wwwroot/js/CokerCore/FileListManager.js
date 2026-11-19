@@ -256,7 +256,12 @@
             template: "#TemplateUploadList",
             renderItem: null,
             onChange: null,
-            onError: null
+            onError: null,
+            coverSelectable: false,   // 是否在檔案預覽旁顯示「設為預設圖片」
+            coverRequired: false,     // 預設圖片一定要有一張：已勾的不能取消，只能改勾別張
+            isCoverItem: null,        // (item) => bool；自訂「哪張算預設圖片」，未提供時看 IsCover
+            activateAfterUpload: false, // 上傳完自動選取剛加入的那張並顯示預覽
+            onCoverChange: null      // (item, checked)；未提供時只在本清單內單選
         }, options || {});
 
         const mode = modes[this.options.mode];
@@ -346,6 +351,22 @@
                 const $button = $(this);
                 if ($button.data("status") === "locked") co.sweet.warn("操作無效", "已上鎖檔案不可解鎖。");
                 else $button.toggleClass("lock");
+            })
+            .on(`change${this.namespace}`, ".cover_toggle_input", function () {
+                const item = self.activeItem && self._find(self.activeItem);
+                if (!item) return;
+                const checked = $(this).is(":checked");
+                if (!checked && self.options.coverRequired === true) {
+                    $(this).prop("checked", true);
+                    return;
+                }
+                if (typeof self.options.onCoverChange === "function") {
+                    self.options.onCoverChange.call(self, item, checked);
+                    return;
+                }
+                self.files.forEach(file => { file.IsCover = false; });
+                item.IsCover = checked;
+                self.refreshCover();
             })
             .on(`blur${this.namespace}`, ".upload_list .ser_no", function () {
                 self.move($(this).closest(".upload_list"), Number($(this).val()));
@@ -550,7 +571,7 @@
             </div>`
             : "";
         const media = this.types.some(type => type === FileType.Image || type === FileType.Image360 || type === FileType.Video)
-            ? '<div class="media_frame d-none flex-column h-100"><div class="mb-2">檔案預覽</div><input class="form-control d-none" type="text" readonly><div class="media_preview flex-grow-1"><div></div></div></div>'
+            ? '<div class="media_frame d-none flex-column h-100"><div class="mb-2 media_frame_title">檔案預覽</div><input class="form-control d-none" type="text" readonly><div class="media_preview flex-grow-1"><div></div></div></div>'
             : "";
 
         this.$root.append(`<div class="preview_frame"><div class="default_frame h-100 d-flex">點選 + 號新增檔案</div>${selector}<div class="upload_frame custom-file-container d-none" data-upload-id="${uploadId}"></div>${media}${externalVideo}</div>`);
@@ -630,6 +651,7 @@
         if (item.IsEncryption) {
             $row.find(".btn_lock").addClass("lock").data("status", "locked").attr("title", "已上鎖檔案不可解鎖");
         }
+        $row.toggleClass("is-cover", this._isCover(item));
         if (typeof this.options.renderItem === "function") this.options.renderItem.call(this, $row, item);
     };
 
@@ -806,8 +828,8 @@
             return;
         }
         const $media = this.$root.find(".media_frame").removeClass("d-none").addClass("d-flex");
-        $media.children(".mb-2").text("檔案預覽");
-        $media.find("input").val(item.Name || "");
+        $media.find(".media_frame_title").text("檔案預覽");
+        $media.find("input[type='text']").val(item.Name || "");
         const $preview = $media.find(".media_preview > div")
             .empty()
             .removeClass("image360_editor");
@@ -817,13 +839,14 @@
         } else {
             $preview.append($("<img>", { src: item.Link || item.File }));
         }
+        this._syncCoverToggle(item);
     };
 
     FileListManager.prototype._show360 = function (item) {
         const self = this;
         const frames = Array.isArray(item.File) ? item.File : [];
         const $media = this.$root.find(".media_frame").removeClass("d-none").addClass("d-flex");
-        $media.children(".mb-2").text(`360 影格（共 ${frames.length} 張，拖曳可調整順序）`);
+        $media.find(".media_frame_title").text(`360 影格（共 ${frames.length} 張，拖曳可調整順序）`);
         const $preview = $media.find(".media_preview > div").empty()
             .addClass("image360_editor")
             .append('<div class="image360_toolbar"><label class="btn btn-sm btn-outline-primary mb-0">新增影格<input class="image360_add_input d-none" type="file" accept="image/*" multiple></label></div>');
@@ -904,6 +927,11 @@
                     Type: type, File: file, Name: file.name, IsDelete: false
                 }));
             }
+            // 上傳完直接顯示剛加入那張的預覽（含預設圖片勾選），不用再點一次
+            if (this.options.activateAfterUpload === true && this.lastCommittedRow && this.lastCommittedRow.length) {
+                this.activate(this.lastCommittedRow, true);
+            }
+            this.lastCommittedRow = null;
         } catch (error) {
             this._error(error);
         }
@@ -911,6 +939,7 @@
 
     FileListManager.prototype._commit = function ($row, item) {
         this.files.push(item);
+        let $target = $row;
         if ($row && $row.length) {
             $row.removeAttr("data-file-list-placeholder")
                 .data("file-list-placeholder", false)
@@ -918,11 +947,12 @@
                 .data("uploadtype", item.Type);
             this._renderItem($row, item);
             this._renderLink($row, item);
-        } else this._render(item);
+        } else $target = this._render(item);
         this.activeItem = null;
         this.clearPreview();
         this._syncOrder();
         this._notify("add", item);
+        this.lastCommittedRow = $target;
     };
 
     FileListManager.prototype._renderExternalVideoPreview = function ($preview, externalVideo) {
@@ -1152,10 +1182,41 @@
         $preview.find(".default_frame").removeClass("d-none").addClass("d-flex");
         $preview.find(".upload_frame").empty().addClass("d-none");
         $preview.find(".media_frame, .external_video_frame, .select_frame").removeClass("d-flex").addClass("d-none");
-        $preview.find(".media_frame > .mb-2").text("檔案預覽");
+        $preview.find(".media_frame_title").text("檔案預覽");
+        $preview.find(".cover_toggle").addClass("d-none");
         $preview.find(".external_video_preview").empty();
         $preview.find(".media_preview > div").empty().removeClass("image360_editor");
         this.uploader = null;
+    };
+
+    // 是否為預設圖片：頁面可用 isCoverItem 自訂（例如沒勾選時用第一張商品圖），否則看 IsCover
+    FileListManager.prototype._isCover = function (item) {
+        if (!item || item.IsDelete === true) return false;
+        if (typeof this.options.isCoverItem === "function") return this.options.isCoverItem.call(this, item) === true;
+        return item.IsCover === true;
+    };
+
+    // 預設圖片勾選框：只有開啟 coverSelectable 且目前是一般圖片時才顯示
+    FileListManager.prototype._syncCoverToggle = function (item) {
+        const $toggle = this.$root.find(".cover_toggle");
+        const canBeCover = this.options.coverSelectable === true && !!item && item.Type === FileType.Image;
+        const checked = canBeCover && this._isCover(item);
+        $toggle.toggleClass("d-none", !canBeCover);
+        // coverRequired：已是預設的那張不能取消，只能改勾別張
+        $toggle.find(".cover_toggle_input")
+            .prop("checked", checked)
+            .prop("disabled", checked && this.options.coverRequired === true);
+    };
+
+    // 重畫清單框線與勾選框（外部改了預設圖片後呼叫）
+    FileListManager.prototype.refreshCover = function () {
+        this.$root.find(".upload_list").each((index, element) => {
+            const $row = $(element);
+            $row.toggleClass("is-cover", this._isCover(this._find($row)));
+        });
+        const activeItem = this.activeItem && this._find(this.activeItem);
+        if (activeItem) this._syncCoverToggle(activeItem);
+        return this;
     };
 
     FileListManager.prototype.destroy = function () {

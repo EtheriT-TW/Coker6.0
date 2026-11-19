@@ -39,6 +39,10 @@ namespace EtheriT.Coker.Application
         public Task<ResponseMessageDto> deleteFile(string path);
         public Task<ResponseMessageDto> insertNotFondFile(InsertNotFoundFileDto dto);
         public Task<Dictionary<long, string>> GetMinImageMapAsync(List<long> prodIds);
+        public Task<Dictionary<long, long>> GetValidCoverUploadIdMapAsync(List<long> prodIds, long websiteId);
+        public Task<bool> IsProductCoverCandidateAsync(long prodId, long uploadId, long websiteId);
+        public Task<Dictionary<long, long>> GetProductDisplayUploadIdMapAsync(List<long> prodIds, long websiteId);
+        public Task<Dictionary<long, string>> GetProductDisplayImageMapAsync(List<long> prodIds, long websiteId, int size);
         public Task<DownloadPayload> DecryptFile(long fid);
 
     }

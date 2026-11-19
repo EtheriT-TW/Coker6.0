@@ -517,3 +517,23 @@
         opacity: 1;
     }
 }
+
+/* ── 平板（577px–991px）：四欄放不下，方案區（價格／數量／加入購物車）改到第二列 ──
+   電腦版四欄最少要 110 + 170 + 140 + 方案區約 342px，容器只有 540／720px 時會往右溢出。
+   縮圖跨兩列靠上；名稱、描述在第一列；方案區從名稱欄開始橫跨到最右。 */
+@media (min-width: 577px) and (max-width: 991.98px) {
+    .spec-card {
+        grid-template-columns: 110px minmax(0, 170px) minmax(0, 1fr);
+        row-gap: .75rem;
+    }
+
+    .spec-thumb {
+        grid-row: 1 / span 2;
+        align-self: start;
+    }
+
+    .spec-actions {
+        grid-column: 2 / -1;
+        margin-left: 0;
+    }
+}

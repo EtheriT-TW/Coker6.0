@@ -1608,6 +1608,9 @@ namespace EtheriT.Coker.Application.Product
                         FileType = 1,
                         SerNo = 500
                     });
+
+                    // 後台有指定預設圖片時，輪播第一張改成那張
+                    await ApplyCoverImageAsync(output, websiteId);
                 }
                 else throw new Exception("查無商品資料");
             }
@@ -1617,6 +1620,51 @@ namespace EtheriT.Coker.Application.Product
 
             return output;
         }
+        // 後台指定的預設圖片排到輪播第一張；沒指定或已失效就維持原排序
+        private async Task ApplyCoverImageAsync(ProdGetMainDisplayDto output, long websiteId)
+        {
+            var coverMap = await fileUploadAppService.GetValidCoverUploadIdMapAsync(new List<long> { output.Id }, websiteId);
+            if (!coverMap.TryGetValue(output.Id, out var coverUploadId)) return;
+
+            var isProductImage = output.Img_Original.Any(x => x.Id == coverUploadId);
+            var original = isProductImage ? null : await BuildCoverDisplayAsync(coverUploadId, 1, null);
+            if (!isProductImage && original == null) return;
+
+            output.CoverFileUploadId = coverUploadId;
+            output.Img_Original = MoveCoverFirst(output.Img_Original, coverUploadId, original);
+            output.Img_Medium = MoveCoverFirst(output.Img_Medium, coverUploadId,
+                isProductImage ? null : await BuildCoverDisplayAsync(coverUploadId, 2, original));
+            output.Img_Small = MoveCoverFirst(output.Img_Small, coverUploadId,
+                isProductImage ? null : await BuildCoverDisplayAsync(coverUploadId, 3, original));
+        }
+
+        // 規格圖不在商品圖清單裡，依尺寸另外取連結；該尺寸沒有就沿用原圖，確保三個清單等長
+        private async Task<FileGetProdDisplayDto?> BuildCoverDisplayAsync(long coverUploadId, int size, FileGetProdDisplayDto? fallback)
+        {
+            var links = await fileUploadAppService.getImgFilesById(new List<long> { coverUploadId }, size);
+            var link = links?.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+            if (link == null) return fallback;
+
+            return new FileGetProdDisplayDto
+            {
+                Id = coverUploadId,
+                FileType = 1,
+                Name = "",
+                Link = new List<string> { link }
+            };
+        }
+
+        // 封面排第一張；noImg 佔位圖（Id = 0）在有封面後移除
+        private static List<FileGetProdDisplayDto> MoveCoverFirst(List<FileGetProdDisplayDto> images, long coverUploadId, FileGetProdDisplayDto? specCover)
+        {
+            var current = images ?? new List<FileGetProdDisplayDto>();
+            var cover = specCover ?? current.FirstOrDefault(x => x.Id == coverUploadId);
+            if (cover == null) return current;
+
+            var rest = current.Where(x => x.Id != coverUploadId && x.Id != 0);
+            return new List<FileGetProdDisplayDto> { cover }.Concat(rest).ToList();
+        }
+
         public async Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto)
         {
             try
@@ -1721,18 +1769,8 @@ namespace EtheriT.Coker.Application.Product
                                 Tag_Name = x.Key.Title
                             }).ToList());
 
-                var imageRows = await fileUploadAppService.getImgsFiles(new FileGetImgsInputDto
-                {
-                    Sid = outputIds,
-                    Type = (int)FileBindTypeEnum.產品,
-                    Size = 1
-                });
-                var imageMap = imageRows
-                    .Where(x => !string.IsNullOrWhiteSpace(x.Link))
-                    .GroupBy(x => x.Sid)
-                    // getImgsFiles 已依商品、圖片 SerNo、Upload Id 排序；沿用第一張，
-                    // 避免改以 Upload Id 取圖而與商品內頁的後台排序不一致。
-                    .ToDictionary(x => x.Key, x => x.First().Link);
+                // 預設圖片 → 第一張商品圖 → 第一張規格圖（與後台列表同一套規則）
+                var imageMap = await fileUploadAppService.GetProductDisplayImageMapAsync(outputIds, websiteId, 1);
 
                 var favoriteMap = await db.Favorites.AsNoTracking()
                     .Where(x => x.UUID == uuid
@@ -2083,6 +2121,40 @@ namespace EtheriT.Coker.Application.Product
                     output.Success = true;
                 }
                 else output.Error = "商品價格不屬於目前網站，已停止刪除";
+            }
+            catch (Exception e)
+            {
+                output.Success = false;
+                output.Error = e.Message;
+            }
+
+            return output;
+        }
+        public async Task<ResponseMessageDto> SetCoverImage(ProdSetCoverImageDto dto)
+        {
+            ResponseMessageDto output = new ResponseMessageDto() { Success = false };
+
+            try
+            {
+                if (dto == null || dto.ProductId <= 0) throw new Exception("商品編號錯誤");
+
+                long websiteId = await loginUserData.GetWebsiteId();
+                var db_p = await db.Prods
+                    .Where(e => e.Id == dto.ProductId && e.FK_WebsiteId == websiteId && !e.IsDeleted)
+                    .FirstOrDefaultAsync();
+                if (db_p == null) throw new Exception("商品不屬於目前網站，已停止設定預設圖片");
+
+                long? coverId = dto.FileUploadId is > 0 ? dto.FileUploadId : null;
+                if (coverId.HasValue &&
+                    !await fileUploadAppService.IsProductCoverCandidateAsync(db_p.Id, coverId.Value, websiteId))
+                    throw new Exception("預設圖片必須是此商品或其規格的圖片");
+
+                if (db_p.CoverFileUploadId != coverId)
+                {
+                    db_p.CoverFileUploadId = coverId;
+                    await loginUserData.SaveChanges(db_p);
+                }
+                output.Success = true;
             }
             catch (Exception e)
             {

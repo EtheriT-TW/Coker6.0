@@ -5877,6 +5877,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<int?>("Clicks")
                         .HasColumnType("int");
 
+                    b.Property<long?>("CoverFileUploadId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("CreationTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")

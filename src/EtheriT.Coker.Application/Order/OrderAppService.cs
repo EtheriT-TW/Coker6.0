@@ -3114,6 +3114,68 @@ namespace EtheriT.Coker.Application.Order
 
             return now >= baseTime.AddMinutes(payment.RepayAfterMinutes.Value);
         }
+        // 沒有規格圖的明細改用商品預設圖片（後台指定 → 第一張商品圖 → 第一張規格圖）；
+        // 商品已刪除等取不到時，沿用舊規則：第一張商品圖
+        private async Task FillProductCoverImagePathAsync(long ohid, long websiteId, List<OrderDetailDisplayDto> details)
+        {
+            var prodIds = details
+                .Where(x => string.IsNullOrWhiteSpace(x.ImagePath) && x.ProdId > 0)
+                .Select(x => x.ProdId)
+                .Distinct()
+                .ToList();
+            if (prodIds.Count == 0) return;
+
+            var orderWebsiteId = websiteId != 0
+                ? websiteId
+                : await db.Order_Headers
+                    .Where(x => x.Id == ohid)
+                    .Select(x => x.FK_WebsiteId)
+                    .FirstOrDefaultAsync();
+
+            var uploadIdByProd = await fileUploadAppService.GetProductDisplayUploadIdMapAsync(prodIds, orderWebsiteId);
+            var uploadIds = uploadIdByProd.Values.Distinct().ToList();
+            var pathByUploadId = uploadIds.Count == 0
+                ? new Dictionary<long, string?>()
+                : await db.FileUploads
+                    .Where(x => uploadIds.Contains(x.Id))
+                    .ToDictionaryAsync(x => x.Id, x => x.DownloadFileName);
+
+            var legacyProdIds = prodIds.Where(id => !uploadIdByProd.ContainsKey(id)).ToList();
+            var legacyPathByProd = new Dictionary<long, string?>();
+            if (legacyProdIds.Count > 0)
+            {
+                var legacyRows = await (
+                    from f in db.FileBinds
+                    join fu in db.FileUploads on f.FK_FileUploadId equals fu.Id
+                    where legacyProdIds.Contains(f.Sid)
+                          && f.type == (int)FileBindTypeEnum.產品
+                          && (websiteId == 0 || fu.FK_WebsiteId == websiteId)
+                          && fu.ContentType.StartsWith("image")
+                    select new { f.Sid, f.SerNo, f.CreationTime, fu.DownloadFileName }
+                ).ToListAsync();
+                legacyPathByProd = legacyRows
+                    .GroupBy(x => x.Sid)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.OrderBy(x => x.SerNo).ThenBy(x => x.CreationTime).First().DownloadFileName);
+            }
+
+            foreach (var item in details.Where(x => string.IsNullOrWhiteSpace(x.ImagePath) && x.ProdId > 0))
+            {
+                if (uploadIdByProd.TryGetValue(item.ProdId, out var uploadId) &&
+                    pathByUploadId.TryGetValue(uploadId, out var coverPath) &&
+                    !string.IsNullOrWhiteSpace(coverPath))
+                {
+                    item.ImagePath = coverPath;
+                }
+                else if (legacyPathByProd.TryGetValue(item.ProdId, out var legacyPath) &&
+                    !string.IsNullOrWhiteSpace(legacyPath))
+                {
+                    item.ImagePath = legacyPath;
+                }
+            }
+        }
+
         private async Task<List<OrderDetailDisplayDto>> GetOrderDetailSnapshotDisplayAsync(long ohid)
         {
             var orgName = await loginUserData.GetWebsiteOrgName();
@@ -3159,8 +3221,8 @@ namespace EtheriT.Coker.Application.Order
                     Subtotal = sc.Price * sc.Quantity,
                     SubtotalBonus = (sc.Bonus ?? 0) * sc.Quantity,
 
-                    // 規格圖優先：買的是哪個規格就顯示哪個規格的圖，
-                    // 該規格沒設圖才退回商品主圖，都沒有才用預設圖。
+                    // 版型二：先用買的那個規格的規格圖；
+                    // 其餘情況由 FillProductCoverImagePathAsync 補商品預設圖片，都沒有才用預設圖。
                     ImagePath = (
                         from f in db.FileBinds.Include(e => e.fileUpload)
                         where isLayout2
@@ -3171,18 +3233,11 @@ namespace EtheriT.Coker.Application.Order
                               && f.fileUpload.ContentType.StartsWith("image")
                         orderby f.SerNo, f.CreationTime
                         select f.fileUpload.DownloadFileName
-                    ).FirstOrDefault() ?? (
-                        from f in db.FileBinds.Include(e => e.fileUpload)
-                        where f.Sid == sc.ProductId
-                              && f.type == (int)FileBindTypeEnum.產品
-                              && f.fileUpload != null
-                              && (websiteId == 0 || f.fileUpload.FK_WebsiteId == websiteId)
-                              && f.fileUpload.ContentType.StartsWith("image")
-                        orderby f.SerNo, f.CreationTime
-                        select f.fileUpload.DownloadFileName
-                    ).FirstOrDefault() ?? "/images/RemovedProd.png"
+                    ).FirstOrDefault() ?? ""
                 }
             ).ToListAsync();
+
+            await FillProductCoverImagePathAsync(ohid, websiteId, details);
 
             foreach (var item in details)
             {

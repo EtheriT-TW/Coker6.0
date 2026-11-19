@@ -63,11 +63,19 @@
             const original = Array.isArray(result.img_Original) ? result.img_Original.slice() : [];
             const stocks = Array.isArray(result.stocks) ? result.stocks : [];
             const indexById = {};
+            // 後端已把預設圖片排在第一張；若它是規格圖，這裡不再重複加入
+            const coverId = result.coverFileUploadId || null;
+            const coverIsFirst = coverId != null && medium.length > 0 && medium[0].id === coverId;
 
             stocks.forEach(stock => {
                 // 版型一每個規格只呈現一張；後台若殘留多張（例如從版型二切回來）只取第一張
                 const items = specImageItems(stock).slice(0, 1);
                 if (!items.length) return;   // 沒有規格圖就略過，不補佔位圖
+
+                if (coverIsFirst && items[0].id === coverId) {
+                    indexById[stock.id] = 0;   // 點這個規格直接回到第一張
+                    return;
+                }
 
                 indexById[stock.id] = medium.length;
 

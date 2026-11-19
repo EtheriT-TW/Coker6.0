@@ -35,5 +35,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public List<FileGetProdDisplayDto> Img_Original { get; set; }
         public List<FileGetProdDisplayDto> Img_Medium { get; set; }
         public List<FileGetProdDisplayDto> Img_Small { get; set; }
+        /// <summary>有效的預設圖片 FileUpload.Id；已排在 Img_* 第一張，前台用來避免規格圖重複</summary>
+        public long? CoverFileUploadId { get; set; }
     }
 }

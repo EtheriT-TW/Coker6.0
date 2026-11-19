@@ -680,6 +680,7 @@
  * @property {CokerThirdPartyApi} ThirdParty
  * @property {CokerTechnicalCertificateApi} TechnicalCertificate
  * @property {CokerTemplatesApi} Templates
+ * @property {{start: (url: string, websiteId: string) => Promise<object>, latest: (websiteId: string) => Promise<object|null>, getStatus: (taskId: string, websiteId: string) => Promise<object>, cancel: (taskId: string, websiteId: string) => Promise<object>}} SiteCrawl
  * @property {CokerUserApi} User
  * @property {CokerUserHabitsApi} UserHabits
  * @property {CokerWebMesnusApi} WebMesnus

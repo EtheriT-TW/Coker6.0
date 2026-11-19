@@ -2,6 +2,8 @@
  obj:{
     autoplay:boolen 是否輪播
  }
+ .one_swiper／.one_swiper_thumbs 加 data-autoplay="true" 時，沒有明確傳 autoplay:false 就自動播放
+ （網站爬蟲匯入的舊站輪播用，舊站輪播原本就會自己切換；後台編輯器傳 false，編輯時不會跑）
  ***************/
 //# sourceURL=Swiper.js
 function SwiperInit(obj) {
@@ -174,7 +176,7 @@ function SwiperInit(obj) {
             if (typeof effect === 'undefined' || effect === false) effect = "slide";
             if (typeof speed === 'undefined' || speed === false) speed = 300;
             else speed = parseInt(speed);
-            var autoplay = obj.autoplay ? canNext : false;
+            var autoplay = (obj.autoplay || (obj.autoplay !== false && $self.data("autoplay") === true)) ? canNext : false;
             let siwerTimer;
             var selfConfig = Object.assign({}, config, {
                 pagination: {
@@ -303,7 +305,7 @@ function SwiperInit(obj) {
                 speed = parseInt(speed);
             }
 
-            var autoplay = obj.autoplay ? canNext : false;
+            var autoplay = (obj.autoplay || (obj.autoplay !== false && $self.data("autoplay") === true)) ? canNext : false;
 
             // 先取得主輪播圖片
             const $images = [];

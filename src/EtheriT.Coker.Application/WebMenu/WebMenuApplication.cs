@@ -834,7 +834,9 @@ namespace EtheriT.Coker.Application
         }
         private async Task Update(MenuItemDto dto)
         {
-            var menu = await db.WebMenus.FirstOrDefaultAsync(e => e.Id == dto.Id);
+            var websiteId = await loginUserData.GetWebsiteId();
+            var menu = await db.WebMenus.FirstOrDefaultAsync(e =>
+                e.Id == dto.Id && e.FK_WebsiteId == websiteId && !e.IsDeleted);
             var user = await loginUserData.GetUser();
             if (menu == null) throw new Exception("查無資料");
             mapper.Map(dto, menu);

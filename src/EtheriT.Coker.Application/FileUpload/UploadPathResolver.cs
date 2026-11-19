@@ -47,6 +47,35 @@ namespace EtheriT.Coker.Application
             throw new DirectoryNotFoundException($"找不到網站 Upload 目錄：{orgName}");
         }
 
+        public string EnsureRootPath(string orgName)
+        {
+            if (string.IsNullOrWhiteSpace(orgName))
+                throw new Exception("orgName 不可為空");
+
+            if (orgName != Path.GetFileName(orgName) || orgName is "." or "..")
+                throw new Exception("orgName 不合法");
+
+            var roots = (virtualDirectory.UploadRoots ?? new Dictionary<string, string>())
+                .Values
+                .Where(root => !string.IsNullOrWhiteSpace(root))
+                .ToList();
+
+            var existing = roots
+                .Select(root => Path.Combine(root, orgName))
+                .FirstOrDefault(siteRoot => IODirectory.Exists(siteRoot));
+            if (existing != null)
+                return existing;
+
+            // 根目錄本身不存在代表設定有誤，不自動建立，交由 GetRootPath 回報。
+            var targetRoot = roots.FirstOrDefault(root => IODirectory.Exists(root));
+            if (targetRoot == null)
+                return GetRootPath(orgName);
+
+            var created = Path.Combine(targetRoot, orgName);
+            IODirectory.CreateDirectory(created);
+            return created;
+        }
+
         public string GetDirectoryPath(string orgName, string directory)
         {
             return Path.Combine(GetRootPath(orgName), directory);

@@ -1,4 +1,5 @@
 ﻿function PageReady() {
+    initializeSiteCrawl();
     var menuEditor;
     var initialStateRestored = false;
     const myOffcanvas = new bootstrap.Offcanvas('#offcanvasSite');
@@ -7,6 +8,237 @@
             return co.WebMesnus.GetPageTypeList();
         }
     });
+
+    function initializeSiteCrawl() {
+        const modal = document.getElementById("SiteCrawlModal");
+        if (!modal) return;
+
+        const field = name => document.getElementById("siteCrawl" + name);
+        const websiteId = modal.dataset.websiteId;
+        const activeStatuses = ["Queued", "Running", "CancelRequested"];
+        let timer;
+        let busy = false;
+        let current;
+        let reloadedTaskId;
+        let reloadingTaskId;
+        // 匯入前偵測的結果：{ sourceUrl, lists }；choices 是使用者在確認畫面的選擇（key → 是否當商品）。
+        let detected;
+        const choices = new Map();
+
+        function normalizeUrl(value) {
+            try {
+                const url = new URL(String(value ?? "").trim());
+                url.hash = "";
+                return url.href;
+            } catch {
+                return "";
+            }
+        }
+
+        function detectionMatchesInput() {
+            return !!detected && normalizeUrl(field("Url").value) === normalizeUrl(detected.sourceUrl);
+        }
+
+        function updateButtons() {
+            const active = busy || activeStatuses.includes(current?.status);
+            const matches = detectionMatchesInput();
+            field("Detect").disabled = active;
+            field("Start").disabled = active || !matches;
+            field("ListsStale").classList.toggle("d-none", !detected || matches);
+        }
+
+        function updateListsCount() {
+            const products = detected?.lists.filter(item => choices.get(item.key)).length ?? 0;
+            field("ListsCount").textContent = detected
+                ? `共 ${detected.lists.length} 個列表，標成商品 ${products} 個` : "";
+        }
+
+        function createListRow(item) {
+            const row = document.createElement("tr");
+            const name = document.createElement("td");
+            const title = document.createElement("div");
+            title.className = "fw-semibold";
+            title.textContent = item.title;
+            const meta = document.createElement("div");
+            meta.className = "small text-body-secondary";
+            meta.textContent = item.path ? item.path + "　" : "";
+            const link = document.createElement("a");
+            link.href = item.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "舊站頁面";
+            meta.append(link);
+            name.append(title, meta);
+
+            const kind = document.createElement("td");
+            kind.className = "d-none d-sm-table-cell text-nowrap";
+            kind.textContent = item.kindName;
+
+            const choiceCell = document.createElement("td");
+            const select = document.createElement("select");
+            select.className = "form-select form-select-sm";
+            select.setAttribute("aria-label", `「${item.title}」匯入成`);
+            select.dataset.listKey = item.key;
+            for (const [value, text] of [["article", "文章"], ["product", "商品"]]) {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = text;
+                select.append(option);
+            }
+            select.value = choices.get(item.key) ? "product" : "article";
+            select.disabled = item.locked;
+            select.addEventListener("change", () => {
+                choices.set(item.key, select.value === "product");
+                updateListsCount();
+            });
+            choiceCell.append(select);
+
+            const reason = document.createElement("td");
+            reason.className = "d-none d-md-table-cell small";
+            reason.textContent = item.reason;
+            row.append(name, kind, choiceCell, reason);
+            return row;
+        }
+
+        // 只有新的偵測結果才重設選擇；輪詢同一個任務時保留使用者改過的選項。
+        function showDetection(status, result) {
+            const isNew = detected?.taskId !== status.taskId;
+            detected = { taskId: status.taskId, sourceUrl: result.sourceUrl, lists: result.lists ?? [] };
+            if (isNew) {
+                choices.clear();
+                for (const item of detected.lists) choices.set(item.key, item.product);
+                if (!field("Url").value.trim()) field("Url").value = result.sourceUrl;
+                field("Lists").replaceChildren(...detected.lists.map(createListRow));
+            }
+            field("ListsPanel").classList.remove("d-none");
+            updateListsCount();
+        }
+
+        function setAllChoices(product) {
+            if (!detected) return;
+            for (const item of detected.lists) {
+                if (!item.locked) choices.set(item.key, product);
+            }
+            field("Lists").querySelectorAll("select[data-list-key]").forEach(select => {
+                if (!select.disabled) select.value = product ? "product" : "article";
+            });
+            updateListsCount();
+        }
+
+        const logoStatusText = {
+            imported: " 網站Logo已匯入。",
+            unchanged: " 網站Logo與舊站相同。",
+            kept: " 網站Logo已有設定，未覆蓋。"
+        };
+
+        function render(status) {
+            const result = status?.resultJson ? JSON.parse(status.resultJson) : null;
+            current = status;
+            field("ProgressPanel").classList.toggle("d-none", !status);
+            field("Progress").value = status?.progress ?? 0;
+            field("Message").textContent = status?.message ?? "";
+            field("Error").textContent = status?.error ?? "";
+            const canCancel = status?.status === "Queued" || status?.status === "Running";
+            field("Cancel").classList.toggle("d-none", !canCancel);
+            const isDetection = result?.mode === "detect";
+            if (isDetection && status.status === "Succeeded") showDetection(status, result);
+            else if (status && !isDetection) {
+                detected = undefined;
+                field("ListsPanel").classList.add("d-none");
+            }
+            field("Summary").textContent = isDetection
+                ? `偵測讀取 ${result.pagesScanned} 頁，找到 ${result.lists?.length ?? 0} 個列表。`
+                : result?.pagesScanned != null
+                ? `掃描 ${result.pagesScanned} 個內容頁，新增選單 ${result.menusCreated} 個、更新選單 ${result.menusUpdated ?? 0} 個。` +
+                    (result.pagesWithBanner == null ? "" :
+                        ` 辨識到版頭 ${result.pagesWithBanner} 頁、頁尾 ${result.pagesWithFooter} 頁。`) +
+                    (result.bannerVotes > 0 || result.footerVotes > 0 ?
+                        ` 新增輪播 ${result.slidesAdded} 張，頁尾${result.footerUpdated ? "已更新" : "未更新"}。` : "") +
+                    (logoStatusText[result.logoStatus] ?? "") +
+                    (result.articlesCreated > 0 || result.articlesUpdated > 0 ?
+                        ` 文章新增 ${result.articlesCreated} 篇、更新 ${result.articlesUpdated} 篇。` : "") +
+                    (result.productsCreated > 0 || result.productsUpdated > 0 ?
+                        ` 商品新增 ${result.productsCreated} 個、更新 ${result.productsUpdated} 個。` : "")
+                : "";
+            const errors = (result?.errors ?? []).map(message => {
+                const item = document.createElement("li");
+                item.textContent = message;
+                return item;
+            });
+            field("Errors").replaceChildren(...errors);
+            for (const path of result?.queryLimitPaths ?? []) {
+                const item = document.createElement("li");
+                item.textContent = "已停止展開查詢參數：" + path;
+                field("Errors").append(item);
+            }
+            if (result?.pageLimitReached || result?.errorCount > errors.length) {
+                const item = document.createElement("li");
+                item.textContent = result.pageLimitReached ? "已達掃描頁數上限。" : "其餘錯誤未列出。";
+                field("Errors").append(item);
+            }
+
+            if (menuEditor && status?.status === "Succeeded" &&
+                (result?.menusCreated > 0 || result?.menusUpdated > 0) &&
+                status.taskId !== reloadedTaskId && status.taskId !== reloadingTaskId) {
+                const taskId = status.taskId;
+                reloadingTaskId = taskId;
+                menuReload(menuEditor, myOffcanvas, () => {
+                    reloadedTaskId = taskId;
+                }, false).always(() => {
+                    if (reloadingTaskId === taskId) reloadingTaskId = undefined;
+                });
+            }
+        }
+
+        async function refresh(action) {
+            if (busy) return;
+            clearTimeout(timer);
+            busy = true;
+            updateButtons();
+            field("Cancel").disabled = true;
+            try {
+                render(await action());
+            } catch (error) {
+                field("Error").textContent = error.message;
+            } finally {
+                busy = false;
+                updateButtons();
+                field("Cancel").disabled = false;
+                if (activeStatuses.includes(current?.status)) {
+                    timer = setTimeout(() => refresh(() => co.SiteCrawl.getStatus(current.taskId, websiteId)), 1000);
+                }
+            }
+        }
+
+        function queue(create) {
+            refresh(async () => {
+                const task = await create();
+                render({ taskId: task.taskId, status: "Queued", message: "等待伺服器開始處理" });
+                return co.SiteCrawl.getStatus(task.taskId, websiteId);
+            });
+        }
+
+        modal.addEventListener("shown.bs.modal", () => {
+            refresh(() => co.SiteCrawl.latest(websiteId));
+        });
+        // 表單送出（Enter 或「偵測列表」）一律是偵測；匯入要按「開始匯入」，避免沒確認就匯入。
+        field("Form").addEventListener("submit", event => {
+            event.preventDefault();
+            if (busy || activeStatuses.includes(current?.status)) return;
+            queue(() => co.SiteCrawl.detect(field("Url").value, websiteId));
+        });
+        field("Start").addEventListener("click", () => {
+            if (busy || activeStatuses.includes(current?.status) || !detectionMatchesInput()) return;
+            const productLists = detected.lists.filter(item => choices.get(item.key)).map(item => item.key);
+            queue(() => co.SiteCrawl.start(detected.sourceUrl, websiteId, productLists));
+        });
+        field("Url").addEventListener("input", updateButtons);
+        field("AllArticles").addEventListener("click", () => setAllChoices(false));
+        field("AllProducts").addEventListener("click", () => setAllChoices(true));
+        field("Cancel").addEventListener("click", () => {
+            refresh(() => co.SiteCrawl.cancel(current.taskId, websiteId));
+        });
+    }
 
     function reopenMenuItem(id) {
         const targetId = String(id);
@@ -580,7 +812,7 @@ function updateMenuEditorAddTitle() {
 }
 
 function menuReload(menuEditor, myOffcanvas, afterReload, showOffcanvas) {
-    co.WebMesnus.getAll().done(function (result) {
+    return co.WebMesnus.getAll().done(function (result) {
         if (result.success) {
             //console.log(result.maps)
             (menuEditor.setDataPreserve || menuEditor.setData).call(menuEditor, result.maps);

@@ -39,6 +39,7 @@
         "wwwroot/js/CokerCore/ThirdParty.js",
         "wwwroot/js/CokerCore/TechnicalCertificate.js",
         "wwwroot/js/CokerCore/Templates.js",
+        "wwwroot/js/CokerCore/SiteCrawl.js",
         "wwwroot/js/CokerCore/User.js",
         "wwwroot/js/CokerCore/UserHabits.js",
         "wwwroot/js/CokerCore/WebMesnus.js",

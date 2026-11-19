@@ -412,9 +412,17 @@ namespace EtheriT.Coker.Application
         }
         public async Task<bool> isSystemUser()
         {
-            var userId = await GetUserId();
-            var data = db.MappingUserAndRoles.Include(e => e.Role).Where(e => e.UserId == userId && e.Role!.Type == RoleTypeEnum.系統維護);
-            return data.Any();
+            return await HasActiveSystemRoleAsync(await GetUserId());
+        }
+
+        private Task<bool> HasActiveSystemRoleAsync(long userId)
+        {
+            return db.MappingUserAndRoles.AnyAsync(mapping =>
+                mapping.UserId == userId &&
+                !mapping.IsDeleted &&
+                mapping.Role != null &&
+                !mapping.Role.IsDeleted &&
+                mapping.Role.Type == RoleTypeEnum.系統維護);
         }
         public async Task<bool> CanAccessMvc()
         {
@@ -468,13 +476,7 @@ namespace EtheriT.Coker.Application
 
             bool check = false;
             try {
-                var isSystemUser = await db.MappingUserAndRoles
-                    .Include(m => m.Role)
-                    .AnyAsync(m =>
-                        m.UserId == userId &&
-                        m.Role != null &&
-                        m.Role.Type == RoleTypeEnum.系統維護);
-                if (isSystemUser)
+                if (await HasActiveSystemRoleAsync(userId))
                 {
                     return await db.Websites.AnyAsync(w =>
                         w.Id == websiteId &&
@@ -543,9 +545,12 @@ namespace EtheriT.Coker.Application
         }
         public async Task SetLogs(string Paramater, string response) {
             var user = await GetUser();
-            var routeData = httpContextAccessor.HttpContext.GetRouteData();
-			var Action = routeData.Values["action"]?.ToString();
-			var Controller = routeData.Values["controller"]?.ToString();
+            var context = httpContextAccessor.HttpContext;
+            if (context == null && !backgroundOperationContext.IsActive)
+                throw new InvalidOperationException("缺少稽核執行上下文。");
+            var routeData = context?.GetRouteData();
+            var Action = routeData?.Values["action"]?.ToString() ?? (context == null ? "Import" : null);
+            var Controller = routeData?.Values["controller"]?.ToString() ?? (context == null ? "BackgroundJob" : null);
             var WebsiteID = await GetWebsiteId();
 
             if (!WebsiteID.IsNullOrEmpty())
@@ -553,10 +558,10 @@ namespace EtheriT.Coker.Application
                 db.AuditLogs.Add(new Core.Models.AuditLog
                 {
                     ClientIpAddress = GetClientIP(),
-                    BrowserInfo = httpContextAccessor.HttpContext.Request.Headers["User-Agent"].ToString(),
+                    BrowserInfo = context?.Request.Headers["User-Agent"].ToString() ?? "",
                     ExecutionTime = DateTime.Now,
                     MethodName = Action,
-                    Parameters = Paramater,
+                    Parameters = context == null ? "背景匯入" : Paramater,
                     ServiceName = Controller,
                     ReturnValue = response,
                     UserId = user.Id,

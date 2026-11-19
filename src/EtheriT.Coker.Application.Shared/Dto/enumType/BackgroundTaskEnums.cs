@@ -4,7 +4,8 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
     {
         ProductImport = 1,
         ProductExport = 2,
-        FileCleanup = 3
+        FileCleanup = 3,
+        SiteCrawl = 4
     }
 
     public enum BackgroundTaskStatusEnum
@@ -14,7 +15,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         Succeeded = 2,
         Failed = 3,
         Expired = 4,
-        AwaitingConfirmation = 5
+        AwaitingConfirmation = 5,
+        CancelRequested = 6,
+        Canceled = 7
     }
 
     public enum NotificationTypeEnum

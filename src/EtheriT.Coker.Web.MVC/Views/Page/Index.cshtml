@@ -1,7 +1,9 @@
 ﻿@using EtheriT.Coker.Web.MVC.Views.Shared.Components.Modal
 @model EtheriT.Coker.Application.Shared.Dto.Webs.WebsiteFrameDto;
+@inject EtheriT.Coker.Application.LoginUserData CrawlUser
 @{
     ViewData["Title"] = "CustomPage";
+    var canCrawl = await CrawlUser.isSystemUser();
 }
 @{
     await Html.RenderPartialAsync(@"GrapesComponents\_ScriptComponents");
@@ -22,11 +24,17 @@
     const hasRole = @Model.hasRole.ToString().ToLower();
 </script>
 <div id="TopLine" class="py-2 px-4">
-    <div class="d-flex">
+    <div class="d-flex site-crawl-toolbar">
         <div class="title fw-bold fs-4">自訂頁面</div>
         <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasSite" role="button" aria-controls="offcanvasSite">
             網站地圖
         </a>
+        @if (canCrawl)
+        {
+            <button id="SiteCrawlActions" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#SiteCrawlModal">
+                網站爬蟲匯入
+            </button>
+        }
     </div>
 </div>
 <div id="gjs" class="d-none"></div>
@@ -52,3 +60,7 @@
 </div>
 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "PermissionDetailsModal" })
 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "FrontRolesModal" })
+@if (canCrawl)
+{
+    @await Component.InvokeAsync(nameof(Modal), new { dispaly = "SiteCrawlModal" })
+}

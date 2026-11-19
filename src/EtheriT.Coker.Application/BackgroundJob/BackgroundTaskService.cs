@@ -11,7 +11,7 @@ namespace EtheriT.Coker.Application.BackgroundJob
         public BackgroundTaskConflictException(string message) : base(message) { }
     }
 
-    public sealed class BackgroundTaskService
+    public sealed partial class BackgroundTaskService
     {
         private readonly DbContextOptions<CokerDbContext> dbOptions;
         private readonly IUploadPathResolver uploadPathResolver;
@@ -376,11 +376,19 @@ namespace EtheriT.Coker.Application.BackgroundJob
             var staleBefore = now.AddHours(-6);
             var staleTasks = await db.BackgroundTasks
                 .Where(x => x.ActiveKey != null)
-                .Where(x => x.Status == BackgroundTaskStatusEnum.Queued || x.Status == BackgroundTaskStatusEnum.Running)
+                .Where(x => x.Status == BackgroundTaskStatusEnum.Queued
+                    || x.Status == BackgroundTaskStatusEnum.Running
+                    || x.Status == BackgroundTaskStatusEnum.CancelRequested)
                 .Where(x => (x.LastModificationTime ?? x.CreationTime) <= staleBefore)
                 .ToListAsync();
             foreach (var staleTask in staleTasks)
             {
+                if (staleTask.Type == BackgroundTaskTypeEnum.SiteCrawl)
+                {
+                    await CloseStaleSiteCrawlAsync(db, staleTask, staleBefore, now);
+                    continue;
+                }
+
                 staleTask.Status = BackgroundTaskStatusEnum.Failed;
                 staleTask.Progress = 100;
                 staleTask.Message = "背景任務逾時，系統已解除鎖定";

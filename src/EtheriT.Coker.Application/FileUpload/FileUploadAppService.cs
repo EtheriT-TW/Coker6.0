@@ -401,6 +401,204 @@ namespace EtheriT.Coker.Application
             return response;
         }
 
+        internal async Task<string> ImportCrawlImageAsync(
+            Uri uri, string sourceHost, SiteCrawl.SiteCrawlHttp http, CancellationToken token)
+            => (await ImportCrawlImageFileAsync(uri, sourceHost, http, token)).Path!;
+
+        // 網站爬蟲匯入的 data: 圖片（舊站編輯器直接貼上的 base64 圖）：解碼後比照一般圖片存檔，同內容只存一份。
+        internal async Task<string> ImportCrawlDataImageAsync(string dataUri, CancellationToken token)
+        {
+            await EnsureCanvasImageImportPermissionAsync();
+            var comma = dataUri.IndexOf(',');
+            if (comma < 0 || !dataUri.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase)
+                || !dataUri[..comma].EndsWith(";base64", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("不是 base64 格式的圖片。");
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(dataUri[(comma + 1)..].Trim());
+            }
+            catch (FormatException)
+            {
+                throw new InvalidOperationException("base64 圖片內容損壞。");
+            }
+            var websiteId = await loginUserData.GetWebsiteId();
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            uploadPathResolver.EnsureRootPath(orgName);
+            var source = "data:sha256," + Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+            var key = CreateCanvasImageSourceKey(websiteId, source);
+            var gate = AtomicFileLocks.GetOrAdd($"canvas-image-import:{websiteId}:{key:N}", _ => new SemaphoreSlim(1, 1));
+            await gate.WaitAsync(token);
+            try
+            {
+                var existing = await FindExistingCanvasImportAsync(websiteId, orgName, source, key);
+                if (existing != null) return existing.Path!;
+                using var content = new MemoryStream(bytes);
+                return (await SaveCanvasImageAsync(content, "crawl-image", source, key)).Path!;
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+
+        // 網站爬蟲匯入的列表圖片：比照後台上傳文章圖片，建立一筆 FileBind 綁到指定對象；已綁過就不重複綁。
+        internal async Task BindCrawlImageAsync(FileItemDto file, long sid, FileBindTypeEnum type)
+        {
+            if (file.Id is not > 0) throw new InvalidOperationException("圖片沒有上傳紀錄，無法綁定。");
+            var bindType = (int)type;
+            var binds = db.FileBinds.Where(b => !b.IsDeleted && b.Sid == sid && b.type == bindType);
+            if (await binds.AnyAsync(b => b.FK_FileUploadId == file.Id)) return;
+            var userId = await loginUserData.GetUserId();
+            var bind = new FileBind
+            {
+                Guid = Guid.NewGuid(),
+                Name = file.Name,
+                Sid = sid,
+                type = bindType,
+                num = 1,
+                SerNo = (await binds.MaxAsync(b => (int?)b.SerNo) ?? -1) + 1,
+                MediaLink = "",
+                FK_FileUploadId = file.Id,
+                IsVisible = true,
+                AreaKey = ""
+            };
+            loginUserData.setOptionParameter(bind, userId);
+            db.FileBinds.Add(bind);
+            await db.SaveChangesAsync();
+        }
+
+        // 網站爬蟲匯入的網站Logo：比照後台網站資料上傳（FileBind 網站Logo＋Website.Logo）。
+        // Website.Logo 存不含 orgName 的 DownloadFileName（例 /upload/htmlConten/x.png）：前台 upload 虛擬目錄指向該站目錄，
+        // file.Path 是後台網址（/upload/{orgName}/...），存它前台會找不到圖（2026-11-18 站台 110 實測）。
+        // 網站已有其他 Logo 時不覆蓋（可能是手動上傳的），回傳 kept；和舊站同一張回傳 unchanged。
+        internal async Task<string> SetCrawlWebsiteLogoAsync(FileItemDto file)
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+            var path = await db.FileUploads.Where(x => x.Id == file.Id && x.FK_WebsiteId == websiteId)
+                .Select(x => x.DownloadFileName).FirstOrDefaultAsync();
+            if (string.IsNullOrEmpty(path)) throw new InvalidOperationException("圖片沒有上傳紀錄，無法設成網站Logo。");
+            var website = await db.Websites.FirstOrDefaultAsync(x => x.Id == websiteId && !x.IsDeleted)
+                ?? throw new InvalidOperationException("找不到網站資料。");
+            // 舊版匯入誤存成後台網址（含 orgName）時視為同一張，順手改正。
+            var orgPath = $"/upload/{website.OrgName}/";
+            var current = website.Logo != null && website.OrgName is { Length: > 0 }
+                && website.Logo.StartsWith(orgPath, StringComparison.OrdinalIgnoreCase)
+                ? "/upload/" + website.Logo[orgPath.Length..] : website.Logo;
+            if (string.Equals(current, path, StringComparison.OrdinalIgnoreCase))
+            {
+                if (website.Logo == path) return "unchanged";
+                website.Logo = path;
+                await loginUserData.SaveChanges(website);
+                return "imported";
+            }
+            if (!string.IsNullOrEmpty(website.Logo)) return "kept";
+            await BindCrawlImageAsync(file, websiteId, FileBindTypeEnum.網站Logo);
+            website.Logo = path;
+            await loginUserData.SaveChanges(website);
+            return "imported";
+        }
+
+        internal async Task<FileItemDto> ImportCrawlImageFileAsync(
+            Uri uri, string sourceHost, SiteCrawl.SiteCrawlHttp http, CancellationToken token)
+        {
+            await EnsureCanvasImageImportPermissionAsync();
+            if (!SiteCrawl.SiteCrawlHttp.IsAllowed(uri, sourceHost))
+                throw new InvalidOperationException("圖片網址超出來源網域範圍。");
+            var websiteId = await loginUserData.GetWebsiteId();
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            uploadPathResolver.EnsureRootPath(orgName);
+            var source = uri.AbsoluteUri;
+            var key = CreateCanvasImageSourceKey(websiteId, source);
+            var gate = AtomicFileLocks.GetOrAdd($"canvas-image-import:{websiteId}:{key:N}", _ => new SemaphoreSlim(1, 1));
+            await gate.WaitAsync(token);
+            try
+            {
+                var existing = await FindExistingCanvasImportAsync(websiteId, orgName, source, key);
+                if (existing != null) return existing;
+                var remote = await http.GetAsync(uri, sourceHost, image: true, CanvasImageImportMaxBytes, token);
+                await using var content = remote.Content;
+                token.ThrowIfCancellationRequested();
+                return await SaveCanvasImageAsync(content, GetCanvasImageName(remote.Url.AbsoluteUri), source, key);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+
+        // 網站爬蟲匯入的內文附件（PDF、Word…，使用者 2026-11-17 要求比照圖片搬到新站）：同一個來源網址只存一份。
+        // 檔案類型以副檔名判斷（舊站常回 application/octet-stream），且必須在 FileAllow 允許清單內。
+        internal async Task<string> ImportCrawlFileAsync(
+            Uri uri, string sourceHost, SiteCrawl.SiteCrawlHttp http, CancellationToken token)
+        {
+            await EnsureCanvasImageImportPermissionAsync();
+            if (!SiteCrawl.SiteCrawlHttp.IsAllowed(uri, sourceHost))
+                throw new InvalidOperationException("檔案網址超出來源網域範圍。");
+            var name = SanitizeUploadedFileName(Uri.UnescapeDataString(uri.AbsolutePath));
+            var contentType = CrawlFileTypes.GetValueOrDefault(Path.GetExtension(name).TrimStart('.').ToLowerInvariant());
+            if (contentType == null || fileAllow.Ext?.Contains(contentType) != true)
+                throw new InvalidOperationException("不支援的檔案類型。");
+            var websiteId = await loginUserData.GetWebsiteId();
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            uploadPathResolver.EnsureRootPath(orgName);
+            var key = CreateCanvasImageSourceKey(websiteId, uri.AbsoluteUri);
+            var gate = AtomicFileLocks.GetOrAdd($"crawl-file-import:{websiteId}:{key:N}", _ => new SemaphoreSlim(1, 1));
+            await gate.WaitAsync(token);
+            try
+            {
+                var existing = await db.FileUploads
+                    .Where(file => file.FK_WebsiteId == websiteId && !file.IsDeleted && file.GuidKey == key)
+                    .OrderByDescending(file => file.Id)
+                    .Select(file => file.DownloadFileName)
+                    .ToListAsync(token);
+                foreach (var stored in existing.Where(path => !string.IsNullOrWhiteSpace(path)))
+                    if (File.Exists(uploadPathResolver.GetPhysicalPathFromDownloadFileName(orgName, NormalizeStoredUploadPath(stored))))
+                        return ApplyOrgToUploadPath(stored, orgName);
+
+                var maxBytes = Math.Max(fileAllow.MaxSize, 1) * 1024L * 1024L;
+                var remote = await http.GetAsync(uri, sourceHost, SiteCrawl.SiteCrawlContent.File, maxBytes, token);
+                await using var content = remote.Content;
+                if (content.Length == 0) throw new InvalidOperationException("檔案是空的。");
+                var formFile = new FormFile(content, 0, content.Length, "files", name)
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = contentType
+                };
+                var saved = await SaveFile(formFile, "", "htmlConten", convert: false);
+                if (saved.Id is not > 0 || string.IsNullOrWhiteSpace(saved.Path))
+                    throw new InvalidOperationException("檔案儲存失敗。");
+                var upload = await db.FileUploads.FirstAsync(file => file.Id == saved.Id.Value, token);
+                upload.GuidKey = key;
+                await db.SaveChangesAsync(token);
+                return saved.Path;
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+
+        private static readonly Dictionary<string, string> CrawlFileTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["pdf"] = "application/pdf",
+            ["doc"] = "application/msword",
+            ["docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ["xls"] = "application/vnd.ms-excel",
+            ["xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ["ppt"] = "application/vnd.ms-powerpoint",
+            ["pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ["odt"] = "application/vnd.oasis.opendocument.text",
+            ["ods"] = "application/vnd.oasis.opendocument.spreadsheet",
+            ["odp"] = "application/vnd.oasis.opendocument.presentation",
+            ["txt"] = "text/plain",
+            ["csv"] = "text/csv",
+            ["zip"] = "application/zip",
+            ["rar"] = "application/vnd.rar",
+            ["mp3"] = "audio/mpeg",
+            ["mp4"] = "video/mp4"
+        };
+
         private async Task EnsureCanvasImageImportPermissionAsync()
         {
             if (!await loginUserData.isSystemUser())
@@ -627,7 +825,7 @@ namespace EtheriT.Coker.Application
                 throw new InvalidOperationException("不允許存取內部網路圖片");
         }
 
-        private static bool IsPrivateAddress(IPAddress address)
+        internal static bool IsPrivateAddress(IPAddress address)
         {
             if (IPAddress.IsLoopback(address)) return true;
             if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();

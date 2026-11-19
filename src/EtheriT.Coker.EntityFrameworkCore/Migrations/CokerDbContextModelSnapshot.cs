@@ -1029,6 +1029,28 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                             Name = "相簿排版切換",
                             SerNo = 20,
                             Visible = true
+                        },
+                        new
+                        {
+                            Id = 3L,
+                            Code = "article-import-directory",
+                            CreationTime = new DateTime(2026, 11, 11, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 2L,
+                            IsDeleted = false,
+                            Name = "文章匯入目錄",
+                            SerNo = 30,
+                            Visible = true
+                        },
+                        new
+                        {
+                            Id = 4L,
+                            Code = "article-import-template",
+                            CreationTime = new DateTime(2026, 11, 13, 0, 0, 0, 0, DateTimeKind.Local),
+                            CreatorUserId = 2L,
+                            IsDeleted = false,
+                            Name = "匯入用文章樣板",
+                            SerNo = 40,
+                            Visible = true
                         });
                 });
 

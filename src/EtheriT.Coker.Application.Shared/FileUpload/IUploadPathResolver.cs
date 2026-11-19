@@ -7,6 +7,7 @@ namespace EtheriT.Coker.Application.Shared
     public interface IUploadPathResolver
     {
         string GetRootPath(string orgName);
+        string EnsureRootPath(string orgName);
         string GetDirectoryPath(string orgName, string directory);
         string GetPhysicalPath(string orgName, string relativePath);
         string GetPhysicalPathFromDownloadFileName(string orgName, string downloadFileName);

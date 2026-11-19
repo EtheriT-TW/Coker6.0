@@ -27,6 +27,26 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations.Seed
                     Visible = true,
                     CreatorUserId = 2,
                     CreationTime = new DateTime(2026, 9, 30, 0, 0, 0, DateTimeKind.Local),
+                },
+                new ComponentPurpose
+                {
+                    Id = 3,
+                    Code = "article-import-directory",
+                    Name = "文章匯入目錄",
+                    SerNo = 30,
+                    Visible = true,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2026, 11, 11, 0, 0, 0, DateTimeKind.Local),
+                },
+                new ComponentPurpose
+                {
+                    Id = 4,
+                    Code = "article-import-template",
+                    Name = "匯入用文章樣板",
+                    SerNo = 40,
+                    Visible = true,
+                    CreatorUserId = 2,
+                    CreationTime = new DateTime(2026, 11, 13, 0, 0, 0, DateTimeKind.Local),
                 }
             );
         }

@@ -76,10 +76,12 @@ namespace EtheriT.Coker.Application.Product
             result.InterestWeight = result.IsPersonalized ? 0.4 : 0d;
             var interestDenominator = totalInterest > 0 ? totalInterest : 1d;
 
+            // 規格只要可見且不是時價就列入候選；沒庫存的商品不排除，改在排序時排到後面。
+            var displayStocks = db.Prod_Stocks.AsNoTracking()
+                .Where(s => !s.IsDeleted && s.Visible && !s.IsTimePrice);
             var candidates = displayProducts.Where(p => p.Id != id
                 && p.Status != ProdStatusEnum.售完 && p.Status != ProdStatusEnum.停產
-                && db.Prod_Stocks.Any(s => s.FK_Pid == p.Id && !s.IsDeleted && s.Visible
-                    && !s.IsTimePrice && (p.NoStockManagement || s.Stock > 0))
+                && displayStocks.Any(s => s.FK_Pid == p.Id)
                 && bindings.Any(b => b.ProductId == p.Id && sourceTagIds.Contains(b.TagId)));
 
             // 彙總、計分、排序與 Take 均留在資料庫，不逐筆查詢或截斷候選池。
@@ -88,36 +90,52 @@ namespace EtheriT.Coker.Application.Product
                              join t in tags on b.TagId equals t.Id
                              join interest in interests on t.Id equals interest.TagId into userInterests
                              from interest in userInterests.DefaultIfEmpty()
-                             group new { t, Interest = (double?)interest.Weight ?? 0d } by new { p.Id, p.Title } into g
+                             group new { t, Interest = (double?)interest.Weight ?? 0d } by new { p.Id, p.Title, p.NoStockManagement } into g
                              select new
                              {
                                  g.Key.Id,
                                  g.Key.Title,
+                                 g.Key.NoStockManagement,
                                  TotalWeight = g.Sum(x => x.t.ProductIdfWeight),
                                  CommonWeight = g.Sum(x => sourceTagIds.Contains(x.t.Id) ? x.t.ProductIdfWeight : 0d),
                                  CommonTagCount = g.Count(x => sourceTagIds.Contains(x.t.Id)),
                                  Interest = g.Sum(x => x.Interest)
                              };
+            var similarityWeight = result.SimilarityWeight;
+            var interestWeight = result.InterestWeight;
             var scores = aggregates.Select(a => new
             {
                 a.Id,
                 a.Title,
                 a.CommonTagCount,
+                // 有勾「不做庫存管理」，或任一可見規格庫存大於 0，就算有貨
+                InStock = a.NoStockManagement || displayStocks.Any(s => s.FK_Pid == a.Id && s.Stock > 0),
                 Similarity = a.CommonWeight / (sourceWeight + a.TotalWeight - a.CommonWeight),
                 Interest = a.Interest / interestDenominator
-            });
-            var similarityWeight = result.SimilarityWeight;
-            var interestWeight = result.InterestWeight;
-            result.Items = await scores.Select(s => new ProductRecommendationItemDto
+            }).Select(s => new
             {
-                Id = s.Id,
-                Title = s.Title,
-                CommonTagCount = s.CommonTagCount,
-                SimilarityScore = s.Similarity,
-                InterestScore = s.Interest,
+                s.Id,
+                s.Title,
+                s.CommonTagCount,
+                s.InStock,
+                s.Similarity,
+                s.Interest,
                 Score = s.Similarity * similarityWeight + s.Interest * interestWeight
-            }).OrderByDescending(s => s.Score).ThenByDescending(s => s.SimilarityScore)
-                .ThenBy(s => s.Id).Take(count).ToListAsync();
+            });
+            // 有貨的商品一律排在沒貨的前面，同一組內再依推薦分數排序。
+            result.Items = await scores
+                .OrderByDescending(s => s.InStock).ThenByDescending(s => s.Score)
+                .ThenByDescending(s => s.Similarity).ThenBy(s => s.Id)
+                .Take(count)
+                .Select(s => new ProductRecommendationItemDto
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    CommonTagCount = s.CommonTagCount,
+                    SimilarityScore = s.Similarity,
+                    InterestScore = s.Interest,
+                    Score = s.Score
+                }).ToListAsync();
 
             if (result.Items.Count == 0) return result;
 

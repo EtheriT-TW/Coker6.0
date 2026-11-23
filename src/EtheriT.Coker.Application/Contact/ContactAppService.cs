@@ -118,8 +118,8 @@ namespace EtheriT.Coker.Application.Contact
                                 if (!string.IsNullOrEmpty(e.Title))
                                 {
                                     html += $@"<tr>
-										<td class='title'>{e.Title}</td>
-										<td>{e.Value.Replace(Environment.NewLine, "<br/>")}</td>
+										<td class='title'>{System.Net.WebUtility.HtmlEncode(e.Title)}</td>
+										<td>{System.Net.WebUtility.HtmlEncode(e.Value ?? "").Replace(Environment.NewLine, "<br/>")}</td>
 									</tr>";
                                 }
                                 if (e.Name == "email") recipient.Email = e.Value;

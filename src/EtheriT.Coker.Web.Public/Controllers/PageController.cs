@@ -457,7 +457,12 @@ namespace EtheriT.Coker.Web.Public.Controllers
                                 }
                             }
                         }
-                        else view = "../Error/NotFound";
+                        else
+                        {
+                            model.PageData = new GetFrontContenOutputDto { SiteName = L.get("PathError") };
+                            Response.StatusCode = 404;
+                            view = "../Error/NotFound";
+                        }
                         break;
                     case "techcert":
                         htmlSanitizeSourceType = HtmlSanitizeSourceType.技術證照;

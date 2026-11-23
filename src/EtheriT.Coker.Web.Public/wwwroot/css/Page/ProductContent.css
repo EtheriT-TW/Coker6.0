@@ -742,42 +742,19 @@ i.fa-chevron-right {
         z-index: 2;
     }
 
+    /* 電腦版：標籤全部顯示，放不下就換行；手機版左右滑動寫在 max-width: 768px 區段 */
     #Product > .image > .pro_tag {
         width: calc(100% - 30px);
         height: auto;
         margin: 0;
-        padding: 0 0 .35rem;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-        overscroll-behavior-x: contain;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x proximity;
+        padding: 0;
+        flex-wrap: wrap;
+        row-gap: .5rem;
         list-style: none;
     }
 
-        /* 不要加 scrollbar-width，一加 Chrome 就改用疊加式捲軸，常駐細條會消失 */
-        #Product > .image > .pro_tag::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        #Product > .image > .pro_tag::-webkit-scrollbar-track {
-            background: var(--gray-light);
-            border-radius: 999px;
-        }
-
-        #Product > .image > .pro_tag::-webkit-scrollbar-thumb {
-            background: var(--gray-text);
-            border-radius: 999px;
-        }
-
-            #Product > .image > .pro_tag::-webkit-scrollbar-thumb:hover {
-                background: var(--black-text);
-            }
-
         #Product > .image > .pro_tag > li {
             flex: 0 0 auto;
-            scroll-snap-align: start;
         }
 
         #Product > .image > .pro_tag .round_tag {

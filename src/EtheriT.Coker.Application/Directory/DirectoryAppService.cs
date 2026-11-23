@@ -568,7 +568,6 @@ namespace EtheriT.Coker.Application.Directory
             }
             int skip = (showNum == -500) ? 0 : (page - 1) * showNum;
 
-            // 圖片 fallback（沿用你原本 regex）
             Regex imgRegex = new Regex("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase);
 
             // ---------- 決定本次要查哪些類型（依 SearchId） ----------
@@ -855,7 +854,7 @@ namespace EtheriT.Coker.Application.Directory
                         Description = string.IsNullOrEmpty(m.Description)
                             ? getSearchDescription(m.Html, dto.SearchText)
                             : getSearchDescription(m.Description, dto.SearchText),
-                        MainImage = imgRegex.Match(m.Html ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "")
+                        MainImage = ExtractHtmlMainImage(m.Html)
                     });
                 }
                 else if (row.Type == DirectoryTypeEnum.文章)
@@ -881,7 +880,7 @@ namespace EtheriT.Coker.Application.Directory
                             : getSearchDescription(a.Description, dto.SearchText),
                         MainImage = (imgs.Count > 0)
                             ? imgs[0].Link
-                            : imgRegex.Match(a.Html ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", ""),
+                            : ExtractHtmlMainImage(a.Html),
                         tags = articleTags.TryGetValue(a.Id, out var t) ? t : null
                     });
                 }
@@ -2007,7 +2006,7 @@ namespace EtheriT.Coker.Application.Directory
                 if (string.IsNullOrEmpty(data.Description)) getSearchDescription(data.MainImage, dto.SearchText);
                 else getSearchDescription(data.Description, dto.SearchText);
                 if (imgs.Any()) data.MainImage = imgs[0].Link;
-                else data.MainImage = imgRegex.Match(data.MainImage ?? "").Value.Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
+                else data.MainImage = ExtractHtmlMainImage(data.MainImage);
 
                 var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).ToListAsync();
                 var stockids = stocks.Select(e => e.Id).ToList();
@@ -2059,6 +2058,19 @@ namespace EtheriT.Coker.Application.Directory
         private static readonly Regex RxStripTags = new(@"<[^>]+>", RegexOptions.Compiled);
 
         private static readonly Regex RxCollapseSpaces = new(@"\s+", RegexOptions.Compiled);
+
+
+        // 取 HTML 第一張圖的網址；GrapesJS 沒選圖時的佔位圖（data: 開頭）視為沒有圖，
+        // 回傳空字串讓前台 normalizeImagePath 退回網站分享圖（og:image）
+        private static readonly Regex RxHtmlFirstImage = new("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private static string ExtractHtmlMainImage(string? html)
+        {
+            var src = RxHtmlFirstImage.Match(html ?? "").Value
+                .Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
+            return src.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? "" : src;
+        }
+
         private string getSearchDescription(string? content, string findstr)
         {
             if (string.IsNullOrEmpty(content)) return string.Empty;

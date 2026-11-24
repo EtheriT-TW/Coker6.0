@@ -109,6 +109,13 @@ public static partial class BackofficeSandboxChecks
         var failed = await failedCanvas.ChatAsync(new() { Enabled = true }, canvasInput, default);
         Require(failed.Status == 422 && failed.Message.Contains("網站語系") && !failed.Message.Contains("secret"),
             "Legacy canvas errors must retain the known-code mapping without leaking provider text.");
+        var clarificationHttp = new ModelListFixture((_, _) => ModelResponse("""{"code":"CanvasPlannerOutputInvalid","reason":"ClarificationNotQuestion","message":"fixture-secret-body"}""", HttpStatusCode.UnprocessableEntity));
+        var clarificationClient = new CanvasAiClient(client, clarificationHttp, ready);
+        var clarificationFailure = await clarificationClient.ChatAsync(new() { Enabled = true }, canvasInput, default);
+        Require(clarificationFailure.Status == 422 && clarificationFailure.FailureReason == "ClarificationNotQuestion" &&
+            !clarificationFailure.Message.Contains("fixture-secret-body") &&
+            CanvasAiService.ClarificationRepairInstructions.Contains("summary") && CanvasAiService.ClarificationRepairInstructions.Contains("CURRENT"),
+            "The observed Gateway rejection must retain its known reason code for precise protocol repair without exposing raw provider text or parsing translated messages.");
 
         // Exercise the website facade with isolated settings and a fake HTTP transport only.
         var settingsService = box.Services.GetRequiredService<WebsiteAiSettingsService>();

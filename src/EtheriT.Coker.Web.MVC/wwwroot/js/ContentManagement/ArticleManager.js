@@ -3,6 +3,94 @@ let editor, directoryDatailList, ArticletForms, $ArticletTags, ArticletId, setPa
 var articleFileManagers = [];
 let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {};
 
+let articleCanvasSavePending = false;
+
+function recycleArticleUnusedImages(input, site) {
+    const headers = Object.assign({}, _c.Data.Header);
+    const query = site ? '?_site=' + encodeURIComponent(site) : '';
+    if (site) headers['X-Coker-Website-Id'] = site;
+    const pending = $.Deferred();
+    $.ajax({ url: '/api/Article/GetImageCleanupAntiforgeryToken' + query,
+        type: 'GET', headers: headers, cache: false })
+        .done(function(result) {
+            const token = result.token || result.Token;
+            const headerName = result.headerName || result.HeaderName || 'x-xsrf-token';
+            if (!token) { pending.reject(); return; }
+            Object.keys(headers).forEach(function(key) {
+                if (key.toLowerCase() === 'x-xsrf-token' || key.toLowerCase() === headerName.toLowerCase()) delete headers[key];
+            });
+            headers[headerName] = token;
+            $.ajax({ url: '/api/Article/RecycleUnusedImages' + query, type: 'POST',
+                contentType: 'application/json; charset=utf-8', headers: headers, data: JSON.stringify(input) })
+                .done(function(data) { pending.resolve(data); })
+                .fail(function(xhr) { pending.reject(xhr); });
+        }).fail(function(xhr) { pending.reject(xhr); });
+    return pending.promise();
+}
+
+async function offerArticleImageCleanup(result, context) {
+    const offer = result.object || result.Object;
+    if (!offer) return false;
+    const unchanged = function() {
+        return Number($('#gjs').data('id')) === context.id
+            && (new URLSearchParams(location.search).get('_site') || '') === context.site
+            && editor && editor.getHtml() === context.html && editor.getCss() === context.css;
+    };
+    if (!unchanged()) return false;
+    if (offer.checkFailed || offer.CheckFailed) {
+        await co.sweet.warn('文章已儲存', '暫時無法確認未使用圖片，已保留所有圖片，可稍後至檔案管理檢查。');
+        return true;
+    }
+    const count = Number(offer.count ?? offer.Count);
+    const token = offer.token || offer.Token;
+    if (!Number.isInteger(count) || count <= 0 || !token) return false;
+    const confirmed = await co.sweet.confirmAsync(context.published ? '文章已儲存並發布' : '文章已儲存',
+        '這次更新後有 ' + count + ' 張圖片已不再使用，是否移到回收桶？仍被其他內容使用的圖片會保留，移入後可從回收桶還原。',
+        '移到回收桶', '保留圖片');
+    if (!confirmed) return true;
+    if (!unchanged()) {
+        await co.sweet.warn('已保留圖片', '畫布或目前頁面已有變更，請再次儲存後再確認清理。');
+        return true;
+    }
+    try {
+        const cleanup = await recycleArticleUnusedImages({ id: context.id, token: token }, context.site);
+        if (cleanup.success ?? cleanup.Success) {
+            await co.sweet.success('圖片清理完成', cleanup.message || cleanup.Message || '不再使用的圖片已移到回收桶。');
+        } else {
+            await co.sweet.warn('文章已儲存，圖片清理未完成', cleanup.error || cleanup.Error || '圖片清理未完成，請稍後至檔案管理確認。');
+        }
+    } catch (_) {
+        await co.sweet.warn('文章已儲存', '圖片清理未完成，請稍後至檔案管理確認；不會自動重送清理操作。');
+    }
+    return true;
+}
+
+function saveArticleCanvas(html, css, published) {
+    if (articleCanvasSavePending) return $.Deferred().reject().promise();
+    articleCanvasSavePending = true;
+    const deferred = $.Deferred();
+    deferred.always(function() { articleCanvasSavePending = false; });
+    const context = { id: Number($('#gjs').data('id')), site: new URLSearchParams(location.search).get('_site') || '',
+        html: editor.getHtml(), css: editor.getCss(), published: published };
+    const request = published ? co.Articles.ImportConten : co.Articles.SaveConten;
+    request({ Id: context.id, SaveHtml: html, SaveCss: css })
+        .done(async function(result) {
+            if (!result.success) {
+                co.sweet.error(result.error || '文章儲存失敗');
+                deferred.reject(result);
+                return;
+            }
+            let handledFeedback = false;
+            try { handledFeedback = await offerArticleImageCleanup(result, context); }
+            catch (_) { /* Saving succeeded; an optional cleanup must not turn it into a failure. */ }
+            deferred.resolve({ handledFeedback: handledFeedback });
+        }).fail(function(xhr) {
+            co.sweet.error('文章儲存失敗，請稍後重試。');
+            deferred.reject(xhr);
+        });
+    return deferred.promise();
+}
+
     function getWorkspaceBackButton() {
         return $('#TopLine [data-role="workspace-back"]');
     }
@@ -350,24 +438,10 @@ let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {}
             },
             readonlyMessage: showArticleReadonlyMessage,
             save: function(html, css) {
-                var deferred = $.Deferred();
-                return co.Articles.SaveConten({
-                    Id: $("#gjs").data("id"),
-                    SaveHtml: html,
-                    SaveCss: css
-                }).done((function(result) {
-                    result.success ? deferred.resolve() : co.sweet.error(result.error);
-                })), deferred.promise();
+                return saveArticleCanvas(html, css, false);
             },
             import: function(html, css) {
-                var deferred = $.Deferred();
-                return co.Articles.ImportConten({
-                    Id: $("#gjs").data("id"),
-                    SaveHtml: html,
-                    SaveCss: css
-                }).done((function(result) {
-                    result.success ? deferred.resolve() : co.sweet.error(result.error);
-                })), deferred.promise();
+                return saveArticleCanvas(html, css, true);
             },
             getComponer: function() {
                 var deferred = $.Deferred();

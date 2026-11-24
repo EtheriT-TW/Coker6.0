@@ -122,8 +122,14 @@
                     });
                     const result = await response.json();
                     if (!response.ok) {
+                        if (Array.isArray(result.diagnostics) && result.diagnostics.length)
+                            console.warn('[Coker AI plan diagnostics]', JSON.stringify(result.diagnostics));
+                        else
+                            console.warn('[Coker AI diagnostics availability]', JSON.stringify({ enabled: result.diagnosticsEnabled === true, count: result.diagnostics?.length || 0 }));
                         const error = new Error(result.message || 'AI 請求失敗，請重新登入或稍後重試。');
                         error.needsClarification = result.needsClarification === true;
+                        error.replyLocale = result.replyLocale;
+                        error.settingsActions = result.settingsActions;
                         error.serviceUnavailable = result.serviceUnavailable === true || [401, 403, 429].includes(response.status) || response.status >= 500;
                         throw error;
                     }

@@ -34,7 +34,7 @@ using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application
 {
-    public class FileUploadAppService : IFileUploadAppService
+    public partial class FileUploadAppService : IFileUploadAppService
     {
         private const long CanvasImageImportMaxBytes = 25L * 1024 * 1024;
         private const int CanvasImageImportMaxCount = 50;
@@ -655,7 +655,8 @@ namespace EtheriT.Coker.Application
             Stream input,
             string originalFileName,
             string sourcePath,
-            Guid sourceKey)
+            Guid sourceKey,
+            bool usePerUploadSourceKey = false)
         {
             var buffered = new MemoryStream();
             await input.CopyToAsync(buffered);
@@ -700,9 +701,12 @@ namespace EtheriT.Coker.Application
                 if (!saved.Id.HasValue || saved.Id.Value <= 0 || string.IsNullOrWhiteSpace(saved.Path))
                     throw new InvalidOperationException("圖片儲存失敗");
                 var upload = await db.FileUploads.FirstAsync(file => file.Id == saved.Id.Value);
-                upload.GuidKey = sourceKey;
+                var storedSourceKey = usePerUploadSourceKey
+                    ? CreateCanvasImageSourceKey(upload.FK_WebsiteId, sourcePath + "#upload:" + upload.Id)
+                    : sourceKey;
+                upload.GuidKey = storedSourceKey;
                 await db.SaveChangesAsync();
-                saved.Guid = sourceKey;
+                saved.Guid = storedSourceKey;
                 saved.SourcePath = sourcePath;
                 return saved;
             }

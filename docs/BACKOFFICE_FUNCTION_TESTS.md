@@ -1,4 +1,300 @@
+## 2026-11-24 實頁重現：連結HTML拒絕與目錄內嵌Swiper
+
+本次內建瀏覽器以實際頁面49／11019重現兩個失敗，未儲存或發布。選取Span送「調整為連結」：開發診斷第一回EmptyProposal，第三回本地HTML安全拒絕，當次尚無具體標籤／屬性原因，不可推定一定是metadata造成。選取目錄送「調整為四欄位」：依序是外框#selected禁止Grid、不存在#catalog、外框#layout-container禁止Grid。DOM實際為catalog_frame > six_swiper > swiper > catalog.swiper-wrapper，卡片由Swiper配置inline寬度；前一輪一般Grid修正未涵蓋此結構。
+
+修正規劃資料辨識一至六欄既有Swiper版型、提供唯一catalog精確別名，樣式契約新增--coker-swiper-columns（僅1至6、既有對應Swiper根元件）。Swiper內Grid計畫回傳實際根ID與可用能力，前端沿既有版型class切換、destroy既有Swiper、清除isInit並重跑原SwiperInit；不重建目錄HTML／資料來源／樣板，重新初始化失敗回滾。此能力是元件契約，不以客戶中文句子或數字正則分派語意。
+
+連結HTML安全驗證的具體原因回饋規劃，不再一律泛稱不安全；允許a上的系統data-link-type=link及經既有HTTPS／站內／錨點規則驗證的data-link-value，空值視為待設定。前端移除空href避免未設定連結回到當頁，仍拒絕javascript、任意data屬性與危險HTML；不放寬全域data-*。
+
+沿既有sandbox/ai-provider-contracts新增目錄外框→catalog內Grid拒絕→Swiper能力修正的真實巢狀fixture，普通圖庫不得用Swiper能力、原生待設定連結metadata可通過、metadata中的javascript拒絕。固定HTTP fixture僅驗證本地資料與契約，尚未執行。人工需重測原兩句、實際4／6欄卡片寬度、手機斷點、目錄換頁／重載、連結modal與還原；尚未編譯或瀏覽器驗證本輪修正，不宣稱已通過。
+
+本輪修改CanvasAiService／CanvasAiPlanning、aiAssistantPlugin及隔離斷言／清單，沒有改生成資產。需使用者手動編譯／重啟MVC（可能還原套件、產生bin／obj）及packages/EtheriT.Coker.GrapesJS的npm run build:mvc（生成dist並複製MVC模組），耗時依環境。本輪沒有再改MVC舊Grapes腳本，不需為本輪額外重跑create-bundles；上輪若尚未產生grapesjs-Coker6.min.js，仍需完成上輪指定流程。
+
+## 2026-11-24 AI 交接至既有連結／目錄設定視窗
+
+前端依已註冊的固定設定命令宣告AvailableSettings（link／directory），與目前HTML、結構及需求送交AI判讀，沒有網址／目錄關鍵字分派。模型可在原有計畫附settingsActions（最多一筆kind＋targetId）；後端只接受已宣告能力且目標為當前片段內唯一相容的a或目錄外框，越界、錯誤類型、任意command／未註冊能力皆拒絕。缺值的必要澄清可直接交接設定視窗；可先完成的連結結構修改則先驗證內容，再交接新的a。missingInput=link-destination／directory-source亦可對相容選取元件轉成設定交接。UI語系校正只能改訊息，不可改已驗證設定目標。
+
+linkComponentPlugin註冊固定命令並沿用openLinkComponentEditor，僅在真正關閉而非檔案庫暫停時通知交接完成；目錄命令沿用原data-dirid trait及PopupDirectory，維持原有站台API、選擇驗證與確認／取消。AI不替使用者填猜測網址或選目錄。前端開啟前再次定位目前元件，保存設定前畫布，暫時隱藏聊天；關閉設定後同頁才返回聊天，若資料改變則保留設定後與設定前兩個版本。不自動送下一次AI請求、不自動保存伺服器。聊天保留設定入口可重新開啟；歷史目標失效不開其他元件；待處理、跨頁、編輯器銷毀不重新開啟舊聊天。
+
+沿既有sandbox/ai-provider-contracts的AiCanvasPlannerChecks新增：Span先轉a再交接連結、既有連結／目錄純設定交接零HTML、最後語系校正無權替換設定目標、未宣告能力／不相容元件／越界ID／任意動作拒絕。新增斷言已綁既有executor，但尚未執行，不宣稱真實模型或瀏覽器通過。人工驗收：兩個設定視窗的開啟／關閉／取消／確認，link檔案庫暫停返回不提早重開聊天，目錄API失敗仍可關閉；設定後接新指令依最新資料、還原設定前／後、舊聊天重開、跨站／跨頁／唯讀與取消生成不開設定。這些人工項目保留review，不列自動通過數。
+
+本輪只做來源修改、JS語法、JSON與diff靜態檢查；未編譯、執行檢測、bundle或寫入資料庫。手動編譯／重啟MVC可能還原相依並寫入bin／obj；packages/EtheriT.Coker.GrapesJS的npm run build:mvc更新dist與MVC模組；src/EtheriT.Coker.Web.MVC的npm run create-bundles更新grapesjs-Coker6.min.js等既有引用資產，其實際流程先檢查DevExtreme授權再yarn及gulp buildDev，可能下載相依、修改lock file、產生多個資產與啟動監看。三者耗時依環境，本次均未執行。
+
+## 2026-11-24 對話語系、目錄動態卡片與修改前還原點（目前有效規格）
+
+本節取代下方「建議尚未實作」與瀏覽器強制回覆語系的舊記錄。模型以結構化replyLocale／replyLanguageBasis判讀：明確指定回覆語言優先，其次充分明確的使用者輸入；引文、HTML待改文案、品牌、網址、數字與短句不作切換依據。continuity由後端維持已驗證ConversationLocale，首次才依瀏覽器預設；中性語言判讀不得抹去同語言的區域偏好。最後UI校正採已選語系，新增HTML仍依授權網站WebsiteLocale。前端只持久化成功或必要澄清的回覆語系。真實模型語言判斷列人工驗收，不把fixture當多語能力通過。
+
+未提供網址時可先將文字改為無href的a，摘要需說明尚未設定並詢問目的網址；後續以對話承接。確實缺少link-destination／new-text／asset-source可用missingInput與唯一SelectedId作澄清證據，不再強迫虛構兩個競爭目標；寬度、間距等仍依當前資料推斷。
+
+目錄結構依Directory renderer實際.catalog_frame／.catalog／.template／.templatecontent區分。外框設欄軌計畫須回AI修正；只允許授權HTML中既有目錄.catalog的精確範圍選擇器「#id > .template」保留至執行時，避免把複製商品卡片規則轉為隱藏樣板ID。Grid補齊直接卡片width:auto／max-width:100%／min-width:0／flex-basis:auto；資料來源、樣板及HTML不重建。前端驗證實際Grid卡片未縮至格寬一半以下，失敗回滾；尚未瀏覽器驗證，不能宣稱已重現或解決所有目錄版型。
+
+AI齒輪設定使用原生dialog／showModal，含標題、關閉、Esc與背景遮罩。版本選取不立即還原，需明確按還原。每次送出前保存實際畫布，與歷史聊天有無版本無關；成功訊息保留修改前／修改後ID，新增頂部「還原上次AI修改前」。還原其他版本前亦保存當前畫布以便返回；重新載入的畫布不視為最後聊天版本。20版本／200對話上限、頁面與站台草稿隔離維持，本機還原不等於伺服器儲存。
+
+沿既有sandbox/ai-provider-contracts擴充AiCanvasPlannerChecks：輸入語言選擇與短句延續傳遞、網站語系不變、目錄外框錯誤修正到catalog及runtime規則、非目錄／越界runtime選擇器拒絕、缺目的網址的單目標澄清。前端人工驗收：齒輪hover與鍵盤開啟／Esc／焦點返回、選版本不立即套用、重新整理且聊天保留後送新指令再還原修改前、手動修改後切版本與返回、20版上限、取消／失敗／跨頁隔離、目錄改4→6欄與換頁／重載卡片及桌機手機。未執行隔離檢測、編譯、bundle或瀏覽器。
+
+使用者需手動編譯／重啟MVC（可能還原套件並寫入bin／obj），並在packages/EtheriT.Coker.GrapesJS執行npm run build:mvc；已確認package.json為vite build後copy-to-mvc，會更新dist與MVC產生資產，耗時依環境；本次未執行、不修改產生資產或資料庫。
+
+## 2026-11-24 連結結構編輯與安全錯誤原因
+
+截圖的上游拒絕尚未取得該次reason，不能認定為缺少設定。靜態修正CanvasAiPlanning：選取文字轉連結須走content並保留完整片段；未提供網址建立無href的可編輯a，不猜網址，摘要說明尚未設定目的網址。上游422僅保留CanvasAiClient已白名單映射的安全訊息，三次失敗後不再用通用錯誤蓋掉。
+
+沿既有sandbox/ai-provider-contracts的AiCanvasPlannerChecks加入Span轉a且保留ID／文字／無href的服務斷言；登錄既有案例，不新增通過數。未執行編譯、隔離檢測、真實Gateway或瀏覽器；需人工驗證原句、提供網址、後續編輯網址、內容保留及實際導航，並重現上游拒絕核對具體安全原因。僅C#變更，需手動編譯／重啟，可能還原套件及寫入bin／obj，耗時依環境；不需bundle。
+
+語系新建議（尚未實作，現行仍依下節）：明確回覆語言要求優先；充分且明確的使用者輸入可切換對話語言；短句、品牌、引用及混合語言不宜觸發切換，資訊不足沿用使用者既有語系或瀏覽器預設。中文區域偏好不能只由字形推斷；HTML文案仍依網站語系。不得把此建議視為已通過的功能。
+
 # 後台功能檢測流程與維護規則
+
+## 瀏覽器回覆語系與網站HTML內容語系分離（目前有效規格）
+
+本節取代先前所有「摘要／澄清依網站語系」規格。前端每次請求送navigator.languages[0]／navigator.language為BrowserLocale；Controller以長度、語系標籤與CultureInfo檢查，建立回覆專用ReplyLocale。未取得有效偏好時依Accept-Language品質權重選有效語系，全部缺少才回退網站語系。WebsiteLocale仍僅由授權站台取得，瀏覽器不能覆寫網站內容語系。兩者明確放入模型上下文、規劃與問題審查。
+
+ReplyLocale用於AI摘要與必要澄清，需區域詞彙、慣用語與句型，不做單純繁簡字形轉換；WebsiteLocale用於新增／改寫HTML標題、本文、caption、alt、title。未要求更動的原文、ID、class、URL不翻譯。規劃Gateway仍用網站語系處理HTML，最後獨立UI訊息校正呼叫改以ReplyLocale指定回覆語系，僅取顯示文字，不採它的HTML或操作。ApprovedPlan及當前需求是操作與數量依據，Source僅草稿，不得把六欄誤述四欄。
+
+AiCanvasPlannerChecks沿原sandbox/ai-provider-contracts補明確瀏覽器偏好、Accept-Language品質排序與q=0排除、無效標籤回退、無偏好回退網站；新增台灣回覆／日文網站的實際服務隔離案例，固定模型日文HTML通過內容審查後UI回繁中，UI校正故意產出中文HTML仍只能改訊息、日文HTML不變。既有日文回覆案例改為明確ReplyLocale=ja-JP，其他案例明確傳入zh-tw回覆語系。使用者瀏覽器與網站語系不同的真實模型能力、區域用語及手機／權限站台隔離列人工驗收，不新增自動通過數。
+
+修改來源為aiAssistantPlugin.js、CanvasAiController、CanvasAiService、CanvasAiPlanning與隔離案例／清單；未執行build、test、bundle或資料寫入。請於根目錄手動dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"並重啟MVC；於packages/EtheriT.Coker.GrapesJS手動npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。前者可能還原相依並產生bin/obj；後者產生dist及複製MVC資產，可能修改多個產物，耗時依環境。尚未執行隔離案例或實頁驗收，不宣稱跨語系已通過。
+
+## 連續欄數切換通過但摘要語系失守
+
+2026-11-24內建瀏覽器續測同一品牌列：四欄4／4／4、六欄6／6、改回四欄4／4／4皆實際生效，原12圖片src與12連結href及順序保留。使用者指出回覆簡中，已讀取當次聊天確認前兩則為「将当前布局调整为每行四个项目。」「将每行显示的项目数调整为6个。」，第三則才為繁中；DOM lang及內嵌siteLocale均zh-tw，確定不是網站設定遺失。此輪排版成功不能宣稱整體語系通過。
+
+缺口是樣式計畫驗證成功後直接回傳summary，語系僅受規劃提示約束。新增固定一次UI訊息獨立校正，傳遞WebsiteLocale與來源訊息、保留已驗證ApprovedPlan供既有Gateway協定使用；移除History避免舊簡中對話成為語系基準，只採用校正後summary／clarification，絕不採用其新增或變更的操作。原最多3次規劃＋1次訊息校正，合計最多4次HTTP模型呼叫，沿原整體逾時及取消。校正服務／格式失敗不回可套用計畫，不顯示未校正摘要。
+
+AiCanvasPlannerChecks補簡中來源→固定繁中校正、zh-tw傳遞與History清空、校正回覆故意含#outside操作仍僅採原操作、校正無效JSON不套用；既有成功呼叫數同步包含校正，原id／executor不變。人工清單補每次四→六→四的文字及必要問題驗收。新增校正未編譯、未執行隔離案例、未實際模型驗收；不能保證只靠新提示就已修好實際語系。
+
+本次只改後端／檢測規格，需手動於根目錄dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"並重新執行MVC，可能還原相依並寫bin/obj，耗時依環境。本次不執行、不需bundle；現有未儲存四欄畫面保留。
+
+## 四欄原句成功、六欄後續被 Gateway 澄清欄位驗證拒絕
+
+本次使用者編譯後，內建瀏覽器「換成四個一排」實際成功：Grid四軌239px、12子項4／4／4且寬度均239px，12圖片src與12連結href及順序與修改前完全相同。續送「6個一排」失敗，開發診斷實際reason為「模型以解說代替必要的澄清問題」（Gateway ClarificationNotQuestion）；原四欄仍完整。已取得與使用者截圖同類provider-validation，不再將單次四欄成功當穩定完成。
+
+CanvasAiClient改用畫布專用回覆型別保留已知FailureReason；ReadCanvasFailureDetails沿既有4096-byte上限與固定錯誤白名單取reason，不暴露供應商message／本文，原ReadCanvasFailure字串入口保留相容。規劃流程以結構化ClarificationNotQuestion分類，回饋明確欄位修正：clarification留空、說明放summary、回傳當前需求與當前畫布的操作，不要求客戶重述；三次預算、權限及不可破壞原圖防護維持。不解析客戶語言或錯誤翻譯文字來分派。
+
+BackofficeSandboxAiGenericChecks沿原sandbox/ai-provider-contracts新增已觀察Gateway錯誤reason傳遞、原始供應商假秘密不洩漏、修正指令包含summary與CURRENT；人工清單補四→六→四連續實頁驗證。新增修正尚未編譯／執行隔離案例，六欄仍未驗收成功；目前內建頁面保留未儲存的四欄，未儲存／發布。
+
+本次只改後端／檢測規格，需於根目錄手動dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"並重新執行MVC；可能還原相依並寫bin/obj，耗時依環境。本次不執行、不需因本次修正重建前端。
+
+## 不同說法重現未生效的 Grid 計畫
+
+使用者回報「換成四個一排」遭上游拒絕，本次內建瀏覽器用同句重現卻得到成功訊息；DOM量測顯示display:flex、grid-template-columns雖為repeat(4,...)但12項仍6／6且各159px。已確認另一個真實不穩定情境：軌道設定缺少Grid display相依，不可將前次單一成功當整體穩定。已重載還原未儲存結果，未儲存／發布。使用者截圖的上游拒絕本次未重現，仍不可宣稱已解決。
+
+CSS適配依結構化操作補齊缺少的display:grid，再沿既有Bootstrap子項寬度釋放；若計畫明確指定display:flex等非Grid模式卻同時設定Grid軌道，回交AI修正，不覆寫其明確選擇。none／initial／unset／inherit／revert不強制啟用Grid。前端套用後對目前修改子樹的Grid目標檢查實際computed display，未生效則沿快照回滾，不能只憑CSS內容不同顯示成功。
+
+開發診斷另加Reason，取已安全分類的驗證／上游錯誤翻譯（最多1000字），不放供應商原文、HTML或需求，讓provider-validation不再只有泛分類。AiCanvasPlannerChecks沿原executor增加實際缺display計畫一次成功、13條規則與原HTML保留，以及明確矛盾三次拒絕且Reason完整。人工清單補computed結果與使用者上游失敗原因。新增案例未執行、修正未編譯或實頁驗收；既有桌面單次成功紀錄仍只代表該次觀察。
+
+需手動於根目錄dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"並重啟；在packages/EtheriT.Coker.GrapesJS執行npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原並寫bin/obj；前端產生dist並複製MVC資產，可能修改多個產物，耗時依環境。本次不執行、不改生成檔。
+
+## 四欄桌面實頁驗證結果
+
+本次使用者編譯後，在已登入內建瀏覽器重新載入站台49／canvas11019，以實際品牌列送出「調整為四個一排」。本次模型回覆「將容器調整為四個一排」，實際DOM驗證display:grid，四軌各239px；12個直接子項top座標分組為4／4／4，各項寬度均239px，視覺確認品牌圖正常，不再縮成40px細條。逐一比較前後12張圖片src及12個連結href，內容與順序完全一致。
+
+這次桌面瀏覽器情境已實際驗證目標別名與Bootstrap→Grid欄寬適配；不能擴張宣稱所有AI檢測通過。未驗證手機、其他語言、四→五→六連續切換、保存重開、SQL寫入或自動隔離案例。未儲存／發布頁面，保留目前未儲存的四欄畫面供使用者檢查；AI面板已關閉以顯示完整品牌列。驗證截圖保存於本次工作階段visualizations目錄，不新增自動通過數，不改既有案例ID或executor。本次僅更新驗證記錄，沒有新增程式碼或重新建置。
+
+## 實頁定位成功後的 Bootstrap 子項二次縮放
+
+本次內建瀏覽器確認目標別名修正後「調整為四個一排」成功，容器實際Grid四軌各239px，12項分三排，原12張圖片與12個連結順序及網址完全保留。然而子項仍col-lg-2，寬度成每個Grid格的1/6約40px，畫面變細條，不能視為完成。已重新載入原頁還原未儲存結果，確認恢復Flex與每項159px；未儲存或發布。
+
+新增框架套用適配AdaptBootstrapGridItems：當已驗證計畫明確把容器改為grid／inline-grid且指定grid-template-columns時，對其已有ID的直接Bootstrap col子項補width:auto、max-width:100%、min-width:0，釋放Flex欄寬在Grid的殘留效果。只補模型未明確指定的屬性，不改class、gutter、HTML、圖片或連結，不根據使用者句子判斷。新增規則仍沿100項／CSS安全校驗。
+
+AiCanvasPlannerChecks沿既有sandbox/ai-provider-contracts補實際根容器別名Grid計畫、12個col-lg-2子項釋放繼承寬度、13條規則、一次呼叫與HTML不變斷言；人工清單補實際圖片寬度，不能只看欄數或成功摘要。新增適配尚未編譯、執行隔離案例或瀏覽器驗收；本次只確認定位修正已生效及視覺衝突可重現。
+
+本次只改後端與檢測規格，手動於根目錄dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"並重新執行MVC；可能還原相依並寫bin/obj，耗時依環境。本次不執行、不需bundle，登入頁面保留供後續確認完整四欄視覺。
+
+## 已取得模型實際未命中名稱與明確目標別名
+
+本次建置後內建瀏覽器實際重現，Development／Local診斷已可讀：當前選取ihpg4且availableIds有完整49個品牌元件，第一個計畫卻用#container、第三個用#layout-container，分類均targets-unmatched。已確認這次不是XPath計算，而是模型使用未宣告名稱；未儲存頁面。
+
+新增TargetAliases作為API明確契約：只有唯一且具唯一ID的fragment根才宣告#container／#layout-container，#selected對應實際點選元件。若片段內已有相同真實ID，不宣告該別名；多根不猜根。計畫驗證前只將已宣告的完整ID token轉回真實ID，可搭配後代／子代選擇器，再走原normalizer、範圍與CSS驗證；其他未知ID仍拒絕。不以需求關鍵字分派、不任意將所有錯誤目標改成根、不改HTML／圖片／metadata。
+
+AiCanvasPlannerChecks沿sandbox/ai-provider-contracts新增實際觀察到的兩種名稱，斷言TargetAliases宣告、根與兩子項精確映射、一次成功且HTML完全相同；補同名真實ID與多根不宣告根別名。尚未編譯或執行新增案例；瀏覽器只確認原始失敗計畫，修正尚待使用者編譯重啟後驗收。
+
+本次只改後端／檢測規格，手動於根目錄dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"並重新執行MVC；可能還原相依並寫bin/obj，耗時依環境。本次不執行、不需bundle。內建登入頁面保留供後續確認實際四欄結果。
+
+## Local 啟動環境的診斷可見性
+
+重啟後內建瀏覽器重現同一未命中，且唯讀確認Razor已載入console診斷程式，但沒有後端診斷輸出。檢查launchSettings確認本專案另有ASPNETCORE_ENVIRONMENT=Local；先前僅允許Development，漏掉此啟動profile。補Local且RemoteIpAddress為IPv4／IPv6 loopback時允許，Local遠端／缺IP與Production（含本機）仍不允許。失敗回應附diagnosticsEnabled布林，Razor在沒有計畫資料時也輸出availability，避免再次無法區分環境關閉或零筆資料。此環境缺口不代表已確認模型selector未命中的根因。
+
+AiCanvasPlannerChecks沿既有executor補Development、Local兩種loopback、Local遠端／null、Production loopback六項閘門斷言；人工驗收確認兩種啟動profile可見性與正式環境無資料。尚未編譯或執行上述案例。本次瀏覽器只重現失敗，未儲存頁面。
+
+需手動重新編譯並重新執行MVC，於根目錄dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"。可能還原相依並寫bin/obj，耗時依環境。本次不執行、不需bundle，內建登入頁面已保留供後續讀取實際selector。
+
+## 實頁重現與開發用 selector 比對
+
+本次已在內建瀏覽器登入後，以實際站台49／canvas11019選取品牌列重現「調整為四個一排」未命中錯誤，未儲存頁面。唯讀確認root為iqprv、row g-3 text-center brand-img，12個直接div子項皆col-4 col-md-3 col-lg-2，含既有連結metadata與圖片。這不是少資料或單純選錯層；但既有日誌無實際selector且本機沒有持久化日誌，尚未取得模型計畫，未定位根因。
+
+新增最多三筆記憶體PlanDiagnostics，僅含attempt/category/SelectedId/最多100個當前ID及最多100個經字元／長度限制的selector；不含HTML、需求、供應商本文或金鑰，JsonIgnore禁止作為客戶端請求欄位輸入。Controller只有Development且失敗才回傳，其他情況null；MVC adapter只寫開發console、不進使用者聊天畫面。登入、站台與編輯權限檢查不變，不新增公開診斷端點或持久化檔案。
+
+既有AiCanvasPlannerChecks補三次失敗保存實際安全selector／當前ID、request序列化排除的斷言。人工驗收需開發環境失敗console可讀、正式環境與成功回應不含資料，以及原畫布／圖片不變。案例未執行；瀏覽器本次僅重現失敗，不能算修復驗收通過。
+
+需使用者手動於根目錄 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj" 並更新執行中的後端，再以已登入內建頁面繼續重現讀取console診斷。編譯可能還原相依並產生bin/obj，耗時依環境。本次不執行build、restore、bundle、不儲存頁面；Razor adapter變更不需因本次修改重建GrapesJS資產。
+
+## 整頁祖先路徑與選取片段定位
+
+定位器原先直接將整條 selector 套到選取片段，body／外層container等祖先不在fragment中時，即使尾端 #gallery／.imageList 與子項真實存在仍回傳未命中。新增受限重定位：僅當完整 selector 未命中，且可移除完全不在片段中的前綴，剩餘路徑以現存唯一 ID 或唯一fragment根為錨點時才解析；不搜尋整頁、不猜近似ID、不跳過已命中局部節點後的錯誤路徑。原 specificity 保留，最終仍轉單一既有ID並沿既有CSS白名單驗證。
+
+AiCanvasPlannerChecks 沿 sandbox/ai-provider-contracts 增加 body #gallery > a、.page-wrapper .imageList > a、#page-outside #gallery > a 三種片段外祖先路徑，一次成功、僅兩子項且原HTML／metadata不變。這是定位器具體缺口，仍無本次實際模型 selector，不能確認截圖就是此原因。尚未執行編譯、案例、真實模型或瀏覽器。
+
+本次後端與檢測規格變更，手動於根目錄 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"；可能還原套件並寫bin/obj，耗時依環境。本次不執行、不需因這次修改重建前端。
+
+## 元件定位失敗細分與片段 scope
+
+CanvasAiStyleNormalizer 新增診斷 overload，保留舊呼叫相容性。未命中、選擇器語法、重複ID、規則格式、規則數及命中數上限各自回傳固定分類；ValidatePlan 將具體修正方向交給AI，最後畫面顯示易懂原因，不暴露原始selector、ID或路徑。伺服器既有安全日誌亦可區分，而非全部歸類targets。這僅修正可觀察性，沒有本次實際模型回覆／日誌，不能斷定截圖是哪一類。
+
+確認原轉換器不支援合法 :scope，補上片段根容器的 :scope > a 等定位，只在目前fragment內解析並轉成既有ID規則，不擴大到整頁。其他動態偽類仍拒絕。
+
+既有 AiCanvasPlannerChecks／sandbox/ai-provider-contracts 新增未命中與動態偽類各三次拒絕後不同訊息，以及 :scope > a 一次成功、只命中兩個既有子項、HTML不重建的斷言。人工清單補五類錯誤核對。保留ID／executor，未執行隔離案例、編譯、瀏覽器或真實模型。
+
+本次只改後端與檢測規格，請手動於根目錄 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"；可能還原相依並寫入bin/obj，耗時依環境。本次不執行、不需因這次修改重建前端。
+
+## 當前快照優先與有依據的澄清
+
+移除「審查過一次後所有澄清皆直接回傳」的缺口。當前需求／SelectedId／HTML／EditorStructure／CSS／computed style 優先，History 只補充需求意圖；舊助手提出的圖片／文字、置中或寬度問題不是事實，不可重新開啟已被目前資料解決的問題。
+
+客戶可見的目標澄清需附 clarificationTargets（2～8個既有唯一 ID），由程式驗證彼此獨立、不是祖先／子孫、不是已由 SelectedId 指向其中一組的選擇。未提供依據或已被目前選取解決則內部繼續規劃，三次耗盡不顯示無依據問題、不套用內容。維持既有 Gateway 欄位；clarificationTargets 為可選澄清證據，若上游未保留該欄位則不會對客戶顯示未驗證問題。此版本可顯示的澄清限有結構證據的目標選擇，其他設計細節由 AI 沿用目前設定，不宣稱能判定所有語意歧義。
+
+AiCanvasPlannerChecks 沿原 sandbox/ai-provider-contracts 增加舊助手問題＋現有圖片快照、連問兩次後改操作、連問三次不顯示、兩個獨立既有目標允許澄清、已點選其中一組圖片後不再詢問；人工清單增加改選／還原後以最新資料判斷。固定回覆僅驗證流程，未執行案例、編譯或真實模型／瀏覽器，不宣稱實際模型已成功套用。
+
+本次只改後端與檢測規格，請手動於根目錄 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"，可能還原相依並寫入bin/obj，耗時依環境；本次不執行，也不需因這次修正再產生前端資產。
+
+## 框架與實際排列結構進入規劃上下文
+
+確認先前 selected 通用提示未攜帶非 selected 提示中的 Bootstrap 說明。新增 EditorStructure，明列 GrapesJS、專案 package.json 確認的 Bootstrap 5.3、Coker imageList／imageItem、Bootstrap 斷點，並依 HTML 結構盤點 row／相簿／重複圖片容器、父層、直接子項 ID／數量／class／圖片數／隱藏狀態；最多8容器、每組48項並標記截斷。此盤點不讀需求關鍵字，也不直接決定客戶操作。前端樣式參考另附實際 componentType／parentSelector，仍受原預算限制。
+
+AI 規劃與問題審查必須以結構為基準，Bootstrap row／col／row-cols 及 gutters 是既有框架設定，目前像素欄寬是可修改的基準，不可誤認容器放不下。指定四欄已授權調整子項寬度，保留容器並換行；不能再問保留現有寬度或自動調整。既有契約以 scoped CSS 表達相容欄寬，避免為換 class 重建自訂元件；未新增不相容 Gateway 欄位。
+
+既有 AiCanvasPlannerChecks／sandbox/ai-provider-contracts 補上12品牌 Bootstrap row／row-cols-lg-6／col-lg-2／g-3，第一回覆誤問容器寬度不足、第二回覆固定子項25%計畫，斷言框架／數量／原class均送達、12項規則、原HTML完整且兩次呼叫。人工清單補桌面三排四個、原容器／間距／手機斷點保留及相簿。固定回覆僅驗證契約，不代表模型結構理解、視覺或實際站台已通過；未執行編譯、隔離案例、瀏覽器或真實模型。
+
+請手動於根目錄 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"，並於 packages/EtheriT.Coker.GrapesJS 執行 npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原相依並寫bin/obj；前端產生dist及複製MVC資產，可能修改多個產物，耗時依環境。本次不執行、不改生成檔。
+
+## 無動作的驗證診斷與合法 CSS 運算
+
+靜態追查確認前後端 CSS 值白名單拒絕乘號，會擋下依既有間距計算等寬的合法 calc((100% - 3 * 16px) / 4)。兩端同步允許乘法字元，原分號／URL／expression／javascript／import 防護不變。不以此宣稱已確認截圖的實際模型失敗原因。
+
+規劃提示由空陣列模板改成含可執行樣式項目的格式範例，仍由 AI 選取真實目標和值，不從需求正則分派。修正請求累積 ValidationFailures，避免只帶最後一種錯誤造成來回失敗。服務新增可選 ILogger，拒絕時記錄 attempt、provider、category 與已校驗的固定原因，不記錄 HTML、需求、RejectedProposal、金鑰或原始供應商本文。用戶錯誤區分空計畫、目標、CSS、格式與上游拒絕，不再把執行失敗推給客戶補充需求；開發分類只留日誌。
+
+既有 AiCanvasPlannerChecks／sandbox/ai-provider-contracts 新增合法乘法計畫一次成功、三次空計畫拒絕且不要求補充，以及第三次修正包含前兩次失敗的斷言。人工清單增加四欄原句與伺服器拒絕分類核對。未執行隔離案例、編譯、真實模型或瀏覽器；缺少實際請求與日誌，不能宣稱截圖問題已重現或修復驗收通過。
+
+請手動於根目錄 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"，並於 packages/EtheriT.Coker.GrapesJS 執行 npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原套件並寫 bin/obj；前端產生 dist 並複製 MVC 資產，可能修改多個產物，耗時依環境。本次不執行、不改生成檔。
+
+## 網站語系與可推斷細節不詢問客戶（目前澄清流程）
+
+本節更新下節「澄清直接回使用者」行為。SelectedInstructions 明定所有 summary／clarification 使用授權網站 WebsiteLocale，含區域及繁簡變體；每次模型呼叫再附權威語系，不跟隨需求語言或歷史簡中回覆。未指定寬度、間距、排列方向、圖片比例與斷點時，沿用現有 CSS、computed style、元件結構及視覺慣例；必要時選保守相容預設。每排數量已明確就足以規劃，不要求客戶提供像素寬度、間距或 CSS 選擇。
+
+首次澄清不直接顯示，將完整 ReviewProposal、原上下文、網站語系與「先推斷既有設定」的具體回饋交回 AI 審查；能完成就回可執行計畫，仍有真實且無法推斷的客戶可見選擇才顯示簡單問題。仍沿三次總呼叫預算；審查不是判斷中文關鍵字，也不新增語言白名單。前端補收 row/column gap、margin、padding、box-sizing、object-fit 與 aspect-ratio，保留 40 元件／16000 字元 JSON 預算。
+
+既有 AiCanvasPlannerChecks／sandbox/ai-provider-contracts 新增截圖原句＋簡中技術問題草稿，斷言第二次送回語系、完整問題、實際間距後取得固定四欄計畫、不顯示草稿問題；真實兩組圖片選擇經第二次審查仍可回問；日文網站中文需求仍帶 ja-JP 並傳回固定日文摘要。沿案例 ID／executor，不新增自動通過數。固定模型回覆僅驗證流程與契約，不代表真實模型語系／推斷能力通過；尚未執行隔離案例、編譯或瀏覽器。
+
+請手動於根目錄執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"，並於 packages/EtheriT.Coker.GrapesJS 執行 npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原套件並寫入 bin/obj；前端產生 dist 並複製 MVC 資產，可能改動多個產物，耗時依環境。本次不執行、不修改生成檔。
+
+## AI 規劃與驗證取代語言關鍵字分派（目前有效流程）
+
+本節取代下方歷次記錄的中文欄數／放大／連結捷徑與零模型預期。CanvasAiService 移除所有以需求文字正則分派的局部處理；保留既有 Gateway editMode／styles／textStyles／html／clarification 契約作為可驗證編輯計畫。所有需求原文與近期對話交 AI 理解，站台語系控制新增文案，不限制輸入語言。新增 CanvasAiPlanning partial 統一規劃、驗證與最多三次總模型呼叫（內容修改另需一次 AI 核對，也計入三次），每次重設 PreserveContent 並以原 HTML 為基準。校驗失敗回傳具體 ValidationFeedback 與可容納的失敗計畫；澄清直接回使用者，429／權限／網路／服務失敗不自動重送。模型呼叫數累計，未知次數不猜測。
+
+樣式操作不重建 HTML；無效 selector／CSS、空計畫、與已知 computed style 完全相同的計畫與遺失圖片的內容回覆皆不套用。內容替換目前要求原圖片（含重複圖片／source）保留；移除或換掉原圖片的能力仍受保護限制，不能宣稱已支援所有編輯動作。內容審查的 ReviewProposal 完整保留於預算內，無法容納時拒絕，不假稱已審查。
+
+前端不再從需求句子判斷欄數／字級或是否擴大範圍；以渲染結構提供最多四層內最近的排列容器作編輯邊界，SelectedId 保留實際點選子元件，交 AI 決定最小目標。未選取／wrapper 不送出；原 ID 範圍、大小限制、取消、等待變更、權限與站台隔離維持。class-only 回覆原地更新，不以語言判定；替換前後及實際套用後檢查圖片完整，失敗沿快照回滾。不宣稱只檢查圖片數即可驗證排版效果。
+
+既有 AiCanvasEdits 保留輸入邊界、JSON 總預算與 selector 正規化，改呼叫 BackofficeSandboxAiPlannerChecks：六種輸入原文與 SelectedId／locale 傳遞、固定樣式計畫保留自訂清單、區塊外修正、JSON／CSS 三次內修正、刪圖三次拒絕、澄清一次、429 一次與內容額外審查。沿 sandbox/ai-provider-contracts 原 ID／executor，不新增通過數。這是純記憶體 HTTP 回覆與獨立 InMemory fixture，不連真實模型／客戶資料庫；不能據此宣稱日文／越文模型理解、SQL 或瀏覽器通過。shared-ai-regression 與片語人工規格已重寫，不再要求中文捷徑零模型。舊記錄保留作變更歷史。
+
+尚未執行編譯、隔離案例、瀏覽器或真實模型。使用者需於根目錄手動 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"，並於 packages/EtheriT.Coker.GrapesJS 手動 npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原相依並寫入 bin/obj；前端產生 dist 並複製 MVC 模組資產，可能修改多個產物，耗時依環境。本次不執行、不修改生成檔。
+
+## 五個一排與一般欄數
+
+先前欄數解析僅允許二、三、四、六，因此截圖的 5個一排／修改為5個一排落入模型後被內容保護拒絕。改為辨識 1～12 的數字及中文，超出範圍或數字溢位明確拒絕且不呼叫模型。Bootstrap 無法平均分配十二格的欄數（如五、七）改走 scoped Grid 純樣式；已有 Grid 時後續六／四欄也更新 Grid，避免只改 Bootstrap class 卻殘留舊 Grid。圖片清單沿原純 CSS 路徑保留 HTML 與元件。
+
+既有 AiCanvasEdits／sandbox/ai-provider-contracts 補上五欄原句、中文五與其他 1～12 欄數、0／13／超大數字拒絕，以及 Bootstrap Grid 五→六→四的規則斷言。shared-ai-regression 補 12 圖五欄五、五、二的視覺驗收與再切換六／四，沿用案例 ID 與 executor。未執行隔離案例、編譯或瀏覽器，不能視為畫布已通過。
+
+本次不改前端，請於根目錄手動執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"；可能還原相依並產生 bin/obj，耗時依環境。本次不執行 build、test 或 bundle。
+
+## 四欄後以短句改回六欄
+
+截圖的「6個一排」未包含原辨識要求的修改動詞，落入模型 HTML 流程後被內容保護拒絕。明確欄數解析現接受省略動詞的數字／中文短句，例如 6個一排、六個一排、4個一排、四個一排，並支援請幫我改成等前綴；仍以整句匹配，複合需求不會只執行部分指令。沿既有純 CSS 圖片清單流程覆寫同一 #id 的 grid-template-columns，原圖、連結與 HTML 不變。
+
+既有 AiCanvasEdits／sandbox/ai-provider-contracts 增加四欄 CSS 與成功對話存在時，五種短句／前綴各自回傳指定四或六欄、零模型、46 條 scoped 規則與原 HTML 不變的斷言。shared-ai-regression 補 12 品牌四→六→四及還原後再次修改的人工驗收。沿用 ID／executor，未執行隔離案例或瀏覽器，不宣稱畫面已通過。
+
+本次只有後端與檢測規格變更，不需因這次修正再產生前端資產。請於根目錄手動執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"，可能還原相依並產生 bin/obj，耗時依環境。本次未執行編譯、測試、bundle。
+
+## 圖片清單直接修改每排數量
+
+精確欄數指令除 Bootstrap 外，新增圖片清單純 CSS 路徑：在選取片段定位最內層、直接子項皆含圖片的唯一重複項目容器，改 grid 欄數與項目寬度，HTML 完全不變。自訂 data-*、原圖、連結、子元件及標題均保留，不送模型重寫 HTML，也不因既有 data-* 被安全 HTML 重建流程拒絕。多組候選仍澄清；缺少可用 ID 明確拒絕，不回退重建。hidden／d-none／backstageType 樣板不納入項目。Bootstrap 遇既有自訂屬性亦可改走此路徑。
+
+前端 ID 準備涵蓋整個選取片段，與最多 40 個 computed style 預算分離，避免圖片項目超過 40 時後段不能定位。純 CSS 路徑沿既有 scoped ID 與最多 100 條安全規則檢查；目前圖片清單指定欄數會作用於所有螢幕寬度，不宣稱保留原手機欄數。
+
+AiCanvasEdits／既有 sandbox/ai-provider-contracts 新增 45 圖、data-*、外層標題、零模型、原 HTML 完整相同、46 規則與末項定位、缺 ID 拒絕斷言；原破壞性模型回覆案例改用仍走模型的欄數說法，繼續檢查刪圖防護。shared-ai-regression 補上相簿、一般卡片、超過 40 項、手機、還原與保存重開。案例 ID／executor 不變，尚未執行隔離斷言或瀏覽器。
+
+請手動編譯 MVC，並於 packages/EtheriT.Coker.GrapesJS 執行 npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原相依、寫入 bin/obj；前端產生 dist 並複製 MVC 資產，可能修改多個產物，耗時依環境。本次不執行編譯、測試、bundle，不修改生成檔。
+
+## 排版成功卻清空純圖片品牌列
+
+截圖顯示成功後品牌列空白。靜態追查確認原 content 回覆可整段替換，文字檢查不能保護沒有文字的圖片；尚無實際請求／回覆可判定是模型刪圖或 GrapesJS 重建自訂元件造成。排版需求現由後端比對完整節點結構、深度、非 class 屬性、圖片／連結網址、ID、重複圖片與文字，僅允許 class／CSS 調整。前端套用前再比對 DOM，將 class 更新至既有元件，不刪除重建元件樹，保留自訂類型與子層；定位失敗不套用。取消與原有回滾流程維持。
+
+AiCanvasEdits 沿既有 sandbox/ai-provider-contracts 增加純圖片空容器、刪一張相同網址圖片、改圖址、改連結四種實際服務拒絕斷言，以及完整樹只改 class 可通過。shared-ai-regression 人工驗收補元件實例、子層及自訂資料保留、錯誤沒有成功版本、設定選修改前版本還原。沿用案例 ID；尚未執行隔離斷言、編譯或瀏覽器，不宣稱已重現實際清空根因或通過視覺驗收。
+
+手動重新編譯 MVC（dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"）並於 packages/EtheriT.Coker.GrapesJS 執行 npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原套件並寫入 bin/obj；前端產生 dist 並複製 MVC 模組資產，可能修改多個產物，耗時依環境。本次不執行、不修改生成檔；先由設定還原到修改前版本再驗收，不儲存空白結果。
+
+## 畫布排版參考資料合併超限
+
+最新截圖的「畫布或對話太長」來自 CanvasAiService 合併模型 context 後的 32000 字元檢查；新增 CSS／排版參考與重複 SelectedTarget 文字後，個別合法欄位仍可能合計超限。模型訊息內層 JSON 改用保留中文的編碼，避免中文及 HTML 字元跳脫造成膨脹；此字串只作模型輸入，不插入網頁，外層 HTTP JSON 仍沿原序列化流程。
+
+實際序列化後超限時，先省略可選 CSS 並標記截斷，再省略 HTML 中已有的 SelectedTarget 重複文字，最後由尾端移除完整樣式參考項目，至少保留第一筆。完整 HTML、目前指令、AllowedSelectors、屬性限制與近期對話都不截斷；必要資料仍超限時回傳明確的小區塊提示，不宣稱清除對話即可解決。不提高 Gateway 限制、不自動重送、不改權限或站台範圍。
+
+既有 sandbox/ai-provider-contracts 的 AiCanvasEdits 增加合併超限精簡、中文不膨脹、原始 HTML／指令／selector／近期澄清對話完整、樣式陣列有效且保留第一筆，以及必要內容超限拒絕的實際 helper 斷言。shared-ai-regression 增加截圖原句與原有對話的人工回歸。維持案例 ID／executor；未執行隔離斷言、編譯、瀏覽器或真實模型，不能宣稱畫布已驗證通過。
+
+本次只改後端與檢測規格，不需因這次修改重建前端。請於根目錄手動執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj" 確認編譯；可能還原相依並產生 bin/obj，耗時依環境且可能較長。本次未執行。
+
+## 畫布選取層級與排版子層
+
+選取片段是可編輯邊界，不再暗示只能調整根節點。明確欄數指令可定位外層容器內唯一 Bootstrap row，保留其他標題與說明；多組 row 回傳澄清且不套用。前端僅對每排／欄數意圖，在所選片段沒有 row／grid／橫向 flex 排列時，最多向上四層尋找最近排列容器，不能選到整頁 wrapper；定位後在畫布顯示實際目標，一般文字或圖片需求不擴大。原取消、站台／資源與等待期間變更檢查繼續綁定這個實際目標。
+
+computed style 補上寬度、grid、flex、間距與對齊，先收集直接子層再收集深層，保留最多 40 元件及 16000 字元有效 JSON 預算。selected 請求提供最多 8000 字元既有 CSS 作為參考並標記截斷；仍不得把 class 規則套到區塊外，整體請求大小限制維持。
+
+既有 AiCanvasEdits／sandbox/ai-provider-contracts 補上外層包住唯一品牌列時調整子層且保留標題／說明、多組排列澄清且零修改的執行斷言。shared-ai-regression 人工規格補上選取外層、row、內層圖片／連結、四層與 wrapper 邊界、文字改色不擴大、排版參考大小、取消／還原及權限站台隔離。保留案例 ID；前端人工規格不列自動檢測數。上述隔離斷言、瀏覽器與模型驗收均未執行。
+
+使用者需手動編譯 MVC，並於 packages/EtheriT.Coker.GrapesJS 執行 npm run build:mvc（已確認為 vite build && node scripts/copy-to-mvc.mjs）。編譯可能還原相依並產生 bin/obj；前端流程產生 dist 並複製 MVC min.js／CSS 等資產，可能修改多個產物且耗時依環境。本次不執行 build、test、bundle，也不修改生成檔。
+
+## 品牌畫布四個一排未提出修改
+
+截圖的 EmptyProposal 是服務未提出修改，與輸入大小驗證不同。selected 提示補上明確欄數是可執行排版需求、完整 HTML 與圖片／連結保留規則。對精確的「修改為四個一排」「幫我改為四個一排」等欄數指令，已知 Bootstrap row 的直接 col 子項由本機調整 md 與更大斷點欄寬；保留手機欄數、ID、其他 class、圖片網址、連結與順序，不呼叫模型。未知容器、複合需求及不安全 HTML 不走局部捷徑，維持模型與原驗證流程。
+
+既有 sandbox/ai-provider-contracts 的 AiCanvasEdits 增加兩個原句、12 品牌完整保留、桌面四欄與手機兩欄、零模型呼叫，以及複合需求／未知容器交模型的隔離斷言。沿用案例 ID 與 executor；shared-ai-regression 補上桌面三排四個、手機、連結、還原、唯讀／跨站與等待期間修改的人工驗收。未執行隔離案例、編譯、瀏覽器或真實模型，不代表四欄視覺結果已通過。
+
+本次只變更後端來源與檢測規格，無新增前端資產變更。請於根目錄手動執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"，確認 C# 編譯；可能還原相依並寫入 bin/obj，耗時依環境且可能較長。本次不執行。
+
+## 選取容器排版請求的輸入大小
+
+「指令或畫布內容不符合限制」是 Chat 在模型呼叫前的欄位驗證，不代表模型拒絕四欄指令。插件收集最多 40 個元件的 computed style 時，新增序列化總長 16000 字元預算，省略空白及超長單一值，參考資料達預算就停止收集，不截斷 JSON，也不截斷選取 HTML。HTML／CSS 超限在送出前明確提示；Chat 保留既有大小與權限限制，拆分為內容、樣式、對話、樣式參考及無效欄位提示。
+
+既有 sandbox/ai-provider-contracts 的 AiCanvasEdits 新增四個一排合法請求、樣式參考邊界及超限、HTML／CSS／對話超限分類斷言，不連模型或客戶資料庫。shared-ai-regression 人工規格補上含 40 個以上子元件的品牌容器排四欄、檢查請求樣式參考為有效且不超限 JSON、只影響所選容器；未執行隔離檢測、編譯或瀏覽器驗收，不宣稱四欄結果已通過。
+
+需手動重新編譯 MVC 及在 packages/EtheriT.Coker.GrapesJS 執行 npm run build:mvc；編譯可能還原相依並產生 bin/obj，前端流程產生 dist 及複製 MVC 資產，可能修改多個產物，耗時依環境。本次不執行上述流程。
+
+## AI 設定工具列顯示回歸
+
+AI 面板標頭改用專屬 div 工具列，避免宿主針對頁面 header 的樣式或顯示控制影響設定／關閉按鈕；以面板直屬 CSS 明確設定正常定位與不壓縮高度。更新 shared-ai-regression 人工規格，核對編輯器一般／全螢幕及窄螢幕下標題、設定與關閉均可見；設定可展開版本與清除入口，長對話捲動不帶走工具列。未執行瀏覽器驗收或 bundle，不能視為通過；需依下方既有 build:mvc 流程手動更新資產。
+
+## 畫布 AI 聊天與本機版本
+
+右側改為聊天、底部輸入與目前選取提示，移除修改範圍及獨立版本工具列；送出固定 selected、autoDetect=true，只處理送出時選取元件，未選取或選到 wrapper 不送出。保留 HTML/CSS 校驗、取消、內容變更與跨資源防護。成功套用的回覆以穩定版本 ID 綁定「還原此版」；設定內保留版本時間／需求摘要選擇器及「清除本機內容」。還原會新增對話紀錄，不自動發布或保存頁面。
+
+既有資源識別鍵保存最多 20 份版本與 200 則對話，舊版僅有版本的資料仍可從設定還原；送往服務只包含最近最多八則 user／assistant 及有效的 8000 字元內 JSON，不送版本資料。清除先確認，只移除目前資源的本機版本及對話，保持畫布與伺服器內容；取消不清除。版本淘汰後舊對話不提供失效還原按鈕。
+
+更新 shared-ai-regression 人工驗收規格：選取／未選取、送出即顯示、成功版本連結、錯誤與取消無成功版本、設定展開、舊紀錄相容、重開與跨頁隔離、兩種還原入口、未存修改確認、清除確認及窄螢幕捲動。保留既有案例 ID，不新增自動通過數；未執行瀏覽器、build、test 或 bundle。修改只涉及插件 JS/CSS 及檢測文件，不新增後端或資料庫操作。
+
+需使用者於 packages/EtheriT.Coker.GrapesJS 手動執行 npm run build:mvc（vite build && node scripts/copy-to-mvc.mjs），產生 dist 並複製 MVC 模組資產，可能修改多個產物且耗時依環境而定；本次不執行，也不修改既有生成檔。
+
+## AI 設定選單預設不開放
+
+NavigationProvider 的 AiSettings 選單預設 Enable=false；沿用既有網站功能權限，只有本站明確授予 AiSettings 才能開放，再依使用者角色判斷檢視與編輯。單獨授予 AiSettings.View 或系統維護身分不能開啟停用的網站功能；既有明確開放的網站維持可用。不變更頁內 AiEnabled 開關、金鑰或 JavaScript，不新增資料庫變更。
+
+既有 sandbox/ai-settings 執行器新增隔離斷言：無網站功能授權時不可見及不可編輯、使用者 View 授權不能開放、本站明確開放後可用、撤銷後再次不可用。權限資料只寫入獨立 InMemory fixture。人工驗收另確認選單、直接頁面及相關 API 均遵守網站功能與角色權限，其他站台不受影響。未執行編譯、檢測或瀏覽器驗收，不代表已通過。這次選單修正不需重建前端資產。
+
+## 畫布修改方式統一自動判斷
+
+移除 aiAssistantPlugin 的「修改方式」選單，使用者只選修改範圍並描述需求。selected／canvas 請求固定 autoDetect=true，初始 preserveContent=true；既有模型結果與後端局部處理決定實際修改方式，前端仍檢查後端回傳 preserveContent。new 範圍仍為 autoDetect=false／preserveContent=false，用於新建內容。保留後端欄位以相容既有客戶端，不新增權限或改變站台隔離，原文保留與 HTML/CSS 套用檢查維持。
+
+更新 shared-ai-regression 人工規格：畫面沒有修改方式選項，selected／canvas／new 各範圍的參數正確；局部放大＋連結、純樣式、明確改寫及新建內容均能沿既有流程處理。取消、等待期間變更、權限／跨站拒絕與本機版本還原不變。這是待執行的瀏覽器驗收，不新增自動案例或通過數；本次未執行編譯、測試或 bundle。
+
+需使用者於 packages/EtheriT.Coker.GrapesJS 手動執行 npm run build:mvc，實際為 vite build && node scripts/copy-to-mvc.mjs，會產生 dist 並 minify／複製 MVC 的模組 JS、CSS 等資產，可能改動多個產物，耗時依環境而定。本次不自行執行，不以 MVC 的 create-bundles 替代此套件流程。
 
 ## 局部放大與連結不得刪除未指定文字
 
@@ -451,3 +747,63 @@ MVC 應由使用者手動 npm run create-bundles，讓 CokerCore.min.css 與 Pro
 擴充既有 `sandbox/search-log-validation`：以實際 Token 服務驗證匿名有效 Token 重用、過期 Access Token 透過 RefreshToken 更新、匿名 UUID 保留、舊 RefreshToken 不被誤作廢及更新後日誌 UUID 一致；簽入基礎設施以隔離替身處理，不驗證真實 Cookie 驗證管線。未增加自動案例數。
 
 擴充 `Page.Index.search-keyword-links` 人工瀏覽器驗收：慢網路首次進站多目錄共用初始化；搜尋 API／上下則等待 Token；到期前更新；Token 失敗不送搜尋且可重試；缺少輸入、空白、undefined／null 在前台阻擋；動態關鍵字屬性及 jQuery 快取同步。對應來源為前台 site.js、coker.api.token.js、coker.core.js、coker.api.directory.js、coker.feature.search.js、Search.js 及 Directory boot.js。瀏覽器規格仍未綁定自動執行器，不計自動通過數。上述執行器與人工情境均未執行。
+
+
+## 文章列表大型內容回歸
+
+ArticleAppService.GetAllList 不再投影正式／草稿 Html、SaveHtml、Css、SaveCss；列表只載入既有中繼欄位，內文仍由編輯／畫布 API 取得。保留既有標籤搜尋與記憶體分頁邏輯，因此尚未解決大量文章中繼資料全量載入的擴充性問題；不能據此宣稱正式站空白畫面唯一原因或 SQL 耗時已驗證。
+
+沿用 ContentManagement.Article.sandbox-article-crud 與 sandbox/article-crud，新增獨立 InMemory 大型內容斷言：兩篇文章每個內文／樣式欄位各 256 KiB，另加其他站台文章；分兩頁查詢確認總筆數、順序、站台與軟刪除隔離，回應內文／樣式為空且單筆序列化小於 8 KiB，原始內容保持完整。不增加自動通過數。
+
+人工驗收：以原異常站台資料於測試環境開啟文章管理，核對列表請求狀態、等待時間與回應大小；測試標籤／標題搜尋、排序、分頁、開啟文章與畫布後正式／草稿內容及樣式完整。若仍空白，需保存失敗請求的完整 URL、HTTP 狀態、回應與對應伺服器日誌，再判斷其他初始化請求或例外。DevTools 快取遭逐出訊息本身不等於 API 回應失敗。
+
+本次僅靜態檢查與 Git diff，未執行編譯、隔離檢測、瀏覽器或 SQL 驗證，未連正式站、未修改資料庫。沒有前端資產變更，不需 bundle。使用者可手動執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj" 確認 C# 編譯；可能還原相依並寫入 bin/obj，耗時依環境且可能較長，本次未執行。
+
+
+## 文章內嵌圖片在儲存與匯入時強制轉存
+
+文章 SaveContenInternal 在確認目前站台、有效文章及既有編輯權限後，透過 IFileUploadAppService.NormalizeInlineImageSourcesAsync 解析 HTML 的 src。data:image 的 PNG／JPEG／GIF／WebP／BMP 支援 Base64 及百分比原始位元組編碼，確認檔頭、宣告 MIME 及圖片尺寸後，沿用現有 htmlConten 上傳與圖片縮放／轉換流程，替換成本站檔案網址；不下載一般遠端網址。相同圖片位元組以站台及內容摘要去重，同一篇重複引用、重試與再保存共用已存在的本站圖檔，缺實體檔時重建。新方法不新增公開 API。
+
+限制：單張 10 MiB、單次不同圖片合計 25 MiB、最多 50 個 src、單張最多 4000 萬像素；仍受既有 HTTP 請求與上傳格式限制。內嵌 SVG 等其他格式、無效編碼、內容格式不符、blob 及含 data／blob 的 srcset 都明確拒絕，請使用上傳後的圖片網址。先驗證全部輸入，再開始建檔，避免後續無效圖片造成部分新增。實際磁碟或資料庫故障仍沿用既有上傳的錯誤／未引用檔管理，沒有新增跨檔案／SQL 交易保證。此次只處理文章 HTML src，不轉換 CSS 背景、其他功能的內文或瀏覽器暫存圖。
+
+ImportConten 只在草稿保存成功後，從已轉存的 dto 建立正式發布內容，避免發布原始 Base64；前台依舊沿 ResolveFrontUploadPath 移除後台站台路徑。拒絕時不繼續發布。內容儲存／發布查詢明確限制本站及未刪除文章，即使系統管理者也不會先替其他站台建立圖檔。含內嵌資料或超過 1 MiB 的失敗內容不整份寫入操作日誌，只記文章 ID 與長度。
+
+ArticleManager.js 的儲存與發布 callback 在服務拒絕或 HTTP 失敗時 reject deferred，避免一直等待；不重送寫入或自動覆蓋目前畫布。已保存的圖檔網址於重開畫布後載入，當前畫布內原始 src 不會在儲存期間被強制重載；首次貼入大型 HTML 仍可能讓瀏覽器變慢。既有文章不在讀取時自動轉存，只於下一次成功儲存／匯入處理，不執行批次修復、Migration 或資料變更命令。
+
+新增 ContentManagement.Article.inline-images，綁定 sandbox/article-inline-images 與 BackofficeSandboxInlineImageChecks：在獨立 InMemory 及暫存上傳目錄，使用實際服務驗證 Base64／百分比 PNG 轉存、同圖去重與實體檔、草稿與正式檔案引用、一般網址／文字／CSS 保留、草稿不發布、重開畫布內容、重複儲存／匯入不增檔，以及發布路徑。以新的有效圖片放在錯誤輸入前，驗證無效編碼、偽造檔頭、內嵌 SVG、blob、內嵌 srcset、數量與單張大小超限時不建檔、不改草稿／正式內容；另驗證跨站寫入拒絕。測試不連外、不使用客戶資料庫。上述斷言尚未執行，不代表 SQL、圖片原生套件部署或瀏覽器已通過。合計大小、尺寸邊界及多種圖片格式另需手動驗收。
+
+更新既有 Article.canvas 人工規格：使用可編輯／唯讀帳號，貼入大型或重複圖片、儲存並重開、發布後核對前台及樣式、重試檔案數不增加、無效圖片及 HTTP 失敗提示且等待結束、修正後可再次保存。唯讀／跨站不可產生圖片或改文章。這些人工規格不列自動通過數。
+
+本次只做靜態閱讀、JavaScript 語法解析、JSON／案例 ID／executor 綁定與 Git diff 檢查，未執行編譯、測試、bundle 或正式環境操作。
+使用者可於根目錄手動執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj" 確認介面及 C# 編譯，可能還原相依、寫入 bin/obj 且耗時較長；本次未執行。
+前端仍引用既有 ArticleManager.min.js；請在 src/EtheriT.Coker.Web.MVC 手動 npm run create-bundles，以套用 callback 修正。已確認 package.json 先檢查 DevExtreme 授權，再執行 yarn && gulp buildDev；可能下載相依、更新 lock file、產生大量資產及啟動監看，耗時依環境，本次不自行產生 .min.js。
+
+
+## 文章更新後僅詢問本次失去引用的圖片
+
+ArticleAppService 在儲存／匯入前，從這篇文章的草稿、正式內容、電子報、CSS 與描述等欄位收集已登錄的本站圖片 ID；成功保存並更新引用後比較新舊集合。沒有移除圖片、圖片仍用於正式內容、同篇其他欄位或其他內容時不提供回收詢問。只在有移除候選時才呼叫既有 FileReferenceScanner，檢查實際內容、綁定、同路徑及相關尺寸圖，不在每次一般保存掃描整站或列舉磁碟。沿用 FileReferenceIndexingService 的路徑解析（改為 internal 共用），不新增另一套引用判斷。
+
+回傳資訊只有數量、確認憑證及檢查失敗旗標，不將內部案例、來源路徑或圖片 ID 顯示在使用者畫面。確認憑證由 DataProtection 保護，綁定目前使用者、站台、文章、保存後內容指紋、最多 200 個本次候選及 15 分鐘期限；日誌不保存憑證。前台共用 ArticleAppService 的新增清理相依採選用，不要求前台註冊後台檔案管理服務，前台讀取流程維持。
+
+ArticleController 僅在目前站台版本及有效父層功能允許、使用者可編輯文章或目錄且有檔案管理刪除權限時提供確認。RecycleUnusedImages POST 需防偽，另有經相同權限檢查且 no-store 的 GetImageCleanupAntiforgeryToken；前端確認後才取最新 Token/Cookie 配對，將快照站台放在 header/query，再送一次清理，不自動重送。清理服務重新核對使用者／站台／文章／期限／內容指紋與編輯資格，重新掃描候選引用，並由既有 MoveToRecycleBinAsync 在實際搬移前再次檢查完整檔案家族引用。只回收本次已移除且仍無引用的本站圖片，不掃除整站其他閒置檔，不永久刪除。
+
+ArticleManager 在保存成功後，有候選才顯示「文章已儲存／已儲存並發布」與圖片數量，提供「移到回收桶／保留圖片」。取消不送清理請求、不新增清理候選或搬檔；畫布內容、目前文章或站台於提示期間改變時也保留。確認期間阻擋同畫布重複儲存／發布。清理失敗明示文章已儲存，部分搬移結果不宣稱全部保留或全部成功。grapesjs-Coker6.js 的共用儲存／發布 callback 支援 handledFeedback，文章清理已提示時不再用一般成功彈窗覆蓋；其他功能仍顯示原成功提示。圖片可由既有回收桶還原；本機歷史版本不是正式引用，還原含已回收舊圖的版本前需先還原圖片。
+
+新增 ContentManagement.Article.unused-image-cleanup，綁定 sandbox/article-image-cleanup，requiredFeatures=FileManagement。獨立 InMemory／暫存圖片與臨時保護金鑰斷言：草稿換圖但正式仍使用舊圖不提示、發布替換後才提供本次移除確認、取消不搬圖及不新增候選、偽造／錯文章／錯站台／錯使用者／逾期確認拒絕、提示後新增未建索引的共用引用仍保留、內容更新後的舊確認拒絕、重新取得確認後回收、重放不搬其他圖、保存內容不變及可還原。沒有連客戶資料庫或執行上述斷言，不代表 SQL、並行交易、HTTP 防偽管線或瀏覽器通過。
+
+新增 unused-image-cleanup-browser 人工規格（無 executor、不列自動通過數），涵蓋沒有候選不詢問、一般成功提示一次、保留／確認、提示期間畫布／文章／站台變更、角色撤權、功能或父層停用、跨站與防偽拒絕、其他內容重新引用、HTTP／搬檔失敗、重複點擊、回收還原及其他功能原儲存提示。不自動清除本機 AI 版本，也不宣稱所有歷史圖檔都已掃描。
+
+本次僅靜態閱讀、修改來源、檢查 JavaScript 語法、JSON／唯一 ID／來源路徑／executor 綁定及 Git diff，未執行編譯、檢測、bundle、Migration、正式環境或實際資料搬移。
+建議使用者於 Repository 根目錄手動執行 dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj" 確認 C# 與介面編譯；可能還原相依並產生 bin/obj，耗時依環境且可能較長。
+在 src/EtheriT.Coker.Web.MVC 手動執行 npm run create-bundles，以更新 ArticleManager.min.js 與 grapesjs-Coker6.min.js。已確認現有 script 先檢查 DevExtreme 授權，再 yarn && gulp buildDev，可能下載相依、更新 lock file、產生大量資產及啟動監看，耗時依環境；本次不產生 min.js。
+
+回收後重新插入同一張 Base64 圖片的補充：InlineImageSources 以本站與內容摘要命名的 OriginalFileName 尋找有效且有實體檔的圖檔；新建上傳使用獨立 GuidKey，避免已回收紀錄與重新建立的圖共用鍵值，讓既有引用掃描／檔案家族查詢產生重複鍵例外。保留舊版內容鍵查找以相容本階段已產生的有效圖檔。新增隔離斷言確認重新插入後使用不同識別，再移除仍可正常產生清理確認，原回收圖仍可還原；尚未執行。
+
+去重另核對伺服器配置的「站台＋內容摘要＋上傳 ID」GuidKey 標記，不單憑可由使用者指定的 OriginalFileName。新增隔離情境以同名紀錄指向另一張圖片，確認重新插入仍建立正確圖檔，不誤用偽裝檔名；尚未執行。SaveCanvasImageAsync 的新選用參數只由內嵌圖片流程啟用，既有外站圖片匯入維持原鍵值規則。
+
+
+## 圖片隔離案例編譯型別修正
+
+修正 BackofficeSandboxArticleCleanupChecks 與 BackofficeSandboxInlineImageChecks 的 15 處 long → int 隱含指派。Article Entity.Id 為 long，但既有 ArticleSaveContenDto.Id 與 SearchIDDto.Id 為 int；呼叫 SaveConten／ImportConten／GetConten 時改用 checked((int)entity.Id)，沿用現有目錄隔離案例的做法，避免靜默截斷。不變更正式 DTO、Entity 或資料庫欄位；RecycleUnusedImages 的 long Id 維持原樣。
+
+同步註記既有 inline-images 與 unused-image-cleanup 案例的 fixture 型別要求，保留原 ID、executor 及業務斷言，不新增自動通過數。僅靜態型別／直接引用、JSON 與 diff 檢查，未執行編譯或隔離案例，不能宣稱已編譯通過。本次不涉及前端資產，不需重新 bundle。請使用者在 Visual Studio 重新編譯 MVC；會寫入 bin/obj 並可能還原相依，耗時依環境而定。

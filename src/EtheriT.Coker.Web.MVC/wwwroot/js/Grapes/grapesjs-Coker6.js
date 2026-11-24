@@ -319,6 +319,18 @@
     });
 
     var PopupDirectory = null;
+    let directorySettingsClosed = null;
+    editor.Commands.add('coker-settings-directory', {
+        run(currentEditor, sender, { component, onClose, onOpened } = {}) {
+            if (!component?.parent() || component.get('type') !== '目錄') return false;
+            const command = component.getTrait('data-dirid')?.get('command');
+            if (typeof command !== 'function') return false;
+            currentEditor.select(component);
+            directorySettingsClosed = onClose;
+            try { command(currentEditor); onOpened?.(); return true; }
+            catch (error) { directorySettingsClosed = null; throw error; }
+        }
+    });
     //目錄
     editor.DomComponents.addType('目錄', {
         isComponent: el => el.classList?.contains('menu_directory') || el.classList?.contains('catalog_frame') || el.classList?.contains('advertise_directory'),
@@ -459,7 +471,12 @@
                                 content.find('.cancel').off('click.directorySource').on('click.directorySource', function () {
                                     PopupDirectory.hide();
                                 });
-                                PopupDirectory.option('onHidden', function () { active = false; });
+                                PopupDirectory.option('onHidden', function () {
+                                    active = false;
+                                    const closed = directorySettingsClosed;
+                                    directorySettingsClosed = null;
+                                    closed?.();
+                                });
                                 confirmButton.off('click.directorySource').on('click.directorySource', function () {
                                     if (!active || !ready) return;
                                     if (missingSelection) {
@@ -999,8 +1016,8 @@
                     return;
                 }
 
-                settings.save(editor.getHtml(), editor.getCss()).done(function () {
-                    co.sweet.success("已儲存草稿");
+                settings.save(editor.getHtml(), editor.getCss()).done(function (result) {
+                    if (result?.handledFeedback !== true) co.sweet.success("已儲存草稿");
                 });
             },
             attributes: { title: 'save' },
@@ -1026,8 +1043,8 @@
                 const $html = $("<div>").append(t);
                 t = `<body>${$html.html()}</body>`;
 
-                settings.import(t, editor.getCss()).done(function () {
-                    co.sweet.success("已儲存並發布");
+                settings.import(t, editor.getCss()).done(function (result) {
+                    if (result?.handledFeedback !== true) co.sweet.success("已儲存並發布");
                 });
             },
             attributes: { title: 'import' },

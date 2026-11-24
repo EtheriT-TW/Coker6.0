@@ -6,19 +6,22 @@ namespace EtheriT.Coker.Web.MVC.Services.Ai;
 
 // The existing Gateway protocol is canvas-specific; never send other features through it.
 public sealed record CanvasAiInput(string System, string Context, string Locale, string OriginalHtml);
+public sealed record CanvasAiChatResult(int Status, string? Content, string Message, int? ModelCalls = null)
+{
+    public string? FailureReason { get; init; }
+}
 
 public sealed class CanvasAiClient(IAiClient client, IHttpClientFactory clients, CanvasAiAvailability availability)
 {
-    public async Task<AiChatResult> ChatAsync(WebsiteAiSettings settings, CanvasAiInput input, CancellationToken token)
+    public async Task<CanvasAiChatResult> ChatAsync(WebsiteAiSettings settings, CanvasAiInput input, CancellationToken token)
     {
         if (!settings.Enabled) return new(403, null, "本站尚未開放 AI 輔助。");
         if (settings.EffectiveProvider != "self")
         {
             var result = await client.ChatAsync(settings, new(input.System, [new("user", input.Context)])
                 { ResponseFormat = AiResponseFormat.JsonObject }, token);
-            return result.Status == 422
-                ? result with { Message = "AI 修改提案未通過驗證，未修改畫布。請重新描述需求。" }
-                : result;
+            return new(result.Status, result.Content, result.Status == 422
+                ? "AI 修改提案未通過驗證，未修改畫布。請重新描述需求。" : result.Message, result.ModelCalls);
         }
         using var request = CreateGatewayRequest(input);
         try
@@ -31,13 +34,14 @@ public sealed class CanvasAiClient(IAiClient client, IHttpClientFactory clients,
             if (!response.IsSuccessStatusCode)
             {
                 var status = (int)response.StatusCode;
+                var failure = status == 422 ? await CanvasAiService.ReadCanvasFailureDetails(response, token) : null;
                 return new(status is 429 or 422 ? status : 502, null, status switch
                 {
-                    422 => await CanvasAiService.ReadCanvasFailure(response, token),
+                    422 => failure!.Message,
                     401 or 403 => "AI 金鑰無效或沒有使用此模型的權限，請管理員檢查設定。",
                     429 => "AI 額度不足或請求過於頻繁，請稍後重試或檢查帳戶額度。",
                     _ => "AI 服務呼叫失敗，請管理員檢查服務與模型設定。"
-                }, calls);
+                }, calls) { FailureReason = failure?.Reason };
             }
             using var json = JsonDocument.Parse(await AiClient.ReadBoundedAsync(response, token));
             var content = json.RootElement.GetProperty("content").GetString();

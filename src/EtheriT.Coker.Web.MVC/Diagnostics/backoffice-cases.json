@@ -6,7 +6,20 @@
       "action": "Public",
       "module": "系統檢測",
       "title": "前台圖片、連結檢測",
-      "sources": ["Controllers/SystemDiagnosticsController.cs", "Controllers/SystemDiagnosticsPublic.cs", "Views/SystemDiagnostics/Public.cshtml", "Views/SystemDiagnostics/_PublicResults.cshtml", "wwwroot/js/SystemDiagnostics/Public.js", "Diagnostics/PublicDiagnostics.cs", "Diagnostics/PublicBrowserChecks.cs", "Diagnostics/PublicDiagnosticsSandboxChecks.cs", "Diagnostics/DiagnosticsBackgroundJob.cs", "Diagnostics/DiagnosticsWorkStore.cs", "Diagnostics/DiagnosticsPlanBuilder.cs", "Controllers/SystemDiagnosticsJobs.cs"],
+      "sources": [
+        "Controllers/SystemDiagnosticsController.cs",
+        "Controllers/SystemDiagnosticsPublic.cs",
+        "Views/SystemDiagnostics/Public.cshtml",
+        "Views/SystemDiagnostics/_PublicResults.cshtml",
+        "wwwroot/js/SystemDiagnostics/Public.js",
+        "Diagnostics/PublicDiagnostics.cs",
+        "Diagnostics/PublicBrowserChecks.cs",
+        "Diagnostics/PublicDiagnosticsSandboxChecks.cs",
+        "Diagnostics/DiagnosticsBackgroundJob.cs",
+        "Diagnostics/DiagnosticsWorkStore.cs",
+        "Diagnostics/DiagnosticsPlanBuilder.cs",
+        "Controllers/SystemDiagnosticsJobs.cs"
+      ],
       "cases": [
         {
           "id": "SystemDiagnostics.Public.parser-and-history",
@@ -130,7 +143,20 @@
       "action": "Backoffice",
       "module": "系統檢測",
       "title": "後台功能測試",
-      "sources": ["Controllers/SystemDiagnosticsController.cs", "Views/SystemDiagnostics/Backoffice.cshtml", "Views/SystemDiagnostics/_BackofficeResults.cshtml", "wwwroot/js/SystemDiagnostics/Backoffice.js", "Diagnostics/BackofficeResultStore.cs", "Diagnostics/BackofficeSandboxChecks.cs", "Diagnostics/DiagnosticsBackgroundJob.cs", "Diagnostics/DiagnosticsWorkStore.cs", "Diagnostics/DiagnosticsPageRunner.cs", "Diagnostics/DiagnosticsPlanBuilder.cs", "Diagnostics/DiagnosticsBackgroundSandboxChecks.cs", "Controllers/SystemDiagnosticsJobs.cs"],
+      "sources": [
+        "Controllers/SystemDiagnosticsController.cs",
+        "Views/SystemDiagnostics/Backoffice.cshtml",
+        "Views/SystemDiagnostics/_BackofficeResults.cshtml",
+        "wwwroot/js/SystemDiagnostics/Backoffice.js",
+        "Diagnostics/BackofficeResultStore.cs",
+        "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/DiagnosticsBackgroundJob.cs",
+        "Diagnostics/DiagnosticsWorkStore.cs",
+        "Diagnostics/DiagnosticsPageRunner.cs",
+        "Diagnostics/DiagnosticsPlanBuilder.cs",
+        "Diagnostics/DiagnosticsBackgroundSandboxChecks.cs",
+        "Controllers/SystemDiagnosticsJobs.cs"
+      ],
       "cases": [
         {
           "id": "SystemDiagnostics.Backoffice.background-storage",
@@ -980,14 +1006,14 @@
           "mode": "external"
         },
         {
-      "id": "Page.Index.search-log-validation",
-      "title": "搜尋日誌有效關鍵字與訪客識別",
-      "steps": "環境：獨立記憶體資料庫及測試簽章，不連接客戶資料庫。呼叫實際搜尋日誌服務：缺少、損壞、過期、其他站台及 UUID 全零 Token；有效匿名 Token 搭配空白、undefined／null（含大小寫及前後空白）、超長關鍵字。另記錄中文、LL-17 FE+，重複提交同日同目標並切換商品／文章目標。 以匿名身分重複建立有效 Token，並模擬 Access Token 過期後以原 RefreshToken 更新，再記錄搜尋。簽入基礎設施使用記憶體替身。",
-      "expected": "無效關鍵字或無有效訪客識別不寫入日誌；有效匿名搜尋沿用 Token 的 UUID，關鍵字去除前後空白，同日同目標去重且不同搜尋目標分開保存。此執行器驗證記憶體業務邏輯與 Token 驗證，不代表 SQL 或瀏覽器流程已通過。 有效匿名 Token 重用不新增 Token；更新後 UUID 保持一致且不作廢其他分頁仍使用的 RefreshToken，更新後日誌沿用該 UUID。",
-      "mode": "isolated",
-      "executor": "sandbox/search-log-validation"
-    },
-    {
+          "id": "Page.Index.search-log-validation",
+          "title": "搜尋日誌有效關鍵字與訪客識別",
+          "steps": "環境：獨立記憶體資料庫及測試簽章，不連接客戶資料庫。呼叫實際搜尋日誌服務：缺少、損壞、過期、其他站台及 UUID 全零 Token；有效匿名 Token 搭配空白、undefined／null（含大小寫及前後空白）、超長關鍵字。另記錄中文、LL-17 FE+，重複提交同日同目標並切換商品／文章目標。 以匿名身分重複建立有效 Token，並模擬 Access Token 過期後以原 RefreshToken 更新，再記錄搜尋。簽入基礎設施使用記憶體替身。",
+          "expected": "無效關鍵字或無有效訪客識別不寫入日誌；有效匿名搜尋沿用 Token 的 UUID，關鍵字去除前後空白，同日同目標去重且不同搜尋目標分開保存。此執行器驗證記憶體業務邏輯與 Token 驗證，不代表 SQL 或瀏覽器流程已通過。 有效匿名 Token 重用不新增 Token；更新後 UUID 保持一致且不作廢其他分頁仍使用的 RefreshToken，更新後日誌沿用該 UUID。",
+          "mode": "isolated",
+          "executor": "sandbox/search-log-validation"
+        },
+        {
           "id": "Page.Index.search-keyword-codec",
           "title": "搜尋網址編碼與舊關鍵字相容",
           "steps": "使用共用編碼類別驗證 LL-17 FE+ 的固定 UTF-8 Base64Url 協定向量；往返中文、emoji、加號、斜線、查詢分隔符、百分比字面值、空白、BOM 及以前綴開頭的原文。驗證無前綴舊關鍵字、損壞編碼、非 UTF-8、非標準尾端位元及空值。",
@@ -1272,14 +1298,48 @@
         "Views/ContentManagement/_ArticleContent.cshtml",
         "Controllers/api/ArticleController.cs",
         "Diagnostics/BackofficeSandboxChecks.cs",
+        "Diagnostics/BackofficeSandboxContentChecks.cs",
+        "Diagnostics/BackofficeSandboxInlineImageChecks.cs",
+        "Diagnostics/BackofficeSandboxArticleCleanupChecks.cs",
+        "wwwroot/js/Grapes/grapesjs-Coker6.js",
+        "wwwroot/js/ContentManagement/ArticleManager.js",
         "Diagnostics/BackofficeReadOnlyChecks.cs"
       ],
       "cases": [
         {
+          "id": "ContentManagement.Article.unused-image-cleanup-browser",
+          "title": "儲存後圖片清理提示與權限",
+          "steps": "環境：測試站台，文章／目錄可編輯帳號及有／無檔案管理刪除權限帳號。測沒有移除圖片不詢問、草稿舊圖仍在正式頁不詢問、發布後無引用才詢問；保留不送清理 POST，確認先取最新防偽資料再送一次 POST。提示中改選文章、切站台、修改畫布、撤權或在其他頁重新引用舊圖。另測缺防偽、逾期確認、HTTP／搬檔失敗、重複點擊、回收桶還原及非文章畫布的原成功提示。",
+          "expected": "只有本站適用功能及檔案刪除權限允許時才提供清理；無候選不出額外詢問，正常成功提示一次。取消、畫布／頁面變更不清理；權限、防偽、站台或內容確認失效時拒絕。清理時新引用保留；失敗訊息明示文章已儲存，不自動重送。搬入回收桶可還原，未永久刪除。人工驗收尚未執行，不列自動通過數。",
+          "mode": "review",
+          "requiredFeatures": [
+            "FileManagement"
+          ]
+        },
+        {
+          "id": "ContentManagement.Article.unused-image-cleanup",
+          "title": "文章更新後未使用圖片確認與回收",
+          "steps": "測試資料以 checked 轉換文章識別碼，對齊既有儲存／匯入／讀取 DTO 的 int 型別，溢位不得截斷。環境：獨立 InMemory、暫存上傳目錄及臨時保護金鑰。先發布紅色圖片，再只儲存藍色圖片草稿，檢查舊正式圖片不列清理；發布藍圖後取得本次移除圖片確認。未確認不搬檔、不新增清理候選；再加入未建索引的共用引用，確認時應保留。測錯文章、偽造確認、錯站台／使用者、逾期與內容更新後的舊確認；重新產生本次移除確認，執行回收、重放、重新插入相同圖片後再次移除與還原。",
+          "expected": "只有本次更新移除且無引用的圖片有提示資料；仍被正式內容或其他文章使用的圖保留。取消無搬檔；偽造、錯文章、錯站台／使用者、逾期及內容更新後的確認失敗且檔案完整。確認只移入回收桶，重放不搬其他圖，回收後重新插入使用獨立檔案識別且引用掃描正常，可還原，已儲存文章不變。不連客戶資料庫，不代表 SQL 或瀏覽器驗證通過。",
+          "mode": "isolated",
+          "executor": "sandbox/article-image-cleanup",
+          "requiredFeatures": [
+            "FileManagement"
+          ]
+        },
+        {
+          "id": "ContentManagement.Article.inline-images",
+          "title": "文章內嵌圖片轉存與發布",
+          "steps": "測試資料以 checked 轉換文章識別碼，對齊既有儲存／匯入／讀取 DTO 的 int 型別，溢位不得截斷。環境：獨立 InMemory 資料庫與暫存上傳目錄，禁止連外。呼叫實際儲存與匯入服務，使用同一 PNG 的 Base64 與百分比編碼、一般網址及重複儲存；檢查圖片實體檔、本站路徑、重開草稿與發布內容。以新圖片搭配無效編碼、偽造格式、內嵌 SVG、blob、內嵌 srcset、超過 50 個圖片及單張超限輸入，另測跨站文章寫入。",
+          "expected": "內嵌 PNG 轉成本站圖檔，重複內容與重試共用檔案；文字、CSS 及一般網址保留，草稿儲存不發布，發布使用已轉存網址並移除後台站台路徑。拒絕情境有明確錯誤，不建立新圖檔、不改草稿或正式內容；其他站台資料不變。只驗證記憶體與暫存檔，不代表 SQL 或瀏覽器通過。",
+          "mode": "isolated",
+          "executor": "sandbox/article-inline-images"
+        },
+        {
           "id": "ContentManagement.Article.sandbox-article-crud",
-          "title": "文章增修刪保存",
-          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。",
-          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。",
+          "title": "文章增修刪保存與大型內容列表",
+          "steps": "建立獨立記憶體資料，呼叫實際服務新增一筆測試資料，修改名稱並重新查詢，再刪除與核對刪除結果。 另建立含大型正式／草稿內文與樣式的兩篇文章及其他站台文章，分兩頁讀取實際列表，檢查回傳欄位、大小、總筆數與原始內容。",
+          "expected": "新增、修改及刪除結果與測試資料一致，不修改客戶資料；不代表 SQL、外部服務及瀏覽器已驗證。 列表不含正式／草稿 HTML、CSS 內容，單筆回應小於 8 KiB；分頁順序與總筆數正確，不含其他站台或已刪除文章，讀取不變更已存內文。",
           "mode": "isolated",
           "executor": "sandbox/article-crud"
         },
@@ -1340,8 +1400,8 @@
         {
           "id": "ContentManagement.Article.canvas",
           "title": "文章進階編輯與發布",
-          "steps": "編輯測試文章畫布、預覽並發布，再重新載入。",
-          "expected": "內文、圖片與樣式一致。",
+          "steps": "環境：測試站台與可編輯文章帳號。貼入含重複 Base64 圖片的原始碼，儲存草稿、重開畫布，再發布並於前台核對圖片與樣式；重複儲存不得新增重複圖檔。另測無效圖片、超限及 HTTP 失敗，檢查錯誤提示與等待狀態是否結束。",
+          "expected": "內文、圖片與樣式一致，重開後圖片使用本站檔案網址；失敗不可顯示成功，等待狀態結束且能修正後重試。第一次貼入的大型內容仍可能拖慢畫布，後端轉存不代表貼上效能已驗證。本人工瀏覽器規格未綁 executor，不列自動通過數。",
           "mode": "isolated"
         },
         {
@@ -3246,19 +3306,24 @@
         "Services/Ai/CanvasAiClient.cs",
         "Services/Ai/CanvasAiStyleNormalizer.cs",
         "Diagnostics/BackofficeSandboxAiCanvasChecks.cs",
+        "Diagnostics/BackofficeSandboxAiPlannerChecks.cs",
+        "Services/Ai/CanvasAiPlanning.cs",
+        "../../packages/EtheriT.Coker.GrapesJS/src/plugins/aiAssistant/aiAssistantPlugin.js",
         "Diagnostics/BackofficeSandboxAiGenericChecks.cs",
         "Services/Ai/AiModelCatalog.cs",
         "Diagnostics/BackofficeSandboxAiModelChecks.cs",
         "Services/Ai/CanvasAiService.cs",
         "Services/Ai/CanvasAiAvailability.cs",
         "Views/Shared/GrapesComponents/_ScriptComponents.cshtml",
-        "Diagnostics/BackofficeSandboxAiChecks.cs"
+        "Diagnostics/BackofficeSandboxAiChecks.cs",
+        "../../packages/EtheriT.Coker.GrapesJS/src/plugins/link/linkComponentPlugin.js",
+        "wwwroot/js/Grapes/grapesjs-Coker6.js"
       ],
       "cases": [
         {
           "id": "SystemManagement.AiSettings.settings-isolation",
           "title": "AI 設定保存、金鑰保護與站台隔離",
-          "steps": "環境：獨立 InMemory 資料庫、暫存目錄與臨時加密金鑰。確認模型 Seed 的 AI 群組、五個 StoreSet 參數、AiEnabled 為無選項的單一 checkbox，以及供應商 StoreSetItems。讀取無本站設定資料；保存假金鑰，清除追蹤後讀回，核對五筆獨立 StoreSetDetail，且群組及參數數量不變。檢查公開設定及通用群組查詢與寫入；關閉保留金鑰，測換供應商沿用、舊版及跨站保存、整組明細複製到另一站台、清除金鑰。保存 Claude 工作區 ID 並重讀，單獨更換 ID 核對版本與金鑰，再切換供應商確認清空，最後模擬缺少 Seed 參數。",
+          "steps": "環境：獨立 InMemory 資料庫、暫存目錄與臨時加密金鑰。確認模型 Seed 的 AI 群組、五個 StoreSet 參數、AiEnabled 為無選項的單一 checkbox，以及供應商 StoreSetItems。讀取無本站設定資料；保存假金鑰，清除追蹤後讀回，核對五筆獨立 StoreSetDetail，且群組及參數數量不變。檢查公開設定及通用群組查詢與寫入；關閉保留金鑰，測換供應商沿用、舊版及跨站保存、整組明細複製到另一站台、清除金鑰。保存 Claude 工作區 ID 並重讀，單獨更換 ID 核對版本與金鑰，再切換供應商確認清空，最後模擬缺少 Seed 參數。 另外確認 AI 設定選單預設停用，使用者 View 授權不能開放；本站功能明確授權後可見可編輯，撤銷後不可用。",
           "expected": "AiEnabled 為無選項的單一 checkBox、預設 false；無本站明細預設關閉且不寫資料，勾選保存 true、取消勾選保存 false，供應商來源為 StoreSetItems。五個參數分別保存，只有 API Key 為密文，沒有整包 JSON，也不在執行時新增群組或參數。公開及通用回應不洩漏金鑰原文或密文；通用寫入拒絕五個 AI 參數的大小寫與尾端空白變體。工作區 ID 可回填、變更時更新版本且保留金鑰，切換供應商保存後清空。停用保留金鑰；換供應商沿用、舊版及跨站保存拒絕，同供應商的跨站密文仍不能解密；清除後轉自架，缺少 Seed 不得自動補建或開放。隔離結果不代表 SQL、瀏覽器或正式加密金鑰持久化驗證。",
           "mode": "isolated",
           "executor": "sandbox/ai-settings"
@@ -3266,23 +3331,30 @@
         {
           "id": "SystemManagement.AiSettings.provider-contracts",
           "title": "AI 共用呼叫、圖片、模型清單與失敗處理",
-          "steps": "環境：獨立容器與純記憶體 HTTP handler，不連外。檢查關閉功能零 HTTP 呼叫、三家固定 HTTPS 目的地、驗證標頭、請求欄位與回覆格式轉換。Claude 有工作區 ID 時核對 anthropic-workspace-id 完全一致、空白時省略，其他供應商不得帶入；無效、超長及換行 ID 必須拒絕。模擬無權限、非 JSON 及超過大小上限回覆，並確認無外部金鑰的自架路由。模擬 DNS、安全連線、網路連線、Proxy 通道、回應中斷與未知 HttpRequestException，例外文字刻意放入假金鑰。透過實際模型清單服務驗證無模型查詢與保存必填的區別、三家 metadata GET 與驗證、Claude 分頁去重、Gemini generateContent 篩選與 token 編碼、OpenAI ID、空清單、錯誤碼、網路、非 JSON、超限與重複 cursor，不執行生成。另呼叫通用 AI 隔離斷言，核對純文字／多輪／圖片轉換、不強制 JSON、非法輸入零 HTTP、self 通用不支援、舊畫布 Gateway 契約／錯誤／呼叫數，以及共用服務保存加密本站設定後讀取與停用後即時拒絕；所有設定寫入只在獨立 InMemory fixture。",
-          "expected": "關閉不呼叫，金鑰不出現在 URL，三家結果統一為文字與單次模型呼叫資訊。中文、全形、遮罩與零寬字元金鑰在 Prepare 被拒絕；已存此類金鑰呼叫前拋出安全設定錯誤且 HTTP 次數為零，不洩漏原值。Gemini 思考內容不作為結果；錯誤不洩漏供應商本文，不重試或回退，非 JSON 與過大回覆拒絕。連線例外回傳 502 與對應分類提示，不含假金鑰或原始例外文字，HTTP 呼叫僅一次。模型查詢可不填模型，保存仍必填；清單正確轉換／去重／翻頁並保留 Claude 工作區，Gemini 僅取 generateContent，不支援的 ID 不列出；HTTP／網路／格式／大小與 cursor 異常不回部分清單，不洩漏金鑰、不重試回退，系統預設不連外。這是本地轉換與錯誤處理斷言，不代表真實供應商契約、網路、憑證、額度或模型能力已驗證。",
+          "steps": "環境：獨立容器與純記憶體 HTTP handler，不連外。檢查關閉功能零 HTTP 呼叫、三家固定 HTTPS 目的地、驗證標頭、請求欄位與回覆格式轉換。Claude 有工作區 ID 時核對 anthropic-workspace-id 完全一致、空白時省略，其他供應商不得帶入；無效、超長及換行 ID 必須拒絕。模擬無權限、非 JSON 及超過大小上限回覆，並確認無外部金鑰的自架路由。模擬 DNS、安全連線、網路連線、Proxy 通道、回應中斷與未知 HttpRequestException，例外文字刻意放入假金鑰。透過實際模型清單服務驗證無模型查詢與保存必填的區別、三家 metadata GET 與驗證、Claude 分頁去重、Gemini generateContent 篩選與 token 編碼、OpenAI ID、空清單、錯誤碼、網路、非 JSON、超限與重複 cursor，不執行生成。另呼叫通用 AI 隔離斷言，核對純文字／多輪／圖片轉換、不強制 JSON、非法輸入零 HTTP、self 通用不支援、舊畫布 Gateway 契約／錯誤／呼叫數，以及共用服務保存加密本站設定後讀取與停用後即時拒絕；所有設定寫入只在獨立 InMemory fixture。 本輪實頁重現目錄為catalog_frame內six_swiper，新增外框與Swiper內Grid拒絕後依實際Swiper根ID修正欄數能力、普通圖庫不得套Swiper能力、待設定原生連結metadata與惡意metadata拒絕的服務斷言。 追加既有設定視窗交接的服務斷言：AvailableSettings傳遞、Span轉a後開link設定、既有link／directory純設定交接、語系校正不能更換設定目標、未宣告／任意動作／越界／不相容目標拒絕。 本輪沿既有executor增加語系策略傳遞：模型判定完整輸入語言、短句沿用ConversationLocale，HTML網站語系不變；目錄外框Grid計畫須修正到catalog，runtime直接template規則保留且非目錄／越界拒絕；單目標缺少目的網址可澄清。 追加選取Span送出「調整為連結」的隔離回歸：內容審查後建立無href的a，保留原ID及文字，不猜目的網址。人工另驗證未設定網址提示與後續設定網址、可點擊結果；上游已知安全錯誤原因在重試耗盡後不得被通用訊息蓋掉。 隔離執行 AiCanvasEdits 的輸入邊界、JSON 總預算與 selector 正規化，以及 AiCanvasPlannerChecks：繁中／簡中／日文／越文／英文／未知說法完整送到同一模型，SelectedId 與站台語系保留；以固定模型計畫確認純樣式保留自訂圖片清單。驗證區塊外目標修正一次、JSON／CSS 錯誤三次內修正、連續刪圖最多三次拒絕、澄清草稿先由 AI 審查一次，可推斷則改回操作計畫、仍必要才回問題、429 不重送、內容修改額外模型審查。 語系責任分離：BrowserLocale由navigator偏好送出，ReplyLocale由後端驗證並按Accept-Language品質權重補缺；網站內容語系仍從授權站台取得。隔離驗證台灣瀏覽器維護日文網站時回繁中區域用語、HTML保持日文；UI校正回覆故意帶中文HTML不得覆蓋已核定日文，無瀏覽器資訊才回退網站語系，無效語系不得注入提示。 補繁中網站回簡中摘要的實際回歸：計畫通過後獨立校正UI訊息，帶zh-tw並排除History，只採用summary／clarification，忽略校正回覆中所有操作；若校正格式失敗則不回可套用計畫。規劃最多3次＋固定1次訊息校正，呼叫數累計。 實頁四欄成功後「6個一排」上游回ClarificationNotQuestion，追加Gateway已知reason code保留、原始供應商訊息不洩漏、以協定修正指令要求clarification留空／說明放summary／回傳目前需求的可執行操作。 追加實際「換成四個一排」只設grid-template-columns卻仍Flex六欄的計畫回歸：缺display須補grid並釋放12個Bootstrap子項，明確display:flex卻設Grid軌道須三次內修正／拒絕，開發診斷保留安全具體Reason。 實頁四欄已定位成功但原col-lg-2讓Grid子項縮至約40px；補根容器Grid計畫時12個Bootstrap子項自動釋放繼承欄寬（width:auto／max-width:100%／min-width:0），不改class／HTML／明確指定的子項值，確認13條scoped規則。 實頁診斷觀察到模型使用不存在的 #container／#layout-container，新增 TargetAliases 明確綁定當前唯一根與selected，計畫套用前精確轉回真實ID；兩別名及直接子項需一次成功、HTML不變，實際同名ID或多根片段不得被別名覆寫。 診斷環境補Local啟動profile：IPv4／IPv6 loopback允許，Local遠端／無位址及Production本機皆拒絕；錯誤console需明確顯示診斷啟用狀態或實際計畫，避免安靜無資料。 追加三次失敗診斷保留實際安全selector與當前ID、JsonIgnore不回送；開發環境失敗回應可在console讀取，正式環境及成功回應不得暴露診斷，畫面不顯示技術資訊。 補頁面祖先前綴回歸：body #gallery > a、.page-wrapper .imageList > a、#page-outside #gallery > a 在只有gallery片段時重定位至唯一根／ID，只改兩個原有子項；不移除已命中局部節點之後的錯誤路徑。 追加目標診斷回歸：不存在 selector 與不支援動態 selector 在三次失敗後顯示不同具體原因；合法 :scope > a 只定位片段根容器兩個子項且一次成功。 補目前資料優先與舊助手問題干擾回歸：圖片／對齊的無依據問題連續兩次後須取得操作，三次仍無依據不得顯示澄清；真正兩組獨立目標需提供 clarificationTargets，點選其中一組的圖片後不可再詢問選哪組。 以12品牌 Bootstrap row／row-cols-lg-6／col-lg-2／g-3 回歸錯誤的寬度不足問題，確認 EditorStructure 明列框架、12子項與響應式 class，第二次計畫只對12子項覆寫25%寬度／flex-basis，HTML不變且不再問保留寬度或自動調整。 補驗證含乘法 calc((100% - 3 * 16px) / 4) 的等寬排列不被 CSS 值白名單拒絕；連續不同失敗需累積 ValidationFailures；空計畫三次後回傳明確未提供修改，不再要求補充需求。 回歸「變成4個一排」收到簡中寬度／間距問題時，第二次呼叫須帶網站語系、原問題與既有間距，固定回覆改為四欄計畫且不顯示草稿問題；真正兩組圖片選擇經審查後仍可詢問；另驗證日文網站收到中文需求時傳遞 ja-JP 與日文摘要。",
+          "expected": "關閉不呼叫，金鑰不出現在 URL，三家結果統一為文字與單次模型呼叫資訊。中文、全形、遮罩與零寬字元金鑰在 Prepare 被拒絕；已存此類金鑰呼叫前拋出安全設定錯誤且 HTTP 次數為零，不洩漏原值。Gemini 思考內容不作為結果；錯誤不洩漏供應商本文，不重試或回退，非 JSON 與過大回覆拒絕。連線例外回傳 502 與對應分類提示，不含假金鑰或原始例外文字，HTTP 呼叫僅一次。模型查詢可不填模型，保存仍必填；清單正確轉換／去重／翻頁並保留 Claude 工作區，Gemini 僅取 generateContent，不支援的 ID 不列出；HTTP／網路／格式／大小與 cursor 異常不回部分清單，不洩漏金鑰、不重試回退，系統預設不連外。這是本地轉換與錯誤處理斷言，不代表真實供應商契約、網路、憑證、額度或模型能力已驗證。 所有自然語言需求均交 AI 規劃，不以中文正則直接執行；驗證失敗只在三次總預算內規劃修正，失敗不回可套用 HTML；呼叫數累計，原 HTML／圖片與自訂資料保留。固定回覆僅驗證資料傳遞與執行契約，不代表真實模型多語理解已通過。",
           "mode": "isolated",
           "executor": "sandbox/ai-provider-contracts"
         },
         {
           "id": "SystemManagement.AiSettings.selected-css-and-deferred-link",
           "title": "選取區塊樣式、連結與原文保留",
-          "steps": "環境：隔離測試站台、完成編譯、有 AI 與頁面編輯權限的帳號。執行既有 sandbox/ai-provider-contracts 內的 AiCanvasEdits 隔離斷言。瀏覽器選取品牌入口，輸入『把入口兩個字換成連結』並換行輸入『顏色變成 #336589』；之後從連結編輯功能填網址。另從完整原文重試『協助我把入口兩個字變大』換行『修改為連結』及只放大，核對四字仍在。模擬模型 content 回覆只剩入口與保留品牌入口兩種情況。另驗收原文跨子節點、重複文字、完整 HTTPS 網址，以及 class／標籤／後代／子代／群組規則回覆與區塊外 selector、危險 CSS 值。",
-          "expected": "指定入口兩字成為可後續填網址的連結、href 留空、只該連結套用 #336589，品牌原文與字級不變；放大組合只讓入口相對原字級加大，完整品牌入口原文保留，明確原句不呼叫模型。外觀／連結請求即使模型選 content 也不能刪原文，只有入口的回覆不套用，完整保留原文的連結修改仍允許。常見靜態 CSS selector 在目標 fragment 內定位並轉為 #id，不因 class 或標籤本身拒絕，缺 ID 由程式補上；不影響區塊外、保留原 class，CSS 屬性與值仍驗證。人工瀏覽器情境尚未執行，不列自動通過數；隔離部分已由既有 executor 實作並綁定，未執行不算通過。",
+          "steps": "環境：完成後端編譯與 GrapesJS build:mvc 的隔離站台、有 AI 與編輯權限。用繁中、簡中、日文、越文及英文要求片語放大、改色與加入連結，確認 AI 選對片語、保留其他文字及原圖。對已知 class／後代／群組規則與區塊外、不安全 CSS 回覆檢查正規化與有限次修正。",
+          "expected": "片語效果由 AI 規劃 styles／textStyles 或內容操作，不再依中文捷徑零模型執行。保留未要求變更的文字／圖片／連結，內容替換另有 AI 審查；無效計畫最多三次仍失敗時不套用。模型能力、連結結構與瀏覽器情境屬未執行人工驗收，不列自動通過數。",
+          "mode": "review"
+        },
+        {
+          "id": "SystemManagement.AiSettings.platform-controlled-access",
+          "title": "AI 設定選單依網站功能開放",
+          "steps": "環境：隔離站台及具權限控制操作資格的管理員。網站未授予 AiSettings 時，檢查系統管理選單並直接存取 AI 設定頁及相關 Settings、Test、Models API。透過既有權限控制開放本站 AiSettings，核對具備與缺少檢視／編輯權限的帳號；再撤銷本站功能，並確認另一站台及頁內 AI 啟用值未被修改。",
+          "expected": "未明確開放網站功能時不顯示 AI 設定選單，直接頁面與 API 仍依既有權限拒絕；使用者檢視權限或系統維護身分不能繞過。網站功能開放後仍須符合角色權限；撤銷後再次不可用。其他站台、頁內 AI 開關與服務設定不變。人工驗收尚未執行，不列自動通過數。",
           "mode": "review"
         },
         {
           "id": "SystemManagement.AiSettings.shared-ai-regression",
           "title": "共用 AI 分層與畫布相容",
-          "steps": "環境：完成編譯的隔離站台、有／無 AI 與頁面編輯權限帳號，已允許測試的外部金鑰或既有畫布 Gateway。確認設定頁 Test 仍為固定 JSON，三家外部與系統預設畫布的 selected／canvas／new、語系、HTML/CSS 驗證及模型呼叫數不變。於已授權的功能服務呼叫 IWebsiteAiService 驗收純文字、對話歷史、PNG／JPEG／WebP 圖片、JsonObject，並測無視覺能力模型、截斷、關閉 AI、取消與逾時；功能入口缺權限、跨站或防偽仍拒絕。",
-          "expected": "通用呼叫沒有 HTML、CSS、畫布選取或固定 JSON 限制，讀取當前站台保存設定；既有畫布仍由原權限與安全校驗保護，JSON 格式由畫布服務指定。通用任務選系統預設時明確不支援且零 HTTP；不偷偷套畫布 workflow 或換供應商。圖片送入能力仍需相容模型與功能級驗證，沒有新增匿名或任意業務操作 API。此為尚未執行的人工及外部驗收，不列自動通過數。",
+          "steps": "新增人工回歸：熱門商品目錄內嵌Swiper應依原輪播配置切4／6欄並驗證實際卡片寬度、手機斷點、重載及還原；Span轉連結失敗時查具體HTML標籤／屬性安全原因。 AI缺網址／目錄時直接開既有設定視窗，聊天暫時隱藏、關閉後返回；目錄確認／取消／載入失敗、連結檔案庫暫停不提早返回、設定後還原與承接新指令、歷史失效目標／跨頁／唯讀不開錯視窗。 齒輪hover及dialog開關／Esc／焦點、選版須按還原；重新整理保留聊天後送新指令，從回覆按還原這次修改前與頂部還原，須返回實際送出前畫布；手動改動後切版本可返回，20版裁切不誤對應。目錄改4→6欄及資料換頁後卡片寬度正常且資料／樣板保留，未填網址先建結構再詢問並承接下一次輸入。 環境：完成 MVC 編譯及 GrapesJS build:mvc 的隔離站台、有／無編輯與 AI 權限帳號、允許測試的實際模型。以繁中、簡中、日文、越文、英文及不固定句型連續要求四→五→六欄、改色、放大、文字改寫，選取外層／子圖片／文字均確認 SelectedId 與實際可編輯邊界，AI 只調整相關目標。檢查模型修正不新增中間成功版本、澄清先檢查能否依既有設定推斷，再詢問必要的客戶選擇、取消／逾時、等待改畫布／切資源拒絕、原圖與自訂元件資料、桌面／手機及保存重開。 人工驗收台灣／日文／越文瀏覽器跨語系網站：明確指定回覆語言、充分輸入語言、短句延續與瀏覽器預設優先順序及區域用語，標題／本文／alt／title等新HTML文案依網站設定；保留原文、ID、URL及其他站台隔離。 回覆需分別核對四欄、六欄、改回四欄三則摘要與必要問題均依網站語系，不能因排版成功就視為語系通過。 不得只因CSS字串改變就成功；Grid計畫套用後實際computed display非grid須回滾，保留原圖片與連結。 四欄需核對圖片實際寬度而非只算四個x座標，防Bootstrap百分比欄寬在Grid內二次縮放；本次瀏覽器觀察到239px格內子項40px細條，已重載還原未儲存結果。 定位失敗需核對未命中、語法、重複識別、資料格式與上限五類訊息及對應日誌，使用者畫面不顯示原始selector／ID／程式碼路徑。 畫布已能看出圖片與對齊時不可重問；歷史有舊問題、還原或改選後仍依最新快照，只有提供獨立且未被選取解決的現有目標才可澄清。 核對 Bootstrap row／col／row-cols、g-* gutters 與 Coker imageList 盤點；12品牌改四欄應保持容器寬度並分三排，不能以目前像素寬度或數量不足為由詢問。 若無動作，核對伺服器 Canvas AI plan rejected 的 attempt／provider／category／reason，區分上游、空計畫、目標與 CSS；確認日誌無 HTML、需求、金鑰及供應商原文。驗收內容修改額外審查與套用後圖片缺失回滾。保留聊天、設定、窄螢幕工具列、版本兩種還原入口、20版本／200對話、舊資料、未存確認、清除本機確認與資源隔離；唯讀／無功能／跨站／防偽拒絕。",
+          "expected": "自然語言全部由 AI 產生結構化樣式／片語／內容計畫，無中文關鍵字動作分派或欄數白名單。樣式直接套既有元件，class 相容時原地更新；內容另有審查與圖片檢查，實際套用缺圖或無變更不顯示成功。摘要與澄清依明確回覆語言要求／充分輸入語言／既有對話語系／瀏覽器預設順序及區域用語，新增／改寫HTML依授權網站語系，不隨需求語言或舊對話改變。未指定寬度、間距、方向與圖片比例依現有 CSS／computed style／結構沿用，不詢問技術規格；只有可見選擇仍無法推斷才問一般客戶能回答的問題。最多三次規劃，服務／權限／額度失敗不重送；版本只記最終成功。上下文保留原需求／SelectedId／HTML／近期對話並控制預算。未選取與 wrapper 不送出；多語理解、目標判斷、響應式視覺及瀏覽器操作尚未執行，不列自動通過數。",
           "mode": "review"
         },
         {

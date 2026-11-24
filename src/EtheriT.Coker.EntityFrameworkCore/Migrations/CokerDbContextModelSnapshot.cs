@@ -312,6 +312,9 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Property<long>("FK_WebsiteId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("FieldDataJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Html")
                         .HasColumnType("nvarchar(max)");
 
@@ -400,6 +403,140 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.HasIndex("permanent");
 
                     b.ToTable("Article");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ArticleImportBatch", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ColumnsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("FK_BackgroundTaskId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FK_ConfirmTaskId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_DirectoryId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SourceFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("TemplateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_BackgroundTaskId");
+
+                    b.HasIndex("FK_WebsiteId", "FK_DirectoryId");
+
+                    b.ToTable("ArticleImportBatches", (string)null);
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ArticleImportRow", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreationTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<long>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DownloadedFilesJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<long?>("FK_ArticleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FK_ArticleImportBatchId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FieldDataJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("RowNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FK_ArticleImportBatchId", "RowNumber");
+
+                    b.ToTable("ArticleImportRows", (string)null);
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.AuditLog", b =>
@@ -1240,6 +1377,10 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                         .HasColumnType("bigint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ArticleTemplateKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("CalendarType")
                         .ValueGeneratedOnAdd()
@@ -10745,6 +10886,17 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Website");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ArticleImportRow", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Core.Models.ArticleImportBatch", "Batch")
+                        .WithMany("Rows")
+                        .HasForeignKey("FK_ArticleImportBatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.AuditLog", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
@@ -11830,6 +11982,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
                 {
                     b.Navigation("Remotes");
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.ArticleImportBatch", b =>
+                {
+                    b.Navigation("Rows");
                 });
 
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Bonus", b =>

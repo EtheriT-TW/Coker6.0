@@ -5,7 +5,9 @@ namespace EtheriT.Coker.Application.Shared.Dto.enumType
         ProductImport = 1,
         ProductExport = 2,
         FileCleanup = 3,
-        SiteCrawl = 4
+        SiteCrawl = 4,
+        ArticleTemplateApply = 5,
+        ArticleImport = 6
     }
 
     public enum BackgroundTaskStatusEnum

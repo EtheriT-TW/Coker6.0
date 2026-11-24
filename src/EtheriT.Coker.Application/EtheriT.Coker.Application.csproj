@@ -16,6 +16,10 @@
       <LogicalName>EtheriT.Coker.Application.MailTemplates.Member.ForgetPasswordMailTemplate.zh-tw.cshtml</LogicalName>
       <WithCulture>false</WithCulture>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\ArticleTemplates\*.html;Resources\ArticleTemplates\*.css">
+      <LogicalName>EtheriT.Coker.Application.ArticleTemplates.%(Filename)%(Extension)</LogicalName>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

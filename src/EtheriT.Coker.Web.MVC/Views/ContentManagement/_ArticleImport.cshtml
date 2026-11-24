@@ -1,0 +1,164 @@
+﻿@* 目錄管理「匯入資料」：選目錄與 Excel → 勾選欄位 → AI 整理 → 預覽確認。邏輯在 js/ContentManagement/ArticleImport.js *@
+<div id="ArticleImport" class="card border-0 d-none" data-hash-page="ArticleImport">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="fw-bold fs-5 d-flex align-items-center">
+            <button type="button" class="btn_back d-flex bg-transparent border-0 align-items-center" data-import-action="back" aria-label="返回目錄列表">
+                <span class="material-symbols-outlined">keyboard_backspace</span>
+            </button>
+            <div class="lh-lg">匯入資料</div>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <ol class="article-import__steps" aria-label="匯入步驟">
+            <li data-import-step="1">選擇檔案</li>
+            <li data-import-step="2">勾選欄位</li>
+            <li data-import-step="3">AI 整理</li>
+            <li data-import-step="4">預覽確認</li>
+        </ol>
+
+        <section class="article-import__panel d-none" data-import-panel="upload" aria-label="選擇檔案">
+            <div class="row g-2">
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="ArticleImportDirectory">匯入到哪個目錄</label>
+                    <input id="ArticleImportDirectory" class="form-control" type="text" disabled aria-describedby="ArticleImportDirectoryHelp" />
+                    <div id="ArticleImportDirectoryHelp" class="form-text">資料會匯入目前編輯的目錄，並套用該目錄的標籤與文章樣板。</div>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="ArticleImportFile">Excel 檔案（.xlsx）</label>
+                    <div class="article-import__file-picker">
+                        <input id="ArticleImportFile" class="visually-hidden" type="file" aria-describedby="ArticleImportFileHelp"
+                               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                        <span class="form-control article-import__file-name is-empty" data-import-file-name>沒有選擇檔案</span>
+                        <label class="btn btn-outline-secondary article-import__file-button" for="ArticleImportFile">選擇檔案</label>
+                    </div>
+                    <div id="ArticleImportFileHelp" class="form-text">第一列是欄名，每列一筆資料；最多 1000 列、20 MB。</div>
+                </div>
+            </div>
+            <div class="article-import__actions">
+                <button type="button" class="btn btn-primary" data-import-action="read">讀取欄位</button>
+            </div>
+
+            <div class="article-import__column-block d-none" data-import-columns>
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-2 mb-2">
+                    <div>
+                        <h2 class="fs-6 fw-bold mb-1">勾選要交給 AI 整理的欄位</h2>
+                        <div class="form-text mt-0" data-import-column-summary></div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-import-action="select-all">全選</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-import-action="select-none">全不選</button>
+                    </div>
+                </div>
+                <div class="article-import__columns" data-import-column-list></div>
+                <div class="article-import__actions">
+                    <button type="button" class="btn btn-primary" data-import-action="start">開始 AI 整理</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="article-import__panel d-none" data-import-panel="progress" aria-live="polite">
+            <h2 class="fs-6 fw-bold mb-2" data-import-progress-title></h2>
+            <progress class="article-import__progress" max="100" value="0" data-import-progress></progress>
+            <p class="mt-2 mb-1" data-import-progress-message></p>
+            <p class="form-text mt-0">可以先離開這個頁面；之後再按「匯入資料」即可回到這裡查看進度與結果。</p>
+            <div class="article-import__actions">
+                <button type="button" class="btn btn-outline-danger" data-import-action="cancel">取消匯入</button>
+            </div>
+        </section>
+
+        <section class="article-import__panel d-none" data-import-panel="preview" aria-label="預覽確認">
+            <div class="mb-2">
+                <div class="fw-bold" data-import-preview-title></div>
+                <div class="form-text mt-0">勾選的資料會在確認後建立文章；標示「將更新」的會覆蓋同目錄同標題的既有文章。失敗的資料修正後即可勾選。</div>
+            </div>
+            <div class="article-import__filters" role="group" aria-label="篩選資料">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-import-filter="all"></button>
+                <button type="button" class="btn btn-sm btn-outline-success" data-import-filter="ready"></button>
+                <button type="button" class="btn btn-sm btn-outline-info" data-import-filter="update"></button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-import-filter="failed"></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-import-filter="excluded"></button>
+            </div>
+            <ul class="article-import__rows list-unstyled" data-import-rows></ul>
+            <nav class="article-import__pager" data-import-pager aria-label="分頁"></nav>
+            <div class="article-import__footer">
+                <div class="small" data-import-footer-text></div>
+                <div class="article-import__footer-actions">
+                    <button type="button" class="btn btn-outline-danger" data-import-action="cancel">取消這批匯入</button>
+                    <button type="button" class="btn btn-primary" data-import-action="confirm">確認匯入</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="article-import__panel d-none" data-import-panel="result" aria-live="polite">
+            <div class="alert mb-3" role="status" data-import-result-alert></div>
+            <ul class="article-import__rows list-unstyled" data-import-result-rows></ul>
+            <div class="article-import__actions">
+                <button type="button" class="btn btn-outline-primary" data-import-action="new">匯入其他檔案</button>
+                <button type="button" class="btn btn-primary" data-import-action="back">返回目錄列表</button>
+            </div>
+        </section>
+    </div>
+</div>
+
+<template id="ArticleImportColumnTemplate">
+    <label class="article-import__column">
+        <input class="form-check-input flex-shrink-0" type="checkbox" data-column-check />
+        <span class="article-import__column-text">
+            <span class="article-import__column-name" data-column-name></span>
+            <span class="article-import__column-sample" data-column-sample></span>
+        </span>
+    </label>
+</template>
+
+<template id="ArticleImportRowTemplate">
+    <li class="article-import__row">
+        <div class="article-import__row-check">
+            <input class="form-check-input" type="checkbox" data-row-include />
+        </div>
+        <div class="article-import__row-main">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="small text-muted" data-row-number></span>
+                <strong class="article-import__row-title" data-row-title></strong>
+                <span class="badge" data-row-status></span>
+                <span class="badge text-bg-info d-none" data-row-update>將更新既有文章</span>
+                <span class="badge text-bg-warning d-none" data-row-duplicate>同批有同標題</span>
+            </div>
+            <p class="article-import__row-summary small text-muted mb-0" data-row-summary></p>
+            <ul class="article-import__row-errors small text-danger mb-0" data-row-errors></ul>
+        </div>
+        <div class="article-import__thumbs" data-row-images></div>
+        <div class="article-import__row-actions">
+            <button type="button" class="btn btn-sm btn-outline-primary" data-import-action="edit-row">編輯</button>
+        </div>
+    </li>
+</template>
+
+<div class="modal fade" id="ArticleImportRowModal" tabindex="-1" aria-labelledby="ArticleImportRowModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-lg-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ArticleImportRowModalLabel">編輯匯入資料</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2">
+                    <div class="col-12 col-lg-8">
+                        <form data-import-row-form novalidate></form>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="article-import__source">
+                            <h6 class="fw-bold">Excel 原始資料</h6>
+                            <dl class="mb-0" data-import-row-source></dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-danger d-none mt-3 mb-0" role="alert" data-import-row-error></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" data-import-action="save-row">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -125,6 +125,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
         public DbSet<MarketingScopeItem> MarketingScopeItems { get; set; }
         public DbSet<BackgroundTaskRecord> BackgroundTasks { get; set; }
         public DbSet<UserNotification> Notifications { get; set; }
+        public DbSet<ArticleImportBatch> ArticleImportBatches { get; set; }
+        public DbSet<ArticleImportRow> ArticleImportRows { get; set; }
         public DbSet<PageTextBackfillState> PageTextBackfillStates { get; set; }
         public DbSet<CdnProviderIpRange> CdnProviderIpRanges { get; set; }
         public DbSet<CdnProviderSyncState> CdnProviderSyncStates { get; set; }
@@ -221,6 +223,21 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
                 o.ToTable("Notifications");
                 o.HasIndex(x => new { x.FK_WebsiteId, x.FK_UserId, x.IsRead });
                 o.HasIndex(x => x.FK_BackgroundTaskId);
+            });
+            modelBuilder.Entity<ArticleImportBatch>(o =>
+            {
+                o.ToTable("ArticleImportBatches");
+                o.HasIndex(x => new { x.FK_WebsiteId, x.FK_DirectoryId });
+                o.HasIndex(x => x.FK_BackgroundTaskId);
+            });
+            modelBuilder.Entity<ArticleImportRow>(o =>
+            {
+                o.ToTable("ArticleImportRows");
+                o.HasOne(x => x.Batch)
+                    .WithMany(x => x.Rows)
+                    .HasForeignKey(x => x.FK_ArticleImportBatchId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                o.HasIndex(x => new { x.FK_ArticleImportBatchId, x.RowNumber });
             });
             modelBuilder.Entity<PageTextBackfillState>(o =>
             {

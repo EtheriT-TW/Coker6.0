@@ -1,0 +1,123 @@
+﻿<div custom_block_template="true" block_id="customBlockTemplate_1" id="vendorProfile" class="container">
+    <div custom_block_template="true" block_id="customBlockTemplate_203" id="vendorHeroBlock" class="picture-line">
+        <div id="vendorHero" class="align-items-center mx-0 hover_inside_scale" data-edit-key="hero" data-edit-label="公司主視覺" data-edit-type="section">
+            <div id="vendorHeroImage" class="col-12 col-sm-7 p-0">
+                <img id="vendorBanner" alt="" data-edit-key="hero.banner" data-edit-label="官網橫幅（1000×605）" data-edit-type="Image" />
+            </div>
+            <div id="vendorHeroText" class="title col align-self-md-stretch px-0 my-0 my-sm-4 bg_gray">
+                <div id="vendorHeroMeta">
+                    <div id="vendorWebsiteRow" class="vendor-info__row" data-edit-empty="hide">
+                        <dt id="vendorWebsiteLabel">
+                            <i class="material-symbols-outlined notranslate">language</i>公開聯繫管道
+                        </dt>
+                        <dd>
+                            <span class="vendor-contact__item" data-edit-empty="hide"><a target="_blank" rel="noopener noreferrer" data-edit-order="4" data-edit-format="{value}" data-edit-key="hero.website" data-edit-label="公司官網（網址）" data-edit-type="Link"></a></span>
+                            <span class="vendor-contact__item" data-edit-empty="hide"><a target="_self" data-edit-order="5" data-edit-format="{value}" data-edit-key="hero.email" data-edit-label="公開聯繫信箱（Email）" data-edit-type="Link"></a></span>
+                        </dd>
+                    </div>
+                    <span id="vendorSummary" data-edit-order="3" data-edit-empty="hide" data-edit-key="hero.summary" data-edit-label="主視覺短介紹" data-edit-type="Textarea"></span>
+                </div>
+                <div data-block-name="一般框架" id="vendorHeroFrame"></div>
+                <div id="vendorName" class="fs-3 fw-bold py-3 py-sm-0">
+                    <h5 id="vendorNameZh" class="fw-bold mb-0" data-edit-order="1" data-edit-required="true" data-edit-key="pageTitle" data-edit-label="公司名稱（中文）" data-edit-type="PageTitle"></h5>
+                    <span id="vendorNameEn" data-edit-order="2" data-edit-key="hero.nameEn" data-edit-label="公司名稱（英文）" data-edit-type="String"></span>
+                </div>
+            </div>
+        </div>
+        <div id="vendorTagsBlock" data-edit-empty="hide">
+            <ul id="vendorTags" class="cap-tags__list" data-edit-template="vendorTagItem" data-edit-type="Tags">
+                <li id="vendorTagItem" class="d-none"><a target="_self" data-edit-format="{value}" data-edit-type="Link"></a></li>
+            </ul>
+        </div>
+        <div id="vendorIntro" data-edit-empty="hide" data-edit-key="intro.content" data-edit-label="公司簡介（400 字內）" data-edit-type="Textarea"></div>
+        <div id="vendorCapabilities" class="vendor-capabilities-container" data-edit-empty="hide" data-edit-key="capability" data-edit-label="營運項目" data-edit-type="section">
+            <div class="cap-group" data-edit-empty="hide">
+                <div class="cap-group__title">
+                    <i class="material-symbols-outlined notranslate">storefront</i>
+                    <span>主要客戶市場</span>
+                </div>
+                <ul class="cap-tags__list" data-edit-template="capMarketItem" data-edit-key="capability.markets" data-edit-label="主要客戶市場" data-edit-type="List">
+                    <li id="capMarketItem" class="d-none"><a target="_self" data-edit-format="{value}" data-edit-type="Link"></a></li>
+                </ul>
+            </div>
+            <div class="cap-group" data-edit-empty="hide">
+                <div class="cap-group__title">
+                    <i class="material-symbols-outlined notranslate">spa</i>
+                    <span>主要製造／銷售／服務領域</span>
+                </div>
+                <ul class="cap-tags__list" data-edit-template="capFieldItem" data-edit-key="capability.fields" data-edit-label="主要製造／銷售／服務領域" data-edit-type="List">
+                    <li id="capFieldItem" class="d-none"><a target="_self" data-edit-format="{value}" data-edit-type="Link"></a></li>
+                </ul>
+            </div>
+            <div class="cap-group" data-edit-empty="hide">
+                <div class="cap-group__title">
+                    <i class="material-symbols-outlined notranslate">precision_manufacturing</i>
+                    <span>可提供之製造／服務</span>
+                </div>
+                <ul class="cap-tags__list" data-edit-template="capServiceItem" data-edit-key="capability.services" data-edit-label="可提供之製造／服務" data-edit-type="List">
+                    <li id="capServiceItem" class="d-none"><a target="_self" data-edit-format="{value}" data-edit-type="Link"></a></li>
+                </ul>
+            </div>
+            <div id="capBrandGroup" class="cap-group" data-edit-empty="hide">
+                <div class="cap-group__title">
+                    <i class="material-symbols-outlined notranslate">sell</i>
+                    <span>自有品牌</span>
+                </div>
+                <ul class="cap-tags__list" data-edit-template="capBrandItem" data-edit-key="capability.brands" data-edit-label="自有品牌" data-edit-type="List">
+                    <li id="capBrandItem" class="d-none"><span class="cap-tag" data-edit-format="{value}" data-edit-type="String"></span></li>
+                </ul>
+            </div>
+            <div id="capOemGroup" class="cap-group" data-edit-empty="hide">
+                <div class="cap-group__title">
+                    <i class="material-symbols-outlined notranslate">factory</i>
+                    <span>代工項目</span>
+                </div>
+                <ul class="cap-tags__list" data-edit-template="capOemItem" data-edit-key="capability.oemItems" data-edit-label="代工項目" data-edit-type="List">
+                    <li id="capOemItem" class="d-none"><span class="cap-tag" data-edit-format="{value}" data-edit-type="String"></span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div data-block-name="一般框架" id="vendorLogos" class="container mt-3" data-edit-empty="hide" data-edit-key="gallery" data-edit-label="Logo 圖片" data-edit-type="section">
+    <div custom_block_template="true" block_id="customBlockTemplate_40346" id="vendorLogoRow" class="cbt_40346 row">
+        <div id="vendorLogoContent" class="col content">
+            <div id="vendorLogoList" class="imageList align-items-stretch d-flex flex-wrap gap-3 mb-3 picture-category" data-edit-template="logoItem" data-edit-maxcount="5" data-edit-key="gallery.logos" data-edit-label="公司 Logo＋品牌 Logo（800×800，最多 5 張）" data-edit-type="Gallery">
+                <a id="logoItem" href="#" target="_self" data-link-type="link" data-link-value="#" class="imageItem align-items-center d-flex justify-content-center p-1 position-relative templatecontent flex-column d-none">
+                    <div class="img_frame rounded p-1">
+                        <img alt="" class="rounded" />
+                        <i class="material-symbols-outlined notranslate">zoom_out_map</i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div data-block-name="廠商資訊" id="vendorInfoBlock" class="container" data-edit-empty="hide" data-edit-key="vendorInfo" data-edit-label="廠商資訊" data-edit-type="section">
+    <div id="vendorMapWrap" class="vendor-map">
+        <section id="vendorInfo" class="vendor-info">
+            <h4 class="vendor-info__title">廠商資訊</h4>
+            <dl class="vendor-info__list">
+                <div class="vendor-info__row" data-edit-empty="hide">
+                    <dt>
+                        <i class="material-symbols-outlined notranslate">location_on</i>地址
+                    </dt>
+                    <dd><span data-edit-key="vendorInfo.address" data-edit-label="公司地址（中文）" data-edit-type="String"></span><br /><span lang="en" data-edit-key="vendorInfo.addressEn" data-edit-label="公司地址（英文）" data-edit-type="String"></span></dd>
+                </div>
+                <div class="vendor-info__row" data-edit-empty="hide">
+                    <dt>
+                        <i class="material-symbols-outlined notranslate">call</i>聯絡電話
+                    </dt>
+                    <dd><a target="_self" data-link-type="phone" data-edit-format="{value}" data-edit-key="vendorInfo.phone" data-edit-label="公司聯絡電話" data-edit-type="Link"></a></dd>
+                </div>
+                <div class="vendor-info__row" data-edit-empty="hide">
+                    <dt>
+                        <i class="material-symbols-outlined notranslate">payments</i>資本額
+                    </dt>
+                    <dd data-edit-key="vendorInfo.capital" data-edit-label="公司資本額" data-edit-type="String"></dd>
+                </div>
+            </dl>
+        </section>
+        <iframe id="vendorMapFrame" frameborder="0" title="公司位置地圖" data-edit-ref="vendorInfo.address" data-edit-type="Map"></iframe>
+    </div>
+</div>

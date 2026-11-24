@@ -1167,7 +1167,11 @@
       "title": "目錄管理",
       "sources": [
         "Controllers/ContentManagementController.cs",
+        "Controllers/api/ArticleImportController.cs",
         "Views/ContentManagement/Directory.cshtml",
+        "Views/ContentManagement/_ArticleImport.cshtml",
+        "wwwroot/js/CokerCore/Directory.js",
+        "wwwroot/js/ContentManagement/ArticleImport.js",
         "Diagnostics/BackofficeSandboxChecks.cs",
         "Diagnostics/BackofficeReadOnlyChecks.cs"
       ],
@@ -1250,6 +1254,26 @@
           "steps": "於測試目錄新增文章，修改內文與畫布後重開。",
           "expected": "文章隸屬目錄正確，內容與畫布保存一致。",
           "mode": "isolated"
+        },
+        {
+          "id": "ContentManagement.Directory.article-import-antiforgery",
+          "title": "文章匯入防偽驗證",
+          "steps": "在啟用目錄管理與文章功能的測試站台，以具匯入權限的帳號開啟目錄管理。瀏覽器同時有登入 Cookie 且匯入請求帶 Bearer 時，上傳有效 Excel 並讀取欄位，核對取權杖與讀取欄位請求都帶 Bearer。另在僅用 Cookie 登入時重試，並於其他分頁切換站台後回到舊分頁重試。",
+          "expected": "兩種登入情境均成功讀取 Excel 欄位，不出現頁面過期訊息。舊站台分頁的請求顯示站台已切換，且未開始匯入。",
+          "mode": "review",
+          "requiredFeatures": [
+            "Article"
+          ]
+        },
+        {
+          "id": "ContentManagement.Directory.article-import-preview",
+          "title": "AI 整理完成後顯示匯入預覽",
+          "steps": "在啟用目錄管理與文章功能的測試站台，以具匯入權限的帳號整理含可匯入列的 Excel。停留在進度頁直到自動切換預覽，核對列標題、狀態、篩選及新增／更新統計。取消勾選所有可匯入列，再勾回一列。另檢查全數整理失敗的批次。驗收停在預覽頁。",
+          "expected": "切換後立即顯示第一頁、篩選數量及匯入統計，整理成功的列預設勾選。沒有勾選時確認按鈕停用，勾回後統計同步且按鈕可用。全數失敗時可看到失敗列及原因，無法直接確認匯入。",
+          "mode": "review",
+          "requiredFeatures": [
+            "Article"
+          ]
         },
         {
           "id": "ContentManagement.Directory.delete",

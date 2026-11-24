@@ -14,6 +14,8 @@ namespace EtheriT.Coker.Core.Models
         public bool Visible { get; set; }
         public int SortBy { get; set; } = 0;
         public long? FK_DefaultLayout { get; set; }
+        // 目錄內文章套用的樣板代碼（程式內建樣板，見 Application/ArticleTemplates）；null＝未指定。
+        [StringLength(100)] public string? ArticleTemplateKey { get; set; }
         public DirectoryFacetTypeEnum FacetType { get; set; } = DirectoryFacetTypeEnum.None;
         public DirectoryCalendarTypeEnum CalendarType { get; set; } = DirectoryCalendarTypeEnum.None;
         public Website? Website { get; set; }

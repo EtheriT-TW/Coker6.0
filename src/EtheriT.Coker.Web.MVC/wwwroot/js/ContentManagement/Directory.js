@@ -1,4 +1,5 @@
 import { ArticleManager } from "./ArticleManager.js";
+import { ArticleImport } from "./ArticleImport.js";
 import "./DirectoryFacet.js";
 
 var $btn_display, $bind_type, $title, $title_text, $description, $description_text;
@@ -12,6 +13,9 @@ var $DirectorytTags;
 var $DirectoryReverseTags;
 var articleOnly = false;
 var hashPage;
+var $templateBlock, $templateKey, $btnReapplyTemplate, $btnArticleImport;
+// 目錄載入時已儲存的樣板，存檔時用來判斷有沒有換樣板。
+var loadedTemplateKey = "";
 
 function PageReady() {
     articleOnly = $("#ContentManagementWorkspace").data("article-only") === true;
@@ -40,6 +44,16 @@ function PageReady() {
         navigate: navigate
     });
 
+    if (!articleOnly) {
+        ArticleImport.init({
+            navigate: navigate,
+            backToList: BackToList,
+            refreshDirectories: function () {
+                if (directory_list) directory_list.component.refresh();
+            }
+        });
+    }
+
     hashPage = Coker.HashPage.create({
         root: "#ContentManagementWorkspace",
         defaultHash: articleOnly ? "Articles_0" : "List",
@@ -65,6 +79,9 @@ function navigate(hash) {
 function parseRoute(hash) {
     var articleRoute = ArticleManager.parseRoute(hash);
     if (articleRoute) return articleRoute;
+
+    var importRoute = articleOnly ? null : ArticleImport.parseRoute(hash);
+    if (importRoute) return importRoute;
 
     var value = String(hash || "").trim();
     if (!value || value.toLowerCase() === "list") {
@@ -108,6 +125,13 @@ function parseRoute(hash) {
 }
 
 function enterRoute(route) {
+    // 離開匯入頁時停止輪詢進度。
+    if (route.scope === "import") {
+        ArticleImport.enterRoute(route);
+        return;
+    }
+    ArticleImport.leave();
+
     if (route.scope === "article") {
         ArticleManager.enterRoute(route);
         return;
@@ -149,6 +173,82 @@ function DirectoryElementInit() {
     DirectorytForms.find(".tag > input").attr("disabled", "disabled");
     DirectorytForms.find(".reverse-tag > input").attr("disabled", "disabled");
     DirectorytForms.find(".webmenu > input").attr("disabled", "disabled");
+
+    $templateBlock = DirectorytForms.find(".article-template");
+    $templateKey = $templateBlock.find("#ArticleTemplateKey");
+    $btnReapplyTemplate = $templateBlock.find(".btn-reapply-template");
+    $btnArticleImport = $("#DirectoryContent .btn-article-import");
+    LoadArticleTemplates();
+}
+
+function LoadArticleTemplates() {
+    co.Directory.GetArticleTemplates().done(function (list) {
+        (list || []).forEach(function (item) {
+            $("<option>").val(item.key).text(item.name).attr("title", item.description).appendTo($templateKey);
+        });
+        // 清單比目錄資料晚回來時，補選目錄已儲存的樣板。
+        if (loadedTemplateKey) $templateKey.val(loadedTemplateKey);
+    });
+}
+
+// 只有文章目錄能選樣板；「重新套用」只在已存檔且有樣板時出現。
+function ToggleArticleTemplate() {
+    var isArticle = parseInt($bind_type.val()) === 2;
+    $templateBlock.toggleClass("d-none", !isArticle);
+    if (!isArticle) $templateKey.val("");
+    $btnReapplyTemplate.toggleClass("d-none", !(isArticle && keyId > 0 && loadedTemplateKey));
+    // 匯入資料只對已存檔的文章目錄開放（目錄沒設標籤或樣板時，匯入頁會提示）。
+    $btnArticleImport.toggleClass("d-none", !(isArticle && keyId > 0));
+}
+
+function EscapeHtml(text) {
+    return $("<div>").text(text == null ? "" : String(text)).html();
+}
+
+function ErrorMessage(xhr) {
+    return (xhr && xhr.responseJSON && xhr.responseJSON.message) || "發生未知錯誤，請稍後再試。";
+}
+
+function BuildApplyMessage(info) {
+    var lines = [
+        "是否將此目錄底下 <b>" + info.applicableCount + "</b> 篇文章都改為使用「" + EscapeHtml(info.templateName) + "」樣板？",
+        "文章的草稿與發布內容都會被覆蓋，可在各文章的還原歷程找回。"
+    ];
+    if (info.noDataCount > 0) lines.push("另有 " + info.noDataCount + " 篇不是由資料匯入建立，不會套用。");
+    if (info.noPermissionCount > 0) lines.push("另有 " + info.noPermissionCount + " 篇您沒有編輯權限，不會套用。");
+    if (info.missingFieldLabels && info.missingFieldLabels.length > 0) {
+        lines.push("新樣板沒有以下欄位，這些資料套用後不會顯示：" + info.missingFieldLabels.map(EscapeHtml).join("、"));
+    }
+    return lines.join("<br>");
+}
+
+// isManual：按「重新套用」進來的（沒有可套用文章時要提示）；存檔後詢問的則改顯示存檔成功。
+function AskApplyArticleTemplate(directoryId, templateKey, fromTemplateKey, isManual) {
+    var done = $.Deferred();
+    co.Directory.GetArticleTemplateChangeInfo(directoryId, templateKey, fromTemplateKey).done(function (info) {
+        if (!info || info.applicableCount === 0) {
+            if (isManual) co.sweet.warn("沒有可套用的文章", "這個目錄沒有由資料匯入建立的文章。");
+            else co.sweet.success("已成功儲存", null, true);
+            done.resolve();
+            return;
+        }
+        co.sweet.confirm("套用文章樣板", BuildApplyMessage(info), "全部套用", "先不要", function () {
+            co.Directory.ApplyArticleTemplate(directoryId).done(function () {
+                co.sweet.success("已開始在背景套用樣板，通常幾分鐘內完成。稍後可到文章的還原歷程確認內容是否已更新。");
+            }).fail(function (xhr) {
+                co.sweet.error("無法套用樣板", EscapeHtml(ErrorMessage(xhr)));
+            }).always(function () {
+                done.resolve();
+            });
+        }, function () {
+            if (!isManual) co.sweet.success("已成功儲存（未套用樣板）", null, true);
+            done.resolve();
+        });
+    }).fail(function (xhr) {
+        co.sweet.error("無法取得樣板資訊", EscapeHtml(ErrorMessage(xhr)));
+        done.resolve();
+    });
+    return done.promise();
 }
 
 function DirectoryEventsInit() {
@@ -169,6 +269,22 @@ function DirectoryEventsInit() {
                 $DirectoryReverseTags.TagDataClear();
                 break;
         }
+        ToggleArticleTemplate();
+    });
+
+    $btnArticleImport.on("click", function () {
+        var directoryId = keyId;
+        Coker.sweet.confirm("前往匯入資料", "目錄尚未儲存的變更不會保存。", "前往匯入", "取消", function () {
+            ArticleImport.open(directoryId);
+        });
+    });
+
+    $btnReapplyTemplate.on("click", function () {
+        if (($templateKey.val() || "") !== loadedTemplateKey) {
+            co.sweet.warn("請先儲存目錄", "文章樣板已變更，儲存目錄時會詢問是否套用。");
+            return;
+        }
+        AskApplyArticleTemplate(keyId, loadedTemplateKey, null, true);
     });
 
     co.Form.init("DirectorytForm", function () {
@@ -284,6 +400,10 @@ function FormDataClear() {
     $bind_type.val(null);
     $title_text.val("");
     $description_text.val("");
+
+    loadedTemplateKey = "";
+    $templateKey.val("");
+    ToggleArticleTemplate();
 }
 
 function FormDataSet(result) {
@@ -320,6 +440,10 @@ function FormDataSet(result) {
 
     $title_text.val(result.title);
     $description_text.val(result.description);
+
+    loadedTemplateKey = result.articleTemplateKey || "";
+    $templateKey.val(loadedTemplateKey);
+    ToggleArticleTemplate();
 }
 
 function AddUp(successText, errorText) {
@@ -328,18 +452,33 @@ function AddUp(successText, errorText) {
         menuId = webmenu_list[webmenu_list.length - 1].FK_MId;
     }
 
+    var type = parseInt($bind_type.val());
+    var directoryId = keyId;
+    var templateKey = type === 2 ? ($templateKey.val() || null) : null;
+    var previousTemplateKey = loadedTemplateKey;
+
     return co.Directory.AddUp({
         Id: keyId,
         Title: $title_text.val(),
         Description: $description_text.val(),
-        Type: parseInt($bind_type.val()),
+        Type: type,
         Visible: disp_opt,
+        ArticleTemplateKey: templateKey,
         TagSelected: $DirectorytTags.data("tagList"),
         ReverseTagSelected: $DirectoryReverseTags.data("tagList"),
         Fk_Mid: menuId
-    }).done(function () {
-        Coker.sweet.success(successText, null, true);
+    }).done(function (result) {
+        if (result && result.success === false) {
+            Coker.sweet.error("錯誤", EscapeHtml(result.error || errorText));
+            return;
+        }
         if (directory_list) directory_list.component.refresh();
+        // 既有目錄換了樣板：詢問是否把目錄底下的文章都改用新樣板。
+        if (directoryId > 0 && templateKey && templateKey !== previousTemplateKey) {
+            AskApplyArticleTemplate(directoryId, templateKey, previousTemplateKey, false).always(BackToList);
+            return;
+        }
+        Coker.sweet.success(successText, null, true);
         BackToList();
     }).fail(function () {
         Coker.sweet.error("錯誤", errorText, null, true);

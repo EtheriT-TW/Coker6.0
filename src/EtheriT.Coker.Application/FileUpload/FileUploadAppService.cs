@@ -527,6 +527,45 @@ namespace EtheriT.Coker.Application
             }
         }
 
+        // 文章資料匯入（2026-11-23）：客戶表單附在 Google Drive 的圖片，比照網站爬蟲圖片存檔，同一個 Drive 檔案只存一份。
+        // 匯入資料開放一般後台使用者（暫不加功能權限），所以不檢查系統管理者。Created = false 表示沿用已存在的檔案。
+        internal async Task<(FileItemDto File, bool Created)> ImportArticleImageAsync(
+            string sourceUrl,
+            Func<CancellationToken, Task<(byte[] Content, string FileName)>> download,
+            CancellationToken token)
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+            var orgName = await loginUserData.GetWebsiteOrgName();
+            uploadPathResolver.EnsureRootPath(orgName);
+            var key = CreateCanvasImageSourceKey(websiteId, sourceUrl);
+            var gate = AtomicFileLocks.GetOrAdd($"canvas-image-import:{websiteId}:{key:N}", _ => new SemaphoreSlim(1, 1));
+            await gate.WaitAsync(token);
+            try
+            {
+                var existing = await FindExistingCanvasImportAsync(websiteId, orgName, sourceUrl, key);
+                if (existing != null) return (existing, false);
+                var (content, fileName) = await download(token);
+                using var stream = new MemoryStream(content);
+                token.ThrowIfCancellationRequested();
+                return (await SaveCanvasImageAsync(stream, fileName, sourceUrl, key), true);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        }
+
+        // 文章資料匯入取消的列：檔案沒有被任何對象綁定才移到資源回收桶（可從檔案管理還原）。
+        internal async Task RecycleArticleImportFileAsync(long fileId)
+        {
+            var websiteId = await loginUserData.GetWebsiteId();
+            var file = await db.FileUploads.FirstOrDefaultAsync(x =>
+                x.Id == fileId && x.FK_WebsiteId == websiteId && !x.IsDeleted);
+            if (file == null) return;
+            if (await db.FileBinds.AnyAsync(x => x.FK_FileUploadId == fileId && !x.IsDeleted)) return;
+            await RecycleUnboundFileAsync(file, websiteId);
+        }
+
         // 網站爬蟲匯入的內文附件（PDF、Word…，使用者 2026-11-17 要求比照圖片搬到新站）：同一個來源網址只存一份。
         // 檔案類型以副檔名判斷（舊站常回 application/octet-stream），且必須在 FileAllow 允許清單內。
         internal async Task<string> ImportCrawlFileAsync(

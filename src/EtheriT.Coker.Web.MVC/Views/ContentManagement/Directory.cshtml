@@ -106,29 +106,46 @@
                             keyboard_backspace
                         </span>
                     </button>
-                    <div class="lh-lg title">編輯目錄</div>
+                    <div class="lh-lg title text-nowrap">編輯目錄</div>
                 </div>
-                <div class="d-flex">
+                @* 手機（< 576px）按鈕只顯示圖示、間距縮小，避免標題與按鈕被擠成直排 *@
+                <div class="d-flex align-items-center">
                     @if (canUseFacet){
-                        <a class="btn btn-primary btn-open-facet border-0 d-flex align-items-center me-3 text-decoration-none" role="button" href="#">
-                            <span class="material-symbols-outlined me-1">settings_b_roll</span>
-                            進階設定
+                        <a class="btn btn-primary btn-open-facet border-0 d-flex align-items-center me-2 me-sm-3 text-decoration-none text-nowrap" role="button" href="#" aria-label="進階設定" title="進階設定">
+                            <span class="material-symbols-outlined">settings_b_roll</span><span class="d-none d-sm-inline ms-1">進階設定</span>
                         </a>
                     }
-                    <button class="btn_done btn-primary border-0 px-3 py-1 text-white me-3 " form="DirectorytForm">儲　存</button>
+                    @* 只在已存檔的文章目錄顯示（Directory.js ToggleArticleTemplate）；手機只顯示圖示 *@
+                    <button type="button" class="btn btn-outline-primary btn-article-import align-self-center me-2 me-sm-3 d-none" aria-label="匯入資料" title="匯入資料">
+                        <span class="material-symbols-outlined align-middle">upload_file</span><span class="d-none d-sm-inline ms-1">匯入資料</span>
+                    </button>
+                    <button class="btn_done btn-primary border-0 px-3 py-1 text-white text-nowrap me-2 me-sm-3" form="DirectorytForm">儲　存</button>
                 </div>
             </div>
 
             <form id="DirectorytForm" class="card-body needs-validation">
                 <div class="d-flex align-self-center mb-3 justify-content-between">
-                    <div class="bind_type d-flex">
-                        <label class="form-label mb-0 pe-3 align-self-center text-nowrap" for="BindType">綁定內容</label>
-                        <select id="BindType" class="form-select" aria-label="Bind Type Select" required>
-                            <option selected value="null" class="d-none">請選擇</option>
-                            <option value="1">商品</option>
-                            <option value="2">文章</option>
-                            <option value="3">選單</option>
-                        </select>
+                    <div class="directory-bind-row d-flex flex-wrap align-items-center gap-2 gap-md-3">
+                        <div class="bind_type d-flex">
+                            <label class="form-label mb-0 pe-3 align-self-center text-nowrap" for="BindType">綁定內容</label>
+                            <select id="BindType" class="form-select" aria-label="Bind Type Select" required>
+                                <option selected value="null" class="d-none">請選擇</option>
+                                <option value="1">商品</option>
+                                <option value="2">文章</option>
+                                <option value="3">選單</option>
+                            </select>
+                        </div>
+                        @* 只在文章目錄顯示（Directory.js ToggleArticleTemplate）；由資料匯入建立的文章會使用此樣板，手動建立的文章不受影響 *@
+                        <div class="article-template d-flex align-items-center d-none">
+                            <label class="form-label mb-0 pe-3 text-nowrap" for="ArticleTemplateKey">文章樣板</label>
+                            <select id="ArticleTemplateKey" class="form-select" title="由資料匯入建立的文章會使用此樣板；手動建立的文章不受影響。">
+                                <option value="">不使用樣板</option>
+                            </select>
+                            @* 手機只顯示圖示（比照「匯入資料」按鈕） *@
+                            <button type="button" class="btn btn-outline-primary text-nowrap btn-reapply-template d-none ms-2" aria-label="重新套用到目錄文章" title="重新套用到目錄文章">
+                                <span class="material-symbols-outlined align-middle">sync</span><span class="d-none d-sm-inline ms-1">重新套用到目錄文章</span>
+                            </button>
+                        </div>
                     </div>
                     <button class="btn_display bg-transparent border-0 text-primary d-flex align-self-center" form="none" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-title="是否顯示在畫面上">
                         <span class="material-symbols-outlined fs-2">visibility</span>
@@ -179,12 +196,17 @@
                 <div class="form-text mb-3">
                     具有任一排除標籤的內容，將不會顯示於此目錄。
                 </div>
+
                 @await Component.InvokeAsync(nameof(Modal), new { dispaly = "WebmenuListModal" })
 
             </form>
         </div>
 
         @await Html.PartialAsync("_ArticleContent", articleContentModel)
+        @if (!articleOnly)
+        {
+            @await Html.PartialAsync("_ArticleImport")
+        }
     </div>
 
 </div>

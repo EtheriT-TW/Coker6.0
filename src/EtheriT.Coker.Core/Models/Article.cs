@@ -39,6 +39,10 @@ namespace EtheriT.Coker.Core.Models
         public string? PageText {  get; set; }
 		[MaxLength]
         public string? DataJson { get; set; }
+        // 樣板欄位資料（{"欄位key":["值",...]}），由資料匯入產生，換樣板時用來重新產生內容。
+        // 不可與 DataJson 共用：DataJson 是電子報資料，有值會被當成電子報。
+        [MaxLength]
+        public string? FieldDataJson { get; set; }
         public virtual DateTime? NodeDate { get; set; }
         public virtual DateTime? EventStartDate{ get; set; }
         public virtual DateTime? EventEndDate { get; set; }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DevExtreme.AspNet.Data;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.ArticleTemplates;
 using EtheriT.Coker.Application.Common;
 using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Permissions;
@@ -129,6 +130,18 @@ namespace EtheriT.Coker.Application.Directory
                 }
 
                 var asoid = dto.Id;
+
+                // 只有文章目錄能指定樣板，代碼必須是程式內建的樣板（ArticleTemplateCatalog）。
+                dto.ArticleTemplateKey = dto.Type == (int)DirectoryTypeEnum.文章
+                    && !string.IsNullOrWhiteSpace(dto.ArticleTemplateKey)
+                        ? dto.ArticleTemplateKey.Trim()
+                        : null;
+                if (dto.ArticleTemplateKey != null)
+                {
+                    if (!ArticleTemplateCatalog.Exists(dto.ArticleTemplateKey))
+                        throw new Exception("找不到指定的文章樣板，請重新選擇。");
+                    dto.ArticleTemplateKey = ArticleTemplateCatalog.Get(dto.ArticleTemplateKey).Key;
+                }
 
                 if (dto.Id == 0)
                 {
@@ -350,7 +363,8 @@ namespace EtheriT.Coker.Application.Directory
                         Visible = e.Visible,
                         Type = e.Type,
                         SortBy = e.SortBy,
-                        FK_MId = e.FK_Mid
+                        FK_MId = e.FK_Mid,
+                        ArticleTemplateKey = e.ArticleTemplateKey
                     })
                     .FirstOrDefaultAsync();
 

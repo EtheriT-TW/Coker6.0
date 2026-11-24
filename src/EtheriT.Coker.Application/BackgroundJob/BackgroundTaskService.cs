@@ -316,6 +316,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 {
                     BackgroundTaskTypeEnum.ProductImport => "商品匯入成功",
                     BackgroundTaskTypeEnum.FileCleanup => "檔案清理完成",
+                    BackgroundTaskTypeEnum.ArticleTemplateApply => "文章樣板套用完成",
+                    BackgroundTaskTypeEnum.ArticleImport => "文章資料匯入完成",
                     _ => "商品匯出完成"
                 },
                 Message = message,
@@ -341,6 +343,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
             {
                 BackgroundTaskTypeEnum.ProductImport => "商品匯入失敗",
                 BackgroundTaskTypeEnum.FileCleanup => "檔案清理失敗",
+                BackgroundTaskTypeEnum.ArticleTemplateApply => "文章樣板套用失敗",
+                BackgroundTaskTypeEnum.ArticleImport => "文章資料匯入失敗",
                 _ => "商品匯出失敗"
             };
             task.Error = error.Length > 4000 ? error[..4000] : error;
@@ -359,6 +363,8 @@ namespace EtheriT.Coker.Application.BackgroundJob
                 {
                     BackgroundTaskTypeEnum.ProductImport => "商品匯入失敗",
                     BackgroundTaskTypeEnum.FileCleanup => "檔案清理失敗",
+                    BackgroundTaskTypeEnum.ArticleTemplateApply => "文章樣板套用失敗",
+                    BackgroundTaskTypeEnum.ArticleImport => "文章資料匯入失敗",
                     _ => "商品匯出失敗"
                 },
                 Message = task.Error,

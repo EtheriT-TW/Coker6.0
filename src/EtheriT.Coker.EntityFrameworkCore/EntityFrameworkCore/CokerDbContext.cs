@@ -26,6 +26,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
     public class CokerDbContext : DbContext
     {
         public DbSet<User> Users { get; set; }
+        public DbSet<AiMemoryEntry> AiMemoryEntries { get; set; }
+        public DbSet<AiMemoryRevision> AiMemoryRevisions { get; set; }
         public DbSet<FrontUser> FrontUsers { get; set; }
         public DbSet<Account_Log> Account_Logs { get; set; }
         public DbSet<Website> Websites { get; set; }
@@ -161,6 +163,8 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             }
 
             base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfiguration(new AiMemoryEntryConfiguration());
+            modelBuilder.ApplyConfiguration(new AiMemoryRevisionConfiguration());
             modelBuilder.Entity<FrontUser>(o =>
             {
                 o.HasIndex(x => new { x.UUID, x.IsDeleted }).IsUnique();

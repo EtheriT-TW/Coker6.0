@@ -335,6 +335,8 @@ builder.Services.AddHttpClient("ParallelAi", client =>
     client.Timeout = TimeSpan.FromSeconds(Math.Clamp(configuration.GetValue<int?>("ParallelAi:TimeoutSeconds") ?? 600, 10, 600));
 }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddScoped<EtheriT.Coker.Web.MVC.Services.Ai.CanvasAiService>();
+builder.Services.AddSingleton<EtheriT.Coker.Web.MVC.Services.Ai.CanvasKnowledgeService>();
+builder.Services.AddSingleton<EtheriT.Coker.Application.Shared.Ai.IAiMemoryStore, EtheriT.Coker.Web.MVC.Services.Ai.DbAiMemoryStore>();
 builder.Services.AddSingleton<EtheriT.Coker.Web.MVC.Services.Ai.CanvasAiAvailability>();
 builder.Services.AddDataProtection();
 builder.Services.AddScoped<EtheriT.Coker.Web.MVC.Services.Ai.WebsiteAiSettingsService>();

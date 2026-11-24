@@ -9,6 +9,7 @@ public static partial class BackofficeSandboxChecks
 {
     private static async Task AiCanvasPlannerChecks(BackofficeSandbox box)
     {
+        await AiCanvasKnowledgeChecks(box);
         Require(Controllers.api.CanvasAiController.ResolveReplyLocale("zh-tw", "ja-JP", "ja-JP") == "zh-TW" &&
             Controllers.api.CanvasAiController.ResolveReplyLocale("", "ja-JP;q=0.2,zh-TW;q=0.9,en;q=0", "vi-VN") == "zh-TW" &&
             Controllers.api.CanvasAiController.ResolveReplyLocale("zh-TW;ignore-instructions", "vi-VN", "ja-JP") == "vi-VN" &&
@@ -388,18 +389,33 @@ public static partial class BackofficeSandboxChecks
         }
         start = http.Calls;
         const string carouselHtml = "<div id='directory' class='catalog_frame' data-dirid='12'><div id='carousel' class='six_swiper'><div id='viewport' class='swiper'><div id='cards' class='catalog swiper-wrapper'><div id='template' class='templatecontent'><div id='card' class='template swiper-slide'>商品</div></div></div></div></div></div>";
-        respond = call => Reply(JsonSerializer.Serialize(new {
-            editMode = "style", html = "", summary = "已調整輪播欄數。",
-            styles = new[] { new { selector = call == start + 1 ? "#directory" : call == start + 2 ? "#catalog" : "#carousel",
-                properties = call <= start + 2 ? new Dictionary<string, string> { ["grid-template-columns"] = "repeat(4, 1fr)" }
-                : new Dictionary<string, string> { ["--coker-swiper-columns"] = "4" } } }
-        }));
+        var classPlan = JsonSerializer.Serialize(new {
+            editMode = "content", html = carouselHtml.Replace("six_swiper", "four_swiper"), summary = "已調整輪播版型。", styles = Array.Empty<object>(),
+            sourceEvidence = new[] { new { key = "fixture-source", start = 1, end = 1 } }
+        });
+        respond = call => Reply(call == start + 1 ? """{"editMode":"style","html":"","styles":[{"selector":"#catalog","properties":{"grid-template-columns":"repeat(4,1fr)"}}],"summary":"完成"}""" : classPlan);
         var carouselRequest = Request("調整為四欄位", carouselHtml); carouselRequest.SelectedId = "directory";
+        carouselRequest.KnowledgeClasses.Add("four_swiper");
+        carouselRequest.KnowledgeSources = [new("fixture-source", "/Shared/widgets.min.js", "js/Widget.js", "source-hash", "runtime-hash",
+            ["four_swiper"], [], [new(1, 1, "$('.four_swiper').each(function(){ slidesPerView: 4 });")], "source-cited")];
         var carouselResult = await service.Generate(carouselRequest, default);
-        Require(carouselResult.Status == 200 && http.Calls == start + 4 && carouselResult.Html == carouselHtml &&
-            carouselResult.Styles.Single().Selector == "#carousel" && carouselResult.Styles.Single().Properties["--coker-swiper-columns"] == "4" &&
-            carouselRequest.PlanDiagnostics.Any(d => d.Reason.Contains("Swiper carousel")),
-            "The observed directory/carousel nesting must reject outer-frame Grid, resolve the actual catalog alias, then replan through the existing Swiper column capability without replacing its template or data source.");
+        Require(carouselResult.Status == 200 && http.Calls == start + 4 && carouselResult.Html == carouselHtml.Replace("six_swiper", "four_swiper") &&
+            carouselResult.Styles.Count == 0 && carouselRequest.PlanDiagnostics.Any(d => d.Reason.Contains("JS-driven carousel")),
+            "A carousel Grid proposal must be replanned into a source-cited class-only edit, preserving all data-source and template metadata without a fixed backend count table.");
+        start = http.Calls;
+        var largeCarousel = carouselHtml.Replace("商品", "<!--" + new string('x', 12000) + "-->商品");
+        respond = _ => Reply(JsonSerializer.Serialize(new {
+            editMode = "content", html = largeCarousel.Replace("six_swiper", "four_swiper"), summary = "已切換既有版型。", styles = Array.Empty<object>(),
+            sourceEvidence = new[] { new { key = "fixture-source", start = 1, end = 1 } }
+        }));
+        var largeRequest = Request("調整輪播", largeCarousel); largeRequest.SelectedId = "directory";
+        largeRequest.KnowledgeClasses.Add("four_swiper"); largeRequest.KnowledgeSources = carouselRequest.KnowledgeSources;
+        var largeResult = await service.Generate(largeRequest, default);
+        Require(largeResult.Status == 200 && http.Calls == start + 3 &&
+            contexts[^2].GetProperty("ReviewProposal").GetString()!.Contains("ClassChangesToReview") &&
+            contexts.Last().GetProperty("Html").ValueKind == JsonValueKind.Null &&
+            contexts.Last().GetProperty("ApprovedPlan").GetProperty("html").GetString()!.Contains(new string('x', 12000)),
+            "Large class-only directory edits must review compact class deltas, then retain one complete approved HTML copy in the UI-language pass instead of overflowing the context budget.");
         start = http.Calls;
         respond = _ => Reply("""{"editMode":"style","html":"","styles":[{"selector":"#gallery","properties":{"--coker-swiper-columns":"4"}}],"summary":"完成"}""");
         Require((await service.Generate(Request("調整"), default)).Status == 422 && http.Calls == start + 3,

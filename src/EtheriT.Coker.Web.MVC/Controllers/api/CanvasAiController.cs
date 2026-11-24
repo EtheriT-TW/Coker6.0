@@ -32,6 +32,8 @@ public sealed class CanvasAiController(LoginUserData user, NavigationProvider na
         input.ReplyLocale = ResolveReplyLocale(input.BrowserLocale, Request.Headers.AcceptLanguage.ToString(), input.WebsiteLocale);
         input.ConversationLocale = string.IsNullOrEmpty(input.ConversationLocale) ? "" : ResolveReplyLocale(input.ConversationLocale, "", input.ReplyLocale);
         if (input.ConversationLocale.Length > 0) input.ReplyLocale = input.ConversationLocale;
+        input.MemoryUserId = (await user.GetUserId()).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        input.PermissionScope = input.Controller + "/" + input.Action;
         var result = await ai.Generate(input, cancellationToken);
         if (input.ModelCalls.HasValue)
             Response.Headers["X-Canvas-Model-Calls"] = input.ModelCalls.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -88,6 +90,8 @@ public sealed class CanvasAiController(LoginUserData user, NavigationProvider na
         if (input.AvailableSettings == null || input.AvailableSettings.Length > 2 ||
             input.AvailableSettings.Distinct().Count() != input.AvailableSettings.Length ||
             input.AvailableSettings.Any(kind => kind is not ("link" or "directory"))) return "設定功能資訊不正確。";
+        if (input.Resources == null || input.Resources.Length > 32 || input.Resources.Any(path => path == null || path.Length > 500))
+            return "畫布資源資訊不正確。";
         if (input.Html.Length > 64000) return "選取區塊的內容太長，請選取較小的區塊後重試。";
         if (input.Css.Length > 32000) return "選取區塊的樣式太多，請選取較小的區塊後重試。";
         if (input.History.Length > 8000) return "對話內容太長，請清除本機對話後重試。";

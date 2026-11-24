@@ -7,9 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Web.MVC.Services.Ai;
 
-public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguration configuration, WebsiteAiSettingsService settingsService, WebsiteAiAvailability availability, ILogger<CanvasAiService>? logger = null)
+public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguration configuration, WebsiteAiSettingsService settingsService, WebsiteAiAvailability availability, ILogger<CanvasAiService>? logger = null, CanvasKnowledgeService? knowledge = null)
 {
-    private const string AllowedCssProperties = "color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap row-gap column-gap grid-template-columns grid-template-rows grid-auto-flow grid-column grid-row flex-direction flex-wrap flex-basis flex-grow flex-shrink justify-content align-items align-self justify-self order box-sizing object-fit object-position aspect-ratio --coker-swiper-columns";
+    private const string AllowedCssProperties = "color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap row-gap column-gap grid-template-columns grid-template-rows grid-auto-flow grid-column grid-row flex-direction flex-wrap flex-basis flex-grow flex-shrink justify-content align-items align-self justify-self order box-sizing object-fit object-position aspect-ratio";
     private const string Instructions = """
         You edit a Coker GrapesJS canvas. Return ONLY JSON: {"html":"...","styles":[],"textStyles":[],"summary":"...","editMode":"style","clarification":""}.
         Interpret natural-language colours, regional/brand colour names and obvious spelling mistakes using context; do not rely on a fixed colour-name list.
@@ -62,6 +62,8 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
         try { return await GenerateCore(input, timeout.Token); }
         catch (AiInputException ex) { return new(400, null, ex.Message); }
         catch (AiSettingsException ex) { return new(503, null, ex.Message); }
+        catch (IOException) { return new(503, null, "功能分析的資源檔案暫時無法讀取，未修改畫布。請管理員檢查檔案存取狀態。"); }
+        catch (UnauthorizedAccessException) { return new(503, null, "功能分析資源的存取權限不足，未修改畫布。請管理員檢查服務帳號的檔案權限。"); }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         { return new(504, null, "AI 回覆逾時，請稍後重試。"); }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -75,6 +77,7 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
         if (!settings.Enabled) return new(403, null, "本站尚未開放 AI 輔助。");
         if (!(await availability.CheckAsync(settings, cancellationToken)).Available)
             return new(503, null, "AI 服務尚未啟用或設定未完成。");
+        CanvasKnowledgeContext? discovered = knowledge == null ? null : await knowledge.PrepareAsync(input, false, cancellationToken);
 
         if (input.AutoDetect && input.Scope != "new") input.PreserveContent = true;
 
@@ -109,6 +112,7 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
             History = history, input.Prompt, input.PreserveContent, input.AutoDetect, input.SelectedId,
             StyleContext = styleContext, input.WebsiteLocale, input.ReplyLocale, input.BrowserLocale, input.ConversationLocale,
             input.AvailableSettings,
+            ResourceKnowledge = discovered,
             AllowedSelectors = allowedSelectors.Concat(targetDocument.DocumentNode.Descendants()
                 .Where(node => node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog"))
                 .Select(node => "#" + node.GetAttributeValue("id", "") + " > .template")
@@ -128,6 +132,8 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
     {
         if (input.Scope == "selected") content = ResolveTargetAliases(input, content);
         using var result = JsonDocument.Parse(content);
+        if (result.RootElement.TryGetProperty("needsSourceAnalysis", out var discovery) && discovery.ValueKind == JsonValueKind.True)
+            return new(422, null, "Re-read expanded ResourceKnowledge and its unavailable/truncated status. Analyze the current source before proposing edits or claiming unsupported options.") { FailureCode = "knowledge" };
         if (result.RootElement.TryGetProperty("clarification", out var clarification) &&
             clarification.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(clarification.GetString()))
         {
@@ -159,7 +165,10 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
         var summary = result.RootElement.TryGetProperty("summary", out var s) ? s.GetString() : "已產生畫布修改";
         if (string.IsNullOrWhiteSpace(html) || html.Length > 64000)
             return new(422, null, "AI 回覆包含不支援或不安全的 HTML，未修改畫布。請簡化指令後重試。");
-        if (!input.PreserveContent && !IsSafeFragment(html, out var htmlFailure))
+        if (!input.PreserveContent && HasRuntimeClassChange(input.Html, html) &&
+            (!TrySourceBackedClassEdit(input, html) || !HasSupportedSourceEvidence(input, result.RootElement)))
+            return new(422, null, "The JS component class change needs exact original markup, an actual deployed class, and supporting sourceEvidence from ResourceKnowledge. Re-read/expand the source; do not invent class choices.") { FailureCode = "knowledge" };
+        if (!input.PreserveContent && !TrySourceBackedClassEdit(input, html) && !IsSafeFragment(html, out var htmlFailure))
             return new(422, null, "Content HTML rejected: " + htmlFailure + " Return safe complete HTML; link metadata is allowed only on a elements, with safe or empty pending destinations.");
         var message = summary ?? "已產生畫布修改";
         var styles = result.RootElement.TryGetProperty("styles", out var styleElement)
@@ -183,10 +192,9 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
         foreach (var rule in styles.Where(HasGridTracks))
         {
             var node = structureDocument.DocumentNode.Descendants().FirstOrDefault(n => "#" + n.GetAttributeValue("id", "") == rule.Selector);
-            var swiper = node?.AncestorsAndSelf().FirstOrDefault(n => n.GetAttributeValue("class", "")
-                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Any(c => SwiperLayoutClasses.Contains(c)));
+            var swiper = node?.AncestorsAndSelf().FirstOrDefault(IsRuntimeCarouselRoot);
             if (swiper != null)
-                return new(422, null, "This target belongs to an existing Swiper carousel. Keep its runtime layout; use --coker-swiper-columns (1 through 6) on #" + swiper.GetAttributeValue("id", "") + " instead of CSS Grid.") { FailureCode = "styles" };
+                return new(422, null, "This target belongs to a JS-driven carousel. Read ResourceKnowledge for its actual initializer and supported class choices; return an exact class-only content edit on #" + swiper.GetAttributeValue("id", "") + " instead of CSS Grid. If source evidence is insufficient, set needsSourceAnalysis=true.") { FailureCode = "styles" };
         }
         var directoryFrames = structureDocument.DocumentNode.Descendants().Where(n =>
             n.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog_frame"))
@@ -309,6 +317,18 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
         context["RejectedProposal"] = null; // ValidationFeedback remains available for replanning.
         result = Serialize();
         if (result.Length <= 32000) return result;
+        if (context["ResourceKnowledge"] is System.Text.Json.Nodes.JsonObject knowledgeContext && knowledgeContext["Sources"] is System.Text.Json.Nodes.JsonArray sources)
+        {
+            knowledgeContext["Truncated"] = true;
+            while (sources.Count > 1 && result.Length > 32000)
+            {
+                sources.RemoveAt(sources.Count - 1);
+                result = Serialize();
+            }
+            if (sources.Count == 1 && result.Length > 32000 && sources[0]?["Evidence"] is System.Text.Json.Nodes.JsonArray evidence)
+                while (evidence.Count > 1 && result.Length > 32000) { evidence.RemoveAt(evidence.Count - 1); result = Serialize(); }
+        }
+        if (result.Length <= 32000) return result;
         if (context["StyleContext"] is JsonArray styles)
         {
             while (styles.Count > 1 && result.Length > 32000)
@@ -401,13 +421,6 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
             if (rule.Properties == null || rule.Properties.Count is < 1 or > 40) return false;
             foreach (var pair in rule.Properties)
             {
-                if (pair.Key == "--coker-swiper-columns")
-                {
-                    var target = doc.DocumentNode.Descendants().SingleOrDefault(n => "#" + n.GetAttributeValue("id", "") == rule.Selector);
-                    failure = "Swiper column capability requires an existing supported carousel root and a count from 1 through 6.";
-                    if (pair.Value is not ("1" or "2" or "3" or "4" or "5" or "6") || target == null ||
-                        !target.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Any(c => SwiperLayoutClasses.Contains(c))) return false;
-                }
                 failure = prefix + "CSS 屬性不在 AllowedCssProperties 清單，名稱須用 kebab-case。";
                 if (!allowed.Contains(pair.Key)) return false;
                 failure = prefix + "CSS 值格式不支援；不可含分號、!important、URL 或程式碼。";
@@ -487,17 +500,26 @@ public sealed class CanvasAiStyle
 
 public sealed class CanvasAiRequest
 {
-    [System.Text.Json.Serialization.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public List<CanvasAiPlanDiagnostic> PlanDiagnostics { get; } = [];
-    [System.Text.Json.Serialization.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public int? ModelCalls { get; set; }
-    [System.Text.Json.Serialization.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public string WebsiteLocale { get; set; } = "";
-    [System.Text.Json.Serialization.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public string ReplyLocale { get; set; } = "";
     public string BrowserLocale { get; set; } = "";
     public string ConversationLocale { get; set; } = "";
     public string[] AvailableSettings { get; set; } = [];
+    public string[] Resources { get; set; } = [];
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public string MemoryUserId { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public Dictionary<string, Guid?> MemoryVersions { get; set; } = new(StringComparer.Ordinal);
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public string PermissionScope { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public HashSet<string> KnowledgeClasses { get; set; } = new(StringComparer.Ordinal);
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public HashSet<string> KnowledgeSourceKeys { get; set; } = new(StringComparer.Ordinal);
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public List<CanvasKnowledgeSource> KnowledgeSources { get; set; } = [];
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public string[] SourceQueries { get; set; } = [];
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public bool KnowledgeExpanded { get; set; }
     public bool AutoDetect { get; set; }
     public bool PreserveContent { get; set; } = true;
     public string StyleContext { get; set; } = "";

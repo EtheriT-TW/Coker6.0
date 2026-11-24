@@ -1,3 +1,31 @@
+## 2026-11-24 正式 AI 記憶改存既有資料庫（目前有效規格）
+
+本節取代下方 App_Data/AiKnowledge 檔案持久化規格。正式記憶使用既有 CokerDbContext，分為目前記憶 AiMemoryEntries 與歷史 AiMemoryRevisions，不自動匯入或刪除舊檔案。系統來源分析共用；網站分析限定授權網站及功能；個人語系限定網站與本人。記憶不能擴大目前登入者權限。
+
+DbAiMemoryStore 每次使用獨立 DbContext，避免保存呼叫者未完成的業務變更。ScopeKey＋MemoryKey 唯一索引；GUID 樂觀併發憑證要求更新者持有先前版本，重複新增、舊版本及不存在資料的更新拒絕。相同內容不新增版本，更新目前值及歷史用一次 SaveChanges 交易；來源事實合併衝突最多重新讀取三次。DB 暫不可用時不回退檔案、不宣稱記憶保存成功，來源仍可當次分析；記憶 payload 限 JSON object／3MB。網站及使用者 FK 採 Restrict，正式刪除前需另定記憶保留／清除政策。
+
+既有 sandbox/ai-provider-contracts 串接 AiMemoryStoreChecks：獨立 InMemory 驗證新服務實例重讀、版本／記錄者、無變更不增歷史、過期／重複／不存在更新拒絕、系統／站台／使用者／功能／分類隔離、錯誤歸屬拒絕、併發屬性及唯一索引模型；AiCanvasKnowledgeChecks 的共用資訊洩漏檢查改查隔離 DB。尚未執行，不代表 SQL 唯一約束、FK、交易回滾、同時插入競爭或瀏覽器驗證通過。人工需於隔離 SQL DB 套用 migration 後驗證上述關聯限制、兩個請求同時更新、DB 停機、重啟後分析重用及來源異動失效；不得使用客戶資料進行寫入檢測。
+
+已準備 AddAiMemoryStorage migration、Designer 與 Snapshot，未執行 EF 指令或更新資料庫。使用者可在 Visual Studio 套件管理主控台（預設專案 EtheriT.Coker.EntityFrameworkCore、啟始專案 EtheriT.Coker.Web.MVC）手動執行 `Update-Database -Migration AddAiMemoryStorage -Context CokerDbContext`；請先確認連線為預期測試資料庫及先前待套用 migration。指令可能編譯／還原套件，建立兩張表、索引及 FK，並套用此前尚未執行的 migrations，會修改 DB schema；耗時依環境。本次沒有新增前端資產變更，不需額外 bundle；先前來源分析前端若尚未更新仍依下節執行。
+
+## 2026-11-24 畫布來源分析、分層記憶與按需更新
+
+本節取代下方歷史記錄中的固定Swiper class／1至6欄中介屬性規格。畫布每次送出目前實際載入的同源JS／CSS路徑；後端僅在既有授權檢查之後，以VirtualDirectory:Shared及MVC公開靜態資源對應本機檔案，追蹤bundles.json的輸入。不存在、過大、超出預算、外部URL、穿越路徑與無法驗證網站歸屬的upload／Layout路徑不讀取、不網路下載，缺資料不能當成不支援。網站目前可編輯CSS另外依授權站台及功能範圍分析。
+
+新增CanvasKnowledgeService：用來源及部署檔內容SHA-256辨識版本，每次使用自動比對；修改、刪除、卸載或bundle輸入異動後，過期分析不供該次規劃使用。來源比部署檔新時提示模型以實際部署證據為準，新增class亦需存在於部署內容。首次提供相關程式片段交AI分析；後續保留來源引用與同段可驗證的class／參數／字面值事實，快取狀態明確為來源分析，不能宣稱執行驗證通過。失敗／找不到能力時，在原三次規劃預算內重新比對並擴大來源片段，模型可提出八個以內class／函式查詢，不可指定任意檔案或URL。回覆前再查版本，變更造成原計畫無效時不套用。
+
+記憶儲存在非靜態目錄App_Data/AiKnowledge，不新增DB schema。共用來源只保存公開部署程式與來源引用，不保存客戶需求、畫布HTML、商品資料或個人習慣；網站CSS分析以站台／已授權功能／精確CSS指紋隔離，資料變動時不取其他快照的分析；個人目前僅保存已驗證回覆語系，依後端登入者與站台隔離。身分及權限範圍由Controller取得且JsonIgnore，不能從JSON指定；取得知識不增加權限，撤權／跨站仍於任何讀取前拒絕。未開放全域記憶搜尋或任意操作API。共用／網站來源快取各範圍保留最多256筆、原子寫檔；儲存失敗記錄安全診斷，不宣稱記憶已保存。
+
+新增CanvasAiComponents：依來源證據接受原HTML僅class變動，節點、文字、註解與其他屬性逐一相同，未知class或混入內容修改不得走此例外。Swiper不再由後端固定欄數表轉class；AI讀實際初始化程式提出class計畫，原地套用既有元件並使用既有SwiperInit重新初始化。前端先核對完整結構再保留原有data屬性，不再在class比對之前一律拒絕目錄metadata。不存在初始化功能或未成功產生執行實例則回滾。來源不足先擴充分析；判定不支援選項需已擴大檢索、有效來源引用與實際選項，再用一般用語列出選項。既有設定modal、取消、圖片保留、版本還原及等待期間變更防護維持。
+
+大型目錄的class-only內容審查改帶已驗證class差異，原HTML仍保留一次；訊息校正也只帶一份完整ApprovedPlan，避免原HTML／計畫／來源三重複製超過32K上下文。模型省略引用時，僅可從已取得且含該class的實際來源片段補足引用，不能猜造來源。身分、權限與來源選項欄位同時套用System.Text.Json及目前MVC的Newtonsoft JsonIgnore，新增兩種formatter的偽造欄位拒絕斷言。
+
+沿既有sandbox/ai-provider-contracts執行AiCanvasKnowledgeChecks與更新後PlannerChecks：臨時目錄bundle追蹤、初次分析及引用事實重用、修改後失效、尚未部署的新class拒絕、部署更新後自動辨識、刪除不回舊知識、外部／跨站路徑拒絕；class切換保留整樹、未知class／文案及metadata混改拒絕；網站分析同站共用但跨站不讀、個人語系不同使用者不可讀、模型未引用的需求資訊不得進共用記憶；JS驅動目錄Grid計畫改為來源引用class計畫，舊中介屬性拒絕。所有檔案只在既有sandbox臨時根目錄，固定HTTP fixture無連外／客戶資料庫；尚未執行，不代表SQL／真實模型／瀏覽器通過。
+
+shared-ai-regression人工驗收新增：四／六欄依實際Swiper.js與手機斷點、請求未支援數字時依來源列選項而非亂改Grid、更新／刪除隔離範例來源後不重編後端也會重新分析、重新整理及伺服器重啟後分析記憶重用、來源未bundle時不宣稱新功能可用、記憶寫入失敗、撤權／跨站／不同使用者隔離，及設定／還原既有流程。只新增人工規格，不新增自動通過數。
+
+本次僅原始碼、檢測規格與靜態檢查，未執行build／test／restore／bundle／Migration或瀏覽器驗收。使用者需手動於Visual Studio編譯／重啟MVC（可能還原相依並寫入bin／obj），以及在packages/EtheriT.Coker.GrapesJS執行npm run build:mvc（已確認vite build後copy-to-mvc，更新dist及MVC模組產物）；耗時依環境。本輪未改MVC舊Grapes腳本及Public Swiper.js，不需為本輪額外執行create-bundles。暫未接商品資料操作、LINE登入、外部檔案下載、向量DB或通用個人習慣推斷。
+
 ## 2026-11-24 實頁重現：連結HTML拒絕與目錄內嵌Swiper
 
 本次內建瀏覽器以實際頁面49／11019重現兩個失敗，未儲存或發布。選取Span送「調整為連結」：開發診斷第一回EmptyProposal，第三回本地HTML安全拒絕，當次尚無具體標籤／屬性原因，不可推定一定是metadata造成。選取目錄送「調整為四欄位」：依序是外框#selected禁止Grid、不存在#catalog、外框#layout-container禁止Grid。DOM實際為catalog_frame > six_swiper > swiper > catalog.swiper-wrapper，卡片由Swiper配置inline寬度；前一輪一般Grid修正未涵蓋此結構。

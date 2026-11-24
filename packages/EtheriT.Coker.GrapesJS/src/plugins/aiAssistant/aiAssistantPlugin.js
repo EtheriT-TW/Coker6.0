@@ -342,6 +342,15 @@ export function aiAssistantPlugin(editor, options = {}) {
                 scope, prompt, html, selectedId,
                 browserLocale: navigator.languages?.[0] || navigator.language || '',
                 conversationLocale: replyLocale,
+                resources: [...new Set([
+                    ...editor.Canvas.getDocument().querySelectorAll('script[src],link[rel="stylesheet"][href]'),
+                    ...document.querySelectorAll('script[src*="/js/Grapes/"]')
+                ].map(el => {
+                    try {
+                        const url = new URL(el.getAttribute('src') || el.getAttribute('href'), el.ownerDocument.baseURI);
+                        return url.origin === location.origin ? url.pathname : null;
+                    } catch { return null; }
+                }).filter(Boolean))].slice(0, 32),
                 availableSettings: Object.keys(settingCommands).filter(kind => editor.Commands.get(settingCommands[kind])),
                 preserveContent, autoDetect, styleContext: JSON.stringify(styleContext),
                 css,
@@ -358,11 +367,13 @@ export function aiAssistantPlugin(editor, options = {}) {
                 preserveContent = result.preserveContent;
             }
             const replaceHtml = !preserveContent || result.htmlChanged === true;
-            const safeHtml = replaceHtml ? validateHtml(result.html) : null;
+            let safeHtml = null;
             let classChanges = null;
             if (replaceHtml) {
-                const parse = markup => new DOMParser().parseFromString(markup, 'text/html').body;
-                const before = parse(html), after = parse(safeHtml);
+                if (typeof result.html !== 'string' || !result.html.trim() || result.html.length > 64000) throw new Error('AI 未回傳有效 HTML。');
+                const beforeDocument = new DOMParser().parseFromString(html, 'text/html');
+                const afterDocument = new DOMParser().parseFromString(result.html, 'text/html');
+                const before = beforeDocument.body, after = afterDocument.body;
                 const images = root => [...root.querySelectorAll('img,source')]
                     .map(el => JSON.stringify([el.tagName, el.getAttribute('src') || '', el.getAttribute('srcset') || '']));
                 const remaining = images(after);
@@ -371,13 +382,14 @@ export function aiAssistantPlugin(editor, options = {}) {
                     if (index < 0) throw new Error('修改回覆遺失原有圖片，已保留原區塊。');
                     remaining.splice(index, 1);
                 }
-                const signature = node => node.nodeType === 3 ? node.nodeValue : {
+                const signature = node => [3, 8].includes(node.nodeType) ? { type: node.nodeType, text: node.nodeValue } : {
                     tag: node.nodeName,
                     attrs: [...(node.attributes || [])].filter(a => a.name !== 'class')
                         .map(a => [a.name, a.value]).sort((a, b) => a[0].localeCompare(b[0])),
-                    children: [...node.childNodes].filter(n => n.nodeType !== 3 || n.nodeValue.trim()).map(signature)
+                    children: [...node.childNodes].map(signature)
                 };
-                if (JSON.stringify(signature(before)) === JSON.stringify(signature(after))) {
+                if (JSON.stringify(signature(beforeDocument)) === JSON.stringify(signature(afterDocument))) {
+                    safeHtml = after.innerHTML;
                     const models = new Map([selected, ...selected.find('*')].map(c => [c.getId(), c]));
                     const originals = [...before.querySelectorAll('*')];
                     classChanges = [];
@@ -387,7 +399,7 @@ export function aiAssistantPlugin(editor, options = {}) {
                         if (!component) throw new Error('無法定位要調整的排列元件，已保留原區塊。');
                         classChanges.push({ component, classes: [...el.classList] });
                     });
-                }
+                } else safeHtml = validateHtml(result.html);
             }
 
             if (preserveContent && replaceHtml) {
@@ -404,7 +416,21 @@ export function aiAssistantPlugin(editor, options = {}) {
             try {
                 if (classChanges) {
                     // Layout edits keep the existing GrapesJS tree, custom types and children.
-                    for (const change of classChanges) change.component.setClass(change.classes);
+                    for (const change of classChanges) {
+                        const root = change.component.getEl();
+                        const carousels = root ? [...root.children].filter(el => el.classList.contains('swiper')) : [];
+                        const runtime = root?.ownerDocument.defaultView;
+                        if (carousels.length && typeof runtime?.SwiperInit !== 'function')
+                            throw new Error('目前元件沒有可用的輪播初始化功能，已保留原內容。');
+                        for (const carousel of carousels) carousel.swiper?.destroy?.(true, true);
+                        change.component.setClass(change.classes);
+                        if (carousels.length) {
+                            if (!runtime.jQuery) throw new Error('輪播的執行環境不完整，已保留原內容。');
+                            runtime.jQuery(change.component.getEl()).data('isInit', false);
+                            runtime.SwiperInit({ autoplay: false });
+                            if (carousels.some(el => !el.swiper)) throw new Error('選取的輪播版型未初始化，已還原修改前內容。');
+                        }
+                    }
                 } else if (replaceHtml) {
                     if (scope === 'selected') {
                         const parent = selected.parent();
@@ -422,25 +448,7 @@ export function aiAssistantPlugin(editor, options = {}) {
                     }
                     else editor.setComponents(safeHtml);
                 }
-                for (const rule of rules) {
-                    const count = rule.properties['--coker-swiper-columns'];
-                    if (count) {
-                        const component = [appliedTarget, ...appliedTarget.find('*')].find(c => `#${c.getId()}` === rule.selector);
-                        const layouts = ['one_swiper', 'two_swiper', 'three_swiper', 'four_swiper', 'five_swiper', 'six_swiper'];
-                        const root = component?.getEl();
-                        const frameWindow = root?.ownerDocument.defaultView;
-                        if (!component || !layouts.some(name => component.getClasses().includes(name)) ||
-                            !frameWindow?.jQuery || typeof frameWindow.SwiperInit !== 'function')
-                            throw new Error('此輪播目前無法調整欄數，已保留原設定。');
-                        for (const element of root.querySelectorAll('.swiper')) element.swiper?.destroy?.(true, true);
-                        component.setClass([...component.getClasses().filter(name => !layouts.includes(name)), layouts[Number(count) - 1]]);
-                        frameWindow.jQuery(component.getEl()).data('isInit', false);
-                        frameWindow.SwiperInit({ autoplay: false });
-                        if (!component.getEl().querySelector('.swiper')?.swiper)
-                            throw new Error('輪播重新初始化未完成，已還原修改前內容。');
-                    }
-                    editor.Css.setRule(rule.selector, rule.properties, { addStyles: true });
-                }
+                for (const rule of rules) editor.Css.setRule(rule.selector, rule.properties, { addStyles: true });
                 const appliedModels = new Map([appliedTarget, ...appliedTarget.find('*')]
                     .map(component => [component.getId(), component]));
                 for (const rule of rules) {
@@ -537,14 +545,8 @@ export function aiAssistantPlugin(editor, options = {}) {
         if (!Array.isArray(rules) || rules.length > 100) throw new Error('AI 未提供有效 CSS 修改，請更新 MVC 與插件後重試。');
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const ids = new Set([...doc.body.querySelectorAll('[id]')].map(el => el.id));
-        const allowed = new Set('color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap row-gap column-gap grid-template-columns grid-template-rows grid-auto-flow grid-column grid-row flex-direction flex-wrap flex-basis flex-grow flex-shrink justify-content align-items align-self justify-self order box-sizing object-fit object-position aspect-ratio --coker-swiper-columns'.split(' '));
+        const allowed = new Set('color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap row-gap column-gap grid-template-columns grid-template-rows grid-auto-flow grid-column grid-row flex-direction flex-wrap flex-basis flex-grow flex-shrink justify-content align-items align-self justify-self order box-sizing object-fit object-position aspect-ratio'.split(' '));
         for (const rule of rules) {
-            if (rule?.properties?.['--coker-swiper-columns']) {
-                const root = doc.getElementById(rule.selector?.slice(1));
-                if (!/^[1-6]$/.test(rule.properties['--coker-swiper-columns']) ||
-                    !root?.matches('.one_swiper,.two_swiper,.three_swiper,.four_swiper,.five_swiper,.six_swiper'))
-                    throw new Error('輪播欄數設定與目標元件不相容。');
-            }
             const directoryMatch = rule && /^#([a-zA-Z_][a-zA-Z0-9_-]*) > \.template$/.exec(rule.selector);
             const directoryList = directoryMatch && doc.getElementById(directoryMatch[1]);
             const directoryItems = directoryList?.matches('.catalog') && directoryList.closest('.catalog_frame');

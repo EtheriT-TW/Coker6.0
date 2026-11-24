@@ -465,36 +465,16 @@ namespace EtheriT.Coker.Application.Directory
             List<long> pageProdIds;
             if (sortBy == "price")
             {
-                // 使用卡片相同的角色／規格價格選取規則，先排序完整候選商品再分頁。
-                var candidates = await prods.Select(p => new { p.Id, p.Status, p.Ser_No, p.ItemNo }).ToListAsync();
-                var orgName = await loginUserData.GetWebsiteOrgName(WebsiteID);
-                var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
-                var priceOrder = await storeSetAppService.getValues(new StoreSetGetValueInput
-                {
-                    key = "priceOrder",
-                    SiteId = WebsiteID
-                });
-                var orderLowToHigh = priceOrder.Success && priceOrder.detailItem != null
-                    && priceOrder.detailItem.key == "priceOrder"
-                    && priceOrder.detailItem.value != null && priceOrder.detailItem.value.Contains("LtoH");
-                var prices = await productDisplayPriceService.GetDirectoryPriceMapAsync(
-                    candidates.Select(p => p.Id).ToList(), roleContext, orderLowToHigh);
-                var pricedCandidates = candidates.Select(p => new
-                {
-                    Product = p,
-                    Price = prices.TryGetValue(p.Id, out var price) ? price.PriceValue : null
-                });
-                var ordered = pricedCandidates.OrderBy(p => p.Product.Status == ProdStatusEnum.售完)
-                    .ThenBy(p => p.Product.Status == ProdStatusEnum.停產)
-                    .ThenBy(p => !p.Price.HasValue);
-                var descending = string.Equals(dto.SearchSortDirection, "desc", StringComparison.OrdinalIgnoreCase);
-                var priceSorted = descending ? ordered.ThenByDescending(p => p.Price) : ordered.ThenBy(p => p.Price);
-                pageProdIds = priceSorted.ThenBy(p => p.Product.Ser_No).ThenBy(p => p.Product.ItemNo)
-                    .ThenByDescending(p => p.Product.Id).Select(p => p.Product.Id).Skip(skip).Take(shownum).ToList();
+                // 依目錄卡片上顯示的價格排序完整候選商品，再分頁。
+                var sorted = await SortByDisplayPriceAsync(
+                    BuildUnionQuery(null, null, prods, WebsiteID, null, dto),
+                    WebsiteID,
+                    dto);
+                pageProdIds = sorted.Select(x => x.Id).Skip(skip).Take(shownum).ToList();
             }
             else if (new[] { "name", "model" }.Contains(sortBy))
             {
-                pageProdIds = await BuildUnionQuery(null, null, prods, WebsiteID, null, new List<long> { 0, 1 }, dto)
+                pageProdIds = await BuildUnionQuery(null, null, prods, WebsiteID, null, dto)
                     .Select(x => x.Id).Skip(skip).Take(shownum).ToListAsync();
             }
             else
@@ -624,35 +604,8 @@ namespace EtheriT.Coker.Application.Directory
 
             // ---------- 取得使用者加權資料（可為空） ----------
             var userCtx = await GetUserSearchContextAsync();
-            var visiblePriceRoleIds = new List<long> { 0, 1 };
-            var isPriceSort = includeProd && string.Equals(
-                dto.SearchSortBy?.Trim(),
-                "price",
-                StringComparison.OrdinalIgnoreCase);
-            long? currentFrontRoleId;
-
-            if (isPriceSort)
-            {
-                try
-                {
-                    var orgName = await loginUserData.GetWebsiteOrgName(websiteId);
-                    var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
-                    currentFrontRoleId = roleContext.CurrentRoleId;
-                    visiblePriceRoleIds = visiblePriceRoleIds
-                        .Concat(roleContext.VisibleRoleIds)
-                        .Distinct()
-                        .ToList();
-                }
-                catch
-                {
-                    // 無法取得角色時以訪客價格排序。
-                    currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteId);
-                }
-            }
-            else
-            {
-                currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteId);
-            }
+            var isPriceSort = includeProd && IsPriceSort(dto);
+            long? currentFrontRoleId = await GetCurrentFrontRoleIdAsync(websiteId);
 
             // ---------- 建立 Query（只建需要的） ----------
             IQueryable<WebMenu>? menuQ = null;
@@ -766,7 +719,7 @@ namespace EtheriT.Coker.Application.Directory
             }
             else
             {
-                var unionForCount = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, visiblePriceRoleIds, dto);
+                var unionForCount = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, dto);
                 totalCount = await unionForCount.CountAsync();
             }
 
@@ -782,13 +735,15 @@ namespace EtheriT.Coker.Application.Directory
                 return output;
 
             // ---------- 建立「統一排序用」的 Union Row ----------
-            var union = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, visiblePriceRoleIds, dto);
+            var union = BuildUnionQuery(menuQ, articleQ, prodQ, websiteId, userCtx, dto);
 
             // 只取當頁 ids（穩定排序：最後一定要有 TieBreaker）
-            var pageRows = await union
-                .Skip(skip)
-                .Take(allContent || dto.MaxLen.GetValueOrDefault() > 0 ? Math.Max(0, Math.Min(showNum, totalCount - skip)) : showNum)
-                .ToListAsync();
+            var pageTake = allContent || dto.MaxLen.GetValueOrDefault() > 0
+                ? Math.Max(0, Math.Min(showNum, totalCount - skip))
+                : showNum;
+            var pageRows = isPriceSort
+                ? (await SortByDisplayPriceAsync(union, websiteId, dto)).Skip(skip).Take(pageTake).ToList()
+                : await union.Skip(skip).Take(pageTake).ToListAsync();
 
             // ---------- 回查詳細資料並組 DTO ----------
             var menuIds = pageRows.Where(r => r.Type == DirectoryTypeEnum.選單).Select(r => r.Id).ToList();
@@ -1182,7 +1137,6 @@ namespace EtheriT.Coker.Application.Directory
             IQueryable<Prod>? prodQ,
             long websiteId,
             UserSearchContext? userCtx,
-            IReadOnlyList<long> visiblePriceRoleIds,
             DirectoryReleInfoInputDto dto)
         {
             IReadOnlyList<long> relevantTagIds = userCtx != null ? userCtx.RelevantTagIds : new List<long>();
@@ -1204,7 +1158,6 @@ namespace EtheriT.Coker.Application.Directory
                         SerNo = m.SerNO,
                         Title = m.Title,
                         ItemNo = null,
-                        SortPrice = null,
                         MatchCount = 0,
 
                         SortType = 1,
@@ -1229,7 +1182,6 @@ namespace EtheriT.Coker.Application.Directory
                         SerNo = a.SerNO,
                         Title = a.Title,
                         ItemNo = null,
-                        SortPrice = null,
 
                         MatchCount = (relevantTagIds.Count == 0)
                             ? 0
@@ -1251,89 +1203,30 @@ namespace EtheriT.Coker.Application.Directory
             // 3) Product
             if (prodQ != null)
             {
-                IQueryable<UnionRow> q;
-
-                if (sortBy == "price")
-                {
-                    var visibleStocks = db.Prod_Stocks
-                        .AsNoTracking()
-                        .Where(stock => !stock.IsDeleted && stock.Visible && !stock.IsTimePrice);
-                    var visiblePrices = db.Prod_Prices
-                        .AsNoTracking()
-                        .Where(price =>
-                            !price.IsDeleted
-                            && (price.Bonus ?? 0) == 0
-                            && (price.Price ?? 0) > 0
-                            && visiblePriceRoleIds.Contains(price.FK_RId));
-
-                    // 從本次搜尋結果開始 JOIN 並依商品一次彙總，避免逐商品相關子查詢或掃描其他站台商品。
-                    q =
-                        from p in prodQ
-                        join stock in visibleStocks
-                            on p.Id equals stock.FK_Pid into stockGroup
-                        from stock in stockGroup.DefaultIfEmpty()
-                        join price in visiblePrices
-                            on stock.Id equals price.FK_PSId into priceGroup
-                        from price in priceGroup.DefaultIfEmpty()
-                        group (price == null ? (decimal?)null : price.Price) by new
-                        {
-                            p.Id,
-                            p.Ser_No,
-                            p.Title,
-                            p.ItemNo,
-                            p.Status,
-                            p.LastModificationTime
-                        } into productGroup
-                        select new UnionRow
-                        {
-                            Id = productGroup.Key.Id,
-                            Type = DirectoryTypeEnum.商品,
-                            NodeDate = null,
-                            LastModified = productGroup.Key.LastModificationTime,
-                            SerNo = productGroup.Key.Ser_No,
-                            Title = productGroup.Key.Title,
-                            ItemNo = productGroup.Key.ItemNo,
-                            SortPrice = productGroup.Min(),
-                            MatchCount = (relevantTagIds.Count == 0)
-                                ? 0
-                                : db.Tag_Associates
-                                    .Where(t => !t.IsDeleted
-                                                && t.Type == TagAssociateTypeEnum.商品
-                                                && t.FK_AId == productGroup.Key.Id
-                                                && relevantTagIds.Contains(t.FK_TId))
-                                    .Count(),
-                            SortType = 0,
-                            SortSoldOut = (productGroup.Key.Status == ProdStatusEnum.售完) ? 1 : 0,
-                            SortDiscontinued = (productGroup.Key.Status == ProdStatusEnum.停產) ? 1 : 0,
-                        };
-                }
-                else
-                {
-                    q =
-                        from p in prodQ
-                        select new UnionRow
-                        {
-                            Id = p.Id,
-                            Type = DirectoryTypeEnum.商品,
-                            NodeDate = null,
-                            LastModified = p.LastModificationTime,
-                            SerNo = p.Ser_No,
-                            Title = p.Title,
-                            ItemNo = p.ItemNo,
-                            SortPrice = null,
-                            MatchCount = (relevantTagIds.Count == 0)
-                                ? 0
-                                : db.Tag_Associates
-                                    .Where(t => !t.IsDeleted
-                                                && t.Type == TagAssociateTypeEnum.商品
-                                                && t.FK_AId == p.Id
-                                                && relevantTagIds.Contains(t.FK_TId))
-                                    .Count(),
-                            SortType = 0,
-                            SortSoldOut = (p.Status == ProdStatusEnum.售完) ? 1 : 0,
-                            SortDiscontinued = (p.Status == ProdStatusEnum.停產) ? 1 : 0,
-                        };
-                }
+                // 價格排序改在 SortByDisplayPriceAsync 依卡片顯示價格處理，這裡不再算價格。
+                var q =
+                    from p in prodQ
+                    select new UnionRow
+                    {
+                        Id = p.Id,
+                        Type = DirectoryTypeEnum.商品,
+                        NodeDate = null,
+                        LastModified = p.LastModificationTime,
+                        SerNo = p.Ser_No,
+                        Title = p.Title,
+                        ItemNo = p.ItemNo,
+                        MatchCount = (relevantTagIds.Count == 0)
+                            ? 0
+                            : db.Tag_Associates
+                                .Where(t => !t.IsDeleted
+                                            && t.Type == TagAssociateTypeEnum.商品
+                                            && t.FK_AId == p.Id
+                                            && relevantTagIds.Contains(t.FK_TId))
+                                .Count(),
+                        SortType = 0,
+                        SortSoldOut = (p.Status == ProdStatusEnum.售完) ? 1 : 0,
+                        SortDiscontinued = (p.Status == ProdStatusEnum.停產) ? 1 : 0,
+                    };
 
                 union = union == null ? q : union.Union(q);
             }
@@ -1400,22 +1293,6 @@ namespace EtheriT.Coker.Application.Directory
                     .ThenBy(x => x.SerNo)
                     .ThenByDescending(x => x.Id),
 
-                "price" when descending => statusOrdered
-                    .ThenBy(x => x.SortPrice == null)
-                    .ThenByDescending(x => x.SortPrice)
-                    .ThenByDescending(x => x.MatchCount)
-                    .ThenBy(x => x.SerNo)
-                    .ThenBy(x => x.ItemNo)
-                    .ThenByDescending(x => x.Id),
-
-                "price" => statusOrdered
-                    .ThenBy(x => x.SortPrice == null)
-                    .ThenBy(x => x.SortPrice)
-                    .ThenByDescending(x => x.MatchCount)
-                    .ThenBy(x => x.SerNo)
-                    .ThenBy(x => x.ItemNo)
-                    .ThenByDescending(x => x.Id),
-
                 "name" when descending => statusOrdered
                     .ThenByDescending(x => x.Title)
                     .ThenByDescending(x => x.MatchCount)
@@ -1461,6 +1338,63 @@ namespace EtheriT.Coker.Application.Directory
                     .ThenBy(x => x.ItemNo)
                     .ThenByDescending(x => x.Id)
             };
+        }
+
+        private static bool IsPriceSort(DirectoryReleInfoInputDto dto)
+            => string.Equals(dto.SearchSortBy?.Trim(), "price", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// 依「目錄卡片上顯示的價格」排序，取價規則與 ProductAppService.GetDirectoryReleInfo 相同
+        /// （目前會員角色、商店設定 priceOrder、紅利價）。
+        /// 這套規則無法轉成 SQL，所以先取出全部候選列在記憶體排序，分頁交給呼叫端。
+        /// </summary>
+        private async Task<List<UnionRow>> SortByDisplayPriceAsync(
+            IQueryable<UnionRow> union,
+            long websiteId,
+            DirectoryReleInfoInputDto dto)
+        {
+            var rows = await union.ToListAsync();
+            var productIds = rows
+                .Where(x => x.Type == DirectoryTypeEnum.商品)
+                .Select(x => x.Id)
+                .ToList();
+            if (productIds.Count == 0)
+                return rows;
+
+            var orgName = await loginUserData.GetWebsiteOrgName(websiteId);
+            var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
+            var priceOrder = await storeSetAppService.getValues(new StoreSetGetValueInput
+            {
+                key = "priceOrder",
+                SiteId = websiteId
+            });
+            var orderLowToHigh = priceOrder.Success && priceOrder.detailItem != null
+                && priceOrder.detailItem.key == "priceOrder"
+                && priceOrder.detailItem.value != null && priceOrder.detailItem.value.Contains("LtoH");
+            var priceMap = await productDisplayPriceService.GetDirectoryPriceMapAsync(
+                productIds, roleContext, orderLowToHigh);
+
+            decimal? DisplayPriceOf(UnionRow row) =>
+                row.Type == DirectoryTypeEnum.商品 && priceMap.TryGetValue(row.Id, out var price)
+                    ? price.PriceValue
+                    : null;
+
+            var ordered = rows
+                .OrderBy(x => x.SortType)
+                .ThenBy(x => x.SortSoldOut)
+                .ThenBy(x => x.SortDiscontinued)
+                .ThenBy(x => DisplayPriceOf(x) == null);
+            var descending = string.Equals(dto.SearchSortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+            var priceOrdered = descending
+                ? ordered.ThenByDescending(DisplayPriceOf)
+                : ordered.ThenBy(DisplayPriceOf);
+
+            return priceOrdered
+                .ThenByDescending(x => x.MatchCount)
+                .ThenBy(x => x.SerNo)
+                .ThenBy(x => x.ItemNo)
+                .ThenByDescending(x => x.Id)
+                .ToList();
         }
 
         private async Task FillProdFiltersAndDirectoryTypeAsync(
@@ -2512,39 +2446,26 @@ namespace EtheriT.Coker.Application.Directory
 
                 if (isCustomSort)
                 {
-                    var visiblePriceRoleIds = new List<long> { 0, 1 };
-                    if (sortBy == "price")
-                    {
-                        try
-                        {
-                            var orgName = await loginUserData.GetWebsiteOrgName(websiteId);
-                            var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
-                            visiblePriceRoleIds = visiblePriceRoleIds
-                                .Concat(roleContext.VisibleRoleIds)
-                                .Distinct()
-                                .ToList();
-                        }
-                        catch
-                        {
-                            if (currentFrontRoleId.HasValue)
-                                visiblePriceRoleIds.Add(currentFrontRoleId.Value);
-                        }
-                    }
-
                     var sortedQuery = BuildUnionQuery(
                         null,
                         null,
                         query,
                         websiteId,
                         null,
-                        visiblePriceRoleIds,
                         dto);
-                    pageIds = await sortedQuery
-                        .Select(x => x.Id)
-                        .Take(output.TotalCount)
-                        .Skip((page - 1) * showNum)
-                        .Take(showNum)
-                        .ToListAsync();
+                    pageIds = sortBy == "price"
+                        ? (await SortByDisplayPriceAsync(sortedQuery, websiteId, dto))
+                            .Select(x => x.Id)
+                            .Take(output.TotalCount)
+                            .Skip((page - 1) * showNum)
+                            .Take(showNum)
+                            .ToList()
+                        : await sortedQuery
+                            .Select(x => x.Id)
+                            .Take(output.TotalCount)
+                            .Skip((page - 1) * showNum)
+                            .Take(showNum)
+                            .ToListAsync();
                 }
                 else if (sortBy == "random")
                 {
@@ -2636,7 +2557,6 @@ namespace EtheriT.Coker.Application.Directory
                         null,
                         websiteId,
                         null,
-                        Array.Empty<long>(),
                         dto);
                     pageIds = await sortedQuery
                         .Select(x => x.Id)
@@ -3850,20 +3770,14 @@ namespace EtheriT.Coker.Application.Directory
             }
             // Use the same default ordering as the full-content catalog, without loading images/prices/detail DTOs.
             var context = await GetUserSearchContextAsync();
-            var priceRoles = new List<long> { 0, 1 };
-            if (dto.type == 1 && string.Equals(dto.SearchSortBy, "price", StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    var orgName = await loginUserData.GetWebsiteOrgName(websiteId);
-                    var roleContext = await frontRoleContextService.GetCurrentContextAsync(orgName);
-                    priceRoles = priceRoles.Concat(roleContext.VisibleRoleIds).Distinct().ToList();
-                }
-                catch { if (roleId.HasValue) priceRoles.Add(roleId.Value); }
-            }
-            var query = BuildUnionQuery(null, articles, products, websiteId, context, priceRoles, input);
-            if (dto.MaxLen.GetValueOrDefault() > 0) query = query.Take(dto.MaxLen.Value);
-            var items = await query.Select(row => new { row.Id, row.Title }).ToListAsync();
+            var query = BuildUnionQuery(null, articles, products, websiteId, context, input);
+            var maxLen = dto.MaxLen.GetValueOrDefault();
+            var rows = dto.type == 1 && IsPriceSort(input)
+                ? await SortByDisplayPriceAsync(query, websiteId, input)
+                : await (maxLen > 0 ? query.Take(maxLen) : query).ToListAsync();
+            var items = (maxLen > 0 ? rows.Take(maxLen) : rows)
+                .Select(row => new { row.Id, row.Title })
+                .ToList();
             var index = items.FindIndex(item => item.Id == dto.id);
             if (index < 0) return new List<KeyValueDto>();
             return new List<KeyValueDto>

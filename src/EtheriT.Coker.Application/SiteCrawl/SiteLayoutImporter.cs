@@ -1,10 +1,14 @@
-using System.Text.Json;
 using EtheriT.Coker.Application.Dto;
-using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
+using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Templates;
+using EtheriT.Coker.Application.Common;
+using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
+using EtheriT.Coker.Web.Core.Models;
 using HtmlAgilityPack;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace EtheriT.Coker.Application.SiteCrawl;
 
@@ -79,7 +83,7 @@ internal sealed class SiteLayoutResult
 
 public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml html,
     ITemplatesApplicationService templates, IHtmlSanitizer sanitizer,
-    ILogger<SiteLayoutImporter> logger)
+    CokerDbContext db, LoginUserData user, ILogger<SiteLayoutImporter> logger)
 {
     internal async Task<SiteLayoutSelection> ImportAsync(Uri root, SiteLayoutResult result, Func<Task> checkpoint, CancellationToken token)
     {
@@ -99,6 +103,7 @@ public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml 
     internal async Task ImportBannerAndFooterAsync(SiteLayoutSelection layout, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
+        await ImportPartAsync("網站版型", () => EnsureTemplateLayoutAsync(checkpoint, token), result, token);
         if (layout.BannerPage is { } bannerPage)
             await ImportPartAsync("版頭", () => ImportBannerAsync(bannerPage, result, checkpoint, token), result, token);
         else
@@ -107,6 +112,22 @@ public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml 
             await ImportPartAsync("頁尾", () => ImportFooterAsync(footerPage, result, checkpoint, token), result, token);
         else
             result.AddError("沒有辨識到可匯入的頁尾。");
+    }
+
+    // 前台只有版型 7、8 才讀樣板（TemplatesApplicationService.GetDefaultTemplatesAsync），
+    // 版型空白時版頭頁尾會變成 Default_Header／Default_Footer，匯入的 Banner 與頁尾都不會顯示。
+    // 只補空白的站，已設定其他版型的網站不動；正式機碰不到資料庫，重新匯入一次就能修好舊資料。
+    private const int TemplateLayoutType = 7;
+
+    private async Task EnsureTemplateLayoutAsync(Func<Task> checkpoint, CancellationToken token)
+    {
+        var websiteId = await user.GetWebsiteId();
+        var website = await db.Websites.FirstOrDefaultAsync(x => x.Id == websiteId, token)
+            ?? throw new InvalidOperationException("找不到目前網站。");
+        if (website.LayoutType is not (null or 0)) return;
+        await checkpoint();
+        website.LayoutType = TemplateLayoutType;
+        await user.SaveChanges(website);
     }
 
     // 各頁版頭的 Logo 取最多頁用的那張（同票取先掃到的），設成網站資料的網站Logo（使用者 2026-11-18 要求）。

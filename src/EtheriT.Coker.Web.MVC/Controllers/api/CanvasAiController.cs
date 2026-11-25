@@ -34,16 +34,42 @@ public sealed class CanvasAiController(LoginUserData user, NavigationProvider na
         if (input.ConversationLocale.Length > 0) input.ReplyLocale = input.ConversationLocale;
         input.MemoryUserId = (await user.GetUserId()).ToString(System.Globalization.CultureInfo.InvariantCulture);
         input.PermissionScope = input.Controller + "/" + input.Action;
-        var result = await ai.Generate(input, cancellationToken);
-        if (input.ModelCalls.HasValue)
+        // Streaming is opt-in and starts only after the same site, edit, AI and
+        // antiforgery checks as ordinary Chat. No second endpoint or shared trace IDs.
+        var streaming = Request.Headers.Accept.ToString().Split(',')
+            .Any(value => value.Trim().Equals("application/x-ndjson", StringComparison.OrdinalIgnoreCase));
+        if (streaming)
+        {
+            Response.ContentType = "application/x-ndjson; charset=utf-8";
+            Response.Headers["X-Accel-Buffering"] = "no";
+            HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>()?.DisableBuffering();
+            input.TraceObserver = (entry, token) => WriteStreamEvent(new { type = "progress", data = entry }, token);
+        }
+        CanvasAiResult result;
+        try { result = await ai.Generate(input, cancellationToken); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { return new EmptyResult(); }
+        finally { input.TraceObserver = null; }
+        if (!Response.HasStarted && input.ModelCalls.HasValue)
             Response.Headers["X-Canvas-Model-Calls"] = input.ModelCalls.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
         var serviceUnavailable = result.Status == 429 || result.Status >= 500;
         var environment = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
         var diagnosticsEnabled = AllowsPlanDiagnostics(environment.EnvironmentName, HttpContext.Connection.RemoteIpAddress);
         var diagnostics = diagnosticsEnabled && result.Status != 200
             ? input.PlanDiagnostics : null;
-        return StatusCode(result.Status, new { html = result.Html, styles = result.Styles, htmlChanged = result.HtmlChanged, message = result.Message, replyLocale = input.ReplyLocale, settingsActions = result.SettingsActions, preserveContent = input.PreserveContent, needsClarification = result.NeedsClarification, serviceUnavailable, diagnostics, diagnosticsEnabled });
+        var body = new { html = result.Html, styles = result.Styles, htmlChanged = result.HtmlChanged, message = result.Message, replyLocale = input.ReplyLocale, settingsActions = result.SettingsActions, preserveContent = input.PreserveContent, needsClarification = result.NeedsClarification, serviceUnavailable, diagnostics, diagnosticsEnabled };
+        if (!streaming) return StatusCode(result.Status, body);
+        await WriteStreamEvent(new { type = "result", status = result.Status, modelCalls = input.ModelCalls, data = body }, cancellationToken);
+        return new EmptyResult();
     }
+
+    private async Task WriteStreamEvent(object entry, CancellationToken token)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(entry, StreamJsonOptions);
+        await Response.WriteAsync(json + "\n", token);
+        await Response.Body.FlushAsync(token);
+    }
+
+    private static readonly System.Text.Json.JsonSerializerOptions StreamJsonOptions = new(System.Text.Json.JsonSerializerDefaults.Web);
 
     internal static bool AllowsPlanDiagnostics(string environment, System.Net.IPAddress? remoteAddress) =>
         string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase) ||

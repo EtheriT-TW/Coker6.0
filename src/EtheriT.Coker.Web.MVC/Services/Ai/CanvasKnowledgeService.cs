@@ -18,10 +18,17 @@ public sealed class CanvasKnowledgeService(IWebHostEnvironment environment, ICon
 
     public async Task<CanvasKnowledgeContext> PrepareAsync(CanvasAiRequest input, bool expand, CancellationToken token)
     {
-        input.KnowledgeExpanded |= expand;
+        // Once expanded, subsequent version checks in this same request must not
+        // discard the initializer evidence that supported the reviewed proposal.
+        expand |= input.KnowledgeExpanded;
+        input.KnowledgeExpanded = expand;
         var sources = new List<CanvasKnowledgeSource>();
         var unavailable = new List<string>();
         var tokens = input.SourceQueries.Take(8).Concat(Classes(input.Html).Take(80)).ToHashSet(StringComparer.Ordinal);
+        var layout = new HtmlDocument(); layout.LoadHtml(input.Html);
+        var owners = layout.DocumentNode.Descendants().Where(n => n.ChildNodes.Any(c => c.NodeType == HtmlNodeType.Element &&
+            c.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("swiper")))
+            .SelectMany(n => n.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).ToHashSet(StringComparer.Ordinal);
         var remaining = 5_000_000;
         var persistenceAvailable = true;
         foreach (var asset in input.Resources.Distinct(StringComparer.Ordinal).Take(32))
@@ -60,7 +67,7 @@ public sealed class CanvasKnowledgeService(IWebHostEnvironment environment, ICon
                     .Take(4000).ToArray();
                 var newerSource = path != relative && File.GetLastWriteTimeUtc(Path.Combine(root, path)) > File.GetLastWriteTimeUtc(Path.Combine(root, relative));
                 sources.Add(new(key, asset, path, sourceHash, runtimeHash, usableClasses, record.Facts,
-                    SelectEvidence(record, tokens, input.SourceQueries, expand), record.Evidence.Length > 0 ? "source-cited-not-runtime-verified" : "needs-analysis", newerSource));
+                    SelectEvidence(record, tokens, input.SourceQueries, expand, owners), record.Evidence.Length > 0 ? "source-cited-not-runtime-verified" : "needs-analysis", newerSource));
             }
         }
         // A website analysis is never written to the shared source namespace. Only the
@@ -79,7 +86,7 @@ public sealed class CanvasKnowledgeService(IWebHostEnvironment environment, ICon
                 persistenceAvailable &= await WriteAsync(input, scope, siteKey, snapshot, token);
             }
             sources.Add(new(siteKey, "current-authorized-css", "current.css", cssHash, cssHash, siteClasses, snapshot.Facts,
-                SelectEvidence(snapshot, tokens, input.SourceQueries, true), snapshot.Evidence.Length > 0 ? "source-cited-not-runtime-verified" : "needs-analysis", MemoryScope: scope));
+                SelectEvidence(snapshot, tokens, input.SourceQueries, true, owners), snapshot.Evidence.Length > 0 ? "source-cited-not-runtime-verified" : "needs-analysis", MemoryScope: scope));
         }
         input.KnowledgeClasses = sources.SelectMany(s => s.Classes).Concat(siteClasses).ToHashSet(StringComparer.Ordinal);
         input.KnowledgeSourceKeys = sources.Select(s => s.Key).ToHashSet(StringComparer.Ordinal);
@@ -93,8 +100,8 @@ public sealed class CanvasKnowledgeService(IWebHostEnvironment environment, ICon
             input.ReplyLocale = preference.Locale;
         }
         return new(sources.Where(s => s.Evidence.Length > 0)
-                .OrderByDescending(s => s.Classes.Where(tokens.Contains).Sum(c => c.Length * c.Length) +
-                    (input.SourceQueries.Any(q => s.Evidence.Any(e => e.Text.Contains(q, StringComparison.Ordinal))) ? 100000 : 0))
+                .OrderByDescending(s => (s.Classes.Any(owners.Contains) ? (s.Asset.EndsWith(".js", StringComparison.OrdinalIgnoreCase) ? 3_000_000 : 1_000_000) : 0) + s.Classes.Where(tokens.Contains).Sum(c => c.Length * c.Length) +
+                    (input.SourceQueries.Any(q => s.Evidence.Any(e => e.Text.Contains(q, StringComparison.Ordinal))) ? 4_000_000 : 0))
                 .ThenBy(s => s.Path.Contains(".min.") ? 1 : 0).Take(12)
                 .Select(s => new CanvasKnowledgeExcerpt(s.Key, s.Asset, s.Path, s.SourceHash, s.RuntimeHash, s.Status, s.Classes.Take(100).ToArray(), s.Facts, s.Evidence, s.SourceMayBeNewerThanRuntime,
                     s.MemoryScope == "system" ? "system" : "website")).ToArray(),
@@ -114,7 +121,7 @@ public sealed class CanvasKnowledgeService(IWebHostEnvironment environment, ICon
             var source = input.KnowledgeSources.Single(s => s.Key == key.GetString());
             // Only evidence actually supplied to the model can be promoted. No model text,
             // request, page HTML, customer content or proposed edits enter shared memory.
-            if (!source.Evidence.Any(e => first >= e.Start && last <= e.End) || first < 1 || last < first || last - first > 100) continue;
+            if (!source.Evidence.Any(e => first >= e.Start && last <= e.End) || first < 1 || last < first || last - first > CanvasSourceRange.MaxLineSpan) continue;
             try
             {
                 for (var attempt = 0; attempt < 3; attempt++)
@@ -237,26 +244,47 @@ public sealed class CanvasKnowledgeService(IWebHostEnvironment environment, ICon
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
     }
 
-    private static CanvasSourceRange[] SelectEvidence(SourceRecord record, HashSet<string> tokens, string[] queries, bool expand)
+    private static CanvasSourceRange[] SelectEvidence(SourceRecord record, HashSet<string> tokens, string[] queries, bool expand, HashSet<string> owners) =>
+        SelectSourceEvidence(record.Text, tokens, queries, expand, owners);
+
+    internal static CanvasSourceRange[] SelectSourceEvidence(string source, HashSet<string> tokens, string[] queries, bool expand, HashSet<string> owners)
     {
-        var lines = record.Text.Replace("\r\n", "\n").Split('\n');
+        var lines = source.Replace("\r\n", "\n").Split('\n');
         var found = new List<(int Start, int End)>();
         foreach (var query in queries.Take(8))
         {
             var index = Array.FindIndex(lines, line => line.Contains(query, StringComparison.Ordinal));
             if (index >= 0) found.Add((Math.Max(1, index - 5), Math.Min(lines.Length, index + 90)));
         }
-        if (!expand) found.AddRange(record.Evidence.Where(e => tokens.Any(t => string.Join('\n', lines.Skip(e.Start - 1).Take(e.End - e.Start + 1)).Contains(t, StringComparison.Ordinal))).Select(e => (e.Start, e.End)));
-        for (var i = 0; i < lines.Length && found.Count < (expand ? 8 : 3) && (expand || record.Evidence.Length == 0 || found.Count == 0); i++)
-            if (tokens.Any(t => lines[i].Contains(t, StringComparison.Ordinal) && Regex.IsMatch(lines[i], @"(?<![\w-])" + Regex.Escape(t) + @"(?![\w-])")) && !found.Any(r => i + 1 >= r.Start && i + 1 <= r.End))
-                found.Add((Math.Max(1, i - 5), Math.Min(lines.Length, i + (expand ? 100 : 65))));
+        // Rank the whole source before applying the excerpt budget. Generic early
+        // matches must not crowd a later initializer out, even when cached.
+        var candidates = lines.Select((line, index) => {
+            var hits = tokens.Where(t => line.Contains(t, StringComparison.Ordinal) && Regex.IsMatch(line, @"(?<![\w-])" + Regex.Escape(t) + @"(?![\w-])")).ToArray();
+            var owner = owners.Any(t => Regex.IsMatch(line, @"\." + Regex.Escape(t) + @"(?![\w-])"));
+            // Expanded discovery also exposes sibling jQuery initializer declarations
+            // from the actual source. No class names or supported counts are built in.
+            var initializer = expand && Regex.IsMatch(line, "[\"']\\.[a-zA-Z_][a-zA-Z0-9_-]*[\"']\\s*\\)\\s*\\.each\\s*\\(");
+            var score = owner ? 3_000_000 : initializer ? 2_000_000 : hits.Length > 0 ? hits.Max(t => t.Length * t.Length) : 0;
+            return (Index: index, Score: score);
+        }).Where(c => c.Score > 0).OrderByDescending(c => c.Score).ThenBy(c => c.Index);
+        foreach (var candidate in candidates)
+        {
+            if (found.Count >= (expand ? 8 : 3)) break;
+            var i = candidate.Index;
+            var start = Math.Max(1, i - 5);
+            var range = (Start: start, End: Math.Min(lines.Length, Math.Min(i + (expand ? 100 : 65), start + CanvasSourceRange.MaxLineSpan)));
+            // A declaration at the end of another excerpt still needs its own
+            // configuration body, not just the first line of the initializer.
+            if (!found.Any(r => range.Start >= r.Start && range.End <= r.End)) found.Add(range);
+        }
         if (found.Count == 0 && expand) found.Add((1, Math.Min(lines.Length, 80)));
-        return found.Distinct().Take(expand ? 8 : 3).Select(r => {
+        return found.Distinct().Take(expand ? 8 : 3).Select(raw => {
+            var r = (Start: raw.Start, End: Math.Min(raw.End, raw.Start + CanvasSourceRange.MaxLineSpan));
             var text = string.Join('\n', lines.Skip(r.Start - 1).Take(r.End - r.Start + 1));
             var offset = 0;
             if (r.Start == r.End && text.Length > 6500)
             {
-                var position = tokens.Select(t => text.IndexOf(t, StringComparison.Ordinal)).FirstOrDefault(p => p >= 0, 0);
+                var position = queries.Concat(owners).Concat(tokens).Select(t => text.IndexOf(t, StringComparison.Ordinal)).FirstOrDefault(p => p >= 0, 0);
                 offset = Math.Max(0, position - 500);
             }
             return new CanvasSourceRange(r.Start, r.End, text.Substring(offset, Math.Min(6500, text.Length - offset)));
@@ -324,6 +352,9 @@ public sealed class CanvasKnowledgeService(IWebHostEnvironment environment, ICon
 
 public sealed record CanvasKnowledgeContext(CanvasKnowledgeExcerpt[] Sources, string[] Unavailable, string[] SiteClasses, string Policy, bool PersistenceAvailable);
 public sealed record CanvasKnowledgeExcerpt(string Key, string Asset, string Path, string SourceHash, string RuntimeHash, string Status, string[] Classes, CanvasCapabilityFact[] Facts, CanvasSourceRange[] Evidence, bool SourceMayBeNewerThanRuntime = false, string Scope = "system");
-public sealed record CanvasSourceRange(int Start, int End, string Text);
+public sealed record CanvasSourceRange(int Start, int End, string Text)
+{
+    internal const int MaxLineSpan = 100;
+}
 public sealed record CanvasKnowledgeSource(string Key, string Asset, string Path, string SourceHash, string RuntimeHash, string[] Classes, CanvasCapabilityFact[] Facts, CanvasSourceRange[] Evidence, string Status, bool SourceMayBeNewerThanRuntime = false, string MemoryScope = "system");
 public sealed record CanvasCapabilityFact(string ClassName, string Parameter, string Value, int Start, int End, string Status);

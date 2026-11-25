@@ -1,3 +1,145 @@
+## 2026-11-25 Swiper外框Flex被誤報為完成
+
+使用者提供完整第1輪提案：style模式，只對iej4_swiper加flex-wrap:wrap及justify-content:space-between，沒有classChanges。原前端只核對CSS有差異、Grid／圖片等安全條件，未阻止把外框Flex當成Swiper欄數配置，因此摘要「四個一排」可能和實際六欄不一致。ui-review只校正文字，其空styles不代表核定操作；資料類型是目錄、呈現由Swiper負責，不能只依摘要名稱判斷。
+
+CanvasAiComponents新增實際結構的RuntimeLayoutTarget辨識（初始化owner、swiper／wrapper／slide及唯一owner外框）；MVC對這些驅動節點的flex-wrap／direction／basis／grow／shrink／justify-content提案拒絕，提示改用來源配置；普通區塊Flex與元件一般樣式保留。ComponentExecution.RuntimeLayoutTargets傳給Parallel，動態Schema分初始化驅動節點與普通子節點，驅動節點排除上述Flex屬性；普通子節點的Flex不一律封鎖。生成能力標頭升2，MVC缺新版即明示需同步更新，不在舊Schema上重試。
+
+aiAssistantPlugin在套用前新增approved-operations，直接列核定class的remove/add及CSS規則；重新初始化後runtime-layout顯示元件classes、實際breakpoint／slidesPerView及寬度，不把語系摘要當執行依據。這些是實際觀察值，不保證任意自然語言需求都達成，必須實頁核對。
+
+MVC沿sandbox/ai-provider-contracts補frame／owner／wrapper的同一份Flex假成功提案皆3輪拒絕、不套用，一般圖片區Flex仍正常（2呼叫）；Parallel獨立runner補實際Schema拒絕Flex組合。既有owner／色彩／普通Grid／classChanges案例保留。人工驗收補原本假成功提案被拒、class差異與runtime值可見、四／六欄與手機斷點、普通子層排版不被誤限。尚未編譯、執行fixture或瀏覽器／模型驗證；只做JS語法與diff／JSON檢查。
+
+本輪需同步編譯重啟MVC、Parallel，並於packages/EtheriT.Coker.GrapesJS執行npm run build:mvc以更新流程顯示。命令可能還原套件、產生bin/obj與前端min資產，耗時依環境，由使用者執行；本輪未產生資產。不需Migration。
+
+## 2026-11-25 自架模型依元件結構約束生成 Schema
+
+編譯修正：CanvasAiService移除同範圍重複runtimeStyleTargets宣告（CS0128）與ComponentExecution匿名物件重複RuntimeStyleTargets屬性（CS0833），保留單一SelectMany計算及投影。既有Planner案例已斷言owner／runtime-card selectors，維持原ID與executor，不新增重複案例。僅靜態定義／引用及diff檢查，未編譯或執行案例。
+
+本輪截圖三次仍生成Grid或把breakpoints放入CSS，尚未進入有效classChanges／來源補齊。這是持續選錯操作形狀，僅調整文字回饋不足。MVC從實際目前HTML建立ComponentExecution.RuntimeStyleTargets：初始化owner範圍的節點與包含唯一owner的外框，以及其catalog直接template selector；不使用需求語言或欄數字典。
+
+Parallel CanvasProposalContract.ForContext依AllowedCssProperties、AllowedSelectors與RuntimeStyleTargets建立本次Schema。styles properties使用明確CSS屬性清單、additionalProperties=false，textStyles同樣禁止JS設定混入CSS；初始化目標分支排除grid-*，display不允許grid／inline-grid；普通目標仍可Grid、初始化元件仍可color等一般樣式，classChanges／內容／設定／來源分析契約保留。以anyOf區分實際selector分支，實際Ollama OutputSchema與本地驗證使用同一份動態Schema。MVC仍做全部HTML／CSS／來源／範圍／站台權限驗證，不將Schema當成執行授權；未附元件能力的舊context保持基礎契約。
+
+Gateway以X-Canvas-Generation-Constraints=1宣告新能力。MVC self路徑在成功或422缺標頭時回503明示需同步編譯重啟Parallel，不進語意重試，避免只有MVC更新仍使用舊生成規格。既有v2契約版號不改；其他供應商路徑維持原有行為，未宣稱已加上相同生成Schema。
+
+MVC沿sandbox/ai-provider-contracts補實際owner／runtime-card selector輸入斷言與v2但缺生成能力標頭拒絕；Parallel scripts/CanvasContractChecks補真實服務＋fake provider：實際請求OutputSchema含runtime／普通分支，runtime Grid／display:grid／breakpoints拒絕，color、普通圖庫Grid、classChanges接受。獨立Parallel執行器不計MVC自動通過數。兩邊均未編譯或執行斷言／模型／瀏覽器，本輪只靜態來源與diff／JSON檢查。
+
+需使用者分別編譯重啟MVC與D:/Ai整合/Parallel的Gateway；可另外執行Parallel的dotnet run --project scripts/CanvasContractChecks/CanvasContractChecks.csproj做隔離驗證。命令可能還原相依並產生bin/obj，MVC既有資產流程亦可能執行，耗時依環境；本輪不自行執行。不需前端bundle或Migration。人工回歸驗證第一輪不再產生禁止的Grid／breakpoints、正常顏色／文字與一般圖庫不受誤限、實際四／六欄套用及來源／原內容保留；不能只因Schema或class字串改動就宣稱成功。
+
+## 2026-11-25 非空錯誤引用與最後一輪直接補查
+
+使用者修正後仍在第3輪class-only有效／sourceEvidence無效處中斷。原CompleteSourceEvidence遇非空sourceEvidence即跳過，沒有檢查key／行號是否當前有效，因此模型填錯引用會阻止伺服器自動補齊；缺片段時只等下一輪Prepare，最後一輪已無修正額度。截圖未完整呈現每個引用，不能宣稱它必然是唯一根因；新增具體來源可用性診斷以區分。
+
+CompleteSourceEvidence僅對嚴格class-only有效結構補齊：保留有效當前引用、丟棄無效key／範圍，再由實際變更token及已部署來源片段補引用，不因非空陣列跳過。ValidatePlan與補齊共用IsCurrentSourceCitation。若仍缺引用、knowledge服務存在且是來源支持的class-only結構，規劃器當輪直接依實際class SourceQueries補查一次，再補齊及驗證，不增加模型呼叫；來源指紋或數量改變則要求重新規劃，不能使用變動前提案。仍失敗的流程理由列出各新增class對應來源數／匹配片段數，保留一般客戶最終安全訊息。沒有繞過部署、結構、引用、授權或站台隔離驗證。
+
+沿sandbox/ai-provider-contracts：Planner的真實expanded片段案例加入非空invented引用，驗證複核只保留generated-source；已知class但Evidence空時仍3輪拒絕並列sources=1/matching excerpts=0。Knowledge新增真實檔案fixture＋規劃服務整合：fake provider在第一回合模擬class證據未帶入，當輪由實際檔案補查，最後3模型呼叫（規劃／內容複核／UI）完成且無失敗診斷；只用獨立記憶體／臨時目錄，不連模型或客戶DB。尚未執行，不宣稱HTTP／SQL／瀏覽器通過。人工shared-ai-regression補本次非空錯引用、最後輪缺片段直接補查、來源變動／無片段拒絕及診斷。僅靜態閱讀與diff／JSON檢查；需使用者編譯MVC，可能還原套件、產生bin/obj與既有資產，耗時依環境。不需Migration、Parallel或前端bundle。
+
+## 2026-11-25 擴充來源片段與引用上限不一致
+
+使用者本輪第三輪classChanges已通過結構驗證，但自動sourceEvidence補充後仍無有效引用。原SelectSourceEvidence的expanded候選起點i-5、終點i+100，行號跨度105；CompleteSourceEvidence、HasSupportedSourceEvidence及RememberAsync只接受跨度<=100，因此程式生成的來源片段可能一律被自己的補引用邏輯略過。這是確定的產生／消費契約矛盾，與截圖中已區分出的失敗階段相符；尚未宣稱修正後實際模型／畫布通過。
+
+CanvasSourceRange集中MaxLineSpan=100；候選與最後輸出皆限制End-Start<=100（至多101行，沿用原引用安全上限）。補引用、驗證與記憶寫入共用相同常數，沒有放寬引用範圍、偽造key或繞過部署／class／內容檢查。不需改DB schema，已有來源會依當前檔案重新擷取，無須清除記憶或重做Migration。
+
+AiCanvasKnowledgeChecks對實際初始／expanded擷取器輸出斷言有效起迄、跨度及實際行數；AiCanvasPlannerChecks的首輪classChanges情境改用900行fixture的真實expanded片段，而非手寫一行citation，驗證模型不附sourceEvidence時可由擷取器輸出自動補齊並進內容複核／UI校正，3呼叫無失敗診斷，ReviewProposal保留generated-source。沿既有sandbox/ai-provider-contracts，尚未執行。shared-ai-regression人工補本次實頁來源補引用、既有來源記憶重用、超範圍／錯key拒絕。靜態閱讀與diff／JSON檢查，不代表編譯、隔離fixture、SQL或瀏覽器通過。需由使用者編譯MVC，可能還原套件並產生bin/obj／既有資產，耗時依環境；不需Parallel、前端bundle或Migration。
+
+## 2026-11-25 初始化來源首輪準備與拒絕原因分離
+
+使用者實際流程：前兩輪各生成完整目錄HTML，耗時約100／90秒，同一個knowledge訊息同時涵蓋非class結構改動、未部署class及無效來源引用；第三輪回Grid再次被拒。此紀錄能確認重複長輸出與拒絕條件混淆，不能據此猜定是哪個原始屬性被改動。增加最後複核額度不會解決這個循環。
+
+GenerateCore先由目前DOM直接子層.swiper辨識初始化owner，不靠指令語言；有owner時第一輪即擴充實際資源配置來源，ComponentExecution攜帶真實owner ID／現有classes及class-only契約。SelectedInstructions最前明定純class修改只用classChanges，去掉可重寫完整HTML的替代建議與開頭Grid範例偏向；真正文字／結構編輯仍可用完整HTML，不固定欄數或按中文關鍵字分派。模型仍負責語意與實際來源選擇，不保證所有需求首輪成功；有效內容保留既有複核與來源安全驗證。
+
+CanvasKnowledgeService同一次請求擴充後，後續PrepareAsync(false)仍保留擴充狀態，防來源版本重查丟失先前支持提案的其他initializer片段。這是原始碼確認的另一路徑缺口，不宣稱本張截圖已到達該重查階段。TrySourceBackedClassEdit保留原嚴格判斷，新增具體原因（節點／子節點含格式空白、文字／註解、非class屬性、未知部署class），與sourceEvidence引用未對應分開；class-structure最終不再誤報一般styles。沒有自動放寬或忽略內容差異。
+
+沿sandbox/ai-provider-contracts新增實際斷言：首輪含實際初始化owner，來源支持classChanges不經失敗修正即可完成內容複核與UI校正（3呼叫，無PlanDiagnostics）；錯data-dirid、未部署class、文字變更各有具體原因。知識fixture用1400行獨立資源驗證擴充後一般重查仍保留另一配置來源。同步shared-ai-regression人工規格，尚未執行斷言、MVC編譯或瀏覽器／模型驗證。僅靜態檢查，清單不代表通過；本輪不需Migration、Parallel或前端bundle。由使用者重編譯MVC，可能還原套件並產生bin/obj／既有資產流程，耗時依環境。
+
+## 2026-11-25 第三輪有效提案缺少複核額度
+
+使用者截圖中第3輪classChanges已「提案通過驗證」，卻立刻回前輪styles錯誤。原PlanAndValidate把內容複核與修正共用三輪：第3輪第一次有效時contentReviewed仍false，尚不能FinishKnowledgePlan，卻先break，最後沿用第2輪lastFailure。此為流程控制缺口，不是畫布拒絕已複核提案，也不能由模型summary當成已套用。
+
+保留三次規劃／修正上限；只有第3輪已通過驗證的內容提案或待複核澄清，可再使用一次專用複核。該輪失敗立即停止，不再重試或降低內容／來源／權限驗證。通過後沿既有來源重驗與獨立UI語系校正；最壞情況為4次規劃／複核＋1次UI校正，不是每個失敗都增加呼叫。第3輪仍無有效提案維持3次停止。流程明示「通過靜態驗證，仍需內容複核」及專用複核階段，複核未完時不得沿用已修正的舊錯誤。
+
+沿sandbox/ai-provider-contracts的AiCanvasPlannerChecks補真實fixture回歸：前兩輪Swiper Grid遭拒，第3輪來源支持classChanges安全具體化且補足引用，第4輪複核通過後UI校正，總5次且保留原資料／樣板；第4輪再回非法Grid則總4次停止、不套用、不進新修正循環。既有連續3次非法提案上限案例保留。人工shared-ai-regression補上述階段與實際前端套用／還原驗證。未編譯／執行fixture／真實模型或瀏覽器驗證，本輪只靜態閱讀、JSON與diff檢查；清單不代表通過。不需Migration、Parallel編譯或前端bundle；由使用者重編譯MVC，可能還原套件、產生bin/obj或觸發既有資產流程，耗時依環境。
+
+## 2026-11-25 流程詳細內容額度修正
+
+使用者截圖顯示兩輪完整system/context耗盡120K先到先用額度，後續回應、驗證理由與修正要求被裁為空字串；截斷的JSON亦無法解碼顯示，留下大量Unicode跳脫。CanvasAiTrace改為獨立顯示投影：第一輪按欄位顯示可讀節錄，後續只列出變更欄位及沿用欄位，優先原需求、驗證回饋與來源。字元裁切前先解碼JSON，明示節錄及原長度；實際模型system/context與重試次數完全不變，不宣稱修好輪播提案。
+
+processViewer每輪請求摘要上限20K、回應／理由32K；單詢問仍120K／60事件、本頁詳細內容仍500K。額度不足先淘汰請求摘要，其次較舊回應，最後才是驗證／修正理由，不再讓前輪請求消耗後輪可用空間。舊紀錄已失去的內容無法補回，展開時改顯示明確未保留說明，不建立空白pre。保持純文字呈現、無額外模型呼叫／DB／HTTP紀錄。極端大回應仍可能節錄，不能宣稱保留完整封包。
+
+沿sandbox/ai-provider-contracts的AiCanvasPlannerChecks新增投影斷言：長system／HTML仍小於20K、解碼需求可讀、重試只帶變更回饋及沿用標記、不重複長HTML／system，原始模型context未被修改。shared-ai-regression人工補三輪大型請求後模型回應與驗證理由可讀、跨多次詢問額度優先、舊截斷紀錄明確提示與非空白、關閉重開及重新整理一致。只做JS語法、JSON及diff靜態檢查；尚未編譯、執行隔離斷言或瀏覽器驗證。需MVC編譯與GrapesJS build:mvc；由使用者執行，會產生bin/obj及min資產並可能還原相依、耗時依環境。不需Migration或Parallel修改。
+
+## 2026-11-25 使用者詢問下的即時處理流程
+
+使用者要求入口放在送出的詢問下，不能等回覆或失敗後才出現。aiAssistantPlugin為每則新詢問建立獨立process，送出即顯示「查看處理流程」，busy期間仍可開啟；原生dialog顯示即時階段、總耗時、目前等待時間、每輪回應耗時、可展開選取複製的送出／回傳內容及驗證／複核要求。更新追加節點，不重建已展開內容；Esc／關閉後可重開，關閉不取消。最終套用、回滾失敗、必要設定、取消與重新整理中斷分開標示，服務端成功不當成前端已套用。舊對話不捏造流程，流程不加入模型History。
+
+沿原Chat POST以Accept: application/x-ndjson選擇串流，所有站台、頁面編輯、AI權限、防偽及語系驗證仍在開始串流之前。CanvasAiRequest的TraceObserver雙formatter JsonIgnore，僅存在單次請求；沒有跨使用者／站台查詢端點、共用背景工作或新資料庫。設定／資源／結構、模型呼叫前後、驗證及下一輪要求依真實await事件flush，模型等待期間只顯示等待時鐘，不偽造模型思考或逐token回傳。最終結果另帶語意status，前端不能把串流HTTP 200當成功；少了result、異常順序或連線中斷不套用。相容未選串流的既有JSON呼叫及舊主機回應。
+
+Trace只投影MVC送往AI服務的system／context與已轉換的提案或本地安全錯誤，不帶供應商HTTP驗證標頭、設定密鑰或上游原始錯誤。不是Gateway後續組裝的完整Ollama封包，也不是模型內部思考。單事件64K字元、單詢問詳細資料120K／60事件、本頁所有詳細資料500K；超過額度保留階段摘要及截斷提醒。HTML以textContent呈現；本機對話／版本原機制保存流程，清除一併移除，重新整理的running標為interrupted。沒有向伺服器保存原文日誌或新增模型呼叫。
+
+AiCanvasPlannerChecks沿sandbox/ai-provider-contracts增加實際隔離斷言：provider呼叫前已收到model-request、settings/resources/validation及兩次模型事件順序、耗時單調、呼叫數與核定操作不變、雙formatter不可輸入TraceObserver、超大detail裁切提示。仍為獨立記憶體HTTP fixture，尚未執行，不代表真實HTTP串流或瀏覽器通過。shared-ai-regression人工規格補等待時開啟／關閉／重開、兩則問題對應隔離、失敗與修正回合、前端套用失敗、取消／斷線／換頁／重載／舊對話、截斷／惡意HTML與權限／跨站／防偽拒絕，不列自動通過數。
+
+本輪僅靜態閱讀、JS語法與diff檢查，未執行build/test/bundle/模型/資料庫操作。需MVC重新編譯，並在packages/EtheriT.Coker.GrapesJS執行npm run build:mvc（已確認為vite build及copy-to-mvc），產生並複製既有min.js/min.css；本輪不編輯生成檔、不新增直接原檔引用。不需Migration或Parallel編譯。上述命令會產生bin/obj或前端產物、MVC編譯亦可能還原套件／觸發既有資產流程，耗時依環境；由使用者執行。
+
+## 2026-11-25 回覆校正最小上下文
+
+使用者回報32K更新後GPU負載增加但目錄四欄仍失敗。本輪未送推論；唯讀api/ps確認qwen2.5-coder:7b使用32768上下文，size_vram=6255678586 bytes。僅憑此與工作管理員截圖不能判定OOM或本次樣式失敗原因。內建瀏覽器舊分頁已關閉，新分頁停在登入；尚未取得本次plan diagnostics。
+
+CanvasAiPlanning的最終UI校正改以白名單建立僅含語系、原需求、核定摘要／澄清及設定交接metadata的新上下文；不帶完整HTML、CSS、結構、來源、RejectedProposal或SelectedInstructions。核定HTML與操作留在服務內，只採用校正訊息，保留語系與內容審查流程。這降低成功路徑最後一輪的輸入負擔，不宣稱修好失敗規劃路徑或降低32K模型顯存配置。
+
+沿sandbox/ai-provider-contracts的AiCanvasPlannerChecks更新斷言：台灣回覆／日文HTML分離，UI回傳操作不得覆蓋核定HTML；12K註解的大型class-only目錄在UI上下文不含原HTML或來源、上下文小於6000字元，完整HTML仍保留於最終結果。同步維護既有人工shared-ai-regression，沒有新增通過數。只做靜態檢查與diff，尚未編譯、執行斷言或瀏覽器修正後驗證；沒有bundle、Migration或Parallel來源修改。
+
+## 2026-11-24 畫布模型上下文容量
+
+重新登入實頁重現：熱門商品轉連結連續三次由Gateway拒絕EmptyProposal；目錄改四欄先生成不存在的layout-container，再重複Grid，未採用已提供的iej4_swiper。未儲存或發布。推論後唯讀查詢本機Ollama api/ps，實際qwen2.5-coder:7b的context_length為4096；Parallel原請求沒有options.num_ctx。這確認容量配置缺口，不代表已證明所有失敗只有此原因。
+
+Parallel新增伺服器端Ollama:CanvasContextLength（預設32768）及CanvasMaxOutputTokens（預設8192），plan與ui-review皆明確傳至Ollama options.num_ctx／num_predict；普通聊天不帶options。設定有範圍與輸出保留檢查，HTTP請求不能覆寫執行額度。僅記錄額度、prompt_eval_count、eval_count及輸出是否達上限，不記錄需求、原始來源或生成內容。沒有新增固定欄數或關鍵字動作判斷。
+
+Parallel獨立CanvasContractChecks增加真實服務額度傳遞、HTTP序列化不可指定額度，以及記憶體HTTP handler驗證實際Ollama JSON、一般聊天省略options與安全token metadata斷言。未執行、不綁MVC自動清單，不能列入MVC通過數。沿既有shared-ai-regression人工規格補編譯重啟後核對api/ps上下文、兩項實頁操作與還原。容量增加可能提高記憶體需求與延遲；若部署模型原生上限較低，應依模型能力調整設定。尚未編譯／執行隔離檢查／完成修正後瀏覽器驗證，無Migration或前端bundle需求。
+
+## 2026-11-24 同步 Parallel Gateway 畫布契約 v2
+
+編譯修正：移除BackofficeSandboxAiGenericChecks重複的GatewayResponse區域函式（CS0128），保留單一定義與既有v2回歸引用。既有provider-contracts案例仍適用，不新增重複案例。僅檢查定義／引用及diff，未執行編譯或案例。
+
+使用者提供 D:/Ai整合/Parallel 並完成登入。CanvasEditingService 的生成Schema設additionalProperties=false，卻未宣告MVC使用的settingsActions、classChanges、來源分析及回覆語言欄位；EmptyProposal只看HTML／styles／textStyles。Gateway另強制UI使用網站語系，且最後訊息校正亦附重新執行原需求的指令。這是原始碼確認的契約衝突，尚未宣稱解決所有實頁失敗。
+
+Parallel：AiChatRequest增加選用phase（預設plan／ui-review）及replyLocale；AiController驗證階段並回X-Canvas-Contract-Version=2。CanvasProposalContract以同一份有型別、列舉、額度及額外欄位限制的Schema約束生成與本地驗證。class變更、設定交接與來源分析不再一律視為空提案；普通空提案仍拒絕。ui-review只校正訊息，不再次附原編輯指令，回傳前移除操作／分析；規劃澄清亦移除classChanges。每請求維持最多一次模型呼叫，MVC仍檢查授權、站台／範圍、來源及HTML／CSS安全。
+
+MVC：CanvasAiInput／CanvasAiClient分開傳網站語系、replyLocale與phase；最後校正使用ui-review並保留網站語系；移除自架不能用classChanges的舊指令。成功／422回應缺v2版本時明示Gateway未更新，503不進語意重試；InvalidCanvasContract只回白名單訊息，不暴露上游本文。
+
+沿sandbox/ai-provider-contracts的AiCanvasGenericChecks補預設plan、日文HTML／繁中回覆與ui-review封套、舊Gateway拒絕及原有錯誤／呼叫數保留斷言。Parallel新增scripts/CanvasContractChecks執行器，以真實CanvasEditingService及fake provider檢查class／來源引用、設定交接、無操作UI校正、plan空提案及非法型別／任意command拒絕；不發HTTP、不連模型或客戶DB。獨立執行器未綁MVC自動清單，保留人工執行規格，不計自動通過數。兩端尚未編譯或執行斷言，不代表SQL／HTTP／模型／瀏覽器通過。
+
+需分別編譯、重啟MVC及Parallel。MVC根目錄：dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"；Parallel根目錄：dotnet build "src/Parallel.Gateway/Parallel.Gateway.csproj"。可另在Parallel執行dotnet run --project "scripts/CanvasContractChecks/CanvasContractChecks.csproj"。命令可能還原套件及產生bin／obj，MVC既有BuildBundlerMinifier亦可能產生資產，耗時依環境；本輪未執行。無新Migration或前端來源更新需求。契約另記於Parallel的CANVAS_CONTRACT.md。
+
+## 2026-11-24 持續失敗：Gateway 契約與模型上下文
+
+使用者回報連結遭Gateway的EmptyProposal拒絕，輪播仍回本地styles失敗。這兩張截圖尚不能證明同一根因。內建瀏覽器登入已逾時，維持登入亦被伺服器拒絕，已請使用者重新登入以取得本輪實際診斷。docs/AI_INTEGRATION.md記載Parallel是Repository外且只有canvas-edit契約；已請提供該專案路徑，不猜測或繞過其Schema／安全驗證。
+
+目前可確認的MVC缺口：ResourceKnowledge在32K預算下會由尾端刪除來源；只有class匹配數排序時，含大量裝飾class的CSS可能排在初始化JS之前。CanvasKnowledgeService改為優先目前owner對應JS，明確sourceQueries優先於一般相關性；沒有輪播owner時不提高JS順位。CanvasAiPlanning內容複核的回饋改為明確保留來源支持的JS class操作，避免「視覺需求優先style」再次引導成Grid。這不代表Gateway或實頁問題已解決。
+
+沿sandbox/ai-provider-contracts的AiCanvasKnowledgeChecks增加CSS先載入且匹配更多裝飾class時，實際owner JS仍排第一的斷言；同步更新既有檢測清單。尚未編譯、執行斷言或完成本輪瀏覽器重現。沒有修改Gateway、DB、前端來源或generated assets；使用者既有生成資產保留。
+
+## 2026-11-24 輪播規劃重試矛盾與來源檢索排序
+
+內建瀏覽器重新登入後，在49／11019選目錄送「修改為四個一排」。實際診斷：第一次#catalog > .template被辨識為JS驅動並指向#iej4_swiper；第二／三次改為#layout-container，卻收到普通catalog_frame的Grid修正指引，最後回styles失敗。選取範圍確實包含初始化owner及.swiper；未儲存或發布。此為修正前重現，不代表修正後通過。
+
+CanvasAiService統一frame／list／card的初始化owner判斷：外框含唯一輪播owner時，也使用相同來源class切換指引；普通目錄維持原CSS規則。CanvasAiPlanning明訂JS驅動結構優先於普通目錄Grid規格。CanvasKnowledgeService先排序整份來源再截取：優先目前owner的class宣告與明確查詢，擴大分析時另納入實際來源中的其他jQuery初始化宣告，避免檔案前段的通用swiper字詞吃完額度；來源檔排序亦優先owner相關來源。保留範圍／大小／片段數預算與來源指紋失效機制，不建立欄數表。
+
+新增classChanges（targetId／remove／add）計畫格式，由AI依來源選class，後端只在原HTML的唯一實際目標移除既有token、加入已部署來源token，再以完整樹比較及既有來源引用／內容複核驗證；拒絕越界、重複目標、未知class、無變更及混合內容／樣式操作。轉換後回應仍是既有完整HTML／styles契約，前端不用新增命令；內容複核亦可回傳token變更，避免重複生成長目錄HTML。
+
+沿sandbox/ai-provider-contracts補實際斷言：外框及runtime卡片Grid失敗皆指出同一owner，再接受來源支持的classChanges且保留metadata／樣板；未知class不修改原請求；1400行來源中後段目前initializer優先於前段通用字詞，擴大後可見另一個initializer。案例與人工驗收規格同步更新，尚未執行。需使用者編譯／重啟MVC後重測四欄、六欄及圖片／連結／資料來源保留；本輪僅後端來源與檢測文件，不新增前端bundle或Migration需求。
+
+## 2026-11-24 實頁回歸：連結原文與輪播卡片選取器
+
+編譯修正：移除CanvasAiPlanning失敗訊息switch重複的link-text分支（CS8510），保留既有訊息及規劃行為。檢查既有連結文字保留／錯誤回覆回歸案例仍適用，不新增重複案例；僅靜態檢查，未執行編譯或案例。
+
+以內建瀏覽器在49／11019重現：熱門商品文字轉連結後變成「連結目的地」，原標題未保留；還原後選目錄送四個一排，前端回排列樣式未在畫布生效。未儲存或發布。此次是重現失敗，尚非修正後瀏覽器通過。
+
+CanvasAiComponents／CanvasAiService：建立新連結時保留原片段文字及SelectedId，拒絕空白／相異data-text與目的地占位文字，失敗回原規劃預算修正；不按使用者語言關鍵字分派。輪播Grid拒絕範圍包含#catalog > .template複合選取器及單獨swiper-wrapper邊界，不讓模型藉卡片選取器繞過JS驅動結構。欄數仍依實際來源分析選擇class，不增加固定欄數表。
+
+aiAssistantPlugin：點到輪播內層先納入具有直接.swiper子層的初始化owner；class原地更新後等畫布渲染再呼叫既有SwiperInit，重新取得現有DOM並確認實例有效；CSS更新後等待渲染才查computed style。Grid生效檢查使用當前邊界內實際匹配的元素，支援已驗證的目錄複合選取器，不能只把整段selector當成模型ID。內容替換後比對全部插入元件的文字與核定HTML，parser／元件造成缺字即還原，不顯示成功。異步套用期間換頁不載入舊頁快照。
+
+沿sandbox/ai-provider-contracts新增斷言：新連結保留巢狀原文／ID，替換占位文字／改ID／空data-text拒絕並在預算內修正；輪播runtime卡片Grid計畫拒絕並改成有來源引用的class-only計畫。人工驗收補：標題轉連結保留文字與字型、設定視窗交接／取消；點輪播外框／卡片／清單送四欄再六欄，實際桌機與手機斷點及保存後重開；一般非Swiper目錄卡片Grid複合選取器正常，不再因查錯模型ID誤判；取消／換頁不覆蓋另一頁。只登錄規格及執行器，尚未執行，不計通過數。
+
+需使用者編譯／重啟MVC及在packages/EtheriT.Coker.GrapesJS執行npm run build:mvc，後者依package.json執行vite build與copy-to-mvc，寫入dist和MVC模組資產，耗時依環境，未自行執行。本輪不改Public Swiper.js、MVC舊Grapes來源或DB schema，無新增Migration及create-bundles需求。
+
 ## 2026-11-24 正式 AI 記憶改存既有資料庫（目前有效規格）
 
 本節取代下方 App_Data/AiKnowledge 檔案持久化規格。正式記憶使用既有 CokerDbContext，分為目前記憶 AiMemoryEntries 與歷史 AiMemoryRevisions，不自動匯入或刪除舊檔案。系統來源分析共用；網站分析限定授權網站及功能；個人語系限定網站與本人。記憶不能擴大目前登入者權限。

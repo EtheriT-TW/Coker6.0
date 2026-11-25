@@ -1,3 +1,5 @@
+import { createProcess, appendProcessEvent, finishProcess, createProcessViewer, limitProcessDetails } from './processViewer.js';
+
 // The host provides permissions, draft identity and transport through options/adapter.
 // This plugin never knows MVC routes, antiforgery headers or Parallel credentials.
 export function aiAssistantPlugin(editor, options = {}) {
@@ -22,6 +24,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         <p class="coker-canvas-ai-status" data-status role="status"></p>
         <p class="coker-canvas-ai-note">內容會傳送至 AI 服務，修改後請儲存頁面。</p></div></div>`;
     const find = selector => panel.querySelector(selector);
+    const processViewer = createProcessViewer(panel);
     const status = message => { find('[data-status]').textContent = message; };
     let versions = [], conversation = [], activeKey = '', pending = null, restoring = false, destroyed = false;
     let serviceUnavailable = false;
@@ -48,6 +51,8 @@ export function aiAssistantPlugin(editor, options = {}) {
     };
     const confirm = message => Promise.resolve(adapter.ui?.confirm?.(message) ?? window.confirm(message));
     const persist = () => {
+        // Preserve stage summaries; bound all raw exchange details across this page's history.
+        limitProcessDetails({ events: conversation.flatMap(message => message.process?.events || []) }, 500000);
         try { localStorage.setItem(activeKey, JSON.stringify({ versions, conversation, replyLocale, undoVersionId })); }
         catch { status('本機儲存空間不足或不可用；紀錄目前僅保留在此編輯器。'); }
     };
@@ -71,6 +76,14 @@ export function aiAssistantPlugin(editor, options = {}) {
             const text = document.createElement('p');
             text.textContent = message.content;
             bubble.append(who, text);
+            if (message.role === 'user' && message.process) {
+                const view = document.createElement('button');
+                view.type = 'button'; view.dataset.process = message.process.id;
+                view.setAttribute('aria-haspopup', 'dialog');
+                view.textContent = '查看處理流程';
+                view.onclick = () => processViewer.open(message, view);
+                bubble.append(view);
+            }
             const index = versions.findIndex(v => v.id && v.id === message.versionId);
             if (index >= 0) {
                 const restore = document.createElement('button');
@@ -105,6 +118,7 @@ export function aiAssistantPlugin(editor, options = {}) {
     function sync() {
         const key = getKey();
         if (key === activeKey) return;
+        processViewer.close();
         activeKey = key;
         versions = []; conversation = []; recordedProject = null; recordedContent = null; currentVersionIndex = -1;
         replyLocale = ''; undoVersionId = '';
@@ -117,6 +131,17 @@ export function aiAssistantPlugin(editor, options = {}) {
                 .map(v => ({ ...v, id: v.id || crypto.randomUUID() }));
             if (saved && Array.isArray(saved.conversation)) conversation = saved.conversation
                 .filter(m => m && ['user', 'assistant', 'system'].includes(m.role) && typeof m.content === 'string').slice(-200);
+            for (const message of conversation) {
+                const process = message.process;
+                if (!process || typeof process.id !== 'string' || !Number.isFinite(process.started) || !Array.isArray(process.events)) {
+                    delete message.process; continue;
+                }
+                process.events = process.events.filter(event => event && typeof event.message === 'string' && Number.isFinite(event.elapsedMs))
+                    .slice(0, 60).map(event => ({ ...event, message: event.message.slice(0, 1000), detail: typeof event.detail === 'string' ? event.detail.slice(0, 64000) : '' }));
+                if (!['running', 'completed', 'failed', 'cancelled', 'interrupted', 'clarification'].includes(process.state)) process.state = 'running';
+                if (process.ended != null && !Number.isFinite(process.ended)) process.ended = null;
+                if (process.state === 'running') finishProcess(process, 'interrupted', '頁面已重新載入；原請求未恢復，未宣稱已套用。');
+            }
         } catch { status('本機紀錄無法讀取；畫布仍可編輯。'); }
         const currentProject = JSON.stringify(editor.getProjectData());
         currentVersionIndex = versions.findIndex(version => JSON.stringify(version.project) === currentProject);
@@ -144,7 +169,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         return id;
     }
     function setBusy(busy) {
-        panel.querySelectorAll('button, select, textarea').forEach(el => { el.disabled = busy; });
+        panel.querySelectorAll('button:not([data-process]):not([data-process-close]), select, textarea').forEach(el => { el.disabled = busy; });
         find('[data-close]').disabled = false;
         find('[data-cancel]').disabled = !pending;
         if (serviceUnavailable) {
@@ -153,7 +178,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         }
         updateNavigation();
     }
-    find('[data-close]').onclick = () => { panel.hidden = true; };
+    find('[data-close]').onclick = () => { processViewer.close(); panel.hidden = true; };
     find('[data-cancel]').onclick = () => pending?.abort();
     find('[data-settings]').onclick = () => {
         sync(); render();
@@ -178,6 +203,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         const beforeVersionId = checkpoint('設定前：' + settingLabels[action.kind]);
         const wasOpen = !panel.hidden;
         switching = true; setBusy(true);
+        processViewer.close();
         find('[data-settings-panel]').close();
         panel.hidden = true;
         let finished = false;
@@ -218,7 +244,7 @@ export function aiAssistantPlugin(editor, options = {}) {
         const approved = await confirm('清除此頁面的本機對話與版本紀錄？目前畫布及已儲存的頁面不受影響。');
         switching = false; setBusy(false);
         if (!approved || destroyed || deleteKey !== getKey()) return;
-        try { localStorage.removeItem(activeKey); versions = []; conversation = []; replyLocale = ''; undoVersionId = ''; recordedProject = null; recordedContent = null; currentVersionIndex = -1; render(); status('已清除本機內容。'); }
+        try { processViewer.close(); localStorage.removeItem(activeKey); versions = []; conversation = []; replyLocale = ''; undoVersionId = ''; recordedProject = null; recordedContent = null; currentVersionIndex = -1; render(); status('已清除本機內容。'); }
         catch { status('無法清除本機紀錄。'); }
     };
     async function switchVersion(index) {
@@ -256,6 +282,12 @@ export function aiAssistantPlugin(editor, options = {}) {
         find('[data-settings-panel]').close();
     }
     function contextTarget(selected) {
+        // The initialization owner must be included when a card/list inside a
+        // carousel was clicked. Counts and configuration still come from sources.
+        for (let owner = selected; owner && owner !== editor.getWrapper(); owner = owner.parent()) {
+            const element = owner.getEl();
+            if (element && [...element.children].some(child => child.classList.contains('swiper'))) return owner;
+        }
         const isLayout = component => {
             const el = component.getEl();
             if (!el || el.children.length < 2) return false;
@@ -331,7 +363,18 @@ export function aiAssistantPlugin(editor, options = {}) {
             .slice(-8).map(({ role, content }) => ({ role, content }));
         while (JSON.stringify(recent).length > 8000) recent.shift();
         const history = JSON.stringify(recent);
-        conversation.push({ role: 'user', content: prompt });
+        const question = { role: 'user', content: prompt, process: createProcess() };
+        const report = entry => {
+            if (destroyed || requestKey !== getKey() || question.process.state !== 'running') return;
+            appendProcessEvent(question.process, entry);
+            persist(); processViewer.refresh();
+        };
+        const finish = (state, message) => {
+            finishProcess(question.process, state, message);
+            if (!destroyed && requestKey === getKey()) { persist(); processViewer.refresh(); }
+        };
+        conversation.push(question);
+        report({ stage: 'request', message: '已送出詢問，正在連接服務' });
         conversation = conversation.slice(-200);
         persist(); render();
         find('[data-prompt]').value = '';
@@ -355,13 +398,14 @@ export function aiAssistantPlugin(editor, options = {}) {
                 preserveContent, autoDetect, styleContext: JSON.stringify(styleContext),
                 css,
                 history
-            }, { signal: pending.signal });
+            }, { signal: pending.signal, onProgress: report });
             // A host adapter may finish after cancellation even if it ignores AbortSignal.
             if (pending.signal.aborted) throw new DOMException('Aborted', 'AbortError');
             if (destroyed) return;
             if (requestKey !== getKey() || originalProject !== JSON.stringify(editor.getProjectData()) ||
                 (scope === 'selected' && !selected.parent()))
                 throw new Error('等待期間畫布已修改或切換，未套用 AI 回覆，請重新送出。');
+            report({ stage: 'apply', message: '服務端已完成，正在驗證並套用至畫布' });
             if (autoDetect) {
                 if (typeof result.preserveContent !== 'boolean') throw new Error('未取得自動判斷結果，未修改畫布。');
                 preserveContent = result.preserveContent;
@@ -407,15 +451,23 @@ export function aiAssistantPlugin(editor, options = {}) {
                 if (parse(html) !== parse(safeHtml)) throw new Error('局部樣式修改不可改寫原文，未套用回覆。');
             }
             let rules = validateStyles(result.styles, replaceHtml ? safeHtml : html);
+            report({ stage: 'approved-operations', message: '核定的實際修改內容（摘要不代表欄數已生效）', detail: JSON.stringify({
+                classChanges: (classChanges || []).map(change => ({ targetId: change.component.getId(),
+                    remove: change.component.getClasses().filter(name => !change.classes.includes(name)),
+                    add: change.classes.filter(name => !change.component.getClasses().includes(name)) })),
+                styles: rules, replacesContent: replaceHtml && !classChanges
+            }, null, 2) });
             const beforeApply = JSON.parse(originalProject);
             const beforeContent = contentSignature();
             const originalImages = [...new DOMParser().parseFromString(editor.getHtml(), 'text/html').querySelectorAll('img')]
                 .map(el => el.getAttribute('src') || '');
             restoring = true;
             let appliedTarget = selected;
+            let appliedTargets = [selected];
             try {
                 if (classChanges) {
                     // Layout edits keep the existing GrapesJS tree, custom types and children.
+                    const carouselOwners = [];
                     for (const change of classChanges) {
                         const root = change.component.getEl();
                         const carousels = root ? [...root.children].filter(el => el.classList.contains('swiper')) : [];
@@ -424,12 +476,22 @@ export function aiAssistantPlugin(editor, options = {}) {
                             throw new Error('目前元件沒有可用的輪播初始化功能，已保留原內容。');
                         for (const carousel of carousels) carousel.swiper?.destroy?.(true, true);
                         change.component.setClass(change.classes);
-                        if (carousels.length) {
-                            if (!runtime.jQuery) throw new Error('輪播的執行環境不完整，已保留原內容。');
-                            runtime.jQuery(change.component.getEl()).data('isInit', false);
-                            runtime.SwiperInit({ autoplay: false });
-                            if (carousels.some(el => !el.swiper)) throw new Error('選取的輪播版型未初始化，已還原修改前內容。');
-                        }
+                        if (carousels.length) carouselOwners.push(change.component);
+                    }
+                    await waitForCanvasRender();
+                    for (const component of carouselOwners) {
+                        const root = component.getEl();
+                        const runtime = root?.ownerDocument.defaultView;
+                        const carousels = root ? [...root.children].filter(el => el.classList.contains('swiper')) : [];
+                        if (!runtime?.jQuery) throw new Error('輪播的執行環境不完整，已保留原內容。');
+                        runtime.jQuery(root).data('isInit', false);
+                        runtime.SwiperInit({ autoplay: false });
+                        if (!carousels.length || carousels.some(el => !el.swiper || el.swiper.destroyed)) throw new Error('選取的輪播版型未初始化，已還原修改前內容。');
+                        report({ stage: 'runtime-layout', message: '輪播已重新初始化，以下為目前執行值', detail: JSON.stringify({
+                            targetId: component.getId(), classes: component.getClasses(),
+                            instances: carousels.map(el => ({ breakpoint: el.swiper.currentBreakpoint,
+                                slidesPerView: el.swiper.params?.slidesPerView, width: el.getBoundingClientRect().width }))
+                        }, null, 2) });
                     }
                 } else if (replaceHtml) {
                     if (scope === 'selected') {
@@ -444,19 +506,30 @@ export function aiAssistantPlugin(editor, options = {}) {
                         selected.remove({ keepIds });
                         if (selected.parent()) throw new Error('無法替換選取區塊，已保留畫布。');
                         const inserted = parent.append(safeHtml, { at });
-                        if (inserted.length) { appliedTarget = inserted[0]; editor.select(inserted[0]); }
+                        if (!inserted.length) throw new Error('元件沒有成功插入，已保留原內容。');
+                        appliedTargets = inserted;
+                        appliedTarget = inserted[0]; editor.select(inserted[0]);
                     }
                     else editor.setComponents(safeHtml);
                 }
                 for (const rule of rules) editor.Css.setRule(rule.selector, rule.properties, { addStyles: true });
-                const appliedModels = new Map([appliedTarget, ...appliedTarget.find('*')]
-                    .map(component => [component.getId(), component]));
+                // CSS/view updates may be scheduled by GrapesJS. Validate the
+                // committed frame, not the previous style during the same task.
+                await waitForCanvasRender();
+                if (pending.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+                if (destroyed || requestKey !== getKey()) throw new Error('頁面已切換，已停止套用。');
+                if (replaceHtml && !classChanges) {
+                    const text = markup => new DOMParser().parseFromString(markup, 'text/html').body.textContent.replace(/\s+/g, ' ').trim();
+                    const actualHtml = scope === 'selected' ? appliedTargets.map(component => component.toHTML()).join('') : editor.getHtml();
+                    if (text(actualHtml) !== text(safeHtml))
+                        throw new Error('元件套用後的文字與核定內容不一致，已還原修改前內容。');
+                }
                 for (const rule of rules) {
                     const tracks = rule.properties['grid-template-columns'];
                     if (!tracks || ['none', 'initial', 'unset', 'inherit', 'revert'].includes(tracks)) continue;
-                    const element = appliedModels.get(rule.selector.slice(1))?.getEl();
-                    const display = element && element.ownerDocument.defaultView.getComputedStyle(element).display;
-                    if (!['grid', 'inline-grid'].includes(display))
+                    const boundary = appliedTarget.getEl();
+                    const elements = boundary ? [boundary, ...boundary.querySelectorAll('*')].filter(el => el.matches(rule.selector)) : [];
+                    if (!elements.length || elements.some(element => !['grid', 'inline-grid'].includes(element.ownerDocument.defaultView.getComputedStyle(element).display)))
                         throw new Error('排列樣式未在畫布生效，已還原修改前內容。');
                 }
                 // Validate the actual runtime directory cards, not just the hidden model template.
@@ -479,7 +552,7 @@ export function aiAssistantPlugin(editor, options = {}) {
                 }
                 if (contentSignature() === beforeContent) throw new Error('回覆未產生任何 HTML 或 CSS 差異，畫布保持不變。');
             } catch (error) {
-                editor.loadProjectData(beforeApply);
+                if (!destroyed && requestKey === getKey()) editor.loadProjectData(beforeApply);
                 throw error;
             } finally { restoring = false; }
             const versionId = checkpoint('AI：' + prompt.slice(0, 50));
@@ -487,11 +560,14 @@ export function aiAssistantPlugin(editor, options = {}) {
             if (typeof result.replyLocale === 'string') replyLocale = result.replyLocale;
             conversation.push({ role: 'assistant', content: result.message || '已完成調整。', versionId, beforeVersionId, settingsActions: result.settingsActions });
             nextSettings = result.settingsActions?.[0];
+            finish('completed', '已通過畫布驗證並套用；尚未儲存頁面。');
             conversation = conversation.slice(-200);
             persist(); render();
             find('[data-prompt]').value = '';
             status('已套用，請檢查桌面／手機預覽並使用原有儲存功能。');
         } catch (error) {
+            finish(error.name === 'AbortError' ? 'cancelled' : error.needsClarification ? 'clarification' : 'failed',
+                error.name === 'AbortError' ? '已取消，未套用 AI 回覆。' : error.message);
             if (!destroyed && requestKey === getKey()) {
                 conversation.push({ role: error.needsClarification === true ? 'assistant' : 'system',
                     content: error.name === 'AbortError' ? '已取消，未套用 AI 回覆。' : error.message,
@@ -515,6 +591,13 @@ export function aiAssistantPlugin(editor, options = {}) {
         }
     };
     // The browser parser is the final authority before GrapesJS parses untrusted markup.
+    async function waitForCanvasRender() {
+        const frame = editor.Canvas.getWindow();
+        await new Promise(resolve => {
+            const timer = setTimeout(resolve, 250);
+            frame.requestAnimationFrame(() => frame.requestAnimationFrame(() => { clearTimeout(timer); resolve(); }));
+        });
+    }
     function validateHtml(html) {
         if (typeof html !== 'string' || !html.trim()) throw new Error('AI 未回傳有效 HTML。');
         const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -569,6 +652,6 @@ export function aiAssistantPlugin(editor, options = {}) {
     editor.on('component:selected component:deselected', updateSelection);
     editor.on('destroy', () => {
         editor.off('component:selected component:deselected', updateSelection);
-        destroyed = true; pending?.abort(); panel.remove();
+        destroyed = true; pending?.abort(); processViewer.destroy(); panel.remove();
     });
 }

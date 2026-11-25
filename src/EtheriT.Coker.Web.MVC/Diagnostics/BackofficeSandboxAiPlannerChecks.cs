@@ -57,6 +57,35 @@ public static partial class BackofficeSandboxChecks
                 contexts.Last().GetProperty("WebsiteLocale").GetString() == "zh-tw",
                 "Every language and unfamiliar wording must reach the same AI planner unchanged; scoped operations preserve the entire custom gallery.");
         }
+        var traceEntries = new List<CanvasAiTraceEvent>();
+        var traced = Request("調整排列");
+        traced.TraceObserver = (entry, _) => { traceEntries.Add(entry); return Task.CompletedTask; };
+        var traceCalls = http.Calls;
+        respond = _ => {
+            Require(traceEntries.Last().Stage == "model-request", "Progress must be emitted before awaiting the provider, not replayed after completion.");
+            return Reply(stylePlan);
+        };
+        var tracedResult = await service.Generate(traced, default);
+        Require(tracedResult.Status == 200 && http.Calls == traceCalls + 2 &&
+            traceEntries.First().Stage == "settings" && traceEntries.Any(entry => entry.Stage == "resources") &&
+            traceEntries.Count(entry => entry.Stage == "model-request") == 2 &&
+            traceEntries.Count(entry => entry.Stage == "model-response") == 2 &&
+            traceEntries.Any(entry => entry.Stage == "validation") &&
+            traceEntries.Zip(traceEntries.Skip(1)).All(pair => pair.First.ElapsedMs <= pair.Second.ElapsedMs) &&
+            !JsonSerializer.Serialize(traced).Contains("TraceObserver") && !Newtonsoft.Json.JsonConvert.SerializeObject(traced).Contains("TraceObserver"),
+            "Request-scoped progress must preserve operations and call count, record ordered real events, and be impossible to supply via either HTTP formatter.");
+        await traced.ReportAsync("fixture", "bounded", new string('x', 70000), default);
+        Require(traceEntries.Last().Detail!.Length < 64100 && traceEntries.Last().Detail!.Contains("僅顯示"), "Detailed progress must be bounded and visibly identify clipping.");
+        var traceContext = JsonSerializer.Serialize(new { Html = new string('x', 30000), Prompt = "四個一排", SelectedId = "gallery", ValidationFeedback = "Read actual source." });
+        var traceProjection = CanvasAiTrace.DescribeRequest("plan", new string('s', 16000), traceContext);
+        var traceRetry = CanvasAiTrace.DescribeRequest("plan", new string('s', 16000),
+            JsonSerializer.Serialize(new { Html = new string('x', 30000), Prompt = "四個一排", SelectedId = "gallery", ValidationFeedback = "Use its supported initializer." }),
+            new string('s', 16000), traceContext);
+        Require(traceProjection.Length < 20000 && traceProjection.Contains("原長度") && traceProjection.Contains("四個一排") &&
+            traceRetry.Contains("沿用前一輪") && traceRetry.Contains("Use its supported initializer.") &&
+            !traceRetry.Contains(new string('x', 100)) && !traceRetry.Contains(new string('s', 100)) &&
+            JsonDocument.Parse(traceContext).RootElement.GetProperty("Html").GetString()!.Length == 30000,
+            "Trace requests must be readable bounded projections, show changed retry feedback and reference unchanged fields without altering actual model inputs.");
         var start = http.Calls;
         respond = call => Reply(call == start + 1
             ? stylePlan.Replace("已調整圖片排列", "将当前布局调整为每行四个项目。")
@@ -273,7 +302,8 @@ public static partial class BackofficeSandboxChecks
             http.Calls == start + 3 && contexts.Last().GetProperty("WebsiteLocale").GetString() == "ja-JP" &&
             contexts.Last().GetProperty("ReplyLocale").GetString() == "zh-TW" &&
             contexts.Last().GetProperty("UiMessageReview").GetProperty("Locale").GetString() == "zh-TW" &&
-            contexts.Last().GetProperty("ApprovedPlan").GetProperty("html").GetString() == japaneseHtml,
+            contexts.Last().GetProperty("ApprovedPlan").GetProperty("html").GetString() == "" &&
+            !contexts.Last().TryGetProperty("EditorStructure", out _) && !contexts.Last().TryGetProperty("ResourceKnowledge", out _),
             "A Taiwan browser maintaining a Japanese site must receive a Taiwan reply while approved HTML remains Japanese; UI localization cannot replace the HTML with Chinese.");
         start = http.Calls;
         respond = _ => new HttpResponseMessage(HttpStatusCode.TooManyRequests) { Content = new StringContent("fixture") };
@@ -403,6 +433,117 @@ public static partial class BackofficeSandboxChecks
             carouselResult.Styles.Count == 0 && carouselRequest.PlanDiagnostics.Any(d => d.Reason.Contains("JS-driven carousel")),
             "A carousel Grid proposal must be replanned into a source-cited class-only edit, preserving all data-source and template metadata without a fixed backend count table.");
         start = http.Calls;
+        var firstPassDelta = JsonSerializer.Serialize(new {
+            editMode = "content", html = "", styles = Array.Empty<object>(), summary = "已切換既有配置。",
+            classChanges = new[] { new { targetId = "carousel", remove = new[] { "six_swiper" }, add = new[] { "four_swiper" } } },
+            sourceEvidence = new[] { new { key = "not-a-current-source", start = 9999, end = 10000 } }
+        });
+        respond = _ => Reply(firstPassDelta);
+        var firstPassRequest = Request("四個一排", carouselHtml); firstPassRequest.SelectedId = "directory";
+        var citationLines = Enumerable.Repeat("// initializer fixture", 900).ToArray();
+        citationLines[500] = "$('.four_swiper').each(function(){ const slidesPerView = 4; });";
+        citationLines[585] = "$('.six_swiper').each(function(){ const slidesPerView = 6; });";
+        var generatedRanges = CanvasKnowledgeService.SelectSourceEvidence(string.Join('\n', citationLines),
+            new HashSet<string>(StringComparer.Ordinal) { "six_swiper" }, [], true,
+            new HashSet<string>(StringComparer.Ordinal) { "six_swiper" });
+        firstPassRequest.KnowledgeClasses.Add("four_swiper");
+        firstPassRequest.KnowledgeSources = [new("generated-source", "/Shared/runtime.js", "runtime.js", "source-hash", "runtime-hash",
+            ["four_swiper", "six_swiper"], [], generatedRanges, "needs-analysis")];
+        var firstPassResult = await service.Generate(firstPassRequest, default);
+        Require(firstPassResult.Status == 200 && http.Calls == start + 3 && firstPassRequest.PlanDiagnostics.Count == 0 &&
+            firstPassResult.Html == carouselHtml.Replace("six_swiper", "four_swiper") &&
+            contexts[^3].GetProperty("ComponentExecution").GetProperty("InitializerTargets")[0].GetProperty("Id").GetString() == "carousel" &&
+            contexts[^3].GetProperty("ComponentExecution").GetProperty("RuntimeStyleTargets").EnumerateArray().Any(selector => selector.GetString() == "#carousel") &&
+            contexts[^3].GetProperty("ComponentExecution").GetProperty("RuntimeStyleTargets").EnumerateArray().Any(selector => selector.GetString() == "#cards > .template") &&
+            systems[^3].Contains("Do not regenerate HTML for this operation"),
+            "The first planning request must identify the actual initialization owner and allow a compact source-backed delta without regenerating directory HTML or failed repair rounds.");
+        Require(generatedRanges.All(range => range.End - range.Start <= CanvasSourceRange.MaxLineSpan) &&
+            contexts[^2].GetProperty("ReviewProposal").GetString()!.Contains("generated-source") &&
+            !contexts[^2].GetProperty("ReviewProposal").GetString()!.Contains("not-a-current-source"),
+            "Nonempty but invented model citations must not suppress automatic citations from actual source excerpts; only current citations survive content review.");
+        start = http.Calls;
+        var missingExcerptRequest = Request("四個一排", carouselHtml); missingExcerptRequest.SelectedId = "directory";
+        missingExcerptRequest.KnowledgeClasses.Add("four_swiper");
+        missingExcerptRequest.KnowledgeSources = firstPassRequest.KnowledgeSources.Select(source => source with { Evidence = [] }).ToList();
+        var missingExcerptResult = await service.Generate(missingExcerptRequest, default);
+        Require(missingExcerptResult.Status == 422 && missingExcerptResult.Html == null && http.Calls == start + 3 &&
+            missingExcerptRequest.PlanDiagnostics.Any(entry => entry.Reason.Contains("four_swiper: sources=1, matching excerpts=0")),
+            "A known class with no supporting source excerpt must still be rejected and explain what evidence is missing, rather than accepting a fabricated citation.");
+        Require(!CanvasAiService.TrySourceBackedClassEdit(firstPassRequest,
+            carouselHtml.Replace("six_swiper", "four_swiper").Replace("data-dirid='12'", "data-dirid='13'"), out var metadataFailure) && metadataFailure.Contains("Non-class attributes") &&
+            !CanvasAiService.TrySourceBackedClassEdit(firstPassRequest, carouselHtml.Replace("six_swiper", "undeployed_class"), out var unavailableFailure) && unavailableFailure.Contains("undeployed"),
+            "A non-class mutation must be distinguished from an unavailable deployed class instead of being mislabeled as missing source citations.");
+        foreach (var approveReview in new[] { true, false })
+        {
+            start = http.Calls;
+            var invalidGrid = """{"editMode":"style","html":"","styles":[{"selector":"#carousel","properties":{"grid-template-columns":"repeat(4,1fr)"}}],"summary":"完成"}""";
+            var lateDelta = JsonSerializer.Serialize(new {
+                editMode = "content", html = "", styles = Array.Empty<object>(), summary = "已切換輪播版型。",
+                classChanges = new[] { new { targetId = "carousel", remove = new[] { "six_swiper" }, add = new[] { "four_swiper" } } }
+            });
+            respond = call => Reply(call <= start + 2 ? invalidGrid : call == start + 3 ? lateDelta : approveReview ? classPlan : invalidGrid);
+            var lateRequest = Request("四個一排", carouselHtml); lateRequest.SelectedId = "directory";
+            lateRequest.KnowledgeClasses.Add("four_swiper"); lateRequest.KnowledgeSources = carouselRequest.KnowledgeSources;
+            var lateEvents = new List<CanvasAiTraceEvent>();
+            lateRequest.TraceObserver = (entry, _) => { lateEvents.Add(entry); return Task.CompletedTask; };
+            var lateResult = await service.Generate(lateRequest, default);
+            Require(lateEvents.Any(entry => entry.Stage == "review-required") &&
+                lateEvents.Any(entry => entry.Stage == "validation" && entry.Message.Contains("仍需內容複核")) &&
+                (approveReview
+                    ? lateResult.Status == 200 && lateResult.Html == carouselHtml.Replace("six_swiper", "four_swiper") && http.Calls == start + 5
+                    : lateResult.Status == 422 && lateResult.Html == null && http.Calls == start + 4),
+                "A first valid third-round class delta must receive exactly one final review and UI localization; a rejected review must stop without applying or another repair loop.");
+        }
+        foreach (var selector in new[] { "#directory", "#carousel", "#cards" })
+        {
+            start = http.Calls;
+            respond = _ => Reply(JsonSerializer.Serialize(new {
+                editMode = "style", html = "", summary = "已調整為四個一排。", styles = new[] {
+                    new { selector, properties = new Dictionary<string, string> { ["flex-wrap"] = "wrap", ["justify-content"] = "space-between" } }
+                }
+            }));
+            var ineffectiveFlex = Request("四個一排", carouselHtml); ineffectiveFlex.SelectedId = "directory";
+            var ineffectiveResult = await service.Generate(ineffectiveFlex, default);
+            Require(ineffectiveResult.Status == 422 && ineffectiveResult.Html == null && http.Calls == start + 3 &&
+                ineffectiveFlex.PlanDiagnostics.All(entry => entry.Reason.Contains("flex-wrap/justify-content does not configure")),
+                "Flex declarations on the initialized directory frame, owner or slide wrapper must not be reported as a successful slides-per-view change.");
+        }
+        start = http.Calls;
+        respond = _ => Reply("""{"editMode":"style","html":"","styles":[{"selector":"#gallery","properties":{"flex-wrap":"wrap","justify-content":"space-between"}}],"summary":"已調整一般版面。"}""");
+        var ordinaryFlexResult = await service.Generate(Request("調整一般圖片區塊排列"), default);
+        Require(ordinaryFlexResult.Status == 200 && http.Calls == start + 2, "Ordinary non-initialized layouts must retain their existing Flex styling capability.");
+        foreach (var selector in new[] { "#directory", "#cards > .template" })
+        {
+            start = http.Calls;
+            var deltaPlan = JsonSerializer.Serialize(new {
+                editMode = "content", html = "", styles = Array.Empty<object>(), summary = "已切換現有輪播版型。",
+                classChanges = new[] { new { targetId = "carousel", remove = new[] { "six_swiper" }, add = new[] { "four_swiper" } } },
+                sourceEvidence = new[] { new { key = "fixture-source", start = 1, end = 1 } }
+            });
+            respond = call => Reply(call == start + 1 ? JsonSerializer.Serialize(new {
+                editMode = "style", html = "", styles = new[] { new { selector, properties = new Dictionary<string, string> { ["grid-template-columns"] = "repeat(4,1fr)" } } }, summary = "完成"
+            }) : deltaPlan);
+            var deltaRequest = Request("四個一排", carouselHtml); deltaRequest.SelectedId = "directory";
+            deltaRequest.KnowledgeClasses.Add("four_swiper"); deltaRequest.KnowledgeSources = carouselRequest.KnowledgeSources;
+            var deltaResult = await service.Generate(deltaRequest, default);
+            Require(deltaResult.Status == 200 && http.Calls == start + 4 && deltaResult.Styles.Count == 0 &&
+                CanvasAiService.TrySourceBackedClassEdit(deltaRequest, deltaResult.Html!) && deltaRequest.PlanDiagnostics[0].Reason.Contains("#carousel"),
+                "Both outer-frame and runtime-card retries must identify the same initializer and accept reviewed source-backed token deltas without rebuilding directory markup.");
+            var invalidDelta = deltaPlan.Replace("four_swiper", "unavailable_variant");
+            var rejectedDelta = false;
+            try { CanvasAiService.MaterializeClassChanges(deltaRequest, invalidDelta); }
+            catch (FormatException) { rejectedDelta = true; }
+            Require(rejectedDelta && deltaRequest.Html == carouselHtml, "Unknown class choices must be rejected before materialization without mutating the original request.");
+        }
+        start = http.Calls;
+        respond = call => Reply(call == start + 1 ? """{"editMode":"style","html":"","styles":[{"selector":"#cards > .template","properties":{"grid-template-columns":"repeat(4,1fr)"}}],"summary":"完成"}""" : classPlan);
+        var cardRuleRequest = Request("四個一排", carouselHtml); cardRuleRequest.SelectedId = "directory";
+        cardRuleRequest.KnowledgeClasses.Add("four_swiper"); cardRuleRequest.KnowledgeSources = carouselRequest.KnowledgeSources;
+        var cardRuleResult = await service.Generate(cardRuleRequest, default);
+        Require(cardRuleResult.Status == 200 && http.Calls == start + 4 && cardRuleResult.Styles.Count == 0 &&
+            cardRuleResult.Html == carouselHtml.Replace("six_swiper", "four_swiper") && cardRuleRequest.PlanDiagnostics.Any(d => d.Reason.Contains("JS-driven carousel")),
+            "Scoped runtime-card Grid selectors must not bypass carousel protection; replan against the real source-backed initialization owner.");
+        start = http.Calls;
         var largeCarousel = carouselHtml.Replace("商品", "<!--" + new string('x', 12000) + "-->商品");
         respond = _ => Reply(JsonSerializer.Serialize(new {
             editMode = "content", html = largeCarousel.Replace("six_swiper", "four_swiper"), summary = "已切換既有版型。", styles = Array.Empty<object>(),
@@ -414,14 +555,32 @@ public static partial class BackofficeSandboxChecks
         Require(largeResult.Status == 200 && http.Calls == start + 3 &&
             contexts[^2].GetProperty("ReviewProposal").GetString()!.Contains("ClassChangesToReview") &&
             contexts.Last().GetProperty("Html").ValueKind == JsonValueKind.Null &&
-            contexts.Last().GetProperty("ApprovedPlan").GetProperty("html").GetString()!.Contains(new string('x', 12000)),
-            "Large class-only directory edits must review compact class deltas, then retain one complete approved HTML copy in the UI-language pass instead of overflowing the context budget.");
+            contexts.Last().GetProperty("ApprovedPlan").GetProperty("html").GetString() == "" &&
+            contexts.Last().GetRawText().Length < 6000 &&
+            !contexts.Last().TryGetProperty("ResourceKnowledge", out _) && largeResult.Html!.Contains(new string('x', 12000)),
+            "Large class-only directory edits must review compact deltas, keep all approved HTML locally and send only message metadata to UI review.");
         start = http.Calls;
         respond = _ => Reply("""{"editMode":"style","html":"","styles":[{"selector":"#gallery","properties":{"--coker-swiper-columns":"4"}}],"summary":"完成"}""");
         Require((await service.Generate(Request("調整"), default)).Status == 422 && http.Calls == start + 3,
             "Swiper-specific configuration must never be applied to an ordinary gallery.");
         start = http.Calls;
         const string systemLink = "<a id='label' class='brand-section-title' href='' data-link-type='link' data-link-value=''>品牌入口</a>";
+        var originalLabel = Request("變更為連結", "<span id='label'>熱門商品 <strong id='emphasis'>精選</strong></span>"); originalLabel.SelectedId = "label";
+        const string retainedLabel = "<a id='label'>熱門商品 <strong id='emphasis'>精選</strong></a>";
+        Require(CanvasAiService.PreservesLinkConversionText(originalLabel, retainedLabel) &&
+            !CanvasAiService.PreservesLinkConversionText(originalLabel, "<a id='label'>連結目的地</a>") &&
+            !CanvasAiService.PreservesLinkConversionText(originalLabel, retainedLabel.Replace("id='label'", "id='other'")) &&
+            !CanvasAiService.PreservesLinkConversionText(originalLabel, retainedLabel.Replace("<a id='label'>", "<a id='label' data-text=''>")),
+            "New links must retain the selected ID and original nested wording and cannot carry a blank or conflicting display-text attribute.");
+        respond = call => Reply(JsonSerializer.Serialize(new {
+            editMode = "content", html = call == start + 1 ? "<a id='other'>連結目的地</a>" : retainedLabel,
+            summary = "請設定連結目的地。", styles = Array.Empty<object>()
+        }));
+        var retainedResult = await service.Generate(originalLabel, default);
+        Require(retainedResult.Status == 200 && retainedResult.Html == retainedLabel && http.Calls == start + 4 &&
+            originalLabel.PlanDiagnostics.Any(d => d.Category == "link-text"),
+            "A destructive link placeholder must be rejected and corrected within the existing planning budget before content review and UI localization.");
+        start = http.Calls;
         respond = _ => Reply(JsonSerializer.Serialize(new { editMode = "content", html = systemLink, summary = "請設定目的網址。", styles = Array.Empty<object>() }));
         var metadataRequest = Request("調整為連結", "<span id='label' class='brand-section-title'>品牌入口</span>"); metadataRequest.SelectedId = "label";
         Require((await service.Generate(metadataRequest, default)).Status == 200 && http.Calls == start + 3,

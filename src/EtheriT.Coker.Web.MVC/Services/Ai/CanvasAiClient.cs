@@ -5,7 +5,11 @@ using EtheriT.Coker.Application.Shared.Ai;
 namespace EtheriT.Coker.Web.MVC.Services.Ai;
 
 // The existing Gateway protocol is canvas-specific; never send other features through it.
-public sealed record CanvasAiInput(string System, string Context, string Locale, string OriginalHtml);
+public sealed record CanvasAiInput(string System, string Context, string Locale, string OriginalHtml)
+{
+    public string Phase { get; init; } = "plan";
+    public string? ReplyLocale { get; init; }
+}
 public sealed record CanvasAiChatResult(int Status, string? Content, string Message, int? ModelCalls = null)
 {
     public string? FailureReason { get; init; }
@@ -31,6 +35,12 @@ public sealed class CanvasAiClient(IAiClient client, IHttpClientFactory clients,
             int? calls = null;
             if (response.Headers.TryGetValues("X-Canvas-Model-Calls", out var values) &&
                 int.TryParse(values.FirstOrDefault(), out var count) && count is >= 0 and <= 1) calls = count;
+            if ((response.IsSuccessStatusCode || (int)response.StatusCode == 422) &&
+                (!response.Headers.TryGetValues("X-Canvas-Contract-Version", out var versions) || !versions.Contains("2")))
+                return new(503, null, "AI 畫布服務的契約尚未更新，請管理員同步編譯並重啟 Parallel／Gateway；目前未修改畫布。", calls);
+            if ((response.IsSuccessStatusCode || (int)response.StatusCode == 422) &&
+                (!response.Headers.TryGetValues("X-Canvas-Generation-Constraints", out var constraints) || !constraints.Contains("2")))
+                return new(503, null, "AI 畫布服務尚未支援元件生成限制，請同步編譯並重啟 Parallel／Gateway；目前未修改畫布。", calls);
             if (!response.IsSuccessStatusCode)
             {
                 var status = (int)response.StatusCode;
@@ -57,7 +67,7 @@ public sealed class CanvasAiClient(IAiClient client, IHttpClientFactory clients,
     {
         if (!availability.TryGetConnection(out var baseUri, out var key))
             throw new AiSettingsException("系統預設 AI 服務尚未啟用或連線設定未完成。");
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(new { workflow = "canvas-edit", locale = input.Locale, originalHtml = input.OriginalHtml,
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(new { workflow = "canvas-edit", phase = input.Phase, locale = input.Locale, replyLocale = input.ReplyLocale, originalHtml = input.OriginalHtml,
             messages = new[] { new { role = "system", content = input.System }, new { role = "user", content = input.Context } } });
         if (bytes.Length > 250000) throw new AiInputException("AI 請求內容超過大小限制。");
         var request = new HttpRequestMessage(HttpMethod.Post, new Uri(baseUri, "api/ai/chat"));

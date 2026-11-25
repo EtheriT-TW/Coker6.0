@@ -72,12 +72,35 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
 
     private async Task<CanvasAiResult> GenerateCore(CanvasAiRequest input, CancellationToken cancellationToken)
     {
+        await input.ReportAsync("settings", "正在確認 AI 設定與服務狀態", null, cancellationToken);
         if (string.IsNullOrWhiteSpace(input.ReplyLocale)) input.ReplyLocale = input.WebsiteLocale;
         var settings = await settingsService.GetAsync(cancellationToken);
         if (!settings.Enabled) return new(403, null, "本站尚未開放 AI 輔助。");
         if (!(await availability.CheckAsync(settings, cancellationToken)).Available)
             return new(503, null, "AI 服務尚未啟用或設定未完成。");
-        CanvasKnowledgeContext? discovered = knowledge == null ? null : await knowledge.PrepareAsync(input, false, cancellationToken);
+        var targetDocument = new HtmlDocument();
+        targetDocument.LoadHtml(input.Html);
+        var initializerTargets = targetDocument.DocumentNode.Descendants().Where(IsRuntimeCarouselRoot)
+            .Select(node => new { Id = node.GetAttributeValue("id", ""), Classes = node.GetAttributeValue("class", "") }).ToArray();
+        var expandInitialSources = initializerTargets.Length > 0;
+        var runtimeStyleTargets = targetDocument.DocumentNode.Descendants()
+            .Where(node => node.AncestorsAndSelf().Any(IsRuntimeCarouselRoot) || node.Descendants().Count(IsRuntimeCarouselRoot) == 1)
+            .SelectMany(node => {
+                var id = node.GetAttributeValue("id", "");
+                if (id.Length == 0) return Array.Empty<string>();
+                var classes = node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                return classes.Contains("catalog") ? new[] { "#" + id, "#" + id + " > .template" } : new[] { "#" + id };
+            }).Distinct().ToArray();
+        var runtimeLayoutTargets = targetDocument.DocumentNode.Descendants().Where(IsRuntimeLayoutTarget)
+            .SelectMany(node => {
+                var id = node.GetAttributeValue("id", "");
+                if (id.Length == 0) return Array.Empty<string>();
+                return node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog")
+                    ? new[] { "#" + id, "#" + id + " > .template" } : new[] { "#" + id };
+            }).Distinct().ToArray();
+        await input.ReportAsync("resources", expandInitialSources ? "已辨識初始化元件，正在準備相關配置來源" : "正在讀取畫布資源與功能分析紀錄", null, cancellationToken);
+        CanvasKnowledgeContext? discovered = knowledge == null ? null : await knowledge.PrepareAsync(input, expandInitialSources, cancellationToken);
+        await input.ReportAsync("structure", "正在整理目前選取範圍與結構", null, cancellationToken);
 
         if (input.AutoDetect && input.Scope != "new") input.PreserveContent = true;
 
@@ -88,8 +111,6 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
             history = JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(input.History) ? "[]" : input.History);
         }
         catch (JsonException) { return new(422, null, "目前樣式資訊格式不正確，請重新整理編輯器。"); }
-        var targetDocument = new HtmlDocument();
-        targetDocument.LoadHtml(input.Html);
         var allowedSelectors = targetDocument.DocumentNode.Descendants()
             .Select(node => node.GetAttributeValue("id", "")).Where(id => !string.IsNullOrEmpty(id))
             .Select(id => "#" + id).Distinct().ToArray();
@@ -107,6 +128,12 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
                 }).ToArray()
         } : null;
         var context = SerializeModelContext(new {
+            ComponentExecution = new {
+                InitializerTargets = initializerTargets,
+                RuntimeStyleTargets = runtimeStyleTargets,
+                RuntimeLayoutTargets = runtimeLayoutTargets,
+                ClassOnlyContract = "For class-only configuration changes return classChanges (targetId/remove/add), html empty, styles empty. The server retains original markup. Select actual supported tokens from ResourceKnowledge; if insufficient request source analysis. This does not authorize unrelated text/content changes."
+            },
             input.Scope, input.Html, Css = input.Scope == "selected" ? input.Css[..Math.Min(input.Css.Length, 8000)] : input.Css,
             CssTruncated = input.Scope == "selected" && input.Css.Length > 8000,
             History = history, input.Prompt, input.PreserveContent, input.AutoDetect, input.SelectedId,
@@ -162,12 +189,18 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
             return new(422, null, "Style plans must return empty html and target existing IDs using styles/textStyles; HTML changes are not applied.");
         if (input.Scope == "selected" && !input.PreserveContent && !PreservesImages(input.Html, html ?? ""))
             return new(422, null, "The content plan loses existing images. Preserve the original images; layout changes must use style operations, not replacement HTML.");
+        if (input.Scope == "selected" && !input.PreserveContent && !PreservesLinkConversionText(input, html ?? ""))
+            return new(422, null, "A link conversion must preserve the original selected element ID and its complete visible text, including nested formatting. Do not replace it with destination placeholders or empty data-text. Return the unchanged wording inside a and use settingsActions for its missing destination.") { FailureCode = "link-text" };
         var summary = result.RootElement.TryGetProperty("summary", out var s) ? s.GetString() : "已產生畫布修改";
         if (string.IsNullOrWhiteSpace(html) || html.Length > 64000)
             return new(422, null, "AI 回覆包含不支援或不安全的 HTML，未修改畫布。請簡化指令後重試。");
-        if (!input.PreserveContent && HasRuntimeClassChange(input.Html, html) &&
-            (!TrySourceBackedClassEdit(input, html) || !HasSupportedSourceEvidence(input, result.RootElement)))
-            return new(422, null, "The JS component class change needs exact original markup, an actual deployed class, and supporting sourceEvidence from ResourceKnowledge. Re-read/expand the source; do not invent class choices.") { FailureCode = "knowledge" };
+        if (!input.PreserveContent && HasRuntimeClassChange(input.Html, html))
+        {
+            if (!TrySourceBackedClassEdit(input, html, out var classFailure))
+                return new(422, null, "Class-only component edit rejected: " + classFailure + " Use classChanges on the original target; do not reproduce or repair its HTML.") { FailureCode = "class-structure" };
+            if (!HasSupportedSourceEvidence(input, result.RootElement))
+                return new(422, null, "The class-only structure is valid, but sourceEvidence does not cite a current ResourceKnowledge key and provided line range. Re-read its actual deployed initializer and cite that range; do not change the markup or replace this operation with Grid." + DescribeMissingClassEvidence(input, html)) { FailureCode = "knowledge" };
+        }
         if (!input.PreserveContent && !TrySourceBackedClassEdit(input, html) && !IsSafeFragment(html, out var htmlFailure))
             return new(422, null, "Content HTML rejected: " + htmlFailure + " Return safe complete HTML; link metadata is allowed only on a elements, with safe or empty pending destinations.");
         var message = summary ?? "已產生畫布修改";
@@ -189,12 +222,19 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
         html = normalizedHtml;
         styles = normalizedStyles;
         var structureDocument = new HtmlDocument(); structureDocument.LoadHtml(html);
-        foreach (var rule in styles.Where(HasGridTracks))
+        foreach (var rule in styles.Where(rule => HasGridTracks(rule) || HasCarouselFlexLayout(rule)))
         {
-            var node = structureDocument.DocumentNode.Descendants().FirstOrDefault(n => "#" + n.GetAttributeValue("id", "") == rule.Selector);
+            var ownerSelector = rule.Selector.Split(' ', 2)[0];
+            var node = structureDocument.DocumentNode.Descendants().FirstOrDefault(n => "#" + n.GetAttributeValue("id", "") == ownerSelector);
             var swiper = node?.AncestorsAndSelf().FirstOrDefault(IsRuntimeCarouselRoot);
-            if (swiper != null)
-                return new(422, null, "This target belongs to a JS-driven carousel. Read ResourceKnowledge for its actual initializer and supported class choices; return an exact class-only content edit on #" + swiper.GetAttributeValue("id", "") + " instead of CSS Grid. If source evidence is insufficient, set needsSourceAnalysis=true.") { FailureCode = "styles" };
+            // A directory frame can contain the initializer instead of being inside it.
+            // The same owner must guide retries for frame, list and runtime-card targets.
+            var nestedOwners = node?.Descendants().Where(IsRuntimeCarouselRoot).Take(2).ToArray() ?? [];
+            if (swiper == null && nestedOwners.Length == 1) swiper = nestedOwners[0];
+            var carouselList = node?.AncestorsAndSelf().Any(n => n.GetAttributeValue("class", "")
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("swiper-wrapper")) == true;
+            if ((swiper != null || carouselList) && (HasGridTracks(rule) || (node != null && IsRuntimeLayoutTarget(node) && HasCarouselFlexLayout(rule))))
+                return new(422, null, "This target belongs to a JS-driven carousel, including runtime-card selectors. Read ResourceKnowledge for its actual initializer and supported class choices; return an exact class-only content edit on its existing initialization owner" + (swiper == null ? " (the editable boundary must include that owner)" : " #" + swiper.GetAttributeValue("id", "")) + " instead of CSS Grid or Flex layout properties. Changing flex-wrap/justify-content does not configure its slidesPerView. If source evidence is insufficient, set needsSourceAnalysis=true.") { FailureCode = "styles" };
         }
         var directoryFrames = structureDocument.DocumentNode.Descendants().Where(n =>
             n.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog_frame"))
@@ -277,6 +317,7 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
                 "InvalidStylesArray" => "CSS 規則陣列不正確",
                 "InvalidTextStylesArray" => "局部文字規則陣列不正確",
                 "EmptyProposal" => "模型未提出任何修改",
+                "InvalidCanvasContract" => "提案欄位、型別或數量不符合畫布服務契約",
                 "ExpectedJsonObject" => "回覆不是 JSON 物件",
                 "InvalidJsonSyntaxOrValue" => "JSON 語法或欄位值不正確",
                 "WrongJsonFieldType" => "JSON 欄位型別不正確",
@@ -500,6 +541,19 @@ public sealed class CanvasAiStyle
 
 public sealed class CanvasAiRequest
 {
+    private readonly long traceStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public Func<CanvasAiTraceEvent, CancellationToken, Task>? TraceObserver { get; set; }
+
+    internal Task ReportAsync(string stage, string message, string? detail, CancellationToken token)
+    {
+        if (TraceObserver == null) return Task.CompletedTask;
+        // Bound each displayed exchange. The UI explicitly marks clipped details.
+        if (detail?.Length > 64000) detail = detail[..64000] + "\n（內容過長，僅顯示前 64,000 字元）";
+        return TraceObserver(new(stage, message, DateTimeOffset.UtcNow,
+            (long)System.Diagnostics.Stopwatch.GetElapsedTime(traceStarted).TotalMilliseconds, detail), token);
+    }
+
     [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public List<CanvasAiPlanDiagnostic> PlanDiagnostics { get; } = [];
     [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]

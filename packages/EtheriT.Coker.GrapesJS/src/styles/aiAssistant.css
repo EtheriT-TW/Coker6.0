@@ -48,5 +48,11 @@
 .coker-canvas-ai-settings::backdrop { background: #0009; }
 .coker-canvas-ai-settings .coker-canvas-ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .coker-canvas-ai-settings [data-current-version] { color: #e8cc91; }
+.coker-canvas-ai-process { width: min(900px, calc(100vw - 32px)); }
+.coker-canvas-ai-process [data-process-question] { white-space: pre-wrap; overflow-wrap: anywhere; }
+.coker-canvas-ai-process [data-process-state] { position: sticky; top: 0; padding: 10px; background: var(--gjs-primary-color, #444); color: #e8cc91; }
+.coker-canvas-ai-process section { padding: 10px 0; border-bottom: 1px solid #ffffff18; }
+.coker-canvas-ai-process pre { max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #0003; padding: 12px; font: 12px/1.6 monospace; user-select: text; }
+.coker-canvas-ai-process summary { cursor: pointer; }
 .coker-canvas-ai-log:empty, .coker-canvas-ai-status:empty { display: none; }
 .coker-canvas-ai-status { white-space: pre-wrap; margin: 14px 0 0; font-size: 12px; color: #e8cc91; }

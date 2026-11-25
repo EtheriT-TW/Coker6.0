@@ -9,6 +9,56 @@ public static partial class BackofficeSandboxChecks
 {
     private static async Task AiCanvasEdits(BackofficeSandbox box)
     {
+        var completeHtml = "<div id='brands'>" + new string('牌', 15000) + "</div>";
+        var latestHistory = new[] { new { role = "user", content = "修改為四個一排" + new string('前', 6000) }, new { role = "assistant", content = "請問哪一組？" } };
+        var oversizedReferences = new
+        {
+            Html = completeHtml, Prompt = "第一組改成四個一排", Css = new string('c', 8000),
+            History = latestHistory, AllowedSelectors = new[] { "#brands" },
+            StyleContext = Enumerable.Range(0, 40).Select(i => new { selector = "#item-" + i, properties = new { width = new string('w', 280) } }).ToArray(),
+            SelectedTarget = new { Text = new string('牌', 15000) }
+        };
+        var fitted = CanvasAiService.SerializeModelContext(oversizedReferences);
+        using (var fittedDoc = JsonDocument.Parse(fitted))
+        {
+            var root = fittedDoc.RootElement;
+            Require(fitted.Length <= 32000 && root.GetProperty("Html").GetString() == completeHtml &&
+                root.GetProperty("Prompt").GetString() == oversizedReferences.Prompt &&
+                root.GetProperty("History").GetArrayLength() == 2 &&
+                root.GetProperty("History")[0].GetProperty("content").GetString() == latestHistory[0].content &&
+                root.GetProperty("History")[1].GetProperty("content").GetString() == "請問哪一組？" &&
+                root.GetProperty("AllowedSelectors")[0].GetString() == "#brands" &&
+                root.GetProperty("CssTruncated").GetBoolean() &&
+                root.GetProperty("StyleContext").GetArrayLength() is > 0 and < 40,
+                "Combined reference overflow must fit valid model JSON without truncating Chinese HTML, the current request, selectors or pending clarification history.");
+        }
+        var compactChinese = CanvasAiService.SerializeModelContext(new { Html = completeHtml, Prompt = "四個一排" });
+        Require(compactChinese.Length < 16000, "Chinese HTML must not inflate to six-character Unicode escapes in model-message text.");
+        var essentialOverflowRejected = false;
+        try { CanvasAiService.SerializeModelContext(new { Html = new string('x', 33000), Prompt = "四個一排" }); }
+        catch (EtheriT.Coker.Application.Shared.Ai.AiInputException) { essentialOverflowRejected = true; }
+        Require(essentialOverflowRejected, "Essential content overflow must be rejected, never silently truncated or permitted beyond the gateway limit.");
+        var layoutRequest = new CanvasAiRequest
+        {
+            Controller = "PageManagement", Action = "Edit", Scope = "selected", Prompt = "幫我改為四個一排",
+            Html = "<div id='brands'><div>品牌一</div><div>品牌二</div></div>", Css = "", History = "[]", StyleContext = "[]",
+            AutoDetect = true, PreserveContent = true
+        };
+        Require(Controllers.api.CanvasAiController.ValidatePayload(layoutRequest) == null,
+            "A selected-container four-column request must pass input validation before calling the model.");
+        layoutRequest.StyleContext = new string(' ', 16000);
+        Require(Controllers.api.CanvasAiController.ValidatePayload(layoutRequest) == null, "The style reference boundary must remain accepted.");
+        layoutRequest.StyleContext += " ";
+        Require(Controllers.api.CanvasAiController.ValidatePayload(layoutRequest)!.Contains("樣式參考"), "Oversized computed styles must identify the actual failing field.");
+        layoutRequest.StyleContext = "[]";
+        layoutRequest.Html = new string('x', 64001);
+        Require(Controllers.api.CanvasAiController.ValidatePayload(layoutRequest)!.Contains("內容太長"), "Oversized HTML must identify the content limit.");
+        layoutRequest.Html = "<div></div>";
+        layoutRequest.Css = new string('x', 32001);
+        Require(Controllers.api.CanvasAiController.ValidatePayload(layoutRequest)!.Contains("樣式太多"), "Oversized CSS must identify the stylesheet limit.");
+        layoutRequest.Css = "";
+        layoutRequest.History = new string('x', 8001);
+        Require(Controllers.api.CanvasAiController.ValidatePayload(layoutRequest)!.Contains("對話內容"), "Oversized history must identify the conversation limit.");
         var rules = new List<CanvasAiStyle>
         {
             new() { Selector = ".target", Properties = new() { ["color"] = "red" } },
@@ -26,51 +76,6 @@ public static partial class BackofficeSandboxChecks
         Require(CanvasAiStyleNormalizer.TryNormalize([new() { Selector = "h2, span.target", Properties = new() { ["color"] = "red" } }], fragment, out _, out normalized) && normalized.Count == 2,
             "Grouped selectors must map each local target to its own scoped rule.");
 
-        var settings = box.Services.GetRequiredService<WebsiteAiSettingsService>();
-        var current = await settings.GetAsync(default);
-        await settings.SaveAsync(new() { WebsiteId = 999000001, Enabled = true, Provider = "claude", Model = "fixture-model", Revision = current.Revision }, default);
-        var response = """{"html":"","styles":[{"selector":".target","properties":{"color":"#336589"}}],"summary":"done","editMode":"style"}""";
-        var http = new ModelListFixture((_, _) => ModelResponse(JsonSerializer.Serialize(new
-        {
-            stop_reason = "end_turn", content = new[] { new { type = "text", text = response } }
-        })));
-        var ai = new AiClient(http, NullLogger<AiClient>.Instance);
-        var availability = box.Services.GetRequiredService<CanvasAiAvailability>();
-        var service = new CanvasAiService(new CanvasAiClient(ai, http, availability), box.Services.GetRequiredService<IConfiguration>(), settings,
-            box.Services.GetRequiredService<WebsiteAiAvailability>());
-        CanvasAiRequest Request(string prompt, string content) => new()
-        {
-            Scope = "selected", AutoDetect = true, Prompt = prompt, Html = content, StyleContext = "{}", WebsiteLocale = "zh-tw"
-        };
-        var result = await service.Generate(Request("調整這個區塊的顏色", fragment), default);
-        Require(result.Status == 200 && result.HtmlChanged && result.Styles.Count == 1 && result.Styles[0].Selector.StartsWith("#ai-style-"),
-            "The real canvas pipeline must apply a valid class selector instead of rejecting it for not being an ID.");
-        response = """{"html":"","styles":[{"selector":".target","properties":{"color":"url(https://invalid)"}}],"summary":"done","editMode":"style"}""";
-        Require((await service.Generate(Request("調整這個區塊的顏色", fragment), default)).Status == 422,
-            "Selector normalization must not bypass CSS property/value validation.");
-        var before = http.Calls;
-        result = await service.Generate(Request("把入口兩個字換成連結\n顏色變成 #336589", "<h2 id='title'>品牌入口</h2>"), default);
-        doc.LoadHtml(result.Html ?? "");
-        var link = doc.DocumentNode.SelectSingleNode("//a");
-        Require(result.Status == 200 && http.Calls == before && result.HtmlChanged && doc.DocumentNode.InnerText == "品牌入口" &&
-            link != null && link.InnerText == "入口" && link.Attributes["href"] == null && result.Styles.Single().Properties["color"] == "#336589",
-            "A phrase link with explicit color must preserve other words, allow a deferred URL and require no model call.");
-        result = await service.Generate(Request("協助我把入口兩個字變大\n修改為連結", "<h2 id='title'>品牌入口</h2>"), default);
-        doc.LoadHtml(result.Html ?? "");
-        link = doc.DocumentNode.SelectSingleNode("//a");
-        Require(result.Status == 200 && http.Calls == before && result.HtmlChanged && doc.DocumentNode.InnerText == "品牌入口" &&
-            link != null && link.InnerText == "入口" && link.Attributes["href"] == null && result.Styles.Single().Properties["font-size"] == "calc(1em + 4px)",
-            "The user's compound resize-and-link request must preserve the complete heading without a model rewrite.");
-        result = await service.Generate(Request("協助我把入口兩個字變大", "<h2 id='title'>品牌入口</h2>"), default);
-        doc.LoadHtml(result.Html ?? "");
-        Require(result.Status == 200 && http.Calls == before && doc.DocumentNode.InnerText == "品牌入口" &&
-            doc.DocumentNode.SelectSingleNode("//span").InnerText == "入口", "Phrase resizing must wrap only the target and never discard its siblings.");
-        response = """{"html":"<h2 id='title'><a id='link'>入口</a></h2>","styles":[{"selector":"#link","properties":{"font-size":"28px"}}],"summary":"done","editMode":"content"}""";
-        result = await service.Generate(Request("請讓入口看起來更大並加上連結", "<h2 id='title'>品牌入口</h2>"), default);
-        Require(result.Status == 422 && result.Html == null,
-            "A model content-mode response must not delete untargeted text for a presentation/link request.");
-        response = """{"html":"<h2 id='title'>品牌<a id='link'>入口</a></h2>","styles":[{"selector":"#link","properties":{"font-size":"28px"}}],"summary":"done","editMode":"content"}""";
-        result = await service.Generate(Request("請讓入口看起來更大並加上連結", "<h2 id='title'>品牌入口</h2>"), default);
-        Require(result.Status == 200, "A complete model content response preserving all text must still be allowed to add links.");
+        await AiCanvasPlannerChecks(box);
     }
 }

@@ -19,6 +19,7 @@ namespace EtheriT.Coker.Application.Shared.Article
         public Task<GetArticleContenDto> GetConten(SearchIDDto dto);
         public Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto);
         public Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto);
+        public Task<ResponseMessageDto> RecycleUnusedImages(ArticleImageCleanupInputDto dto);
         public Task<GetFrontContenOutputDto> GetFrontConten(ArticleGetFrontContenInputDto dto);
         public Task<ResponseMessageDto> RebuildContentWithFiles(long AId);
         public Task<ResponseMessageDto> RebuildAllContentWithFiles();

@@ -52,7 +52,7 @@ function restoreElement(element, parent, nextSibling) {
  * Opens the real GrapesJS TraitManager for a link component in a modal.
  * The trait views are moved temporarily, then returned to the right sidebar.
  */
-export function openLinkComponentEditor(editor, component) {
+export function openLinkComponentEditor(editor, component, options = {}) {
     if (!component || component.get?.('type') !== linkComponentType) {
         return;
     }
@@ -228,6 +228,7 @@ export function openLinkComponentEditor(editor, component) {
         if (editor.__cokerLinkEditor === controller) {
             delete editor.__cokerLinkEditor;
         }
+        options.onClose?.();
     };
 
     const show = () => {
@@ -290,6 +291,7 @@ export function openLinkComponentEditor(editor, component) {
     });
     editor.__cokerLinkEditor = controller;
     show();
+    return true;
 }
 
 function updateDisplayText(component) {
@@ -779,6 +781,13 @@ function updateTargetSecurity(component) {
 
 export function linkComponentPlugin(editor, options = {}) {
     const titleTexts = getLinkTitleTexts(options.locale);
+    editor.Commands.add('coker-settings-link', {
+        run(currentEditor, sender, { component, onClose, onOpened } = {}) {
+            const opened = openLinkComponentEditor(currentEditor, component, { onClose }) === true;
+            if (opened) onOpened?.();
+            return opened;
+        }
+    });
 
     editor.DomComponents.addType(linkComponentType, {
         extend: 'link',

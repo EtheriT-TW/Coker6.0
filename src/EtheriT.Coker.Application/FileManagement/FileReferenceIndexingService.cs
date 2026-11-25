@@ -504,7 +504,7 @@ namespace EtheriT.Coker.Application.FileManagement
         private static IReadOnlyDictionary<string, string?> Fields(params (string Name, string? Value)[] fields)
             => fields.ToDictionary(x => x.Name, x => x.Value);
 
-        private static IEnumerable<string> ExtractPaths(string? value, string orgName)
+        internal static IEnumerable<string> ExtractPaths(string? value, string orgName)
         {
             if (string.IsNullOrWhiteSpace(value))
                 yield break;

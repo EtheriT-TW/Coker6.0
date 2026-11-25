@@ -453,6 +453,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                             },
                             new JobMenu{
                                 PageName="AiSettings",
+                                Enable=false,
                                 Title="AI 設定",
                                 Controller="SystemManagement",
                                 Action="AiSettings",
@@ -554,7 +555,7 @@ namespace EtheriT.Coker.Web.MVC.Startup
                 }
             };
             // Platform diagnostics are not customer-assignable website permissions.
-            if (includePlatformDiagnostics && await loginUserData.IsPlatformAdministrator())
+            if (includePlatformDiagnostics && await loginUserData.IsPlatformAdministrator() && false)
             {
                 site.Jobs.Add(new JobMenu
                 {

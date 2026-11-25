@@ -32,6 +32,7 @@ public static partial class BackofficeSandboxChecks
         var enabledDefinition = definitions.Single(s => s.key == AiStoreSettingNames.Enabled);
         Require(enabledDefinition.type == SeoSetDataTypeEnum.checkBox && enabledDefinition.DefaultValue == "false" &&
             enabledDefinition.storeSetItems.Count == 0, "AI enabled must be one boolean checkbox with no option rows and default false.");
+        await AiMenuPermissions(box);
         var groupCount = await box.Db.StoreSetGroup.CountAsync();
         var definitionCount = await box.Db.StoreSet.CountAsync();
         var first = await service.SaveAsync(new() { WebsiteId = site, Enabled = true, Provider = "openai", Model = "fixture-model", KeyAction = "replace", ApiKey = fakeKey }, default);
@@ -211,6 +212,34 @@ public static partial class BackofficeSandboxChecks
         await AiGenericContracts(box);
         await AiCanvasEdits(box);
         Require(WebsiteAiSettingsService.Prepare(new(), new() { Provider = "gemini" }).EffectiveProvider == "self", "Missing external keys must select self-hosting.");
+    }
+
+    private static async Task AiMenuPermissions(BackofficeSandbox box)
+    {
+        var navigation = box.Services.GetRequiredService<EtheriT.Coker.Web.MVC.Startup.NavigationProvider>();
+        async Task<EtheriT.Coker.Web.MVC.Views.Shared.Components.Sidebar.JobMenu> CurrentMenu()
+        {
+            var site = await navigation.getMenus();
+            await navigation.SetWebsite(site);
+            await navigation.setUserJob(site, writeHttpContextItems: false, controllerName: "SystemManagement", actionName: "AiSettings");
+            return navigation.FindJob(site.Jobs, "SystemManagement", "AiSettings")!;
+        }
+        var menu = await CurrentMenu();
+        Require(!menu.Enable && !menu.CanVisble && !menu.CanUpdate,
+            "AI settings must default to unavailable even for a system-maintenance power user.");
+        box.Db.Permissions.Add(new Permissions { FK_WebsiteId = 999000001, FK_UserId = 999000001, Name = "AiSettings.View", IsGranted = true });
+        await box.Db.SaveChangesAsync();
+        Require(!(await CurrentMenu()).Enable, "A user-level View grant must not enable a disabled website feature.");
+        var feature = new Permissions { FK_WebsiteId = 999000001, Name = "AiSettings", IsGranted = true };
+        box.Db.Permissions.Add(feature);
+        await box.Db.SaveChangesAsync();
+        menu = await CurrentMenu();
+        Require(menu.Enable && menu.CanVisble && menu.CanUpdate,
+            "An explicit website feature grant must make AI settings available through the existing power-user permissions.");
+        feature.IsGranted = false;
+        await box.Db.SaveChangesAsync();
+        menu = await CurrentMenu();
+        Require(!menu.Enable && !menu.CanVisble && !menu.CanUpdate, "Revoking the website feature must remove menu and action access.");
     }
 
     // No sockets: every HTTP response is constructed inside this isolated diagnostic.

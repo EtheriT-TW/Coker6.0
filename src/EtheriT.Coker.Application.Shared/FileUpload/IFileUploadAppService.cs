@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application
     public interface IFileUploadAppService
     {
         public Task<UploadFileOutputDto> uploadTempFiles(IList<IFormFile> files);
+        public Task<string> NormalizeInlineImageSourcesAsync(string html);
         public Task<UploadFileOutputDto> uploadHtmlContentFiles(IList<IFormFile> files);
         public Task<UploadFileOutputDto> uploadGalleryFiles(IList<IFormFile> files);
         public Task<UploadFileOutputDto> ensureGalleryImages(IReadOnlyCollection<string> paths);

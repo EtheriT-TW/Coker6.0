@@ -106,11 +106,12 @@
                 }
             },
             ai: {
-                async generate(request, { signal } = {}) {
+                async generate(request, { signal, onProgress } = {}) {
                     const response = await fetch(@Json.Serialize(Url.Content("~/api/CanvasAi/Chat")), {
                         method: 'POST', credentials: 'same-origin', signal,
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': typeof onProgress === 'function' ? 'application/x-ndjson' : 'application/json',
                             'x-xsrf-token': @Json.Serialize(Antiforgery.GetAndStoreTokens(Context).RequestToken)
                         },
                         body: JSON.stringify({
@@ -120,11 +121,47 @@
                             action: @Json.Serialize(Context.Request.RouteValues["action"]?.ToString())
                         })
                     });
-                    const result = await response.json();
-                    if (!response.ok) {
+                    let result, resultStatus = response.status;
+                    if (response.ok && response.headers.get('content-type')?.includes('application/x-ndjson')) {
+                        if (!response.body) throw new Error('無法讀取處理流程，未套用 AI 回覆。');
+                        const reader = response.body.getReader(), decoder = new TextDecoder();
+                        let buffer = '', finished = false, modelCalls = null;
+                        const readLine = line => {
+                            if (!line.trim()) return;
+                            if (line.length > 2097152) throw new Error('AI 流程資料過長，已停止處理。');
+                            const entry = JSON.parse(line);
+                            if (finished) throw new Error('AI 流程回應順序不正確，未套用。');
+                            if (entry.type === 'progress') onProgress?.(entry.data);
+                            else if (entry.type === 'result') {
+                                if (!Number.isInteger(entry.status) || !entry.data) throw new Error('AI 最終回應格式不正確。');
+                                result = entry.data; resultStatus = entry.status; modelCalls = entry.modelCalls; finished = true;
+                            }
+                        };
+                        try {
+                            while (true) {
+                                const { value, done } = await reader.read();
+                                buffer += decoder.decode(value, { stream: !done });
+                                let end;
+                                while ((end = buffer.indexOf('\n')) >= 0) {
+                                    const line = buffer.slice(0, end); buffer = buffer.slice(end + 1); readLine(line);
+                                }
+                                if (buffer.length > 2097152) throw new Error('AI 流程資料過長，已停止處理。');
+                                if (done) { readLine(buffer); break; }
+                            }
+                        } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+                        if (!finished) throw new Error('AI 連線中斷，尚未收到最終結果，未套用。');
+                        onProgress?.({ stage: 'server-result', message: '已收到服務端最終結果' + (Number.isInteger(modelCalls) ? `（模型呼叫 ${modelCalls} 次）` : '') });
+                    } else result = await response.json();
+                    if (resultStatus < 200 || resultStatus >= 300) {
+                        if (Array.isArray(result.diagnostics) && result.diagnostics.length)
+                            console.warn('[Coker AI plan diagnostics]', JSON.stringify(result.diagnostics));
+                        else
+                            console.warn('[Coker AI diagnostics availability]', JSON.stringify({ enabled: result.diagnosticsEnabled === true, count: result.diagnostics?.length || 0 }));
                         const error = new Error(result.message || 'AI 請求失敗，請重新登入或稍後重試。');
                         error.needsClarification = result.needsClarification === true;
-                        error.serviceUnavailable = result.serviceUnavailable === true || [401, 403, 429].includes(response.status) || response.status >= 500;
+                        error.replyLocale = result.replyLocale;
+                        error.settingsActions = result.settingsActions;
+                        error.serviceUnavailable = result.serviceUnavailable === true || [401, 403, 429].includes(resultStatus) || resultStatus >= 500;
                         throw error;
                     }
                     return result;

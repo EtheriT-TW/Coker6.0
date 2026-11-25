@@ -54,6 +54,8 @@ public static partial class BackofficeSandboxChecks
         , ["sandbox/directory-all-content"] = "Page.Index"
         , ["sandbox/menu-content-cache"] = "Page.Index"
         , ["sandbox/article-crud"] = "ContentManagement.Article"
+        , ["sandbox/article-inline-images"] = "ContentManagement.Article"
+        , ["sandbox/article-image-cleanup"] = "ContentManagement.Article"
         , ["sandbox/enter-ad-crud"] = "AdvertisementManagement.EnterAd"
         , ["sandbox/side-ad-crud"] = "AdvertisementManagement.RightSideAd"
         , ["sandbox/tag-crud"] = "ContentManagement.Tag"
@@ -115,6 +117,8 @@ public static partial class BackofficeSandboxChecks
             case "sandbox/directory-all-content": await DirectoryAllContents(sandbox); break;
             case "sandbox/menu-content-cache": await MenuPublishedContentCache(sandbox); break;
             case "sandbox/article-crud": await ArticleCrud(sandbox); break;
+            case "sandbox/article-inline-images": await ArticleInlineImages(sandbox); break;
+            case "sandbox/article-image-cleanup": await ArticleImageCleanup(sandbox); break;
             case "sandbox/enter-ad-crud": await AdvertiseCrud(sandbox, 1); break;
             case "sandbox/side-ad-crud": await AdvertiseCrud(sandbox, 2); break;
             case "sandbox/tag-crud": await TagCrud(sandbox, false); break;

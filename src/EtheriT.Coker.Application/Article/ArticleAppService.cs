@@ -30,10 +30,13 @@ using System.Net;
 using System.Text.RegularExpressions;
 using EtheriT.Coker.Application.Permissions;
 using EtheriT.Coker.Application.FileManagement;
+using EtheriT.Coker.Application.Shared.FileManagement;
+using EtheriT.Coker.Application.Shared;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace EtheriT.Coker.Application.Article
 {
-    public class ArticleAppService : IArticleAppService
+    public partial class ArticleAppService : IArticleAppService
     {
         private readonly CokerDbContext db;
         private readonly LoginUserData loginUserData;
@@ -47,6 +50,10 @@ namespace EtheriT.Coker.Application.Article
         private readonly IPermissionsAppService permissionsAppService;
         private readonly IHtmlSanitizeService htmlSanitizeService;
         private readonly IFileReferenceWriter fileReferenceWriter;
+        private readonly IFileReferenceScanner? imageCleanupScanner;
+        private readonly IFileManagementAppService? imageCleanupFiles;
+        private readonly IDataProtector? imageCleanupProtector;
+        private readonly IUploadPathResolver? imageCleanupPaths;
         public ArticleAppService(
             CokerDbContext db,
             LoginUserData loginUserData,
@@ -59,7 +66,11 @@ namespace EtheriT.Coker.Application.Article
             IHtmlProcessor htmlProcessor,
             IPermissionsAppService permissionsAppService,
             IHtmlSanitizeService htmlSanitizeService,
-            IFileReferenceWriter fileReferenceWriter
+            IFileReferenceWriter fileReferenceWriter,
+            IFileReferenceScanner? imageCleanupScanner = null,
+            IFileManagementAppService? imageCleanupFiles = null,
+            IDataProtectionProvider? protectionProvider = null,
+            IUploadPathResolver? imageCleanupPaths = null
         )
         {
             this.db = db;
@@ -72,6 +83,10 @@ namespace EtheriT.Coker.Application.Article
             this.stringHandler = stringHandler;
             this.htmlProcessor = htmlProcessor;
             this.fileReferenceWriter = fileReferenceWriter;
+            this.imageCleanupScanner = imageCleanupScanner;
+            this.imageCleanupFiles = imageCleanupFiles;
+            this.imageCleanupProtector = protectionProvider?.CreateProtector("Coker.Article.ImageCleanup.v1");
+            this.imageCleanupPaths = imageCleanupPaths;
             this.permissionsAppService = permissionsAppService;
             this.htmlSanitizeService = htmlSanitizeService;
         }
@@ -156,6 +171,7 @@ namespace EtheriT.Coker.Application.Article
 
                 if (result != null)
                 {
+                    // Keep list metadata only; content is loaded separately when opening the editor.
                     var dataQuery = await (from e in result
                                            orderby e.Id descending
                                            select new ArticleListGetDto
@@ -171,10 +187,6 @@ namespace EtheriT.Coker.Application.Article
                                                SerNO = e.SerNO,
                                                Popular = e.Popular,
                                                PopularVisible = e.PopularVisible,
-                                               SaveHtml = e.SaveHtml,
-                                               Html = e.Html,
-                                               SaveCss = e.SaveCss,
-                                               Css = e.Css,
                                                Tags = String.Join("、", (
                                                            from ta in db.Tag_Associates
                                                            where ta.FK_AId == e.Id && ta.Type == TagAssociateTypeEnum.文章 && !ta.IsDeleted
@@ -673,16 +685,24 @@ namespace EtheriT.Coker.Application.Article
                     throw new Exception("此目錄已設定權限，您目前僅能檢視，不能匯入修改。");
                 }
 
-                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
+                var websiteId = await loginUserData.GetWebsiteId();
+                var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id && e.FK_WebsiteId == websiteId && !e.IsDeleted);
+                if (article == null) throw new Exception("資料不存在");
+                var previousImages = await CaptureArticleImageIdsAsync(article);
+                var saved = await SaveContenInternal(dto, writeAuditLog: false);
+                if (!saved.Success)
+                {
+                    response = saved;
+                    return response;
+                }
+                // Publish the normalized draft, never the original inline image payload.
                 ArticleContenDto importDto = new ArticleContenDto
                 {
                     Id = dto.Id,
                     Html = dto.SaveHtml,
                     Css = dto.SaveCss
                 };
-                var s = await SaveContenInternal(dto, writeAuditLog: false);
                 var user = await loginUserData.GetUser();
-                var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
                 if (article != null)
                 {
                     string orgName = await loginUserData.GetWebsiteOrgName();
@@ -721,6 +741,7 @@ namespace EtheriT.Coker.Application.Article
                             }),
                         userId);
                     response.Success = true;
+                    response.Object = await CreateArticleImageCleanupOfferAsync(article, previousImages);
                 }
                 else throw new Exception("資料不存在");
             }
@@ -730,7 +751,7 @@ namespace EtheriT.Coker.Application.Article
             }
             finally
             {
-                await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                await loginUserData.SetLogs(SerializeArticleContentAudit(dto), SerializeArticleContentResponseAudit(response));
             }
             return response;
         }
@@ -748,11 +769,15 @@ namespace EtheriT.Coker.Application.Article
                     throw new Exception("此目錄已設定權限，您目前僅能檢視，不能儲存修改。");
                 }
 
-                dto.SaveHtml = stringHandler.HtmlEncode(dto.SaveHtml);
-                var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id);
+                var websiteId = await loginUserData.GetWebsiteId();
+                var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id && e.FK_WebsiteId == websiteId && !e.IsDeleted);
 
                 if (article != null)
                 {
+                    var previousImages = writeAuditLog ? await CaptureArticleImageIdsAsync(article) : new HashSet<long>();
+                    var normalizedHtml = await fileUploadAppService.NormalizeInlineImageSourcesAsync(
+                        stringHandler.HtmlDecode(dto.SaveHtml));
+                    dto.SaveHtml = stringHandler.HtmlEncode(normalizedHtml);
 
                     var checktokenresponse = await tokenAppService.CheckToken(null);
                     var isLogin = checktokenresponse.IsLogin;
@@ -838,6 +863,8 @@ namespace EtheriT.Coker.Application.Article
                             }),
                         await loginUserData.GetUserId());
                     response.Success = true;
+                    if (writeAuditLog)
+                        response.Object = await CreateArticleImageCleanupOfferAsync(article, previousImages);
                 }
                 else throw new Exception("資料不存在");
             }
@@ -849,11 +876,29 @@ namespace EtheriT.Coker.Application.Article
             {
                 if (writeAuditLog)
                 {
-                    await loginUserData.SetLogs(JsonConvert.SerializeObject(dto), JsonConvert.SerializeObject(response));
+                    await loginUserData.SetLogs(SerializeArticleContentAudit(dto), SerializeArticleContentResponseAudit(response));
                 }
             }
             return response;
         }
+        private static string SerializeArticleContentResponseAudit(ResponseMessageDto response)
+        {
+            // Confirmation tickets are scoped bearer values, not audit content.
+            if (response.Object is ArticleImageCleanupOfferDto offer)
+                return JsonConvert.SerializeObject(new { response.Success, response.Error, response.Message,
+                    CleanupImageCount = offer.Count, CleanupCheckFailed = offer.CheckFailed });
+            return JsonConvert.SerializeObject(response);
+        }
+
+        private static string SerializeArticleContentAudit(ArticleSaveContenDto dto)
+        {
+            // Rejected inputs must not put megabytes of image data into audit logs.
+            if ((dto.SaveHtml?.Length ?? 0) > 1024 * 1024
+                || dto.SaveHtml?.Contains("data:", StringComparison.OrdinalIgnoreCase) == true)
+                return JsonConvert.SerializeObject(new { dto.Id, HtmlLength = dto.SaveHtml?.Length ?? 0, CssLength = dto.SaveCss?.Length ?? 0, ContentOmitted = true });
+            return JsonConvert.SerializeObject(dto);
+        }
+
         public async Task<GetFrontContenOutputDto> GetFrontConten(ArticleGetFrontContenInputDto dto)
         {
             if (dto.siteId == null)

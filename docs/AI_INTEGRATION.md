@@ -5,10 +5,12 @@
 ```text
 功能 API → 功能服務 → IWebsiteAiService → IAiClient → Claude／OpenAI／Gemini
 畫布 API → CanvasAiService → CanvasAiClient → IAiClient（外部供應商）
-                                         → 舊畫布 Gateway（系統預設）
+                                         → 畫布 Gateway 契約 v2（系統預設）
 ```
 
 ## 後端呼叫
+
+畫布 Gateway 原始碼在 `D:/Ai整合/Parallel`，須與 MVC 同步編譯及重啟。v2 在原 `canvas-edit` workflow 增加 `phase=plan/ui-review`、獨立 `replyLocale` 及有型別限制的來源分析／class 變更／設定交接欄位；`locale` 保持網站 HTML 語系。ui-review 只校正訊息並移除操作，不執行原修改。MVC 以 `X-Canvas-Contract-Version: 2` 拒絕舊服務的成功／422回應，避免不相容計畫被誤當一般失敗。此更新沒有開放通用 self workflow、任意命令或放寬 MVC 的授權及內容安全驗證。Parallel 的契約文件與獨立 fake-provider 執行器分別為 `CANVAS_CONTRACT.md`、`scripts/CanvasContractChecks`；尚未執行，不代表實頁通過。
 
 在已授權的功能服務注入 `IWebsiteAiService`（namespace `EtheriT.Coker.Application.Shared.Ai`）。介面與訊息型別位於 Application.Shared，Application Service 不必引用 MVC；MVC 啟動時註冊供應商與設定實作，其他 host 若要使用亦需註冊實作：
 
@@ -59,3 +61,8 @@ dotnet build "src/EtheriT.Coker.Web.MVC/EtheriT.Coker.Web.MVC.csproj"
 ```
 
 編譯可能還原套件並更新 bin/obj，時間依環境。接著在測試環境驗收原畫布三種範圍、連線測試、各供應商純文字／圖片、JSON、關閉 AI、權限與跨站拒絕。圖片產品草稿、購物診斷與客服目前只有可共用的底層能力，尚未建立其功能 API 或 UI。
+## 畫布本機模型上下文容量（2026-11-24）
+
+Parallel的Ollama設定新增`CanvasContextLength`（32768）及`CanvasMaxOutputTokens`（8192）。畫布plan／ui-review由伺服器設定明確傳入`options.num_ctx`／`num_predict`，一般聊天保留既有預設；外部HTTP不能指定這兩個內部額度。上下文允許8192–131072，輸出至少1024且不超過上下文一半，仍須符合實際模型支援範圍及硬體能力。增加容量可能提高記憶體需求與推論時間。
+
+本輪實際`GET /api/ps`顯示Qwen上下文僅4096，原程式未送上下文選項；這是觀察到的配置缺口。新紀錄只含設定容量、輸入／輸出token數與是否碰輸出上限，不能將修改程式碼視為實際模型或瀏覽器驗證通過。重新編譯／重啟Parallel後，再送畫布指令並以`api/ps`及伺服器metadata確認實際容量。隔離斷言位於Parallel的`scripts/CanvasContractChecks`，尚未執行。沒有資料庫或前端資產變更。

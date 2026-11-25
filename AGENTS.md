@@ -14,7 +14,7 @@
 - `dotnet restore`
 - `dotnet ef migrations add`
 - `dotnet ef database update`
-- 任何 EF Core Migration 建立或套用
+- 自行建立或套用 EF Core Migration（資料庫設計與必要原始碼修改依 Database safety 正常進行）
 - 任何會修改資料庫 schema 或資料內容的 SQL
 - `npm install`
 - `npm ci`
@@ -141,22 +141,24 @@ npm run create-bundles
 
 # Database safety
 
+Migration 是正常的開發流程，不是禁止使用的設計。功能需要資料庫變更時，應直接完成必要的 Entity、DbContext、Mapping／Configuration 與相關程式碼修改，再告知使用者需要執行的 Migration 指令；不必為此另外要求確認，也不得因此改用檔案、記憶體或其他不適合的儲存方式來迴避資料庫變更。
+
 未經使用者在當前 Thread 明確要求：
 
-- 不建立 Migration。
-- 不執行 Migration。
+- 不自行執行建立或套用 Migration 的命令；由使用者依提供的指令執行。
+- 不手寫 Migration、Designer 或 ModelSnapshot 來繞過由使用者產生 Migration 的流程。
 - 不更新資料庫。
 - 不執行 `INSERT` / `UPDATE` / `DELETE` / `MERGE` / `ALTER` / `DROP` / `TRUNCATE`。
 - 不執行可能改變資料或 schema 的 script。
 
-如果認為資料庫需要變更，請只提供：
+完成必要原始碼修改後，請在回覆提供：
 
 - 建議變更內容。
 - 建議 Migration 名稱。
-- 建議使用者執行的指令。
+- 建立及套用 Migration 的完整指令，依已確認的專案、啟動專案與 DbContext 填寫。
 - 可能的資料相容性影響。
 
-不要直接執行；並依 Validation policy 說明指令作用、副作用與可能耗時。
+依 Validation policy 說明指令作用、副作用與可能耗時，並明確標示尚未建立／套用或驗證的部分。若使用者已明確授權建立或套用 Migration，依該次授權範圍處理，無須重複詢問；建立 Migration 不等於授權更新資料庫。
 
 # Frontend generated assets
 

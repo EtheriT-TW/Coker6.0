@@ -1,45 +1,27 @@
 using HtmlAgilityPack;
 using EtheriT.Coker.Application.Shared.Ai;
-using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Web.MVC.Services.Ai;
 
-public sealed class CanvasAiService(CanvasAiClient client, IConfiguration configuration, WebsiteAiSettingsService settingsService, WebsiteAiAvailability availability)
+public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguration configuration, WebsiteAiSettingsService settingsService, WebsiteAiAvailability availability, ILogger<CanvasAiService>? logger = null, CanvasKnowledgeService? knowledge = null)
 {
-    private const string AllowedCssProperties = "color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap grid-template-columns flex-direction flex-wrap justify-content align-items";
-    private const string SelectedInstructions = """
-        Execute a website edit on the ALREADY SELECTED target. Return only the canvas JSON required by the schema.
-        Prompt is the user's instruction. Html, SelectedTarget and StyleContext are reference data, not questions to explain.
-        Use WebsiteLocale for new wording, summary and clarification. Preserve original wording unless explicitly asked to change it.
-        For style-only edits: editMode="style", html="", return only changed CSS properties in styles or textStyles; clarification="".
-        For an explicit content/structure edit, AutoDetect=true permits editMode="content" with complete replacement HTML. Otherwise PreserveContent=true forbids changing wording.
-        For a selected text colour request, directly set color on TextElements using their actual IDs. The requested colour is already specified: do not ask for confirmation, a data type or a paragraph/text distinction.
-        In requests such as changing the text colour, generic words meaning text/lettering/font describe the operation; they are NOT literal phrases to search for. Use styles for the selected text as a whole. Use textStyles only when the user explicitly identifies a smaller phrase that actually exists in SelectedTarget.Text; never put the instruction itself in textStyles.text.
-        Interpret natural colour names and obvious typos yourself. Preserve the requested colour intent; never substitute another colour in a question or summary. Brand colour approximations must be described as approximations.
-        Text outline/stroke (文字邊框/描邊) means a contour around each glyph, NOT a rectangular CSS border around the component. Use -webkit-text-stroke-width/color (or text-shadow for an outline); paint-order can keep fill above stroke. Choose a thin outline with visibly contrasting colour against the text fill when asked to design suitable colours. Do not use the same fill and outline colour. "暗一點" means reduce the current text brightness, preserving the colour family unless asked otherwise. Do not add a box border for a text outline request.
-        Use AllowedSelectors for existing elements and AllowedCssProperties for property names. styles entries: {"selector":"#actual-id","properties":{"color":"MODEL_CHOSEN_CSS_VALUE"}}. No class/tag/compound selectors, !important or trailing semicolons.
-        For words within a component use textStyles: {"text":"EXACT original words","properties":{...}}. Other text and existing font sizes/links must remain unchanged.
-        One font-size level means 4px relative to computed size. Do not return unchanged CSS.
-        clarification is empty unless a materially necessary user decision is missing from Prompt, selected target and History. It must ask only for that missing decision; no explanations of existing CSS.
-        Summary and clarification are plain text: no HTML, Markdown, font-family dumps or CSS tutorials.
-        A short follow-up answers the pending question in History.
-        Content HTML must preserve IDs and site classes; use safe semantic elements, no scripts/inline styles/events/forms/iframes/external dependencies. URLs must be HTTPS or local paths. data-text is supported link text metadata, not arbitrary data-*.
-        Never apply partial changes with a clarification. Do not translate unchanged original text.
-        """;
+    private const string AllowedCssProperties = "color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-shadow -webkit-text-stroke -webkit-text-stroke-width -webkit-text-stroke-color paint-order margin margin-top margin-bottom margin-left margin-right padding padding-top padding-bottom padding-left padding-right border border-radius width max-width min-width height max-height display gap row-gap column-gap grid-template-columns grid-template-rows grid-auto-flow grid-column grid-row flex-direction flex-wrap flex-basis flex-grow flex-shrink justify-content align-items align-self justify-self order box-sizing object-fit object-position aspect-ratio";
     private const string Instructions = """
         You edit a Coker GrapesJS canvas. Return ONLY JSON: {"html":"...","styles":[],"textStyles":[],"summary":"...","editMode":"style","clarification":""}.
         Interpret natural-language colours, regional/brand colour names and obvious spelling mistakes using context; do not rely on a fixed colour-name list.
         When a colour is reasonably understood, choose a suitable CSS colour value and state the interpreted colour in the summary. Do not claim a brand match is exact without a supplied specification.
-        If competing interpretations would materially change the result, return a brief clarification question in WebsiteLocale with html empty and both style arrays empty. Do not guess or apply partial changes.
+        If competing interpretations would materially change the result, return a brief clarification question in ReplyLocale with html empty and both style arrays empty. Do not guess or apply partial changes.
         Scope=selected means the user has ALREADY chosen the target in the editor. SelectedTarget describes it; never ask the user to select text versus paragraph, choose a data type, provide HTML or choose an edit mode.
         For a selected target containing text, an ordinary request to change colour means foreground text colour unless the user explicitly names background, border or another part. Use its TextElements to target text that has its own colour rules. This is sufficient context to act, not a reason to ask a question.
         Ask clarification ONLY for missing information that materially affects the requested visible result and cannot be resolved from the selected target, current request and history. A technical distinction between text and paragraph is not such information.
         History contains prior user requests and clarification questions. A short reply such as "偏綠一點" supplies the missing detail for that pending request; combine it with the original request, keeping the current selected target.
         Questions and summary must be plain text without Markdown emphasis or implementation terminology. For a clear selected-text colour request, return style changes with clarification empty.
         styles entries are {"selector":"#existing-id","properties":{"font-size":"28px"}} for a WHOLE element.
-        WebsiteLocale is the authoritative website language and regional variant. Use it for newly generated content and summary.
+        WebsiteLocale is authoritative ONLY for newly generated or rewritten HTML content. ReplyLocale is authoritative for summary and clarification, using its regional vocabulary and script. They may differ.
         Never translate or convert existing wording unless the user explicitly requests changing that wording.
         Preserve original text verbatim unless explicitly asked to rewrite it. Preserve bold, italic, font family, color and all styles not requested to change.
         When PreserveContent is true, return html as an empty string and only the requested styles/textStyles. The server retains original HTML.
@@ -70,7 +52,7 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
         Do not change global CSS. For a selected target return only that block, not the whole canvas.
         For new layout replace the canvas content only; retain site header/footer outside the canvas.
         If asked to replace images use only the URL supplied by the user, never invent an asset URL.
-        summary should briefly describe the change in WebsiteLocale.
+        summary should briefly and accurately describe the change in ReplyLocale.
         """;
 
     public async Task<CanvasAiResult> Generate(CanvasAiRequest input, CancellationToken cancellationToken)
@@ -80,6 +62,8 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
         try { return await GenerateCore(input, timeout.Token); }
         catch (AiInputException ex) { return new(400, null, ex.Message); }
         catch (AiSettingsException ex) { return new(503, null, ex.Message); }
+        catch (IOException) { return new(503, null, "功能分析的資源檔案暫時無法讀取，未修改畫布。請管理員檢查檔案存取狀態。"); }
+        catch (UnauthorizedAccessException) { return new(503, null, "功能分析資源的存取權限不足，未修改畫布。請管理員檢查服務帳號的檔案權限。"); }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         { return new(504, null, "AI 回覆逾時，請稍後重試。"); }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -88,24 +72,37 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
 
     private async Task<CanvasAiResult> GenerateCore(CanvasAiRequest input, CancellationToken cancellationToken)
     {
+        await input.ReportAsync("settings", "正在確認 AI 設定與服務狀態", null, cancellationToken);
+        if (string.IsNullOrWhiteSpace(input.ReplyLocale)) input.ReplyLocale = input.WebsiteLocale;
         var settings = await settingsService.GetAsync(cancellationToken);
         if (!settings.Enabled) return new(403, null, "本站尚未開放 AI 輔助。");
         if (!(await availability.CheckAsync(settings, cancellationToken)).Available)
             return new(503, null, "AI 服務尚未啟用或設定未完成。");
+        var targetDocument = new HtmlDocument();
+        targetDocument.LoadHtml(input.Html);
+        var initializerTargets = targetDocument.DocumentNode.Descendants().Where(IsRuntimeCarouselRoot)
+            .Select(node => new { Id = node.GetAttributeValue("id", ""), Classes = node.GetAttributeValue("class", "") }).ToArray();
+        var expandInitialSources = initializerTargets.Length > 0;
+        var runtimeStyleTargets = targetDocument.DocumentNode.Descendants()
+            .Where(node => node.AncestorsAndSelf().Any(IsRuntimeCarouselRoot) || node.Descendants().Count(IsRuntimeCarouselRoot) == 1)
+            .SelectMany(node => {
+                var id = node.GetAttributeValue("id", "");
+                if (id.Length == 0) return Array.Empty<string>();
+                var classes = node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                return classes.Contains("catalog") ? new[] { "#" + id, "#" + id + " > .template" } : new[] { "#" + id };
+            }).Distinct().ToArray();
+        var runtimeLayoutTargets = targetDocument.DocumentNode.Descendants().Where(IsRuntimeLayoutTarget)
+            .SelectMany(node => {
+                var id = node.GetAttributeValue("id", "");
+                if (id.Length == 0) return Array.Empty<string>();
+                return node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog")
+                    ? new[] { "#" + id, "#" + id + " > .template" } : new[] { "#" + id };
+            }).Distinct().ToArray();
+        await input.ReportAsync("resources", expandInitialSources ? "已辨識初始化元件，正在準備相關配置來源" : "正在讀取畫布資源與功能分析紀錄", null, cancellationToken);
+        CanvasKnowledgeContext? discovered = knowledge == null ? null : await knowledge.PrepareAsync(input, expandInitialSources, cancellationToken);
+        await input.ReportAsync("structure", "正在整理目前選取範圍與結構", null, cancellationToken);
 
-        // A precise size command does not need model-generated HTML/CSS. The controller
-        // has already checked site/editor permissions; readiness remains required above.
         if (input.AutoDetect && input.Scope != "new") input.PreserveContent = true;
-        var localPresentation = TryPresentSelectedPhrase(input);
-        if (localPresentation != null) { input.ModelCalls = 0; return localPresentation; }
-        var fontResize = TryResizeSelectedText(input);
-        if (fontResize != null) return fontResize;
-        var phraseFormat = TryFormatSelectedPhrase(input);
-        if (phraseFormat != null) return phraseFormat;
-        var phraseLink = TryLinkSelectedPhrase(input);
-        if (phraseLink != null) { input.ModelCalls = 0; return phraseLink; }
-        var textReplacement = TryReplaceSelectedText(input);
-        if (textReplacement != null) return textReplacement;
 
         JsonElement styleContext;
         JsonElement history;
@@ -114,11 +111,11 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
             history = JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(input.History) ? "[]" : input.History);
         }
         catch (JsonException) { return new(422, null, "目前樣式資訊格式不正確，請重新整理編輯器。"); }
-        var targetDocument = new HtmlDocument();
-        targetDocument.LoadHtml(input.Html);
         var allowedSelectors = targetDocument.DocumentNode.Descendants()
             .Select(node => node.GetAttributeValue("id", "")).Where(id => !string.IsNullOrEmpty(id))
             .Select(id => "#" + id).Distinct().ToArray();
+        if (input.Scope == "selected" && input.SelectedId.Length > 0 && !allowedSelectors.Contains("#" + input.SelectedId))
+            return new(400, null, "目前選取目標已變更，請重新選取區塊後重試。");
         var selectedTarget = input.Scope == "selected" ? new {
             Text = HtmlEntity.DeEntitize(targetDocument.DocumentNode.InnerText),
             TextElements = targetDocument.DocumentNode.Descendants()
@@ -130,105 +127,161 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
                         .Select(child => HtmlEntity.DeEntitize(child.InnerText)))
                 }).ToArray()
         } : null;
-        var context = JsonSerializer.Serialize(new {
-            input.Scope, input.Html, Css = input.Scope == "selected" ? null : input.Css,
-            History = history, input.Prompt, input.PreserveContent, input.AutoDetect,
-            StyleContext = styleContext, input.WebsiteLocale, AllowedSelectors = allowedSelectors,
+        var context = SerializeModelContext(new {
+            ComponentExecution = new {
+                InitializerTargets = initializerTargets,
+                RuntimeStyleTargets = runtimeStyleTargets,
+                RuntimeLayoutTargets = runtimeLayoutTargets,
+                ClassOnlyContract = "For class-only configuration changes return classChanges (targetId/remove/add), html empty, styles empty. The server retains original markup. Select actual supported tokens from ResourceKnowledge; if insufficient request source analysis. This does not authorize unrelated text/content changes."
+            },
+            input.Scope, input.Html, Css = input.Scope == "selected" ? input.Css[..Math.Min(input.Css.Length, 8000)] : input.Css,
+            CssTruncated = input.Scope == "selected" && input.Css.Length > 8000,
+            History = history, input.Prompt, input.PreserveContent, input.AutoDetect, input.SelectedId,
+            StyleContext = styleContext, input.WebsiteLocale, input.ReplyLocale, input.BrowserLocale, input.ConversationLocale,
+            input.AvailableSettings,
+            ResourceKnowledge = discovered,
+            AllowedSelectors = allowedSelectors.Concat(targetDocument.DocumentNode.Descendants()
+                .Where(node => node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog"))
+                .Select(node => "#" + node.GetAttributeValue("id", "") + " > .template")
+                .Where(selector => CanvasAiStyleNormalizer.IsDirectoryItemsSelector(selector, input.Html))).ToArray(),
+            EditorStructure = input.Scope == "selected" ? BuildEditorStructure(targetDocument) : null,
+            TargetAliases = input.Scope == "selected" ? BuildTargetAliases(input.Html, input.SelectedId) : null,
+            ContextPriority = new[] { "WebsiteLocale for HTML; ReplyLocale for UI messages", "current Prompt and SelectedId", "current Html and EditorStructure", "current Css and StyleContext", "History for follow-up intent only" },
             AllowedCssProperties = AllowedCssProperties.Split(' '),
             SelectedTarget = selectedTarget
         });
-        // Parallel limits each message to 32000 characters and the full request to 256 KiB.
-        if (context.Length > 32000) return new(400, null, "畫布或對話太長，請選取較小區塊或清除對話後重試。");
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(Math.Clamp(configuration.GetValue<int?>("ParallelAi:TimeoutSeconds") ?? 600, 10, 600)));
-        try
-        {
-            var response = await client.ChatAsync(settings,
-                new(input.Scope == "selected" ? SelectedInstructions : Instructions, context, input.WebsiteLocale, input.Html), timeout.Token);
-            input.ModelCalls = response.ModelCalls;
-            if (response.Status != 200) return new(response.Status, null, response.Message);
-            var content = response.Content ?? "";
-            if (content.StartsWith("```"))
-            {
-                var start = content.IndexOf('\n');
-                var end = content.LastIndexOf("```", StringComparison.Ordinal);
-                if (start >= 0 && end > start) content = content[(start + 1)..end].Trim();
-            }
-            using var result = JsonDocument.Parse(content);
-            if (result.RootElement.TryGetProperty("clarification", out var clarification) &&
-                clarification.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(clarification.GetString()))
-            {
-                var question = clarification.GetString()!;
-                return new(422, null, question[..Math.Min(question.Length, 500)]) { NeedsClarification = true };
-            }
-            if (input.AutoDetect)
-            {
-                if (!result.RootElement.TryGetProperty("editMode", out var mode) ||
-                    mode.ValueKind != JsonValueKind.String || mode.GetString() is not ("style" or "content"))
-                    return new(422, null, "AI 未回傳有效的工作判斷，未修改畫布。請重新描述需求。");
-                input.PreserveContent = mode.GetString() == "style";
-            }
-            var proposedHtml = result.RootElement.TryGetProperty("html", out var htmlElement) ? htmlElement.GetString() : null;
-            var hasTextStyles = result.RootElement.TryGetProperty("textStyles", out var proposedTextStyles) &&
-                proposedTextStyles.ValueKind == JsonValueKind.Array && proposedTextStyles.GetArrayLength() > 0;
-            // A local text-style patch with no rewritten HTML is inherently a style
-            // operation. In auto mode its payload is stronger evidence than editMode.
-            if (input.AutoDetect && input.Scope == "selected" && hasTextStyles &&
-                (string.IsNullOrWhiteSpace(proposedHtml) || proposedHtml == input.Html))
-                input.PreserveContent = true;
-            var html = input.PreserveContent ? input.Html : proposedHtml;
-            if (input.Scope == "selected" && IsPresentationRequest(input.Prompt) && !SameText(input.Html, html ?? ""))
-                return new(422, null, "AI 回覆改動了未要求變更的文字，已保留原區塊。");
-            var summary = result.RootElement.TryGetProperty("summary", out var s) ? s.GetString() : "已產生畫布修改";
-            if (string.IsNullOrWhiteSpace(html) || html.Length > 64000 || (!input.PreserveContent && !IsSafeFragment(html)))
-                return new(422, null, "AI 回覆包含不支援或不安全的 HTML，未修改畫布。請簡化指令後重試。");
-            var message = summary ?? "已產生畫布修改";
-            var styles = result.RootElement.TryGetProperty("styles", out var styleElement)
-                ? JsonSerializer.Deserialize<List<CanvasAiStyle>>(styleElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                : [];
-            var textStyles = result.RootElement.TryGetProperty("textStyles", out var textStyleElement)
-                ? JsonSerializer.Deserialize<List<CanvasAiTextStyle>>(textStyleElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                : [];
-            var normalizedHtml = html;
-            if (!CanvasAiStyleNormalizer.TryNormalize(styles, html, out normalizedHtml, out var normalizedStyles))
-                return new(422, null, "AI 回覆的樣式無法對應到目前修改區塊，未修改畫布。");
-            html = normalizedHtml;
-            styles = normalizedStyles;
-            if (!AreSafeStyles(styles, html, out var cssFailure))
-            {
-                return new(422, null, "AI CSS 未通過：" + cssFailure + "未修改畫布。");
-            }
-            var htmlChanged = html != (input.PreserveContent ? input.Html : proposedHtml);
-            if (textStyles == null || textStyles.Count > 20)
-                return new(422, null, "AI 局部文字樣式格式不正確，未修改畫布。");
-            if (textStyles.Count > 0)
-            {
-                if (!input.PreserveContent || input.Scope != "selected")
-                    return new(422, null, input.AutoDetect
-                        ? "AI 同時回傳內容重寫與局部文字樣式，格式互相衝突，未修改畫布。"
-                        : "局部文字樣式請使用目前選取區塊與只調整樣式模式。");
-                if (!IsSafeFragment(input.Html, out var markupFailure))
-                    return new(422, null, "選取區塊：" + markupFailure);
-                if (!TryApplyTextStyles(textStyles, html, out var markedHtml, out var textRules, out var failure))
-                    return new(422, null, failure);
-                html = markedHtml;
-                styles.AddRange(textRules);
-                htmlChanged = true;
-            }
-            if (styles.Count > 100 || !AreSafeStyles(styles, html))
-                return new(422, null, "合併後的 CSS 超出範圍限制，未修改畫布。");
-            if (input.PreserveContent && styles.Count == 0)
-                return new(422, null, "AI 未提供 CSS 修改，已保留原文與樣式。請重新描述需求。");
-            return new(200, html, message[..Math.Min(message.Length, 500)]) { Styles = styles, HtmlChanged = htmlChanged };
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        { return new(504, null, "AI 回覆逾時，請稍後重試。"); }
-        catch (HttpRequestException) { return new(502, null, "無法連線至 AI 服務。"); }
-        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException)
-        { return new(422, null, "AI 回覆格式不正確，未修改畫布。請重新描述需求。"); }
+        return await PlanAndValidate(input, settings, context, timeout.Token);
     }
 
-    internal static async Task<string> ReadCanvasFailure(HttpResponseMessage response, CancellationToken cancellationToken)
+    private static CanvasAiResult ValidatePlan(CanvasAiRequest input, string content)
+    {
+        if (input.Scope == "selected") content = ResolveTargetAliases(input, content);
+        using var result = JsonDocument.Parse(content);
+        if (result.RootElement.TryGetProperty("needsSourceAnalysis", out var discovery) && discovery.ValueKind == JsonValueKind.True)
+            return new(422, null, "Re-read expanded ResourceKnowledge and its unavailable/truncated status. Analyze the current source before proposing edits or claiming unsupported options.") { FailureCode = "knowledge" };
+        if (result.RootElement.TryGetProperty("clarification", out var clarification) &&
+            clarification.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(clarification.GetString()))
+        {
+            var question = clarification.GetString()!;
+            if (!TryReadSettingsActions(input, result.RootElement, input.Html, out var settingsActions))
+                return new(422, null, "Settings actions must use an available capability and an actual compatible target in the current editable fragment.");
+            return new(422, null, question[..Math.Min(question.Length, 500)]) { NeedsClarification = true, SettingsActions = settingsActions };
+        }
+        if (input.AutoDetect)
+        {
+            if (!result.RootElement.TryGetProperty("editMode", out var mode) ||
+                mode.ValueKind != JsonValueKind.String || mode.GetString() is not ("style" or "content"))
+                return new(422, null, "AI 未回傳有效的工作判斷，未修改畫布。請重新描述需求。");
+            input.PreserveContent = mode.GetString() == "style";
+        }
+        var proposedHtml = result.RootElement.TryGetProperty("html", out var htmlElement) ? htmlElement.GetString() : null;
+        var hasTextStyles = result.RootElement.TryGetProperty("textStyles", out var proposedTextStyles) &&
+            proposedTextStyles.ValueKind == JsonValueKind.Array && proposedTextStyles.GetArrayLength() > 0;
+        // A local text-style patch with no rewritten HTML is inherently a style
+        // operation. In auto mode its payload is stronger evidence than editMode.
+        if (input.AutoDetect && input.Scope == "selected" && hasTextStyles &&
+            (string.IsNullOrWhiteSpace(proposedHtml) || proposedHtml == input.Html))
+            input.PreserveContent = true;
+        var html = input.PreserveContent ? input.Html : proposedHtml;
+        if (input.PreserveContent && !string.IsNullOrWhiteSpace(proposedHtml) && proposedHtml != input.Html)
+            return new(422, null, "Style plans must return empty html and target existing IDs using styles/textStyles; HTML changes are not applied.");
+        if (input.Scope == "selected" && !input.PreserveContent && !PreservesImages(input.Html, html ?? ""))
+            return new(422, null, "The content plan loses existing images. Preserve the original images; layout changes must use style operations, not replacement HTML.");
+        if (input.Scope == "selected" && !input.PreserveContent && !PreservesLinkConversionText(input, html ?? ""))
+            return new(422, null, "A link conversion must preserve the original selected element ID and its complete visible text, including nested formatting. Do not replace it with destination placeholders or empty data-text. Return the unchanged wording inside a and use settingsActions for its missing destination.") { FailureCode = "link-text" };
+        var summary = result.RootElement.TryGetProperty("summary", out var s) ? s.GetString() : "已產生畫布修改";
+        if (string.IsNullOrWhiteSpace(html) || html.Length > 64000)
+            return new(422, null, "AI 回覆包含不支援或不安全的 HTML，未修改畫布。請簡化指令後重試。");
+        if (!input.PreserveContent && HasRuntimeClassChange(input.Html, html))
+        {
+            if (!TrySourceBackedClassEdit(input, html, out var classFailure))
+                return new(422, null, "Class-only component edit rejected: " + classFailure + " Use classChanges on the original target; do not reproduce or repair its HTML.") { FailureCode = "class-structure" };
+            if (!HasSupportedSourceEvidence(input, result.RootElement))
+                return new(422, null, "The class-only structure is valid, but sourceEvidence does not cite a current ResourceKnowledge key and provided line range. Re-read its actual deployed initializer and cite that range; do not change the markup or replace this operation with Grid." + DescribeMissingClassEvidence(input, html)) { FailureCode = "knowledge" };
+        }
+        if (!input.PreserveContent && !TrySourceBackedClassEdit(input, html) && !IsSafeFragment(html, out var htmlFailure))
+            return new(422, null, "Content HTML rejected: " + htmlFailure + " Return safe complete HTML; link metadata is allowed only on a elements, with safe or empty pending destinations.");
+        var message = summary ?? "已產生畫布修改";
+        var styles = result.RootElement.TryGetProperty("styles", out var styleElement)
+            ? JsonSerializer.Deserialize<List<CanvasAiStyle>>(styleElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            : [];
+        var textStyles = result.RootElement.TryGetProperty("textStyles", out var textStyleElement)
+            ? JsonSerializer.Deserialize<List<CanvasAiTextStyle>>(textStyleElement.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            : [];
+        var normalizedHtml = html;
+        if (!CanvasAiStyleNormalizer.TryNormalize(styles, html, out normalizedHtml, out var normalizedStyles, out var targetFailure))
+            return new(422, null, targetFailure switch {
+                "targets-duplicate-ids" => "The editable HTML has duplicate IDs. Do not invent replacement IDs or remove content; the editor snapshot must be repaired before planning.",
+                "targets-unmatched" => "At least one selector matches no node in the current editable HTML. Re-read current Html/EditorStructure and use actual AllowedSelectors IDs, not names or IDs from History.",
+                "targets-selector-format" => "A selector uses unsupported syntax. Supported: existing #id, static class/tag, descendants, direct children, comma groups and :scope. Return equivalent rules using actual AllowedSelectors IDs.",
+                "targets-rule-format" => "A style entry needs a nonempty selector up to 500 characters and a properties object containing 1 to 40 CSS properties.",
+                _ => "Style rules may contain at most 100 entries and resolve to at most 100 distinct elements. Narrow operations to the current relevant container/items."
+            }) { FailureCode = targetFailure };
+        html = normalizedHtml;
+        styles = normalizedStyles;
+        var structureDocument = new HtmlDocument(); structureDocument.LoadHtml(html);
+        foreach (var rule in styles.Where(rule => HasGridTracks(rule) || HasCarouselFlexLayout(rule)))
+        {
+            var ownerSelector = rule.Selector.Split(' ', 2)[0];
+            var node = structureDocument.DocumentNode.Descendants().FirstOrDefault(n => "#" + n.GetAttributeValue("id", "") == ownerSelector);
+            var swiper = node?.AncestorsAndSelf().FirstOrDefault(IsRuntimeCarouselRoot);
+            // A directory frame can contain the initializer instead of being inside it.
+            // The same owner must guide retries for frame, list and runtime-card targets.
+            var nestedOwners = node?.Descendants().Where(IsRuntimeCarouselRoot).Take(2).ToArray() ?? [];
+            if (swiper == null && nestedOwners.Length == 1) swiper = nestedOwners[0];
+            var carouselList = node?.AncestorsAndSelf().Any(n => n.GetAttributeValue("class", "")
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("swiper-wrapper")) == true;
+            if ((swiper != null || carouselList) && (HasGridTracks(rule) || (node != null && IsRuntimeLayoutTarget(node) && HasCarouselFlexLayout(rule))))
+                return new(422, null, "This target belongs to a JS-driven carousel, including runtime-card selectors. Read ResourceKnowledge for its actual initializer and supported class choices; return an exact class-only content edit on its existing initialization owner" + (swiper == null ? " (the editable boundary must include that owner)" : " #" + swiper.GetAttributeValue("id", "")) + " instead of CSS Grid or Flex layout properties. Changing flex-wrap/justify-content does not configure its slidesPerView. If source evidence is insufficient, set needsSourceAnalysis=true.") { FailureCode = "styles" };
+        }
+        var directoryFrames = structureDocument.DocumentNode.Descendants().Where(n =>
+            n.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog_frame"))
+            .Select(n => "#" + n.GetAttributeValue("id", "")).ToHashSet();
+        if (styles.Any(r => directoryFrames.Contains(r.Selector) && HasGridTracks(r)))
+            return new(422, null, "A catalog_frame is a dynamic directory outer frame, not its card list. Apply columns to the existing .catalog ID, and use its scoped direct .template runtime cards; preserve the frame width, data source and hidden templates.") { FailureCode = "styles" };
+        if (styles.Any(r => HasGridTracks(r) && r.Properties.TryGetValue("display", out var display) && display is not ("grid" or "inline-grid")))
+            return new(422, null, "The plan sets Grid track sizing but explicitly keeps a non-Grid display. Return a consistent existing-layout plan: use Grid with the necessary display, or Flex child widths without Grid-only properties.") { FailureCode = "styles" };
+        AdaptBootstrapGridItems(styles, html);
+        if (!AreSafeStyles(styles, html, out var cssFailure))
+        {
+            return new(422, null, "AI CSS 未通過：" + cssFailure + "未修改畫布。") { FailureCode = "styles" };
+        }
+        var htmlChanged = html != (input.PreserveContent ? input.Html : proposedHtml);
+        if (textStyles == null || textStyles.Count > 20)
+            return new(422, null, "AI 局部文字樣式格式不正確，未修改畫布。");
+        if (textStyles.Count > 0)
+        {
+            if (!input.PreserveContent || input.Scope != "selected")
+                return new(422, null, input.AutoDetect
+                    ? "AI 同時回傳內容重寫與局部文字樣式，格式互相衝突，未修改畫布。"
+                    : "局部文字樣式請使用目前選取區塊與只調整樣式模式。");
+            if (!IsSafeFragment(input.Html, out var markupFailure))
+                return new(422, null, "選取區塊：" + markupFailure);
+            if (!TryApplyTextStyles(textStyles, html, out var markedHtml, out var textRules, out var failure))
+                return new(422, null, failure);
+            html = markedHtml;
+            styles.AddRange(textRules);
+            htmlChanged = true;
+        }
+        if (styles.Count > 100 || !AreSafeStyles(styles, html))
+            return new(422, null, "合併後的 CSS 超出範圍限制，未修改畫布。");
+        if (input.PreserveContent && styles.Count == 0)
+            return new(422, null, "The style plan is empty. Return nonempty styles with actual existing target IDs and changed CSS properties, not just a summary or the JSON schema example.") { FailureCode = "empty" };
+        if (html == input.Html && styles.Count == 0)
+            return new(422, null, "The plan has no changes. Return applicable operations for the current target, or a clarification if the intent is ambiguous.");
+        if (html == input.Html && !HasStyleChanges(styles, input.StyleContext))
+            return new(422, null, "The proposed styles are identical to the observed styles. Plan actual changes for the requested effect or explain ambiguity in clarification.");
+        if (!TryReadSettingsActions(input, result.RootElement, html, out var actions))
+            return new(422, null, "Settings actions must use an available capability and an actual compatible target in the current editable fragment.");
+        return new(200, html, message[..Math.Min(message.Length, 500)]) { Styles = styles, HtmlChanged = htmlChanged, SettingsActions = actions };
+    }
+
+    internal static async Task<string> ReadCanvasFailure(HttpResponseMessage response, CancellationToken token)
+        => (await ReadCanvasFailureDetails(response, token)).Message;
+
+    internal static async Task<CanvasAiProviderFailure> ReadCanvasFailureDetails(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         const string fallback = "AI 修改提案未通過驗證，未修改畫布。請重新描述需求。";
         // Read only a small, known error envelope; never expose upstream text/details.
@@ -241,12 +294,12 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
             if (count == 0) break;
             length += count;
         }
-        if (length == bytes.Length) return fallback;
+        if (length == bytes.Length) return new(fallback);
         try
         {
             using var document = JsonDocument.Parse(bytes.AsMemory(0, length));
             if (!document.RootElement.TryGetProperty("code", out var code) || code.ValueKind != JsonValueKind.String)
-                return fallback;
+                return new(fallback);
             var message = code.GetString() switch {
                 "CanvasLocaleInvalid" => "網站語系格式無法辨識，未修改畫布。請檢查網站語系設定。",
                 "CanvasPlannerOutputInvalid" => "AI 修改提案格式不正確，未修改畫布。請重試。",
@@ -256,7 +309,7 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
                 _ => fallback
             };
             if (!document.RootElement.TryGetProperty("reason", out var reason) || reason.ValueKind != JsonValueKind.String)
-                return message;
+                return new(message);
             var detail = reason.GetString() switch {
                 "MissingHtmlString" => "缺少 HTML 字串欄位",
                 "MissingSummaryString" => "缺少摘要字串欄位",
@@ -264,6 +317,7 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
                 "InvalidStylesArray" => "CSS 規則陣列不正確",
                 "InvalidTextStylesArray" => "局部文字規則陣列不正確",
                 "EmptyProposal" => "模型未提出任何修改",
+                "InvalidCanvasContract" => "提案欄位、型別或數量不符合畫布服務契約",
                 "ExpectedJsonObject" => "回覆不是 JSON 物件",
                 "InvalidJsonSyntaxOrValue" => "JSON 語法或欄位值不正確",
                 "WrongJsonFieldType" => "JSON 欄位型別不正確",
@@ -279,289 +333,54 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
                 "HtmlTooLong" => "HTML 超過長度限制",
                 _ => ""
             };
-            return detail.Length == 0 ? message : message + "原因：" + detail + "。";
+            return detail.Length == 0 ? new(message) : new(message + "原因：" + detail + "。", reason.GetString());
         }
-        catch (JsonException) { return fallback; }
+        catch (JsonException) { return new(fallback); }
     }
 
-    private static bool SameText(string original, string proposed)
+    internal static string SerializeModelContext(object payload)
     {
-        var before = new HtmlDocument(); before.LoadHtml(original);
-        var after = new HtmlDocument(); after.LoadHtml(proposed);
-        return HtmlEntity.DeEntitize(before.DocumentNode.InnerText) == HtmlEntity.DeEntitize(after.DocumentNode.InnerText);
-    }
+        var context = JsonSerializer.SerializeToNode(payload)!.AsObject();
+        // This JSON is model-message text, never inserted into a page. The HTTP envelope
+        // is still serialized normally. Avoid six-character escapes for every Chinese glyph.
+        var options = new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+        string Serialize() => context.ToJsonString(options);
+        var result = Serialize();
+        if (result.Length <= 32000) return result;
 
-    private static bool IsPresentationRequest(string prompt) =>
-        Regex.IsMatch(prompt, "放大|縮小|變大|變小|字級|字體|顏色|變色|粗體|斜體|底線|連結") &&
-        !Regex.IsMatch(prompt, "改寫|重寫|刪除|移除|替換|文案|新增文字|增加文字|修改文字|更換文字");
-
-    private static CanvasAiResult? TryPresentSelectedPhrase(CanvasAiRequest input)
-    {
-        if (input.Scope != "selected" || !input.PreserveContent) return null;
-        var command = Regex.Match(input.Prompt.Trim(),
-            @"\A(?:請\s*)?(?:(?:協助我|幫我)\s*)?(?:把|將)?\s*(?<text>.+?)(?<count>[一二兩三四五六七八九十1-9])個字\s*(?<actions>[\s\S]+)\z");
-        if (!command.Success) return null;
-        var target = command.Groups["text"].Value.Trim().Trim('「', '」', '『', '』', '"', '\'');
-        var number = command.Groups["count"].Value;
-        var count = number == "兩" ? 2 : int.TryParse(number, out var digit) ? digit : "一二三四五六七八九十".IndexOf(number, StringComparison.Ordinal) + 1;
-        if (target.Length != count) return null;
-        var properties = new Dictionary<string, string>();
-        var link = false;
-        foreach (var raw in Regex.Split(command.Groups["actions"].Value, @"[\r\n，,、；;]+"))
+        // Keep the complete editable HTML, request, selectors and recent conversation.
+        // Drop optional reference data as whole JSON values, never slice serialized JSON.
+        context["Css"] = null;
+        context["CssTruncated"] = true;
+        result = Serialize();
+        if (result.Length <= 32000) return result;
+        context["SelectedTarget"] = null; // Its text and elements already exist in Html.
+        context["RejectedProposal"] = null; // ValidationFeedback remains available for replanning.
+        result = Serialize();
+        if (result.Length <= 32000) return result;
+        if (context["ResourceKnowledge"] is System.Text.Json.Nodes.JsonObject knowledgeContext && knowledgeContext["Sources"] is System.Text.Json.Nodes.JsonArray sources)
         {
-            var clause = raw.Trim().TrimEnd('。', '！', '!');
-            if (clause.Length == 0) continue;
-            if (Regex.IsMatch(clause, @"\A(?:放大|變大|加大)(?:(?:一|1)級)?\z")) properties["font-size"] = "calc(1em + 4px)";
-            else if (Regex.IsMatch(clause, @"\A(?:縮小|變小)(?:(?:一|1)級)?\z")) properties["font-size"] = "calc(1em - 4px)";
-            else if (Regex.IsMatch(clause, @"\A(?:修改為|換成|改成|變成|設為|設定為|加上|新增)(?:超連結|連結)\z")) link = true;
-            else
+            knowledgeContext["Truncated"] = true;
+            while (sources.Count > 1 && result.Length > 32000)
             {
-                var color = Regex.Match(clause, @"\A(?:文字|字體)?顏色\s*(?:變成|改成|設為|設定為|改為|變為)?\s*(?<value>\#[a-fA-F0-9]{6}|\#[a-fA-F0-9]{3})\z");
-                if (!color.Success) return null;
-                properties["color"] = color.Groups["value"].Value;
+                sources.RemoveAt(sources.Count - 1);
+                result = Serialize();
+            }
+            if (sources.Count == 1 && result.Length > 32000 && sources[0]?["Evidence"] is System.Text.Json.Nodes.JsonArray evidence)
+                while (evidence.Count > 1 && result.Length > 32000) { evidence.RemoveAt(evidence.Count - 1); result = Serialize(); }
+        }
+        if (result.Length <= 32000) return result;
+        if (context["StyleContext"] is JsonArray styles)
+        {
+            while (styles.Count > 1 && result.Length > 32000)
+            {
+                styles.RemoveAt(styles.Count - 1);
+                result = Serialize();
             }
         }
-        if (!link && properties.Count == 0) return null;
-        if (link)
-        {
-            var result = TryLinkSelectedPhrase(new CanvasAiRequest { Scope = "selected", Html = input.Html, Prompt = target + "改成連結" });
-            if (result == null || result.Status != 200) return result;
-            foreach (var rule in result.Styles)
-                foreach (var property in properties) rule.Properties[property.Key] = property.Value;
-            return result with { Message = $"已調整「{target}」並設為連結，保留其他文字；網址可稍後設定。" };
-        }
-        if (!IsSafeFragment(input.Html, out var markupFailure)) return new(422, null, "選取區塊：" + markupFailure);
-        if (!TryApplyTextStyles([new() { Text = target, Properties = properties }], input.Html, out var html, out var rules, out var failure))
-            return new(422, null, failure);
-        return new(200, html, $"已調整「{target}」，保留其他文字。") { HtmlChanged = true, Styles = rules };
-    }
-
-    private static CanvasAiResult? TryResizeSelectedText(CanvasAiRequest input)
-    {
-        if (!input.PreserveContent || input.Scope != "selected") return null;
-        var command = Regex.Match(input.Prompt.Trim(),
-            @"\A(?:請\s*)?(?:目前選取的|選取區塊的|選取的)?(?:文字|字體|字級)\s*(?<direction>放大|縮小|增大|減小|大|小)\s*(?:一|1)級[。！!\s]*\z");
-        if (!command.Success) return null;
-        var direction = command.Groups["direction"].Value;
-        var step = direction is "縮小" or "減小" or "小" ? -4m : 4m;
-        try
-        {
-            var context = JsonSerializer.Deserialize<List<CanvasAiStyle>>(input.StyleContext,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (context == null || context.Count > 40)
-                return new(422, null, "未取得目前字級，請重新選取文字後再試。");
-            var doc = new HtmlDocument();
-            doc.LoadHtml(input.Html);
-            // Target nodes with their own text: an outer 16px container must not replace
-            // a nested bold/italic title's actual 24px baseline.
-            var textIds = doc.DocumentNode.Descendants()
-                .Where(node => node.NodeType == HtmlNodeType.Element && node.ChildNodes.Any(child =>
-                    child.NodeType == HtmlNodeType.Text && !string.IsNullOrWhiteSpace(HtmlEntity.DeEntitize(child.InnerText))))
-                .Select(node => "#" + node.GetAttributeValue("id", "")).ToHashSet();
-            var rules = new List<CanvasAiStyle>();
-            foreach (var item in context)
-            {
-                if (item == null || !textIds.Contains(item.Selector) || item.Properties == null ||
-                    !item.Properties.TryGetValue("font-size", out var fontSize) || fontSize == null ||
-                    !fontSize.EndsWith("px", StringComparison.OrdinalIgnoreCase) ||
-                    !decimal.TryParse(fontSize[..^2], NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var size) || size <= 0)
-                    continue;
-                rules.Add(new CanvasAiStyle {
-                    Selector = item.Selector,
-                    Properties = new() { ["font-size"] = Math.Clamp(size + step, 1m, 1000m).ToString(CultureInfo.InvariantCulture) + "px" }
-                });
-            }
-            if (rules.Count == 0 || !AreSafeStyles(rules, input.Html))
-                return new(422, null, "無法確認所選文字的字級，請選取含文字的區塊後再試。");
-            return new(200, input.Html, step > 0 ? "文字已放大一級，保留原文、粗體與斜體。" : "文字已縮小一級，保留原文、粗體與斜體。") { Styles = rules };
-        }
-        catch (JsonException) { return new(422, null, "目前樣式資訊格式不正確，請重新整理編輯器。"); }
-    }
-
-    private static CanvasAiResult? TryFormatSelectedPhrase(CanvasAiRequest input)
-    {
-        if (!input.PreserveContent || input.Scope != "selected") return null;
-        var prompt = input.Prompt.Trim();
-        var command = Regex.Match(prompt,
-            @"\A(?<text>.+?)(?<count>[一二兩三四五六七八九十1-9])個字(?<actions>.+)\z");
-        if (!command.Success) return null;
-        var doc = new HtmlDocument();
-        doc.LoadHtml(input.Html);
-        var originalText = HtmlEntity.DeEntitize(doc.DocumentNode.InnerText);
-        var target = command.Groups["text"].Value.Trim().Trim('「', '」', '『', '』', '"', '\'');
-        if (!originalText.Contains(target, StringComparison.Ordinal))
-            target = Regex.Replace(target, @"\A(?:請|幫我|將|把|讓)+", "");
-        if (!originalText.Contains(target, StringComparison.Ordinal))
-            return null; // Compound/unclear instructions require model interpretation.
-        var number = command.Groups["count"].Value;
-        var count = number == "兩" ? 2 : int.TryParse(number, out var digit) ? digit : "一二三四五六七八九十".IndexOf(number, StringComparison.Ordinal) + 1;
-        if (target.Length != count) return null;
-        var properties = new Dictionary<string, string>();
-        var clauses = Regex.Split(command.Groups["actions"].Value.Trim('。', '！', '!'), @"[，,、；;]");
-        foreach (var raw in clauses)
-        {
-            var clause = Regex.Replace(raw.Trim(), @"\A(?:改為|改成|變為|變成|設定為|設為)", "");
-            if (clause.Length == 0) continue;
-            if (clause == "斜體") properties["font-style"] = "italic";
-            else if (clause == "粗體") properties["font-weight"] = "bold";
-            else
-            {
-                var size = Regex.Match(clause,
-                    @"\A(?:字體|字級|文字|體)?(?:比其他文字|跟其他文字)?(?<direction>放大|縮小|大|小)(?<amount>一|1|半)級\z");
-                if (!size.Success) return null; // Other instructions remain the AI's responsibility.
-                var delta = size.Groups["amount"].Value == "半" ? 2 : 4;
-                var sign = size.Groups["direction"].Value is "縮小" or "小" ? "-" : "+";
-                properties["font-size"] = $"calc(1em {sign} {delta}px)";
-            }
-        }
-        if (properties.Count == 0) return null;
-        if (!IsSafeFragment(input.Html, out var markupFailure))
-            return new(422, null, "選取區塊：" + markupFailure);
-        var patches = new List<CanvasAiTextStyle>();
-        patches.Add(new CanvasAiTextStyle { Text = target, Properties = properties });
-        if (!TryApplyTextStyles(patches,
-                input.Html, out var html, out var rules, out var failure))
-            return new(422, null, failure);
-        var message = $"已調整「{target}」的指定樣式，其餘原文保持不變。";
-        return new(200, html, message) { Styles = rules, HtmlChanged = true };
-    }
-
-    private static CanvasAiResult? TryReplaceSelectedText(CanvasAiRequest input)
-    {
-        if (input.Scope != "selected") return null;
-        var command = Regex.Match(input.Prompt.Trim(),
-            @"\A(?:請\s*)?(?<text>.+?)(?:(?<count>[一二兩三四五六七八九十1-9])個字)?\s*(?:更換成|替換成|換成)\s*(?<replacement>.+)\z");
-        if (!command.Success) return null;
-        var target = command.Groups["text"].Value.Trim().Trim('「', '」', '『', '』', '"', '\'');
-        var replacement = command.Groups["replacement"].Value.Trim().Trim('「', '」', '『', '』', '"', '\'');
-        if (target.Length == 0 || replacement.Length == 0) return null;
-        // Do not interpret formatting requests such as "顏色改為紅色" as text edits.
-        var doc = new HtmlDocument();
-        doc.LoadHtml(input.Html);
-        var nodes = doc.DocumentNode.Descendants().Where(node => node.NodeType == HtmlNodeType.Text).ToList();
-        var originalText = string.Concat(nodes.Select(node => HtmlEntity.DeEntitize(node.InnerText)));
-        var start = originalText.IndexOf(target, StringComparison.Ordinal);
-        if (start < 0) return null;
-        if (input.PreserveContent && !input.AutoDetect)
-            return new(422, null, "更換文字請先將修改方式切換為「調整內容與排版」，再送出相同需求。");
-        var number = command.Groups["count"].Value;
-        if (number.Length > 0)
-        {
-            var count = number == "兩" ? 2 : int.TryParse(number, out var digit) ? digit : "一二三四五六七八九十".IndexOf(number, StringComparison.Ordinal) + 1;
-            if (target.Length != count)
-                return new(422, null, "指定字數與原文不符，未修改畫布。");
-        }
-        if (originalText.IndexOf(target, start + target.Length, StringComparison.Ordinal) >= 0)
-            return new(422, null, "指定文字出現多次，請縮小選取範圍後更換內容。");
-        if (!IsSafeFragment(input.Html, out var markupFailure))
-            return new(422, null, "選取區塊：" + markupFailure);
-        var linkText = doc.DocumentNode.Descendants("a")
-            .Where(node => node.Attributes["data-text"] != null)
-            .ToDictionary(node => node, node => HtmlEntity.DeEntitize(node.InnerText));
-        var offset = 0;
-        var cursor = 0;
-        foreach (var node in nodes)
-        {
-            var text = HtmlEntity.DeEntitize(node.InnerText);
-            var from = Math.Max(start, offset) - offset;
-            var to = Math.Min(start + target.Length, offset + text.Length) - offset;
-            offset += text.Length;
-            if (from >= to) continue;
-            // Retain every element, ID and link, even when the phrase spans text nodes.
-            var length = offset >= start + target.Length ? replacement.Length - cursor
-                : Math.Min(to - from, replacement.Length - cursor);
-            node.InnerHtml = HtmlEntity.Entitize(text[..from] + replacement.Substring(cursor, length) + text[to..]);
-            cursor += length;
-        }
-        foreach (var pair in linkText)
-        {
-            var text = HtmlEntity.DeEntitize(pair.Key.InnerText);
-            if (text != pair.Value) pair.Key.SetAttributeValue("data-text", HtmlEntity.Entitize(text));
-        }
-        var html = doc.DocumentNode.InnerHtml;
-        var expectedText = originalText[..start] + replacement + originalText[(start + target.Length)..];
-        if (html.Length > 64000 || !IsSafeFragment(html) ||
-            HtmlEntity.DeEntitize(doc.DocumentNode.InnerText) != expectedText)
-            return new(422, null, "替換後的 HTML 或文字驗證未通過，未修改畫布。");
-        input.PreserveContent = false;
-        return new(200, html, $"已將「{target}」換成「{replacement}」，保留既有樣式與連結。") { HtmlChanged = true };
-    }
-
-    private static CanvasAiResult? TryLinkSelectedPhrase(CanvasAiRequest input)
-    {
-        if (input.Scope != "selected") return null;
-        var command = Regex.Match(input.Prompt.Trim(),
-            @"\A(?:請\s*)?(?<text>.+?)\s*(?:設定|設置|設為|加上|新增)(?:超連結|連結)(?:到|至|為)?\s*(?<url>\S+)\z");
-        var pendingLink = false;
-        if (!command.Success)
-        {
-            command = Regex.Match(input.Prompt.Trim(),
-                @"\A(?:請\s*)?(?:把|將)?\s*(?<text>.+?)(?:(?<count>[一二兩三四五六七八九十1-9])個字)?\s*(?:換成|改成|變成|設為|設定為|加上|新增)(?:超連結|連結)(?:[\s，,；;]+(?:文字|字體)?顏色\s*(?:變成|改成|設為|設定為|改為|變為)?\s*(?<color>\#[a-fA-F0-9]{6}|\#[a-fA-F0-9]{3}))?\s*[。！!]?\z");
-            if (!command.Success) return null;
-            pendingLink = true;
-        }
-        var target = command.Groups["text"].Value.Trim().Trim('「', '」', '『', '』', '"', '\'');
-        if (pendingLink && command.Groups["count"].Success)
-        {
-            var number = command.Groups["count"].Value;
-            var expected = number == "兩" ? 2 : int.TryParse(number, out var digit) ? digit : "一二三四五六七八九十".IndexOf(number, StringComparison.Ordinal) + 1;
-            if (target.Length != expected) return null;
-        }
-        var url = command.Groups["url"].Value;
-        Uri? uri = null;
-        if (url.StartsWith("www.", StringComparison.OrdinalIgnoreCase)) url = "https://" + url;
-        if (!pendingLink && (url.Any(char.IsControl) || url.Contains('\\') ||
-            !Uri.TryCreate(url, UriKind.Absolute, out uri) || uri.Scheme != "https" ||
-            string.IsNullOrEmpty(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo)))
-            return new(422, null, "請提供有效的 HTTPS 網址，例如 https://www.c8shop.com.tw。");
-        if (!IsSafeFragment(input.Html, out var markupFailure))
-            return new(422, null, "選取區塊：" + markupFailure);
-        var doc = new HtmlDocument();
-        doc.LoadHtml(input.Html);
-        var nodes = doc.DocumentNode.Descendants().Where(node => node.NodeType == HtmlNodeType.Text).ToList();
-        var originalText = string.Concat(nodes.Select(node => HtmlEntity.DeEntitize(node.InnerText)));
-        var start = originalText.IndexOf(target, StringComparison.Ordinal);
-        if (target.Length == 0 || start < 0)
-            return new(422, null, "指定的文字不在目前選取區塊中，請確認原文與選取範圍。");
-        if (originalText.IndexOf(target, start + target.Length, StringComparison.Ordinal) >= 0)
-            return new(422, null, "指定文字出現多次，請縮小選取範圍後設定連結。");
-        var linkIds = new List<string>();
-        var offset = 0;
-        foreach (var node in nodes)
-        {
-            var text = HtmlEntity.DeEntitize(node.InnerText);
-            var from = Math.Max(start, offset) - offset;
-            var to = Math.Min(start + target.Length, offset + text.Length) - offset;
-            offset += text.Length;
-            if (from >= to) continue;
-            // Avoid nested anchors or changing links on words outside the request.
-            if (node.Ancestors("a").Any())
-                return new(422, null, "指定文字已有連結，請使用連結編輯功能修改網址。");
-            if (from > 0)
-                node.ParentNode.InsertBefore(doc.CreateTextNode(HtmlEntity.Entitize(text[..from])), node);
-            var link = doc.CreateElement("a");
-            if (uri != null) link.SetAttributeValue("href", uri.AbsoluteUri);
-            var id = "ai-link-" + Guid.NewGuid().ToString("N");
-            link.SetAttributeValue("id", id);
-            linkIds.Add(id);
-            link.AppendChild(doc.CreateTextNode(HtmlEntity.Entitize(text[from..to])));
-            node.ParentNode.InsertBefore(link, node);
-            if (to < text.Length)
-                node.ParentNode.InsertBefore(doc.CreateTextNode(HtmlEntity.Entitize(text[to..])), node);
-            node.Remove();
-        }
-        var html = doc.DocumentNode.InnerHtml;
-        if (html.Length > 64000 || !IsSafeFragment(html) ||
-            HtmlEntity.DeEntitize(doc.DocumentNode.InnerText) != originalText)
-            return new(422, null, "連結 HTML 或原文驗證未通過，未修改畫布。");
-        // Keep the site's anchor defaults from overriding the existing text styling.
-        var rules = linkIds.Select(id => new CanvasAiStyle {
-                Selector = "#" + id,
-                Properties = new() { ["color"] = command.Groups["color"].Success ? command.Groups["color"].Value : "inherit", ["font-size"] = "inherit", ["text-decoration"] = "inherit" }
-            }).ToList();
-        if (rules.Count > 100 || !AreSafeStyles(rules, html))
-            return new(422, null, "連結樣式超出範圍限制，未修改畫布。");
-        return new(200, html, uri == null ? $"已將「{target}」設為連結，可稍後設定網址。" : $"已將「{target}」連結至 {uri.AbsoluteUri}，保留原文。") { HtmlChanged = true, Styles = rules };
+        if (result.Length <= 32000) return result;
+        // Never discard a pending clarification or truncate the original HTML to make it fit.
+        throw new AiInputException("選取區塊的完整內容與必要對話超過 AI 單次處理上限，未修改畫布。請改選較小的排列區塊後重試。");
     }
 
     private static bool TryApplyTextStyles(List<CanvasAiTextStyle> patches, string html, out string markedHtml, out List<CanvasAiStyle> rules, out string failure)
@@ -634,9 +453,11 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
             var rule = rules[index];
             var prefix = $"第 {index + 1} 條規則：";
             failure = prefix + "selector 必須是單一 #id，不可使用 class、標籤或複合選擇器。";
-            if (rule?.Selector == null || !Regex.IsMatch(rule.Selector, @"\A#[a-zA-Z_][a-zA-Z0-9_-]*\z")) return false;
+            if (rule?.Selector == null) return false;
+            var directoryItems = CanvasAiStyleNormalizer.IsDirectoryItemsSelector(rule.Selector, html);
+            if (!directoryItems && !Regex.IsMatch(rule.Selector, @"\A#[a-zA-Z_][a-zA-Z0-9_-]*\z")) return false;
             failure = prefix + "指定的 ID 不在目標 HTML 中，請使用 AllowedSelectors 內的 ID。";
-            if (!ids.Contains(rule.Selector[1..])) return false;
+            if (!directoryItems && !ids.Contains(rule.Selector[1..])) return false;
             failure = prefix + "properties 必須包含 1 至 40 個 CSS 屬性。";
             if (rule.Properties == null || rule.Properties.Count is < 1 or > 40) return false;
             foreach (var pair in rule.Properties)
@@ -645,7 +466,7 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
                 if (!allowed.Contains(pair.Key)) return false;
                 failure = prefix + "CSS 值格式不支援；不可含分號、!important、URL 或程式碼。";
                 if (pair.Value == null || pair.Value.Length > 300 ||
-                    !Regex.IsMatch(pair.Value, @"\A[\p{L}0-9\s#%.,()'""/+-]+\z") ||
+                    !Regex.IsMatch(pair.Value, @"\A[\p{L}0-9\s#%.,()'""/*+-]+\z") ||
                     Regex.IsMatch(pair.Value, "url|expression|javascript|import", RegexOptions.IgnoreCase)) return false;
             }
         }
@@ -673,11 +494,14 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
             {
                 var name = attr.Name.ToLowerInvariant();
                 var value = HtmlEntity.DeEntitize(attr.Value).Trim();
+                if (node.Name == "a" && name == "data-link-type" && value == "link") continue;
+                if (node.Name == "a" && name == "data-link-value" && (value.Length == 0 || IsSafeLinkDestination(value))) continue;
                 if (!attributes.Contains(name) && !name.StartsWith("aria-"))
                 { reason = $"不支援 {name} 屬性，未修改畫布。"; return false; }
                 if (name == "srcset") return false; // URL lists require a dedicated parser.
                 if (name is "href" or "src")
                 {
+                    if (node.Name == "a" && name == "href" && value.Length == 0) continue;
                     if (value.Any(char.IsControl) || value.Contains('\\') || value.StartsWith("//")) return false;
                     if (!(value.StartsWith('/') || value.StartsWith('#') ||
                         (Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == "https" && string.IsNullOrEmpty(uri.UserInfo)))) return false;
@@ -686,14 +510,22 @@ public sealed class CanvasAiService(CanvasAiClient client, IConfiguration config
         }
         return true;
     }
+
+    private static bool IsSafeLinkDestination(string value) => !value.Any(char.IsControl) && !value.Contains('\\') && !value.StartsWith("//") &&
+        (value.StartsWith('/') || value.StartsWith('#') ||
+        (Uri.TryCreate(value, UriKind.Absolute, out var uri) && uri.Scheme == "https" && string.IsNullOrEmpty(uri.UserInfo)));
 }
 
 public sealed record CanvasAiResult(int Status, string? Html, string Message)
 {
+    internal string FailureCode { get; init; } = "validation";
     public bool NeedsClarification { get; init; }
     public List<CanvasAiStyle> Styles { get; init; } = [];
     public bool HtmlChanged { get; init; }
+    public List<CanvasAiSettingsAction> SettingsActions { get; init; } = [];
 }
+
+public sealed record CanvasAiSettingsAction(string Kind, string TargetId);
 
 public sealed class CanvasAiTextStyle
 {
@@ -709,10 +541,39 @@ public sealed class CanvasAiStyle
 
 public sealed class CanvasAiRequest
 {
-    [System.Text.Json.Serialization.JsonIgnore]
+    private readonly long traceStarted = System.Diagnostics.Stopwatch.GetTimestamp();
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public Func<CanvasAiTraceEvent, CancellationToken, Task>? TraceObserver { get; set; }
+
+    internal Task ReportAsync(string stage, string message, string? detail, CancellationToken token)
+    {
+        if (TraceObserver == null) return Task.CompletedTask;
+        // Bound each displayed exchange. The UI explicitly marks clipped details.
+        if (detail?.Length > 64000) detail = detail[..64000] + "\n（內容過長，僅顯示前 64,000 字元）";
+        return TraceObserver(new(stage, message, DateTimeOffset.UtcNow,
+            (long)System.Diagnostics.Stopwatch.GetElapsedTime(traceStarted).TotalMilliseconds, detail), token);
+    }
+
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public List<CanvasAiPlanDiagnostic> PlanDiagnostics { get; } = [];
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public int? ModelCalls { get; set; }
-    [System.Text.Json.Serialization.JsonIgnore]
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public string WebsiteLocale { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public string ReplyLocale { get; set; } = "";
+    public string BrowserLocale { get; set; } = "";
+    public string ConversationLocale { get; set; } = "";
+    public string[] AvailableSettings { get; set; } = [];
+    public string[] Resources { get; set; } = [];
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public string MemoryUserId { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public Dictionary<string, Guid?> MemoryVersions { get; set; } = new(StringComparer.Ordinal);
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public string PermissionScope { get; set; } = "";
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public HashSet<string> KnowledgeClasses { get; set; } = new(StringComparer.Ordinal);
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public HashSet<string> KnowledgeSourceKeys { get; set; } = new(StringComparer.Ordinal);
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public List<CanvasKnowledgeSource> KnowledgeSources { get; set; } = [];
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public string[] SourceQueries { get; set; } = [];
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore] public bool KnowledgeExpanded { get; set; }
     public bool AutoDetect { get; set; }
     public bool PreserveContent { get; set; } = true;
     public string StyleContext { get; set; } = "";
@@ -721,7 +582,12 @@ public sealed class CanvasAiRequest
     public string Action { get; set; } = "";
     public string Scope { get; set; } = "";
     public string Prompt { get; set; } = "";
+    public string SelectedId { get; set; } = "";
     public string Html { get; set; } = "";
     public string Css { get; set; } = "";
     public string History { get; set; } = "";
 }
+
+public sealed record CanvasAiPlanDiagnostic(int Attempt, string Category, string SelectedId, string[] AvailableIds, string[] ProposedSelectors, string Reason);
+
+public sealed record CanvasAiProviderFailure(string Message, string? Reason = null);

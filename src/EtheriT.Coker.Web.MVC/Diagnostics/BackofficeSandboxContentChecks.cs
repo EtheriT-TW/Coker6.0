@@ -214,12 +214,43 @@ public static partial class BackofficeSandboxChecks
             "Content publication must not change another site's menu version.");
     }
 
-    private static Task ArticleCrud(BackofficeSandbox box)
+    private static async Task ArticleCrud(BackofficeSandbox box)
     {
         var service = box.Services.GetRequiredService<IArticleAppService>();
-        return Crud<Article, ArticleDto>(box,
+        await Crud<Article, ArticleDto>(box,
             new() { Title = "檢測文章", Description = "檢測說明", Visible = true, permanent = true, TagSelected = new() },
             service.AddUp, service.Delete, (input, id) => { input.Id = id; input.Title = "更新檢測資料"; }, row => row.Title);
+
+        // Large bodies must never be loaded into the list response, even for a single row.
+        const long site = 999000001;
+        var body = new string('x', 256 * 1024);
+        var first = new Article { FK_WebsiteId = site, Title = "列表大型內容一", Html = body, SaveHtml = body, Css = body, SaveCss = body };
+        var second = new Article { FK_WebsiteId = site, Title = "列表大型內容二", Html = body, SaveHtml = body, Css = body, SaveCss = body };
+        box.Db.Article.AddRange(first, second,
+            new Article { FK_WebsiteId = 999000002, Title = "其他站台文章", Html = body });
+        await box.Db.SaveChangesAsync();
+        box.Db.ChangeTracker.Clear();
+
+        for (var skip = 0; skip < 2; skip++)
+        {
+            var result = await service.GetAllList(new DevExtreme.AspNet.Mvc.DataSourceLoadOptions
+            {
+                Skip = skip, Take = 1, RequireTotalCount = true,
+                Sort = new[] { new DevExtreme.AspNet.Data.SortingInfo { Selector = "Id", Desc = false } }
+            });
+            var payload = Newtonsoft.Json.Linq.JObject.FromObject(result.Value!);
+            var rows = payload["data"] as Newtonsoft.Json.Linq.JArray;
+            Require((int?)payload["totalCount"] == 2 && rows?.Count == 1,
+                "Article list must retain paging, total count and site isolation.");
+            var row = rows![0];
+            Require((long?)row["Id"] == (skip == 0 ? first.Id : second.Id), "Article list page order changed.");
+            foreach (var field in new[] { "Html", "SaveHtml", "Css", "SaveCss" })
+                Require(string.IsNullOrEmpty((string?)row[field]), "Article list returned an editor content field.");
+            Require(JsonConvert.SerializeObject(result.Value).Length < 8192, "Article list payload includes large content.");
+        }
+        var stored = await box.Db.Article.AsNoTracking().SingleAsync(row => row.Id == first.Id);
+        Require(stored.Html == body && stored.SaveHtml == body && stored.Css == body && stored.SaveCss == body,
+            "List loading must not change stored editor content.");
     }
     private static Task AdvertiseCrud(BackofficeSandbox box, int type)
     {

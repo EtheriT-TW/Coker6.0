@@ -240,7 +240,8 @@
                 const requestedStockId = this.getRequestedStockId();
                 this.state.selection = new ProductSelectionEngine(result, {
                     ...this.options,
-                    initialStockId: requestedStockId
+                    initialStockId: requestedStockId,
+                    preferredStockId: result.displayStockId
                 });
 
                 if (requestedStockId && !this.state.selection.initialStockMatched) {

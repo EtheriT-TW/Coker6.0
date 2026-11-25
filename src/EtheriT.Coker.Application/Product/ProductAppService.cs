@@ -1533,6 +1533,7 @@ namespace EtheriT.Coker.Application.Product
                         output.PriceDisplayText = displayPrice.PriceDisplayText;
                         output.BaseRoleName = displayPrice.BaseRoleName;
                         output.CurrentRoleName = displayPrice.CurrentRoleName;
+                        output.DisplayStockId = displayPrice.DisplayStockId;
                     }
                     // ===== 主顯示價格結束 =====
 

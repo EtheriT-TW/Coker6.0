@@ -93,7 +93,15 @@
                 : null;
             this.initialStockMatched = requestedStock != null;
 
+            // 沒帶 psid 時優先選「目錄卡片價格取自的規格」，讓點進來的價格與目錄一致；
+            // 該規格售完或時價也照樣選取，由數量列與加入購物車按鈕顯示不能購買
+            const preferredStockId = normalizeNullableInt(this.options.preferredStockId, 0);
+            const preferredStock = preferredStockId > 0
+                ? this.stocks.find(stock => stock.id === preferredStockId)
+                : null;
+
             const firstAvailable = requestedStock
+                || preferredStock
                 || this.stocks.find(x => !this.canShop || x.canPurchase === true)
                 || this.stocks[0];
 

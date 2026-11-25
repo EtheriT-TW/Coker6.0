@@ -154,6 +154,7 @@ namespace EtheriT.Coker.Application.Product
                         result[productId] = new DirectoryPriceResultDto
                         {
                             ProductId = productId,
+                            DisplayStockId = chosen.Stock.Id,
                             Price = priceValue > 0 ? priceValue.ToString(priceFormat) : null,
                             PriceValue = priceValue > 0 ? priceValue : null,
                             // 紅利是點數（int），不跟著幣別帶小數。
@@ -181,6 +182,7 @@ namespace EtheriT.Coker.Application.Product
                         result[productId] = new DirectoryPriceResultDto
                         {
                             ProductId = productId,
+                            DisplayStockId = timeStock.Id,
                             Price = null,
                             Bonus = null,
                             OriPrice = null,

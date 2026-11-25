@@ -49,10 +49,8 @@
         // 規格 id → 該規格第一張圖在 ProductSwiper 的 slide 索引
         let specSlideIndexById = {};
 
-        // 開頁網址帶的 psid 只能在這裡讀一次：使用者一旦切過規格，
-        // syncVariantUrlFromSelection 就會持續改寫網址，之後再讀就不是「深連結」了。
-        const deepLinkStockId = controller.getRequestedStockId();
-        let deepLinkJumpDone = false;
+        // 輪播每次重建都會回到第 0 張；重建後第一次 renderSelectionArea 要跳到目前規格的圖
+        let mediaJustRebuilt = false;
 
         // 版型一：規格圖統一併進 ProductSwiper，接在商品主圖之後。
         // 規格圖只有原圖一種尺寸，medium / small / original 三個清單塞同一筆，
@@ -92,6 +90,7 @@
             });
 
             specSlideIndexById = indexById;
+            mediaJustRebuilt = true;
 
             return { medium, small, original };
         }
@@ -110,15 +109,12 @@
             }
         }
 
-        // 帶 psid 進來時，首次渲染就把主圖停在該規格的圖上。
-        // 只做一次：之後的重繪（加入購物車、切換商品）不該把使用者拉回去。
-        function applyDeepLinkJump() {
-            if (deepLinkJumpDone || !deepLinkStockId) return;
+        // 輪播重建後（開頁、加入購物車後重載）一律讓主圖對上目前選取的規格；
+        // 目前規格沒有規格圖時 slideToActiveSpec 不會動作，維持第 0 張（封面或第一張商品圖）
+        function alignSlideAfterRebuild() {
+            if (!mediaJustRebuilt) return;
 
-            deepLinkJumpDone = true;
-
-            if (!controller.state.selection.initialStockMatched) return;
-
+            mediaJustRebuilt = false;
             slideToActiveSpec();
         }
 
@@ -127,7 +123,7 @@
             renderPrices();
             renderQuantity();
             syncButtonState();
-            applyDeepLinkJump();
+            alignSlideAfterRebuild();
 
             if (typeof controller.options.hooks.onSelectionChanged === 'function') {
                 controller.options.hooks.onSelectionChanged(controller.state.selection, controller);

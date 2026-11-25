@@ -683,6 +683,28 @@ i.fa-chevron-right {
         display: block;
     }
 
+/* PreviewSwiper 目前顯示中的縮圖：外框標示位置（Swiper thumbs 會自動加 .swiper-slide-thumb-active）
+   用 ::after 疊在縮圖邊緣畫框，不改縮圖尺寸，切換時版面不會跳動 */
+.PreviewSwiper .swiper-slide::after {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border: 2px solid transparent;
+    pointer-events: none;
+    content: "";
+    transition: border-color .2s ease;
+}
+
+@media (hover: hover) {
+    .PreviewSwiper .swiper-slide:hover::after {
+        border-color: var(--gray-text);
+    }
+}
+
+.PreviewSwiper .swiper-slide.swiper-slide-thumb-active::after {
+    border-color: var(--red-main);
+}
+
 [class*=btn_swiper_] {
     z-index: 10;
     top: calc(50% - 25px);

@@ -20,5 +20,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public string? PriceDisplayText { get; set; }
         public string? BaseRoleName { get; set; }
         public string? CurrentRoleName { get; set; }
+        /// <summary>這個價格取自哪個規格（Prod_Stock.Id）；商品頁用來預設選取，讓價格與目錄卡片一致</summary>
+        public long? DisplayStockId { get; set; }
     }
 }

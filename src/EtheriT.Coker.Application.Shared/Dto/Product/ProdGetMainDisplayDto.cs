@@ -37,5 +37,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Product
         public List<FileGetProdDisplayDto> Img_Small { get; set; }
         /// <summary>有效的預設圖片 FileUpload.Id；已排在 Img_* 第一張，前台用來避免規格圖重複</summary>
         public long? CoverFileUploadId { get; set; }
+        /// <summary>目錄卡片價格取自的規格 Id；前台開頁預設選它，讓價格與目錄一致</summary>
+        public long? DisplayStockId { get; set; }
     }
 }

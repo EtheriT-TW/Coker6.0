@@ -224,10 +224,10 @@ public static partial class BackofficeSandboxChecks
         // Large bodies must never be loaded into the list response, even for a single row.
         const long site = 999000001;
         var body = new string('x', 256 * 1024);
-        var first = new Article { FK_WebsiteId = site, Title = "列表大型內容一", Html = body, SaveHtml = body, Css = body, SaveCss = body };
+        var first = new Article { FK_WebsiteId = site, Title = "列表大型內容一", Html = body, SaveHtml = body, Css = body, SaveCss = body, HasPendingImportReview = true };
         var second = new Article { FK_WebsiteId = site, Title = "列表大型內容二", Html = body, SaveHtml = body, Css = body, SaveCss = body };
-        box.Db.Article.AddRange(first, second,
-            new Article { FK_WebsiteId = 999000002, Title = "其他站台文章", Html = body });
+        var otherSite = new Article { FK_WebsiteId = 999000002, Title = "其他站台文章", Html = body, HasPendingImportReview = true };
+        box.Db.Article.AddRange(first, second, otherSite);
         await box.Db.SaveChangesAsync();
         box.Db.ChangeTracker.Clear();
 
@@ -244,6 +244,7 @@ public static partial class BackofficeSandboxChecks
                 "Article list must retain paging, total count and site isolation.");
             var row = rows![0];
             Require((long?)row["Id"] == (skip == 0 ? first.Id : second.Id), "Article list page order changed.");
+            Require((bool?)row["HasPendingImportReview"] == (skip == 0), "The list must expose the stored import marker.");
             foreach (var field in new[] { "Html", "SaveHtml", "Css", "SaveCss" })
                 Require(string.IsNullOrEmpty((string?)row[field]), "Article list returned an editor content field.");
             Require(JsonConvert.SerializeObject(result.Value).Length < 8192, "Article list payload includes large content.");
@@ -251,6 +252,30 @@ public static partial class BackofficeSandboxChecks
         var stored = await box.Db.Article.AsNoTracking().SingleAsync(row => row.Id == first.Id);
         Require(stored.Html == body && stored.SaveHtml == body && stored.Css == body && stored.SaveCss == body,
             "List loading must not change stored editor content.");
+
+        var edit = new ArticleDto
+        {
+            Id = first.Id, Title = first.Title, Subtitle = "", RemovedFromShelves = !first.RemovedFromShelves,
+            PopularVisible = first.PopularVisible, TagSelected = new()
+        };
+        Success(await service.AddUp(edit));
+        Require(await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == first.Id && a.HasPendingImportReview),
+            "An unchanged article form must retain the marker.");
+        edit.EventStartDate = new DateTime(2026, 12, 2);
+        edit.EventEndDate = new DateTime(2026, 12, 1);
+        Require(!(await service.AddUp(edit)).Success, "Invalid event dates must be rejected.");
+        Require(await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == first.Id && a.HasPendingImportReview),
+            "A rejected article edit must retain the marker.");
+        edit.EventStartDate = edit.EventEndDate = null;
+        edit.Title = "手動修改";
+        Success(await service.AddUp(edit));
+        Require(!await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == first.Id && a.HasPendingImportReview),
+            "A saved article edit must clear the marker.");
+        edit.Id = otherSite.Id;
+        Require(!(await service.AddUp(edit)).Success
+            && !(await service.RebuildContentWithFiles(otherSite.Id, filesChanged: true, rebuildContent: false)).Success
+            && await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == otherSite.Id && a.HasPendingImportReview),
+            "Another site's marker must be isolated.");
     }
     private static Task AdvertiseCrud(BackofficeSandbox box, int type)
     {

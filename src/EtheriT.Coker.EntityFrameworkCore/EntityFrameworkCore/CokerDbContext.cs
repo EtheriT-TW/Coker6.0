@@ -664,6 +664,7 @@ namespace EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore
             });
             modelBuilder.Entity<Article>(o =>
             {
+                o.Property(a => a.HasPendingImportReview).HasDefaultValue(false);
                 o.HasIndex(a => a.Title);
                 o.HasIndex(a => a.RemovedFromShelves);
                 o.HasIndex(a => a.permanent);

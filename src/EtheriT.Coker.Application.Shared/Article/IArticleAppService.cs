@@ -17,11 +17,11 @@ namespace EtheriT.Coker.Application.Shared.Article
         public Task<List<DirectoryReleInfoDto>> GetDirectoryReleInfo(DirectoryReleInfoInputDto dto);
         public Task<ResponseMessageDto> Delete(long Id);
         public Task<GetArticleContenDto> GetConten(SearchIDDto dto);
-        public Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto);
+        public Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto, bool manualEdit = true);
         public Task<ResponseMessageDto> SaveConten(ArticleSaveContenDto dto);
         public Task<ResponseMessageDto> RecycleUnusedImages(ArticleImageCleanupInputDto dto);
         public Task<GetFrontContenOutputDto> GetFrontConten(ArticleGetFrontContenInputDto dto);
-        public Task<ResponseMessageDto> RebuildContentWithFiles(long AId);
+        public Task<ResponseMessageDto> RebuildContentWithFiles(long AId, bool filesChanged = false, bool rebuildContent = true);
         public Task<ResponseMessageDto> RebuildAllContentWithFiles();
         public Task<ResponseMessageDto> FindArticleOrgName(long Id);
     }

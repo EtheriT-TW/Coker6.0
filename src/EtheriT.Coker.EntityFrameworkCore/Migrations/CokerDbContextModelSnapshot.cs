@@ -22,161 +22,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryEntry", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<byte>("ScopeKind")
-                        .HasColumnType("tinyint");
-
-                    b.Property<long?>("WebsiteId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Feature")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(40)");
-
-                    b.Property<string>("ScopeKey")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("MemoryKey")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ContentHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("SourceHash")
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("RuntimeHash")
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<int>("SchemaVersion")
-                        .HasColumnType("int");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(40)");
-
-                    b.Property<long>("Version")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("ConcurrencyToken")
-                        .IsConcurrencyToken()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ScopeKey", "MemoryKey").IsUnique();
-
-                    b.HasIndex("ScopeKind", "WebsiteId", "UserId", "UpdatedAtUtc");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("WebsiteId");
-
-                    b.ToTable("AiMemoryEntries", t => t.HasCheckConstraint("CK_AiMemoryEntries_Scope", "([ScopeKind] = 0 AND [WebsiteId] IS NULL AND [UserId] IS NULL) OR ([ScopeKind] = 1 AND [WebsiteId] IS NOT NULL AND [UserId] IS NULL) OR ([ScopeKind] = 2 AND [WebsiteId] IS NOT NULL AND [UserId] IS NOT NULL)"));
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryRevision", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("EntryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("Version")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ContentHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("SourceHash")
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<string>("RuntimeHash")
-                        .HasMaxLength(64)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<int>("SchemaVersion")
-                        .HasColumnType("int");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(40)");
-
-                    b.Property<long?>("ActorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("RecordedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EntryId", "Version").IsUnique();
-
-                    b.HasIndex("ActorUserId");
-
-                    b.ToTable("AiMemoryRevisions");
-                });
-
-
-
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Account_Log", b =>
                 {
                     b.Property<long>("Id")
@@ -424,6 +269,164 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.ToTable("Advertise_Logs");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryEntry", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<Guid>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Feature")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("MemoryKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RuntimeHash")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("SchemaVersion")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<byte>("ScopeKind")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("SourceHash")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("WebsiteId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WebsiteId");
+
+                    b.HasIndex("ScopeKey", "MemoryKey")
+                        .IsUnique();
+
+                    b.HasIndex("ScopeKind", "WebsiteId", "UserId", "UpdatedAtUtc");
+
+                    b.ToTable("AiMemoryEntries", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AiMemoryEntries_Scope", "([ScopeKind] = 0 AND [WebsiteId] IS NULL AND [UserId] IS NULL) OR ([ScopeKind] = 1 AND [WebsiteId] IS NOT NULL AND [UserId] IS NULL) OR ([ScopeKind] = 2 AND [WebsiteId] IS NOT NULL AND [UserId] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryRevision", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("ActorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<long>("EntryId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RecordedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RuntimeHash")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<int>("SchemaVersion")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceHash")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("EntryId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("AiMemoryRevisions", (string)null);
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
                 {
                     b.Property<long>("Id")
@@ -469,6 +472,11 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Property<string>("FieldDataJson")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("HasPendingImportReview")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Html")
                         .HasColumnType("nvarchar(max)");
@@ -11030,6 +11038,35 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
                     b.Navigation("Advertise");
                 });
 
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryEntry", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("EtheriT.Coker.Core.Models.Website", null)
+                        .WithMany()
+                        .HasForeignKey("WebsiteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryRevision", b =>
+                {
+                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("EtheriT.Coker.Core.Models.AiMemoryEntry", "Entry")
+                        .WithMany()
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Entry");
+                });
+
             modelBuilder.Entity("EtheriT.Coker.Core.Models.Article", b =>
                 {
                     b.HasOne("EtheriT.Coker.Core.Models.Website", "Website")
@@ -12459,20 +12496,6 @@ namespace EtheriT.Coker.EntityFrameworkCore.Migrations
 
                     b.Navigation("frontUsers");
                 });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryEntry", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null).WithMany().HasForeignKey("UserId").OnDelete(DeleteBehavior.Restrict);
-                    b.HasOne("EtheriT.Coker.Core.Models.Website", null).WithMany().HasForeignKey("WebsiteId").OnDelete(DeleteBehavior.Restrict);
-                });
-
-            modelBuilder.Entity("EtheriT.Coker.Core.Models.AiMemoryRevision", b =>
-                {
-                    b.HasOne("EtheriT.Coker.Core.Models.AiMemoryEntry", "Entry").WithMany().HasForeignKey("EntryId").OnDelete(DeleteBehavior.Cascade).IsRequired();
-                    b.HasOne("EtheriT.Coker.Web.Core.Models.User", null).WithMany().HasForeignKey("ActorUserId").OnDelete(DeleteBehavior.Restrict);
-                    b.Navigation("Entry");
-                });
-
 #pragma warning restore 612, 618
         }
     }

@@ -75,6 +75,8 @@ public sealed class ArticleImportWriter(
                 await templates.ApplyToArticleAsync(websiteId, articleId, template, orgName, HistorySource);
                 if (cover != null) await SetCoverAsync(articleId, userId, cover);
                 row.FieldDataJson = previewFieldsJson;
+                var article = await db.Article.FirstAsync(a => a.Id == articleId && a.FK_WebsiteId == websiteId);
+                article.HasPendingImportReview = true;
                 await SetRowAsync(row.Id, userId, ArticleImportRowStatusEnum.Imported, articleId, null);
 
                 // 同一批裡後面同名的列，更新剛建立的這篇。

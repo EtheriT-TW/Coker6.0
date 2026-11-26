@@ -2,6 +2,9 @@ using EtheriT.Coker.Application;
 using EtheriT.Coker.Application.ArticleImports;
 using EtheriT.Coker.Application.ArticleTemplates;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Article;
+using EtheriT.Coker.Application.Shared.Directory;
+using EtheriT.Coker.Application.Shared.Dto.Article;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Core.Models;
@@ -83,6 +86,7 @@ public static partial class BackofficeSandboxChecks
         Require(result.CreatedCount == 2 && result.Failures.Count == 0,
             $"Cover import failed: {string.Join(", ", result.Failures.Select(f => f.Error))}");
         var articles = await box.Db.Article.AsNoTracking().OrderBy(a => a.Id).ToListAsync();
+        Require(articles.All(a => a.HasPendingImportReview), "Imported articles must show the import marker.");
         var files = box.Services.GetRequiredService<IFileUploadAppService>();
         var ids = articles.Select(a => a.Id).ToList();
         var images = await files.getImgsFiles(new() { Sid = ids, Type = (int)FileBindTypeEnum.文章管理, Size = 3 });
@@ -90,6 +94,20 @@ public static partial class BackofficeSandboxChecks
             "Each article must resolve its own cover even when both refer to the same file.");
         Require(articles.All(a => !ArticleFieldValues.Parse(a.FieldDataJson).ContainsKey(coverKey)),
             "The cover must be saved as an article image separately from the template fields.");
+
+        var service = box.Services.GetRequiredService<IArticleAppService>();
+        var firstArticle = articles[0];
+        var draft = new ArticleSaveContenDto
+        {
+            Id = checked((int)firstArticle.Id), SaveHtml = firstArticle.SaveHtml, SaveCss = firstArticle.SaveCss
+        };
+        Success(await service.SaveConten(draft));
+        Require(await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == firstArticle.Id && a.HasPendingImportReview),
+            "An identical draft save must retain the marker.");
+        draft.SaveHtml += "<p>手動修改</p>";
+        Success(await service.SaveConten(draft));
+        Require(!await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == firstArticle.Id && a.HasPendingImportReview),
+            "A successful manual draft edit must clear the marker.");
 
         var update = NewRow(4, ReadAiFields(aiImages, "image:1"), records);
         var withoutImage = ReadAiFields([], null);
@@ -101,6 +119,22 @@ public static partial class BackofficeSandboxChecks
         Require(updated.UpdatedCount == 2 && images.Select(i => i.Id).SequenceEqual([banner.Id, cover.Id])
             && !await box.Db.FileUploads.AnyAsync(f => f.IsDeleted),
             "Replacing a cover must preserve the shared file; an image-free update must preserve the article's cover.");
+        Require(await box.Db.Article.AsNoTracking().CountAsync(a => a.HasPendingImportReview) == 2,
+            "Importing over an edited article must restore the marker.");
+        var directoryService = box.Services.GetRequiredService<IDirectoryAppService>();
+        var directoryList = await directoryService.GetDirectoryArticlesList(directory.Id, new());
+        var directoryRows = Newtonsoft.Json.Linq.JObject.FromObject(directoryList.Value!)["data"]!;
+        Require(directoryRows.Count() == 2 && directoryRows.All(row => (bool?)row["HasPendingImportReview"] == true),
+            "The directory article list must return both markers.");
+
+        draft.SaveHtml = "<p>背景更新</p>";
+        Success(await service.ImportConten(draft, manualEdit: false));
+        Require(await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == firstArticle.Id && a.HasPendingImportReview),
+            "Automated publication must retain the marker.");
+        draft.SaveHtml = "<p>手動發布</p>";
+        Success(await service.ImportConten(draft));
+        Require(!await box.Db.Article.AsNoTracking().AnyAsync(a => a.Id == firstArticle.Id && a.HasPendingImportReview),
+            "A successful manual publication must clear the marker.");
 
         FileUpload NewFile(string name) => new()
         {

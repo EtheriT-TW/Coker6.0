@@ -61,7 +61,12 @@
                             .AllowHiding(false)
                             .CssClass("article-title-column")
                             .CellTemplate(@<text>
-                                <span class="article-title-text" title="<%- data.Title || '' %>"><%- data.Title || '' %></span>
+                                <span class="d-inline-flex align-items-center gap-1 mw-100">
+                                    <% if (data.HasPendingImportReview === true) { %>
+                                        <span class="badge bg-info text-dark flex-shrink-0" title="匯入後尚未手動編輯">匯入</span>
+                                    <% } %>
+                                    <span class="article-title-text" title="<%- data.Title || '' %>"><%- data.Title || '' %></span>
+                                </span>
                             </text>);
                         c.Add()
                             .DataField("Tags")

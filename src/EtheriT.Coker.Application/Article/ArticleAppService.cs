@@ -100,6 +100,8 @@ namespace EtheriT.Coker.Application.Article
                 long WebsiteID = await loginUserData.GetWebsiteId();
                 long usetId = await loginUserData.GetUserId();
                 var asoid = dto.Id;
+                Core.Models.Article? editedArticle = null;
+                bool clearsImportReview = false;
 
                 if (dto.Id != null && dto.Id > 0 && !await CanSaveArticleAsync(dto.Id.Value))
                 {
@@ -122,12 +124,27 @@ namespace EtheriT.Coker.Application.Article
                 }
                 else
                 {
-                    var result = db.Article.Where(e => e.Id == dto.Id).FirstOrDefault();
+                    var result = await db.Article.FirstOrDefaultAsync(e =>
+                        e.Id == dto.Id && e.FK_WebsiteId == WebsiteID && !e.IsDeleted);
 
                     if (result != null)
                     {
                         mapper.Map(dto, result);
                         result.RemovedFromShelves = !result.RemovedFromShelves;
+                        editedArticle = result;
+                        if (result.HasPendingImportReview)
+                        {
+                            clearsImportReview = db.Entry(result).Properties.Any(property => property.IsModified
+                                && !Equals(property.OriginalValue ?? "", property.CurrentValue ?? ""));
+                            if (!clearsImportReview && dto.TagSelected.Count > 0)
+                            {
+                                var activeTags = (await db.Tag_Associates.AsNoTracking()
+                                    .Where(t => t.FK_AId == result.Id && t.Type == TagAssociateTypeEnum.文章 && !t.IsDeleted)
+                                    .Select(t => t.FK_TId).ToListAsync()).ToHashSet();
+                                clearsImportReview = dto.TagSelected.GroupBy(t => t.FK_TId).Select(group => group.Last())
+                                    .Any(tag => activeTags.Contains(tag.FK_TId) == tag.IsDeleted);
+                            }
+                        }
                         await loginUserData.SaveChanges(result);
                     }
                     else throw new Exception("查無文章資料");
@@ -149,6 +166,8 @@ namespace EtheriT.Coker.Application.Article
                     }
 
                     tag_response = await tagAppService.TagAssociateAddDelect(tagitem);
+                    if (tag_response.Success && clearsImportReview && editedArticle != null)
+                        await ClearPendingImportReviewAsync(editedArticle);
                     output.Message = asoid.ToString();
                 }
 
@@ -178,6 +197,7 @@ namespace EtheriT.Coker.Application.Article
                                            {
                                                Id = e.Id,
                                                Title = e.Title,
+                                               HasPendingImportReview = e.HasPendingImportReview,
                                                Subtitle = e.Subtitle,
                                                Description = e.Description,
                                                Longitude = e.Longitude,
@@ -675,7 +695,7 @@ namespace EtheriT.Coker.Application.Article
             }
             return results;
         }
-        public async Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto)
+        public async Task<ResponseMessageDto> ImportConten(ArticleSaveContenDto dto, bool manualEdit = true)
         {
             ResponseMessageDto response = new ResponseMessageDto();
             try
@@ -691,6 +711,8 @@ namespace EtheriT.Coker.Application.Article
                 var article = await db.Article.FirstOrDefaultAsync(e => e.Id == dto.Id && e.FK_WebsiteId == websiteId && !e.IsDeleted);
                 if (article == null) throw new Exception("資料不存在");
                 var previousImages = await CaptureArticleImageIdsAsync(article);
+                var previousDraftHtml = article.SaveHtml;
+                var previousDraftCss = article.SaveCss;
                 var saved = await SaveContenInternal(dto, writeAuditLog: false);
                 if (!saved.Success)
                 {
@@ -742,6 +764,8 @@ namespace EtheriT.Coker.Application.Article
                                 ["Subtitle"] = article.Subtitle
                             }),
                         userId);
+                    if (manualEdit && article.HasPendingImportReview && HasManualDraftChange(dto, previousDraftHtml, previousDraftCss))
+                        await ClearPendingImportReviewAsync(article);
                     response.Success = true;
                     response.Object = await CreateArticleImageCleanupOfferAsync(article, previousImages);
                 }
@@ -851,6 +875,8 @@ namespace EtheriT.Coker.Application.Article
                         dto.SaveHtml = doc.DocumentNode.OuterHtml;
                     }
 
+                    var clearsImportReview = writeAuditLog && article.HasPendingImportReview
+                        && HasManualDraftChange(dto, article.SaveHtml, article.SaveCss);
                     article.SaveHtml = dto.SaveHtml;
                     article.SaveCss = dto.SaveCss;
                     await loginUserData.SaveChanges(article);
@@ -864,6 +890,8 @@ namespace EtheriT.Coker.Application.Article
                                 ["DataJson"] = article.DataJson
                             }),
                         await loginUserData.GetUserId());
+                    if (clearsImportReview)
+                        await ClearPendingImportReviewAsync(article);
                     response.Success = true;
                     if (writeAuditLog)
                         response.Object = await CreateArticleImageCleanupOfferAsync(article, previousImages);
@@ -883,6 +911,19 @@ namespace EtheriT.Coker.Application.Article
             }
             return response;
         }
+        private bool HasManualDraftChange(ArticleSaveContenDto dto, string? previousHtml, string? previousCss)
+        {
+            return dto.EditorContentChanged != false
+                && (!string.Equals(stringHandler.HtmlDecode(dto.SaveHtml), stringHandler.HtmlDecode(previousHtml), StringComparison.Ordinal)
+                    || !string.Equals(dto.SaveCss ?? "", previousCss ?? "", StringComparison.Ordinal));
+        }
+
+        private async Task ClearPendingImportReviewAsync(Core.Models.Article article)
+        {
+            article.HasPendingImportReview = false;
+            await db.SaveChangesAsync();
+        }
+
         private static string SerializeArticleContentResponseAudit(ResponseMessageDto response)
         {
             // Confirmation tickets are scoped bearer values, not audit content.
@@ -943,13 +984,28 @@ namespace EtheriT.Coker.Application.Article
             return result;
         }
 
-        public async Task<ResponseMessageDto> RebuildContentWithFiles(long AId)
+        public async Task<ResponseMessageDto> RebuildContentWithFiles(long AId, bool filesChanged = false, bool rebuildContent = true)
         {
             ResponseMessageDto response = new ResponseMessageDto();
-            var article = await db.Article.Where(e => e.Id == AId).FirstOrDefaultAsync();
 
             try
             {
+                var query = db.Article.Where(e => e.Id == AId);
+                if (filesChanged)
+                {
+                    var websiteId = await loginUserData.GetWebsiteId();
+                    if (!await CanSaveArticleAsync(AId))
+                        return response;
+                    query = query.Where(e => e.FK_WebsiteId == websiteId && !e.IsDeleted);
+                }
+                var article = await query.FirstOrDefaultAsync();
+                if (article != null && filesChanged && !rebuildContent)
+                {
+                    if (article.HasPendingImportReview)
+                        await ClearPendingImportReviewAsync(article);
+                    response.Success = true;
+                    return response;
+                }
                 if (article != null)
                 {
                     var checktokenresponse = await tokenAppService.CheckToken(null);
@@ -1002,6 +1058,12 @@ namespace EtheriT.Coker.Application.Article
                         }
 
                         await loginUserData.SaveChanges(article);
+                        response.Success = true;
+                    }
+                    if (filesChanged)
+                    {
+                        if (article.HasPendingImportReview)
+                            await ClearPendingImportReviewAsync(article);
                         response.Success = true;
                     }
                 }

@@ -23,6 +23,7 @@ namespace EtheriT.Coker.Core.Models
         public int Popular { get; set; } = 0;
         public bool PopularVisible { get; set; } = true;
         public bool RemovedFromShelves { get; set; } = false;
+        public bool HasPendingImportReview { get; set; }
         [MaxLength]
         public string? SaveHtml { get; set; }
         [MaxLength]

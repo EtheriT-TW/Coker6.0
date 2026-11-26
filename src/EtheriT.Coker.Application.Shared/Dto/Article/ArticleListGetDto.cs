@@ -9,6 +9,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Article
 {
     public class ArticleListGetDto
     {
+        public bool HasPendingImportReview { get; set; }
         public long Id { get; set; }
         public long FK_WebsiteId { get; set; }
         public string? Title { get; set; }

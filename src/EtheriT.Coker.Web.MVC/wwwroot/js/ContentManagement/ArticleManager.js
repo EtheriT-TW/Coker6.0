@@ -4,6 +4,7 @@ var articleFileManagers = [];
 let plan = "", articleCanSave = !0, articleOnly = !1, articleManagerOptions = {};
 
 let articleCanvasSavePending = false;
+let articleCanvasBaseline;
 
 function recycleArticleUnusedImages(input, site) {
     const headers = Object.assign({}, _c.Data.Header);
@@ -73,13 +74,17 @@ function saveArticleCanvas(html, css, published) {
     const context = { id: Number($('#gjs').data('id')), site: new URLSearchParams(location.search).get('_site') || '',
         html: editor.getHtml(), css: editor.getCss(), published: published };
     const request = published ? co.Articles.ImportConten : co.Articles.SaveConten;
-    request({ Id: context.id, SaveHtml: html, SaveCss: css })
+    const baseline = articleCanvasBaseline;
+    const unchanged = baseline?.id === context.id && baseline.site === context.site
+        && baseline.html === context.html && baseline.css === context.css;
+    request({ Id: context.id, SaveHtml: html, SaveCss: css, EditorContentChanged: unchanged ? false : null })
         .done(async function(result) {
             if (!result.success) {
                 co.sweet.error(result.error || '文章儲存失敗');
                 deferred.reject(result);
                 return;
             }
+            if (articleCanvasBaseline === baseline) articleCanvasBaseline = context;
             let handledFeedback = false;
             try { handledFeedback = await offerArticleImageCleanup(result, context); }
             catch (_) { /* Saving succeeded; an optional cleanup must not turn it into a failure. */ }
@@ -152,9 +157,10 @@ function saveArticleCanvas(html, css, published) {
         var dfd = $.Deferred();
         return req && "function" == typeof req.done && "function" == typeof req.fail ? (req.done((function(data, textStatus, jqXHR) {
             const payload = {
-                success: !0,
+                success: (data?.success ?? data?.Success) === true,
                 meta: meta,
                 data: data,
+                errorMessage: data?.error || data?.Error,
                 textStatus: textStatus,
                 httpStatus: jqXHR ? jqXHR.status : req.status,
                 responseText: jqXHR ? jqXHR.responseText || "" : req.responseText || ""
@@ -427,6 +433,7 @@ function saveArticleCanvas(html, css, published) {
         return null;
     }
     setPage = function(id) {
+        articleCanvasBaseline = null;
         $("body").addClass("grapesEdit"), showCanvasBackButton(), editor || (editor = GrapesEditorManager.create("article", {
             container: "#gjs",
             restoreHistory: { source: "Article" },
@@ -456,8 +463,15 @@ function saveArticleCanvas(html, css, published) {
                 setArticleSaveMode(!0 === result.canSave || !0 === result.CanSave), editor && "function" == typeof editor.setSavePanelVisible && editor.setSavePanelVisible(articleCanSave);
                 var html = co.Data.HtmlDecode(result.conten.saveHtml);
                 waitGrapesEditorReady((function(readyEditor) {
+                    if (Number($("#gjs").data("id")) !== Number(id)) return;
                     co.Grapes.setEditor(readyEditor, html, result.conten.saveCss), co.Grapes.setFile(readyEditor, id, 2),
                     showCanvasBackButton(), result.title && $("#TopLine .title").text(result.title);
+                    articleCanvasBaseline = {
+                        id: Number(id),
+                        site: new URLSearchParams(location.search).get('_site') || '',
+                        html: readyEditor.getHtml(),
+                        css: readyEditor.getCss()
+                    };
                 }));
             } else co.sweet.error(result.error);
         }));
@@ -504,10 +518,11 @@ const ArticleManager = {
                             !function(success_text) {
                                 const data = co.Form.getJson($(ArticletForms).attr("id"));
                                 const pendingRequests = [];
-                                null != $("#ImageUpload .img_input_frame").data("delectList") && pendingRequests.push(wrapRequest(co.File.DeleteFileById({
+                                const removedCoverIds = $("#ImageUpload .img_input_frame").data("delectList");
+                                removedCoverIds?.length > 0 && pendingRequests.push(wrapRequest(co.File.DeleteFileById({
                                     Sid: data.id,
                                     Type: 6,
-                                    Fid: $("#ImageUpload .img_input_frame").data("delectList")
+                                    Fid: removedCoverIds
                                 }), {
                                     action: "圖片刪除",
                                     areaKey: "ImageUpload",
@@ -522,8 +537,10 @@ const ArticleManager = {
                                     }
                                     co.sweet.loading();
                                     var requests = pendingRequests;
+                                    let coverChanged = pendingRequests.length > 0;
                                     const imageFileData = $("#ImageUpload .img_input").data("file");
                                     if (null != imageFileData && null != imageFileData.File && 0 == imageFileData.id) {
+                                        coverChanged = true;
                                         var formData = new FormData;
                                         formData.append("files", imageFileData.File), formData.append("type", 6), formData.append("sid", result.message), 
                                         formData.append("serno", 500), requests.push(wrapRequest(co.File.Upload(formData), {
@@ -618,7 +635,9 @@ const ArticleManager = {
                                             directoryDatailList && directoryDatailList.component.refresh(), navigate("canvas" == plan ? `ArticlesEditorView_${DirectoryId}_${result.message}` : `Articles_${DirectoryId}`),
                                             saveDeferred.resolve();
                                         }
-                                        isFileUploaded || isFileUpdated || isFileDeleted ? co.Articles.RebuildContentWithFiles(parseInt(result.message)).done((function(rebuildResult) {
+                                        const attachmentsChanged = isFileUploaded || isFileUpdated || isFileDeleted;
+                                        const filesSaved = results.every(item => item?.success);
+                                        attachmentsChanged || (coverChanged && filesSaved) ? co.Articles.RebuildContentWithFiles(parseInt(result.message), filesSaved, attachmentsChanged).done((function(rebuildResult) {
                                             rebuildResult && !0 === rebuildResult.success || results.push({
                                                 success: !1,
                                                 meta: {

@@ -1933,6 +1933,28 @@ namespace EtheriT.Coker.Application
 
             var uploadIds = binds.Select(x => x.UploadId).Distinct().ToList();
 
+            // 不同文章的封面可共用同一份匯入圖片，每篇文章都要有自己的 Sid。
+            if (dto.Type == (int)FileBindTypeEnum.文章管理)
+            {
+                var images = (await _getLinksByUploadIdsAsync(uploadIds, dto.Size)).ToDictionary(image => image.Id);
+                var articleOrder = dto.Sid.Select((id, index) => (id, index)).ToDictionary(item => item.id, item => item.index);
+                return binds.Where(bind => images.ContainsKey(bind.UploadId))
+                    .OrderBy(bind => articleOrder[bind.Sid]).ThenBy(bind => bind.SerNo).ThenBy(bind => bind.UploadId)
+                    .DistinctBy(bind => (bind.Sid, bind.UploadId))
+                    .Select(bind =>
+                    {
+                        var image = images[bind.UploadId];
+                        return new FileGetImgDto
+                        {
+                            Id = image.Id,
+                            Sid = bind.Sid,
+                            Name = string.IsNullOrWhiteSpace(bind.Name) ? image.Name : bind.Name,
+                            Link = image.Link,
+                            Size = image.Size
+                        };
+                    }).ToList();
+            }
+
             // 同一 UploadId 可能對應多筆 bind，沿用 SerNo 最小者
             var uploadIdMeta = binds
                 .GroupBy(x => x.UploadId)

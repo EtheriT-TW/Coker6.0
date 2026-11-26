@@ -85,7 +85,8 @@ public sealed class ArticleImportAiFiller(IWebsiteAiService ai)
         2. 欄位值一律是字串陣列。pagetitle、string、textarea、link、image 只放一個字串；
            list 每個項目一個字串（把頓號、逗號、斜線、換行分隔的項目拆開，去掉編號與多餘符號）；gallery 可放多個圖片代號，不超過 maxCount。
         3. image、gallery 只能填該列 images 清單裡的代號（例如 "image:2"），依欄名與檔名判斷圖片用途（例如官網橫幅、Logo），不可填網址或其他文字。
-           該列只要有圖片，image 欄位就一定要選一張；只有一張圖片時放在 image，gallery 留空；image 用過的圖片不可再放進 gallery。
+           樣板的 image 欄位只要有圖片就一定要選一張；只有一張圖片時放在樣板的 image，gallery 留空；樣板的 image 用過的圖片不可再放進 gallery。
+           article.cover（文章封面）獨立選圖。有封面或主圖就優先選，沒有時選一張能代表該列文章的圖片；可與橫幅或 Logo 共用同一張。沒有圖片時留空。
         4. required 為 true 的欄位必填；pagetitle 通常是公司或單位的中文名稱。
         5. 文字照原文，不翻譯、不改寫，只去除多餘空白；textarea 保留原本的換行。英文欄位只在資料有英文時才填。
         6. link 欄位填原文的網址、電子郵件或電話。同一格同時有網址與電子郵件時（例如「www.abc.com / abc@mail.com」），
@@ -101,7 +102,7 @@ public sealed class ArticleImportAiFiller(IWebsiteAiService ai)
     public static string BuildUserMessage(ArticleTemplate template, IReadOnlyList<ArticleImportAiRow> rows)
         => JsonConvert.SerializeObject(new
         {
-            fields = template.Fields.Select(f => new
+            fields = ArticleImportFieldRules.GetFields(template).Select(f => new
             {
                 key = f.Key,
                 label = f.Label,

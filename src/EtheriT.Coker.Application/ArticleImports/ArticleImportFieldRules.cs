@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.ArticleTemplates;
+using EtheriT.Coker.Application.Shared.Dto.ArticleTemplate;
 
 namespace EtheriT.Coker.Application.ArticleImports;
 
@@ -9,6 +10,12 @@ public sealed record ArticleImportImageChoice(string Path, string Column, string
 // 只留樣板有的欄位、依型別限制筆數與長度、圖片只能用這列下載的檔案、必填欄位要有值。
 public static class ArticleImportFieldRules
 {
+    public const string CoverKey = "article.cover";
+    private static readonly ArticleTemplateFieldDto CoverField = new(CoverKey, "文章封面", ArticleFieldTypes.Image, false, null, null);
+
+    public static IReadOnlyList<ArticleTemplateFieldDto> GetFields(ArticleTemplate template)
+        => [CoverField, .. template.Fields];
+
     public const int MaxTitleLength = 150;      // Article.Title 的長度上限
     public const int MaxStringLength = 300;
     public const int MaxLinkLength = 500;
@@ -53,13 +60,34 @@ public static class ArticleImportFieldRules
         }
 
         if (images is { Count: > 0 })
+        {
             ApplyImageRules(template, result, images, excludeFromGallery: !byUser);
+            if (raw.TryGetValue(CoverKey, out var cover))
+            {
+                var selection = Images(ArticleFieldValues.Clean(cover), resolveImage).FirstOrDefault();
+                if (selection != null) result[CoverKey] = [selection];
+            }
+            SetDefaultCover(result, images);
+        }
 
         var missing = template.Fields
             .Where(f => (f.Required || f.Key == template.PageTitleKey) && !result.ContainsKey(f.Key))
             .Select(f => f.Label)
             .ToList();
         return (result, missing.Count == 0 ? null : $"缺少必填欄位：{string.Join("、", missing)}");
+    }
+
+    internal static void SetDefaultCover(Dictionary<string, List<string>> fields, IReadOnlyList<ArticleImportImageChoice> images)
+    {
+        if (images.Count == 0 || ArticleFieldValues.First(fields, CoverKey).Length > 0) return;
+
+        var cover = images.FirstOrDefault(image =>
+        {
+            var name = $"{image.Column} {image.FileName}";
+            return name.Contains("封面", StringComparison.Ordinal) || name.Contains("主圖", StringComparison.Ordinal)
+                || name.Contains("cover", StringComparison.OrdinalIgnoreCase);
+        }) ?? images[0];
+        fields[CoverKey] = [cover.Path];
     }
 
     // 圖片規則（使用者 2026-11-24 定案）：

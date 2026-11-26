@@ -1194,6 +1194,7 @@
       "sources": [
         "Controllers/ContentManagementController.cs",
         "Controllers/api/ArticleImportController.cs",
+        "Diagnostics/BackofficeSandboxArticleImportChecks.cs",
         "Views/ContentManagement/Directory.cshtml",
         "Views/ContentManagement/_ArticleImport.cshtml",
         "wwwroot/js/CokerCore/Directory.js",
@@ -1296,6 +1297,27 @@
           "title": "AI 整理完成後顯示匯入預覽",
           "steps": "在啟用目錄管理與文章功能的測試站台，以具匯入權限的帳號整理含可匯入列的 Excel。停留在進度頁直到自動切換預覽，核對列標題、狀態、篩選及新增／更新統計。取消勾選所有可匯入列，再勾回一列。另檢查全數整理失敗的批次。驗收停在預覽頁。",
           "expected": "切換後立即顯示第一頁、篩選數量及匯入統計，整理成功的列預設勾選。沒有勾選時確認按鈕停用，勾回後統計同步且按鈕可用。全數失敗時可看到失敗列及原因，無法直接確認匯入。",
+          "mode": "review",
+          "requiredFeatures": [
+            "Article"
+          ]
+        },
+        {
+          "id": "ContentManagement.Directory.article-import-cover",
+          "title": "匯入文章封面",
+          "steps": "以隔離的範例圖片模擬 AI 選封面，涵蓋封面和橫幅共用、無效選圖、無圖及舊批次。手動改選一列，確認後查詢文章封面，再用同名資料更新。",
+          "expected": "封面排在橫幅左側，可獨立選同列圖片。確認前不寫入文章，確認後存到文章圖片欄位。共用同一張封面的文章各自可讀到封面，換圖只更新目前文章，無圖的更新保留既有封面。",
+          "mode": "isolated",
+          "executor": "sandbox/article-import-cover",
+          "requiredFeatures": [
+            "Article"
+          ]
+        },
+        {
+          "id": "ContentManagement.Directory.article-import-cover-browser",
+          "title": "文章封面預覽與前台顯示",
+          "steps": "在啟用文章與目錄功能的測試站，用有權限的帳號匯入有多張圖、同列只有一張圖及無圖的 Excel。確認第四步的桌面和手機順序、預設縮圖和換圖，再確認匯入並開啟文章編輯及前台目錄。另用無匯入權限的帳號及切換站台後的舊分頁嘗試換圖。",
+          "expected": "第四步先顯示文章封面，再顯示官網橫幅。換封面後橫幅不變，只有一張圖時兩欄可共用，無圖時封面顯示未設定。文章編輯和目錄顯示最後選定的封面，無權限及跨站請求不會寫入。",
           "mode": "review",
           "requiredFeatures": [
             "Article"

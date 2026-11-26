@@ -40,7 +40,7 @@ public sealed partial class ArticleImportAppService
             batch.CreationTime,
             ToTaskDto(scanTask),
             confirmTask == null ? null : ToTaskDto(confirmTask),
-            template?.Fields ?? [],
+            template == null ? [] : ArticleImportFieldRules.GetFields(template),
             rowDtos);
     }
 
@@ -72,10 +72,7 @@ public sealed partial class ArticleImportAppService
             throw new InvalidOperationException($"文章樣板「{row.Batch.TemplateKey}」已不存在。");
 
         var template = ArticleTemplateCatalog.Get(row.Batch.TemplateKey);
-        var images = ArticleImportRowImages.Parse(row.DownloadedFilesJson)
-            .Where(i => i.Error == null && !string.IsNullOrEmpty(i.Path))
-            .Select(i => new ArticleImportImageChoice(i.Path!, i.Column, i.FileName))
-            .ToList();
+        var images = ArticleImportRowImages.Choices(ArticleImportRowImages.Parse(row.DownloadedFilesJson));
         var paths = images.Select(i => i.Path).ToHashSet(StringComparer.Ordinal);
         var (fields, error) = ArticleImportFieldRules.Normalize(
             template, input.Fields, value => paths.Contains(value) ? value : null, images, byUser: true);
@@ -110,6 +107,9 @@ public sealed partial class ArticleImportAppService
 
         return parsed.Select(x =>
         {
+            var images = ArticleImportRowImages.Parse(x.Row.DownloadedFilesJson);
+            if (x.Row.Status == ArticleImportRowStatusEnum.Ready)
+                ArticleImportFieldRules.SetDefaultCover(x.Fields, ArticleImportRowImages.Choices(images));
             var key = ArticleImportTitleMatcher.Key(x.Title);
             var pending = x.Row.Status is ArticleImportRowStatusEnum.Ready or ArticleImportRowStatusEnum.Failed;
             var match = pending && key.Length > 0 && matches.TryGetValue(key, out var found) ? found : null;
@@ -119,7 +119,7 @@ public sealed partial class ArticleImportAppService
                 x.Row.Status,
                 x.Title,
                 x.Fields,
-                ArticleImportRowImages.Parse(x.Row.DownloadedFilesJson).Select(ArticleImportRowImages.ToDto).ToList(),
+                images.Select(ArticleImportRowImages.ToDto).ToList(),
                 x.Row.Error,
                 match?.Id ?? (x.Row.Status == ArticleImportRowStatusEnum.Imported ? x.Row.FK_ArticleId : null),
                 match?.CanEdit ?? true,

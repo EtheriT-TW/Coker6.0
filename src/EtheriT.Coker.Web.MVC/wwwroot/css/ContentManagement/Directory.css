@@ -642,12 +642,13 @@ input[type="number"] {
         max-width: 26rem;
     }
 
-    /* 每列的圖片群組固定寬度，各列的「官網橫幅」「Logo」上下對齊 */
+    /* 圖片用途維持同一列，各列的封面、橫幅與 Logo 上下對齊 */
     .article-import__media-list {
         flex-wrap: nowrap;
     }
 
     .article-import__media.is-image {
+        flex-shrink: 0;
         width: 4.75rem;
     }
 
@@ -663,6 +664,10 @@ input[type="number"] {
 
 /* ≥ 992px：欄位三欄、編輯彈窗的原始資料固定在右側 */
 @media (min-width: 992px) {
+    .article-import__thumbs {
+        max-width: 31rem;
+    }
+
     .article-import__columns {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }

@@ -34,6 +34,11 @@ public static class ArticleImportRowImages
 
     public static string Serialize(IReadOnlyList<ArticleImportImageRecord> images) => JsonConvert.SerializeObject(images);
 
+    internal static List<ArticleImportImageChoice> Choices(IEnumerable<ArticleImportImageRecord> images)
+        => images.Where(i => i.Error == null && !string.IsNullOrEmpty(i.Path))
+            .Select(i => new ArticleImportImageChoice(i.Path!, i.Column, i.FileName))
+            .ToList();
+
     public static ArticleImportImageDto ToDto(ArticleImportImageRecord image)
         => new(image.Token, image.Column, image.FileName, image.FileId, image.Path, image.Error);
 }

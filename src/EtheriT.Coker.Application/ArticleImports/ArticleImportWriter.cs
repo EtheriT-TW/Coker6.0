@@ -1,4 +1,5 @@
 ﻿using EtheriT.Coker.Application.ArticleTemplates;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ArticleImport;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
 using EtheriT.Coker.Application.Shared.JsonObject;
@@ -62,16 +63,23 @@ public sealed class ArticleImportWriter(
                 if (isUpdate && !match!.CanEdit)
                     throw new InvalidOperationException("同標題的文章在有權限設定的目錄裡，您沒有編輯權限。");
 
+                var cover = await FindCoverAsync(websiteId, row, values);
+                var previewFieldsJson = ArticleFieldValues.Serialize(values);
+                values.Remove(ArticleImportFieldRules.CoverKey);
+                var articleFieldsJson = ArticleFieldValues.Serialize(values);
+                var description = Description(template, values);
                 if (!isUpdate)
-                    newArticleId = await CreateArticleAsync(websiteId, userId, title, row.FieldDataJson!, Description(template, values), tagIds);
+                    newArticleId = await CreateArticleAsync(websiteId, userId, title, articleFieldsJson, description, tagIds);
                 var articleId = newArticleId
-                    ?? await UpdateArticleAsync(websiteId, match!.Id, row.FieldDataJson!, Description(template, values));
+                    ?? await UpdateArticleAsync(websiteId, match!.Id, articleFieldsJson, description);
                 await templates.ApplyToArticleAsync(websiteId, articleId, template, orgName, HistorySource);
+                if (cover != null) await SetCoverAsync(articleId, userId, cover);
+                row.FieldDataJson = previewFieldsJson;
+                await SetRowAsync(row.Id, userId, ArticleImportRowStatusEnum.Imported, articleId, null);
 
                 // 同一批裡後面同名的列，更新剛建立的這篇。
                 if (!isUpdate) matches[ArticleImportTitleMatcher.Key(title)] = new ArticleTemplateAppService.DirectoryArticle(articleId, title, true, true);
                 if (isUpdate) updated++; else created++;
-                await SetRowAsync(row.Id, userId, ArticleImportRowStatusEnum.Imported, articleId, null);
             }
             catch (Exception ex)
             {
@@ -94,6 +102,49 @@ public sealed class ArticleImportWriter(
         var excluded = await db.ArticleImportRows.CountAsync(r =>
             r.FK_ArticleImportBatchId == batch.Id && !r.IsDeleted && r.Status == ArticleImportRowStatusEnum.Excluded);
         return new ArticleImportConfirmResultDto(batch.Id, created, updated, excluded, failures);
+    }
+
+    private async Task<FileUpload?> FindCoverAsync(long websiteId, ArticleImportRow row, Dictionary<string, List<string>> values)
+    {
+        var images = ArticleImportRowImages.Parse(row.DownloadedFilesJson);
+        ArticleImportFieldRules.SetDefaultCover(values, ArticleImportRowImages.Choices(images));
+        var path = ArticleFieldValues.First(values, ArticleImportFieldRules.CoverKey);
+        if (path.Length == 0) return null;
+
+        var fileId = images.FirstOrDefault(i => i.Error == null && i.Path == path && i.FileId is > 0)?.FileId;
+        return await db.FileUploads.AsNoTracking().FirstOrDefaultAsync(file =>
+                file.Id == fileId && file.FK_WebsiteId == websiteId && !file.IsDeleted && file.DownloadFileName != null)
+            ?? throw new InvalidOperationException("文章封面已不存在或無法使用，請重新選擇圖片。");
+    }
+
+    private async Task SetCoverAsync(long articleId, long userId, FileUpload file)
+    {
+        var type = (int)FileBindTypeEnum.文章管理;
+        var binds = await db.FileBinds.Where(b => b.Sid == articleId && b.type == type && !b.IsDeleted)
+            .OrderBy(b => b.SerNo).ThenBy(b => b.Id).ToListAsync();
+        var current = binds.FirstOrDefault(b => b.FK_FileUploadId == file.Id);
+        foreach (var old in binds.Where(b => b != current))
+        {
+            old.IsDeleted = true;
+            old.DeletionTime = DateTime.Now;
+            old.DeleterUserId = userId;
+        }
+        if (current != null) return;
+
+        var bind = new FileBind
+        {
+            Guid = Guid.NewGuid(),
+            Sid = articleId,
+            type = type,
+            Name = file.OriginalFileName,
+            FK_FileUploadId = file.Id,
+            num = 1,
+            SerNo = 500,
+            MediaLink = "",
+            AreaKey = ""
+        };
+        loginUserData.setOptionParameter(bind, userId);
+        db.FileBinds.Add(bind);
     }
 
     private async Task<long> CreateArticleAsync(

@@ -1,3 +1,31 @@
+## 2026-11-26 空欄數提案生成限制
+
+生成能力版本同步升5，MVC需收到Gateway的相同版本，避免仍使用只禁止CSS但允許空操作的舊契約。此次未修改前端來源，不需因本次修正重建bundle。
+
+修正欄數ExecutionGoal禁止CSS卻允許所有操作為空的Schema缺口。原模型僅摘要時Gateway回EmptyProposal，MVC反覆傳送中文錯誤而沒有操作修正指引。Parallel在既有完整欄位驗證之外新增anyOf，強制非空classChanges／needsSourceAnalysis=true／非空澄清三擇一；不得移除來源、目標、斷言或瀏覽器驗證。MVC保留EmptyProposal分類並送具體英文協定修正指令，要求實際來源操作、來源分析或真實不支援選項問題，非一般中文字串重試。未更改語言關鍵字判斷或新增DB。
+
+更新原sandbox/ai-provider-contracts案例說明及Parallel獨立runner：summary-only欄數計畫拒絕、明確來源分析允許，保留有效class delta及錯數值拒絕。僅登錄與靜態檢查，未執行案例／編譯／模型／bundle／DB；不宣稱使用者情境已通過。請同步編譯重啟MVC與Parallel後測試原需求，來源不足應進入分析而非重複摘要。
+
+## 2026-11-25 需求判定與輪播欄數操作綁定
+
+針對「四個一排」只改字體而在1024斷點還原的回歸，觀察到實際輪播時先以獨立intent請求判斷kind／真實初始化owner／數量。只傳目前要求、歷史、元件結構，沒有中文關鍵字表或固定欄數class表；來源仍定義可執行選項。非欄數需求保留原流程。欄數目標為伺服器內部資料，不接受客戶端傳入，後續規劃與修正均攜帶。Parallel生成Schema禁止該目標改html／CSS／文字樣式／設定操作，只允許目標上的來源class差異、來源分析或必要問題；MVC再次拒絕字體代替欄數，驗證斷言數值必須符合原判定目標，實際Swiper斷點與卡片幾何驗證保留。intent另計模型呼叫並顯示實際請求／結果，輸出預算1024，失敗停止而非重複相同分類。能力契約升4，MVC與Parallel須同步更新；沒有DB或資產格式變更。
+
+沿既有sandbox/ai-provider-contracts executor補中／日／越南語固定判定回覆搭配錯誤字體操作皆拒絕、有效class操作與assertions保留及呼叫數；Parallel獨立fixture補生成層拒font-only、允許class delta。固定模型替身僅驗證契約，不代表真模型語意判斷已通過。未執行build／test／bundle／模型／DB；需使用者編譯MVC與Parallel並於原頁測4→6、字體調整、圖片文字保留、窄螢幕響應式及來源不支援選項。
+
+## 2026-11-25 輪播排版白名單與可執行結果驗證
+
+編譯修正：TryReadRuntimeAssertions改以區域變數parsedAssertions做LINQ驗證，再由out參數回傳同一清單，避免Lambda捕捉out assertions造成CS1628。保留原覆蓋範圍／目標／數值斷言與既有案例ID、executor，無行為或DB變更；僅靜態引用及diff檢查，未編譯／執行案例。
+
+使用者新提案為display:flex、justify-self:stretch、aspect-ratio:auto等CSS，仍無class變更，卻被誤報四欄成功。前次僅排除少數Flex屬性仍不足。MVC以RuntimeAppearanceProperties限定JS排版驅動節點只能直接調整外觀（字體／文字／色彩／邊框等），幾何布局須用實際初始化配置；普通子節點及非輪播區塊仍保留原CSS能力。辨識也包含初始化owner內catalog／template，不能依賴Grapes模型未必保留的執行期swiper-wrapper／swiper-slide class。Parallel動態Schema依同一外觀能力清單生成，生成能力標頭升3，兩端必須同步更新。
+
+GrapesJS送出RuntimeContext（當前instance的slidesPerView、斷點、視窗寬度及配置），MVC只作參考，不當成權限或來源證據。觀察到輪播的提案須附runtimeAssertions（targetId、字串value、minWidth；0驗證目前視窗，正數指定實際配置斷點），每個目前初始化元件均須覆蓋，目標及數值／範圍由MVC驗證。模型依原需求及來源選擇預期值，沒有語言關鍵字或固定欄數表。minWidth>0時必須有該斷點配置，且當前視窗達該寬度時的active slidesPerView也必須符合，不能用舊六欄配置中較小斷點的四欄冒充桌機四欄。較窄視窗保留原響應式，但核對已配置目標及當前卡片幾何。
+
+runtimeVerification.js在套用後讀真實Swiper instance：未初始化、缺／錯驗證目標、active欄數不符、斷點不符、參數與卡片寬度不符皆丟錯，由原交易回復beforeApply且不建立成功版本。數值型欄數按instance.size／spaceBetween驗證可見slides實際寬度（3px或10%容差）；auto不作固定卡片寬度假設。流程顯示runtime-verified的預期與實際值；只更改CSS文字不夠。UI語系校正只保留訊息，不能取代核定runtimeAssertions。舊無觀察資料的JSON客戶端沿用原契約，新畫布有實際元件卻沒收到驗證條件會拒絕，不假報成功。
+
+沿sandbox/ai-provider-contracts補display/flex/justify-self/aspect-ratio在frame／owner／無執行期class的catalog均拒絕，普通Flex保留；非空觀察缺assertions拒絕，有效assertions經內容複核／語系校正仍保留。Parallel獨立runner補外觀白名單拒幾何CSS、觀察資料存在時Schema必填assertions。GrapesJS新增scripts/check-runtime-verification.mjs，純DOM形狀fixture測舊6目標4拒絕、params4但舊寬度拒絕、真4通過、寬視窗舊斷點冒充拒絕、窄視窗保留響應式、錯／缺目標拒絕；不列MVC自動通過數。以上均未執行，不代表真實瀏覽器或SQL驗證。
+
+本輪只做JS語法、JSON及diff靜態檢查，沒有執行模型／build／test／bundle／DB操作。需使用者同步編譯重啟MVC及Parallel，並執行packages/EtheriT.Coker.GrapesJS的npm run build:mvc；可能還原相依及產生bin/obj或min資產，耗時依環境。可自行在套件目錄執行node scripts/check-runtime-verification.mjs（獨立記憶體fixture，不連模型／DB，不寫產物），Parallel另有dotnet run --project scripts/CanvasContractChecks/CanvasContractChecks.csproj（可能編譯／還原並產生bin/obj）。本輪不自行執行，不需Migration。
+
 ## 2026-11-25 Swiper外框Flex被誤報為完成
 
 使用者提供完整第1輪提案：style模式，只對iej4_swiper加flex-wrap:wrap及justify-content:space-between，沒有classChanges。原前端只核對CSS有差異、Grid／圖片等安全條件，未阻止把外框Flex當成Swiper欄數配置，因此摘要「四個一排」可能和實際六欄不一致。ui-review只校正文字，其空styles不代表核定操作；資料類型是目錄、呈現由Swiper負責，不能只依摘要名稱判斷。

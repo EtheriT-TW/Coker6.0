@@ -21,6 +21,8 @@ public sealed partial class CanvasAiService
         {
             if (value is not JsonObject change || change["targetId"] is not JsonValue idValue || !idValue.TryGetValue<string>(out var id) || string.IsNullOrEmpty(id))
                 throw new FormatException("A class change needs an actual target ID.");
+            if (input.ExecutionGoal is { } goal && id != goal.TargetId)
+                throw new FormatException("Class changes must target the classified execution goal.");
             var matches = document.DocumentNode.Descendants().Where(n => n.NodeType == HtmlNodeType.Element && n.GetAttributeValue("id", "") == id).Take(2).ToArray();
             if (matches.Length != 1 || !seen.Add(id)) throw new FormatException("Class targets must be unique and inside the current boundary.");
             string[] Tokens(string name)
@@ -142,10 +144,33 @@ public sealed partial class CanvasAiService
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("swiper"));
     private static bool IsRuntimeLayoutTarget(HtmlNode node) => IsRuntimeCarouselRoot(node) ||
         node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
-            .Any(cls => cls is "swiper" or "swiper-wrapper" or "swiper-slide") || node.Descendants().Count(IsRuntimeCarouselRoot) == 1;
+            .Any(cls => cls is "swiper" or "swiper-wrapper" or "swiper-slide") || node.Descendants().Count(IsRuntimeCarouselRoot) == 1 ||
+        (node.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Any(cls => cls is "catalog" or "template") &&
+            node.Ancestors().Any(IsRuntimeCarouselRoot));
 
-    private static bool HasCarouselFlexLayout(CanvasAiStyle rule) => rule.Properties.Keys.Any(name =>
-        name is "flex-wrap" or "flex-direction" or "flex-basis" or "flex-grow" or "flex-shrink" or "justify-content");
+    private static bool IsRuntimeAppearanceProperty(string name) => name is
+        "color" or "background-color" or "font-family" or "font-size" or "font-weight" or "font-style" or "line-height" or
+        "letter-spacing" or "text-align" or "text-decoration" or "text-shadow" or "-webkit-text-stroke" or
+        "-webkit-text-stroke-width" or "-webkit-text-stroke-color" or "paint-order" or "border" or "border-radius";
+    private static bool HasRuntimeGeometryStyle(CanvasAiStyle rule) => rule.Properties.Keys.Any(name => !IsRuntimeAppearanceProperty(name));
+
+    private static bool TryReadRuntimeAssertions(CanvasAiRequest input, JsonElement plan, out List<CanvasAiRuntimeAssertion> assertions)
+    {
+        assertions = [];
+        if (!plan.TryGetProperty("runtimeAssertions", out var value)) return input.RuntimeContext == "[]";
+        if (value.ValueKind != JsonValueKind.Array || value.GetArrayLength() > 8) return false;
+        var parsedAssertions = JsonSerializer.Deserialize<List<CanvasAiRuntimeAssertion>>(value.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+        if (input.ExecutionGoal is { } goal && !parsedAssertions.Any(item => item != null && item.TargetId == goal.TargetId &&
+            double.TryParse(item.Value, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var actual) &&
+            double.TryParse(goal.Value, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var expected) && actual == expected)) return false;
+        assertions = parsedAssertions;
+        var document = new HtmlDocument(); document.LoadHtml(input.Html);
+        var owners = document.DocumentNode.Descendants().Where(IsRuntimeCarouselRoot).Select(node => node.GetAttributeValue("id", "")).Where(id => id.Length > 0).ToArray();
+        return (input.RuntimeContext == "[]" || owners.All(id => parsedAssertions.Any(assertion => assertion?.TargetId == id))) && parsedAssertions.All(assertion => assertion != null && assertion.MinWidth is >= 0 and <= 20000 &&
+            !string.IsNullOrEmpty(assertion.TargetId) && document.DocumentNode.Descendants().Any(node => IsRuntimeCarouselRoot(node) && node.GetAttributeValue("id", "") == assertion.TargetId) &&
+            (assertion.Value == "auto" || double.TryParse(assertion.Value, System.Globalization.NumberStyles.AllowDecimalPoint,
+                System.Globalization.CultureInfo.InvariantCulture, out var number) && double.IsFinite(number) && number > 0 && number <= 100));
+    }
     private static bool HasRuntimeClassChange(string original, string proposed)
     {
         var before = new HtmlDocument(); before.LoadHtml(original);

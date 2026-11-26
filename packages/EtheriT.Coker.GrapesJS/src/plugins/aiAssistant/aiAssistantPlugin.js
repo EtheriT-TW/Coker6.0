@@ -1,4 +1,5 @@
 import { createProcess, appendProcessEvent, finishProcess, createProcessViewer, limitProcessDetails } from './processViewer.js';
+import { captureRuntimeContext, verifyRuntimeAssertions } from './runtimeVerification.js';
 
 // The host provides permissions, draft identity and transport through options/adapter.
 // This plugin never knows MVC routes, antiforgery headers or Parallel credentials.
@@ -380,7 +381,9 @@ export function aiAssistantPlugin(editor, options = {}) {
         find('[data-prompt]').value = '';
         setBusy(true); status(expanded ? '已定位包含此元件的排列區塊，AI 產生中…' : 'AI 產生中，可能需要數分鐘…');
         let nextSettings = null;
+        let runtimeContext = [];
         try {
+            runtimeContext = captureRuntimeContext(selected.getEl());
             const result = await adapter.ai.generate({
                 scope, prompt, html, selectedId,
                 browserLocale: navigator.languages?.[0] || navigator.language || '',
@@ -396,6 +399,7 @@ export function aiAssistantPlugin(editor, options = {}) {
                 }).filter(Boolean))].slice(0, 32),
                 availableSettings: Object.keys(settingCommands).filter(kind => editor.Commands.get(settingCommands[kind])),
                 preserveContent, autoDetect, styleContext: JSON.stringify(styleContext),
+                runtimeContext: JSON.stringify(runtimeContext),
                 css,
                 history
             }, { signal: pending.signal, onProgress: report });
@@ -455,7 +459,8 @@ export function aiAssistantPlugin(editor, options = {}) {
                 classChanges: (classChanges || []).map(change => ({ targetId: change.component.getId(),
                     remove: change.component.getClasses().filter(name => !change.classes.includes(name)),
                     add: change.classes.filter(name => !change.component.getClasses().includes(name)) })),
-                styles: rules, replacesContent: replaceHtml && !classChanges
+                styles: rules, replacesContent: replaceHtml && !classChanges,
+                runtimeAssertions: result.runtimeAssertions
             }, null, 2) });
             const beforeApply = JSON.parse(originalProject);
             const beforeContent = contentSignature();
@@ -551,6 +556,8 @@ export function aiAssistantPlugin(editor, options = {}) {
                     appliedImages.splice(index, 1);
                 }
                 if (contentSignature() === beforeContent) throw new Error('回覆未產生任何 HTML 或 CSS 差異，畫布保持不變。');
+                const verifiedRuntime = verifyRuntimeAssertions(appliedTarget.getEl(), result.runtimeAssertions, runtimeContext);
+                if (verifiedRuntime.length) report({ stage: 'runtime-verified', message: '已核對輪播預期值、實際執行值與卡片寬度', detail: JSON.stringify(verifiedRuntime, null, 2) });
             } catch (error) {
                 if (!destroyed && requestKey === getKey()) editor.loadProjectData(beforeApply);
                 throw error;

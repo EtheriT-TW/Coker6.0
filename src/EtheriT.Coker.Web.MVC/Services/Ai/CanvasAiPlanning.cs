@@ -12,6 +12,13 @@ public sealed partial class CanvasAiService
         You plan edits to a GrapesJS website. Understand the user's language yourself,
         including follow-ups in History; never depend on a language-specific command list.
         Return one executable JSON object with editMode, html, styles, textStyles, summary and clarification.
+        When RuntimeContext is nonempty, include runtimeAssertions with actual initializer targetId,
+        expected slidesPerView as string value, and minWidth (0 means active viewport; a positive
+        value must be an actual breakpoint from the chosen deployed configuration). A layout
+        request asserts its requested result, not the old column count. Appearance-only edits
+        can assert the unchanged layout. The browser checks real runtime parameters AND slide
+        widths; CSS text changes alone do not prove completion. Driver nodes accept only
+        ComponentExecution.RuntimeAppearanceProperties as CSS; use classChanges for layout.
         For a class-only layout/configuration change, return classChanges with targetId/remove/add,
         editMode="content", html="", styles=[], textStyles=[] and supporting sourceEvidence.
         Do not regenerate HTML for this operation. ComponentExecution.InitializerTargets identifies
@@ -174,8 +181,8 @@ public sealed partial class CanvasAiService
     {
         var initialPreserve = input.PreserveContent;
         var context = originalContext;
-        var knownCalls = 0;
-        var callsKnown = true;
+        var knownCalls = input.ModelCalls ?? 0;
+        var callsKnown = !input.IntentClassified || input.ModelCalls.HasValue;
         var contentReviewed = false;
         var clarificationReviewed = false;
         var failures = new List<string>();
@@ -191,6 +198,7 @@ public sealed partial class CanvasAiService
             token.ThrowIfCancellationRequested();
             input.PreserveContent = initialPreserve;
             var system = (input.Scope == "selected" ? SelectedInstructions : Instructions) +
+                (input.ExecutionGoal == null ? "" : "\nExecutionGoal is the separately classified current intent. This is a JS-driven column-count change: return only source-backed classChanges for its TargetId, empty html/styles/textStyles, and runtimeAssertions matching its Value. If unsupported, ask using actual supported options; if evidence is missing request source analysis. Never substitute typography CSS.") +
                 "\nBrowser default response locale: " + input.ReplyLocale +
                 ". Choose replyLocale using the reply-language policy; browser is a fallback, not a forced language. " +
                 "Authoritative HTML content locale: " + input.WebsiteLocale + ". Do not mix these two responsibilities.";
@@ -215,7 +223,7 @@ public sealed partial class CanvasAiService
                 // Client messages contain only locally mapped, allowlisted failure details.
                 lastProviderMessage = response.Message;
                 result = new(422, null, response.Message) {
-                    FailureCode = response.FailureReason == "ClarificationNotQuestion" ? "provider-clarification" : "provider-validation"
+                    FailureCode = response.FailureReason == "EmptyProposal" ? "provider-empty" : response.FailureReason == "ClarificationNotQuestion" ? "provider-clarification" : "provider-validation"
                 };
             }
             else
@@ -306,6 +314,8 @@ public sealed partial class CanvasAiService
                 ? "Review this draft question before showing it to the customer. Use ReplyLocale for the entire reply, including its regional vocabulary and script; WebsiteLocale applies only to HTML wording. Resolve unspecified widths, spacing and arrangement from the current CSS, computed styles and hierarchy; retain existing settings or choose compatible defaults. Read EditorStructure and its actual item counts and Bootstrap classes. Current computed width is editable, not evidence of insufficient space. Keep the container width, resize its children and wrap excess items into further rows. Do not ask whether to keep widths versus adjust them: the requested arrangement already authorizes item width changes. A specified item count per row is enough to act. Return executable edits if possible. Only return clarification for a genuinely unresolved customer-visible choice; do not ask for technical layout specifications."
                 : result.Status == 200
                 ? "Review this content plan against the user's original request and SelectedId. Preserve all unrelated text, links and images. Ordinary CSS layouts can use style operations, but source-backed JS initializer class changes are layout operations too: preserve that class-only operation and never replace it with Grid on the frame, list or cards. Return the verified or corrected executable plan, not an explanation."
+                : result.FailureCode == "provider-empty"
+                ? "The previous response contained a summary but no executable operation. Do not return another summary-only response. For ExecutionGoal use a nonempty classChanges array on its exact TargetId with deployed source tokens, empty html/styles/textStyles and matching runtimeAssertions. Read ResourceKnowledge; if it lacks supported choices return needsSourceAnalysis:true with specific sourceQueries. If no deployed option supports the requested value, ask a concrete question listing only source-backed supported options. Do not invent CSS or classes."
                 : result.FailureCode == "provider-clarification"
                 ? ClarificationRepairInstructions
                 : result.Message;
@@ -323,6 +333,7 @@ public sealed partial class CanvasAiService
         }
         input.PreserveContent = initialPreserve;
         return new(422, null, lastFailure switch {
+            "runtime-verification" => "AI 未提供有效的輪播執行驗證條件，未採用修改；原內容已保留。",
             "class-structure" => "AI 在調整元件配置時改動了其他結構或使用無來源的 class，未採用提案；原內容已保留。請查看流程中的具體差異。",
             "review-incomplete" => "提案尚未完成必要複核，未套用修改；原內容已保留。",
             "link-text" => "連結修改未保留原有文字，已保留原內容；請重新送出。",
@@ -382,6 +393,7 @@ public sealed partial class CanvasAiService
         review["ApprovedPlan"] = JsonSerializer.SerializeToNode(new {
             editMode = input.PreserveContent ? "style" : "content", html = "",
             styles = Array.Empty<object>(), textStyles = Array.Empty<object>(),
+            runtimeAssertions = validated.RuntimeAssertions.Select(assertion => new { targetId = assertion.TargetId, value = assertion.Value, minWidth = assertion.MinWidth }).ToArray(),
             summary = validated.NeedsClarification ? "" : validated.Message,
             clarification = validated.NeedsClarification ? validated.Message : "",
             settingsActions = validated.SettingsActions.Select(action => new { kind = action.Kind, targetId = action.TargetId }).ToArray()

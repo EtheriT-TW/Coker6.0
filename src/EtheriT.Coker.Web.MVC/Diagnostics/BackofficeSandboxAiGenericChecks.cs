@@ -89,7 +89,7 @@ public static partial class BackofficeSandboxChecks
         {
             var response = ModelResponse(body, code);
             response.Headers.Add("X-Canvas-Contract-Version", "2");
-            response.Headers.Add("X-Canvas-Generation-Constraints", "2");
+            response.Headers.Add("X-Canvas-Generation-Constraints", "5");
             return response;
         }
         var gatewayHttp = new ModelListFixture((_, _) =>

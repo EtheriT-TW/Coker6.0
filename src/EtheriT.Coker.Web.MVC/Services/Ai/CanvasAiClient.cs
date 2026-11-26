@@ -39,7 +39,7 @@ public sealed class CanvasAiClient(IAiClient client, IHttpClientFactory clients,
                 (!response.Headers.TryGetValues("X-Canvas-Contract-Version", out var versions) || !versions.Contains("2")))
                 return new(503, null, "AI 畫布服務的契約尚未更新，請管理員同步編譯並重啟 Parallel／Gateway；目前未修改畫布。", calls);
             if ((response.IsSuccessStatusCode || (int)response.StatusCode == 422) &&
-                (!response.Headers.TryGetValues("X-Canvas-Generation-Constraints", out var constraints) || !constraints.Contains("2")))
+                (!response.Headers.TryGetValues("X-Canvas-Generation-Constraints", out var constraints) || !constraints.Contains("5")))
                 return new(503, null, "AI 畫布服務尚未支援元件生成限制，請同步編譯並重啟 Parallel／Gateway；目前未修改畫布。", calls);
             if (!response.IsSuccessStatusCode)
             {
@@ -47,6 +47,7 @@ public sealed class CanvasAiClient(IAiClient client, IHttpClientFactory clients,
                 var failure = status == 422 ? await CanvasAiService.ReadCanvasFailureDetails(response, token) : null;
                 return new(status is 429 or 422 ? status : 502, null, status switch
                 {
+                    400 when input.Phase == "intent" => "AI 需求判定請求未被服務接受，請檢查並同步更新 Parallel／Gateway；目前未修改畫布。",
                     422 => failure!.Message,
                     401 or 403 => "AI 金鑰無效或沒有使用此模型的權限，請管理員檢查設定。",
                     429 => "AI 額度不足或請求過於頻繁，請稍後重試或檢查帳戶額度。",

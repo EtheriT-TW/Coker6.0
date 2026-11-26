@@ -56,7 +56,7 @@ public sealed class CanvasAiController(LoginUserData user, NavigationProvider na
         var diagnosticsEnabled = AllowsPlanDiagnostics(environment.EnvironmentName, HttpContext.Connection.RemoteIpAddress);
         var diagnostics = diagnosticsEnabled && result.Status != 200
             ? input.PlanDiagnostics : null;
-        var body = new { html = result.Html, styles = result.Styles, htmlChanged = result.HtmlChanged, message = result.Message, replyLocale = input.ReplyLocale, settingsActions = result.SettingsActions, preserveContent = input.PreserveContent, needsClarification = result.NeedsClarification, serviceUnavailable, diagnostics, diagnosticsEnabled };
+        var body = new { html = result.Html, styles = result.Styles, htmlChanged = result.HtmlChanged, message = result.Message, replyLocale = input.ReplyLocale, settingsActions = result.SettingsActions, runtimeAssertions = result.RuntimeAssertions, preserveContent = input.PreserveContent, needsClarification = result.NeedsClarification, serviceUnavailable, diagnostics, diagnosticsEnabled };
         if (!streaming) return StatusCode(result.Status, body);
         await WriteStreamEvent(new { type = "result", status = result.Status, modelCalls = input.ModelCalls, data = body }, cancellationToken);
         return new EmptyResult();
@@ -122,6 +122,7 @@ public sealed class CanvasAiController(LoginUserData user, NavigationProvider na
         if (input.Css.Length > 32000) return "選取區塊的樣式太多，請選取較小的區塊後重試。";
         if (input.History.Length > 8000) return "對話內容太長，請清除本機對話後重試。";
         if (input.StyleContext.Length > 16000) return "區塊樣式參考資料太多，請更新編輯器後重試。";
+        if (input.RuntimeContext == null || input.RuntimeContext.Length > 12000) return "輪播執行參考資料不正確。";
         return null;
     }
 }

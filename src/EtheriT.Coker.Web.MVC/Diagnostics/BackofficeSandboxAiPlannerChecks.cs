@@ -495,14 +495,18 @@ public static partial class BackofficeSandboxChecks
                 "A first valid third-round class delta must receive exactly one final review and UI localization; a rejected review must stop without applying or another repair loop.");
         }
         foreach (var selector in new[] { "#directory", "#carousel", "#cards" })
+        foreach (var properties in new[] {
+            new Dictionary<string, string> { ["flex-wrap"] = "wrap", ["justify-content"] = "space-between" },
+            new Dictionary<string, string> { ["display"] = "flex", ["justify-self"] = "stretch", ["aspect-ratio"] = "auto" }
+        })
         {
             start = http.Calls;
             respond = _ => Reply(JsonSerializer.Serialize(new {
                 editMode = "style", html = "", summary = "已調整為四個一排。", styles = new[] {
-                    new { selector, properties = new Dictionary<string, string> { ["flex-wrap"] = "wrap", ["justify-content"] = "space-between" } }
+                    new { selector, properties }
                 }
             }));
-            var ineffectiveFlex = Request("四個一排", carouselHtml); ineffectiveFlex.SelectedId = "directory";
+            var ineffectiveFlex = Request("四個一排", carouselHtml.Replace("catalog swiper-wrapper", "catalog").Replace("template swiper-slide", "template")); ineffectiveFlex.SelectedId = "directory";
             var ineffectiveResult = await service.Generate(ineffectiveFlex, default);
             Require(ineffectiveResult.Status == 422 && ineffectiveResult.Html == null && http.Calls == start + 3 &&
                 ineffectiveFlex.PlanDiagnostics.All(entry => entry.Reason.Contains("flex-wrap/justify-content does not configure")),
@@ -512,6 +516,32 @@ public static partial class BackofficeSandboxChecks
         respond = _ => Reply("""{"editMode":"style","html":"","styles":[{"selector":"#gallery","properties":{"flex-wrap":"wrap","justify-content":"space-between"}}],"summary":"已調整一般版面。"}""");
         var ordinaryFlexResult = await service.Generate(Request("調整一般圖片區塊排列"), default);
         Require(ordinaryFlexResult.Status == 200 && http.Calls == start + 2, "Ordinary non-initialized layouts must retain their existing Flex styling capability.");
+        foreach (var includeAssertion in new[] { false, true })
+        {
+            start = http.Calls;
+            var assertedPlan = System.Text.Json.Nodes.JsonNode.Parse(firstPassDelta)!.AsObject();
+            if (includeAssertion) assertedPlan["runtimeAssertions"] = JsonSerializer.SerializeToNode(new[] { new { targetId = "carousel", value = "4", minWidth = 992 } });
+            respond = call => Reply(call == start + 1 ? """{"kind":"columns","targetId":"carousel","value":"4"}""" : assertedPlan.ToJsonString());
+            var observed = Request("四個一排", carouselHtml); observed.SelectedId = "directory";
+            observed.RuntimeContext = """[{"targetId":"carousel","slidesPerView":6}]""";
+            observed.KnowledgeClasses.Add("four_swiper"); observed.KnowledgeSources = firstPassRequest.KnowledgeSources;
+            var assertedResult = await service.Generate(observed, default);
+            Require(http.Calls == start + 4 && observed.ModelCalls == 4 && observed.ExecutionGoal?.Value == "4" && (includeAssertion
+                ? assertedResult.Status == 200 && assertedResult.RuntimeAssertions.Single().Value == "4"
+                : assertedResult.Status == 422 && assertedResult.Html == null),
+                "Observed runtime proposals need scoped executable assertions; valid assertions must survive review/localization without replacing approved operations.");
+        }
+        foreach (var prompt in new[] { "四個一排", "1行に4個", "Mỗi hàng 4 mục" })
+        {
+            start = http.Calls;
+            respond = call => Reply(call == start + 1 ? """{"kind":"columns","targetId":"carousel","value":"4"}""" :
+                """{"html":"","editMode":"style","summary":"完成四欄","styles":[{"selector":"#carousel","properties":{"font-size":"18px"}}],"runtimeAssertions":[{"targetId":"carousel","value":"4","minWidth":1024}]}""");
+            var goalRequest = Request(prompt, carouselHtml); goalRequest.SelectedId = "directory";
+            goalRequest.RuntimeContext = """[{"targetId":"carousel","slidesPerView":6}]""";
+            var goalResult = await service.Generate(goalRequest, default);
+            Require(goalResult.Status == 422 && goalResult.Html == null && http.Calls == start + 4 && goalRequest.ExecutionGoal?.TargetId == "carousel",
+                "A separately classified column goal cannot be satisfied by font CSS in any user language; no applicable result may escape.");
+        }
         foreach (var selector in new[] { "#directory", "#cards > .template" })
         {
             start = http.Calls;

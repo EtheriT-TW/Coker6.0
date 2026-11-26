@@ -106,9 +106,13 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
 
         JsonElement styleContext;
         JsonElement history;
+        JsonElement runtimeContext;
         try {
             styleContext = JsonSerializer.Deserialize<JsonElement>(input.StyleContext);
             history = JsonSerializer.Deserialize<JsonElement>(string.IsNullOrWhiteSpace(input.History) ? "[]" : input.History);
+            runtimeContext = JsonSerializer.Deserialize<JsonElement>(input.RuntimeContext);
+            if (runtimeContext.ValueKind != JsonValueKind.Array) return new(422, null, "輪播執行資訊格式不正確。");
+            if (runtimeContext.GetArrayLength() == 0) input.RuntimeContext = "[]";
         }
         catch (JsonException) { return new(422, null, "目前樣式資訊格式不正確，請重新整理編輯器。"); }
         var allowedSelectors = targetDocument.DocumentNode.Descendants()
@@ -127,17 +131,22 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
                         .Select(child => HtmlEntity.DeEntitize(child.InnerText)))
                 }).ToArray()
         } : null;
+        var intentFailure = await IdentifyRuntimeGoal(input, settings, targetDocument, history, cancellationToken);
+        if (intentFailure != null) return intentFailure;
         var context = SerializeModelContext(new {
+            ExecutionGoal = input.ExecutionGoal,
             ComponentExecution = new {
                 InitializerTargets = initializerTargets,
                 RuntimeStyleTargets = runtimeStyleTargets,
                 RuntimeLayoutTargets = runtimeLayoutTargets,
+                RuntimeAppearanceProperties = AllowedCssProperties.Split(' ').Where(IsRuntimeAppearanceProperty).ToArray(),
                 ClassOnlyContract = "For class-only configuration changes return classChanges (targetId/remove/add), html empty, styles empty. The server retains original markup. Select actual supported tokens from ResourceKnowledge; if insufficient request source analysis. This does not authorize unrelated text/content changes."
             },
             input.Scope, input.Html, Css = input.Scope == "selected" ? input.Css[..Math.Min(input.Css.Length, 8000)] : input.Css,
             CssTruncated = input.Scope == "selected" && input.Css.Length > 8000,
             History = history, input.Prompt, input.PreserveContent, input.AutoDetect, input.SelectedId,
             StyleContext = styleContext, input.WebsiteLocale, input.ReplyLocale, input.BrowserLocale, input.ConversationLocale,
+            RuntimeContext = runtimeContext,
             input.AvailableSettings,
             ResourceKnowledge = discovered,
             AllowedSelectors = allowedSelectors.Concat(targetDocument.DocumentNode.Descendants()
@@ -169,6 +178,13 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
                 return new(422, null, "Settings actions must use an available capability and an actual compatible target in the current editable fragment.");
             return new(422, null, question[..Math.Min(question.Length, 500)]) { NeedsClarification = true, SettingsActions = settingsActions };
         }
+        if (input.ExecutionGoal != null &&
+            ((result.RootElement.TryGetProperty("styles", out var goalStyles) && goalStyles.GetArrayLength() > 0) ||
+             (result.RootElement.TryGetProperty("textStyles", out var goalText) && goalText.GetArrayLength() > 0) ||
+             (result.RootElement.TryGetProperty("settingsActions", out var goalSettings) && goalSettings.GetArrayLength() > 0) ||
+             !string.IsNullOrWhiteSpace(result.RootElement.GetProperty("html").GetString()) &&
+             !IsGoalClassChange(input, result.RootElement.GetProperty("html").GetString()!)))
+            return new(422, null, "The classified goal is a JS-driven carousel column count. Use only source-backed classChanges on ExecutionGoal.TargetId, or request source analysis / a genuine missing decision. Appearance CSS cannot satisfy this goal.") { FailureCode = "runtime-goal" };
         if (input.AutoDetect)
         {
             if (!result.RootElement.TryGetProperty("editMode", out var mode) ||
@@ -222,7 +238,7 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
         html = normalizedHtml;
         styles = normalizedStyles;
         var structureDocument = new HtmlDocument(); structureDocument.LoadHtml(html);
-        foreach (var rule in styles.Where(rule => HasGridTracks(rule) || HasCarouselFlexLayout(rule)))
+        foreach (var rule in styles.Where(rule => HasGridTracks(rule) || HasRuntimeGeometryStyle(rule)))
         {
             var ownerSelector = rule.Selector.Split(' ', 2)[0];
             var node = structureDocument.DocumentNode.Descendants().FirstOrDefault(n => "#" + n.GetAttributeValue("id", "") == ownerSelector);
@@ -233,8 +249,8 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
             if (swiper == null && nestedOwners.Length == 1) swiper = nestedOwners[0];
             var carouselList = node?.AncestorsAndSelf().Any(n => n.GetAttributeValue("class", "")
                 .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("swiper-wrapper")) == true;
-            if ((swiper != null || carouselList) && (HasGridTracks(rule) || (node != null && IsRuntimeLayoutTarget(node) && HasCarouselFlexLayout(rule))))
-                return new(422, null, "This target belongs to a JS-driven carousel, including runtime-card selectors. Read ResourceKnowledge for its actual initializer and supported class choices; return an exact class-only content edit on its existing initialization owner" + (swiper == null ? " (the editable boundary must include that owner)" : " #" + swiper.GetAttributeValue("id", "")) + " instead of CSS Grid or Flex layout properties. Changing flex-wrap/justify-content does not configure its slidesPerView. If source evidence is insufficient, set needsSourceAnalysis=true.") { FailureCode = "styles" };
+            if ((swiper != null || carouselList) && (HasGridTracks(rule) || (node != null && IsRuntimeLayoutTarget(node) && HasRuntimeGeometryStyle(rule))))
+                return new(422, null, "This target belongs to a JS-driven carousel, including runtime-card selectors. Read ResourceKnowledge for its actual initializer and supported class choices; return an exact class-only content edit on its existing initialization owner" + (swiper == null ? " (the editable boundary must include that owner)" : " #" + swiper.GetAttributeValue("id", "")) + " instead of CSS layout properties. Changing display/flex-wrap/justify-content does not configure its slidesPerView. Driver nodes allow only RuntimeAppearanceProperties. If source evidence is insufficient, set needsSourceAnalysis=true.") { FailureCode = "styles" };
         }
         var directoryFrames = structureDocument.DocumentNode.Descendants().Where(n =>
             n.GetAttributeValue("class", "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Contains("catalog_frame"))
@@ -275,7 +291,9 @@ public sealed partial class CanvasAiService(CanvasAiClient client, IConfiguratio
             return new(422, null, "The proposed styles are identical to the observed styles. Plan actual changes for the requested effect or explain ambiguity in clarification.");
         if (!TryReadSettingsActions(input, result.RootElement, html, out var actions))
             return new(422, null, "Settings actions must use an available capability and an actual compatible target in the current editable fragment.");
-        return new(200, html, message[..Math.Min(message.Length, 500)]) { Styles = styles, HtmlChanged = htmlChanged, SettingsActions = actions };
+        if (!TryReadRuntimeAssertions(input, result.RootElement, out var runtimeAssertions))
+            return new(422, null, "Return runtimeAssertions:[{targetId:actual_initializer_id,value:expected_slidesPerView_as_string,minWidth:0}]. Use RuntimeContext and requested outcome, not the old baseline for a layout change. minWidth>0 cites a real responsive breakpoint; at that width and above the active slidesPerView must also match. Appearance-only edits may assert the unchanged current layout.") { FailureCode = "runtime-verification" };
+        return new(200, html, message[..Math.Min(message.Length, 500)]) { Styles = styles, HtmlChanged = htmlChanged, SettingsActions = actions, RuntimeAssertions = runtimeAssertions };
     }
 
     internal static async Task<string> ReadCanvasFailure(HttpResponseMessage response, CancellationToken token)
@@ -523,7 +541,10 @@ public sealed record CanvasAiResult(int Status, string? Html, string Message)
     public List<CanvasAiStyle> Styles { get; init; } = [];
     public bool HtmlChanged { get; init; }
     public List<CanvasAiSettingsAction> SettingsActions { get; init; } = [];
+    public List<CanvasAiRuntimeAssertion> RuntimeAssertions { get; init; } = [];
 }
+
+public sealed record CanvasAiRuntimeAssertion(string TargetId, string Value, int MinWidth = 0);
 
 public sealed record CanvasAiSettingsAction(string Kind, string TargetId);
 
@@ -559,6 +580,10 @@ public sealed class CanvasAiRequest
     [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public int? ModelCalls { get; set; }
     [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public bool IntentClassified { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public CanvasAiRuntimeAssertion? ExecutionGoal { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public string WebsiteLocale { get; set; } = "";
     [System.Text.Json.Serialization.JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public string ReplyLocale { get; set; } = "";
@@ -577,6 +602,7 @@ public sealed class CanvasAiRequest
     public bool AutoDetect { get; set; }
     public bool PreserveContent { get; set; } = true;
     public string StyleContext { get; set; } = "";
+    public string RuntimeContext { get; set; } = "[]";
     public long WebsiteId { get; set; }
     public string Controller { get; set; } = "";
     public string Action { get; set; } = "";

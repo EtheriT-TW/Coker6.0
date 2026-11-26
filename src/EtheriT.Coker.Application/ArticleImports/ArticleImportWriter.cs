@@ -1,6 +1,7 @@
 ﻿using EtheriT.Coker.Application.ArticleTemplates;
 using EtheriT.Coker.Application.Shared.Dto.ArticleImport;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,8 @@ public sealed class ArticleImportWriter(
     CokerDbContext db,
     LoginUserData loginUserData,
     ArticleTemplateAppService templates,
-    ArticleImportFileCleaner cleaner)
+    ArticleImportFileCleaner cleaner,
+    IWebsiteCacheStateAppService cacheState)
 {
     public const int DescriptionLength = 100;
     private const string HistorySource = "背景匯入文章資料";
@@ -82,6 +84,10 @@ public sealed class ArticleImportWriter(
 
             await reportProgress(5 + 85 * (i + 1) / rowIds.Count, $"正在建立文章（{i + 1}/{rowIds.Count}）");
         }
+
+        // 文章是直接寫 Tag_Associates，沒經過 TagAppService，要自己讓前台目錄快照失效，否則前台看不到新文章。
+        if (created + updated > 0)
+            await cacheState.TouchByWebsiteIdAsync(websiteId, WebsiteCacheKeys.DirectoryContent);
 
         await reportProgress(95, "正在清理未使用的圖片");
         await cleaner.RecycleUnusedAsync(batch.Id);

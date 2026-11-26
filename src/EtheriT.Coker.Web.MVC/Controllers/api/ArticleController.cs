@@ -115,9 +115,9 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api
         }
 
         [HttpPost]
-        public async Task<ResponseMessageDto> RebuildContentWithFiles(long AId)
+        public async Task<ResponseMessageDto> RebuildContentWithFiles(long AId, bool filesChanged = false, bool rebuildContent = true)
         {
-            return await articleAppService.RebuildContentWithFiles(AId);
+            return await articleAppService.RebuildContentWithFiles(AId, filesChanged, rebuildContent);
         }
         // 2026/05/14 21:15 正式站Run過一次 先隱藏
         // 2026/05/14 21:54 需重新Run 先開啟

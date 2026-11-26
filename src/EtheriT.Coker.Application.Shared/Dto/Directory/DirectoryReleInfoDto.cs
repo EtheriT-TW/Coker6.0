@@ -22,6 +22,7 @@ namespace EtheriT.Coker.Application.Shared.Dto.Directory
         public DateTime? LastModificationTime { get; set; }
         public int SerNo { get; set; }
         public string? Title { get; set; }
+        public bool HasPendingImportReview { get; set; }
         public string? Subtitle { get; set; }
         public string? Address { get; set; }
         public double? Longitude { get; set; }

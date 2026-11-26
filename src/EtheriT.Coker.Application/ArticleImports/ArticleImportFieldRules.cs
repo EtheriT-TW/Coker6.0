@@ -1,4 +1,6 @@
 ﻿using EtheriT.Coker.Application.ArticleTemplates;
+using EtheriT.Coker.Application.Shared.Dto.ArticleTemplate;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.ArticleImports;
 
@@ -9,6 +11,14 @@ public sealed record ArticleImportImageChoice(string Path, string Column, string
 // 只留樣板有的欄位、依型別限制筆數與長度、圖片只能用這列下載的檔案、必填欄位要有值。
 public static class ArticleImportFieldRules
 {
+    public const string CoverKey = "article.cover";
+    private static readonly ArticleTemplateFieldDto CoverField = new(CoverKey, "文章封面", ArticleFieldTypes.Image, false, null, null);
+    private static readonly Regex IntroductionHeading = new(@"^\s*(?:公司|企業|廠商)簡介(?:[ \t]*[:：][ \t]*|[ \t]*\n)");
+    private static readonly Regex PhilosophyHeading = new(@"(?m)^[ \t]*(?:公司)?經營理念(?:[ \t]*[:：][ \t]*|[ \t]*(?:\n|$))");
+
+    public static IReadOnlyList<ArticleTemplateFieldDto> GetFields(ArticleTemplate template)
+        => [CoverField, .. template.Fields];
+
     public const int MaxTitleLength = 150;      // Article.Title 的長度上限
     public const int MaxStringLength = 300;
     public const int MaxLinkLength = 500;
@@ -16,6 +26,39 @@ public static class ArticleImportFieldRules
     public const int MaxListItems = 50;
     public const int MaxListItemLength = 100;
     public const int DefaultGalleryMax = 10;
+
+    internal static string OriginalIntroduction(IReadOnlyDictionary<string, string> source)
+    {
+        var genericIntroduction = "";
+        foreach (var (column, value) in source)
+        {
+            var label = column.Split(['(', '（', '\r', '\n', ':', '：'], 2)[0].Trim();
+            var isCompanyIntroduction = label is "公司簡介" or "企業簡介" or "廠商簡介" or "公司介紹" or "企業介紹" or "廠商介紹";
+            if (!isCompanyIntroduction && label is not ("簡介" or "完整簡介")) continue;
+            var text = ArticleFieldValues.Clean([value]).FirstOrDefault()?.ReplaceLineEndings("\n");
+            if (text == null) continue;
+            if (isCompanyIntroduction) return text;
+            if (genericIntroduction.Length == 0) genericIntroduction = text;
+        }
+
+        return source.Values.Select(value => value.ReplaceLineEndings("\n").Trim())
+            .FirstOrDefault(value => IntroductionHeading.IsMatch(value)) ?? genericIntroduction;
+    }
+
+    internal static void ApplyIntroductionSections(ArticleTemplate template, Dictionary<string, List<string>> fields,
+        IReadOnlyDictionary<string, string> source)
+    {
+        if (template.Key != "vendor-profile") return;
+        var introduction = OriginalIntroduction(source);
+        var heading = IntroductionHeading.Match(introduction);
+        var philosophy = PhilosophyHeading.Match(introduction, heading.Length);
+        if (!philosophy.Success) return;
+
+        var summary = introduction[heading.Length..philosophy.Index].Trim();
+        if (summary.Length == 0) return;
+        fields["hero.summary"] = [summary];
+        fields["intro.content"] = [introduction[philosophy.Index..].Trim()];
+    }
 
     // resolveImage：把欄位值轉成圖片路徑，不是這列的圖片就回傳 null（AI 用代號 image:1，預覽頁送回路徑）。
     // images：這列下載成功的圖片（依 Excel 順序），用來套用圖片規則；不給就不套用。
@@ -53,13 +96,34 @@ public static class ArticleImportFieldRules
         }
 
         if (images is { Count: > 0 })
+        {
             ApplyImageRules(template, result, images, excludeFromGallery: !byUser);
+            if (raw.TryGetValue(CoverKey, out var cover))
+            {
+                var selection = Images(ArticleFieldValues.Clean(cover), resolveImage).FirstOrDefault();
+                if (selection != null) result[CoverKey] = [selection];
+            }
+            SetDefaultCover(result, images);
+        }
 
         var missing = template.Fields
             .Where(f => (f.Required || f.Key == template.PageTitleKey) && !result.ContainsKey(f.Key))
             .Select(f => f.Label)
             .ToList();
         return (result, missing.Count == 0 ? null : $"缺少必填欄位：{string.Join("、", missing)}");
+    }
+
+    internal static void SetDefaultCover(Dictionary<string, List<string>> fields, IReadOnlyList<ArticleImportImageChoice> images)
+    {
+        if (images.Count == 0 || ArticleFieldValues.First(fields, CoverKey).Length > 0) return;
+
+        var cover = images.FirstOrDefault(image =>
+        {
+            var name = $"{image.Column} {image.FileName}";
+            return name.Contains("封面", StringComparison.Ordinal) || name.Contains("主圖", StringComparison.Ordinal)
+                || name.Contains("cover", StringComparison.OrdinalIgnoreCase);
+        }) ?? images[0];
+        fields[CoverKey] = [cover.Path];
     }
 
     // 圖片規則（使用者 2026-11-24 定案）：

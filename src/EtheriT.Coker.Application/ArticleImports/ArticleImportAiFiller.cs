@@ -24,6 +24,7 @@ public sealed class ArticleImportAiUnavailableException(string message) : Except
 public sealed class ArticleImportAiFiller(IWebsiteAiService ai)
 {
     public const int ChunkSize = 5;
+    public const int MaxDescriptionLength = 300;
     private const int MaxOutputTokens = 12000;
     private static readonly Regex ImageToken = new(@"image:(\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -50,6 +51,36 @@ public sealed class ArticleImportAiFiller(IWebsiteAiService ai)
         }
 
         return rows.Select(r => results[r.RowNumber]).ToList();
+    }
+
+    internal async Task<string> SummarizeIntroductionAsync(string introduction)
+    {
+        var input = new AiChatInput(
+            $"依提供的公司簡介原文撰寫一段簡單、完整的文章描述，最多 {MaxDescriptionLength} 字元（含標點與空白）。只使用原文資訊，維持原文語言，不新增事實。只回傳 JSON 物件，description 為描述字串。",
+            [new AiMessage("user", JsonConvert.SerializeObject(new { introduction }))])
+        {
+            ResponseFormat = AiResponseFormat.JsonObject,
+            MaxOutputTokens = 1000
+        };
+        var response = await ai.ChatAsync(input);
+        if (response.Status != 200 || string.IsNullOrWhiteSpace(response.Content))
+            throw new InvalidOperationException("AI 無法產生文章描述，請確認 AI 設定後重新匯入。");
+
+        try
+        {
+            var description = JObject.Parse(StripCodeFence(response.Content))["description"];
+            if (description?.Type == JTokenType.String)
+            {
+                var text = description.ToString().ReplaceLineEndings("\n").Trim();
+                if (text.Length is > 0 and <= MaxDescriptionLength) return text;
+            }
+        }
+        catch (JsonException)
+        {
+            // 無效的回覆和不符合長度的描述都交由匯入流程顯示失敗原因。
+        }
+
+        throw new InvalidOperationException($"AI 回傳的文章描述無效，請重新匯入。描述須為 1 至 {MaxDescriptionLength} 字元。");
     }
 
     private async Task<(IReadOnlyList<ArticleImportAiResult> Results, string? Error)> RequestAsync(
@@ -85,13 +116,15 @@ public sealed class ArticleImportAiFiller(IWebsiteAiService ai)
         2. 欄位值一律是字串陣列。pagetitle、string、textarea、link、image 只放一個字串；
            list 每個項目一個字串（把頓號、逗號、斜線、換行分隔的項目拆開，去掉編號與多餘符號）；gallery 可放多個圖片代號，不超過 maxCount。
         3. image、gallery 只能填該列 images 清單裡的代號（例如 "image:2"），依欄名與檔名判斷圖片用途（例如官網橫幅、Logo），不可填網址或其他文字。
-           該列只要有圖片，image 欄位就一定要選一張；只有一張圖片時放在 image，gallery 留空；image 用過的圖片不可再放進 gallery。
+           樣板的 image 欄位只要有圖片就一定要選一張；只有一張圖片時放在樣板的 image，gallery 留空；樣板的 image 用過的圖片不可再放進 gallery。
+           article.cover（文章封面）獨立選圖。有封面或主圖就優先選，沒有時選一張能代表該列文章的圖片；可與橫幅或 Logo 共用同一張。沒有圖片時留空。
         4. required 為 true 的欄位必填；pagetitle 通常是公司或單位的中文名稱。
         5. 文字照原文，不翻譯、不改寫，只去除多餘空白；textarea 保留原本的換行。英文欄位只在資料有英文時才填。
         6. link 欄位填原文的網址、電子郵件或電話。同一格同時有網址與電子郵件時（例如「www.abc.com / abc@mail.com」），
            自行判斷哪個是網址、哪個是電子郵件，分別填入對應的欄位（依欄位 label 判斷），不要整串放在同一個欄位。
         7. 同一段介紹文字要分給「短介紹」與「完整簡介」兩類欄位時（例如主視覺短介紹與公司簡介）：
-           一律先填短介紹：只要有介紹文字，短介紹就一定要有值；文字只有一到兩句時只填短介紹，完整簡介留空；
+           若原文用「公司簡介」和「經營理念」小標題分段，主視覺短介紹完整照抄經營理念前的公司簡介內文，包含所有句子和段落；經營理念小標題及內文放進完整簡介。
+           原文沒有以上小標題時，一律先填短介紹：只要有介紹文字，短介紹就一定要有值；文字只有一到兩句時只填短介紹，完整簡介留空；
            文字較長時再依下列方式拆分。短介紹只放最能說明公司主要業務的一到兩句（原文照抄，約 100 字內，通常是開頭說明「主要生產／提供什麼」的句子）；
            其餘內容（含經營理念等段落）放進完整簡介，保留原本的段落與換行，不要重複短介紹已放的句子；
            「公司簡介」「經營理念」這類小標題：與欄位名稱相同的開頭標題去掉，其他小標題保留成獨立一行。
@@ -101,7 +134,7 @@ public sealed class ArticleImportAiFiller(IWebsiteAiService ai)
     public static string BuildUserMessage(ArticleTemplate template, IReadOnlyList<ArticleImportAiRow> rows)
         => JsonConvert.SerializeObject(new
         {
-            fields = template.Fields.Select(f => new
+            fields = ArticleImportFieldRules.GetFields(template).Select(f => new
             {
                 key = f.Key,
                 label = f.Label,
@@ -138,6 +171,7 @@ public sealed class ArticleImportAiFiller(IWebsiteAiService ai)
                 continue;
 
             var raw = ReadFields(item["fields"] as JObject);
+            ArticleImportFieldRules.ApplyIntroductionSections(template, raw, row.Data);
             var images = row.Images.ToDictionary(i => i.Token, i => i.Path, StringComparer.OrdinalIgnoreCase);
             var (fields, error) = ArticleImportFieldRules.Normalize(template, raw, value =>
             {

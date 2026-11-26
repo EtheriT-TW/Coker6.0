@@ -15,12 +15,12 @@
 
 <div id="ArticleWorkspace" class="card border-0 d-none" data-hash-page="ArticleList">
     <div id="ArticleList" class="articles d-none">
-        <div class="card-body position-relative">
-            <div class="d-flex position-absolute z-index-up">
-                <button class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none @(Model.ArticleOnly ? "d-none" : "")">
+        <div class="card-body position-relative content-list-body">
+            <div class="content-list-actions d-flex position-absolute z-index-up">
+                <button type="button" class="btn_back border btn-outline-light text-black d-flex p-1 rounded text-decoration-none @(Model.ArticleOnly ? "d-none" : "")" aria-label="返回目錄列表">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </button>
-                <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded text-decoration-none ml-3">
+                <button type="button" class="btn_add border btn-outline-light text-black d-flex p-1 rounded text-decoration-none ml-3" aria-label="新增文章">
                     <span class="material-symbols-outlined">add</span>
                 </button>
             </div>
@@ -34,7 +34,7 @@
                             type = new JS("GetDirectoryType")
                         })
                     )
-                    .OnContentReady("DirectoryDatailListReady")
+                    .OnContentReady("articleListReady")
                     .OnRowPrepared("articleRowPrepared")
                     .HeaderFilter(headerFilter => headerFilter.Visible(true))
                     .RemoteOperations(true)
@@ -59,9 +59,14 @@
                             .Caption("標題")
                             .MinWidth(150)
                             .AllowHiding(false)
-                            .CssClass("article-title-column")
+                            .CssClass("article-title-column content-list-title")
                             .CellTemplate(@<text>
-                                <span class="article-title-text" title="<%- data.Title || '' %>"><%- data.Title || '' %></span>
+                                <span class="d-inline-flex align-items-center gap-1 mw-100">
+                                    <% if (data.HasPendingImportReview === true) { %>
+                                        <span class="badge bg-info text-dark flex-shrink-0" title="匯入後尚未手動編輯">匯入</span>
+                                    <% } %>
+                                    <span class="article-title-text" title="<%- data.Title || '' %>"><%- data.Title || '' %></span>
+                                </span>
                             </text>);
                         c.Add()
                             .DataField("Tags")

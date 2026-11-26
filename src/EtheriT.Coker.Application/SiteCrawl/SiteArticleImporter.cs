@@ -372,7 +372,7 @@ public sealed partial class SiteArticleImporter(SiteCrawlHtml html, SiteLayoutSc
             Id = checked((int)id),
             SaveHtml = built.Html,
             SaveCss = built.Css
-        });
+        }, manualEdit: false);
         if (built.UsedTemplate && response.Success) result.ArticleTemplatesApplied++;
         if (!response.Success)
         {

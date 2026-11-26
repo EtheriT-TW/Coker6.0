@@ -1,6 +1,8 @@
 ﻿using EtheriT.Coker.Application.ArticleTemplates;
+using EtheriT.Coker.Application.Dto;
 using EtheriT.Coker.Application.Shared.Dto.ArticleImport;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.JsonObject;
 using EtheriT.Coker.Core.Models;
 using EtheriT.Coker.EntityFrameworkCore.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -8,15 +10,16 @@ using Microsoft.EntityFrameworkCore;
 namespace EtheriT.Coker.Application.ArticleImports;
 
 // 匯入的背景第二段（使用者在預覽頁按確認後）：每列建立或更新一篇文章，再用樣板產生內容。
-// 新文章：Title＝pageTitle、Description＝簡介前 100 字、顯示且永久上架、NodeDate＝匯入日，掛上目錄所有標籤。
+// 新文章：Title＝pageTitle、Description＝原始公司簡介或 AI 摘要、顯示且永久上架、NodeDate＝匯入日，掛上目錄所有標籤。
 // 同目錄有同標題文章：覆蓋欄位資料與簡介後重新套用樣板（不改標籤）。
 public sealed class ArticleImportWriter(
     CokerDbContext db,
     LoginUserData loginUserData,
     ArticleTemplateAppService templates,
-    ArticleImportFileCleaner cleaner)
+    ArticleImportFileCleaner cleaner,
+    IWebsiteCacheStateAppService cacheState,
+    ArticleImportAiFiller filler)
 {
-    public const int DescriptionLength = 100;
     private const string HistorySource = "背景匯入文章資料";
 
     public async Task<ArticleImportConfirmResultDto> WriteAsync(long batchId, Func<int, string, Task> reportProgress)
@@ -60,16 +63,25 @@ public sealed class ArticleImportWriter(
                 if (isUpdate && !match!.CanEdit)
                     throw new InvalidOperationException("同標題的文章在有權限設定的目錄裡，您沒有編輯權限。");
 
+                var cover = await FindCoverAsync(websiteId, row, values);
+                var previewFieldsJson = ArticleFieldValues.Serialize(values);
+                values.Remove(ArticleImportFieldRules.CoverKey);
+                var articleFieldsJson = ArticleFieldValues.Serialize(values);
+                var description = await DescriptionAsync(template, values, row.SourceJson);
                 if (!isUpdate)
-                    newArticleId = await CreateArticleAsync(websiteId, userId, title, row.FieldDataJson!, Description(template, values), tagIds);
+                    newArticleId = await CreateArticleAsync(websiteId, userId, title, articleFieldsJson, description, tagIds);
                 var articleId = newArticleId
-                    ?? await UpdateArticleAsync(websiteId, match!.Id, row.FieldDataJson!, Description(template, values));
+                    ?? await UpdateArticleAsync(websiteId, match!.Id, articleFieldsJson, description);
                 await templates.ApplyToArticleAsync(websiteId, articleId, template, orgName, HistorySource);
+                if (cover != null) await SetCoverAsync(articleId, userId, cover);
+                row.FieldDataJson = previewFieldsJson;
+                var article = await db.Article.FirstAsync(a => a.Id == articleId && a.FK_WebsiteId == websiteId);
+                article.HasPendingImportReview = true;
+                await SetRowAsync(row.Id, userId, ArticleImportRowStatusEnum.Imported, articleId, null);
 
                 // 同一批裡後面同名的列，更新剛建立的這篇。
                 if (!isUpdate) matches[ArticleImportTitleMatcher.Key(title)] = new ArticleTemplateAppService.DirectoryArticle(articleId, title, true, true);
                 if (isUpdate) updated++; else created++;
-                await SetRowAsync(row.Id, userId, ArticleImportRowStatusEnum.Imported, articleId, null);
             }
             catch (Exception ex)
             {
@@ -83,11 +95,58 @@ public sealed class ArticleImportWriter(
             await reportProgress(5 + 85 * (i + 1) / rowIds.Count, $"正在建立文章（{i + 1}/{rowIds.Count}）");
         }
 
+        // 文章是直接寫 Tag_Associates，沒經過 TagAppService，要自己讓前台目錄快照失效，否則前台看不到新文章。
+        if (created + updated > 0)
+            await cacheState.TouchByWebsiteIdAsync(websiteId, WebsiteCacheKeys.DirectoryContent);
+
         await reportProgress(95, "正在清理未使用的圖片");
         await cleaner.RecycleUnusedAsync(batch.Id);
         var excluded = await db.ArticleImportRows.CountAsync(r =>
             r.FK_ArticleImportBatchId == batch.Id && !r.IsDeleted && r.Status == ArticleImportRowStatusEnum.Excluded);
         return new ArticleImportConfirmResultDto(batch.Id, created, updated, excluded, failures);
+    }
+
+    private async Task<FileUpload?> FindCoverAsync(long websiteId, ArticleImportRow row, Dictionary<string, List<string>> values)
+    {
+        var images = ArticleImportRowImages.Parse(row.DownloadedFilesJson);
+        ArticleImportFieldRules.SetDefaultCover(values, ArticleImportRowImages.Choices(images));
+        var path = ArticleFieldValues.First(values, ArticleImportFieldRules.CoverKey);
+        if (path.Length == 0) return null;
+
+        var fileId = images.FirstOrDefault(i => i.Error == null && i.Path == path && i.FileId is > 0)?.FileId;
+        return await db.FileUploads.AsNoTracking().FirstOrDefaultAsync(file =>
+                file.Id == fileId && file.FK_WebsiteId == websiteId && !file.IsDeleted && file.DownloadFileName != null)
+            ?? throw new InvalidOperationException("文章封面已不存在或無法使用，請重新選擇圖片。");
+    }
+
+    private async Task SetCoverAsync(long articleId, long userId, FileUpload file)
+    {
+        var type = (int)FileBindTypeEnum.文章管理;
+        var binds = await db.FileBinds.Where(b => b.Sid == articleId && b.type == type && !b.IsDeleted)
+            .OrderBy(b => b.SerNo).ThenBy(b => b.Id).ToListAsync();
+        var current = binds.FirstOrDefault(b => b.FK_FileUploadId == file.Id);
+        foreach (var old in binds.Where(b => b != current))
+        {
+            old.IsDeleted = true;
+            old.DeletionTime = DateTime.Now;
+            old.DeleterUserId = userId;
+        }
+        if (current != null) return;
+
+        var bind = new FileBind
+        {
+            Guid = Guid.NewGuid(),
+            Sid = articleId,
+            type = type,
+            Name = file.OriginalFileName,
+            FK_FileUploadId = file.Id,
+            num = 1,
+            SerNo = 500,
+            MediaLink = "",
+            AreaKey = ""
+        };
+        loginUserData.setOptionParameter(bind, userId);
+        db.FileBinds.Add(bind);
     }
 
     private async Task<long> CreateArticleAsync(
@@ -159,16 +218,19 @@ public sealed class ArticleImportWriter(
         await db.SaveChangesAsync();
     }
 
-    // 簡介：標籤含「簡介」的多行文字欄位優先，沒有就用第一個有值的多行文字欄位；取前 100 字、換行改空白。
-    internal static string Description(ArticleTemplate template, IReadOnlyDictionary<string, List<string>> values)
+    private async Task<string> DescriptionAsync(
+        ArticleTemplate template, IReadOnlyDictionary<string, List<string>> values, string? sourceJson)
     {
-        var textareas = template.Fields.Where(f => f.Type == ArticleFieldTypes.Textarea).ToList();
-        var text = textareas
-            .OrderBy(f => f.Label.Contains("簡介", StringComparison.Ordinal) ? 0 : 1)
-            .Select(f => ArticleFieldValues.First(values, f.Key))
-            .FirstOrDefault(v => v.Length > 0) ?? "";
-        text = string.Join(" ", text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-        return text.Length > DescriptionLength ? text[..DescriptionLength] : text;
+        var text = ArticleImportFieldRules.OriginalIntroduction(ArticleImportProcessor.ParseSource(sourceJson));
+        if (text.Length == 0)
+            text = template.Fields.Where(f => f.Type == ArticleFieldTypes.Textarea)
+                .OrderBy(f => f.Label.Contains("簡介", StringComparison.Ordinal) ? 0 : 1)
+                .Select(f => ArticleFieldValues.First(values, f.Key))
+                .FirstOrDefault(v => v.Length > 0)?.ReplaceLineEndings("\n") ?? "";
+
+        return text.Length <= ArticleImportAiFiller.MaxDescriptionLength
+            ? text
+            : await filler.SummarizeIntroductionAsync(text);
     }
 }
 

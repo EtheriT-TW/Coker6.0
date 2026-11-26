@@ -38,8 +38,8 @@
     <div id="pages">
         <div id="DirectoryList" class="card border-0" data-hash-page="DirectoryList">
             @await Component.InvokeAsync(nameof(Modal), new { dispaly = "PermissionDetailsModal" })
-            <div class="card-body position-relative">
-                <button class="btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none">
+            <div class="card-body position-relative content-list-body">
+                <button type="button" class="content-list-actions btn_add border btn-outline-light text-black d-flex p-1 rounded position-absolute text-decoration-none" aria-label="新增目錄">
                     <span class="material-symbols-outlined">add</span>
                 </button>
                 @(
@@ -64,7 +64,7 @@
                                 .Columns(c =>
                                 {
                                     c.AddFor(e => e.Id).Caption("ID").Width(100).AllowEditing(false);
-                                    c.AddFor(e => e.Title).Caption("標題");
+                                    c.AddFor(e => e.Title).Caption("標題").CssClass("content-list-title");
                                     c.AddFor(e => e.Description).Caption("描述");
                                     c.AddFor(e => e.Type).Caption("綁定內容").Width(100);
                                     c.AddFor(e => e.Items).Caption("綁定標籤、選單");

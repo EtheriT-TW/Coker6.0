@@ -823,7 +823,7 @@ namespace EtheriT.Coker.Application.Directory
                         Description = string.IsNullOrEmpty(m.Description)
                             ? getSearchDescription(m.Html, dto.SearchText)
                             : getSearchDescription(m.Description, dto.SearchText),
-                        MainImage = ExtractHtmlMainImage(m.Html)
+                        MainImage = StringHandler.ExtractHtmlMainImage(m.Html)
                     });
                 }
                 else if (row.Type == DirectoryTypeEnum.文章)
@@ -849,7 +849,7 @@ namespace EtheriT.Coker.Application.Directory
                             : getSearchDescription(a.Description, dto.SearchText),
                         MainImage = (imgs.Count > 0)
                             ? imgs[0].Link
-                            : ExtractHtmlMainImage(a.Html),
+                            : StringHandler.ExtractHtmlMainImage(a.Html),
                         tags = articleTags.TryGetValue(a.Id, out var t) ? t : null
                     });
                 }
@@ -1954,7 +1954,7 @@ namespace EtheriT.Coker.Application.Directory
                 if (string.IsNullOrEmpty(data.Description)) getSearchDescription(data.MainImage, dto.SearchText);
                 else getSearchDescription(data.Description, dto.SearchText);
                 if (imgs.Any()) data.MainImage = imgs[0].Link;
-                else data.MainImage = ExtractHtmlMainImage(data.MainImage);
+                else data.MainImage = StringHandler.ExtractHtmlMainImage(data.MainImage);
 
                 var stocks = await db.Prod_Stocks.Where(e => e.FK_Pid == data.Id).Where(e => !e.IsDeleted).ToListAsync();
                 var stockids = stocks.Select(e => e.Id).ToList();
@@ -2007,17 +2007,6 @@ namespace EtheriT.Coker.Application.Directory
 
         private static readonly Regex RxCollapseSpaces = new(@"\s+", RegexOptions.Compiled);
 
-
-        // 取 HTML 第一張圖的網址；GrapesJS 沒選圖時的佔位圖（data: 開頭）視為沒有圖，
-        // 回傳空字串讓前台 normalizeImagePath 退回網站分享圖（og:image）
-        private static readonly Regex RxHtmlFirstImage = new("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        private static string ExtractHtmlMainImage(string? html)
-        {
-            var src = RxHtmlFirstImage.Match(html ?? "").Value
-                .Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
-            return src.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? "" : src;
-        }
 
         private string getSearchDescription(string? content, string findstr)
         {
@@ -3141,7 +3130,7 @@ namespace EtheriT.Coker.Application.Directory
                             .ToListAsync();
                         if (!a_tags.Any()) throw new Exception("資料不存在");
                         var aids = a_tags.Select(e => e.FK_AId).ToList();
-                        var dataQuery = from a in db.Article.Where(e => !e.IsDeleted)
+                        var dataQuery = from a in db.Article.Where(e => !e.IsDeleted && e.FK_WebsiteId == WebsiteID)
                                         where aids.Contains(a.Id)
                                         select new DirectoryReleInfoDto
                                         {
@@ -3149,6 +3138,7 @@ namespace EtheriT.Coker.Application.Directory
                                             Visible = a.Visible,
                                             Available = !a.RemovedFromShelves,
                                             Title = a.Title,
+                                            HasPendingImportReview = a.HasPendingImportReview,
                                             Description = a.Description,
                                             SerNo = a.SerNO,
                                             NodeDate = a.NodeDate,

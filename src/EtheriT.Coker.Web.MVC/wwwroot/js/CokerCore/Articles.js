@@ -58,9 +58,11 @@
                 dataType: "json"
             });
         },
-        RebuildContentWithFiles: function (data) {
+        RebuildContentWithFiles: function (data, filesChanged = false, rebuildContent = true) {
             return $.ajax({
-                url: "/api/Article/RebuildContentWithFiles?AId=" + parseInt(data),
+                url: "/api/Article/RebuildContentWithFiles?" + $.param({
+                    AId: parseInt(data), filesChanged: filesChanged, rebuildContent: rebuildContent
+                }),
                 type: "POST",
                 headers: _c.Data.Header,
                 dataType: "json"

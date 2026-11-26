@@ -10,16 +10,16 @@ using Microsoft.EntityFrameworkCore;
 namespace EtheriT.Coker.Application.ArticleImports;
 
 // 匯入的背景第二段（使用者在預覽頁按確認後）：每列建立或更新一篇文章，再用樣板產生內容。
-// 新文章：Title＝pageTitle、Description＝簡介前 100 字、顯示且永久上架、NodeDate＝匯入日，掛上目錄所有標籤。
+// 新文章：Title＝pageTitle、Description＝原始公司簡介或 AI 摘要、顯示且永久上架、NodeDate＝匯入日，掛上目錄所有標籤。
 // 同目錄有同標題文章：覆蓋欄位資料與簡介後重新套用樣板（不改標籤）。
 public sealed class ArticleImportWriter(
     CokerDbContext db,
     LoginUserData loginUserData,
     ArticleTemplateAppService templates,
     ArticleImportFileCleaner cleaner,
-    IWebsiteCacheStateAppService cacheState)
+    IWebsiteCacheStateAppService cacheState,
+    ArticleImportAiFiller filler)
 {
-    public const int DescriptionLength = 100;
     private const string HistorySource = "背景匯入文章資料";
 
     public async Task<ArticleImportConfirmResultDto> WriteAsync(long batchId, Func<int, string, Task> reportProgress)
@@ -67,7 +67,7 @@ public sealed class ArticleImportWriter(
                 var previewFieldsJson = ArticleFieldValues.Serialize(values);
                 values.Remove(ArticleImportFieldRules.CoverKey);
                 var articleFieldsJson = ArticleFieldValues.Serialize(values);
-                var description = Description(template, values);
+                var description = await DescriptionAsync(template, values, row.SourceJson);
                 if (!isUpdate)
                     newArticleId = await CreateArticleAsync(websiteId, userId, title, articleFieldsJson, description, tagIds);
                 var articleId = newArticleId
@@ -216,16 +216,19 @@ public sealed class ArticleImportWriter(
         await db.SaveChangesAsync();
     }
 
-    // 簡介：標籤含「簡介」的多行文字欄位優先，沒有就用第一個有值的多行文字欄位；取前 100 字、換行改空白。
-    internal static string Description(ArticleTemplate template, IReadOnlyDictionary<string, List<string>> values)
+    private async Task<string> DescriptionAsync(
+        ArticleTemplate template, IReadOnlyDictionary<string, List<string>> values, string? sourceJson)
     {
-        var textareas = template.Fields.Where(f => f.Type == ArticleFieldTypes.Textarea).ToList();
-        var text = textareas
-            .OrderBy(f => f.Label.Contains("簡介", StringComparison.Ordinal) ? 0 : 1)
-            .Select(f => ArticleFieldValues.First(values, f.Key))
-            .FirstOrDefault(v => v.Length > 0) ?? "";
-        text = string.Join(" ", text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-        return text.Length > DescriptionLength ? text[..DescriptionLength] : text;
+        var text = ArticleImportFieldRules.OriginalIntroduction(ArticleImportProcessor.ParseSource(sourceJson));
+        if (text.Length == 0)
+            text = template.Fields.Where(f => f.Type == ArticleFieldTypes.Textarea)
+                .OrderBy(f => f.Label.Contains("簡介", StringComparison.Ordinal) ? 0 : 1)
+                .Select(f => ArticleFieldValues.First(values, f.Key))
+                .FirstOrDefault(v => v.Length > 0)?.ReplaceLineEndings("\n") ?? "";
+
+        return text.Length <= ArticleImportAiFiller.MaxDescriptionLength
+            ? text
+            : await filler.SummarizeIntroductionAsync(text);
     }
 }
 

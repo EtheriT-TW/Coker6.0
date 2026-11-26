@@ -1314,6 +1314,27 @@
           ]
         },
         {
+          "id": "ContentManagement.Directory.article-import-description",
+          "title": "匯入公司簡介與文章描述",
+          "steps": "在隔離環境匯入 300 字元的公司簡介，以及超過 300 字元且含經營理念的公司簡介。用固定的 AI 回覆模擬有效摘要與超長摘要，查詢文章描述及樣板欄位。",
+          "expected": "300 字元的原文與換行完整保存。超過上限時以整格原文請 AI 摘要，主視覺短介紹完整保留經營理念前的段落，經營理念留在內文。無效摘要會回報該筆失敗，同名文章維持原描述。",
+          "mode": "isolated",
+          "executor": "sandbox/article-import-description",
+          "requiredFeatures": [
+            "Article"
+          ]
+        },
+        {
+          "id": "ContentManagement.Directory.article-import-description-browser",
+          "title": "核對公司簡介預覽與編輯文章描述",
+          "steps": "在測試站匯入一列未滿 300 字元的公司簡介，以及一列含公司簡介與經營理念小標題、整格超過 300 字元的原文。檢查第四步的主視覺短介紹，再確認匯入並開啟編輯文章。用同名資料重匯，並以無匯入權限帳號及另一站台的分頁檢查是否能確認原批次。",
+          "expected": "主視覺短介紹保留經營理念前的全部公司簡介段落。編輯文章的描述在 300 字元以內保留原文，超過上限時顯示完整的 AI 摘要。同名重匯更新描述，無匯入權限及跨站操作無法匯入。",
+          "mode": "review",
+          "requiredFeatures": [
+            "Article"
+          ]
+        },
+        {
           "id": "ContentManagement.Directory.article-import-cover-browser",
           "title": "文章封面預覽與前台顯示",
           "steps": "在啟用文章與目錄功能的測試站，用有權限的帳號匯入有多張圖、同列只有一張圖及無圖的 Excel。確認第四步的桌面和手機順序、預設縮圖和換圖，再確認匯入並開啟文章編輯及前台目錄。另用無匯入權限的帳號及切換站台後的舊分頁嘗試換圖。",

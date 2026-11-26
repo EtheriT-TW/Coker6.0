@@ -1,5 +1,6 @@
 ﻿using EtheriT.Coker.Application.ArticleTemplates;
 using EtheriT.Coker.Application.Shared.Dto.ArticleTemplate;
+using System.Text.RegularExpressions;
 
 namespace EtheriT.Coker.Application.ArticleImports;
 
@@ -12,6 +13,8 @@ public static class ArticleImportFieldRules
 {
     public const string CoverKey = "article.cover";
     private static readonly ArticleTemplateFieldDto CoverField = new(CoverKey, "文章封面", ArticleFieldTypes.Image, false, null, null);
+    private static readonly Regex IntroductionHeading = new(@"^\s*(?:公司|企業|廠商)簡介(?:[ \t]*[:：][ \t]*|[ \t]*\n)");
+    private static readonly Regex PhilosophyHeading = new(@"(?m)^[ \t]*(?:公司)?經營理念(?:[ \t]*[:：][ \t]*|[ \t]*(?:\n|$))");
 
     public static IReadOnlyList<ArticleTemplateFieldDto> GetFields(ArticleTemplate template)
         => [CoverField, .. template.Fields];
@@ -23,6 +26,39 @@ public static class ArticleImportFieldRules
     public const int MaxListItems = 50;
     public const int MaxListItemLength = 100;
     public const int DefaultGalleryMax = 10;
+
+    internal static string OriginalIntroduction(IReadOnlyDictionary<string, string> source)
+    {
+        var genericIntroduction = "";
+        foreach (var (column, value) in source)
+        {
+            var label = column.Split(['(', '（', '\r', '\n', ':', '：'], 2)[0].Trim();
+            var isCompanyIntroduction = label is "公司簡介" or "企業簡介" or "廠商簡介" or "公司介紹" or "企業介紹" or "廠商介紹";
+            if (!isCompanyIntroduction && label is not ("簡介" or "完整簡介")) continue;
+            var text = ArticleFieldValues.Clean([value]).FirstOrDefault()?.ReplaceLineEndings("\n");
+            if (text == null) continue;
+            if (isCompanyIntroduction) return text;
+            if (genericIntroduction.Length == 0) genericIntroduction = text;
+        }
+
+        return source.Values.Select(value => value.ReplaceLineEndings("\n").Trim())
+            .FirstOrDefault(value => IntroductionHeading.IsMatch(value)) ?? genericIntroduction;
+    }
+
+    internal static void ApplyIntroductionSections(ArticleTemplate template, Dictionary<string, List<string>> fields,
+        IReadOnlyDictionary<string, string> source)
+    {
+        if (template.Key != "vendor-profile") return;
+        var introduction = OriginalIntroduction(source);
+        var heading = IntroductionHeading.Match(introduction);
+        var philosophy = PhilosophyHeading.Match(introduction, heading.Length);
+        if (!philosophy.Success) return;
+
+        var summary = introduction[heading.Length..philosophy.Index].Trim();
+        if (summary.Length == 0) return;
+        fields["hero.summary"] = [summary];
+        fields["intro.content"] = [introduction[philosophy.Index..].Trim()];
+    }
 
     // resolveImage：把欄位值轉成圖片路徑，不是這列的圖片就回傳 null（AI 用代號 image:1，預覽頁送回路徑）。
     // images：這列下載成功的圖片（依 Excel 順序），用來套用圖片規則；不給就不套用。

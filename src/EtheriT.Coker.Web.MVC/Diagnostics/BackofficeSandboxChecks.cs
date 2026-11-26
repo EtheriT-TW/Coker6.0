@@ -1,9 +1,13 @@
 using AutoMapper;
 using DevExtreme.AspNet.Mvc;
+using EtheriT.Coker.Application.ArticleImports;
+using EtheriT.Coker.Application.ArticleTemplates;
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Ai;
 using EtheriT.Coker.Application.Shared.Common;
 using EtheriT.Coker.Application.Shared.Dto;
 using EtheriT.Coker.Application.Shared.Dto.enumType;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Directory;
 using EtheriT.Coker.Application.Shared.Dto.enumType.Product;
 using EtheriT.Coker.Application.Shared.Dto.Marquee;
 using EtheriT.Coker.Application.Shared.Dto.Product;
@@ -49,6 +53,7 @@ public static partial class BackofficeSandboxChecks
         , ["sandbox/certificate-crud"] = "ProductManagement.TechnicalCertificate"
         , ["sandbox/directory-crud"] = "ContentManagement.Directory"
         , ["sandbox/article-import-cover"] = "ContentManagement.Directory"
+        , ["sandbox/article-import-description"] = "ContentManagement.Directory"
         , ["sandbox/cust-search-settings"] = "SearchManagement.CustSearch"
         , ["sandbox/search-keyword-codec"] = "Page.Index"
         , ["sandbox/search-log-validation"] = "Page.Index"
@@ -87,7 +92,9 @@ public static partial class BackofficeSandboxChecks
             return new(result.Status == PublicCheckStatus.Passed ? BackofficeTestStatus.Passed : BackofficeTestStatus.Failed, result.Message);
         }
         using var effects = new DiagnosticsSandboxScope();
-        await using var sandbox = await factory.CreateAsync(mapper, level, token);
+        var importSummary = executor == "sandbox/article-import-description" ? new ArticleImportSummaryFixture() : null;
+        await using var sandbox = await factory.CreateAsync(mapper, level, token,
+            importSummary == null ? null : services => services.AddSingleton<IWebsiteAiService>(importSummary));
         token.ThrowIfCancellationRequested();
         switch (executor)
         {
@@ -113,6 +120,7 @@ public static partial class BackofficeSandboxChecks
             case "sandbox/certificate-crud": await CertificateCrud(sandbox); break;
             case "sandbox/directory-crud": await DirectoryCrud(sandbox); break;
             case "sandbox/article-import-cover": await ArticleImportCover(sandbox); break;
+            case "sandbox/article-import-description": await ArticleImportDescription(sandbox, importSummary!); break;
             case "sandbox/cust-search-settings": await CustSearchSettings(sandbox); break;
             case "sandbox/search-keyword-codec": SearchKeywordEncoding(); break;
             case "sandbox/search-log-validation": await SearchLogValidation(sandbox); break;
@@ -139,6 +147,102 @@ public static partial class BackofficeSandboxChecks
             default: throw new InvalidOperationException("Missing sandbox workflow implementation.");
         }
         return new(BackofficeTestStatus.Passed, "隔離測試資料中的業務流程通過；不含瀏覽器操作及 SQL 相容性驗證。");
+    }
+
+    private static async Task ArticleImportDescription(BackofficeSandbox box, ArticleImportSummaryFixture ai)
+    {
+        const long websiteId = 999000001;
+        const string fullIntroduction = """
+            公司簡介
+            本公司主要生產各式家庭用及專業用清潔劑。
+            專業OEM/ODM國際大廠產品，累積20年生產管理經驗，與研發技術。
+            以高標準(ISO22716化粧品GMP)之工廠作業指導綱要，嚴謹管控品質，重視環境保護，深得國際大廠信賴與肯定。
+
+            長期積極投注研究開發，產品多元，品質精良，歡迎共同合作發展，供消費者享受優質商品。
+
+            經營理念
+            本公司自草創成立伊始，即稟持著「誠信、務實、專業」之經營理念及「品質至上，客戶優先」之品質政策，於2013年11月通過 ISO 22716化妝品優良製造規範認證，並依其標準作業持續執行；另在環境保護方面，本公司堅持不使用會危害大自然生態或造成人體健康威脅 之原料，並恪遵政府環境保護單位相關法規，期能共同營造〝健康社會〞善盡責任。
+            """;
+        const string companyColumn = "公司簡介（400 字內）";
+        const string kireiIntroduction = """
+            我們的目標是透過創造和創新，為人類、社會和地球打造美好的生活，讓所有生命都能享受更充實、更豐富的生活。
+            為實現所有生命和諧相處的Kirei世界，我們透過在以下三個領域中做出貢獻：讓每個人的生活都閃耀光芒的Kirei、讓所有人在日常生活中露出笑容的Kirei、實現可持續發展生態的Kirei。
+            這是我們130多年前成立以來一直秉持的企業理念。
+            """;
+        var template = ArticleTemplateCatalog.Get("vendor-profile");
+        var directory = new global::EtheriT.Coker.Core.Models.Directory
+        {
+            FK_WebsiteId = websiteId, Title = "匯入文章描述", Type = (int)DirectoryTypeEnum.文章,
+            ArticleTemplateKey = template.Key
+        };
+        var tag = new Tag { FK_WebsiteId = websiteId, Title = "匯入文章描述" };
+        box.Db.AddRange(directory, tag);
+        await box.Db.SaveChangesAsync();
+        var batch = new ArticleImportBatch { FK_WebsiteId = websiteId, FK_DirectoryId = directory.Id, TemplateKey = template.Key };
+        box.Db.AddRange(batch, new Tag_Associate { FK_AId = directory.Id, FK_TId = tag.Id, Type = TagAssociateTypeEnum.目錄 });
+        await box.Db.SaveChangesAsync();
+
+        var boundary = new string('文', 150) + "\n" + new string('字', 149);
+        var longIntroduction = fullIntroduction.ReplaceLineEndings("\n");
+        var invalid = new string('長', 301);
+        box.Db.AddRange(
+            NewRow(2, "原文描述", boundary),
+            NewRow(3, "摘要描述", longIntroduction),
+            NewRow(4, "原文描述", invalid),
+            NewRow(5, "Kirei 原文描述", kireiIntroduction));
+        await box.Db.SaveChangesAsync();
+
+        var writer = box.Services.GetRequiredService<ArticleImportWriter>();
+        var result = await writer.WriteAsync(batch.Id, (_, _) => Task.CompletedTask);
+        var articles = await box.Db.Article.AsNoTracking().ToDictionaryAsync(article => article.Title!);
+        Require(result.CreatedCount == 3 && result.UpdatedCount == 0 && result.Failures.Count == 1
+            && result.Failures[0].RowNumber == 4, "An invalid summary must prevent writes to the matching article.");
+        Require(ai.Requests.SequenceEqual([longIntroduction, invalid]),
+            "Only over-limit source text must be sent to AI, with the complete original cell.");
+        Require(articles["原文描述"].Description == boundary && articles["摘要描述"].Description == ArticleImportSummaryFixture.Summary,
+            "The article must store the whole 300-character source or the validated summary.");
+        Require(articles["Kirei 原文描述"].Description == kireiIntroduction.ReplaceLineEndings("\n"),
+            "The Kirei description must keep all source paragraphs, including the full final sentence.");
+        var saved = ArticleFieldValues.Parse(articles["摘要描述"].FieldDataJson);
+        var philosophy = longIntroduction.IndexOf("\n經營理念\n", StringComparison.Ordinal);
+        Require(saved["hero.summary"][0] == longIntroduction["公司簡介\n".Length..philosophy].Trim()
+            && saved["intro.content"][0] == longIntroduction[(philosophy + 1)..],
+            "All original introduction paragraphs must be in the hero before the separately preserved philosophy.");
+
+        ArticleImportRow NewRow(int number, string title, string introduction)
+        {
+            var source = new Dictionary<string, string> { [companyColumn] = introduction };
+            var aiRow = new ArticleImportAiRow(number, source, []);
+            var fields = new Dictionary<string, string[]>
+            {
+                [template.PageTitleKey] = [title],
+                ["hero.summary"] = ["本公司主要生產各式家庭用及專業用清潔劑。"],
+                ["intro.content"] = ["AI 整理過的內容"]
+            };
+            var response = JsonConvert.SerializeObject(new { rows = new[] { new { row = number, fields } } });
+            var parsed = ArticleImportAiFiller.ParseResponse(response, template, [aiRow]).Single().Fields
+                ?? throw new InvalidOperationException("Import fixture could not parse the company introduction.");
+            return new ArticleImportRow
+            {
+                FK_ArticleImportBatchId = batch.Id, RowNumber = number, Status = ArticleImportRowStatusEnum.Ready,
+                SourceJson = JsonConvert.SerializeObject(source), FieldDataJson = ArticleFieldValues.Serialize(parsed)
+            };
+        }
+    }
+
+    private sealed class ArticleImportSummaryFixture : IWebsiteAiService
+    {
+        public const string Summary = "本公司生產家庭及專業清潔劑，提供 OEM／ODM 服務，並重視品質與環境保護。";
+        public List<string> Requests { get; } = [];
+
+        public Task<AiChatResult> ChatAsync(AiChatInput input, CancellationToken token = default)
+        {
+            var source = JObject.Parse(input.Messages.Single().Text).Value<string>("introduction")
+                ?? throw new InvalidOperationException("Missing introduction in the summary request.");
+            Requests.Add(source);
+            var description = Requests.Count == 1 ? Summary : new string('長', 301);
+            return Task.FromResult(new AiChatResult(200, JsonConvert.SerializeObject(new { description }), ""));
+        }
     }
 
     private static void Require(bool condition, string reason)

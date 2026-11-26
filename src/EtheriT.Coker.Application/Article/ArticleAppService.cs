@@ -529,7 +529,9 @@ namespace EtheriT.Coker.Application.Article
                                 output_data.type = DirectoryTypeEnum.文章;
                                 output_data = mapper.Map(data, output_data);
                                 output_data.Link = $"/article/{data.Id}";
-                                output_data.MainImage = imageMap.TryGetValue(data.Id, out var image) ? image : "";
+                                output_data.MainImage = imageMap.TryGetValue(data.Id, out var image)
+                                    ? image
+                                    : StringHandler.ExtractHtmlMainImage(data.Html);
                                 output_data.NodeDate = data.NodeDate;
                                 output_data.OrgName = website.OrgName;
                                 output_data.Title = ((DataJson != null && DataJson.No != 0) ? $"第{DataJson.No}期 " : "") + output_data.Title;

@@ -17,6 +17,16 @@ namespace EtheriT.Coker.Application.Common
 {
     public class StringHandler
     {
+        private static readonly Regex RxHtmlFirstImage = new("(?:src=[\\S]*quot;)[\\S]*(?:quot;)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        // GrapesJS 的 data: 佔位圖視為沒有圖，讓前台套用缺圖處理。
+        internal static string ExtractHtmlMainImage(string? html)
+        {
+            var src = RxHtmlFirstImage.Match(html ?? "").Value
+                .Replace("quot;", "").Replace("src=&", "").Replace("&", "").Replace("amp;", "");
+            return src.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ? "" : src;
+        }
+
         public string HtmlDecode(string? html) {
             string output;
             if (html == null) output = "";

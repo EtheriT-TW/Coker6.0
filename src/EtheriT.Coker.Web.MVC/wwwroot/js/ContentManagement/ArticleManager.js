@@ -122,6 +122,12 @@ function saveArticleCanvas(html, css, published) {
         );
     }
 
+    function syncArticleCharacterCounts() {
+        ArticletForms.find(".title textarea, .describe textarea").each(function () {
+            $(this).closest(".title, .describe").find(".count").text(this.value.length);
+        });
+    }
+
     function syncAdvancedSettingsVisibility(data) {
         const details = document.getElementById("ArticleAdvancedSettings");
         if (!details) return;
@@ -312,7 +318,7 @@ function saveArticleCanvas(html, css, published) {
                     tagDatas: []
                 }), _dfr.resolve()) : co.Directory.Get(DirectoryId).done((result => {
                     $("#ArticleWorkspace").data("dir", result), _dfr.resolve();
-                })), destroyArticleFileAreas(), co.Form.clear("ArticletForm"), setArticlePopularValue(0), syncAdvancedSettingsVisibility(null), id > 0 ? co.Articles.GetDataOne(id).done((function(result) {
+                })), destroyArticleFileAreas(), co.Form.clear("ArticletForm"), syncArticleCharacterCounts(), setArticlePopularValue(0), syncAdvancedSettingsVisibility(null), id > 0 ? co.Articles.GetDataOne(id).done((function(result) {
                     null != result ? (ArticletId = result.id, setArticleSaveMode(!0 === result.canSave || !0 === result.CanSave), 
                     result.startEndDate = 0, result.sortCheckbox = 1, result.ImageUpload = 1, $(".linkToFront").removeClass("d-none").attr("href", `${defaultUrl}/${OrgName}/search/article/${result.id}`), 
                     result.fileAreas.length > 0 && result.fileAreas.forEach((function(area) {
@@ -323,7 +329,7 @@ function saveArticleCanvas(html, css, published) {
                             "data-key": area.key.toLowerCase(),
                             "data-label": area.label
                         }), item_upload_frame.attr("data-upload-id", `${area.key.toLowerCase()}file`), $("#ArticleFileAreas").append(item), createArticleFileArea(item);
-                    })), co.Form.insertData(result, "#ArticletForm"), setArticlePopularValue(result.popular ?? result.Popular),
+                    })), co.Form.insertData(result, "#ArticletForm"), syncArticleCharacterCounts(), setArticlePopularValue(result.popular ?? result.Popular),
                     syncAdvancedSettingsVisibility(result), $ArticletTags.TagDataSet(result.tagDatas),
                     result.files.forEach((file => {
                         addArticleFile(file, $(`#ArticleFileAreas .data_upload[data-key="${file.areakey.toLowerCase()}"]`));
@@ -497,6 +503,12 @@ const ArticleManager = {
                 ArticletForms = $("#ArticletForm"), $ArticletTags = ArticletForms.find(".InputTag").TagListModalInit(), 
                 $("#ArticleFileAreas").off("change.articleFileArea").on("change.articleFileArea", ".area_select", function() { transferArticleFile($(this)); }),
                 Array.from(ArticletForms).forEach((function(form) {
+                    const $schedule = $(form).find("#InputDate");
+                    if (!$schedule.data("daterangepicker")) {
+                        co.Picker.Init($schedule, { drops: "auto" });
+                    }
+                    $schedule.data("daterangepicker").container.addClass("article-schedule-picker");
+
                     "true" !== form.dataset.advancedValidationBound && (form.addEventListener("invalid", (function(event) {
                         event.target.closest("#ArticleAdvancedSettings") && (document.getElementById("ArticleAdvancedSettings").open = !0);
                     }), !0), form.dataset.advancedValidationBound = "true");
@@ -686,11 +698,8 @@ const ArticleManager = {
                         title: articleTitle,
                         type: 5
                     }).modal("show");
-                })), ArticletForms.find(".title textarea").on("keyup.articleManager", (function() {
-                    ArticletForms.find(".title .count").text($(this).val().length);
-                })), ArticletForms.find(".describe textarea").on("keyup.articleManager", (function() {
-                    ArticletForms.find(".describe .count").text($(this).val().length);
-                }));
+                })), ArticletForms.off("input.articleManager", ".title textarea, .describe textarea")
+                    .on("input.articleManager", ".title textarea, .describe textarea", syncArticleCharacterCounts);
             },
             parseRoute: parseRoute,
             enterRoute: function(route) {

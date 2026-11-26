@@ -72,6 +72,38 @@ textarea.h300 {
 }
 
 /* Article Content */
+@media (max-width: 768px) {
+    #ArticleList .dx-command-edit .dx-link.dx-icon-palette,
+    #ArticleContent .btn_to_canvas {
+        display: none !important;
+    }
+
+    #ArticleContent > .card-header {
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    #ArticleContent > .card-header > div:first-child {
+        white-space: nowrap;
+    }
+
+    #ArticleContent > .card-header > .article-editor-actions {
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        max-width: 100%;
+        margin-inline-start: auto;
+        white-space: nowrap;
+    }
+
+    #ArticleContent > .card-header :is(.btn_permission_details, .btn_done) {
+        margin-inline-end: 0 !important;
+    }
+}
+
 #ArticleContent .card-header {
     background-color: var(--color-gray-bg-dark);
 }
@@ -122,6 +154,164 @@ textarea.h300 {
 
 #ArticleContent .article-advanced-settings[open] .advanced-expand-icon {
     transform: rotate(180deg);
+}
+
+#ArticleContent #ImageUpload .btn_img_delete {
+    top: 0.125rem;
+    right: 0.125rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    line-height: 1;
+}
+
+#ArticleContent .article-coordinate-label {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    #ArticleContent .article-schedule > .form-control {
+        padding-inline: 0.375rem;
+    }
+
+    .daterangepicker.article-schedule-picker {
+        width: min(278px, calc(100vw - 1rem));
+        max-height: 75vh;
+        overflow-y: auto;
+    }
+
+    .daterangepicker.article-schedule-picker .drp-calendar {
+        float: none;
+        max-width: none;
+        padding: 0.5rem;
+    }
+
+    .daterangepicker.article-schedule-picker .drp-buttons {
+        position: sticky;
+        bottom: 0;
+        background-color: #fff;
+    }
+
+    .daterangepicker.article-schedule-picker .drp-selected {
+        display: block;
+        padding: 0 0 0.5rem;
+        white-space: normal;
+    }
+
+    #ArticletForm {
+        padding: 0.75rem;
+    }
+
+    #ArticletForm .article-cover-and-status {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    #ArticletForm #ImageUpload {
+        align-self: flex-start;
+        max-width: 100%;
+    }
+
+    #ArticletForm #ImageUpload .img_input {
+        margin-bottom: 0 !important;
+    }
+
+    #ArticletForm #ImageUpload .file_name {
+        max-width: 150px;
+        overflow-wrap: anywhere;
+    }
+
+    #ArticletForm .article-status-controls {
+        order: -1;
+        justify-content: flex-start !important;
+    }
+
+    #ArticleContent .article-coordinate-label {
+        display: block;
+    }
+
+    #ArticleContent .article-advanced-settings > .border-top {
+        padding: 0.5rem !important;
+    }
+
+    #ArticleContent .article-advanced-settings > summary > :is(.fw-bold, .material-symbols-outlined) {
+        flex-shrink: 0;
+    }
+
+    #ArticleContent .article-option-field {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    #ArticleContent .article-option-field > :is(.article-option-label, .checkbox) {
+        position: static !important;
+        transform: none !important;
+        padding-inline-start: 0 !important;
+        margin-inline-end: 0 !important;
+    }
+
+    #ArticleContent .article-option-field > .checkbox {
+        grid-column: 2;
+        grid-row: 1;
+        white-space: nowrap;
+    }
+
+    #ArticleContent .article-option-field > .form-control,
+    #ArticleContent .lnglat > .form-control {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0;
+        margin-left: 0;
+        border-radius: var(--bs-border-radius);
+        padding-inline: 0.5rem;
+    }
+
+    #ArticleContent .lnglat {
+        display: grid;
+        gap: 0.375rem;
+    }
+
+    #ArticleContent .lnglat > .input-group-text {
+        display: none;
+    }
+
+    #ArticleFileAreas .upload_list.d-flex {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) repeat(4, 2rem);
+        gap: 0.375rem !important;
+    }
+
+    #ArticleFileAreas .upload_list > .name {
+        grid-area: 1 / 1 / 2 / 4;
+        width: 100%;
+        min-width: 0;
+    }
+
+    #ArticleFileAreas .upload_list > .size {
+        grid-area: 1 / 4 / 2 / 6;
+        width: auto;
+        font-size: 0.875rem;
+        overflow-wrap: anywhere;
+    }
+
+    #ArticleFileAreas .upload_list > .serNoTool {
+        grid-area: 2 / 1;
+    }
+
+    #ArticleFileAreas .upload_list > :is(.btn_preview, .visible, .btn_lock, .btn_remove) {
+        grid-row: 2;
+        align-items: center;
+        justify-content: center;
+        min-height: 2rem;
+        margin: 0;
+    }
+
+    #ArticleFileAreas .upload_list > .area_select {
+        grid-column: 1 / -1;
+        grid-row: 3;
+        width: 100%;
+    }
 }
 /*
 #ArticleContent > form .image_upload > div {

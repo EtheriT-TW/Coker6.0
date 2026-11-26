@@ -16,6 +16,8 @@ var hashPage;
 var $templateBlock, $templateKey, $btnReapplyTemplate, $btnArticleImport;
 // 目錄載入時已儲存的樣板，存檔時用來判斷有沒有換樣板。
 var loadedTemplateKey = "";
+const responsiveLists = new WeakSet();
+const articleDateFields = new Set(["NodeDate", "EventStartDate", "EventEndDate", "LastModificationTime"]);
 
 function PageReady() {
     articleOnly = $("#ContentManagementWorkspace").data("article-only") === true;
@@ -197,7 +199,7 @@ function ToggleArticleTemplate() {
     $templateBlock.toggleClass("d-none", !isArticle);
     if (!isArticle) $templateKey.val("");
     $btnReapplyTemplate.toggleClass("d-none", !(isArticle && keyId > 0 && loadedTemplateKey));
-    // 匯入資料只對已存檔的文章目錄開放（目錄沒設標籤或樣板時，匯入頁會提示）。
+    // 匯入資料只對已存檔的文章目錄開放。
     $btnArticleImport.toggleClass("d-none", !(isArticle && keyId > 0));
 }
 
@@ -252,6 +254,8 @@ function AskApplyArticleTemplate(directoryId, templateKey, fromTemplateKey, isMa
 }
 
 function DirectoryEventsInit() {
+    let saveForImport = false;
+
     $bind_type.on("change", function () {
         switch (parseInt($bind_type.val())) {
             case 1:
@@ -273,6 +277,25 @@ function DirectoryEventsInit() {
     });
 
     $btnArticleImport.on("click", function () {
+        const form = DirectorytForms[0];
+        if (form.dataset.submitting === "true") return;
+
+        const selectedTemplateKey = $templateKey.val();
+        if (!selectedTemplateKey) {
+            co.sweet.warn("這個目錄還不能匯入", "請先選擇文章樣板，再點「匯入資料」。");
+            return;
+        }
+
+        if (selectedTemplateKey !== loadedTemplateKey) {
+            saveForImport = true;
+            try {
+                form.requestSubmit();
+            } finally {
+                saveForImport = false;
+            }
+            return;
+        }
+
         var directoryId = keyId;
         Coker.sweet.confirm("前往匯入資料", "目錄尚未儲存的變更不會保存。", "前往匯入", "取消", function () {
             ArticleImport.open(directoryId);
@@ -288,13 +311,16 @@ function DirectoryEventsInit() {
     });
 
     co.Form.init("DirectorytForm", function () {
+        const importAfterSave = saveForImport;
+        const directoryId = keyId;
         return co.Form.confirmSubmit({
-            title: "即將儲存",
-            text: "儲存後將顯示於安排的位置",
-            confirmButtonText: "儲存",
+            title: importAfterSave ? "儲存並前往匯入" : "即將儲存",
+            text: importAfterSave ? "將儲存目前的目錄設定（包含文章樣板），再前往匯入資料。" : "儲存後將顯示於安排的位置",
+            confirmButtonText: importAfterSave ? "儲存並前往匯入" : "儲存",
             cancelButtonText: "取消",
             onConfirm: function () {
-                return AddUp("已成功儲存", "儲存發生未知錯誤");
+                const onSaved = importAfterSave ? function () { ArticleImport.open(directoryId); } : BackToList;
+                return AddUp("已成功儲存", "儲存發生未知錯誤", onSaved);
             }
         });
     });
@@ -332,7 +358,105 @@ function DirectoryEventsInit() {
 
 function contentReady(e) {
     directory_list = e;
+    configureResponsiveContentList(e);
     if (hashPage) hashPage.refresh();
+}
+
+function articleListReady(e) {
+    window.DirectoryDatailListReady(e);
+    configureResponsiveContentList(e, true);
+}
+
+function configureResponsiveContentList(e, isArticleList = false) {
+    const grid = e.component;
+    if (responsiveLists.has(grid)) return;
+    responsiveLists.add(grid);
+
+    const element = e.element[0] || e.element;
+    const body = element.closest(".content-list-body");
+    const columns = grid.option("columns").map((column, index) => ({
+        index,
+        dataField: column.dataField,
+        caption: column.caption,
+        visible: column.visible !== false,
+        width: column.width,
+        minWidth: column.minWidth,
+        isAction: column.type === "buttons"
+    }));
+    const details = columns.filter(column =>
+        column.visible && column.dataField && !["Title", "Visible"].includes(column.dataField));
+    const desktopVisibilityIndex = isArticleList ? grid.columnOption("Visible", "visibleIndex") : null;
+    const compactVisibilityIndex = isArticleList ? grid.columnOption("Title", "visibleIndex") + 1 : null;
+    let compact = false;
+
+    const observer = new ResizeObserver(() => {
+        const width = body.getBoundingClientRect().width;
+        const isCompact = width <= 768;
+        // 隱藏的列表會在重新顯示時收到新的寬度。
+        if (!width || compact === isCompact) return;
+        compact = isCompact;
+        body.classList.toggle("content-list-compact", compact);
+
+        grid.beginUpdate();
+        try {
+            grid.option({
+                columnHidingEnabled: !compact,
+                columnAutoWidth: !compact,
+                "filterRow.visible": !compact,
+                "headerFilter.visible": !compact,
+                masterDetail: {
+                    enabled: compact,
+                    template: (container, options) => renderContentListDetails(container, options.data, details)
+                }
+            });
+
+            if (isArticleList) {
+                grid.columnOption("Visible", "visibleIndex", compact ? compactVisibilityIndex : desktopVisibilityIndex);
+            }
+
+            columns.forEach(column => {
+                if (column.isAction) {
+                    grid.columnOption(column.index, { width: compact ? 76 : column.width });
+                } else if (column.dataField === "Visible") {
+                    grid.columnOption(column.index, {
+                        width: compact ? 56 : column.width,
+                        caption: compact ? "顯示" : column.caption
+                    });
+                } else if (column.dataField === "Title") {
+                    grid.columnOption(column.index, { minWidth: compact ? 0 : column.minWidth });
+                } else if (column.visible) {
+                    grid.columnOption(column.index, "visible", !compact);
+                }
+            });
+        } finally {
+            grid.endUpdate();
+        }
+    });
+    observer.observe(body, { box: "border-box" });
+    grid.on("disposing", function () {
+        observer.disconnect();
+        body.classList.remove("content-list-compact");
+    });
+}
+
+function renderContentListDetails(container, data, columns) {
+    const list = $("<dl class='content-list-details'></dl>");
+    columns.forEach(column => {
+        let value = data[column.dataField];
+        if (typeof value === "boolean") {
+            value = value ? "是" : "否";
+        } else if (value && articleDateFields.has(column.dataField)) {
+            const date = new Date(value);
+            value = column.dataField === "LastModificationTime"
+                ? date.toLocaleString("zh-TW")
+                : date.toLocaleDateString("zh-TW");
+        }
+        list.append(
+            $("<dt></dt>").text(column.caption),
+            $("<dd></dd>").text(value === null || value === undefined || value === "" ? "－" : value)
+        );
+    });
+    $(container).append(list);
 }
 
 function editButtonClicked(e) {
@@ -446,7 +570,7 @@ function FormDataSet(result) {
     ToggleArticleTemplate();
 }
 
-function AddUp(successText, errorText) {
+function AddUp(successText, errorText, onSaved) {
     var menuId = null;
     if (webmenu_list.length > 0 && !webmenu_list[webmenu_list.length - 1].IsDeleted) {
         menuId = webmenu_list[webmenu_list.length - 1].FK_MId;
@@ -467,7 +591,7 @@ function AddUp(successText, errorText) {
         TagSelected: $DirectorytTags.data("tagList"),
         ReverseTagSelected: $DirectoryReverseTags.data("tagList"),
         Fk_Mid: menuId
-    }).done(function (result) {
+    }).then(function (result) {
         if (result && result.success === false) {
             Coker.sweet.error("錯誤", EscapeHtml(result.error || errorText));
             return;
@@ -475,12 +599,11 @@ function AddUp(successText, errorText) {
         if (directory_list) directory_list.component.refresh();
         // 既有目錄換了樣板：詢問是否把目錄底下的文章都改用新樣板。
         if (directoryId > 0 && templateKey && templateKey !== previousTemplateKey) {
-            AskApplyArticleTemplate(directoryId, templateKey, previousTemplateKey, false).always(BackToList);
-            return;
+            return AskApplyArticleTemplate(directoryId, templateKey, previousTemplateKey, false).then(onSaved);
         }
         Coker.sweet.success(successText, null, true);
-        BackToList();
-    }).fail(function () {
+        onSaved();
+    }, function () {
         Coker.sweet.error("錯誤", errorText, null, true);
     });
 }
@@ -518,6 +641,7 @@ window.PageReady = PageReady;
 // DevExtreme 的 Razor 設定仍以函式名稱呼叫；僅將必要的介面公開到 window。
 Object.assign(window, {
     contentReady,
+    articleListReady,
     editButtonClicked,
     reladataButtonClicked,
     GetDirectoryId,

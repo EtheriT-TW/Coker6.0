@@ -875,7 +875,9 @@
       "sources": [
         "Controllers/PageController.cs",
         "Views/Page/Index.cshtml",
+        "Views/Shared/Components/Modal/PermissionDetailsModal.cshtml",
         "Controllers/api/WebMenuController.cs",
+        "wwwroot/css/Components/PermissionDetailsModal.css",
         "wwwroot/js/Page/Index.js",
         "Diagnostics/BackofficeObjectChecks.cs",
         "Diagnostics/BackofficeReadOnlyChecks.cs",
@@ -887,6 +889,13 @@
         "Diagnostics/BackofficeSandboxChecks.cs"
       ],
       "cases": [
+        {
+          "id": "Page.Index.responsive-backoffice-permission-modal",
+          "title": "自訂頁面後台權限視窗在窄螢幕可操作",
+          "steps": "使用啟用自訂頁面的測試站台與可設定後台權限的管理帳號，從網站地圖開啟有長名稱項目的後台權限設定。以 320px 及桌面寬度檢查角色、關閉與底部按鈕，再取消並重新開啟。",
+          "expected": "長標題和角色名可換行，無須橫向捲動。手機窄版角色排成單欄，桌面依寬度並排。關閉、取消及確認按鈕可見，取消後重開保留原角色。",
+          "mode": "review"
+        },
         {
           "id": "Page.Index.object-menu-tree",
           "title": "網站地圖樹狀查詢",
@@ -1196,13 +1205,32 @@
         "Controllers/api/ArticleImportController.cs",
         "Diagnostics/BackofficeSandboxArticleImportChecks.cs",
         "Views/ContentManagement/Directory.cshtml",
+        "Views/ContentManagement/_ArticleContent.cshtml",
         "Views/ContentManagement/_ArticleImport.cshtml",
+        "Views/Shared/Components/Modal/PermissionDetailsModal.cshtml",
+        "wwwroot/css/Components/PermissionDetailsModal.css",
+        "wwwroot/css/ContentManagement/Directory.css",
         "wwwroot/js/CokerCore/Directory.js",
+        "wwwroot/js/ContentManagement/Directory.js",
         "wwwroot/js/ContentManagement/ArticleImport.js",
         "Diagnostics/BackofficeSandboxChecks.cs",
         "Diagnostics/BackofficeReadOnlyChecks.cs"
       ],
       "cases": [
+        {
+          "id": "ContentManagement.Directory.responsive-list-browser",
+          "title": "目錄列表窄版排版與列操作",
+          "steps": "使用啟用目錄功能的測試站台，準備多頁目錄資料，包含長標題、描述和不同綁定類型。以管理帳號和受限帳號查看，將表格可用寬度從 769px 以上縮到 768px 以下，再切回桌面。窄版搜尋、翻頁、展開明細，開啟可用的編輯、綁定內容和權限視窗，並開啟後取消刪除確認。另以另一個有目錄功能的測試站台比對列表和展開列。",
+          "expected": "窄版仍能操作新增、搜尋與翻頁，主列顯示可換行的標題、顯示狀態和該帳號可用的按鈕，無需橫向捲動。顯示狀態的欄名為「顯示」，切回桌面後恢復為「是否顯示」。展開後讀到該列的 ID、描述、綁定內容、標籤或選單。桌面欄位與篩選恢復，站台與操作權限維持原規則。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.Directory.responsive-permission-modal",
+          "title": "目錄權限視窗窄版排版與角色操作",
+          "steps": "使用啟用目錄功能的測試站台，準備有長標題的測試目錄與多個角色，其中至少一個角色名稱很長。以有設定權限的管理帳號，在 320px、375px、768px 及桌面寬度從目錄列開啟權限視窗。捲動清單、切換勾選，分別測試取消與確認後重開。再以沒有設定權限的帳號核對入口。",
+          "expected": "窄版角色使用單欄，寬版依空間並排；長標題及角色名稱可換行，關閉按鈕與底部操作仍可點按，無需橫向捲動。取消不儲存，確認後保留勾選結果，沒有設定權限的帳號無入口。",
+          "mode": "review"
+        },
         {
           "id": "ContentManagement.Directory.sandbox-directory-crud",
           "title": "目錄增修刪保存",
@@ -1283,6 +1311,16 @@
           "mode": "isolated"
         },
         {
+          "id": "ContentManagement.Directory.article-import-missing-template",
+          "title": "選擇文章樣板後儲存目錄並前往匯入",
+          "steps": "在啟用目錄與文章功能的測試站台，以可匯入及編輯帳號開啟已綁標籤但無樣板的目錄。修改描述，未選樣板時按匯入並關閉提示。選樣板後按匯入，分別測試取消、必填欄位無效、更新失敗與確認成功。再測試有既有匯入文章的目錄換樣板，處理套用詢問後進入匯入；樣板未變更時比對原匯入與一般儲存流程。",
+          "expected": "未選樣板時只提示並留在原頁。新選樣板可直接確認儲存目前目錄設定並前往匯入。取消、欄位驗證失敗或儲存失敗時留在編輯頁並保留輸入。成功後使用剛儲存的樣板；既有文章的樣板套用仍需另外選擇，樣板未變更時照原流程匯入。",
+          "mode": "review",
+          "requiredFeatures": [
+            "Article"
+          ]
+        },
+        {
           "id": "ContentManagement.Directory.article-import-antiforgery",
           "title": "文章匯入防偽驗證",
           "steps": "在啟用目錄管理與文章功能的測試站台，以具匯入權限的帳號開啟目錄管理。瀏覽器同時有登入 Cookie 且匯入請求帶 Bearer 時，上傳有效 Excel 並讀取欄位，核對取權杖與讀取欄位請求都帶 Bearer。另在僅用 Cookie 登入時重試，並於其他分頁切換站台後回到舊分頁重試。",
@@ -1327,8 +1365,8 @@
         {
           "id": "ContentManagement.Directory.article-import-description-browser",
           "title": "核對公司簡介預覽與編輯文章描述",
-          "steps": "在測試站匯入一列未滿 300 字元的公司簡介，以及一列含公司簡介與經營理念小標題、整格超過 300 字元的原文。檢查第四步的主視覺短介紹，再確認匯入並開啟編輯文章。用同名資料重匯，並以無匯入權限帳號及另一站台的分頁檢查是否能確認原批次。",
-          "expected": "主視覺短介紹保留經營理念前的全部公司簡介段落。編輯文章的描述在 300 字元以內保留原文，超過上限時顯示完整的 AI 摘要。同名重匯更新描述，無匯入權限及跨站操作無法匯入。",
+          "steps": "在測試站匯入一列未滿 300 字元的公司簡介，以及一列含公司簡介與經營理念小標題、整格超過 300 字元的原文。檢查第四步的主視覺短介紹，再確認匯入並開啟編輯文章，不先輸入就核對標題與描述字數。貼上和清空描述，接著開啟新增文章再檢查計數。用同名資料重匯，並以無匯入權限帳號及另一站台的分頁檢查是否能確認原批次。",
+          "expected": "主視覺短介紹保留經營理念前的全部公司簡介段落。編輯文章的描述在 300 字元以內保留原文，超過上限時顯示完整的 AI 摘要。開啟文章時標題與描述立刻顯示目前字數，貼上或清空時同步更新，切到新增文章時兩個計數皆為 0。同名重匯更新描述，無匯入權限及跨站操作無法匯入。",
           "mode": "review",
           "requiredFeatures": [
             "Article"
@@ -1363,16 +1401,55 @@
         "Controllers/ContentManagementController.cs",
         "Views/ContentManagement/Directory.cshtml",
         "Views/ContentManagement/_ArticleContent.cshtml",
+        "Views/ContentManagement/_ArticleForm.cshtml",
         "Controllers/api/ArticleController.cs",
         "Diagnostics/BackofficeSandboxChecks.cs",
         "Diagnostics/BackofficeSandboxContentChecks.cs",
         "Diagnostics/BackofficeSandboxInlineImageChecks.cs",
         "Diagnostics/BackofficeSandboxArticleCleanupChecks.cs",
+        "wwwroot/css/ContentManagement/Article.css",
+        "wwwroot/css/ContentManagement/Directory.css",
         "wwwroot/js/Grapes/grapesjs-Coker6.js",
+        "wwwroot/js/ContentManagement/Directory.js",
         "wwwroot/js/ContentManagement/ArticleManager.js",
         "Diagnostics/BackofficeReadOnlyChecks.cs"
       ],
       "cases": [
+        {
+          "id": "ContentManagement.Article.responsive-list-browser",
+          "title": "文章列表窄版排版與列操作",
+          "steps": "使用啟用文章功能的測試站台與可編輯帳號，準備多頁文章，包含長標題、匯入標記、標籤和有／無活動日期。分別在文章管理及啟用目錄功能的站台之目錄內文章列表，測試表格可用寬度跨過 768px、窄版搜尋與翻頁、展開明細、開啟文章編輯，以及開啟後取消刪除確認。以視窗寬度 768px 和 769px 檢查列表畫布按鈕和表單「進階編輯」，並在桌面版開啟畫布。另以只能檢視該目錄文章的帳號比對操作，並確認返回列表後的排版。",
+          "expected": "窄版的「顯示」欄緊接在「標題」後方，匯入標記保留在標題左側。視窗寬度不超過 768px 時隱藏列表畫布按鈕及表單「進階編輯」，一般編輯與儲存仍可操作；視窗加寬後，兩個畫布入口依原權限恢復。長標題可換行、搜尋可輸入、翻頁可點擊。展開列顯示原桌面欄位的資料，日期可閱讀，缺值顯示破折號；標籤與人氣僅在文章管理顯示。切回桌面後恢復原欄位順序與篩選，唯讀提示與刪除限制仍依原規則生效。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.Article.responsive-editor-header",
+          "title": "編輯文章頁首手機版排版",
+          "steps": "在啟用文章功能的測試站台，從文章管理及目錄內的文章列表開啟編輯頁。以可編輯及只能檢視的帳號，分別用 320px、375px、575px、576px、768px 和桌面視窗寬度檢查頁首，並點按各帳號可用的返回、前台瀏覽、瀏覽權限或儲存。",
+          "expected": "手機版標題與返回箭頭保持同列，操作區在空間不足時整組換到下一列。按鈕文字保持完整，頁首無重疊或橫向溢出。低於 576px 時，頁首底部單獨一列置中顯示紅字「進階編輯僅提供平板與電腦版」，576px 起隱藏提示。進階編輯入口沿原有 768px 門檻與權限顯示，桌面版維持原排版。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.Article.responsive-editor-cover-status",
+          "title": "手機版文章封面與顯示狀態",
+          "steps": "使用測試站台及可編輯帳號，分別從文章管理與目錄內文章列表開啟編輯頁。在 320px、375px、768px 和桌面寬度測試空封面、既有封面、選擇長檔名新圖片、移除後再選擇。於手機寬度點按顯示、顯示人氣及上架，再用測試文章儲存並重新開啟核對狀態。",
+          "expected": "已有預覽圖時，移除按鈕完整位於封面預覽右上角，能點擊移除，空封面不顯示該按鈕。手機版的三個狀態控制在封面區上方，與桌面版一樣只顯示原本的圖示。空封面及換圖後順序一致，長檔名可換行，點選及儲存重開後狀態正確。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.Article.responsive-editor-advanced-fields",
+          "title": "手機版文章進階設定",
+          "steps": "在測試站台以可編輯帳號，於 320px、375px、768px 及桌面寬度，在新增文章與編輯既有文章時展開進階設定。取消勾選永久顯示，開啟日期選擇器並捲動到第二個月曆，選擇起訖日期及時間後確認。再開啟一次後取消，切回永久顯示，再測自訂排序、含負值及七位小數的經緯度、無效日期、座標超界與有效資料重新開啟。",
+          "expected": "「設定上架日期」和「永久顯示」位於日期輸入框上方，輸入框全寬且沒有文字或開關重疊。手機寬度下兩個月曆上下排列，可捲動並點按確認或取消，彈窗不超出視窗左右邊緣。確認後回填起訖日期與時間；取消及永久顯示維持原行為。排序與經緯度欄位各自獨佔一列，原驗證與有效資料儲存行為正確。",
+          "mode": "review"
+        },
+        {
+          "id": "ContentManagement.Article.responsive-editor-attachments",
+          "title": "手機版文章附件排版與操作",
+          "steps": "以測試站台的可編輯帳號，在有附件區塊的文章加入長檔名附件，另開含已鎖定檔案及無對應區塊檔案的文章。以 320px、375px、768px 和桌面寬度檢查檔案列，試用改名、排序、預覽、顯示、加鎖、移除及對應區塊下拉選單。",
+          "expected": "手機版檔名和大小在第一列，排序與圖示操作在第二列，區塊下拉選單另佔一列，無須橫向捲動即可操作。已鎖定規則仍生效，桌面保持單列排列。",
+          "mode": "review"
+        },
         {
           "id": "ContentManagement.Article.import-marker-browser",
           "title": "文章列表匯入標記與手動編輯",

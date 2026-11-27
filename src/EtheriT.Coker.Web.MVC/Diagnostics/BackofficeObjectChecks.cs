@@ -6,6 +6,7 @@ using EtheriT.Coker.Application.Shared.Order;
 using EtheriT.Coker.Application.Shared.ThirdParty;
 using EtheriT.Coker.Application.StoreSet;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
 
 namespace EtheriT.Coker.Web.MVC.Diagnostics;
 
@@ -43,12 +44,30 @@ public static class BackofficeObjectChecks
         var passed = false;
         if (executor.StartsWith("object/revenue-", StringComparison.Ordinal))
         {
-            var granularity = executor.EndsWith("day", StringComparison.Ordinal) ? RevenueReportGranularity.Day : RevenueReportGranularity.Month;
-            var report = await services.GetRequiredService<IRevenueReportAppService>().GetRevenue(granularity, DateTime.Today.AddDays(-7), DateTime.Today);
-            passed = report.Granularity == granularity && report.StartDate <= report.EndDate &&
-                report.Items != null && report.Items.All(item => item.OrderCount >= 0 && item.InvalidOrderCount >= 0 &&
-                    item.PeriodStart >= report.StartDate.AddMonths(-1) && item.PeriodStart <= report.EndDate &&
-                    (item.OrderCount != 0 || item.AverageOrderValue == 0));
+            var monthly = executor == "object/revenue-month";
+            var granularity = monthly ? RevenueReportGranularity.Month : RevenueReportGranularity.Day;
+            var today = DateTime.Today;
+            var requestedStart = monthly ? today.AddMonths(-1) : today.AddDays(-7);
+            var start = monthly ? new DateTime(requestedStart.Year, requestedStart.Month, 1) : requestedStart;
+            var end = monthly ? start.AddMonths(2).AddDays(-1) : today;
+            var labelFormat = monthly ? "yyyy/MM" : "yyyy/MM/dd";
+            var report = await services.GetRequiredService<IRevenueReportAppService>().GetRevenue(granularity, requestedStart, today);
+
+            passed = report.Granularity == granularity && report.StartDate == start && report.EndDate == end &&
+                report.Items.Count == (monthly ? 2 : 8) &&
+                report.Items.Select((item, index) =>
+                {
+                    var period = monthly ? start.AddMonths(index) : start.AddDays(index);
+                    var average = item.OrderCount > 0
+                        ? Math.Round(item.Amount / item.OrderCount, 0, MidpointRounding.AwayFromZero)
+                        : 0;
+                    return item.PeriodStart == period &&
+                        item.PeriodLabel == period.ToString(labelFormat, CultureInfo.InvariantCulture) &&
+                        item.OrderCount >= 0 && item.InvalidOrderCount >= 0 &&
+                        (item.OrderCount != 0 || item.Amount == 0) &&
+                        (item.InvalidOrderCount != 0 || item.InvalidAmount == 0) &&
+                        item.AverageOrderValue == average;
+                }).All(matches => matches);
         }
         else if (executor is "object/seo" or "object/shop-settings" or "object/smtp-settings" or "object/member-settings")
         {

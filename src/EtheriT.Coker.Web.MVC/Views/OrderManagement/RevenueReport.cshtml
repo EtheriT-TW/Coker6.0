@@ -2,26 +2,111 @@
     ViewData["Title"] = "RevenueReport";
 }
 
+<link rel="stylesheet" href="~/css/OrderManagement/RevenueReport.min.css" asp-append-version="true" />
 <script src="~/js/OrderManagement/RevenueReport.min.js" asp-append-version="true"></script>
 
-<div class="revenue-report-page py-2 px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="title fw-bold fs-4">營收報表</div>
-    </div>
-
-    <div class="card border-0">
-        <div class="card-body">
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <div id="RevenueGranularity"></div>
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <div id="RevenueStartDate"></div>
-                    <span>～</span>
-                    <div id="RevenueEndDate"></div>
-                </div>
-                <div id="RevenueQuery"></div>
+<div class="revenue-report-page">
+    <div class="revenue-report-heading">
+        <h1 class="title fw-bold fs-4 mb-0">營收報表</h1>
+        <div class="revenue-report-filters">
+            <div id="RevenueGranularity" class="revenue-report-segments"></div>
+            <div class="revenue-report-dates">
+                <div id="RevenueStartDate"></div>
+                <span aria-hidden="true">～</span>
+                <div id="RevenueEndDate"></div>
             </div>
-            <p class="text-dark mb-3">有效訂單：訂單狀態為已付款、已出貨、已完成。無效訂單：訂單狀態為已取消、付款失敗。金額皆含商品小計與運費；依下單日期歸屬。客單價＝有效訂單金額 ÷ 有效訂單筆數，四捨五入至整數。</p>
-            <div id="RevenueReportGrid"></div>
+            <div id="RevenueQuery"></div>
         </div>
     </div>
+
+    <div id="RevenueReportStatus" class="revenue-report-note" role="status"></div>
+    <div id="RevenueReportResults" aria-busy="true">
+        <div class="revenue-report-summary">
+            <div class="card revenue-report-panel revenue-report-metric">
+                <div class="revenue-report-metric-heading">
+                    <div>
+                        <div class="revenue-report-metric-label">有效訂單金額</div>
+                        <strong id="RevenueTotalAmount" class="revenue-report-metric-value">—</strong>
+                    </div>
+                    <span class="revenue-report-metric-icon revenue-report-metric-icon-amount" aria-hidden="true">
+                        <i class="material-symbols-outlined">payments</i>
+                    </span>
+                </div>
+                <div class="revenue-report-metric-footer">
+                    <span>較前期</span>
+                    <span id="RevenueAmountChange" class="revenue-report-change">—</span>
+                </div>
+            </div>
+            <div class="card revenue-report-panel revenue-report-metric">
+                <div class="revenue-report-metric-heading">
+                    <div>
+                        <div class="revenue-report-metric-label">有效訂單筆數</div>
+                        <strong id="RevenueTotalCount" class="revenue-report-metric-value">—</strong>
+                    </div>
+                    <span class="revenue-report-metric-icon revenue-report-metric-icon-count" aria-hidden="true">
+                        <i class="material-symbols-outlined">shopping_bag</i>
+                    </span>
+                </div>
+                <div class="revenue-report-metric-footer">
+                    <span>較前期</span>
+                    <span id="RevenueCountChange" class="revenue-report-change">—</span>
+                </div>
+            </div>
+            <div class="card revenue-report-panel revenue-report-metric">
+                <div class="revenue-report-metric-heading">
+                    <div>
+                        <div class="revenue-report-metric-label">平均客單價</div>
+                        <strong id="RevenueTotalAverage" class="revenue-report-metric-value">—</strong>
+                    </div>
+                    <span class="revenue-report-metric-icon revenue-report-metric-icon-average" aria-hidden="true">
+                        <i class="material-symbols-outlined">account_balance_wallet</i>
+                    </span>
+                </div>
+                <div class="revenue-report-metric-footer">
+                    <span>較前期</span>
+                    <span id="RevenueAverageChange" class="revenue-report-change">—</span>
+                </div>
+            </div>
+            <div class="card revenue-report-panel revenue-report-metric">
+                <div class="revenue-report-metric-heading">
+                    <div>
+                        <div class="revenue-report-metric-label">無效訂單金額</div>
+                        <strong id="RevenueTotalInvalidAmount" class="revenue-report-metric-value">—</strong>
+                    </div>
+                    <span class="revenue-report-metric-icon revenue-report-metric-icon-invalid" aria-hidden="true">
+                        <i class="material-symbols-outlined">assignment_late</i>
+                    </span>
+                </div>
+                <div class="revenue-report-metric-footer">
+                    <span>無效訂單筆數</span>
+                    <span id="RevenueTotalInvalidCount" class="revenue-report-change">—</span>
+                </div>
+            </div>
+        </div>
+
+        <section class="card revenue-report-panel" aria-labelledby="RevenueTrendTitle">
+            <div class="revenue-report-trend-heading">
+                <h2 id="RevenueTrendTitle">營收與訂單趨勢分析</h2>
+                <div id="RevenueTrendMetric" class="revenue-report-segments"></div>
+            </div>
+            <div id="RevenueTrendChart"></div>
+        </section>
+
+        <div class="revenue-report-details">
+            <section class="card revenue-report-panel" aria-labelledby="RevenueDetailsTitle">
+                <h2 id="RevenueDetailsTitle">數據明細</h2>
+                <div id="RevenueReportGrid"></div>
+            </section>
+            <section class="card revenue-report-panel" aria-labelledby="RevenueOrderStatusTitle">
+                <h2 id="RevenueOrderStatusTitle">訂單狀態對比</h2>
+                <div class="revenue-report-status-legend">
+                    <span>有效 <strong id="RevenueValidShare">—</strong></span>
+                    <span>無效 <strong id="RevenueInvalidShare">—</strong></span>
+                </div>
+                <ul id="RevenueOrderStatusBars" class="revenue-report-status-bars" tabindex="0" aria-label="各期有效與無效訂單筆數"></ul>
+                <div id="RevenueOrderStatusEmpty" class="revenue-report-note"></div>
+            </section>
+        </div>
+    </div>
+    <p class="revenue-report-note mb-0">有效訂單包含已付款、已出貨、已完成。無效訂單包含已取消、付款失敗。金額含商品小計與運費，依下單日期統計。客單價以有效訂單金額除以筆數，四捨五入至整數。</p>
 </div>

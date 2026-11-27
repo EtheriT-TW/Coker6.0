@@ -325,38 +325,55 @@
       "title": "營收報表",
       "sources": [
         "Controllers/OrderManagementController.cs",
+        "Controllers/api/RevenueReportController.cs",
         "Views/OrderManagement/RevenueReport.cshtml",
+        "wwwroot/js/OrderManagement/RevenueReport.js",
+        "wwwroot/css/OrderManagement/RevenueReport.css",
         "Diagnostics/BackofficeObjectChecks.cs"
       ],
       "cases": [
         {
           "id": "OrderManagement.RevenueReport.object-revenue-month",
           "title": "每月營收區間及統計檢查",
-          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
-          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "steps": "唯讀查詢目前站台的上個月與本月，檢查各月順序、區間、訂單筆數、金額及客單價。",
+          "expected": "回傳兩筆逐月統計，區間涵蓋完整月份，零筆訂單的金額為零，客單價依有效訂單金額和筆數計算。",
           "mode": "review",
           "executor": "object/revenue-month"
         },
         {
           "id": "OrderManagement.RevenueReport.object-revenue-day",
           "title": "每日營收區間及統計檢查",
-          "steps": "呼叫目前站台實際讀取服務，檢查成功回應、資料欄位及對應區間或筆數限制。",
-          "expected": "實際服務成功且符合此項執行器定義的資料條件；無寫入。",
+          "steps": "唯讀查詢目前站台最近八天，檢查各日順序、區間、訂單筆數、金額及客單價。",
+          "expected": "逐日回傳八筆統計，區間包含起訖日，零筆訂單的金額為零，客單價依有效訂單金額和筆數計算。",
           "mode": "review",
           "executor": "object/revenue-day"
         },
         {
           "id": "OrderManagement.RevenueReport.period",
           "title": "日期區間與彙總",
-          "steps": "以固定測試訂單切換日期區間，核對筆數、金額與客單價。",
-          "expected": "依下單日期統計，客單價與有效訂單計算一致。",
+          "steps": "在具訂單管理權限且有固定訂單資料的測試站，從選單直接進入，另從儀表板點本月及上月。切換日／月並查詢跨年、跨閏日、反向日期、空日期及超過 366 日或 60 月的區間。核對摘要、趨勢及明細。",
+          "expected": "直接進入以月顯示本年，儀表板入口以日顯示對應月份。三處數字依同一查詢區間與下單日期更新，摘要客單價為總有效金額除以總有效筆數，非法區間提示錯誤並保留已載入的查詢結果。",
           "mode": "isolated"
         },
         {
           "id": "OrderManagement.RevenueReport.exclude",
           "title": "有效與無效訂單",
-          "steps": "準備已付款、已出貨、已完成、已取消與付款失敗訂單。",
-          "expected": "有效與無效訂單依畫面定義分別統計，不重複計算。",
+          "steps": "在有報表權限的測試站，用既有的已付款、已出貨、已完成、已取消、付款失敗及待付款訂單對照摘要與狀態圖。另查無訂單的區間，並以另一測試站或沒有訂單管理入口的帳號核對站台篩選及入口。",
+          "expected": "有效及無效訂單依畫面定義分別統計。狀態圖按期顯示兩類筆數，整期占比只計入這兩類。零單時摘要顯示零而占比顯示橫線，切換站台時資料隨目前站台切換，受限帳號依既有規則隱藏入口。查詢不變更訂單。",
+          "mode": "isolated"
+        },
+        {
+          "id": "OrderManagement.RevenueReport.comparison",
+          "title": "前期比較與查詢失敗",
+          "steps": "在測試站選跨年的月份與跨月的日期區間，比對前期等量月份或日數。查詢前期為零的區間，並用瀏覽器網路工具模擬前期失敗、本期失敗與兩次查詢回應順序相反。",
+          "expected": "比較區間緊鄰本期且期數相同，前期值為零時差異顯示橫線。前期失敗時保留本期資料並提示，本期失敗時清除結果並提示可重查，舊回應不覆蓋新查詢。",
+          "mode": "isolated"
+        },
+        {
+          "id": "OrderManagement.RevenueReport.chart-and-grid",
+          "title": "報表卡片、趨勢圖與手機排版",
+          "steps": "在有多期訂單的測試站，以桌面及手機寬度比對儀錶板與營收報表的卡片、圖示、比較徽章和切換控制。以滑鼠和鍵盤切換日／月及四個趨勢指標，以有效金額和無效訂單的雙指標圖確認金額線與筆數柱接近時的標籤。查看提示並框選放大，檢查縮放前後圖表上緣。將明細排序、換頁、切換每頁筆數，再捲動訂單狀態清單。",
+          "expected": "卡片、圖示和圖表沿用儀錶板的視覺風格，前期變化的正、負及無值皆可辨識。各切換控制可辨識選取及鍵盤焦點。雙指標圖只在金額線上標示無底色的金額，柱狀筆數可由提示讀取。只有筆數的圖仍可顯示筆數標籤。資料期數較多或標籤互相重疊時，可從提示與明細讀取數值。圖例與曲線及柱狀配色對應，圖表可框選放大且縮放前後皆隱藏捲動條。表格操作不變動摘要或圖表查詢範圍，窄版卡片依序排列且數值與操作可見。",
           "mode": "isolated"
         }
       ]

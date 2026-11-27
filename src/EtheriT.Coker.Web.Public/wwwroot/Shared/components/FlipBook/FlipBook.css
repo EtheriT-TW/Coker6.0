@@ -568,6 +568,11 @@
         padding: 0;
     }
 
+    .FlipBookStage {
+        /* Keep the flip engine's page layers below the mobile sidebar. */
+        isolation: isolate;
+    }
+
     .FlipBookSidebar {
         position: absolute;
         inset: 0 auto 0 0;

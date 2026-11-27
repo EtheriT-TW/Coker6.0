@@ -16,7 +16,8 @@ internal sealed record ImportedSiteMenu(long Id, long? ParentId, string Title, s
     PageTypeEnum PageType, bool IsAlias = false);
 
 public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication webMenu,
-    CokerDbContext db, LoginUserData user, IMapper mapper, ISiteCrawlBrowserFactory browsers, ILogger<SiteMenuImporter> logger)
+    CokerDbContext db, LoginUserData user, IMapper mapper, ISiteCrawlBrowserFactory browsers,
+    SiteCrawlMenuContent menuContent, ILogger<SiteMenuImporter> logger)
 {
     private const string HomeTitle = "首頁";
     private const string HomeRouterName = "Home";
@@ -42,6 +43,9 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             return entry;
         }
         links = SiteMenuSelection.Apply(links, result);
+        result.IsFirstImport = result.ImportState is { HasSavedState: false }
+            && !await db.WebMenus.AnyAsync(x => x.FK_WebsiteId == websiteId && !x.IsDeleted
+                && x.RouterName != null && x.RouterName.StartsWith("import-"), token);
         var state = await LoadStateAsync(entry.IdnHost, websiteId, result, checkpoint, hiddenByDefault: false, token);
         // 主選單有「首頁」就把它設成首頁；沒有的話另建一個關閉狀態的首頁選單，內容用舊站入口頁。
         state.HomeLink = FindHomeLink(links, entry);
@@ -51,6 +55,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             state.HomeHidden = true;
             links = [state.HomeLink, .. links];
         }
+        state.ReserveMappedTargets(MenuUrls(links));
         await CreateChildrenAsync(links, state, parentId: null, rootId: null);
         AddHomeAliases(result, [root, new Uri(root, "/"), entry, .. result.EntryRedirects]);
         return entry;
@@ -121,6 +126,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         if (sections.Count == 0) return;
 
         var state = await LoadStateAsync(layout.Pages[0].Url.IdnHost, websiteId, result, checkpoint, hiddenByDefault: false, token);
+        state.ReserveMappedTargets(layout.Pages.Select(page => page.Url));
         state.LinkToMenu.UnionWith(ownKeys);
         foreach (var (menu, page, allLinks) in sections)
         {
@@ -137,7 +143,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             var before = result.ImportedMenus.Count;
             await CreateChildrenAsync(links, state, menu.Id, RootOf(menu, result) ?? menu.Id);
             result.SectionMenus += result.ImportedMenus.Count - before;
-            if (useDirectory) await BindMenuDirectoryAsync(menu, websiteId, result, token);
+            if (useDirectory) await BindMenuDirectoryAsync(menu, page, websiteId, result, token);
         }
     }
 
@@ -149,22 +155,28 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         return current.Id == menu.Id ? null : current.Id;
     }
 
-    private async Task BindMenuDirectoryAsync(ImportedSiteMenu menu, long websiteId, SiteLayoutResult result, CancellationToken token)
+    private async Task BindMenuDirectoryAsync(ImportedSiteMenu menu, SiteLayoutScanner.LayoutPage page, long websiteId,
+        SiteLayoutResult result, CancellationToken token)
     {
+        result.HandledMenuIds.Add(menu.Id);
+        if (await menuContent.PrepareAsync(websiteId, menu, page, result, token) is not { } write) return;
         var directory = await SiteCategoryLists.EnsureMenuDirectoryAsync(db, user, websiteId, menu.Id, menu.Title, result, token);
+        var html = SiteImportTemplates.BuildMenuDirectory(directory.Id, directory.Title ?? menu.Title);
+        if (!await menuContent.CanWriteAsync(websiteId, menu, write, html, "", result, token)) return;
         var response = await webMenu.importConten(new MenuSaveContenDto
         {
             Id = checked((int)menu.Id),
-            SaveHtml = SiteImportTemplates.BuildMenuDirectory(directory.Id, directory.Title ?? menu.Title),
+            SaveHtml = html,
             SaveCss = ""
         });
         if (!response.Success)
         {
             logger.LogWarning("Site crawl menu directory bind failed for menu {MenuId}: {Reason}", menu.Id, response.Error);
             result.AddError($"選單「{menu.Title}」改用選單目錄失敗，請查看 MVC 日誌。");
+            result.HandledMenuIds.Remove(menu.Id);
             return;
         }
-        result.HandledMenuIds.Add(menu.Id);
+        await menuContent.CompleteAsync(websiteId, menu, write, result);
     }
 
     // 主選單沒有、但從選單頁內文連得到的獨立頁面（例如首頁「地區類別專區」的各地區），建成第一層選單，Visible 預設關閉。
@@ -191,7 +203,8 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
                 if (result.ExcludedPageKeys.Contains(target) || !visited.Add(target)
                     || !pages.TryGetValue(target, out var page)) continue;
                 if (page.Article != null || page.Content == null || string.IsNullOrWhiteSpace(page.Title)) continue;
-                if (menusByTitle.TryGetValue(page.Title.Trim(), out var same))
+                var imports = result.ImportState;
+                if (imports?.Find(imports.MenuKey(page.Url)) == null && menusByTitle.TryGetValue(page.Title.Trim(), out var same))
                 {
                     result.ImportedMenus.Add(same with { SourceUrl = page.Url.AbsoluteUri, IsAlias = true });
                     continue;
@@ -204,6 +217,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
 
         var host = layout.Pages[0].Url.IdnHost;
         var state = await LoadStateAsync(host, websiteId, result, checkpoint, hiddenByDefault: true, token);
+        state.ReserveMappedTargets(layout.Pages.Select(page => page.Url));
         var before = result.ImportedMenus.Count;
         // 子分類在確認畫面上的勾選與路徑名稱（使用者 2026-11-18 要求子分類也能改路徑名稱）。
         var tree = SiteMenuSelection.ApplyHidden(BuildHiddenTree(hidden, layout.Pages), result);
@@ -286,6 +300,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         var state = new ImportState(host, result, checkpoint) { HiddenByDefault = hiddenByDefault };
         foreach (var menu in existing)
         {
+            state.ById.Add(menu.Id, menu);
             var siblings = state.GetSiblings(menu.FK_TopNodeId);
             if (menu.Title is { } title) siblings.Existing.TryAdd(title.Trim(), menu);
             siblings.LastOrder = Math.Max(siblings.LastOrder, menu.SerNO);
@@ -337,16 +352,19 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         foreach (var link in links)
         {
             await state.Checkpoint();
-            if (MakeMenu(link, state, siblings, parentId, rootId) is not { Dto: var dto, HasSource: var hasSource }
-                || siblings.SavedTitles.Contains(dto.Title!)) continue;
-            var id = await SaveAsync(dto, state, link, hasSource);
-            if (id.HasValue) siblings.SavedTitles.Add(dto.Title!);
+            if (MakeMenu(link, state, siblings, parentId, rootId) is not { } target
+                || (target.Dto.Id == 0 && !target.ReplacingDeleted && siblings.SavedTitles.Contains(target.Dto.Title!))
+                || (target.Dto.Id > 0 && state.Result.ImportedMenus.Any(x => x.Id == target.Dto.Id && !x.IsAlias))) continue;
+            var id = await SaveAsync(target.Dto, state, link, target.HasSource, target.Persist);
+            if (id.HasValue) siblings.SavedTitles.Add(target.Dto.Title!);
             if (id.HasValue && link.Children.Count > 0)
                 await CreateChildrenAsync(link.Children, state, id, rootId ?? id);
         }
     }
 
-    private static string MenuTitle(SiteMenuLink link) => link.Title[..Math.Min(link.Title.Length, 100)].TrimEnd();
+    private static string MenuTitle(SiteMenuLink link) => LimitMenuTitle(link.Title);
+
+    internal static string LimitMenuTitle(string title) => title[..Math.Min(title.Length, 100)].TrimEnd();
 
     // 自動產生路徑名稱用的字根：舊站網址路徑轉小寫英數（例 /tw/index.asp → tw-index-asp），前面再加 import-。
     private static string RouteStem(Uri? url)
@@ -360,7 +378,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
     // 首頁固定 Home；外站連結沒有；同層同名的既有選單沿用它的路徑名稱；其餘依序保留 import-{字根}（重複時加 -2、-3）。
     // 和上方選單同一頁又沒有子選單的項目，匯入時不建選單（Duplicate）。
     internal async Task<Dictionary<string, SiteMenuRoute>> SuggestRoutesAsync(IReadOnlyList<SiteMenuLink> links, Uri entry,
-        long websiteId, CancellationToken token)
+        long websiteId, SiteCrawlImportState? imports, CancellationToken token)
     {
         var existing = await db.WebMenus.AsNoTracking()
             .Where(menu => menu.FK_WebsiteId == websiteId && !menu.IsDeleted)
@@ -369,6 +387,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             .ToListAsync(token);
         var routes = new HashSet<string>(existing.Select(menu => menu.RouterName).Where(route => !string.IsNullOrEmpty(route)),
             StringComparer.OrdinalIgnoreCase);
+        var byId = existing.ToDictionary(menu => menu.Id);
         var children = new Dictionary<long, Dictionary<string, (long Id, string? RouterName)>>();
         foreach (var menu in existing.Where(menu => menu.Title != null))
         {
@@ -414,8 +433,21 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
                 }
                 if (urlKey != null) importedUrls.Add(urlKey);
                 (long Id, string? RouterName) found = default;
-                var hasExisting = parentId is { } pid && children.TryGetValue(pid, out var siblings)
-                    && siblings.TryGetValue(MenuTitle(link), out found);
+                var mapped = isLocal && url != null ? imports?.Find(imports.MenuKey(url)) : null;
+                var hasExisting = false;
+                if (mapped != null)
+                {
+                    if (byId.TryGetValue(mapped.NewId, out var target))
+                    {
+                        found = (target.Id, target.RouterName);
+                        hasExisting = true;
+                    }
+                }
+                else
+                {
+                    hasExisting = parentId is { } pid && children.TryGetValue(pid, out var siblings)
+                        && siblings.TryGetValue(MenuTitle(link), out found);
+                }
                 if (ReferenceEquals(link, home))
                     result[key] = new SiteMenuRoute(HomeRouterName, hasExisting, false);
                 else if (url != null && !isLocal)
@@ -520,8 +552,18 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
     private static IEnumerable<SiteMenuLink> Leaves(IEnumerable<SiteMenuLink> links) =>
         links.SelectMany(link => link.Children.Count == 0 ? [link] : Leaves(link.Children));
 
+    private static IEnumerable<Uri> MenuUrls(IEnumerable<SiteMenuLink> links)
+    {
+        foreach (var link in links)
+        {
+            if (link.Url != null) yield return link.Url;
+            foreach (var child in MenuUrls(link.Children)) yield return child;
+        }
+    }
+
     // hasSource：這個選單有對應的舊站頁面可匯入內容（沒網址的下拉上層、重複網址的上層都沒有）。
-    private (MenuItemDto Dto, bool HasSource)? MakeMenu(SiteMenuLink link, ImportState state, SiblingState siblings, long? parentId, long? rootId)
+    private (MenuItemDto Dto, bool HasSource, bool Persist, bool ReplacingDeleted)? MakeMenu(SiteMenuLink link, ImportState state,
+        SiblingState siblings, long? parentId, long? rootId)
     {
         var url = link.Url;
         var isLocal = url != null && SiteCrawlHttp.IsAllowed(url, state.Host);
@@ -544,20 +586,35 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         var external = url != null && (!isLocal || sameAsMenu != null);
         var stem = RouteStem(url);
         var title = MenuTitle(link);
-        siblings.Existing.TryGetValue(title, out var existing);
+        var imports = state.Result.ImportState;
+        var previous = !external && url != null ? imports?.Find(imports.MenuKey(url)) : null;
+        WebMenu? existing;
+        if (previous != null)
+        {
+            state.ById.TryGetValue(previous.NewId, out existing);
+            if (existing != null) return (mapper.Map<MenuItemDto>(existing), true, false, false);
+        }
+        else
+        {
+            siblings.Existing.TryGetValue(title, out existing);
+            if (existing != null && state.ReservedIds.Contains(existing.Id)) existing = null;
+        }
         var moved = false;
         var isHome = ReferenceEquals(link, state.HomeLink);
-        if (existing == null && state.HiddenByDefault && state.Movable.Remove(title, out var orphan))
+        if (previous == null && existing == null && state.HiddenByDefault && state.Movable.Remove(title, out var orphan)
+            && !state.ReservedIds.Contains(orphan.Id))
         {
             existing = orphan;
             moved = true;
         }
         // 每個網站只能有一個首頁：網站已有首頁選單時直接沿用它，不另建第二個（另建會被首頁重複的檢查擋下）。
-        if (isHome && existing?.PageType != PageTypeEnum.首頁 && state.ExistingHome is { } currentHome)
+        if (previous == null && isHome && existing?.PageType != PageTypeEnum.首頁 && state.ExistingHome is { } currentHome)
         {
             existing = currentHome;
             moved = currentHome.FK_TopNodeId != parentId;
         }
+        if (existing != null && !state.Result.IsFirstImport)
+            return (mapper.Map<MenuItemDto>(existing), !external && url != null, false, false);
         var dto = existing == null ? new MenuItemDto
         {
             VisibleHeader = true,
@@ -575,7 +632,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             dto.FK_RootNodeId = rootId;
             dto.SerNO = siblings.LastOrder == int.MaxValue ? int.MaxValue : ++siblings.LastOrder;
         }
-        if (!external && !isHome && link.RouterName is { } wanted
+        if (existing == null && !external && !isHome && link.RouterName is { } wanted
             && !string.Equals(dto.RouterName, wanted, StringComparison.OrdinalIgnoreCase))
         {
             // 使用者在確認畫面指定的路徑名稱；被其他選單用掉時不自動加流水號，沿用原本或自動產生的名稱並列出錯誤。
@@ -584,13 +641,13 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         }
         // 首頁下面固定改成 Home，不能先保留 import-…：否則名字被佔掉，偵測時推算給下一個選單的 import-…（例 import-tw-index-asp）
         // 匯入時就會被判成「已被其他選單使用」（2026-11-18 實測）。
-        if (string.IsNullOrWhiteSpace(dto.RouterName) && !external && !isHome)
+        if (existing == null && string.IsNullOrWhiteSpace(dto.RouterName) && !external && !isHome)
             dto.RouterName = Reserve(state.Routes, "import-" + stem, 50, index => $"-{index + 1}");
         if (isHome)
         {
             // 前台用 RouterName「Home」找首頁（後台選首頁類型時也固定填 Home）。
             dto.PageType = PageTypeEnum.首頁;
-            dto.RouterName = HomeRouterName;
+            if (existing == null) dto.RouterName = HomeRouterName;
             dto.LinkUrl = null;
             dto.Target = false;
         }
@@ -601,7 +658,7 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             dto.PageType = PageTypeEnum.一般頁面;
             dto.LinkUrl = external ? sameAsMenu ?? url!.AbsoluteUri : null;
             dto.Target = external && sameAsMenu == null && link.OpensNewTab;
-            if (external) dto.RouterName = "";
+            if (external && existing == null) dto.RouterName = "";
         }
         // 隱藏選單（含主選單沒有、另建的首頁）第一次建立時關閉；重新匯入時保留使用者後來的設定。
         dto.Visible = state.HiddenByDefault || isHome && state.HomeHidden ? existing?.Visible ?? false : true;
@@ -614,31 +671,41 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
             dto.Visible = existing is { ShowToMenu: false } ? existing.Visible : true;
             dto.ShowToMenu = false;
         }
-        return (dto, url != null);
+        return (dto, !external && url != null, true, previous != null);
     }
 
-    private async Task<long?> SaveAsync(MenuItemDto dto, ImportState state, SiteMenuLink link, bool hasSource)
+    private async Task<long?> SaveAsync(MenuItemDto dto, ImportState state, SiteMenuLink link, bool hasSource, bool persist)
     {
-        var response = await webMenu.CreateOrEdit(dto);
         var updated = dto.Id > 0;
         var id = dto.Id;
-        if (updated ? !response.Success : !long.TryParse(response.Message, out id) || id <= 0)
+        if (persist)
         {
-            logger.LogWarning("Site crawl menu save failed: {Reason}", response.Error);
-            state.Result.AddError($"選單「{dto.Title}」儲存失敗，請查看 MVC 日誌。");
-            return null;
+            var response = await webMenu.CreateOrEdit(dto);
+            if (updated ? !response.Success : !long.TryParse(response.Message, out id) || id <= 0)
+            {
+                logger.LogWarning("Site crawl menu save failed: {Reason}", response.Error);
+                state.Result.AddError($"選單「{dto.Title}」儲存失敗，請查看 MVC 日誌。");
+                return null;
+            }
+            if (!response.Success)
+                state.Result.AddError($"選單「{dto.Title}」已建立，但儲存後處理失敗。");
         }
-        if (!response.Success)
-            state.Result.AddError($"選單「{dto.Title}」已建立，但儲存後處理失敗。");
         if (link.Url != null && SiteCrawlHttp.IsAllowed(link.Url, state.Host))
             state.ImportedUrls.Add(SiteLayoutScanner.Normalize(link.Url!).AbsoluteUri);
         if (link.SelectionKey != null) state.Result.MenuSelectionKeys[id] = link.SelectionKey;
         // 沒有舊站頁面的上層與外站連結沒有要匯入的內容，SourceUrl 留空，後續的內容／文章匯入就不會碰它們。
+        var source = hasSource ? link.Url : null;
+        if (source != null && !updated)
+            await state.Result.RecordImportTargetAsync(state.Result.ImportState?.MenuKey(source) ?? "Menu|" + SiteLayoutScanner.PageKey(source),
+                id, source, link.Title, true, dto.Title);
         state.Result.ImportedMenus.Add(new ImportedSiteMenu(id, dto.FK_TopNodeId, dto.Title!, link.Title,
-            !hasSource || !string.IsNullOrEmpty(dto.LinkUrl) ? null : link.Url?.AbsoluteUri,
-            dto.RouterName ?? "", dto.PageType));
-        if (updated) state.Result.MenusUpdated++;
-        else state.Result.MenusCreated++;
+            source?.AbsoluteUri, dto.RouterName ?? "", dto.PageType));
+        if (!updated)
+        {
+            state.Result.MenusCreated++;
+            state.Result.CreatedMenuIds.Add(id);
+        }
+        else if (persist && source == null) state.Result.MenusUpdated++;
         return id;
     }
 
@@ -668,11 +735,21 @@ public sealed class SiteMenuImporter(SiteCrawlHttp http, IWebMenuApplication web
         internal SiteMenuLink? HomeLink { get; set; }
         internal bool HomeHidden { get; set; }
         internal WebMenu? ExistingHome { get; set; }
+        internal Dictionary<long, WebMenu> ById { get; } = [];
+        internal HashSet<long> ReservedIds { get; } = [];
         internal Dictionary<string, WebMenu> Movable { get; } = new(StringComparer.OrdinalIgnoreCase);
         internal HashSet<string> Routes { get; } = new(StringComparer.OrdinalIgnoreCase);
         internal HashSet<string> ImportedUrls { get; } = new(StringComparer.Ordinal);
         internal HashSet<string> LinkToMenu { get; } = new(StringComparer.Ordinal);
         private Dictionary<long, SiblingState> Siblings { get; } = [];
+
+        internal void ReserveMappedTargets(IEnumerable<Uri> urls)
+        {
+            if (Result.ImportState is not { } imports) return;
+            foreach (var url in urls.Where(url => SiteCrawlHttp.IsAllowed(url, Host)))
+                if (imports.Find(imports.MenuKey(url)) is { } item)
+                    ReservedIds.Add(item.NewId);
+        }
 
         internal SiblingState GetSiblings(long? parentId)
         {

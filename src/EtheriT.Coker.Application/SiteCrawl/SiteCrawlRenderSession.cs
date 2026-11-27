@@ -14,6 +14,7 @@ internal sealed class SiteCrawlRenderSession(ISiteCrawlBrowserFactory factory, s
     private const string VisibleText = ".//text()[not(ancestor::script or ancestor::style or ancestor::noscript)]";
 
     private ISiteCrawlBrowser? browser;
+    private string? browserHost;
     private bool unavailable;
 
     internal static bool NeedsRender(HtmlDocument document)
@@ -31,15 +32,23 @@ internal sealed class SiteCrawlRenderSession(ISiteCrawlBrowserFactory factory, s
 
     public async Task<HtmlDocument?> TryRenderAsync(Uri uri, bool scrollToEnd, CancellationToken token)
     {
-        if (unavailable) return null;
+        if (unavailable || !SiteCrawlHttp.IsAllowed(uri, host)) return null;
         try
         {
-            browser ??= await factory.OpenAsync(host, token);
+            // HTTP 跟隨 www 轉址後，瀏覽器要固定在最終主機經檢查的 IP，才能讀到 JS 載入的內容。
+            if (browser != null && browserHost != uri.IdnHost)
+            {
+                var previous = browser;
+                browser = null;
+                await previous.DisposeAsync();
+            }
+            browser ??= await factory.OpenAsync(uri.IdnHost, token);
+            browserHost = uri.IdnHost;
         }
         catch (Exception ex) when (!token.IsCancellationRequested)
         {
             unavailable = true;
-            logger.LogError(ex, "Site crawl browser failed to start for {Host}", host);
+            logger.LogError(ex, "Site crawl browser failed to start for {Host}", uri.IdnHost);
             result.AddError("無法啟動瀏覽器，由 JS 載入的內容不會被讀取，請查看 MVC 日誌。");
             return null;
         }

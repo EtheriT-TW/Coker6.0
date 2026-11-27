@@ -30,25 +30,25 @@ public sealed partial class SiteArticleImporter
 
     // 第一輪只建商品（取得新站 Id）並記下新站網址，第二輪才寫內文，連到其他商品／文章的連結才改寫得到。
     // 簡述要看內文才知道，第一輪先不動（新商品是空白、既有商品保留原本的），第二輪再寫。
-    private async Task<Dictionary<string, long>> CreateProductsAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages,
+    private async Task<Dictionary<string, DetailTarget>> CreateProductsAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages,
         Dictionary<string, Membership> membership, long websiteId, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
-        // 重新匯入時用名稱找回原本的商品（比照文章）；同一次匯入內同名的不同商品不會互相覆蓋。
-        var byTitle = (await db.Prods.Where(x => x.FK_WebsiteId == websiteId && !x.IsDeleted)
-                .Select(x => new { x.Id, x.Title }).ToListAsync(token))
-            .GroupBy(x => x.Title, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.Select(x => x.Id).ToList(), StringComparer.Ordinal);
-        var claimed = new HashSet<long>();
-        var ids = new Dictionary<string, long>(StringComparer.Ordinal);
+        var existing = await db.Prods.AsNoTracking().Where(x => x.FK_WebsiteId == websiteId && !x.IsDeleted)
+            .Select(x => new { x.Id, x.Title }).OrderBy(x => x.Id).ToListAsync(token);
+        var existingIds = existing.Select(x => x.Id).ToHashSet();
+        var byTitle = existing.ToLookup(x => x.Title, x => x.Id, StringComparer.Ordinal);
+        var claimed = ReservedDetailIds(result, pages.Values, existingIds, isProduct: true);
+        var ids = new Dictionary<string, DetailTarget>(StringComparer.Ordinal);
         foreach (var (key, page) in pages)
         {
             await checkpoint();
             try
             {
-                var id = await SaveProductAsync(page.Article!, null, byTitle, claimed, websiteId, result, token);
-                ids[key] = id;
-                SiteCrawlHtml.RegisterDetail(result, page.Url, membership.GetValueOrDefault(key)?.ListUrl, isProduct: true, id);
+                var member = membership.GetValueOrDefault(key);
+                var target = await ResolveProductAsync(page, member, byTitle, existingIds, claimed, websiteId, result);
+                ids[key] = target;
+                SiteCrawlHtml.RegisterDetail(result, page.Url, member?.ListUrl, isProduct: true, target.Id);
             }
             catch (Exception ex) when (ex is not OperationCanceledException && !token.IsCancellationRequested)
             {
@@ -59,7 +59,7 @@ public sealed partial class SiteArticleImporter
         return ids;
     }
 
-    private async Task FillProductsAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages, Dictionary<string, long> ids,
+    private async Task FillProductsAsync(Dictionary<string, SiteLayoutScanner.LayoutPage> pages, Dictionary<string, DetailTarget> ids,
         Dictionary<string, Membership> membership, long websiteId, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
@@ -70,29 +70,66 @@ public sealed partial class SiteArticleImporter
 
         foreach (var (key, page) in pages)
         {
-            if (!ids.TryGetValue(key, out var id)) continue;
+            if (!ids.TryGetValue(key, out var target)) continue;
+            var id = target.Id;
             await checkpoint();
             try
             {
                 var member = membership.GetValueOrDefault(key);
+                var query = db.Prods.Where(x => x.FK_WebsiteId == websiteId && !x.IsDeleted && x.Id == id);
+                var contentQuery = query.AsNoTracking().Select(x => new SiteCrawlContentSnapshot(x.Html, x.Css, x.SaveHtml, x.SaveCss));
+                var current = await contentQuery.SingleOrDefaultAsync(token);
+                if (current == null) continue;
+                var title = page.Article!.Title;
+                var decision = result.DecideImport(target.Previous, target.SourceHash, current, $"商品「{title}」");
+                if (decision == SiteCrawlImportDecision.Unchanged) continue;
                 var (content, galleryImages, sideText) = await BuildProductContentAsync(page, websiteId, result, checkpoint, token);
                 var (introduction, keepContent) = sideText != null ? (sideText, true)
                     : ChooseIntroduction(member?.Description, content?.Html);
-                await SaveIntroductionAsync(id, introduction, token);
+                var markup = keepContent ? content : null;
+                var latest = await contentQuery.SingleOrDefaultAsync(token);
+                if (decision == SiteCrawlImportDecision.Conflict || !result.CheckContentUnchanged(current, latest, $"商品「{title}」"))
+                {
+                    if (latest != null && target.StateKey is { } stateKey)
+                    {
+                        await CompleteProductAsync(page, target, query, introduction, member?.ListUrl, result, contentWritten: false);
+                        await result.StageConflictAsync(SiteCrawlConflictKind.Product, id, stateKey, page.Url, target.SourceHash,
+                            title, latest, target.Previous, markup?.Html ?? "", markup?.Css ?? "", Truncate(title, MaxProductTitleLength));
+                    }
+                    continue;
+                }
+                // 商品已取得 Id 但匯入中斷時，可能還沒建立預設規格，沿用同一個商品補齊。
+                if (target.Previous is { SourceHash: null, WrittenFields: not null }
+                    && !await db.Prod_Stocks.AnyAsync(x => !x.IsDeleted && x.FK_Pid == id
+                        && x.Prod!.FK_WebsiteId == websiteId && !x.Prod.IsDeleted, token))
+                    await CreateDefaultStockAsync(id);
                 foreach (var tagId in member?.TagIds ?? [])
                     if (bound.Add((id, tagId)))
                     {
                         var binding = new Tag_Associate { FK_TId = tagId, FK_AId = id, Type = TagAssociateTypeEnum.商品 };
                         db.Tag_Associates.Add(binding);
                         await user.SaveChanges(binding);
+                        result.DirectoryBindingsChanged = true;
                     }
                 // 列表主圖排第一張，目錄卡片用的就是第一張商品圖片。
                 if (member?.ImageUrl != null)
                     await html.BindImageAsync(member.ImageUrl, member.ListUrl, id, FileBindTypeEnum.產品, result, checkpoint, token);
                 foreach (var image in galleryImages)
                     await html.BindImageAsync(image.AbsoluteUri, page.Url, id, FileBindTypeEnum.產品, result, checkpoint, token);
+                latest = await contentQuery.SingleOrDefaultAsync(token);
+                if (!result.CheckContentUnchanged(current, latest, $"商品「{title}」"))
+                {
+                    if (latest != null && target.StateKey is { } stateKey)
+                    {
+                        await CompleteProductAsync(page, target, query, introduction, member?.ListUrl, result, contentWritten: false);
+                        await result.StageConflictAsync(SiteCrawlConflictKind.Product, id, stateKey, page.Url, target.SourceHash,
+                            title, latest, target.Previous, markup?.Html ?? "", markup?.Css ?? "", Truncate(title, MaxProductTitleLength));
+                    }
+                    continue;
+                }
                 // 內文只是簡述那段文字時存空內容：重新匯入要清掉之前重複存的內容。
-                await SaveProductContentAsync(id, page, keepContent ? content : null, result);
+                if (!await SaveProductContentAsync(id, page, markup, result)) continue;
+                await CompleteProductAsync(page, target, query, introduction, member?.ListUrl, result);
             }
             catch (Exception ex) when (ex is not OperationCanceledException && !token.IsCancellationRequested)
             {
@@ -126,40 +163,17 @@ public sealed partial class SiteArticleImporter
 
     private static string Compact(string value) => string.Concat(value.Where(c => !char.IsWhiteSpace(c)));
 
-    // introduction 為 null＝不動（和 SaveProductAsync 對既有商品的處理相同）。
-    private async Task SaveIntroductionAsync(long id, string? introduction, CancellationToken token)
+    private async Task<DetailTarget> ResolveProductAsync(SiteLayoutScanner.LayoutPage page, Membership? member,
+        ILookup<string, long> byTitle, HashSet<long> existingIds, HashSet<long> claimed, long websiteId, SiteLayoutResult result)
     {
-        if (introduction == null) return;
-        var product = await db.Prods.FirstAsync(x => x.Id == id, token);
-        if (product.Introduction == introduction) return;
-        product.Introduction = introduction;
-        await user.SaveChanges(product);
-    }
-
-    private async Task<long> SaveProductAsync(SiteArticleInfo info, string? introduction,
-        Dictionary<string, List<long>> byTitle, HashSet<long> claimed, long websiteId,
-        SiteLayoutResult result, CancellationToken token)
-    {
-        var title = Truncate(info.Title, MaxProductTitleLength);
-        var existingId = byTitle.GetValueOrDefault(title)?.FirstOrDefault(id => !claimed.Contains(id));
-        if (existingId is > 0)
-        {
-            claimed.Add(existingId.Value);
-            var existing = await db.Prods.FirstAsync(x => x.Id == existingId.Value, token);
-            if (introduction != null && existing.Introduction != introduction)
-            {
-                existing.Introduction = introduction;
-                await user.SaveChanges(existing);
-            }
-            result.ProductsUpdated++;
-            return existing.Id;
-        }
-
+        var title = Truncate(page.Article!.Title, MaxProductTitleLength);
+        var target = ResolveDetail(page, member, title, byTitle, existingIds, claimed, result, isProduct: true);
+        if (target.Id > 0) return target;
         var product = new Prod
         {
             FK_WebsiteId = websiteId,
             Title = title,
-            Introduction = introduction ?? "",
+            Introduction = "",
             Description = "",
             Ser_No = DefaultProductSerNo,
             permanent = true,
@@ -170,10 +184,20 @@ public sealed partial class SiteArticleImporter
         };
         db.Prods.Add(product);
         await user.SaveChanges(product);
+        if (target.StateKey is { } key)
+            await result.RecordImportTargetAsync(key, product.Id, page.Url, page.Article.Title, true, product.Title,
+                new(Introduction: product.Introduction));
+        await CreateDefaultStockAsync(product.Id);
+        result.ProductsCreated++;
+        return target with { Id = product.Id, Created = true };
+    }
+
+    private async Task CreateDefaultStockAsync(long productId)
+    {
         // 無規格（規格 id 0）、時價：和後台新增商品不選規格、勾「時價」存出來的資料相同。
         var stock = new Prod_Stock
         {
-            FK_Pid = product.Id,
+            FK_Pid = productId,
             FK_S1id = 0,
             FK_S2id = 0,
             Price = 0,
@@ -187,9 +211,6 @@ public sealed partial class SiteArticleImporter
         };
         db.Prod_Stocks.Add(stock);
         await user.SaveChanges(stock);
-        claimed.Add(product.Id);
-        result.ProductsCreated++;
-        return product.Id;
     }
 
     // 相簿圖（a[href=#modalOfSwiper] 與縮圖）改存商品圖片，從內文拿掉；內文其他圖片照舊留在內容裡。
@@ -245,7 +266,7 @@ public sealed partial class SiteArticleImporter
             .Where(line => line.Length > 0));
     }
 
-    private async Task SaveProductContentAsync(long id, SiteLayoutScanner.LayoutPage page, ProductContent? content,
+    private async Task<bool> SaveProductContentAsync(long id, SiteLayoutScanner.LayoutPage page, ProductContent? content,
         SiteLayoutResult result)
     {
         var response = await products.ImportConten(new ProdSaveContenDto
@@ -259,5 +280,46 @@ public sealed partial class SiteArticleImporter
             logger.LogWarning("Site crawl product content save failed for {ProductId}: {Reason}", id, response.Error);
             result.AddError($"商品「{page.Article!.Title}」的內容儲存失敗，請查看 MVC 日誌。");
         }
+        return response.Success;
+    }
+
+    private async Task CompleteProductAsync(SiteLayoutScanner.LayoutPage page, DetailTarget target, IQueryable<Prod> query,
+        string? introduction, Uri? sourceList, SiteLayoutResult result, bool contentWritten = true)
+    {
+        if (!contentWritten && target.Previous == null) return;
+        var saved = await query.AsNoTracking()
+            .Select(x => new { x.Html, x.Css, x.SaveHtml, x.SaveCss, x.Title, x.Introduction }).SingleOrDefaultAsync();
+        if (saved == null) return;
+        var previous = target.Previous;
+        var sourceTitle = page.Article!.Title;
+        var title = contentWritten && previous != null && SiteCrawlReimport.ShouldUpdate(sourceTitle, previous.SourceTitle, saved.Title, previous.WrittenTitle)
+            ? Truncate(sourceTitle, MaxProductTitleLength) : saved.Title;
+        var newIntroduction = introduction ?? "";
+        var updateIntroduction = (introduction != null || previous?.SourceFields?.Introduction != null)
+            && ShouldWriteField(newIntroduction, saved.Introduction, previous, x => x.Introduction);
+        if (title != saved.Title || updateIntroduction)
+        {
+            var entity = await query.SingleAsync();
+            if (title != saved.Title) entity.Title = title;
+            if (updateIntroduction) entity.Introduction = newIntroduction;
+            await user.SaveChanges(entity);
+        }
+        if (!target.Created && (contentWritten || updateIntroduction)) result.ProductsUpdated++;
+        if (target.StateKey is not { } key) return;
+        var writtenTitle = previous == null || title != saved.Title ? title : previous.WrittenTitle;
+        var writtenIntroduction = updateIntroduction ? newIntroduction
+            : previous == null ? saved.Introduction : previous.WrittenFields?.Introduction;
+        var writtenFields = new SiteCrawlFields(Introduction: writtenIntroduction);
+        var sourceFields = new SiteCrawlFields(Introduction: introduction);
+        if (!contentWritten)
+        {
+            if (previous?.WrittenFields != null)
+                result.ImportState?.RecordFields(key, target.Id, writtenFields, sourceFields, sourceList);
+            return;
+        }
+        result.ImportState?.RecordWritten(key, target.Id, page.Url, sourceTitle, target.SourceHash,
+            new(SiteCrawlFingerprint.ComputeWritten(saved.Html, saved.Css), writtenTitle, writtenFields,
+                SiteCrawlFingerprint.ComputeWritten(saved.SaveHtml, saved.SaveCss)),
+            sourceFields, sourceListUrl: sourceList?.AbsoluteUri);
     }
 }

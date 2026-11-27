@@ -67,9 +67,7 @@ public sealed class SiteLayoutScanner(SiteCrawlHttp http, IOptions<SiteCrawlOpti
                         result.AddError($"入口 {uri.AbsolutePath} 的跳轉超出來源網域。");
                     else if (pages.Count == 0 && ++entryRedirects > 5)
                         result.AddError("入口頁跳轉超過上限。");
-                    else if (fetched.Contains(Normalize(entryTarget).AbsoluteUri))
-                        result.AddError($"入口頁跳轉重複到訪：{entryTarget.AbsolutePath}。");
-                    else
+                    else if (!fetched.Contains(Normalize(entryTarget).AbsoluteUri))
                         Enqueue(entryTarget, root, pending, seen, variants, result, isEntryRedirect: pages.Count == 0);
                     if (pending.Count > 0) await Task.Delay(500, token);
                     continue;
@@ -125,6 +123,7 @@ public sealed class SiteLayoutScanner(SiteCrawlHttp http, IOptions<SiteCrawlOpti
             catch (Exception ex) when (!token.IsCancellationRequested &&
                 ex is HttpRequestException or InvalidOperationException or OperationCanceledException)
             {
+                if (SiteCrawlHttp.IsTimeout(ex)) result.TimedOutSources.Add(uri);
                 result.AddError($"無法抓取 {uri.PathAndQuery}。{ex.Message}");
             }
             if (pending.Count > 0) await Task.Delay(500, token);

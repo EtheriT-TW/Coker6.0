@@ -205,6 +205,7 @@ public sealed class SiteCrawlHtml(SiteCrawlHttp http, FileUploadAppService files
     // 找不到列表選單時文章用 /{OrgName}/article/{id}、商品用 /{OrgName}/search/product/{id}（前台搜尋結果用的寫法）。
     internal static void RegisterDetail(SiteLayoutResult result, Uri articleUrl, Uri? listUrl, bool isProduct, long id)
     {
+        result.ClaimedRemovalTargets.Add((isProduct ? "Product" : "Article", id));
         if (DetailKey(articleUrl) is not { } key) return;
         var option = isProduct ? "product" : "article";
         var listRoute = listUrl == null ? null : FindMenuRoute(result, listUrl);
@@ -215,11 +216,10 @@ public sealed class SiteCrawlHtml(SiteCrawlHttp http, FileUploadAppService files
             : isProduct ? $"{root}/search/product/{id}" : $"{root}/article/{id}";
     }
 
-    private static string? DetailKey(Uri url)
+    internal static string? DetailKey(Uri url)
     {
         if (SiteArticleDetector.ArticleKey(url) is not { } key) return null;
-        var host = url.IdnHost.ToLowerInvariant();
-        return (host.StartsWith("www.", StringComparison.Ordinal) ? host[4..] : host) + "|" + key;
+        return SiteCrawlStateStore.NormalizeHost(url.IdnHost) + "|" + key;
     }
 
     // 先完全比對；對不到時再去掉分頁參數比對（列表第 2 頁也是同一個選單）。

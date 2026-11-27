@@ -24,6 +24,40 @@
             <progress id="siteCrawlProgress" class="w-100" max="100" value="0" aria-label="任務進度"></progress>
             <p id="siteCrawlMessage" class="mb-1" role="status"></p>
             <p id="siteCrawlSummary" class="mb-1"></p>
+            <details id="siteCrawlConflicts" class="d-none mb-2" open>
+                <summary>衝突項目（已保留新站內容）</summary>
+                <ul id="siteCrawlConflictTitles" class="mb-0"></ul>
+            </details>
+            <section id="siteCrawlConflictReview" class="d-none mt-3" aria-labelledby="siteCrawlConflictHeading">
+                <h3 id="siteCrawlConflictHeading" class="h6">處理匯入衝突</h3>
+                <p id="siteCrawlConflictFeedback" class="small mb-2" role="status"></p>
+                <div id="siteCrawlConflictControls" class="d-flex flex-wrap gap-2 mb-2 d-none">
+                    <button id="siteCrawlOverwriteAll" type="button" class="btn btn-sm btn-outline-primary">全部覆蓋</button>
+                    <button id="siteCrawlKeepAll" type="button" class="btn btn-sm btn-outline-secondary">全部保留</button>
+                </div>
+                <ul id="siteCrawlConflictRows" class="list-group mb-2"></ul>
+                <button id="siteCrawlApplyConflicts" type="button" class="btn btn-primary d-none">套用</button>
+            </section>
+            <section id="siteCrawlRemovalReview" class="d-none mt-3" aria-labelledby="siteCrawlRemovalHeading">
+                <h3 id="siteCrawlRemovalHeading" class="h6">舊站已刪除</h3>
+                <p id="siteCrawlRemovalFeedback" class="small mb-2" role="status"></p>
+                <div id="siteCrawlRemovalControls" class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <div class="form-check mb-0">
+                        <input id="siteCrawlSelectAllRemoved" class="form-check-input" type="checkbox">
+                        <label class="form-check-label" for="siteCrawlSelectAllRemoved">全選</label>
+                    </div>
+                    <button id="siteCrawlUnpublish" type="button" class="btn btn-outline-danger btn-sm" disabled>一鍵下架</button>
+                </div>
+                <ul id="siteCrawlRemovalRows" class="list-group"></ul>
+            </section>
+            <details id="siteCrawlNotScanned" class="d-none mt-3">
+                <summary>這次沒掃到</summary>
+                <ul id="siteCrawlNotScannedRows" class="list-group mt-2"></ul>
+            </details>
+            <details id="siteCrawlUnchanged" class="d-none mb-2">
+                <summary>未變更而略過的選單</summary>
+                <ul id="siteCrawlUnchangedMenuTitles" class="mb-0"></ul>
+            </details>
             <ul id="siteCrawlErrors" class="mb-0"></ul>
         </div>
         <div id="siteCrawlConfirmPanel" class="d-none">

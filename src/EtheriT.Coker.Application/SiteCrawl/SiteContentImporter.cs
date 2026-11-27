@@ -15,7 +15,7 @@ internal sealed record SiteLayoutSelection(
     SiteLayoutScanner.LayoutPage? FooterPage);
 
 public sealed class SiteContentImporter(SiteCrawlHtml html, SiteGalleryBuilder gallery, IWebMenuApplication webMenu, IHtmlSanitizer sanitizer,
-    CokerDbContext db, LoginUserData user, ILogger<SiteContentImporter> logger)
+    CokerDbContext db, LoginUserData user, SiteCrawlMenuContent menuContent, ILogger<SiteContentImporter> logger)
 {
     // 不能用 VisibleHeader=false：前台會把整個 <header> 連主選單一起藏掉。
     private const string HideGlobalBanner = "header #banner,header .image-wh,header .full-banner{display:none !important;}";
@@ -67,6 +67,7 @@ public sealed class SiteContentImporter(SiteCrawlHtml html, SiteGalleryBuilder g
     private async Task ImportPageAsync(SiteLayoutScanner.LayoutPage page, ImportedSiteMenu menu, SiteLayoutSelection layout,
         long websiteId, SiteFormRecipient recipient, SiteLayoutResult result, Func<Task> checkpoint, CancellationToken token)
     {
+        if (await menuContent.PrepareAsync(websiteId, menu, page, result, token) is not { } write) return;
         var ownBanner = layout.BannerPage != null && !SiteLayoutScanner.IsSameSection(page.Banner, page.Url,
             layout.BannerPage.Banner, layout.BannerPage.Url);
         var ownFooter = layout.FooterPage != null && !SiteLayoutScanner.IsSameSection(page.Footer, page.Url,
@@ -79,16 +80,22 @@ public sealed class SiteContentImporter(SiteCrawlHtml html, SiteGalleryBuilder g
             : await BuildPageAsync(page, ownBanner, ownFooter, recipient, result, checkpoint, token);
         if (built == null)
         {
-            result.AddError($"選單「{menu.Title}」的來源頁面沒有內容，未覆蓋。");
+            if ((write.Content.IsEmpty || write.Decision == SiteCrawlImportDecision.Conflict)
+                && await menuContent.CanWriteAsync(websiteId, menu, write, "", "", result, token))
+                await menuContent.CompleteAsync(websiteId, menu, write, result);
+            else if (write.Decision == SiteCrawlImportDecision.Write && !write.Content.IsEmpty)
+                result.AddError($"選單「{menu.Title}」的來源頁面沒有內容，未覆蓋。");
             return;
         }
 
         await checkpoint();
+        var css = ownBanner ? built.Css + "\n" + HideGlobalBanner : built.Css;
+        if (!await menuContent.CanWriteAsync(websiteId, menu, write, built.Html, css, result, token, hideGlobalFooter: ownFooter)) return;
         var response = await webMenu.importConten(new MenuSaveContenDto
         {
             Id = checked((int)menu.Id),
             SaveHtml = built.Html,
-            SaveCss = ownBanner ? built.Css + "\n" + HideGlobalBanner : built.Css
+            SaveCss = css
         });
         if (!response.Success)
         {
@@ -97,6 +104,7 @@ public sealed class SiteContentImporter(SiteCrawlHtml html, SiteGalleryBuilder g
             return;
         }
 
+        await menuContent.CompleteAsync(websiteId, menu, write, result);
         if (ownFooter) await HideGlobalFooterAsync(menu.Id, websiteId, token);
         if (built.UsedTemplate) result.ArticleTemplatesApplied++;
         result.PagesImported++;

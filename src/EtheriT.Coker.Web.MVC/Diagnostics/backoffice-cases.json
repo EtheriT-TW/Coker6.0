@@ -878,6 +878,9 @@
         "Views/Shared/Components/Modal/PermissionDetailsModal.cshtml",
         "Controllers/api/WebMenuController.cs",
         "wwwroot/css/Components/PermissionDetailsModal.css",
+        "Controllers/api/SiteCrawlController.cs",
+        "Views/Shared/Components/Modal/SiteCrawlOffcanvas.cshtml",
+        "wwwroot/js/CokerCore/SiteCrawl.js",
         "wwwroot/js/Page/Index.js",
         "Diagnostics/BackofficeObjectChecks.cs",
         "Diagnostics/BackofficeReadOnlyChecks.cs",
@@ -886,6 +889,7 @@
         "Controllers/api/DirectoryController.cs",
         "Diagnostics/BackofficeSandboxContentChecks.cs",
         "Diagnostics/BackofficeSandboxSearchChecks.cs",
+        "Diagnostics/BackofficeSandboxSiteCrawlChecks.cs",
         "Diagnostics/BackofficeSandboxChecks.cs"
       ],
       "cases": [
@@ -895,6 +899,66 @@
           "steps": "使用啟用自訂頁面的測試站台與可設定後台權限的管理帳號，從網站地圖開啟有長名稱項目的後台權限設定。以 320px 及桌面寬度檢查角色、關閉與底部按鈕，再取消並重新開啟。",
           "expected": "長標題和角色名可換行，無須橫向捲動。手機窄版角色排成單欄，桌面依寬度並排。關閉、取消及確認按鈕可見，取消後重開保留原角色。",
           "mode": "review"
+        },
+        {
+          "id": "Page.Index.site-crawl-state",
+          "title": "網站匯入對照與指紋",
+          "steps": "用獨立暫存目錄模擬兩個站台，檢查新項目即時寫入、已存在項目批次保存、來源網域比對、備份回復及指紋差異。",
+          "expected": "兩站對照互相隔離。同網域可跟隨轉址到 www，其他網域、子網域或非允許連接埠遭拒。正式檔損毀可用備份復原，兩檔失效可重建。搜尋 token 與目錄載入順序不影響列表指紋，介紹內容、目錄類型、來源資料及新站 CSS 變更會反映於相應指紋。",
+          "mode": "isolated",
+          "executor": "sandbox/site-crawl-state"
+        },
+        {
+          "id": "Page.Index.site-crawl-state-integration",
+          "title": "匯入時保存各類資料的來源對照",
+          "steps": "在有測試來源及獨立 Upload 目錄的測試站完成偵測、正式匯入與中途取消。以同網域有無 www 及另一來源網域分別按偵測，再檢查前台的 Upload 路徑。",
+          "expected": "偵測沒有建立對照檔。匯入後各類資料對照包含實際新站 ID，取消後已建立的 ID 仍在，前台無法下載對照。有無 www 均可讀到同一個來源轉址後的頁面及 JS 內容，選單總數只顯示一次且註明含子選單。另一來源在偵測排程前被拒絕並顯示如何更換來源，正式匯入仍須檢查來源。",
+          "mode": "external"
+        },
+        {
+          "id": "Page.Index.site-crawl-reimport-decisions",
+          "title": "重新匯入對照判斷與手動編輯保護",
+          "steps": "套用實際匯入決策比對來源和新站內容指紋，並驗證首次、空白、只有 ID 的中斷項目，以及標題和欄位前後比對。",
+          "expected": "來源未改直接略過，唯有重用舊 ID 且晚於對照建立的全空白選單要補寫。手動清空的舊選單保留。來源有變且新站發布內容或草稿有變時列為衝突。已有草稿但缺少上次草稿指紋時保留草稿，無對照且只有草稿的頁面也不能視為空白。舊站值有變且新站仍為上次寫入值才會更新標題或欄位。",
+          "mode": "isolated",
+          "executor": "sandbox/site-crawl-reimport"
+        },
+        {
+          "id": "Page.Index.site-crawl-removals-isolated",
+          "title": "舊站移除判定與輪播下架",
+          "steps": "以隔離的狀態碼、輪播設定和站台暫存目錄驗證刪除判斷、下架目標及批次隔離。",
+          "expected": "只有 404 或 410 確認頁面已刪除。版面區塊有讀到其他項目才確認移除。輪播只停用指定桌面圖片的唯一項目，保留其他設定，不接受模糊路徑。不同站台或任務取不到該批下架清單。",
+          "mode": "isolated",
+          "executor": "sandbox/site-crawl-removals"
+        },
+        {
+          "id": "Page.Index.site-crawl-removals-integration",
+          "title": "網站匯入結果的一鍵下架",
+          "steps": "先在測試站原樣重跑且無待下架項目的來源，再準備來源回應 404、410、200、403、轉址及逾時的項目。另測取消勾選、同一新站 ID 被本次其他來源認領和整區未讀到。跑完匯入後在桌面和手機查看結果，以逐項及全選套用下架，並驗證跨站、舊任務、防偽驗證及匯入中操作。",
+          "expected": "匯入成功且有檢查結果時，摘要即使兩類都是 0 項也會顯示。若刪除檢查結果存檔失敗，只顯示失敗訊息，摘要沒有刪除計數。只有確認刪除的項目可勾選。未掃到的項目僅供查看，取消勾選、逾時及已認領資料不提供下架。套用只切換指定項目的下架或顯示旗標，後台保留資料，其他項目維持，跨站、舊任務、防偽失敗及匯入中不能寫入。",
+          "mode": "external"
+        },
+        {
+          "id": "Page.Index.site-crawl-conflicts-isolated",
+          "title": "匯入衝突暫存與內容比對",
+          "steps": "在隔離的兩個站台目錄保存衝突，從相同與不同任務讀回，比對發布與草稿內容，再以舊路徑與不同類型的資料檢查新站連結。",
+          "expected": "相同站台同一任務能讀回完整待處理內容，其他站台或任務無法讀取。發布或草稿有新變更時不符合覆蓋條件。新站連結保留站台名稱並對應實際頁面，既有站台名稱不重複，其他站台選單不產生連結。保留衝突時只更新來源紀錄，來源原樣重跑會略過，下次來源再變仍保護手動內容。",
+          "mode": "isolated",
+          "executor": "sandbox/site-crawl-conflicts"
+        },
+        {
+          "id": "Page.Index.site-crawl-conflicts-integration",
+          "title": "匯入結果套用覆蓋或保留",
+          "steps": "用測試站與可重跑的來源準備至少兩筆衝突。於結果測試逐筆與批次切換後套用，在下一次套用前另行編輯新站草稿。另用不同帳號、站台、錯誤防偽資料與匯入進行中的請求驗證。用桌面與 375px 手機確認連結對應目前站台且可操作，手機連結的觸控區至少為 44×44px。重跑遇到已造訪的入口跳轉時檢查提示。",
+          "expected": "匯入確認前無衝突操作，完成後可開啟新舊站。只覆蓋選定且未再次修改的項目，保留項及再次修改項不改內文，結果回報各項狀態。內文有衝突時，已有寫入基準且未手改的日期、摘要和簡述仍可更新，手改過的欄位保留。選保留後來源未變的重跑不重列，來源再變時仍會保護手改內文，另一批匯入開始後舊批次不可套用。無權限、失效防偽或活躍匯入時拒絕寫入，重複入口跳轉不顯示提示。",
+          "mode": "external"
+        },
+        {
+          "id": "Page.Index.site-crawl-reimport-integration",
+          "title": "重跑匯入時保留資料與手動調整",
+          "steps": "在測試站以同一來源重跑，分別變更來源標題、新站 HTML 或 CSS、日期摘要與商品簡述。準備會產生隨機搜尋 token 的列表來源，原樣連續重跑並比對指紋。使用隔離資料準備晚於對照建立且重用其 ID 的空白選單，再確認頁面可補寫；另測人工清空的原選單維持空白。測試中途取消、刪除已對照項目、同名空白選單，以及移除兩份對照檔後重跑。另以無權限、切換站台和失效防偽權杖嘗試偵測。",
+          "expected": "保持選單勾選重跑，來源未變的選單顯示於略過結果，新站草稿或發布內容仍在。來源指紋不同且新站有編輯時顯示衝突計數與項目名稱，對照 ID 和指紋維持。來源不符提示只顯示處理方式。改名更新同一 ID 並保留路徑。取消後沿用現有 ID，已軟刪除的對照另建，同名空白可填寫。權限或防偽驗證失敗不排程。",
+          "mode": "external"
         },
         {
           "id": "Page.Index.object-menu-tree",
@@ -978,6 +1042,13 @@
           "steps": "在測試頁面加入元件及圖片，預覽、儲存並重開。",
           "expected": "元件內容、圖片與樣式保留。",
           "mode": "isolated"
+        },
+        {
+          "id": "Page.Index.canvas-date-field",
+          "title": "畫布日曆設定日期與保存",
+          "steps": "環境：有頁面編輯權限的隔離測試站台及已重建的 MVC 前端資產。從系統元件插入日期欄位至表單外，保持編輯模式、不開右側設定，先點輸入框右端的日曆圖示選日，再直接點欄位中央選另一日。針對既有元件及已選取的元件重做，核對右側設定，並由設定改日與清空。對其中一欄撤銷、重做、儲存重開；切到預覽試選其他日期，再返回編輯確認內容。另以唯讀身分確認無法保存。",
+          "expected": "日期欄位列在系統元件，可獨立使用。編輯畫布上的日曆圖示可直接開啟日期選擇器；瀏覽器支援直接開啟時，點欄位中央也可叫出日曆。從畫布選日會同步到右側設定；清空、撤銷、重做與儲存重開後，日期顯示與實際內容一致，兩個元件互不影響。預覽中的選日不寫入頁面內容，唯讀身分無法保存。",
+          "mode": "external"
         },
         {
           "id": "Page.Index.visibility",

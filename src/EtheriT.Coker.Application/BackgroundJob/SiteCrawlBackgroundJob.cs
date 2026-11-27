@@ -20,6 +20,9 @@ public sealed class SiteCrawlBackgroundJob(
     SiteGlobalCssImporter globalCssImporter,
     SiteMarqueeImporter marqueeImporter,
     SiteListDetector listDetector,
+    SiteCrawlStateStore stateStore,
+    SiteCrawlPendingStore pendingStore,
+    SiteCrawlRemovalService removals,
     IOptions<SiteCrawlOptions> options,
     ILogger<SiteCrawlBackgroundJob> logger)
 {
@@ -93,8 +96,22 @@ public sealed class SiteCrawlBackgroundJob(
         {
             if (!await user.isSystemUser() || !await user.CheckedWebSiteId(task.FK_UserId, task.FK_WebsiteId))
                 throw new UnauthorizedAccessException("網站匯入權限已撤銷。");
+            var source = new Uri(sourceUrl);
+            SiteCrawlImportState? imports = null;
+            try
+            {
+                imports = await stateStore.LoadAsync(await user.GetWebsiteOrgName(task.FK_WebsiteId), source, timeout.Token);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // 站台尚無 Upload 目錄時仍能讀取舊站供確認。
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new IOException("無法讀取網站匯入對照。", ex);
+            }
             var navigation = await ReadMenusAsync(sourceUrl, result, () => Checkpoint(0), timeout.Token);
-            await listDetector.DetectAsync(new Uri(sourceUrl), result, Checkpoint, timeout.Token);
+            await listDetector.DetectAsync(source, result, Checkpoint, timeout.Token);
             if (navigation is { } nav)
             {
                 // 左欄子頁、分類頁的子分類也列進確認畫面，讓使用者可以勾選、改路徑名稱（使用者 2026-11-18 要求）。
@@ -102,11 +119,11 @@ public sealed class SiteCrawlBackgroundJob(
                     () => Checkpoint(result.PagesScanned), timeout.Token);
                 var tree = SiteMenuSelection.AttachCategories(
                     SiteMenuSelection.AttachSections(nav.Links, nav.Entry, extras.Sections), nav.Entry, extras.Categories);
-                var routes = await importer.SuggestRoutesAsync(tree, nav.Entry, task.FK_WebsiteId, timeout.Token);
+                var routes = await importer.SuggestRoutesAsync(tree, nav.Entry, task.FK_WebsiteId, imports, timeout.Token);
                 result.Menus.AddRange(SiteMenuSelection.Describe(tree, nav.Entry,
                     result.Lists.Select(item => item.Key).ToHashSet(StringComparer.Ordinal), routes));
             }
-            var message = $"偵測完成：讀取 {result.PagesScanned} 頁，找到主選單 {result.Menus.Count} 項、{result.Lists.Count} 個列表，請確認後開始匯入。";
+            const string message = "偵測完成，請確認選單和列表後開始匯入。";
             if (!await tasks.FinishSiteCrawlAsync(task, BackgroundTaskStatusEnum.Running,
                 BackgroundTaskStatusEnum.Succeeded, message, result.Serialize()))
                 await FinishCancellationAsync(task, result.Serialize());
@@ -118,6 +135,8 @@ public sealed class SiteCrawlBackgroundJob(
             logger.LogError(ex, "Site crawl list detection failed for task {TaskId}", task.Id);
             var error = ex switch
             {
+                SiteCrawlSourceMismatchException => ex.Message,
+                IOException => "無法讀取網站匯入對照，請確認站台 Upload 目錄與權限。",
                 OperationCanceledException when timeout.IsCancellationRequested => "列表偵測超過時間上限。",
                 UnauthorizedAccessException => "網站匯入權限已撤銷。",
                 _ => $"無法完成列表偵測，請查看 MVC 日誌中的任務 {task.Id}。"
@@ -161,13 +180,14 @@ public sealed class SiteCrawlBackgroundJob(
         var scanningLayout = false;
         var importingContent = false;
         var importingArticles = false;
+        var checkingRemovals = false;
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (options.Value.MaxSeconds > 0)
             timeout.CancelAfter(TimeSpan.FromSeconds(options.Value.MaxSeconds));
 
         async Task Checkpoint()
         {
-            var processed = result.MenusCreated + result.MenusUpdated;
+            var processed = result.ImportedMenus.Count(menu => !menu.IsAlias);
             var progress = result.ScanComplete ? Math.Min(95, 30 + processed) : 10;
             var message = result.ScanComplete ? $"正在匯入選單，已處理 {processed} 個" : "正在抓取入口頁的導覽選單";
             if (scanningLayout)
@@ -185,8 +205,14 @@ public sealed class SiteCrawlBackgroundJob(
                 progress = 98;
                 message = $"正在匯入頁面內容，已完成 {result.PagesImported} 頁";
             }
+            if (checkingRemovals)
+            {
+                progress = 99;
+                message = "正在確認舊站已刪除的項目";
+            }
             if (!await tasks.UpdateSiteCrawlProgressAsync(task, progress, message))
                 throw new OperationCanceledException("網站匯入任務已停止。");
+            await result.SaveImportStateAsync();
             timeout.Token.ThrowIfCancellationRequested();
         }
 
@@ -197,9 +223,30 @@ public sealed class SiteCrawlBackgroundJob(
                 throw new UnauthorizedAccessException("網站匯入權限已撤銷。");
             result.OrgName = await user.GetWebsiteOrgName(task.FK_WebsiteId);
 
-            var entry = await importer.ImportAsync(new Uri(sourceUrl), task.FK_WebsiteId, result, Checkpoint, timeout.Token);
+            var source = new Uri(sourceUrl);
+            try
+            {
+                result.ImportState = await stateStore.LoadAsync(result.OrgName, source, timeout.Token);
+                pendingStore.Clear(result.OrgName);
+                result.PendingStore = pendingStore;
+                result.ImportTaskId = task.Id;
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                // 尚無 Upload 根目錄時沿用既有匯入流程，並提示這次無法建立對照。
+                logger.LogWarning(ex, "Could not load site crawl import state for task {TaskId}", task.Id);
+                result.AddError("無法讀取網站匯入對照，請確認站台 Upload 目錄與權限。");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // 對照可能存在但無法讀取，無法確認來源相符就不能開始更新新站。
+                result.AddError("無法讀取網站匯入對照，請確認站台 Upload 目錄與權限。");
+                throw;
+            }
+
+            var entry = await importer.ImportAsync(source, task.FK_WebsiteId, result, Checkpoint, timeout.Token);
             await Checkpoint();
-            if (result.MenusCreated + result.MenusUpdated == 0)
+            if (result.ImportedMenus.Count == 0)
                 throw new InvalidOperationException("沒有儲存任何選單。");
             scanningLayout = true;
             result.PagesScanned = 0;
@@ -223,7 +270,12 @@ public sealed class SiteCrawlBackgroundJob(
             await globalCssImporter.ImportAsync(entry, layout, result, Checkpoint, timeout.Token);
             await Checkpoint();
             await marqueeImporter.ImportAsync(layout, result, Checkpoint, timeout.Token);
+            checkingRemovals = true;
             await Checkpoint();
+            await removals.DetectAsync(entry, layout, result, Checkpoint, timeout.Token);
+            await Checkpoint();
+            result.ImportState?.Complete();
+            await result.SaveImportStateAsync();
             var message = result.ErrorCount > 0 ? "選單匯入完成，部分項目未能處理。" : "網站匯入完成。";
             if (!await tasks.FinishSiteCrawlAsync(task, BackgroundTaskStatusEnum.Running,
                 BackgroundTaskStatusEnum.Succeeded, message, result.Serialize()))
@@ -231,20 +283,23 @@ public sealed class SiteCrawlBackgroundJob(
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            await result.SaveImportStateAsync();
             if (!await FinishCancellationAsync(task, result.Serialize()))
                 throw;
         }
         catch (Exception ex)
         {
+            await result.SaveImportStateAsync();
             var summary = result.Serialize();
             if (await FinishCancellationAsync(task, summary)) return;
             logger.LogError(ex, "Site crawl failed for task {TaskId} after scanning {PagesScanned} pages",
                 task.Id, result.PagesScanned);
             var error = ex switch
             {
+                SiteCrawlSourceMismatchException => ex.Message,
                 OperationCanceledException when timeout.IsCancellationRequested => "網站匯入超過時間上限。",
                 UnauthorizedAccessException => "網站匯入權限已撤銷。",
-                _ when result.MenusCreated + result.MenusUpdated == 0 && result.Errors.Count > 0 => result.Errors[0],
+                _ when result.ImportedMenus.Count == 0 && result.Errors.Count > 0 => result.Errors[0],
                 _ => $"無法完成網站匯入任務，請查看 MVC 日誌中的任務 {task.Id}。"
             };
             if (!await tasks.FinishSiteCrawlAsync(task, BackgroundTaskStatusEnum.Running,
@@ -252,6 +307,11 @@ public sealed class SiteCrawlBackgroundJob(
                 && await FinishCancellationAsync(task, summary))
                 return;
             throw;
+        }
+        finally
+        {
+            // 停止或逾時也要保存已提交的資料，不使用已取消的 token 寫檔。
+            await result.SaveImportStateAsync();
         }
     }
 

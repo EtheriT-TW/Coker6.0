@@ -40,6 +40,9 @@
         let reloadedTaskId;
         let reloadingTaskId;
         let nodeSeq = 0;
+        let conflictTaskId;
+        let conflictBusy = false;
+        let removalBusy = false;
         // 偵測結果：{ taskId, sourceUrl, menus, lists }；confirmPage：確認畫面目前在第 3 步（頁面與路徑名稱）或第 4 步（列表類型）。
         let detected;
         let confirmPage = 3;
@@ -414,11 +417,15 @@
             return (menus ?? []).reduce((total, menu) => total + 1 + countMenus(menu.children), 0);
         }
 
-        function summarize(result, isDetection) {
+        function summarize(result, isDetection, isSucceeded) {
             if (result?.pagesScanned == null) return "";
             if (isDetection)
-                return `偵測讀取 ${result.pagesScanned} 頁，找到主選單 ${countMenus(result.menus)} 項、列表 ${result.lists?.length ?? 0} 個。`;
+                return `偵測讀取 ${result.pagesScanned} 頁，選單共 ${countMenus(result.menus)} 項（含子選單）、列表 ${result.lists?.length ?? 0} 個。`;
             return `掃描 ${result.pagesScanned} 個內容頁，新增選單 ${result.menusCreated} 個、更新選單 ${result.menusUpdated ?? 0} 個。` +
+                (result.unchanged != null ? ` 未變更，已略過 ${result.unchanged} 項。` : "") +
+                (result.conflicts != null ? ` 衝突 ${result.conflicts} 項。` : "") +
+                (isSucceeded && result.removed != null ? ` 舊站已刪除 ${result.removed} 項。` : "") +
+                (isSucceeded && result.notScanned != null ? ` 這次沒掃到 ${result.notScanned} 項。` : "") +
                 (result.menusExcluded > 0 ? ` 依勾選略過選單 ${result.menusExcluded} 項。` : "") +
                 (result.pagesWithBanner == null ? "" :
                     ` 辨識到版頭 ${result.pagesWithBanner} 頁、頁尾 ${result.pagesWithFooter} 頁。`) +
@@ -430,6 +437,218 @@
                 (result.productsCreated > 0 || result.productsUpdated > 0 ?
                     ` 商品新增 ${result.productsCreated} 個、更新 ${result.productsUpdated} 個。` : "");
         }
+
+        function renderImportDetails(panel, list, titles) {
+            const items = titles ?? [];
+            field(panel)?.classList.toggle("d-none", items.length === 0);
+            field(list)?.replaceChildren(...items.map(title => {
+                const item = document.createElement("li");
+                item.textContent = title;
+                return item;
+            }));
+        }
+
+        const conflictKinds = { Menu: "選單", Article: "文章", Product: "商品", Footer: "頁尾", Marquee: "跑馬燈", Slider: "輪播" };
+        const conflictSelects = () => [...field("ConflictRows").querySelectorAll("select")];
+
+        function conflictLink(label, address) {
+            if (!address || address.startsWith("//")) return null;
+            try {
+                const url = new URL(address, window.location.origin);
+                if (!["http:", "https:"].includes(url.protocol)) return null;
+                const link = document.createElement("a");
+                link.textContent = label;
+                link.href = url.href;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                return link;
+            } catch {
+                return null;
+            }
+        }
+
+        function conflictRow(item) {
+            const row = document.createElement("li");
+            row.className = "list-group-item";
+            const grid = document.createElement("div");
+            grid.className = "row g-2 align-items-center";
+            const heading = document.createElement("div");
+            heading.className = "col-12 col-sm-6 fw-semibold text-break";
+            heading.textContent = `${conflictKinds[item.kind]}｜${item.title}`;
+            const links = document.createElement("div");
+            links.className = "col-12 col-sm-4 d-flex flex-wrap gap-2 site-crawl-conflict-links";
+            links.append(...[conflictLink("舊站", item.sourceUrl), conflictLink("新站", item.newUrl)].filter(Boolean));
+            const choices = document.createElement("div");
+            choices.className = "col-12 col-sm-2";
+            const select = document.createElement("select");
+            select.className = "form-select form-select-sm";
+            select.dataset.conflictId = item.id;
+            select.setAttribute("aria-label", `處理${heading.textContent}`);
+            select.append(new Option("保留", "keep"), new Option("覆蓋", "overwrite"));
+            choices.append(select);
+            grid.append(heading, links, choices);
+            row.append(grid);
+            return row;
+        }
+
+        function updateConflictButtons() {
+            const selects = conflictSelects();
+            field("ConflictControls").classList.toggle("d-none", !selects.length);
+            field("ApplyConflicts").classList.toggle("d-none", !selects.length);
+            for (const name of ["OverwriteAll", "KeepAll", "ApplyConflicts"]) field(name).disabled = conflictBusy;
+            for (const select of selects) select.disabled = conflictBusy;
+        }
+
+        const removalChecks = () => [...field("RemovalRows").querySelectorAll("input[type=checkbox]")];
+
+        function updateRemovalControls() {
+            const checks = removalChecks();
+            const selected = checks.filter(x => x.checked).length;
+            const selectAll = field("SelectAllRemoved");
+            selectAll.checked = checks.length > 0 && selected === checks.length;
+            selectAll.indeterminate = selected > 0 && selected < checks.length;
+            selectAll.disabled = removalBusy;
+            field("Unpublish").disabled = removalBusy || selected === 0;
+            field("RemovalControls").classList.toggle("d-none", checks.length === 0);
+            for (const check of checks) check.disabled = removalBusy;
+        }
+
+        function removalRow(item, canUnpublish) {
+            const row = document.createElement("li");
+            row.className = "list-group-item d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2";
+            const label = document.createElement(canUnpublish ? "label" : "span");
+            label.className = canUnpublish ? "d-flex align-items-start gap-2 text-break" : "text-break";
+            if (canUnpublish) {
+                const check = document.createElement("input");
+                check.type = "checkbox";
+                check.value = item.id;
+                check.dataset.kind = item.kind;
+                check.className = "form-check-input flex-shrink-0";
+                label.append(check);
+            }
+            label.append(`${conflictKinds[item.kind]}｜${item.title}`);
+            row.append(label);
+            const link = conflictLink("舊站", item.sourceUrl);
+            if (link) {
+                link.className = "flex-shrink-0";
+                row.append(link);
+            }
+            return row;
+        }
+
+        function showRemovals(removed, notScanned) {
+            field("RemovalReview").classList.toggle("d-none", !removed.length);
+            field("RemovalFeedback").textContent = "";
+            field("RemovalRows").replaceChildren(...removed.map(x => removalRow(x, true)));
+            field("NotScanned").classList.toggle("d-none", !notScanned.length);
+            field("NotScannedRows").replaceChildren(...notScanned.map(x => removalRow(x, false)));
+            updateRemovalControls();
+        }
+
+        async function unpublishSelected() {
+            if (removalBusy || !conflictTaskId) return;
+            const taskId = conflictTaskId;
+            const checks = removalChecks().filter(x => x.checked);
+            if (!checks.length) return;
+            removalBusy = true;
+            updateRemovalControls();
+            field("RemovalFeedback").textContent = "正在下架選取的項目。";
+            try {
+                const result = await co.SiteCrawl.unpublish(taskId, websiteId, checks.map(x => x.value));
+                if (conflictTaskId !== taskId) return;
+                const outcomes = result.outcomes ?? [];
+                const done = new Set(outcomes.filter(x => x.status === "unpublished").map(x => x.id));
+                for (const check of checks) {
+                    if (done.has(check.value)) check.closest("li").remove();
+                }
+                const remaining = outcomes.filter(x => x.status !== "unpublished").map(x => x.title);
+                field("RemovalFeedback").textContent = `已下架 ${done.size} 項。`
+                    + (remaining.length ? ` 未能下架：${remaining.join("、")}。` : "");
+                if (menuEditor && checks.some(x => x.dataset.kind === "Menu" && done.has(x.value)))
+                    menuReload(menuEditor, myOffcanvas, () => {}, false);
+            } catch (error) {
+                if (conflictTaskId === taskId) field("RemovalFeedback").textContent = error.message;
+            } finally {
+                if (conflictTaskId === taskId) {
+                    removalBusy = false;
+                    updateRemovalControls();
+                }
+            }
+        }
+
+        field("RemovalRows")?.addEventListener("change", updateRemovalControls);
+        field("SelectAllRemoved")?.addEventListener("change", event => {
+            for (const check of removalChecks()) check.checked = event.target.checked;
+            updateRemovalControls();
+        });
+        field("Unpublish")?.addEventListener("click", unpublishSelected);
+
+        async function showConflicts(taskId, hasConflicts) {
+            if (!field("ConflictReview") || taskId === conflictTaskId) return;
+            conflictTaskId = taskId;
+            conflictBusy = false;
+            removalBusy = false;
+            showRemovals([], []);
+            field("ConflictRows").replaceChildren();
+            field("ConflictReview").classList.toggle("d-none", !taskId || !hasConflicts);
+            updateConflictButtons();
+            if (!taskId) return;
+            field("ConflictFeedback").textContent = "正在讀取待處理的衝突。";
+            try {
+                const result = await co.SiteCrawl.pending(taskId, websiteId);
+                if (conflictTaskId !== taskId) return;
+                const conflicts = result.conflicts ?? [];
+                showRemovals(result.removed ?? [], result.notScanned ?? []);
+                field("ConflictRows").replaceChildren(...conflicts.map(conflictRow));
+                field("ConflictFeedback").textContent = conflicts.length ? "" : "目前沒有待處理的衝突。";
+                if (conflicts.length) field("Conflicts")?.classList.add("d-none");
+                updateConflictButtons();
+            } catch (error) {
+                if (conflictTaskId !== taskId) return;
+                conflictTaskId = undefined;
+                field(hasConflicts ? "ConflictFeedback" : "Error").textContent = error.message;
+            }
+        }
+
+        async function applyConflicts() {
+            if (conflictBusy || !conflictTaskId) return;
+            const taskId = conflictTaskId;
+            const selects = conflictSelects();
+            const overwrite = selects.filter(x => x.value === "overwrite").map(x => x.dataset.conflictId);
+            conflictBusy = true;
+            updateConflictButtons();
+            field("ConflictFeedback").textContent = "正在套用選擇。";
+            try {
+                const result = await co.SiteCrawl.applyConflicts(taskId, websiteId, overwrite);
+                if (conflictTaskId !== taskId) return;
+                const outcomes = result.outcomes ?? [];
+                const handled = new Set(outcomes.filter(x => x.status === "applied" || x.status === "kept").map(x => x.id));
+                for (const select of selects) {
+                    if (handled.has(select.dataset.conflictId)) select.closest("li").remove();
+                    else select.value = "keep";
+                }
+                const applied = outcomes.filter(x => x.status === "applied").length;
+                const kept = outcomes.filter(x => x.status === "kept").length;
+                const changed = outcomes.filter(x => x.status === "changed").map(x => x.title);
+                const failed = outcomes.filter(x => x.status === "failed").map(x => x.title);
+                field("ConflictFeedback").textContent = `已覆蓋 ${applied} 項，已保留 ${kept} 項。`
+                    + (changed.length ? ` 新站內容已有變動，未覆蓋：${changed.join("、")}。` : "")
+                    + (failed.length ? ` 套用失敗：${failed.join("、")}。` : "");
+                if (menuEditor && outcomes.some(x => x.status === "applied" && x.id.startsWith("Menu-")))
+                    menuReload(menuEditor, myOffcanvas, () => {}, false);
+            } catch (error) {
+                if (conflictTaskId === taskId) field("ConflictFeedback").textContent = error.message;
+            } finally {
+                if (conflictTaskId === taskId) {
+                    conflictBusy = false;
+                    updateConflictButtons();
+                }
+            }
+        }
+
+        field("OverwriteAll")?.addEventListener("click", () => conflictSelects().forEach(select => { select.value = "overwrite"; }));
+        field("KeepAll")?.addEventListener("click", () => conflictSelects().forEach(select => { select.value = "keep"; }));
+        field("ApplyConflicts")?.addEventListener("click", applyConflicts);
 
         function renderErrors(result) {
             const errors = (result?.errors ?? []).map(message => {
@@ -464,8 +683,12 @@
             if (isDetection && status.status === "Succeeded") showDetection(status, result);
             else if (status && !isDetection) detected = undefined;
             field("ConfirmPanel").classList.toggle("d-none", !detected || isRunning());
-            field("Summary").textContent = summarize(result, isDetection);
+            field("Summary").textContent = summarize(result, isDetection, status?.status === "Succeeded");
+            renderImportDetails("Conflicts", "ConflictTitles", result?.conflictTitles);
+            renderImportDetails("Unchanged", "UnchangedMenuTitles", result?.unchangedMenuTitles);
             renderErrors(result);
+            const hasReview = result?.conflicts > 0 || result?.removed > 0 || result?.notScanned > 0;
+            void showConflicts(!isDetection && status?.status === "Succeeded" && hasReview ? status.taskId : undefined, result?.conflicts > 0);
 
             if (menuEditor && status?.status === "Succeeded" &&
                 (result?.menusCreated > 0 || result?.menusUpdated > 0) &&

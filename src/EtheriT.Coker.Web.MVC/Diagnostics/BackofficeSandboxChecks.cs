@@ -77,6 +77,10 @@ public static partial class BackofficeSandboxChecks
         , ["sandbox/mail-envelope"] = "StoreSettings.SMTPSettings"
         , ["sandbox/file-recycle"] = "FileManagement.Index"
         , ["sandbox/file-path"] = "FileManagement.Index"
+        , ["sandbox/site-crawl-state"] = "Page.Index"
+        , ["sandbox/site-crawl-reimport"] = "Page.Index"
+        , ["sandbox/site-crawl-conflicts"] = "Page.Index"
+        , ["sandbox/site-crawl-removals"] = "Page.Index"
     };
 
     public static bool Supports(string page, string? executor) =>
@@ -144,6 +148,10 @@ public static partial class BackofficeSandboxChecks
             case "sandbox/mail-envelope": await MailEnvelope(sandbox); break;
             case "sandbox/file-recycle": await FileRecycle(sandbox); break;
             case "sandbox/file-path": FilePathBoundary(sandbox); break;
+            case "sandbox/site-crawl-state": await SiteCrawlState(sandbox, token); break;
+            case "sandbox/site-crawl-reimport": SiteCrawlReimportRules(); break;
+            case "sandbox/site-crawl-conflicts": await SiteCrawlConflicts(sandbox, token); break;
+            case "sandbox/site-crawl-removals": await SiteCrawlRemovals(sandbox, token); break;
             default: throw new InvalidOperationException("Missing sandbox workflow implementation.");
         }
         return new(BackofficeTestStatus.Passed, "隔離測試資料中的業務流程通過；不含瀏覽器操作及 SQL 相容性驗證。");

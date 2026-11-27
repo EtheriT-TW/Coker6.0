@@ -21,9 +21,8 @@ Coker.extend({
                 const message = response.status === 403
                     ? "沒有網站匯入權限，或目前站台已切換。"
                     : data?.title || "無法取得網站匯入任務資料。";
-                const endpoint = action.split("?")[0];
                 const validation = data?.errors && Object.values(data.errors).flat().join(" ");
-                throw new Error(`${data?.message || validation || message}（${endpoint}，HTTP ${response.status}）`);
+                throw new Error(data?.message || validation || message);
             }
             return data;
         }
@@ -42,6 +41,13 @@ Coker.extend({
             }, websiteId),
             latest: websiteId => request("Latest?websiteId=" + encodeURIComponent(websiteId)),
             getStatus: (taskId, websiteId) => request("GetStatus?" + taskQuery(taskId, websiteId)),
+            pending: (taskId, websiteId) => request("Pending?" + taskQuery(taskId, websiteId), { cache: "no-store" }),
+            applyConflicts: (taskId, websiteId, overwrite) => request("ApplyConflicts?" + taskQuery(taskId, websiteId), {
+                method: "POST", body: JSON.stringify({ overwrite })
+            }, websiteId),
+            unpublish: (taskId, websiteId, selected) => request("Unpublish?" + taskQuery(taskId, websiteId), {
+                method: "POST", body: JSON.stringify({ selected })
+            }, websiteId),
             cancel: (taskId, websiteId) => request("Cancel?" + taskQuery(taskId, websiteId), { method: "POST" }, websiteId)
         };
     })()

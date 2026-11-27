@@ -18,7 +18,7 @@ public sealed class SiteCrawlHttp(IHttpClientFactory factory)
     };
 
     public static bool IsAllowed(Uri uri, string host) =>
-        IsWebUrl(uri) && uri.IdnHost.Equals(host, StringComparison.OrdinalIgnoreCase);
+        IsWebUrl(uri) && SiteCrawlStateStore.NormalizeHost(uri.IdnHost) == SiteCrawlStateStore.NormalizeHost(host);
 
     private static bool IsWebUrl(Uri uri) =>
         uri.IsAbsoluteUri && uri.Scheme is "https" or "http" &&
@@ -59,6 +59,29 @@ public sealed class SiteCrawlHttp(IHttpClientFactory factory)
     // 逾時也一樣（2026-11-17 superiorlink 商品 id=84 匯入時 15 秒沒回應，事後單獨抓不到 1 秒）。
     private static readonly TimeSpan[] RetryDelays = [TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(10)];
     private const int TimeoutSeconds = 15;
+
+    internal async Task<HttpStatusCode?> ProbeStatusAsync(Uri uri, CancellationToken token)
+    {
+        if (!IsAllowed(uri, uri.IdnHost)) return null;
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(5));
+        using var client = factory.CreateClient(ClientName);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        try
+        {
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+            return response.StatusCode;
+        }
+        catch (Exception ex) when (!token.IsCancellationRequested && ex is HttpRequestException or OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    internal static bool IsTimeout(Exception exception) =>
+        exception is OperationCanceledException or TimeoutException
+            or HttpRequestException { StatusCode: HttpStatusCode.RequestTimeout or HttpStatusCode.GatewayTimeout }
+        || exception.InnerException is OperationCanceledException or TimeoutException;
 
     public Task<(Uri Url, MemoryStream Content, string? Charset)> GetAsync(
         Uri uri, string host, bool image, long maxBytes, CancellationToken token) =>

@@ -104,7 +104,9 @@ public sealed class SiteGlobalCssImporter(SiteCrawlHttp http, SiteCrawlHtml html
             ?? throw new InvalidOperationException("找不到目前網站。");
         // 前台 /upload 已指向該站目錄，全站 CSS 不會再被改寫路徑，所以存前台用的網址。
         var imported = sanitizer.SanitizePublicCss(css).Replace($"/upload/{orgName}/", "/upload/");
-        website.Css = MergeBlock(website.Css ?? "", $"{BeginMarker}\n{imported.Trim()}\n{EndMarker}");
+        var merged = MergeBlock(website.Css ?? "", $"{BeginMarker}\n{imported.Trim()}\n{EndMarker}");
+        if (website.Css == merged) return;
+        website.Css = merged;
         await user.SaveChanges(website);
     }
 

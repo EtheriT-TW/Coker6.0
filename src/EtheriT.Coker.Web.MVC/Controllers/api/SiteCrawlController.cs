@@ -12,7 +12,8 @@ namespace EtheriT.Coker.Web.MVC.Controllers.api;
 
 [ApiController, Authorize, Route("api/[controller]/[action]")]
 public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskService tasks,
-    IBackgroundJobClient jobs, IAntiforgery antiforgery, ILogger<SiteCrawlController> logger) : ControllerBase
+    IBackgroundJobClient jobs, IAntiforgery antiforgery, SiteCrawlStateStore stateStore, SiteCrawlConflictService conflicts,
+    SiteCrawlRemovalService removals, ILogger<SiteCrawlController> logger) : ControllerBase
 {
     private const int MaxProductLists = 2000;
     private const int MaxListKeyLength = 2100;
@@ -62,6 +63,23 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
         if (!await ValidateRequestTokenAsync()) return InvalidRequestToken();
         if (ParseSource(input.Url) is not { } url)
             return BadRequest(new { message = "請輸入有效的 HTTP 或 HTTPS 網址。" });
+        try
+        {
+            await stateStore.LoadAsync(await user.GetWebsiteOrgName(websiteId), new Uri(url), HttpContext.RequestAborted);
+        }
+        catch (SiteCrawlSourceMismatchException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // 站台還沒有 Upload 目錄時沒有對照可查，仍可偵測來源網站。
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Could not load site crawl import state for site {WebsiteId}", websiteId);
+            return StatusCode(503, new { message = "無法讀取網站匯入對照，請確認站台 Upload 目錄與權限。" });
+        }
         return await CreateAndScheduleAsync(websiteId,
             task => jobs.Enqueue<SiteCrawlBackgroundJob>(job => job.Detect(task, url, CancellationToken.None)), DetectTaskTag);
     }
@@ -135,6 +153,75 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
     }
 
     [HttpGet, ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> Pending(long taskId, long websiteId)
+    {
+        if (!await CanAccessAsync(websiteId)) return Forbid();
+        if (await GetOwnTaskAsync(taskId, websiteId) is not { Status: BackgroundTaskStatusEnum.Succeeded }) return NotFound();
+        try
+        {
+            var pendingConflicts = await conflicts.ListAsync(taskId, HttpContext.RequestAborted);
+            var pendingRemovals = await removals.ListAsync(taskId, HttpContext.RequestAborted);
+            return Ok(new { conflicts = pendingConflicts, removed = pendingRemovals.Removed, notScanned = pendingRemovals.NotScanned });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            logger.LogWarning(ex, "Could not read pending site crawl conflicts for task {TaskId}", taskId);
+            return StatusCode(503, new { message = "無法讀取網站匯入衝突，請稍後再試。" });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ApplyConflicts(long taskId, long websiteId, ApplyConflictsRequest input)
+    {
+        if (!await CanAccessAsync(websiteId)) return Forbid();
+        if (!await ValidateRequestTokenAsync()) return InvalidRequestToken();
+        if (await GetOwnTaskAsync(taskId, websiteId) is not { Status: BackgroundTaskStatusEnum.Succeeded }) return NotFound();
+        if (input.Overwrite is not { Length: <= 10000 } overwrite || overwrite.Any(x => x is not { Length: > 0 and <= 40 }))
+            return BadRequest(new { message = "衝突選擇資料不正確。" });
+        try
+        {
+            return Ok(new { outcomes = await conflicts.ApplyAsync(taskId, overwrite.ToHashSet(StringComparer.Ordinal), HttpContext.RequestAborted) });
+        }
+        catch (BackgroundTaskConflictException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (SiteCrawlSourceMismatchException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            logger.LogWarning(ex, "Could not apply pending site crawl conflicts for task {TaskId}", taskId);
+            return StatusCode(503, new { message = "無法套用網站匯入衝突，請稍後再試。" });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Unpublish(long taskId, long websiteId, UnpublishRequest input)
+    {
+        if (!await CanAccessAsync(websiteId)) return Forbid();
+        if (!await ValidateRequestTokenAsync()) return InvalidRequestToken();
+        if (await GetOwnTaskAsync(taskId, websiteId) is not { Status: BackgroundTaskStatusEnum.Succeeded }) return NotFound();
+        if (input.Selected is not { Length: > 0 and <= 10000 } selected
+            || selected.Any(id => id is not { Length: > 0 and <= 12 } || !id.All(char.IsAsciiDigit)))
+            return BadRequest(new { message = "請選擇有效的下架項目。" });
+        try
+        {
+            return Ok(new { outcomes = await removals.UnpublishAsync(taskId, selected.ToHashSet(StringComparer.Ordinal), HttpContext.RequestAborted) });
+        }
+        catch (BackgroundTaskConflictException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            logger.LogWarning(ex, "Could not unpublish site crawl items for task {TaskId}", taskId);
+            return StatusCode(503, new { message = "無法套用網站匯入下架，請稍後再試。" });
+        }
+    }
+
+    [HttpGet, ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> RequestToken(long websiteId)
     {
         if (!await CanAccessAsync(websiteId)) return Forbid();
@@ -189,4 +276,6 @@ public sealed class SiteCrawlController(LoginUserData user, BackgroundTaskServic
 
     public sealed record StartRequest(string? Url, string[]? ProductLists, SiteMenuChoice[]? Menus);
     public sealed record DetectRequest(string? Url);
+    public sealed record ApplyConflictsRequest(string[]? Overwrite);
+    public sealed record UnpublishRequest(string[]? Selected);
 }

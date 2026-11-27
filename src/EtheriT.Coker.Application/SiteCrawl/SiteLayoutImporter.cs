@@ -1,4 +1,5 @@
 using EtheriT.Coker.Application.Dto;
+using EtheriT.Coker.Application.Shared.Dto.enumType.Template;
 using EtheriT.Coker.Application.Shared.Dto.Templates;
 using EtheriT.Coker.Application.Shared.Processor;
 using EtheriT.Coker.Application.Shared.Templates;
@@ -16,6 +17,10 @@ internal sealed class SiteLayoutResult
 {
     public int MenusCreated { get; set; }
     public int MenusUpdated { get; set; }
+    public int Unchanged { get; private set; }
+    public int Conflicts { get; private set; }
+    public List<string> UnchangedMenuTitles { get; } = [];
+    public List<string> ConflictTitles { get; } = [];
     public List<ImportedSiteMenu> ImportedMenus { get; } = [];
     public int ArticlesCreated { get; set; }
     public int ArticlesUpdated { get; set; }
@@ -59,6 +64,21 @@ internal sealed class SiteLayoutResult
     public int ErrorCount { get; private set; }
     internal bool ScanComplete { get; set; }
     internal string? OrgName { get; set; }
+    internal SiteCrawlImportState? ImportState { get; set; }
+    internal SiteCrawlPendingStore? PendingStore { get; set; }
+    internal long ImportTaskId { get; set; }
+    public int? Removed { get; internal set; }
+    public int? NotScanned { get; internal set; }
+    internal HashSet<Uri> TimedOutSources { get; } = [];
+    internal HashSet<string> SeenSliderKeys { get; } = new(StringComparer.Ordinal);
+    internal bool SliderSectionSeen { get; set; }
+    internal HashSet<string> SeenMarqueeKeys { get; } = new(StringComparer.Ordinal);
+    internal HashSet<(string Kind, long Id)> ClaimedRemovalTargets { get; } = [];
+    internal HashSet<(long HeaderId, string DesktopImage)> ClaimedSliders { get; } = [];
+    internal bool IsFirstImport { get; set; }
+    internal HashSet<long> CreatedMenuIds { get; } = [];
+    internal bool DirectoryBindingsChanged { get; set; }
+    private bool importStateWriteFailed;
     // 已改放目錄元件的選單（例 分類首頁改選單目錄），列表綁定與內容匯入都不再覆蓋。
     internal HashSet<long> HandledMenuIds { get; } = [];
     internal string? FirstPageDiagnostic { get; set; }
@@ -79,6 +99,92 @@ internal sealed class SiteLayoutResult
     }
 
     public string Serialize() => JsonSerializer.Serialize(this, JsonSerializerOptions.Web);
+
+    internal void CountUnchanged() => Unchanged++;
+
+    internal bool CheckContentUnchanged(SiteCrawlContentSnapshot before, SiteCrawlContentSnapshot? after, string title)
+    {
+        // 下載圖片和整理內容需要時間，寫入前再讀一次，避免這段期間的手動編輯被蓋掉。
+        if (before == after) return true;
+        Conflicts++;
+        if (ConflictTitles.Count < 20) ConflictTitles.Add(title);
+        return false;
+    }
+
+    internal SiteCrawlImportDecision DecideImport(SiteCrawlStateItem? previous, string hash,
+        SiteCrawlContentSnapshot current, string title, bool isMenu = false)
+    {
+        var decision = SiteCrawlReimport.Decide(hash, previous?.SourceHash, previous?.WrittenHash,
+            current.Html, current.Css, previous == null && IsFirstImport, current.SaveHtml, current.SaveCss,
+            previous?.WrittenDraftHash,
+            // 舊對照無法辨識寫入指紋是否曾被衝突處理改寫。
+            requiresManualReview: previous is { WrittenHash: not null, HasVerifiedContentBaseline: false });
+        if (decision == SiteCrawlImportDecision.Unchanged)
+        {
+            CountUnchanged();
+            if (isMenu && UnchangedMenuTitles.Count < 20) UnchangedMenuTitles.Add(title);
+        }
+        if (decision == SiteCrawlImportDecision.Conflict)
+        {
+            Conflicts++;
+            if (ConflictTitles.Count < 20) ConflictTitles.Add(title);
+        }
+        return decision;
+    }
+
+    internal async Task StageConflictAsync(SiteCrawlConflictKind kind, long id, string key, Uri source,
+        string sourceHash, string title, SiteCrawlContentSnapshot current, SiteCrawlStateItem? previous,
+        string html, string css, string? importedTitle = null, bool hideGlobalFooter = false)
+    {
+        if (PendingStore == null || OrgName == null || ImportState == null) return;
+        var hash = SiteCrawlFingerprint.ComputeWritten(current.Html, current.Css);
+        var draftHash = SiteCrawlFingerprint.ComputeWritten(current.SaveHtml, current.SaveCss);
+        var rename = importedTitle != null && previous?.WrittenTitle != null && title != previous.SourceTitle;
+        var newUrl = kind switch
+        {
+            SiteCrawlConflictKind.Footer => $"/{Uri.EscapeDataString(OrgName)}/",
+            SiteCrawlConflictKind.Menu => SiteCrawlHtml.FindMenuRoute(this, source),
+            _ => SiteCrawlHtml.FindDetailRoute(this, source)
+        };
+        await PendingStore.WriteAsync(OrgName, new(ImportTaskId, kind, id, key, source.AbsoluteUri,
+            newUrl, title, sourceHash, html, css, hash, draftHash,
+            rename ? previous!.WrittenTitle : null, rename ? importedTitle : null, hideGlobalFooter));
+        ImportState.RememberConflict(key, id, source, title, sourceHash);
+    }
+
+    internal async Task RecordImportTargetAsync(string key, long id, Uri? source, string? title, bool created,
+        string? writtenTitle = null, SiteCrawlFields? writtenFields = null)
+    {
+        if (ImportState == null) return;
+        try
+        {
+            await ImportState.RecordTargetAsync(key, id, source, title, created, writtenTitle, writtenFields);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ReportImportStateWriteFailure();
+        }
+    }
+
+    internal async Task SaveImportStateAsync()
+    {
+        if (ImportState == null) return;
+        try
+        {
+            await ImportState.SaveAsync();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ReportImportStateWriteFailure();
+        }
+    }
+
+    private void ReportImportStateWriteFailure()
+    {
+        if (importStateWriteFailed) return;
+        importStateWriteFailed = true;
+        AddError("網站匯入對照未能儲存，請確認站台 Upload 目錄可寫入。");
+    }
 }
 
 public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml html,
@@ -162,56 +268,150 @@ public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml 
     private async Task ImportBannerAsync(SiteLayoutScanner.LayoutPage page, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
-        var images = new List<SliderDto>();
-        var candidates = page.Banner!.DescendantsAndSelf()
-            .Where(x => x.Name == "img" || x.GetAttributeValue("style", "").Contains("background-image", StringComparison.OrdinalIgnoreCase));
-        foreach (var image in candidates.Take(50))
-        {
-            var desktop = await html.ImportImageAsync(SiteCrawlHtml.ImageSource(image), page.Url, result, checkpoint, token);
-            if (desktop == null) continue;
-            var mobileSource = image.ParentNode?.Name == "picture"
-                ? image.ParentNode.Elements("source").FirstOrDefault(x =>
-                    x.GetAttributeValue("media", "").Contains("max-width", StringComparison.OrdinalIgnoreCase))
-                : null;
-            var mobile = mobileSource == null ? null :
-                await html.ImportImageAsync(SiteCrawlHtml.ImageSource(mobileSource), page.Url, result, checkpoint, token);
-            images.Add(new SliderDto
-            {
-                DesktopImage = desktop,
-                MobileImage = mobile,
-                Link = ResolveBannerLink(image, page.Url, result),
-                Enabled = true
-            });
-        }
-        if (images.Count == 0)
+        var images = page.Banner!.DescendantsAndSelf().Where(IsBannerImage).ToList();
+        var candidates = images.Take(50).ToList();
+        if (candidates.Count == 0)
         {
             result.AddError("已辨識版頭，但沒有可匯入的輪播圖片。");
             return;
+        }
+
+        // 以輪播區讀到的來源網址判斷是否存在，下載圖片失敗不代表舊站移除了輪播。
+        foreach (var image in images)
+        {
+            var rawImage = SiteCrawlHtml.ImageSource(image);
+            if (BannerImageUrl(page.Url, rawImage) is { } sourceUrl)
+            {
+                result.SeenSliderKeys.Add("Slider|" + sourceUrl.AbsoluteUri);
+                result.SliderSectionSeen = true;
+            }
+            else if (rawImage.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                result.SliderSectionSeen = true;
+            }
         }
         await checkpoint();
         var response = await templates.getDefaultHeader();
         if (!response.Success || response.Object is not HeaderTemplateDto header)
             throw new InvalidOperationException("無法讀取現有版頭。");
         var sliders = header.ContentConfig.Sliders;
-        var existing = sliders.SelectMany(x => new[] { x.DesktopImage, x.MobileImage }).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var added = images.Where(x => existing.Add(x.DesktopImage)).ToList();
+        var headerId = result.ImportState == null ? null : (await ReadHeaderAsync())?.Id;
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var paths = sliders.SelectMany(x => new[] { x.DesktopImage, x.MobileImage }).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var observed = new List<(Uri Source, string Hash, SliderDto Slider, string? WrittenLinkHash)>();
+        var added = 0;
         var linksChanged = false;
-        foreach (var image in images.Where(x => x.Link != null))
+        var found = false;
+
+        foreach (var image in candidates)
         {
-            foreach (var slider in sliders.Where(x =>
-                string.Equals(x.DesktopImage, image.DesktopImage, StringComparison.OrdinalIgnoreCase) && x.Link != image.Link))
+            var raw = SiteCrawlHtml.ImageSource(image);
+            var source = BannerImageUrl(page.Url, raw);
+            var key = source == null ? null : "Slider|" + source.AbsoluteUri;
+            if (key != null && !seen.Add(key)) continue;
+            var previous = key == null ? null : result.ImportState?.Find(key);
+            var mobileSource = image.ParentNode?.Name == "picture"
+                ? image.ParentNode.Elements("source").FirstOrDefault(x =>
+                    x.GetAttributeValue("media", "").Contains("max-width", StringComparison.OrdinalIgnoreCase))
+                : null;
+            var mobileRaw = mobileSource == null ? null : SiteCrawlHtml.ImageSource(mobileSource);
+            var rawLink = image.ParentNode?.Name == "a" ? image.ParentNode.GetAttributeValue("href", "") : null;
+            var hash = SiteCrawlFingerprint.ComputeWritten(rawLink, mobileRaw);
+            var link = ResolveBannerLink(image, page.Url, result);
+            var slider = previous?.NewId == headerId && previous?.DesktopImage is { } desktopPath
+                ? sliders.FirstOrDefault(x => SameDesktop(x, desktopPath, result.OrgName)) : null;
+
+            if (slider != null && previous?.SourceHash == hash)
             {
-                slider.Link = image.Link;
+                result.CountUnchanged();
+                found = true;
+                continue;
+            }
+            if (slider == null)
+            {
+                var desktop = await html.ImportImageAsync(raw, page.Url, result, checkpoint, token);
+                if (desktop == null) continue;
+                slider = sliders.FirstOrDefault(x => SameDesktop(x, PublishedDesktop(desktop, result.OrgName), result.OrgName));
+                if (slider == null && paths.Add(desktop))
+                {
+                    var mobile = mobileRaw == null ? null :
+                        await html.ImportImageAsync(mobileRaw, page.Url, result, checkpoint, token);
+                    slider = new SliderDto { DesktopImage = desktop, MobileImage = mobile, Link = link, Enabled = true };
+                    sliders.Add(slider);
+                    added++;
+                }
+                found = true;
+                if (slider == null) continue;
+            }
+
+            found = true;
+            var writtenLinkHash = previous?.WrittenHash;
+            if (slider.Link != link && ((previous == null && result.IsFirstImport && link != null)
+                || writtenLinkHash != null && writtenLinkHash == SiteCrawlFingerprint.ComputeWritten(slider.Link, null)))
+            {
+                slider.Link = link;
                 linksChanged = true;
             }
+            // 未曾記錄過連結時，只有目前連結符合來源才可作為日後更新的依據。
+            if (slider.Link == link) writtenLinkHash = SiteCrawlFingerprint.ComputeWritten(slider.Link, null);
+            if (source != null) observed.Add((source, hash, slider, writtenLinkHash));
         }
-        if (added.Count == 0 && !linksChanged) return;
-        sliders.AddRange(added);
-        await checkpoint();
-        if (!(await templates.saveDefaultHeader(header)).Success)
-            throw new InvalidOperationException("無法儲存版頭。");
-        result.SlidesAdded = added.Count;
+
+        if (!found)
+        {
+            result.AddError("已辨識版頭，但沒有可匯入的輪播圖片。");
+            return;
+        }
+        if (added > 0 || linksChanged)
+        {
+            await checkpoint();
+            if (!(await templates.saveDefaultHeader(header)).Success)
+                throw new InvalidOperationException("無法儲存版頭。");
+            result.SlidesAdded = added;
+        }
+        if (result.ImportState is not { } state || observed.Count == 0
+            || await ReadHeaderAsync() is not { } savedHeader || string.IsNullOrWhiteSpace(savedHeader.ContentConfig)) return;
+        var saved = Newtonsoft.Json.JsonConvert.DeserializeObject<HeaderContentConfigDto>(savedHeader.ContentConfig)?.Sliders;
+        if (saved == null) return;
+        foreach (var (source, hash, slider, writtenLinkHash) in observed)
+        {
+            var desktop = PublishedDesktop(slider.DesktopImage, result.OrgName);
+            var match = saved.FirstOrDefault(x => string.Equals(x.DesktopImage, desktop, StringComparison.OrdinalIgnoreCase));
+            if (match == null || string.IsNullOrEmpty(match.DesktopImage)) continue;
+            result.ClaimedSliders.Add((savedHeader.Id, match.DesktopImage.ToUpperInvariant()));
+            state.RecordWritten("Slider|" + source.AbsoluteUri, savedHeader.Id, source, null, hash,
+                new(writtenLinkHash, match.Title), desktopImage: match.DesktopImage);
+        }
+        if (added > 0) await result.SaveImportStateAsync();
     }
+
+    private async Task<HeaderSnapshot?> ReadHeaderAsync()
+    {
+        var websiteId = await user.GetWebsiteId();
+        var templateId = await db.Templates.AsNoTracking()
+            .Where(x => x.FK_WebsiteID == websiteId && !x.IsDeleted && x.Enable)
+            .OrderByDescending(x => x.LastModificationTime ?? x.CreationTime)
+            .Select(x => x.Id).FirstOrDefaultAsync();
+        return await db.TemplateSections.AsNoTracking()
+            .Where(x => x.FK_TemplateID == templateId && x.template.FK_WebsiteID == websiteId
+                && !x.IsDeleted && x.sectionType == SectionTypeEnum.表頭)
+            .Select(x => new HeaderSnapshot(x.Id, x.ContentConfig)).FirstOrDefaultAsync();
+    }
+
+    private sealed record HeaderSnapshot(long Id, string ContentConfig);
+
+    private static bool IsBannerImage(HtmlNode node) =>
+        node.Name == "img" || node.GetAttributeValue("style", "").Contains("background-image", StringComparison.OrdinalIgnoreCase);
+
+    private static Uri? BannerImageUrl(Uri page, string raw) =>
+        !string.IsNullOrWhiteSpace(raw) && Uri.TryCreate(page, HtmlEntity.DeEntitize(raw).Trim(), out var url)
+            && url.Scheme is ("http" or "https") ? new UriBuilder(url) { Fragment = "" }.Uri : null;
+
+    private static string? PublishedDesktop(string? path, string? orgName) =>
+        path?.Replace($"/upload/{orgName}/", "/upload/");
+
+    private static bool SameDesktop(SliderDto slider, string? desktop, string? orgName) =>
+        string.Equals(PublishedDesktop(slider.DesktopImage, orgName), desktop, StringComparison.OrdinalIgnoreCase);
 
     private static string? ResolveBannerLink(HtmlNode image, Uri pageUrl, SiteLayoutResult result)
     {
@@ -227,19 +427,59 @@ public sealed class SiteLayoutImporter(SiteLayoutScanner scanner, SiteCrawlHtml 
     private async Task ImportFooterAsync(SiteLayoutScanner.LayoutPage page, SiteLayoutResult result,
         Func<Task> checkpoint, CancellationToken token)
     {
+        var key = "Footer|" + SiteCrawlStateStore.NormalizeHost(page.Url.IdnHost);
+        var hash = SiteCrawlFingerprint.ComputeSource(page.Footer, null);
+        var previous = result.ImportState?.Find(key);
+        var websiteId = await user.GetWebsiteId();
+        var footers = db.FooterTemplates.AsNoTracking()
+            .Where(x => !x.IsDeleted && !x.templateSections.IsDeleted && !x.templateSections.template.IsDeleted
+                && x.templateSections.template.FK_WebsiteID == websiteId);
+        var existing = previous == null ? null : await footers.SingleOrDefaultAsync(x => x.Id == previous.NewId, token);
+        if (existing == null)
+        {
+            var current = await templates.GetDefaultFooterTemplatesAsync();
+            if (!current.Success || current.Object is not TemplateSectionsDto section || section.footerTemplateDto?.id is not long id)
+                throw new InvalidOperationException("無法讀取現有頁尾。");
+            existing = await footers.SingleOrDefaultAsync(x => x.Id == id, token)
+                ?? throw new InvalidOperationException("無法讀取現有頁尾。");
+        }
+        if (previous?.NewId != existing.Id) previous = null;
+        var currentHtml = previous?.WrittenHash != null || !string.IsNullOrWhiteSpace(existing.html) ? existing.html : existing.saveHtml;
+        var currentCss = previous?.WrittenHash != null || !string.IsNullOrWhiteSpace(existing.css) ? existing.css : existing.saveCss;
+        var before = new SiteCrawlContentSnapshot(existing.html, existing.css, existing.saveHtml, existing.saveCss);
+        var decision = result.DecideImport(previous, hash, before, "網站頁尾");
+        if (decision == SiteCrawlImportDecision.Unchanged) return;
+
         var node = page.Footer!.CloneNode(true);
         result.ContentSource = "網站頁尾";
         var css = await html.CleanAsync(node, page.Url, result, allowIframes: false, checkpoint, token);
         await checkpoint();
-        var current = await templates.GetDefaultFooterTemplatesAsync();
-        if (!current.Success || current.Object is not TemplateSectionsDto section || section.footerTemplateDto?.id is not long footerId)
-            throw new InvalidOperationException("無法讀取現有頁尾。");
         var cleaned = sanitizer.SanitizePublicHtml(node.OuterHtml);
         if (string.IsNullOrWhiteSpace(cleaned))
             throw new InvalidOperationException("沒有可儲存的頁尾內容。");
+        var footerId = existing.Id;
+        var latest = await footers.Where(x => x.Id == footerId)
+            .Select(x => new SiteCrawlContentSnapshot(x.html, x.css, x.saveHtml, x.saveCss)).SingleOrDefaultAsync(token);
         var input = new MenuSaveContenDto { Id = checked((int)footerId), SaveHtml = cleaned, SaveCss = sanitizer.SanitizePublicCss(css) };
+        if (decision == SiteCrawlImportDecision.Conflict || !result.CheckContentUnchanged(before, latest, "網站頁尾"))
+        {
+            if (latest != null)
+                await result.StageConflictAsync(SiteCrawlConflictKind.Footer, footerId, key, page.Url, hash,
+                    "網站頁尾", latest, previous, cleaned, input.SaveCss ?? "");
+            return;
+        }
+        // 已有非空頁尾要等寫入成功才建立對照，避免失敗後誤判為可直接續寫。
+        if (previous == null && string.IsNullOrWhiteSpace(currentHtml) && string.IsNullOrWhiteSpace(currentCss))
+            await result.RecordImportTargetAsync(key, footerId, page.Url, null, created: true);
         if (!(await templates.importDefaultFooter(input)).Success)
             throw new InvalidOperationException("無法儲存頁尾。");
         result.FooterUpdated = true;
+        if (result.ImportState is not { } state) return;
+        var saved = await footers.Where(x => x.Id == footerId)
+            .Select(x => new { x.html, x.css, x.saveHtml, x.saveCss }).SingleOrDefaultAsync();
+        if (saved != null)
+            state.RecordWritten(key, footerId, page.Url, null, hash,
+                new(SiteCrawlFingerprint.ComputeWritten(saved.html, saved.css), null,
+                    DraftHash: SiteCrawlFingerprint.ComputeWritten(saved.saveHtml, saved.saveCss)));
     }
 }

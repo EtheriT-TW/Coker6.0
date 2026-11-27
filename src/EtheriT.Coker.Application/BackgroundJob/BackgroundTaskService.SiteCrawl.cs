@@ -9,6 +9,14 @@ public sealed partial class BackgroundTaskService
 {
     internal static string SiteCrawlKey(long websiteId) => $"site-crawl:{websiteId}";
 
+    internal async Task<bool> HasActiveSiteCrawlAsync(long websiteId, CancellationToken token)
+    {
+        await using var db = CreateDb();
+        var key = SiteCrawlKey(websiteId);
+        return await db.BackgroundTasks.AnyAsync(x => x.FK_WebsiteId == websiteId && !x.IsDeleted
+            && x.Type == BackgroundTaskTypeEnum.SiteCrawl && x.ActiveKey == key, token);
+    }
+
     // resultJson：建立時先放的結果（偵測任務放 {"mode":"detect"}，畫面才分得出是哪一步）。
     public async Task<BackgroundTaskRecord> CreateSiteCrawlTaskAsync(long websiteId, long userId, string? resultJson = null)
     {

@@ -493,6 +493,188 @@
         }
     }
 
+    const dateFormats = ['yyyy-mm-dd', 'yyyy/mm/dd', 'mm/dd/yyyy', 'dd/mm/yyyy', 'yyyy.mm.dd', 'yyyy年mm月dd日'];
+
+    function removeLegacyDateLabel(component) {
+        const wrapper = component.parent();
+        const index = component.index();
+        if (!wrapper?.getClasses().includes('mb-3') || index < 1) return;
+
+        const label = wrapper.components().at(index - 1);
+        if (label?.get('tagName') !== 'span') return;
+
+        const classes = label.getClasses();
+        const isOriginalLabel = ['title', 'd-block', 'mb-1'].every(name => classes.includes(name)) &&
+            label.getInnerHTML().trim() === '日期';
+        if (!classes.includes('coker-date-label') && !isOriginalLabel) return;
+
+        // Removing a sibling must wait for GrapesJS to finish rendering the collection.
+        queueMicrotask(() => {
+            if (component.parent() === wrapper && label.parent() === wrapper) {
+                editor.UndoManager.skip(() => label.remove());
+            }
+        });
+    }
+
+    function normalizeDateValue(value) {
+        return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+    }
+
+    function getDateValue(component) {
+        return normalizeDateValue(component.getAttributes()['data-date']);
+    }
+
+    function updateDateValue(component, value) {
+        const date = normalizeDateValue(value);
+        if (date) {
+            component.addAttributes({ 'data-date': date });
+        } else {
+            component.removeAttributes('data-date');
+        }
+    }
+
+    tm.addType('coker-date-picker', {
+        createInput({ trait }) {
+            const input = document.createElement('input');
+            input.type = 'date';
+            input.setAttribute('aria-label', trait.get('label'));
+            return input;
+        },
+        onUpdate({ elInput, component }) {
+            elInput.value = getDateValue(component);
+        },
+        onEvent({ elInput, component }) {
+            updateDateValue(component, elInput.value);
+        }
+    });
+
+    domc.addType('coker-date-input', {
+        isComponent: el => (el.tagName === 'INPUT' || el.tagName === 'SPAN') &&
+            el.hasAttribute('data-coker-date-input') && { type: 'coker-date-input', components: [] },
+        model: {
+            defaults: {
+                tagName: 'span',
+                editable: false,
+                droppable: false,
+                attributes: { 'data-date-format': dateFormats[0] },
+                traits: [
+                    { name: 'data-date', type: 'coker-date-picker', label: '日期' },
+                    {
+                        name: 'data-date-format',
+                        type: 'select',
+                        label: '顯示格式',
+                        options: dateFormats.map(format => ({ id: format, name: format }))
+                    }
+                ]
+            },
+            init() {
+                if (this.get('tagName') === 'input') {
+                    updateDateValue(this, this.getAttributes().value);
+                    this.removeAttributes(['type', 'value', 'name', 'required']);
+                    this.removeClass('form-control');
+                    this.set({ tagName: 'span', void: false });
+                }
+            },
+            getInnerHTML() {
+                const date = getDateValue(this);
+                if (!date) return '';
+
+                const selectedFormat = this.getAttributes()['data-date-format'];
+                const format = dateFormats.includes(selectedFormat) ? selectedFormat : dateFormats[0];
+                const [yyyy, mm, dd] = date.split('-');
+                const parts = { yyyy, mm, dd };
+                return format.replace(/yyyy|mm|dd/g, part => parts[part]);
+            }
+        },
+        view: {
+            events: {
+                'click input': 'selectDateInput',
+                'change input': 'saveDateValue'
+            },
+            init() {
+                this.listenTo(this.model, 'change:attributes:data-date change:attributes:data-date-format', this.syncDateValue);
+                this.listenTo(this.model, 'change:locked', this.onRender);
+                this.listenTo(this.em, 'run:preview', this.showDateText);
+                this.listenTo(this.em, 'stop:preview', this.showDateInput);
+            },
+            onRender() {
+                removeLegacyDateLabel(this.model);
+                if (editor.Commands.isActive('preview') || this.model.locked) {
+                    this.showDateText();
+                } else {
+                    this.showDateInput();
+                }
+            },
+            showDateText() {
+                this.el.textContent = this.model.getInnerHTML();
+            },
+            showDateInput() {
+                if (this.model.locked) return;
+
+                if (!this.dateControl) {
+                    const doc = this.el.ownerDocument;
+                    this.dateControl = doc.createElement('span');
+                    this.dateControl.className = 'form-control position-relative d-inline-block';
+
+                    this.dateText = doc.createElement('span');
+                    this.dateText.setAttribute('aria-hidden', 'true');
+
+                    this.dateInput = doc.createElement('input');
+                    this.dateInput.type = 'date';
+                    this.dateInput.className = 'position-absolute top-0 start-0 w-100 h-100 opacity-0';
+                    this.dateInput.setAttribute('aria-label', '選擇日期');
+                    this.dateControl.append(this.dateText, this.dateInput);
+                }
+                this.el.replaceChildren(this.dateControl);
+                this.syncDateValue();
+            },
+            selectDateInput(event) {
+                if (editor.Commands.isActive('preview') || this.model.locked) {
+                    return;
+                }
+
+                // The canvas selection handler cancels the native calendar button's default click.
+                event.stopPropagation();
+                editor.select(this.model);
+                try {
+                    this.dateInput.showPicker?.();
+                } catch (error) {
+                    // Keep the native calendar button usable when the browser blocks showPicker().
+                    if (!(error instanceof this.el.ownerDocument.defaultView.DOMException)) {
+                        throw error;
+                    }
+                }
+            },
+            saveDateValue() {
+                if (!editor.Commands.isActive('preview') && !this.model.locked) {
+                    updateDateValue(this.model, this.dateInput.value);
+                }
+            },
+            syncDateValue() {
+                if (this.dateControl?.parentNode === this.el) {
+                    this.dateInput.value = getDateValue(this.model);
+                    this.dateText.textContent = this.model.getInnerHTML() || '選擇日期';
+                } else {
+                    this.showDateText();
+                }
+            }
+        }
+    });
+
+    if (options.enableDateField !== false) {
+        bm.add('coker-date-field', {
+            label: '日期欄位',
+            category: '系統元件',
+            keywords: ['日期選擇', '日曆', 'date'],
+            media: '<i class="material-symbols-outlined fa-5x">calendar_month</i>',
+            content: `
+                <div class="mb-3">
+                    <span data-coker-date-input="1"></span>
+                </div>
+            `
+        });
+    }
+
     domc.addType('dynamic-select', {
         isComponent: el => el.tagName === 'SELECT',
         model: {

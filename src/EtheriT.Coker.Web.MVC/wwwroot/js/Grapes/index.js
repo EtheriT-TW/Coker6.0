@@ -50,7 +50,9 @@ var grapesInit = function (options) {
         },
 
         function legacyCoker6Form(editor) {
-            window.CokerGrapesLegacyPlugins.coker6FormPlugin(editor, {});
+            window.CokerGrapesLegacyPlugins.coker6FormPlugin(editor, {
+                enableDateField: !options.enableNewsletter
+            });
         }
     ];
 
